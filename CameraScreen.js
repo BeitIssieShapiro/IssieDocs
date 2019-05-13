@@ -30,7 +30,7 @@ export default class CameraScreenLocal extends React.Component {
   render() {
     const mockPath = require('./mock.jpg');
     let camera;
-    if (DeviceInfo.isEmulator()) {
+    if (DeviceInfo.isEmulator() || true) {
       camera =  <View>
         <Button
           title="Mock Take Picture"

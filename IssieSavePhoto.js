@@ -1,9 +1,11 @@
 
 import React from 'react';
-import { Image,ImageBackground,TextInput, Picker, StyleSheet, View, Button,TouchableOpacity, Text,
+import { Image,ImageBackground,TextInput, Picker, StyleSheet, View, Text,
 Alert } from 'react-native';
+import {Button} from 'react-native-elements'
 import {FOLDERS_DIR, globalStyle} from './GaleryScreen';
 import * as RNFS from 'react-native-fs';
+import { black, green } from 'ansi-colors';
 
 
 const pictureSize = 150;
@@ -31,13 +33,12 @@ export default class IssieSavePhoto extends React.Component {
       this.setState({phase: PickFolder, folder:""});
     } else if (this.state.phase == PickFolder) {
       this.save();
-      this.props.navigation.navigate('Home');
     }
   }
 
   save = () => { 
     const uri = this.props.navigation.getParam('uri', '');
-    Alert.alert("saving : "+ uri);
+    //Alert.alert("saving : "+ uri);
     let folderName = this.state.folder;
     let fileName = this.state.pageName;
     
@@ -52,7 +53,9 @@ export default class IssieSavePhoto extends React.Component {
     let targetFolder = FOLDERS_DIR + folderName;
     let filePath = targetFolder + "/" + fileName +  ".jpg";
     RNFS.mkdir(targetFolder).then(() => {
-      RNFS.copyFile(uri, filePath).then(undefined,
+      RNFS.copyFile(uri, filePath).then(
+        //Success
+        () => this.props.navigation.navigate('Home'),
         //on error 
         err => Alert.alert('error saving file: ' + uri + ' to ' + filePath + ', err: '+err)
       ).catch(err => Alert.alert('Catch saving file: ' + uri + ' to ' + filePath + ', err: '+err));  
@@ -70,113 +73,129 @@ export default class IssieSavePhoto extends React.Component {
     let SelectFolder = <View/>;
     if (this.state.phase == OK_Cancel || this.state.phase == PickName ||
         this.state.phase == PickFolder) {
-      buttons = <View style={styles.bottom}>
-        <Button title="OK" style={styles.buttons} onPress={this.OK}/>
-        <Button title="Cancel" style={styles.buttons} onPress={this.Cancel}/>
+      buttons = <View style={styles.okCancelView}>
+        <Button raised={true} title="OK" style={[styles.button, styles.buttonGreen]} onPress={this.OK}/>
+        <Text>    </Text>
+        <Button raised={true} title="Cancel" style={[styles.button, styles.buttonRed]} onPress={this.Cancel}/>
       </View>;
     }
-    if (this.state.phase == PickName) {
-      PageNameInput = <View style={styles.bottom}>
-                        <TextInput style={styles.textInput}
-                        onChangeText={(text) => this.setState({pageName:text})}
-                        />
-                      </View>
-    }
+   
 
     if (this.state.phase == PickFolder) {
       SelectFolder = 
-      <View style={styles.bottom} zIndex={1000}>
-        <Picker
+      <View style={styles.pickerView}>
+        <Text style={styles.titleText}>ספריה</Text>
+        <Picker style={styles.textInput}
           selectedValue={this.state.folder}
-          style={styles.folderPicker}
           mode='dropdown'
           onValueChange={(itemValue, itemIndex) =>
             this.setState({folder: itemValue})
           }>
           <Picker.Item label= "" value="" />
           <Picker.Item label= "חשבון" value="חשבון" />
-          <Picker.Item  label= "תורה" value="תורה" />
-          <Picker.Item  label= "ספריה חדשה" value="ספריה חדשה" />
+          <Picker.Item label= "תורה" value="תורה" />
+          <Picker.Item label= "ספריה חדשה" value="ספריה חדשה" />
         </Picker>
       </View>
     }
+
+    if (this.state.phase == PickName || this.state.phase == PickFolder) {
+      PageNameInput = <View style={styles.textInputView}>
+                        <Text style={styles.titleText}>שם הדף</Text>
+                        <TextInput style={styles.textInput}
+                        onChangeText={(text) => this.setState({pageName:text})}
+                        />
+                        {SelectFolder}
+
+                      </View>
+    }
     return (
-        <View style={styles.bgImage}>
-          <ImageBackground
-            resizeMode="contain"
+        <ImageBackground
             style={styles.bgImage}
             source={{uri}}
-          />
+            resizeMode={"cover"}
+            
+          >
           {PageNameInput}
-          {SelectFolder}
           {buttons}
+        </ImageBackground>
 
-        </View>
         
       );
   };
     
 }
 const styles = StyleSheet.create({
-  
-    bgImage: {
-      flex: 1,
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'stretch',
-      resizeMode: 'stretch',
-    },
-  
-  button: {
-    position: 'absolute',
-    bottom:0
-  },
-  bottom: {
+  bgImageView: {
+    backgroundColor:'blue',
     flex: 1,
-    justifyContent: 'flex-end',
-    marginBottom: 36
+    position:'absolute',
+    top:0,bottom:0,right:0, left:0,
+    justifyContent: 'center',
+    width:'100%',
+    height:'100%',
+  },
+  bgImage: {
+    flex:1,
+    width:'100%',
+    height:'100%',
+  },
+  
+  okCancelView: {
+    position: 'absolute',
+    top:"80%",
+    left:50, right:50, //middle
+    flex: 1,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: "center",
+  },
+  button: {
+    borderColor:'black',
+    fontWeight:"bold",
+    width: 100,
+  },
+  buttonGreen: {
+    backgroundColor:"green"
+  },
+  buttonRed: {
+    backgroundColor:"red"
+  },
+  pickerView: {
+    flex:1,
+    width:"100%",
+    flexDirection:"column",
+    alignItems:"center",
+    justifyContent:"flex-end",
+  },
+  textInputView: {
+    position:'absolute',
+    flex:1,
+    flexDirection:"column",
+    alignItems:"center",
+    justifyContent:"flex-end",
+    width:"60%",
+    right:"20%",
+    top:"30%",
   },
   textInput: {
-    height: 40, 
-    borderColor: 
-    'black', 
-    borderWidth: 1,
-    backgroundColor: 'white'
-
+    fontSize: 70,
+    textAlign:"right",
+    fontWeight: 'bold',
+    color: 'black',
+    width: "100%",
+    backgroundColor:'white'
+  },
+  titleText: {
+    fontSize: 70,
+    textAlign:"right",
+    width:"100%",
+    fontWeight: 'bold',
+    color: 'white',
   },
   folderPicker: {
     height: 50, 
     width: 250,
     backgroundColor: 'white'
-  },
-  pictureWrapper: {
-    width: pictureSize,
-    height: pictureSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: 5,
-  },
-  facesContainer: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    left: 0,
-    top: 0,
-  },
-  face: {
-    borderWidth: 2,
-    borderRadius: 2,
-    position: 'absolute',
-    borderColor: '#FFD700',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  faceText: {
-    color: '#FFD700',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    margin: 2,
-    fontSize: 10,
-    backgroundColor: 'transparent',
   }
 });

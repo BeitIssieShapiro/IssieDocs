@@ -1,5 +1,6 @@
 import React from 'react';
-import { Image, StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import { ImageBackground, StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import {Icon} from 'react-native-elements'
 
 const pictureSize = 150;
 
@@ -59,6 +60,7 @@ export default class Photo extends React.Component {
   
   render() {
     const { uri } = this.props;
+    const fileName = (uri.split('\\').pop().split('/').pop().split('.'))[0];
     return (
         <TouchableOpacity
           style={styles.pictureWrapper}
@@ -66,14 +68,15 @@ export default class Photo extends React.Component {
           onPress={this.props.onPress}
           activeOpacity={1}
         >
-          <Image
+          <ImageBackground
             style={styles.picture}
             source={{ uri }}
-          />
-          {//this.state.selected && <Ionicons name="md-checkmark-circle" size={30} color="#4630EB" />
+          >
+          {
+            this.state.selected && <Icon name="check-circle" size={30} color="#4630EB" />
           }
-          <View style={styles.facesContainer}>
-          </View>
+          </ImageBackground>
+          <Text style={{bottom:0}}>{fileName}</Text>
         </TouchableOpacity>
       );
   };
