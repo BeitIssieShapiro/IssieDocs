@@ -75,5 +75,7 @@
 	<string>Using camera to capture new pages</string>
 	<key>NSAppleMusicUsageDescription</key>
 	<string>save pages in gallery</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Used for saving pictures</string>
 </dict>
 </plist>

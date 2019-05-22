@@ -138,6 +138,8 @@ android {
 }
 
 dependencies {
+    implementation project(':@projektpro_react-native-responsive-sketch-canvas')
+    implementation project(':react-native-read-write-exif')
     implementation project(':react-native-view-shot')
     implementation project(':react-native-device-info')
     implementation project(':react-native-vector-icons')

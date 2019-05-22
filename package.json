@@ -7,6 +7,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@projektpro/react-native-responsive-sketch-canvas": "^0.9.1",
     "@terrylinla/react-native-sketch-canvas": "^0.8.0",
     "react": "16.8.3",
     "react-native": "0.59.8",
@@ -15,6 +16,7 @@
     "react-native-elements": "^1.1.0",
     "react-native-fs": "^2.13.3",
     "react-native-gesture-handler": "^1.2.1",
+    "react-native-read-write-exif": "git+https://github.com/floristic-project/react-native-read-write-exif.git",
     "react-native-vector-icons": "^6.4.2",
     "react-native-view-shot": "^2.6.0",
     "react-navigation": "^3.9.1"

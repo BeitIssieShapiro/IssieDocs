@@ -17,32 +17,45 @@ export default class GalleryScreen extends React.Component {
   state = {
     folders: [],
     selected: [],
+    isFocused: false
   };
+
+  componentWillUnmount() {
+    this.subs.forEach(sub => sub.remove());
+  }
 
   componentDidMount = async () => {
-
     //verify exists:
     RNFS.mkdir(FOLDERS_DIR).catch(()=>{});
-    const folders = await RNFS.readDir(FOLDERS_DIR);
-    //Alert.alert("Loading " + folders.length + " folders");
-    
-    let foldersState = [];
-    
-    for (let folder of folders) {
-      //Alert.alert("reading files from: " + folder.path);
-      try {
-        const filesItems = await RNFS.readDir(folder.path);
-        const filesPath = filesItems.map(fileItem => fileItem.path);
-        foldersState.push({name:folder.name, files:filesPath});
-      } catch (e) {
-        Alert.alert("error readin folder: " + e);
-      }
-    }
 
- 
-    this.setState({ folders: foldersState });
+    this.subs = [
+      this.props.navigation.addListener("didFocus", async () => {
+        this.refresh();
+      }),
+    ];
     
+    await this.refresh();
   };
+
+  refresh = async () => {
+    
+      RNFS.readDir(FOLDERS_DIR).then(async (folders)=> {
+        //Alert.alert("Loading " + folders.length + " folders");
+        let foldersState = [];
+
+        for (let folder of folders) {
+          //Alert.alert("reading files from: " + folder.path);
+            const filesItems = await RNFS.readDir(folder.path);
+            
+            const filesPath = filesItems.filter((f) => !f.name.endsWith(".json")).map(fileItem => fileItem.path);
+            foldersState.push({name:folder.name, files:filesPath});
+            
+        }
+        this.setState({ folders: foldersState });
+        
+      })
+  
+  }
 
   toggleSelection = (uri, isSelected) => {
     let selected = this.state.selected;
@@ -98,6 +111,8 @@ export default class GalleryScreen extends React.Component {
   }
 
   render() {
+    //fire and forget - refresh
+    //this.refresh();
  
     const currentFolder = this.props.navigation.getParam('folder', '');
     const {navigate} = this.props.navigation;

@@ -801,6 +801,11 @@
     "@types/istanbul-reports" "^1.1.1"
     "@types/yargs" "^12.0.9"
 
+"@projektpro/react-native-responsive-sketch-canvas@^0.9.1":
+  version "0.9.1"
+  resolved "https://registry.yarnpkg.com/@projektpro/react-native-responsive-sketch-canvas/-/react-native-responsive-sketch-canvas-0.9.1.tgz#cb3e0b252b9290016cfa09b970e0c4673ca1b298"
+  integrity sha512-mBxlNV1QpZgrh5NW5zEj0OkEvvJ8/GwsYIUIqMs1lffo3mJClmH0sboqSSmVczecp9BoMyuvCd+intDQOTld6g==
+
 "@react-native-community/cli@^1.2.1":
   version "1.9.4"
   resolved "https://registry.yarnpkg.com/@react-native-community/cli/-/cli-1.9.4.tgz#51e4ba30aa6ee29f0c1e2bedf69ac7d1a4df1a8c"
@@ -5008,6 +5013,10 @@ react-native-ratings@^6.3.0:
   dependencies:
     lodash "^4.17.4"
     prop-types "^15.5.10"
+
+"react-native-read-write-exif@git+https://github.com/floristic-project/react-native-read-write-exif.git":
+  version "1.0.0"
+  resolved "git+https://github.com/floristic-project/react-native-read-write-exif.git#159319fd4e3dc3acee2cd39c0d3f9a43bbe2fc08"
 
 react-native-safe-area-view@^0.13.0:
   version "0.13.2"
