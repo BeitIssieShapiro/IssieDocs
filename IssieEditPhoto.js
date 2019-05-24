@@ -1,8 +1,8 @@
 
 import React from 'react';
 import {
-  AppRegistry, Image, ImageBackground,TouchableHighlight, StyleSheet, TextInput, View,
-  Button, TouchableOpacity, Text, Alert
+  AppRegistry, Image, ImageBackground, TouchableHighlight, StyleSheet, TextInput, View,
+  Button, TouchableOpacity, Text, Alert, PanResponder
 } from 'react-native';
 import RNSketchCanvas from '@terrylinla/react-native-sketch-canvas';
 //import {ResponsiveSketchCanvas} from '@projektpro/react-native-responsive-sketch-canvas';
@@ -18,30 +18,30 @@ class DoQueue {
     this._doneQueue = []
     this._undoQueue = []
   }
-  
-  pushText(elem){
-    this.add({elem:elem, type:'text'});
+
+  pushText(elem) {
+    this.add({ elem: elem, type: 'text' });
     //once new item added redo is reset
     this._undoQueue = [];
   }
 
-  pushPath(elem){
-    this.add({elem:elem, type:'path'});
+  pushPath(elem) {
+    this.add({ elem: elem, type: 'path' });
     //once new item added redo is reset
     this._undoQueue = [];
   }
 
-  add(queueElem){
+  add(queueElem) {
     this._doneQueue.push(queueElem);
   }
 
-  undo (){
+  undo() {
     if (this._doneQueue.length > 0) {
       this._undoQueue.push(this._doneQueue.pop());
     }
   }
 
-  redo (){
+  redo() {
     if (this._undoQueue.length > 0) {
       this._doneQueue.push(this._undoQueue.pop());
     }
@@ -59,7 +59,25 @@ export default class IssieEditPhoto extends React.Component {
   };
   constructor() {
     super();
-    this.state = { textMode: false, showTextInput:false, queue: new DoQueue() }
+
+    this._panResponder = PanResponder.create({
+      onStartShouldSetPanResponder: (evt, gestureState) => this.state.showTextInput,
+      onStartShouldSetPanResponderCapture: (evt, gestureState) => this.state.showTextInput,
+      onMoveShouldSetPanResponder: (evt, gestureState) => this.state.showTextInput,
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => this.state.showTextInput,
+      onPanResponderMove: (evt, gestureState) => {
+        if (this.state.textMode) {
+          this.setState({ textX: gestureState.moveX, textY:  gestureState.moveY- topLayer - marginTop });
+        }
+      }
+    });
+
+
+    this.state = { textMode: false, showTextInput: false, queue: new DoQueue() }
+
+
+
+
   }
 
   componentDidMount = async () => {
@@ -71,7 +89,7 @@ export default class IssieEditPhoto extends React.Component {
     const metaDataUri = uri + ".json";
     RNFS.readFile(metaDataUri).then((value) => {
       let sketchState = JSON.parse(value);
-      
+
       for (let i = 0; i < sketchState.length; i++) {
         this.state.queue.add(sketchState[i])
       }
@@ -151,36 +169,35 @@ export default class IssieEditPhoto extends React.Component {
     }
     let textElem = this.findTextElement(ev.nativeEvent)
     let initialText = '';
-    let x = ev.nativeEvent.locationX, y=ev.nativeEvent.locationY
+    let x = ev.nativeEvent.locationX, y = ev.nativeEvent.locationY
     if (textElem) {
       initialText = textElem.text;
       x = textElem.position.x;
       y = textElem.position.y + topLayer + marginTop;
     }
-    this.setState({showTextInput:true, inputTextValue:initialText, currentTextElem:textElem, textX:x, textY:y})
+    this.setState({ showTextInput: true, inputTextValue: initialText, currentTextElem: textElem, textX: x, textY: y })
   }
 
   findTextElement = (ev) => {
     let q = this.state.queue.getAll();
-    for (let i=q.length-1;i>=0;i--) {
+    for (let i = q.length - 1; i >= 0; i--) {
       if (q[i].type == 'text') {
         const elem = q[i].elem;
 
         if (elem.position.x - 15 < Math.floor(ev.locationX) &&
-            elem.position.x + 65 > Math.floor(ev.locationX) &&
-            elem.position.y - 15 < Math.floor(ev.locationY) &&
-            elem.position.y + 65 > Math.floor(ev.locationY)) {
-          Alert.alert("found")
+          elem.position.x + 65 > Math.floor(ev.locationX) &&
+          elem.position.y - 15 < Math.floor(ev.locationY) &&
+          elem.position.y + 65 > Math.floor(ev.locationY)) {
           return elem;
         }
       }
     }
-    
+
     return undefined;
   }
 
   getTextElement = (newText) => {
-    newTextElem = {text:newText}
+    newTextElem = { text: newText }
     if (this.state.currentTextElem) {
       newTextElem.id = this.state.currentTextElem.id;
     } else {
@@ -203,8 +220,8 @@ export default class IssieEditPhoto extends React.Component {
         //first try to find same ID and replace, or add it
         let found = false;
 
-        for (let j=0;j<canvasTexts.length;j++) {
-          if(canvasTexts[j].id === q[i].elem.id) {
+        for (let j = 0; j < canvasTexts.length; j++) {
+          if (canvasTexts[j].id === q[i].elem.id) {
             canvasTexts[j] = q[i].elem
             found = true;
             break;
@@ -215,48 +232,51 @@ export default class IssieEditPhoto extends React.Component {
         this.canvas.addPath(q[i].elem);
       }
     }
-    this.setState({canvasTexts:canvasTexts});
+    this.setState({ canvasTexts: canvasTexts });
   }
 
   render() {
     return (
       <View style={styles.mainContainer}>
         <TouchableOpacity onPress={this.TextModeClick}
-        //onPress={()=>Alert.alert('click')} 
-        activeOpacity={1}
-        style={styles.fullSizeInParent} >
-        <View style={styles.fullSizeInParent} pointerEvents={this.state.textMode?'box-only':'auto'}>
+          //onPress={()=>Alert.alert('click')} 
+          activeOpacity={1}
+          style={styles.fullSizeInParent} >
+          <View style={styles.fullSizeInParent} pointerEvents={this.state.textMode ? 'box-only' : 'auto'}
+          >
             {this.getCanvas()}
-        </View>
+          </View>
         </TouchableOpacity>
-        <View style={{flexDirection:'row'}}>
-        {
-          this.getButton(() => {
-            this.setState({showTextInput:false,
-               textMode:!this.state.textMode})
-          }, this.state.textMode?'#0693e3':'#8ed1fc', "ABC")
-        }
-        {
-          this.getButton(() => {
-            this.state.queue.undo();
-            this.UpdateCanvas();
-          }, this.state.textMode?'#0693e3':'#8ed1fc', "בטל")
-        }
-        {
-          this.getButton(() => {
-            this.state.queue.redo();
-            this.UpdateCanvas();
-          }, this.state.textMode?'#0693e3':'#8ed1fc', "החזר")
-        }
+        <View style={{ flexDirection: 'row' }}>
+          {
+            this.getButton(() => {
+              this.setState({
+                showTextInput: false,
+                textMode: !this.state.textMode
+              })
+            }, this.state.textMode ? '#0693e3' : '#8ed1fc', "ABC")
+          }
+          {
+            this.getButton(() => {
+              this.state.queue.undo();
+              this.UpdateCanvas();
+            }, this.state.textMode ? '#0693e3' : '#8ed1fc', "בטל")
+          }
+          {
+            this.getButton(() => {
+              this.state.queue.redo();
+              this.UpdateCanvas();
+            }, this.state.textMode ? '#0693e3' : '#8ed1fc', "החזר")
+          }
         </View>
-        
+
         {
-          this.state.showTextInput?
+          this.state.showTextInput ?
             //todo height should be relative to text size
-            this.getTextInput(this.state.inputTextValue,this.state.textX,this.state.textY - 20):
+            this.getTextInput(this.state.inputTextValue, this.state.textX, this.state.textY - 20) :
             <Text></Text>
         }
-        
+
       </View>
     );
   }
@@ -267,12 +287,12 @@ export default class IssieEditPhoto extends React.Component {
     return <RNSketchCanvas
       ref={component => this.canvas = component}
       text={this.state.canvasTexts}
-      containerStyle={[ styles.container]}
-      canvasStyle={[ styles.canvas]}
+      containerStyle={[styles.container]}
+      canvasStyle={[styles.canvas]}
       localSourceImage={{ filename: uri, mode: 'AspectFill' }}
       saveComponent={<View style={styles.functionButton}><Text style={{ color: 'white' }}>Save</Text></View>}
       onSketchSaved={this.Save}
-      
+
       onStrokeEnd={this.SketchEnd}
       clearComponent={<View style={styles.functionButton}><Text style={{ color: 'white' }}>Clear</Text></View>}
       onClearPressed={() => {
@@ -308,23 +328,23 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getButton = (func, bgColor, txt) => {
-    return <TouchableOpacity 
+    return <TouchableOpacity
       onPress={func}
       activeOpacity={1}
     >
-      <View style={[styles.CircleShapeView, 
-        { backgroundColor: bgColor}]}>
+      <View style={[styles.CircleShapeView,
+      { backgroundColor: bgColor }]}>
         <Text>{txt}</Text>
       </View>
     </TouchableOpacity>
   }
 
   getTextInput = (txt, x, y) => {
-    return <View style={{flex:1, position:'absolute', left:x, top:y}}>
-      <TextInput ref={"textInput"} 
-          onChangeText={(text) => this.setState({inputTextValue:text})}
-          autoFocus style={styles.textInput}>{txt}</TextInput>
-    </View> 
+    return <View style={{ flex: 1, position: 'absolute', left: x, top: y }} {...this._panResponder.panHandlers}>
+      <TextInput ref={"textInput"}
+        onChangeText={(text) => this.setState({ inputTextValue: text })}
+        autoFocus style={styles.textInput}>{txt}</TextInput>
+    </View>
   }
 
 
@@ -339,11 +359,12 @@ const styles = StyleSheet.create({
     flex: 1, justifyContent: 'center', alignItems: 'center',
     backgroundColor: 'white',
   },
-  fullSizeInParent: { 
-    flex: 1, 
-    flexDirection: 'column', 
-    width: '100%', 
-    height: '100%' },
+  fullSizeInParent: {
+    flex: 1,
+    flexDirection: 'column',
+    width: '100%',
+    height: '100%'
+  },
   textInput: {
     height: 40,
     width: 100,
@@ -368,24 +389,24 @@ const styles = StyleSheet.create({
     width: 35,
     height: 35,
     borderRadius: 35 / 2,
-    alignItems:'center',
+    alignItems: 'center',
     justifyContent: 'center'
-  }, 
+  },
   container: {
-    flex: 1, 
+    flex: 1,
     backgroundColor: 'transparent',
-    height:topLayer
-  }, 
+    height: topLayer
+  },
   canvas: {
-    flex: 1, 
+    flex: 1,
     backgroundColor: 'transparent'
-  }, 
+  },
   bottomPanel: {
-    position:'absolute',
-    bottom:17
+    position: 'absolute',
+    bottom: 17
   },
   alignRightPanel: {
-    right:17
+    right: 17
   }
 });
 
