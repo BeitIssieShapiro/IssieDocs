@@ -20,7 +20,7 @@ export default class IssieEditPhoto extends React.Component {
   };
   constructor() {
     super();
-    this.state = { textMode: false }
+    this.state = { textMode: false, showTextInput:false }
   }
 
   componentDidMount = async () => {
@@ -103,20 +103,33 @@ export default class IssieEditPhoto extends React.Component {
     return false; //Alert.alert("a"+a + ",b:"+b+" c:"+c);
   }
 
+  TextModeClick = (ev) => {
+    this.setState({showTextInput:true, textX:ev.nativeEvent.locationX, textY:ev.nativeEvent.locationY})
+  }
   render() {
     return (
       <View style={styles.mainContainer}>
-        <TouchableOpacity onPress={()=>Alert.alert('click')} activeOpacity={1}
+        <TouchableOpacity onPress={this.TextModeClick}
+        //onPress={()=>Alert.alert('click')} 
+        activeOpacity={1}
         style={styles.fullSizeInParent} >
         <View style={styles.fullSizeInParent} pointerEvents={this.state.textMode?'box-only':'auto'}>
             {this.getCanvas()}
         </View>
         </TouchableOpacity>
         {
-              this.getButton(() => {
-                this.setState({textMode:!this.state.textMode})
-              }, this.state.textMode?'#0693e3':'#8ed1fc', "ABC")
-            }
+          this.getButton(() => {
+            this.setState({showTextInput:false,
+               textMode:!this.state.textMode})
+          }, this.state.textMode?'#0693e3':'#8ed1fc', "ABC")
+        }
+        {
+          this.state.showTextInput?
+            //todo height should be relative to text size
+            this.getTextInput('ariel',this.state.textX,this.state.textY - 20):
+            <Text></Text>
+        }
+        
       </View>
     );
   }
@@ -181,6 +194,11 @@ export default class IssieEditPhoto extends React.Component {
     </TouchableOpacity>
   }
 
+  getTextInput = (txt, x, y) => {
+    return <View style={{flex:1, position:'absolute', left:x, top:y}}>
+      <TextInput autoFocus style={styles.textInput}>{txt}</TextInput>
+    </View> 
+  }
 
 
 }
