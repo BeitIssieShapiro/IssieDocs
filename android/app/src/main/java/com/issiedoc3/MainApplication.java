@@ -4,7 +4,6 @@ import android.app.Application;
 
 import com.facebook.react.ReactApplication;
 import com.terrylinla.rnsketchcanvas.SketchCanvasPackage;
-import com.floristicreactlibrary.RNReadWriteExifPackage;
 import fr.greweb.reactnativeviewshot.RNViewShotPackage;
 import com.learnium.RNDeviceInfo.RNDeviceInfo;
 import com.oblador.vectoricons.VectorIconsPackage;
@@ -33,7 +32,6 @@ public class MainApplication extends Application implements ReactApplication {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
             new SketchCanvasPackage(),
-            new RNReadWriteExifPackage(),
             new RNViewShotPackage(),
             new RNDeviceInfo(),
             new VectorIconsPackage(),

@@ -5,7 +5,6 @@
 	};
 	objectVersion = 46;
 	objects = {
-
 /* Begin PBXBuildFile section */
 		00C302E51ABCBA2D00DB3ED1 /* libRCTActionSheet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302AC1ABCB8CE00DB3ED1 /* libRCTActionSheet.a */; };
 		00C302E71ABCBA2D00DB3ED1 /* libRCTGeolocation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C302BA1ABCB90400DB3ED1 /* libRCTGeolocation.a */; };
@@ -59,7 +58,6 @@
 		C65835809CEA47D6A3984EF7 /* libRNGestureHandler.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C6DD887AB2794D3DA23DDA62 /* libRNGestureHandler.a */; };
 		D490F5C3F1F34FAA98C99B52 /* Foundation.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 49AD630628F84E61B0106E4B /* Foundation.ttf */; };
 		DC363DA69D3D44CFA8AD248E /* libRNSketchCanvas.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7FB43EDC09294E61858E8B46 /* libRNSketchCanvas.a */; };
-		E609D8AB0F264C3BAA2E6EA7 /* libRNReadWriteExif.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 77BE3714DB0C4BF8A9FD07B8 /* libRNReadWriteExif.a */; };
 		ED297163215061F000B7C4FE /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ED297162215061F000B7C4FE /* JavaScriptCore.framework */; };
 		ED2971652150620600B7C4FE /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ED2971642150620600B7C4FE /* JavaScriptCore.framework */; };
 		F3AF29FDF80B48958FDC674F /* Zocial.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6F5CB887FC544F6680CD6417 /* Zocial.ttf */; };
@@ -391,13 +389,6 @@
 			remoteGlobalIDString = 134814201AA4EA6300B7C361;
 			remoteInfo = RNViewShot;
 		};
-		6AA9E98922948BF300D783B5 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0F8A628F1CE34DED8E434460 /* RNReadWriteExif.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 134814201AA4EA6300B7C361;
-			remoteInfo = RNReadWriteExif;
-		};
 		6AA9E9D42295D49F00D783B5 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = E9A9A1FCF4994B529CB98AEB /* RNSketchCanvas.xcodeproj */;
@@ -440,7 +431,6 @@
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		00E356F21AD99517003FC87E /* IssieDoc3Tests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IssieDoc3Tests.m; sourceTree = "<group>"; };
 		08F2E3D0E723460F8345BEDB /* RNGestureHandler.xcodeproj */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = "wrapper.pb-project"; name = RNGestureHandler.xcodeproj; path = "../node_modules/react-native-gesture-handler/ios/RNGestureHandler.xcodeproj"; sourceTree = "<group>"; };
-		0F8A628F1CE34DED8E434460 /* RNReadWriteExif.xcodeproj */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = "wrapper.pb-project"; name = RNReadWriteExif.xcodeproj; path = "../node_modules/react-native-read-write-exif/ios/RNReadWriteExif.xcodeproj"; sourceTree = "<group>"; };
 		139105B61AF99BAD00B5F7CC /* RCTSettings.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTSettings.xcodeproj; path = "../node_modules/react-native/Libraries/Settings/RCTSettings.xcodeproj"; sourceTree = "<group>"; };
 		139FDEE61B06529A00C62182 /* RCTWebSocket.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTWebSocket.xcodeproj; path = "../node_modules/react-native/Libraries/WebSocket/RCTWebSocket.xcodeproj"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* IssieDoc3.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IssieDoc3.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -468,7 +458,6 @@
 		5F34549E50D7485ABC84E743 /* RNFS.xcodeproj */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = "wrapper.pb-project"; name = RNFS.xcodeproj; path = "../node_modules/react-native-fs/RNFS.xcodeproj"; sourceTree = "<group>"; };
 		649CB090BBAE4DD6AF830BC1 /* libRNFS.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNFS.a; sourceTree = "<group>"; };
 		6F5CB887FC544F6680CD6417 /* Zocial.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Zocial.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Zocial.ttf"; sourceTree = "<group>"; };
-		77BE3714DB0C4BF8A9FD07B8 /* libRNReadWriteExif.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNReadWriteExif.a; sourceTree = "<group>"; };
 		78C398B01ACF4ADC00677621 /* RCTLinking.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTLinking.xcodeproj; path = "../node_modules/react-native/Libraries/LinkingIOS/RCTLinking.xcodeproj"; sourceTree = "<group>"; };
 		7EB6AFD0F4D243179340E427 /* FontAwesome5_Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = FontAwesome5_Regular.ttf; path = "../node_modules/react-native-vector-icons/Fonts/FontAwesome5_Regular.ttf"; sourceTree = "<group>"; };
 		7FB43EDC09294E61858E8B46 /* libRNSketchCanvas.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNSketchCanvas.a; sourceTree = "<group>"; };
@@ -526,7 +515,6 @@
 				F3B4A20052B84D9093A5B0AA /* libRNVectorIcons.a in Frameworks */,
 				625E318A241D44B685A87450 /* libRNDeviceInfo.a in Frameworks */,
 				03D2FFDF83F94DDB82B1565F /* libRNViewShot.a in Frameworks */,
-				E609D8AB0F264C3BAA2E6EA7 /* libRNReadWriteExif.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -765,14 +753,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		6AA9E98622948BF300D783B5 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				6AA9E98A22948BF300D783B5 /* libRNReadWriteExif.a */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		6AA9E9A42295D49F00D783B5 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -811,7 +791,6 @@
 				3FCE2E953B924BAABD6E9819 /* RNVectorIcons.xcodeproj */,
 				DB3504DBB376400EA56AEDF1 /* RNDeviceInfo.xcodeproj */,
 				E1E96C0A96CB4B5DBF098AB7 /* RNViewShot.xcodeproj */,
-				0F8A628F1CE34DED8E434460 /* RNReadWriteExif.xcodeproj */,
 				E9A9A1FCF4994B529CB98AEB /* RNSketchCanvas.xcodeproj */,
 			);
 			name = Libraries;
@@ -1063,10 +1042,6 @@
 				{
 					ProductGroup = 6AA9E8A72287447B00D783B5 /* Products */;
 					ProjectRef = 08F2E3D0E723460F8345BEDB /* RNGestureHandler.xcodeproj */;
-				},
-				{
-					ProductGroup = 6AA9E98622948BF300D783B5 /* Products */;
-					ProjectRef = 0F8A628F1CE34DED8E434460 /* RNReadWriteExif.xcodeproj */;
 				},
 				{
 					ProductGroup = 6AA9E9A42295D49F00D783B5 /* Products */;
@@ -1400,13 +1375,6 @@
 			remoteRef = 6AA9E941228891D100D783B5 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		6AA9E98A22948BF300D783B5 /* libRNReadWriteExif.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = libRNReadWriteExif.a;
-			remoteRef = 6AA9E98922948BF300D783B5 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 		6AA9E9D52295D49F00D783B5 /* libRNSketchCanvas.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
@@ -1598,7 +1566,6 @@
 					"$(SRCROOT)/../node_modules/react-native-vector-icons/RNVectorIconsManager",
 					"$(SRCROOT)/../node_modules/react-native-device-info/ios/RNDeviceInfo",
 					"$(SRCROOT)/../node_modules/react-native-view-shot/ios",
-					"$(SRCROOT)/../node_modules/react-native-read-write-exif/ios",
 					"$(SRCROOT)/../node_modules/@projektpro/react-native-responsive-sketch-canvas/ios/RNSketchCanvas/RNSketchCanvas",
 				);
 				INFOPLIST_FILE = IssieDoc3Tests/Info.plist;
@@ -1606,17 +1573,6 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",
@@ -1643,7 +1599,6 @@
 					"$(SRCROOT)/../node_modules/react-native-vector-icons/RNVectorIconsManager",
 					"$(SRCROOT)/../node_modules/react-native-device-info/ios/RNDeviceInfo",
 					"$(SRCROOT)/../node_modules/react-native-view-shot/ios",
-					"$(SRCROOT)/../node_modules/react-native-read-write-exif/ios",
 					"$(SRCROOT)/../node_modules/@projektpro/react-native-responsive-sketch-canvas/ios/RNSketchCanvas/RNSketchCanvas",
 				);
 				INFOPLIST_FILE = IssieDoc3Tests/Info.plist;
@@ -1651,17 +1606,6 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",
@@ -1689,7 +1633,6 @@
 					"$(SRCROOT)/../node_modules/react-native-vector-icons/RNVectorIconsManager",
 					"$(SRCROOT)/../node_modules/react-native-device-info/ios/RNDeviceInfo",
 					"$(SRCROOT)/../node_modules/react-native-view-shot/ios",
-					"$(SRCROOT)/../node_modules/react-native-read-write-exif/ios",
 					"$(SRCROOT)/../node_modules/@projektpro/react-native-responsive-sketch-canvas/ios/RNSketchCanvas/RNSketchCanvas",
 				);
 				INFOPLIST_FILE = IssieDoc3/Info.plist;
@@ -1721,7 +1664,6 @@
 					"$(SRCROOT)/../node_modules/react-native-vector-icons/RNVectorIconsManager",
 					"$(SRCROOT)/../node_modules/react-native-device-info/ios/RNDeviceInfo",
 					"$(SRCROOT)/../node_modules/react-native-view-shot/ios",
-					"$(SRCROOT)/../node_modules/react-native-read-write-exif/ios",
 					"$(SRCROOT)/../node_modules/@projektpro/react-native-responsive-sketch-canvas/ios/RNSketchCanvas/RNSketchCanvas",
 				);
 				INFOPLIST_FILE = IssieDoc3/Info.plist;
@@ -1759,24 +1701,12 @@
 					"$(SRCROOT)/../node_modules/react-native-vector-icons/RNVectorIconsManager",
 					"$(SRCROOT)/../node_modules/react-native-device-info/ios/RNDeviceInfo",
 					"$(SRCROOT)/../node_modules/react-native-view-shot/ios",
-					"$(SRCROOT)/../node_modules/react-native-read-write-exif/ios",
 					"$(SRCROOT)/../node_modules/@projektpro/react-native-responsive-sketch-canvas/ios/RNSketchCanvas/RNSketchCanvas",
 				);
 				INFOPLIST_FILE = "IssieDoc3-tvOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",
@@ -1811,24 +1741,12 @@
 					"$(SRCROOT)/../node_modules/react-native-vector-icons/RNVectorIconsManager",
 					"$(SRCROOT)/../node_modules/react-native-device-info/ios/RNDeviceInfo",
 					"$(SRCROOT)/../node_modules/react-native-view-shot/ios",
-					"$(SRCROOT)/../node_modules/react-native-read-write-exif/ios",
 					"$(SRCROOT)/../node_modules/@projektpro/react-native-responsive-sketch-canvas/ios/RNSketchCanvas/RNSketchCanvas",
 				);
 				INFOPLIST_FILE = "IssieDoc3-tvOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",
@@ -1862,24 +1780,12 @@
 					"$(SRCROOT)/../node_modules/react-native-vector-icons/RNVectorIconsManager",
 					"$(SRCROOT)/../node_modules/react-native-device-info/ios/RNDeviceInfo",
 					"$(SRCROOT)/../node_modules/react-native-view-shot/ios",
-					"$(SRCROOT)/../node_modules/react-native-read-write-exif/ios",
 					"$(SRCROOT)/../node_modules/@projektpro/react-native-responsive-sketch-canvas/ios/RNSketchCanvas/RNSketchCanvas",
 				);
 				INFOPLIST_FILE = "IssieDoc3-tvOSTests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",
@@ -1913,24 +1819,12 @@
 					"$(SRCROOT)/../node_modules/react-native-vector-icons/RNVectorIconsManager",
 					"$(SRCROOT)/../node_modules/react-native-device-info/ios/RNDeviceInfo",
 					"$(SRCROOT)/../node_modules/react-native-view-shot/ios",
-					"$(SRCROOT)/../node_modules/react-native-read-write-exif/ios",
 					"$(SRCROOT)/../node_modules/@projektpro/react-native-responsive-sketch-canvas/ios/RNSketchCanvas/RNSketchCanvas",
 				);
 				INFOPLIST_FILE = "IssieDoc3-tvOSTests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
-					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",

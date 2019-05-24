@@ -110,6 +110,18 @@ export default class GalleryScreen extends React.Component {
     this.props.navigation.navigate('EditPhoto', {uri:filePath})
   }
 
+  Delete = () => {
+    if (this.state.selected) {
+      //todo add verification questions
+      this.state.selected.forEach((toDelete) => {
+        RNFS.unlink(toDelete).then(()=>{
+          RNFS.unlink(toDelete + ".json").catch((e)=>{/*do nothing*/});
+        });
+      })
+      this.refresh();
+    }
+  }
+
   render() {
     //fire and forget - refresh
     //this.refresh();
@@ -138,9 +150,23 @@ export default class GalleryScreen extends React.Component {
             {galery}
           </View>
         </ScrollView>
+        {this.getButton(this.Delete, '#8ed1fc', "מחק")}
       </View>
     );
   }
+
+  getButton = (func, bgColor, txt) => {
+    return <TouchableOpacity 
+      onPress={func}
+      activeOpacity={1}
+    >
+      <View style={[styles.CircleShapeView, 
+        { backgroundColor: bgColor}]}>
+        <Text>{txt}</Text>
+      </View>
+    </TouchableOpacity>
+  }
+
 }
 
 export const globalStyle = StyleSheet.create({
@@ -163,6 +189,14 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     backgroundColor: 'white',
   },
+  CircleShapeView: {
+    marginVertical: 2,
+    width: 35,
+    height: 35,
+    borderRadius: 35 / 2,
+    alignItems:'center',
+    justifyContent: 'center'
+  }, 
   navbar: {
     flexDirection: 'row',
     alignItems: 'center',
