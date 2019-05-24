@@ -1,7 +1,7 @@
 
 import React from 'react';
 import {
-  AppRegistry, Image, ImageBackground, StyleSheet, TextInput, View,
+  AppRegistry, Image, ImageBackground,TouchableHighlight, StyleSheet, TextInput, View,
   Button, TouchableOpacity, Text, Alert
 } from 'react-native';
 import RNSketchCanvas from '@terrylinla/react-native-sketch-canvas';
@@ -20,7 +20,7 @@ export default class IssieEditPhoto extends React.Component {
   };
   constructor() {
     super();
-
+    this.state = { textMode: false }
   }
 
   componentDidMount = async () => {
@@ -36,7 +36,7 @@ export default class IssieEditPhoto extends React.Component {
         let path = sketchState[i]
         this.canvas.addPath(path);
       }
-    }).catch((e)=>{/*no json file yet*/})
+    }).catch((e) => {/*no json file yet*/ })
   }
 
   Save = () => {
@@ -99,70 +99,106 @@ export default class IssieEditPhoto extends React.Component {
     this.props.navigation.goBack();
   }
 
+  SketchStart = (a, b, c) => {
+    return false; //Alert.alert("a"+a + ",b:"+b+" c:"+c);
+  }
+
   render() {
-    const uri = this.props.navigation.getParam('uri', '');
     return (
-      <View style={styles.container}>
-        <View style={{ flex: 1, flexDirection: 'row', width: '100%', height: '100%' }}>
-          <RNSketchCanvas
-            ref={component => this.canvas = component}
-            containerStyle={{ backgroundColor: 'transparent', flex: 1 }}
-            canvasStyle={{ backgroundColor: 'transparent', flex: 1 }}
-            localSourceImage={{ filename: uri, mode: 'AspectFill' }}
-            saveComponent={<View style={styles.functionButton}><Text style={{ color: 'white' }}>Save</Text></View>}
-            onSketchSaved={this.Save}
-            undoComponent={<View style={styles.functionButton}><Text style={{ color: 'white' }}>Undo</Text></View>}
-            onUndoPressed={(id) => {
-              //Alert.alert('do something')
-            }}
-            clearComponent={<View style={styles.functionButton}><Text style={{ color: 'white' }}>Clear</Text></View>}
-            onClearPressed={() => {
-              this.canvas.clear();
-            }}
-            eraseComponent={<View style={styles.functionButton}><Text style={{ color: 'white' }}>Eraser</Text></View>}
-            strokeComponent={(color) => <View style={[styles.CircleShapeView, { backgroundColor: color }]} ></View>}
-            strokeColors = {[
-              { color: '#000000' },
-              { color: '#FF0000' },
-              { color: '#00FFFF' },
-              { color: '#0000FF' },
-              { color: '#0000A0' }]
-            }
-            strokeSelectedComponent={(color, index, changed) => {
-              return (
-                <View style={[styles.CircleShapeView, { backgroundColor: color, borderColor: 'black', borderWidth: 3 }]} ></View>
-              )
-            }}
-            strokeWidthComponent={(w) => {
-              return (<View style={styles.strokeWidthButton}>
-                <View style={{
-                  backgroundColor: 'black', marginHorizontal: 2.5,
-                  width: Math.sqrt(w / 3) * 10, height: Math.sqrt(w / 3) * 10, borderRadius: Math.sqrt(w / 3) * 10 / 2
-                }} />
-              </View>
-              )
-            }}
-            defaultStrokeIndex={0}
-            defaultStrokeWidth={5}
-          />
-
+      <View style={styles.mainContainer}>
+        <TouchableOpacity onPress={()=>Alert.alert('click')} activeOpacity={1}
+        style={styles.fullSizeInParent} >
+        <View style={styles.fullSizeInParent} pointerEvents={this.state.textMode?'box-only':'auto'}>
+            {this.getCanvas()}
         </View>
+        </TouchableOpacity>
+        {
+              this.getButton(() => {
+                this.setState({textMode:!this.state.textMode})
+              }, this.state.textMode?'#0693e3':'#8ed1fc', "ABC")
+            }
       </View>
-
-
-
-
-
     );
   }
+
+  getCanvas = () => {
+    const uri = this.props.navigation.getParam('uri', '');
+
+    return <RNSketchCanvas
+      ref={component => this.canvas = component}
+      containerStyle={[ styles.container]}
+      canvasStyle={[ styles.canvas]}
+      localSourceImage={{ filename: uri, mode: 'AspectFill' }}
+      saveComponent={<View style={styles.functionButton}><Text style={{ color: 'white' }}>Save</Text></View>}
+      onSketchSaved={this.Save}
+      undoComponent={<View style={styles.functionButton}><Text style={{ color: 'white' }}>Undo</Text></View>}
+      onUndoPressed={(id) => {
+        //Alert.alert('do something')
+      }}
+      onStrokeStart={this.SketchStart}
+      clearComponent={<View style={styles.functionButton}><Text style={{ color: 'white' }}>Clear</Text></View>}
+      onClearPressed={() => {
+        this.canvas.clear();
+      }}
+      eraseComponent={<View style={styles.functionButton}><Text style={{ color: 'white' }}>Eraser</Text></View>}
+      strokeComponent={(color) => <View style={[styles.CircleShapeView, { backgroundColor: color }]} ></View>}
+      strokeColors={[
+        { color: '#000000' },
+        { color: '#FF0000' },
+        { color: '#00FFFF' },
+        { color: '#0000FF' },
+        { color: '#0000A0' }]
+      }
+      strokeSelectedComponent={(color, index, changed) => {
+        return (
+          <View style={[styles.CircleShapeView, { backgroundColor: color, borderColor: 'black', borderWidth: 3 }]} ></View>
+        )
+      }}
+      strokeWidthComponent={(w) => {
+        return (<View style={styles.strokeWidthButton}>
+          <View style={{
+            backgroundColor: 'black', marginHorizontal: 2.5,
+            width: Math.sqrt(w / 3) * 10, height: Math.sqrt(w / 3) * 10, borderRadius: Math.sqrt(w / 3) * 10 / 2
+          }} />
+        </View>
+        )
+      }}
+      defaultStrokeIndex={0}
+      defaultStrokeWidth={5}
+
+    />
+  }
+
+  getButton = (func, bgColor, txt) => {
+    return <TouchableOpacity 
+      onPress={func}
+      activeOpacity={1}
+    >
+      <View style={[styles.CircleShapeView, 
+        { backgroundColor: bgColor}]}>
+        <Text>{txt}</Text>
+      </View>
+    </TouchableOpacity>
+  }
+
+
+
 }
 AppRegistry.registerComponent('IssieEditPhoto', () => IssieEditPhoto);
 
+
+
+
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1, justifyContent: 'center', alignItems: 'center',
     backgroundColor: 'white',
   },
+  fullSizeInParent: { 
+    flex: 1, 
+    flexDirection: 'column', 
+    width: '100%', 
+    height: '100%' },
   textInput: {
     height: 40,
     width: 100,
@@ -186,7 +222,24 @@ const styles = StyleSheet.create({
     marginVertical: 2,
     width: 35,
     height: 35,
-    borderRadius: 35 / 2
+    borderRadius: 35 / 2,
+    alignItems:'center',
+    justifyContent: 'center'
+  }, 
+  container: {
+    flex: 1, 
+    backgroundColor: 'transparent'
+  }, 
+  canvas: {
+    flex: 1, 
+    backgroundColor: 'transparent'
+  }, 
+  bottomPanel: {
+    position:'absolute',
+    bottom:17
+  },
+  alignRightPanel: {
+    right:17
   }
 });
 
