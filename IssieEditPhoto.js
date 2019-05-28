@@ -196,11 +196,14 @@ export default class IssieEditPhoto extends React.Component {
     this.state.queue.pushPath(p);
     this.Save()
   }
-  //a = absolute, s=screen
+  //a = absolute, s=screen, c=canvas
   s2aW = (w) => { return w - this.state.sideMargin }
-  s2aH = (h) => { return h - this.state.topView - topLayer }// - this.state.inputTextHeight/2}
+  s2aH = (h) => { return h - this.state.topView }// - this.state.inputTextHeight/2}
   a2sW = (w) => { return w + this.state.sideMargin }
-  a2sH = (h) => { return h + topLayer + this.state.inputTextHeight / 2 }
+  a2sH = (h) => { return h + this.state.topView } // + this.state.inputTextHeight / 2 }
+  a2cW = (w) => { return w + this.state.sideMargin }
+  a2cH = (h) => { return h + topLayer } // + this.state.inputTextHeight / 2 }
+
 
   TextModeClick = (ev) => {
     if (this.state.showTextInput) {
@@ -211,7 +214,7 @@ export default class IssieEditPhoto extends React.Component {
     //check that the click is in the canvas area:
     let x = this.s2aW(ev.nativeEvent.pageX);
     let y = this.s2aH(ev.nativeEvent.pageY);
-    //Alert.alert("x:"+x+",y:"+y+ ", nativeX:"+ev.nativeEvent.pageX+", nativeY:"+ev.nativeEvent.pageY+", topView:"+ this.state.topView)
+    //Alert.alert("x:"+x+",y:"+y+ ", nativeX:"+ev.nativeEvent.pageX+", nativeY:"+ev.nativeEvent.pageY+", topView:"+ this.state.topView + ",topLayer:"+topLayer)
     if (x < 0 || x > this.state.canvasW || y < 0 || y > this.state.canvasH) {
       return
     }
@@ -262,7 +265,7 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     newTextElem.anchor = { x: 0, y: 0 };
-    newTextElem.position = { x: this.state.textX, y: this.state.textY };
+    newTextElem.position = { x: this.state.textX / this.state.zoom, y: this.state.textY / this.state.zoom };
     newTextElem.alignment = 'Right';
     newTextElem.fontColor = this.state.color;
     newTextElem.fontSize = this.state.fontSize;
@@ -327,6 +330,7 @@ export default class IssieEditPhoto extends React.Component {
           activeOpacity={1}
           style={styles.fullSizeInParent} >
           <View style={{
+            flex:1,
             position: 'absolute',
             top: topLayer,
             left: this.state.sideMargin,
@@ -336,7 +340,7 @@ export default class IssieEditPhoto extends React.Component {
             ref={v => this.topView = v}
             pointerEvents={this.state.textMode ? 'box-only' : 'auto'}
           >
-            <ScrollView minimumZoomScale={1} maximumZoomScale={5} zoomScale={this.state.zoom} style={{ flex: 1}} contentContainerStyle={{ flex: 1, height:700 }}>
+            <ScrollView minimumZoomScale={1} maximumZoomScale={5} zoomScale={this.state.zoom} style={{ flex: 1}} contentContainerStyle={{ flex: 1 }}>
               {this.getCanvas()}
             </ScrollView>
           </View>
@@ -426,7 +430,7 @@ export default class IssieEditPhoto extends React.Component {
         {
           this.state.showTextInput ?
             //todo height should be relative to text size
-            this.getTextInput(this.state.inputTextValue, this.a2sW(this.state.textX), this.a2sH(this.state.textY) + this.state.inputTextHeight / 2) :
+            this.getTextInput(this.state.inputTextValue, this.a2cW(this.state.textX), this.a2cH(this.state.textY) ) :
             <Text></Text>
         }
 
@@ -496,8 +500,6 @@ export default class IssieEditPhoto extends React.Component {
 AppRegistry.registerComponent('IssieEditPhoto', () => IssieEditPhoto);
 
 
-
-
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1, justifyContent: 'center', alignItems: 'center',
@@ -542,7 +544,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
-    top: topLayer,
     shadowColor: 'black',
     shadowOffset: { width: 10, height: 10 },
     shadowOpacity: 3
