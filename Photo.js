@@ -1,8 +1,11 @@
 import React from 'react';
 import { ImageBackground, StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import {Icon} from 'react-native-elements'
+import LinearGradient from 'react-native-linear-gradient';
 
 const pictureSize = 150;
+const topBar = .38;
+const heightBar = .35;
 
 export default class Photo extends React.Component {
   state = {
@@ -28,35 +31,6 @@ export default class Photo extends React.Component {
   }
 
   
-
-  getImageDimensions = ({ width, height }) => {
-    if (width > height) {
-      const scaledHeight = pictureSize * height / width;
-      return {
-        width: pictureSize,
-        height: scaledHeight,
-
-        scaleX: pictureSize / width,
-        scaleY: scaledHeight / height,
-
-        offsetX: 0,
-        offsetY: (pictureSize - scaledHeight) / 2,
-      };
-    } else {
-      const scaledWidth = pictureSize * width / height;
-      return {
-        width: scaledWidth,
-        height: pictureSize,
-
-        scaleX: scaledWidth / width,
-        scaleY: pictureSize / height,
-
-        offsetX: (pictureSize - scaledWidth) / 2,
-        offsetY: 0,
-      };
-    }
-  };
-
   
   render() {
     const { uri } = this.props;
@@ -76,7 +50,34 @@ export default class Photo extends React.Component {
             this.state.selected && <Icon name="check-circle" size={30} color="#4630EB" />
           }
           </ImageBackground>
-          <Text style={{bottom:0}}>{fileName}</Text>
+          <LinearGradient colors={['#AEC6DD','#749DC5']} style={{flex:1, position:'absolute', 
+            top:pictureSize*topBar ,
+            height:pictureSize*heightBar,
+            right:-10,
+            left:-10,
+            alignContent:'center', alignItems:'center',
+            zIndex:2
+            }}>
+            <Text style={{fontSize:40, color:'#505B64'}}>{fileName}</Text>
+          </LinearGradient>
+          <LinearGradient
+          colors={['#325272', '#628EB6']}
+          style={{
+            flex:1, position:'absolute',
+            width:20, height:20,
+            left:-5, top: pictureSize * (topBar+heightBar)-10,
+            transform :[{ rotate: '-45deg' }],
+            zIndex:0
+          }}></LinearGradient>  
+          <LinearGradient
+          colors={['#325272', '#628EB6']}
+          style={{
+            flex:1, position:'absolute',
+            width:20, height:20,
+            right:-5, top: pictureSize * (topBar+heightBar)-10,
+            transform :[{ rotate: '45deg' }],
+            zIndex:0
+          }}></LinearGradient>  
         </TouchableOpacity>
       );
   };
@@ -90,9 +91,10 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     resizeMode: 'contain',
+    zIndex:1
   },
   pictureWrapper: {
-    width: pictureSize,
+    width: pictureSize*4/5,
     height: pictureSize,
     alignItems: 'center',
     justifyContent: 'center',
