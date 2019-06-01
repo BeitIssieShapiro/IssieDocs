@@ -6,15 +6,24 @@ import {
 } from 'react-native';
 import { Icon } from 'react-native-elements'
 import RNSketchCanvas from '@terrylinla/react-native-sketch-canvas';
-//import {ResponsiveSketchCanvas} from '@projektpro/react-native-responsive-sketch-canvas';
-import { globalStyle } from './GaleryScreen'
+import LinearGradient from 'react-native-linear-gradient';
 import * as RNFS from 'react-native-fs';
 //import RNReadWriteExif from 'react-native-read-write-exif';
 
 const topLayer = 35 + 8 + 8;
+const maxZoom = 3;
 const marginTop = 8;
+const TOP = 0, RIGHT = 1, BOTTOM = 2, LEFT = 3;
 
-const Colors = ['#000000', '#FF0000', '#00FFFF', '#0000FF', '#0000A0'];
+const colors = {
+  gray: ['#5B748A', '#587189'],
+  orange: ['#FFA264', '#A24A04'],
+  blue: ['#0097F8', '#00145C'],
+  yellow: ['#FCF300', '#B0A000'],
+  green: ['#00F815', '#005C05'],
+  red: ['#FF0000', '#A20000'],
+  black: ['#000000','#000000']
+}
 
 class DoQueue {
   constructor(name, level) {
@@ -80,7 +89,7 @@ export default class IssieEditPhoto extends React.Component {
     });
 
     this.state = {
-      color: Colors[0],
+      color: colors.black,
       fontSize: 25,
       textMode: false,
       showTextInput: false,
@@ -90,7 +99,9 @@ export default class IssieEditPhoto extends React.Component {
       canvasH: 1000,
       inputTextHeight: 40,
       topView: 0,
-      zoom:1.0
+      zoom: 1.0,
+      xOffset: 0,
+      yOffset: 0
     }
 
   }
@@ -267,7 +278,7 @@ export default class IssieEditPhoto extends React.Component {
     newTextElem.anchor = { x: 0, y: 0 };
     newTextElem.position = { x: this.state.textX / this.state.zoom, y: this.state.textY / this.state.zoom };
     newTextElem.alignment = 'Right';
-    newTextElem.fontColor = this.state.color;
+    newTextElem.fontColor = this.state.color[0];
     newTextElem.fontSize = this.state.fontSize;
     return newTextElem;
   }
@@ -323,121 +334,139 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   render() {
+    let drawingAreaStyle = {
+      flex: 1,
+      position: 'absolute',
+      top: topLayer,
+      left: this.state.sideMargin,
+      width: this.state.canvasW,
+      height: this.state.canvasH,
+      zIndex: 5
+    };
+
     return (
-      <View style={styles.mainContainer}  >
+
+      <LinearGradient colors={['#E2DCCE', '#D4CDBC', '#C1B7A1']} style={styles.mainContainer}  >
+
         <TouchableOpacity onPress={this.TextModeClick}
-          //onPress={()=>Alert.alert('click')} 
           activeOpacity={1}
-          style={styles.fullSizeInParent} >
-          <View style={{
-            flex:1,
-            position: 'absolute',
-            top: topLayer,
-            left: this.state.sideMargin,
-            width: this.state.canvasW,
-            height: this.state.canvasH
-          }}
+          style={[drawingAreaStyle, { backgroundColor: 'black' }]} >
+          <View style={{ flex: 1 }}
             ref={v => this.topView = v}
             pointerEvents={this.state.textMode ? 'box-only' : 'auto'}
           >
-            <ScrollView minimumZoomScale={1} maximumZoomScale={5} zoomScale={this.state.zoom} style={{ flex: 1}} contentContainerStyle={{ flex: 1 }}>
+            <ScrollView minimumZoomScale={1} maximumZoomScale={maxZoom} zoomScale={this.state.zoom} style={{ flex: 1 }} contentContainerStyle={{ flex: 1 }}>
               {this.getCanvas()}
             </ScrollView>
           </View>
         </TouchableOpacity>
-        <View style={styles.topPanel}>
-          {
-            this.getSquareButton(() => { this.setState({ zoom: this.state.zoom + .5 }) }
-              , 'white', undefined, "zoom-in", 30, false)
-          }
-          {this.getSpace(1)}
-          {
-            this.getSquareButton(() => { this.setState({ zoom: this.state.zoom - .5 }) }
-              , 'white', undefined, "zoom-out", 30, false)
-          }
-          {this.getSpace(4)}
+        <LinearGradient colors={['#94B2D1', '#6C97C0']} style={{ flex: 1, position: 'absolute', top: 0, width: '100%', height: '20%' }} >
+          <View style={[styles.topPanel,{left:this.state.sideMargin}]}>
+            {
+              this.getSquareButton(() => {
+                if (this.state.zoom == maxZoom) {
+                  this.setState({ zoom: 1 });
+                  return;
+                }
+                this.setState({ zoom: this.state.zoom + .5 })
+              }
+                , colors.gray, colors.orange, undefined, "search", 30, this.state.zoom > 1)
+            }
 
-          {
-            this.getSquareButton(() => {
-              this.state.queue.undo();
-              this.UpdateCanvas();
-            }, 'white', undefined, "undo", 30, false)
-          }
-          {this.getSpace(1)}
+            {this.getSpace(4)}
 
-          {
-            this.getSquareButton(() => {
-              this.state.queue.redo();
-              this.UpdateCanvas();
-            }, 'white', undefined, "redo", 30, false)
-          }
-          {this.getSpace(20)}
+            {
+              this.getSquareButton(() => {
+                this.state.queue.undo();
+                this.UpdateCanvas();
+              }, colors.gray, colors.gray, undefined, "undo", 30, false)
+            }
+            {this.getSpace(1)}
 
-          {
-            this.getCircleButton(() => {
-              const newColor = { color: Colors[0] }
-              this.canvas.setState(newColor)
-              this.setState(newColor)
-            }, Colors[0], undefined, this.state.color === Colors[0])
-          }
-          {this.getSpace(1)}
+            {
+              this.getSquareButton(() => {
+                this.state.queue.redo();
+                this.UpdateCanvas();
+              }, colors.gray, colors.gray, undefined, "redo", 30, false)
+            }
+            {this.getSpace(20)}
 
-          {
-            this.getCircleButton(() => {
-              const newColor = { color: Colors[1] }
-              this.canvas.setState(newColor)
-              this.setState(newColor)
-            }, Colors[1], undefined, this.state.color === Colors[1])
-          }
-          {this.getSpace(1)}
-          {
-            this.getCircleButton(() => {
-              const newColor = { color: Colors[2] }
-              this.canvas.setState(newColor)
-              this.setState(newColor)
-            }, Colors[2], undefined, this.state.color === Colors[2])
-          }
-          {this.getSpace(1)}
+            { this.getColorButton(colors.black) }
+            {this.getSpace(1)}
+            { this.getColorButton(colors.red) }
+            {this.getSpace(1)}
+            { this.getColorButton(colors.blue) }
+            {this.getSpace(1)}
+            { this.getColorButton(colors.green) }
+            {this.getSpace(3)}
 
-          {
-            this.getCircleButton(() => {
-              const newColor = { color: Colors[3] }
-              this.canvas.setState(newColor)
-              this.setState(newColor)
-            }, Colors[3], undefined, this.state.color === Colors[3])
-          }
-          {this.getSpace(3)}
-          {
-            this.getSquareButton(() => { this.onTextButton(-1) },
-              'blue', "א", undefined, 20, this.state.textMode)
-          }
-          {
-            this.getSquareButton(() => { this.onTextButton(1) }
-              , 'blue', "א", undefined, 30, this.state.textMode)
-          }
-          {this.getSpace(3)}
+            {
+              this.getSquareButton(() => { this.onTextButton(-1) },
+                colors.gray, this.state.color, "א", undefined, 20, this.state.textMode)
+            }
+            {
+              this.getSquareButton(() => { this.onTextButton(1) },
+                colors.gray, this.state.color, "א", undefined, 30, this.state.textMode)
+            }
+            {this.getSpace(3)}
 
-          {
-            this.getSquareButton(() => { this.onBrushButton(-1) }
-              , 'white', undefined, "brush", 20, !this.state.textMode)
-          }
-          {
-            this.getSquareButton(() => { this.onBrushButton(1) }
-              , 'white', undefined, "brush", 30, !this.state.textMode)
-          }
-        </View>
+            {
+              this.getSquareButton(() => { this.onBrushButton(-1) },
+                colors.gray, this.state.color, undefined, "brush", 20, !this.state.textMode)
+            }
+            {
+              this.getSquareButton(() => { this.onBrushButton(1) },
+                colors.gray, this.state.color, undefined, "brush", 30, !this.state.textMode)
+            }
+          </View>
+        </LinearGradient>
 
         {
           this.state.showTextInput ?
             //todo height should be relative to text size
-            this.getTextInput(this.state.inputTextValue, this.a2cW(this.state.textX), this.a2cH(this.state.textY) ) :
+            this.getTextInput(this.state.inputTextValue, this.a2cW(this.state.textX), this.a2cH(this.state.textY)) :
             <Text></Text>
         }
 
-      </View>
+        {this.getArrow(LEFT, () => this.setState({ xOffset: this.state.xOffset + 50 }))}
+        {this.getArrow(TOP, () => this.setState({ yOffset: this.state.yOffset + 50 }))}
+        {this.getArrow(RIGHT, () => this.setState({ xOffset: this.state.xOffset - 50 }))}
+        {this.getArrow(BOTTOM, () => this.setState({ yOffset: this.state.yOffset - 50 }))}
+
+      </LinearGradient>
     );
   }
 
+  getArrow = (location, func) => {
+    let style = { flex: 1, position: 'absolute', zIndex:100 }
+    let deg = 0;
+    if (location == TOP && this.state.yOffset < 0) {
+      style.top = topLayer, style.left = 100, deg = -90;
+      style.left = this.state.sideMargin + this.state.canvasW / 2
+    } else if (location == RIGHT && this.state.zoom > 1) {
+      style.top = topLayer + this.state.canvasH / 2;
+      style.right = 5, deg = 0;
+    } else if (location == BOTTOM && this.state.zoom > 1) {
+      style.top = topLayer + this.state.canvasH, deg = 90;
+      style.left = this.state.sideMargin + this.state.canvasW / 2
+    } else if (location == LEFT && this.state.xOffset < 0) {
+      style.top = topLayer + this.state.canvasH / 2;
+      style.left = 5, deg = 180;
+    } else {
+      return;
+    }
+    style.transform = [{ rotate: deg + 'deg' }]
+
+
+    return <View style={style}>
+      <Icon
+        onPress={func}
+        name='play-arrow'
+        size={30}
+        color="#4630EB"
+      />
+    </View>
+  }
   getCanvas = () => {
     const uri = this.props.navigation.getParam('uri', '');
 
@@ -446,24 +475,29 @@ export default class IssieEditPhoto extends React.Component {
       scale={this.state.zoom}
       text={this.state.canvasTexts}
       containerStyle={[styles.container]}
-      canvasStyle={[styles.canvas]}
+      canvasStyle={[styles.canvas, { transform: [{ translateX: this.state.xOffset }, { translateY: this.state.yOffset }] }]}
       localSourceImage={{ filename: uri, mode: 'AspectFit' }}
       onStrokeEnd={this.SketchEnd}
-      strokeColors={[{ color: Colors[0] }]}
+      strokeColors={[{ color: colors.black[0] }]}
       defaultStrokeIndex={0}
       defaultStrokeWidth={5}
     />
   }
 
-  getCircleButton = (func, bgColor, txt, selected) => {
+  getColorButton = (color) => {
+    let func = () => {
+      this.canvas.setState({color: color[0]})
+      this.setState({ color: color })
+    }
+    let selected = this.state.color == color;
+
     return <TouchableOpacity
       onPress={func}
       activeOpacity={1}
     >
-      <View style={[styles.CircleShapeView,
-      { backgroundColor: bgColor }, selected ? styles.selected : styles.notSelected]}>
-        <Text>{txt}</Text>
-      </View>
+      <LinearGradient colors= {color} style={[styles.CircleShapeView,
+      selected ? styles.selected : styles.notSelected]}>
+      </LinearGradient>
     </TouchableOpacity>
   }
 
@@ -475,23 +509,29 @@ export default class IssieEditPhoto extends React.Component {
     return <Text>{space}</Text>
   }
 
-  getSquareButton = (func, bgColor, txt, icon, size, selected) => {
+
+
+
+
+
+  getSquareButton = (func, color, selectedColor, txt, icon, size, selected) => {
     return <TouchableOpacity
       onPress={func}
       activeOpacity={1}
     >
-      <View style={[styles.squareShapeView,
-      { backgroundColor: bgColor }, selected ? styles.selected : styles.notSelected]}>
-        {txt ? <Text style={{ fontSize: size }}>{txt}</Text> : <Icon name={icon} size={size} color="#4630EB" />}
-      </View>
+      <LinearGradient
+        colors={selected ? selectedColor : color}
+        style={[styles.squareShapeView, selected ? styles.selected : styles.notSelected]}>
+        {txt ? <Text style={{ fontSize: size, color: 'white' }}>{txt}</Text> : <Icon name={icon} size={size} color='white' />}
+      </LinearGradient>
     </TouchableOpacity>
   }
 
   getTextInput = (txt, x, y) => {
-    return <View style={{ flex: 1, position: 'absolute', left: x, top: y }} {...this._panResponder.panHandlers}>
+    return <View style={{ flex: 1, position: 'absolute', left: x, top: y, zIndex:100 }} {...this._panResponder.panHandlers}>
       <TextInput ref={"textInput"}
         onChangeText={(text) => this.setState({ inputTextValue: text })}
-        autoFocus style={[styles.textInput, { height: this.state.inputTextHeight, color: this.state.color, fontSize: this.state.fontSize }]}>{txt}</TextInput>
+        autoFocus style={[styles.textInput, { height: this.state.inputTextHeight, color: this.state.color[0], fontSize: this.state.fontSize }]}>{txt}</TextInput>
     </View>
   }
 
@@ -502,14 +542,14 @@ AppRegistry.registerComponent('IssieEditPhoto', () => IssieEditPhoto);
 
 const styles = StyleSheet.create({
   mainContainer: {
-    flex: 1, justifyContent: 'center', alignItems: 'center',
-    backgroundColor: '#E0D9CC',
+    flex: 1, justifyContent: 'center', alignItems: 'center'
   },
   fullSizeInParent: {
     flex: 1,
     flexDirection: 'column',
     width: '100%',
-    height: '100%'
+    height: '100%',
+    zIndex: 10
   },
   textInput: {
     width: 100,
@@ -533,7 +573,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#39579A',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 5,
+    borderRadius: 5
   },
   selected: {
     marginVertical: 0
@@ -556,7 +596,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     flexDirection: 'row',
     top: marginTop,
-    height: topLayer
+    height: topLayer,
+    backgroundColor: 'transparent'
   },
   alignRightPanel: {
     right: 17
