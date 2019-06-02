@@ -1,7 +1,7 @@
 import React from 'react';
 import {
-  Button, StyleSheet, View,
-  TouchableOpacity, Text, ScrollView, Alert
+  Image, StyleSheet, View,
+  TouchableOpacity, Button, ScrollView, Alert
 } from 'react-native';
 import * as RNFS from 'react-native-fs';
 import LinearGradient from 'react-native-linear-gradient';
@@ -29,7 +29,8 @@ export default class GalleryScreen extends React.Component {
   state = {
     folders: [],
     selected: [],
-    isFocused: false
+    isFocused: false,
+    shelf: require('./shelf.jpg')
   };
 
   componentWillUnmount() {
@@ -97,16 +98,7 @@ export default class GalleryScreen extends React.Component {
       onPress={this.onFolderPress.bind(this, folder)}
     />;
   }
-  /*
-  renderFolder = (folder) => {
-    //Alert.alert("render folder: "+folder.name);
-    return <View key={folder.name} style={styles.folder} >
-            <TouchableOpacity style={styles.button} onPress={this.onFolderPress.bind(this,folder)}>
-              <Text>{folder.name}</Text> 
-            </TouchableOpacity>
-          </View>
-  }
-  */
+  
 
   renderNewPageFolder = () => {
     return <View key={'addNewPage'} style={[pictureWrapperStyle, { backgroundColor: 'white' }]} >
@@ -141,6 +133,7 @@ export default class GalleryScreen extends React.Component {
           RNFS.unlink(toDelete + ".json").catch((e) => {/*do nothing*/ });
         });
       })
+      this.setState({selected:[]});
       this.refresh();
     }
   }
@@ -151,7 +144,7 @@ export default class GalleryScreen extends React.Component {
 
     const currentFolder = this.props.navigation.getParam('folder', '');
     const { navigate } = this.props.navigation;
-    let galery = <View />;
+    let galery = [];
     if (this.state.folders) {
       if (currentFolder.length == 0) {
         galery = this.state.folders.filter(f => f.name != 'Default').map(this.renderFolder);
@@ -177,13 +170,31 @@ export default class GalleryScreen extends React.Component {
     return (
       <LinearGradient style={styles.container} colors={['#F1EEE6', '#BEB39F']}>
         <ScrollView contentComponentStyle={{ flex: 1 }}>
-          <View style={styles.pictures}>
-            {galery}
-          </View>
+          {
+            galery.map(this.arrange)
+          }
         </ScrollView>
-        {this.getButton(this.Delete, '#8ed1fc', "מחק")}
+        {
+          this.state.selected.length>0? this.getButton(this.Delete, '#8ed1fc', "מחק"):<View/>
+        }
       </LinearGradient>
     );
+  }
+
+  arrange = (item, index, array) => {
+    if (index % 3 == 0) {
+      return <View key={index} style={styles.pictures}>
+        <Image source={this.state.shelf}
+          style={[styles.shelf, { top: pictureSize * .45 }]}
+          resizeMode={'stretch'} />
+        <View style={{ marginHorizontal: pictureSize * .85, flexDirection: 'row', justifyContent: 'space-between' }}>
+          {array[index]}
+          {index + 1 < array.length?array[index+1]:<View/>}
+          {index + 2 < array.length?array[index+2]:<View/>}
+        </View>
+      </View>
+    } 
+    return <View key={index}/>
   }
 
   getShelf = () => {
@@ -202,15 +213,10 @@ export default class GalleryScreen extends React.Component {
   }
 
   getButton = (func, bgColor, txt) => {
-    return <TouchableOpacity
-      onPress={func}
-      activeOpacity={1}
-    >
-      <View style={[styles.CircleShapeView,
-      { backgroundColor: bgColor }]}>
-        <Text>{txt}</Text>
-      </View>
-    </TouchableOpacity>
+    return <Button raised={true} 
+      title={txt} 
+      style={{width:100, color:bgColor}} 
+      onPress={func}/>
   }
 
 }
@@ -256,12 +262,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'powderblue',
     borderColor: 'black'
   },
+  shelf: {
+    flex: 1,
+    position: 'absolute',
+    left: '3%',
+    width: '94%',
+    backgroundColor: 'transparent'
+  },
   pictures: {
     flex: 1,
-    flexWrap: 'wrap',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 8,
+    height: pictureSize * 1.8
   },
   button: {
     padding: 20,
