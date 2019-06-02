@@ -30,7 +30,7 @@ export default class GalleryScreen extends React.Component {
     folders: [],
     selected: [],
     isFocused: false,
-    shelf: require('./shelf.jpg')
+    shelf: require('./shelf.png')
   };
 
   componentWillUnmount() {
