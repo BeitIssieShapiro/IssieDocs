@@ -79,7 +79,6 @@ export default class CameraScreenLocal extends React.Component {
           actions={{ rightButtonText: 'Done', leftButtonText: 'Cancel' }}
           onBottomButtonPressed={(event) => this.onBottomButtonPressed(event)}
           captureButtonImage={require('./cameraButton.png')}
-          o
         />
       </View>
     }

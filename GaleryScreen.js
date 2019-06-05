@@ -30,7 +30,7 @@ export default class GalleryScreen extends React.Component {
     folders: [],
     selected: [],
     isFocused: false,
-    shelf: require('./shelf.png')
+    shelf: require('./shelf_transparent.png')
   };
 
   componentWillUnmount() {
@@ -185,7 +185,7 @@ export default class GalleryScreen extends React.Component {
     if (index % 3 == 0) {
       return <View key={index} style={styles.pictures}>
         <Image source={this.state.shelf}
-          style={[styles.shelf, { top: pictureSize * .45 }]}
+          style={[styles.shelf, { top: pictureSize * .42 }]}
           resizeMode={'stretch'} />
         <View style={{ marginHorizontal: pictureSize * .85, flexDirection: 'row', justifyContent: 'space-between' }}>
           {array[index]}

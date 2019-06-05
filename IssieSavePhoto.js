@@ -30,6 +30,10 @@ export default class IssieSavePhoto extends React.Component {
     if (this.state.phase == OK_Cancel) {
       this.setState({phase: PickName, folder:""});
     } else if (this.state.phase == PickName) {
+      if (!this.state.pageName || this.state.pageName.length == 0) {
+        Alert.alert('חובה לבחור שם לדף');
+        return;
+      }
       if (this.state.folder === "new") {
         this.setState({phase : PickFolder});
         return;
@@ -63,7 +67,13 @@ export default class IssieSavePhoto extends React.Component {
         //Success
         () => this.props.navigation.navigate('Home'),
         //on error 
-        err => Alert.alert('Error saving file: ' + uri + ' to ' + filePath + ', err: '+err)
+        err => {
+          if (err.toString().includes("already exists")) {
+            Alert.alert("קובץ בשם זה כבר קיים");
+            return;
+          }
+          Alert.alert('Error saving file: ' + uri + ' to ' + filePath + ', err: '+err)
+        }
       ).catch(err => Alert.alert('Error saving file: ' + uri + ' to ' + filePath + ', err: '+err));  
     });
   }

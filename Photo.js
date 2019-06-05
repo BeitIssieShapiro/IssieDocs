@@ -50,7 +50,9 @@ export default class Photo extends React.Component {
             this.state.selected && <Icon name="check-circle" size={30} color="#4630EB" />
           }
           </ImageBackground>
-          <LinearGradient colors={['#AEC6DD','#749DC5']} style={{flex:1, position:'absolute', 
+          <LinearGradient colors={['#AEC6DD','#749DC5']} style={{
+            flex:1, 
+            position:'absolute', 
             top:pictureSize*topBar ,
             height:pictureSize*heightBar,
             right:-10,
