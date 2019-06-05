@@ -62,6 +62,10 @@ class DoQueue {
   getAll() {
     return this._doneQueue;
   }
+  clear() {
+    this._doneQueue = []
+    this._undoQueue = []
+  }
 }
 
 
@@ -98,6 +102,7 @@ export default class IssieEditPhoto extends React.Component {
       canvasW: 1000,
       canvasH: 1000,
       inputTextHeight: 40,
+      canvasTexts: [],
       topView: 0,
       zoom: 1.0,
       scaleRatio: 1.0,
@@ -122,6 +127,7 @@ export default class IssieEditPhoto extends React.Component {
 
   componentDidMount = async () => {
     this.onLayout();
+    setTimeout(this.Load, 100);
   }
 
   Load = () => {
@@ -129,7 +135,8 @@ export default class IssieEditPhoto extends React.Component {
     const metaDataUri = uri + ".json";
     RNFS.readFile(metaDataUri).then((value) => {
       let sketchState = JSON.parse(value);
-
+      Alert.alert("Load: "+sketchState.length)
+      this.state.queue.clear();
       for (let i = 0; i < sketchState.length; i++) {
         this.state.queue.add(sketchState[i])
       }
@@ -192,7 +199,6 @@ export default class IssieEditPhoto extends React.Component {
   TextModeClick = (ev) => {
     if (this.state.showTextInput) {
       //a text box is visible and a click was pressed - save the text box contents first:
-      //todotext
       this.SaveText()
     }
 
@@ -207,43 +213,51 @@ export default class IssieEditPhoto extends React.Component {
     //   return
     // }
 
-    //todotext
-    let textElem = this.findTextElement({ x: x, y: y });
+
+    let textElemIndex = this.findTextElement({ x: x, y: y });
     let initialText = '';
     //    let x = ev.nativeEvent.locationX, y = ev.nativeEvent.locationY
+    //let canvasTexts = this.state.canvasTexts;
 
-    if (textElem) {
+    let textElem = undefined;
+    if (textElemIndex >= 0) {
+      textElem = this.state.canvasTexts[textElemIndex];
       initialText = textElem.text;
       x = textElem.position.x;
       y = textElem.position.y;
+
+      //remove the text from the canvas:
+      //canvasTexts.splice(textElemIndex);
+
     }
-    this.setState({ showTextInput: true, inputTextValue: initialText, currentTextElem: textElem, xText: x, yText: y })
+    this.setState({ 
+      showTextInput: true, 
+      inputTextValue: initialText, 
+      currentTextElem: textElem, 
+      xText: x, 
+      yText: y
+    });
   }
 
   SaveText = () => {
     let text = this.state.inputTextValue;
-    if (text.length > 0) {
+    //if (text.length > 0) { to be able to delete
       this.state.queue.pushText(this.getTextElement(text));
-      //todo optimize
-      this.UpdateCanvas();
-    }
+      this.UpdateCanvas(false, true);
+    //}
   }
   findTextElement = (coordinates) => {
-    let q = this.state.queue.getAll();
+    let q = this.state.canvasTexts
     for (let i = q.length - 1; i >= 0; i--) {
-      if (q[i].type == 'text') {
-        const elem = q[i].elem;
-
-        if (elem.position.x - 15 < coordinates.x &&
-          elem.position.x + 65 > coordinates.x &&
-          elem.position.y - 15 < coordinates.y &&
-          elem.position.y + 65 > coordinates.y) {
-          return elem;
-        }
+      if (q[i].position.x - 15 < coordinates.x &&
+        q[i].position.x + 65 > coordinates.x &&
+        q[i].position.y - 15 < coordinates.y &&
+        q[i].position.y + 65 > coordinates.y) {
+        return i;
       }
     }
 
-    return undefined;
+    return -1;
   }
 
   getTextElement = (newText) => {
@@ -267,19 +281,17 @@ export default class IssieEditPhoto extends React.Component {
     return newTextElem;
   }
 
-  UpdateCanvas = (dontSave) => {
-    this.canvas.clear();
+  UpdateCanvas = (dontSave, textOnly) => {
+    textOnly = (textOnly === undefined) ? false : textOnly;
+
+    if (!textOnly) {
+      this.canvas.clear();
+    }
     let q = this.state.queue.getAll();
     let canvasTexts = [];
     for (let i = 0; i < q.length; i++) {
       if (q[i].type === 'text') {
-        let txtElem = {};
-        Object.assign(txtElem, q[i].elem);
-        //todotext
-        // txtElem.position = {
-        //   x:txtElem.position.x * this.state.scaleRatio*this.state.zoom,
-        //   y:txtElem.position.y * this.state.scaleRatio*this.state.zoom,
-        // }
+        let txtElem = q[i].elem;
 
         //first try to find same ID and replace, or add it
         let found = false;
@@ -292,7 +304,7 @@ export default class IssieEditPhoto extends React.Component {
           }
         }
         if (!found) canvasTexts.push(txtElem);
-      } else if (q[i].type === 'path') {
+      } else if (q[i].type === 'path' && !textOnly) {
         this.canvas.addPath(q[i].elem);
       }
     }
@@ -316,6 +328,7 @@ export default class IssieEditPhoto extends React.Component {
 
   onBrushButton = (inc) => {
     if (this.state.textMode) {
+      this.SaveText();
       this.setState({
         showTextInput: false,
         textMode: false
@@ -356,7 +369,6 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     this.setState({ sideMargin: sideMargin, canvasW: imageWidth * ratio, canvasH: imageHeight * ratio, scaleRatio: ratio })
-    setTimeout(this.Load, 100);
   }
 
   render() {
@@ -544,7 +556,7 @@ export default class IssieEditPhoto extends React.Component {
   getSquareButton = (func, color, selectedColor, txt, icon, size, selected) => {
     return <TouchableOpacity
       onPress={func}
-      activeOpacity={1}
+
     >
       <LinearGradient
         colors={selected ? selectedColor : color}
