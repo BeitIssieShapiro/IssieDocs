@@ -10,10 +10,11 @@ import LinearGradient from 'react-native-linear-gradient';
 import * as RNFS from 'react-native-fs';
 //import RNReadWriteExif from 'react-native-read-write-exif';
 
-const topLayer = 35 + 8 + 8;
+const topLayer = 51 + 8 + 8;
 const maxZoom = 3;
-const marginTop = 8;
+const marginTop = 4;
 const TOP = 0, RIGHT = 1, BOTTOM = 2, LEFT = 3;
+const DEFAULT_STROKE_WIDTH = 5;
 
 const colors = {
   gray: ['#5B748A', '#587189'],
@@ -22,7 +23,8 @@ const colors = {
   yellow: ['#FCF300', '#B0A000'],
   green: ['#00F815', '#005C05'],
   red: ['#FF0000', '#A20000'],
-  black: ['#000000', '#000000']
+  black: ['#000000', '#000000'],
+  disabled: ['#A8C2D8','#A8C2D8']
 }
 
 class DoQueue {
@@ -57,6 +59,10 @@ class DoQueue {
     if (this._undoQueue.length > 0) {
       this._doneQueue.push(this._undoQueue.pop());
     }
+  }
+
+  canRedo() {
+    return (this._undoQueue.length > 0);
   }
 
   getAll() {
@@ -97,6 +103,7 @@ export default class IssieEditPhoto extends React.Component {
       fontSize: 25,
       textMode: false,
       showTextInput: false,
+      strokeWidth: DEFAULT_STROKE_WIDTH,
       queue: new DoQueue(),
       sideMargin: 0,
       canvasW: 1000,
@@ -135,7 +142,7 @@ export default class IssieEditPhoto extends React.Component {
     const metaDataUri = uri + ".json";
     RNFS.readFile(metaDataUri).then((value) => {
       let sketchState = JSON.parse(value);
-      Alert.alert("Load: "+sketchState.length)
+      //Alert.alert("Load: "+sketchState.length)
       this.state.queue.clear();
       for (let i = 0; i < sketchState.length; i++) {
         this.state.queue.add(sketchState[i])
@@ -195,7 +202,14 @@ export default class IssieEditPhoto extends React.Component {
   a2cW = (w) => { return (w + this.state.xOffset) * this.state.zoom + this.state.sideMargin }
   a2cH = (h) => { return (h + this.state.yOffset) * this.state.zoom + topLayer } // + this.state.inputTextHeight / 2 }
 
-
+  findColor = (fc) => {
+    for (let c in colors) {
+      if (colors[c][0] == fc) {
+        return colors[c];
+      }
+    }
+    return this.state.color;
+  }
   TextModeClick = (ev) => {
     if (this.state.showTextInput) {
       //a text box is visible and a click was pressed - save the text box contents first:
@@ -216,6 +230,8 @@ export default class IssieEditPhoto extends React.Component {
 
     let textElemIndex = this.findTextElement({ x: x, y: y });
     let initialText = '';
+    let fontSize = this.state.fontSize;
+    let fontColor = this.state.color;
     //    let x = ev.nativeEvent.locationX, y = ev.nativeEvent.locationY
     //let canvasTexts = this.state.canvasTexts;
 
@@ -223,6 +239,8 @@ export default class IssieEditPhoto extends React.Component {
     if (textElemIndex >= 0) {
       textElem = this.state.canvasTexts[textElemIndex];
       initialText = textElem.text;
+      fontSize = textElem.fontSize;
+      fontColor = this.findColor(textElem.fontColor);
       x = textElem.position.x;
       y = textElem.position.y;
 
@@ -233,6 +251,8 @@ export default class IssieEditPhoto extends React.Component {
     this.setState({ 
       showTextInput: true, 
       inputTextValue: initialText, 
+      fontSize: fontSize,
+      color: fontColor,
       currentTextElem: textElem, 
       xText: x, 
       yText: y
@@ -335,7 +355,9 @@ export default class IssieEditPhoto extends React.Component {
       });
       return;
     }
-    this.canvas.setState({ strokeWidth: this.canvas.state.strokeWidth + inc });
+    let newStrokeWidth = this.canvas.state.strokeWidth + inc;
+    this.canvas.setState({ strokeWidth: newStrokeWidth });
+    this.setState({strokeWidth: newStrokeWidth})
   }
 
   onLayout = async () => {
@@ -426,11 +448,12 @@ export default class IssieEditPhoto extends React.Component {
               this.getSquareButton(() => {
                 this.state.queue.redo();
                 this.UpdateCanvas();
-              }, colors.gray, colors.gray, undefined, "redo", 30, false)
+              }, this.state.queue.canRedo()?colors.gray:colors.disabled, this.state.queue.canRedo()?colors.gray:colors.disabled,
+                   undefined, "redo", 30, false)
             }
-            {this.getSpace(20)}
+            {this.getSpace(3)}
 
-            {this.getColorButton(colors.black)}
+            {this.getColorButton(colors.black)} 
             {this.getSpace(1)}
             {this.getColorButton(colors.red)}
             {this.getSpace(1)}
@@ -456,6 +479,20 @@ export default class IssieEditPhoto extends React.Component {
             {
               this.getSquareButton(() => { this.onBrushButton(1) },
                 colors.gray, this.state.color, undefined, "brush", 30, !this.state.textMode)
+            }
+            {this.getSpace(3)}
+            {
+              this.state.textMode?<View/>:
+                <LinearGradient colors={this.state.color} style={{
+                  top: 20,
+                  width: this.state.strokeWidth+2,
+                  height: this.state.strokeWidth+2,
+                  borderRadius: (this.state.strokeWidth+2) / 2,
+                  alignItems: 'center',
+                  justifyContent: 'center'              
+                }
+                  }>
+                </LinearGradient>
             }
           </View>
         </LinearGradient>
@@ -519,7 +556,7 @@ export default class IssieEditPhoto extends React.Component {
       onStrokeEnd={this.SketchEnd}
       strokeColors={[{ color: colors.black[0] }]}
       defaultStrokeIndex={0}
-      defaultStrokeWidth={5}
+      defaultStrokeWidth={DEFAULT_STROKE_WIDTH}
     />
   }
 
@@ -570,9 +607,21 @@ export default class IssieEditPhoto extends React.Component {
     return <View style={{ flex: 1, position: 'absolute', left: x, top: y, zIndex: 100 }} {...this._panResponder.panHandlers}>
       <TextInput ref={"textInput"}
         onChangeText={(text) => this.setState({ inputTextValue: text })}
-        autoFocus style={[styles.textInput, { height: this.state.inputTextHeight, color: this.state.color[0], fontSize: this.state.fontSize }]}>{txt}</TextInput>
+        autoFocus 
+        
+        style={[styles.textInput, { 
+          width: this.getTextWidth(),
+          height: this.getTextHeight(), 
+          color: this.state.color[0], 
+          fontSize: this.state.fontSize
+        }]}
+        >{txt}</TextInput>
     </View>
   }
+
+  getTextWidth = () => this.state.inputTextValue.length * 20 + 80;
+  getTextHeight = () => this.state.fontSize + 1.2 + 15;
+  
 
 
 }
@@ -591,7 +640,6 @@ const styles = StyleSheet.create({
     zIndex: 10
   },
   textInput: {
-    width: 100,
     borderColor:
       'black',
     borderWidth: 1,
@@ -599,16 +647,16 @@ const styles = StyleSheet.create({
 
   },
   CircleShapeView: {
-    width: 35,
-    height: 35,
-    borderRadius: 35 / 2,
+    width: 50,
+    height: 50,
+    borderRadius: 50 / 2,
     alignItems: 'center',
     justifyContent: 'center'
   },
   squareShapeView: {
     marginHorizontal: 2.5,
-    height: 35,
-    width: 35,
+    height: 50,
+    width: 50,
     backgroundColor: '#39579A',
     justifyContent: 'center',
     alignItems: 'center',
