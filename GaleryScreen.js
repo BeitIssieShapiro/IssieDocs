@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Image, StyleSheet, View,
-  TouchableOpacity, Button, ScrollView, Alert
+  TouchableOpacity, Button, ScrollView, Alert, Text
 } from 'react-native';
 import * as RNFS from 'react-native-fs';
 import LinearGradient from 'react-native-linear-gradient';
@@ -98,7 +98,7 @@ export default class GalleryScreen extends React.Component {
       onPress={this.onFolderPress.bind(this, folder)}
     />;
   }
-  
+
 
   renderNewPageFolder = () => {
     return <View key={'addNewPage'} style={[pictureWrapperStyle, { backgroundColor: 'white' }]} >
@@ -112,17 +112,20 @@ export default class GalleryScreen extends React.Component {
 
   onFolderPress = (folder) => {
     //console.warn(folder.name + " was pressed");
-    //this.setState({currentFolder:folder.name});
     this.props.navigation.push('Home', { folder: folder.name });
   }
-
-  //onArrowBackPress = () => {
-  //  this.setState({currentFolder: ""});
-  //}
 
   onPhotoPressed = (filePath) => {
     //console.warn(filePath + " was pressed");
     this.props.navigation.navigate('EditPhoto', { uri: filePath })
+  }
+
+  onAllFolders = () => {
+    this.props.navigation.push('Home', { allFolders: true });
+  }
+
+  onAllPages = () => {
+    this.props.navigation.push('Home', { allFiles: 'all' });
   }
 
   Delete = () => {
@@ -133,68 +136,172 @@ export default class GalleryScreen extends React.Component {
           RNFS.unlink(toDelete + ".json").catch((e) => {/*do nothing*/ });
         });
       })
-      this.setState({selected:[]});
+      this.setState({ selected: [] });
       this.refresh();
     }
   }
 
   render() {
-    //fire and forget - refresh
-    //this.refresh();
 
     const currentFolder = this.props.navigation.getParam('folder', '');
-    const { navigate } = this.props.navigation;
+    const allFiles = this.props.navigation.getParam('allFiles', '');
+    const allFolders = this.props.navigation.getParam('allFolders', false);
+    let overview = false;
+
     let galery = [];
     if (this.state.folders) {
-      if (currentFolder.length == 0) {
+      if (allFolders) {
         galery = this.state.folders.filter(f => f.name != 'Default').map(this.renderFolder);
-        if (!galery) {
-          gelery = [];
-        }
-        galery.unshift(this.renderNewPageFolder())
-
-        //add pages w/o folder
+      } else if (allFiles) {
         this.state.folders.filter(f => f.name == 'Default').map(defFolder => {
           defFolder.files.map(f => {
             galery.push(this.renderPhoto(f))
           })
         });
-
-      } else {
+      } else if (currentFolder.length > 0) {
+        //specific folder
         let selectedFolder = this.state.folders.find(f => f.name === currentFolder);
         if (selectedFolder) {
-          galery = selectedFolder.files.map(this.renderPhoto);
+          this.addNewPage(galery);
+          galery.push(...selectedFolder.files.map(this.renderPhoto));
         }
+      } else {
+        //default openning screen: 3 most recent folders, 3 most recent files
+        this.addNewPage(galery);
+        this.addTop3Folders(galery);
+        this.addTop3Files(galery);
+        overview = true;
+        //Alert.alert("galery: "+ galery.length);
       }
+
+
+      // if (currentFolder.length == 0 ) {
+      //   galery = this.state.folders.filter(f => f.name != 'Default').map(this.renderFolder);
+      //   if (!galery) {
+      //     gelery = [];
+      //   }
+
+      //   //add pages w/o folder
+
+      // } else {
+      //   let selectedFolder = this.state.folders.find(f => f.name === currentFolder);
+      //   if (selectedFolder) {
+      //     galery = selectedFolder.files.map(this.renderPhoto);
+      //   }
+      // }
     }
     return (
       <LinearGradient style={styles.container} colors={['#F1EEE6', '#BEB39F']}>
         <ScrollView contentComponentStyle={{ flex: 1 }}>
           {
-            galery.map(this.arrange)
+            this.arrange(galery, overview)
           }
         </ScrollView>
         {
-          this.state.selected.length>0? this.getButton(this.Delete, '#8ed1fc', "מחק"):<View/>
+          this.state.selected.length > 0 ? this.getButton(this.Delete, '#8ed1fc', "מחק") : <View />
         }
       </LinearGradient>
     );
   }
 
-  arrange = (item, index, array) => {
-    if (index % 3 == 0) {
-      return <View key={index} style={styles.pictures}>
-        <Image source={this.state.shelf}
-          style={[styles.shelf, { top: pictureSize * .42 }]}
-          resizeMode={'stretch'} />
-        <View style={{ marginHorizontal: pictureSize * .85, flexDirection: 'row', justifyContent: 'space-between' }}>
-          {array[index]}
-          {index + 1 < array.length?array[index+1]:<View/>}
-          {index + 2 < array.length?array[index+2]:<View/>}
+  addNewPage = (galery) => {
+    galery.push(this.renderNewPageFolder())
+    galery.push(Folder.empty());
+    galery.push(Folder.empty());
+  }
+
+  addTop3Files = (galery) => {
+    let files = [];
+    this.state.folders.filter(f => f.name == 'Default').map(defFolder => {
+      defFolder.files.map(f => {
+        files.push(this.renderPhoto(f))
+      })
+    });
+    for (let i = 0; i < 3; i++) {
+      if (i < files.length) {
+        galery.push(files[i]);
+      } else {
+        galery.push(Folder.empty());
+      }
+    }
+  }
+
+  addTop3Folders = (galery) => {
+    let folders = [];
+    this.state.folders.filter(f => f.name != 'Default').map(folder => {
+      folders.push(this.renderFolder(folder));
+    });
+    for (let i = 0; i < 3; i++) {
+      if (i < folders.length) {
+        galery.push(folders[i]);
+      } else {
+        galery.push(Folder.empty());
+      }
+    }
+  }
+
+  empty = () => {
+
+  }
+
+
+  arrange = (array, isOverview) => {
+    return array.map((item, index, array) => {
+      if (index % 3 == 0) {
+        return <View key={index}>
+          {this.getRowHeader(index, isOverview)
+            //this is the bool flag of overview
+          }
+
+          <View style={styles.pictures}>
+
+            <Image source={this.state.shelf}
+              style={[styles.shelf, { top: pictureSize * .42 }]}
+              resizeMode={'stretch'} />
+            <View style={{
+              flex: 1,
+              marginHorizontal: pictureSize * .85,
+              flexDirection: 'row', justifyContent: 'space-between'
+            }}>
+              {array[index]}
+              {index + 1 < array.length ? array[index + 1] : <View />}
+              {index + 2 < array.length ? array[index + 2] : <View />}
+            </View>
+          </View>
+
         </View>
-      </View>
-    } 
-    return <View key={index}/>
+      }
+      return <View key={index} />
+    })
+  }
+
+  getRowHeader = (index, isOverview) => {
+    if (!isOverview) return <View />;
+    if (index == 3) {
+      return this.getRowHeaderImpl('תיקיות', 'כל התיקיות', this.onAllFolders);
+    }
+    if (index == 6) {
+      return this.getRowHeaderImpl('דפים', 'כל הדפים', this.onAllPages);
+    }
+    return <View />;
+  }
+
+  getRowHeaderImpl = (text, linkText, eventHandler) => {
+    return <View style={{
+      flex: 1,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginHorizontal: 50
+    }}>
+
+      <Text style={{ color: 'blue', fontSize: 23, textDecorationLine:'underline' }}
+        onPress={eventHandler}>
+        {linkText}
+      </Text>
+      <Text style={{ color: '#424242', fontSize: 35 }}>
+        {text}
+      </Text>
+    </View>
   }
 
   getShelf = () => {
@@ -213,10 +320,10 @@ export default class GalleryScreen extends React.Component {
   }
 
   getButton = (func, bgColor, txt) => {
-    return <Button raised={true} 
-      title={txt} 
-      style={{width:100, color:bgColor}} 
-      onPress={func}/>
+    return <Button raised={true}
+      title={txt}
+      style={{ width: 100, color: bgColor }}
+      onPress={func} />
   }
 
 }

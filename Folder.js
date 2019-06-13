@@ -24,6 +24,13 @@ export default class Folder extends React.Component {
     this._mounted = false;
   }
 
+  static empty = () => {
+    return <TouchableOpacity
+      style={styles.pictureWrapper}
+      activeOpacity={1}
+    />
+  }
+
   toggleSelection = () => {
     this.setState(
       { selected: !this.state.selected },
@@ -37,15 +44,15 @@ export default class Folder extends React.Component {
       return <View style={styles.picture}>
         <ImageBackground
           style={styles.picture}
-          source={{uri:this.props.files[0]}}
+          source={{ uri: this.props.files[0] }}
         >
           {
             this.state.selected && <Icon name="check-circle" size={30} color="#4630EB" />
           }
         </ImageBackground>
-        <View style={[styles.picture, { backgroundColor: 'white',  transform: [{ rotate: '6deg' }, {translateY:-10}],zIndex:0  }]}/>
-        <View style={[styles.picture, { backgroundColor: 'white',  transform: [{ rotate: '-6deg' }, {translateY:-10}], zIndex:0 }]}/>
-    
+        <View style={[styles.picture, { backgroundColor: 'white', transform: [{ rotate: '6deg' }, { translateY: -10 }], zIndex: 0 }]} />
+        <View style={[styles.picture, { backgroundColor: 'white', transform: [{ rotate: '-6deg' }, { translateY: -10 }], zIndex: 0 }]} />
+
       </View>
     }
     return <View style={[styles.picture, { backgroundColor: 'white' }]}>
@@ -105,7 +112,7 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     borderColor: '#DCDCDB',
-    borderWidth:1,
+    borderWidth: 1,
     resizeMode: 'contain',
     zIndex: 1
   },
@@ -117,7 +124,7 @@ const styles = StyleSheet.create({
     top: 0,
   },
   pictureWrapper: {
-    width: pictureSize*4/5,
+    width: pictureSize * 4 / 5,
     height: pictureSize,
     alignItems: 'center',
     justifyContent: 'center',
