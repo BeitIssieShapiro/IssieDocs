@@ -138,6 +138,8 @@ android {
 }
 
 dependencies {
+    implementation project(':react-native-image-rotate')
+    implementation project(':@react-native-community_image-editor')
     implementation project(':react-native-linear-gradient')
     implementation project(':@projektpro_react-native-responsive-sketch-canvas')
     implementation project(':react-native-view-shot')

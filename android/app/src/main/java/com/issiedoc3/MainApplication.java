@@ -3,6 +3,8 @@ package com.issiedoc3;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import io.codebakery.imagerotate.ImageRotatePackage;
+import com.reactnativecommunity.imageeditor.ImageEditorPackage;
 import com.BV.LinearGradient.LinearGradientPackage;
 import com.terrylinla.rnsketchcanvas.SketchCanvasPackage;
 import fr.greweb.reactnativeviewshot.RNViewShotPackage;
@@ -32,6 +34,8 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new ImageRotatePackage(),
+            new ImageEditorPackage(),
             new LinearGradientPackage(),
             new SketchCanvasPackage(),
             new RNViewShotPackage(),
