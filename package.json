@@ -12,6 +12,7 @@
     "@terrylinla/react-native-sketch-canvas": "^0.8.0",
     "react": "16.8.3",
     "react-native": "0.59.8",
+    "react-native-base64": "^0.0.2",
     "react-native-camera-kit": "^8.0.0",
     "react-native-device-info": "^1.6.1",
     "react-native-elements": "^1.1.0",

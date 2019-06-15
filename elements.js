@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text,StyleSheet } from 'react-native';
+import { TouchableOpacity, Text,StyleSheet, Image } from 'react-native';
 import { Icon } from 'react-native-elements'
 import LinearGradient from 'react-native-linear-gradient';
 import React from 'react';
@@ -33,6 +33,17 @@ export function getSquareButton(func, color, selectedColor, txt, icon, size, sel
         </LinearGradient>
     </TouchableOpacity>
 }
+
+export async function getImageDimensions(uri) {
+    return new Promise(
+      (resolve, reject) => {
+        Image.getSize(uri, (width, height) => {
+          resolve({ w: width, h: height });
+        });
+      },
+      error => reject(error)
+    );
+  }
 
 const styles = StyleSheet.create({
     squareShapeView: {
