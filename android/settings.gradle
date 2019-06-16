@@ -1,4 +1,8 @@
 rootProject.name = 'IssieDoc3'
+include ':react-native-share'
+project(':react-native-share').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-share/android')
+include ':react-native-image-picker'
+project(':react-native-image-picker').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-image-picker/android')
 include ':react-native-image-rotate'
 project(':react-native-image-rotate').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-image-rotate/android')
 include ':@react-native-community_image-editor'

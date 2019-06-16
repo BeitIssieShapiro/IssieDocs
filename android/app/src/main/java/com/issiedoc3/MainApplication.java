@@ -3,6 +3,8 @@ package com.issiedoc3;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import cl.json.RNSharePackage;
+import com.imagepicker.ImagePickerPackage;
 import io.codebakery.imagerotate.ImageRotatePackage;
 import com.reactnativecommunity.imageeditor.ImageEditorPackage;
 import com.BV.LinearGradient.LinearGradientPackage;
@@ -34,6 +36,8 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new RNSharePackage(),
+            new ImagePickerPackage(),
             new ImageRotatePackage(),
             new ImageEditorPackage(),
             new LinearGradientPackage(),

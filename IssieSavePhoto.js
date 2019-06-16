@@ -2,14 +2,16 @@
 import React from 'react';
 import {
   ImageBackground, TextInput, Picker, StyleSheet, View, Text,
-  Alert, Dimensions, PanResponder, ImageEditor, ImageStore
+  Alert, Dimensions, PanResponder, ImageEditor, ImageStore, TouchableHighlight
 } from 'react-native';
 import { Button } from 'react-native-elements'
 import { FOLDERS_DIR } from './GaleryScreen';
 import * as RNFS from 'react-native-fs';
 import { getSquareButton, colors, getImageDimensions } from './elements'
 import ImageRotate from 'react-native-image-rotate';
-import base64 from 'react-native-base64'
+import ModalDropdown from 'react-native-modal-dropdown';
+import { Icon } from 'react-native-elements'
+
 
 const OK_Cancel = 1;
 const PickName = 2;
@@ -18,6 +20,7 @@ const PickFolder = 3;
 const headerHeight = 60;
 const panBroderDistance = 80;
 
+const newFolderName = 'ספריה חדשה';
 
 export default class IssieSavePhoto extends React.Component {
   static navigationOptions = {
@@ -94,6 +97,7 @@ export default class IssieSavePhoto extends React.Component {
   componentDidMount = async () => {
     let uri = this.props.navigation.getParam('uri', '');
     this.setState({ uri: uri });
+    this.initFolderList()
     this.updateImageDimension();
     this.onLayout();
   }
@@ -120,7 +124,7 @@ export default class IssieSavePhoto extends React.Component {
         Alert.alert('חובה לבחור שם לדף');
         return;
       }
-      if (this.state.folder === "new") {
+      if (this.state.folder === newFolderName) {
         this.setState({ phase: PickFolder });
         return;
       }
@@ -141,7 +145,7 @@ export default class IssieSavePhoto extends React.Component {
     }
     if (!folderName) {
       folderName = "Default";
-    } else if (folderName == "new") {
+    } else if (folderName == newFolderName) {
       folderName = this.state.newFolderName;
     }
 
@@ -202,7 +206,7 @@ export default class IssieSavePhoto extends React.Component {
         x: 0,
         y: 0,
         width: windowSize.width,
-        height: windowSize.height - headerHeight,
+        height: windowSize.height - headerHeight - this.state.topView,
         scaleX: windowSize.width / this.state.imgSize.w,
         scaleY: windowSize.height / this.state.imgSize.h
       },
@@ -243,6 +247,50 @@ export default class IssieSavePhoto extends React.Component {
       (error) => { });
   }
 
+  initFolderList = async () => {
+    if (this.state.folders) return this.state.folders;
+
+    RNFS.readDir(FOLDERS_DIR).then(folders=> {
+      this.setState({folders: folders.map(f=>f.name).filter(f=> f != 'Default')});
+    });
+  }
+
+  getFolderPicker = () => {
+    console.disableYellowBox = true;
+    return <ModalDropdown
+      style={[styles.pickerButton]}
+      dropdownStyle={{width:'60%', height:'25%'}}
+      onSelect={(itemIndex, itemValue) => this.setState({ folder: itemValue })}
+      renderRow={this.pickerRenderRow.bind(this)}
+      options={['ללא', ...this.state.folders, newFolderName]} >
+        <View style= {{
+          flexDirection:'row', justifyContent:'space-between',
+          alignItems:'center'
+        }}>
+        <Icon name='arrow-drop-down' size={50} color="#4630EB" />
+        <Text style={{ fontSize: 70, textAlign:'right' }}>{this.state.folder?this.state.folder:'ללא'}</Text>
+        </View>
+    </ModalDropdown>
+  }
+
+  pickerRenderRow = (rowData, rowID, highlighted) => {
+    let evenRow = rowID % 2;
+    return (
+      <TouchableHighlight underlayColor='cornflowerblue'>
+        <View style={[styles.textInput, {
+           backgroundColor: evenRow ? 'lemonchiffon' : 'white',
+           justifyContent:'flex-end'
+          }]}>
+          {/* <Icon name='gavel' size={30} color="#4630EB" /> */}
+
+          <Text style={{ fontSize: 70 , textAlign:'right'}}>
+            {`${rowData}`}
+          </Text>
+        </View>
+      </TouchableHighlight>
+    );
+  }
+
   render() {
     let uri = this.state.uri;
 
@@ -278,7 +326,8 @@ export default class IssieSavePhoto extends React.Component {
       SelectFolder =
         <View style={styles.pickerView}>
           <Text style={styles.titleText}>ספריה</Text>
-          <Picker
+          {this.getFolderPicker()}
+          {/* <Picker
             style={styles.textInput}
             itemStyle={styles.textInput}
             selectedValue={this.state.folder}
@@ -288,10 +337,17 @@ export default class IssieSavePhoto extends React.Component {
             }>
 
             <Picker.Item label="ללא" value="" />
+            <Picker.Item label={<Text style={{ alignItems: 'center', flexDirection: 'row' }}>
+              <Thumbnail square style={{ width: 30, height: 20, marginTop: 5 }} source={require('../assets/+90.png')} 
+              /> +90</Text>
+            } value="+90"
+            />
+
+
             <Picker.Item label="חשבון" value="חשבון" />
             <Picker.Item label="תורה" value="תורה" />
             <Picker.Item label="ספריה חדשה" value="new" />
-          </Picker>
+          </Picker> */}
         </View>
     }
 
@@ -301,7 +357,8 @@ export default class IssieSavePhoto extends React.Component {
         <TextInput style={styles.textInput}
           onChangeText={(text) => this.setState({ pageName: text })}
         />
-        {SelectFolder}
+        <Text style={styles.titleText}>ספריה</Text>
+        {this.getFolderPicker()}
 
       </View>
     }
@@ -320,7 +377,7 @@ export default class IssieSavePhoto extends React.Component {
         style={{
           position: 'absolute',
           width: this.state.cropData.width,
-          height: this.state.cropData.height - 30,
+          height: this.state.cropData.height,
           top: this.state.cropData.y,
           left: this.state.cropData.x,
 
@@ -427,6 +484,14 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: 'white'
   },
+  pickerButton: {
+    flex: 1,
+    height: 70,
+    fontWeight: 'bold',
+    color: 'black',
+    width: "100%",
+    backgroundColor: 'white'
+  },
   titleText: {
     fontSize: 70,
     textAlign: "right",
@@ -434,10 +499,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
     backgroundColor: 'transparent'
-  },
-  folderPicker: {
-    height: 50,
-    width: 250,
-    backgroundColor: 'white'
   }
 });

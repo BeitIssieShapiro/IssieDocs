@@ -1,0 +1,20 @@
+V* Import from albom
+V* export to albom (via share)
+V* Send to mail
+* Multiple photos in one pages
+* Support import pdf
+
+* new from within folder, goes to folder
+* enlarge frame of folder picker
+* - optimize loading list if folders any times
+* headers' color (where navigation happens)
+* Move to another folder
+V * Delete button - style
+V * Ask before Delete
+* In editPhoto, when changing text size, the text does not change
+* Image for folders:
+  * when creating new folder
+  * when picking
+  * in galery
+V * cancel button in camera screen
+V * zoom in camera

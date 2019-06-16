@@ -9,6 +9,7 @@ import RNSketchCanvas from './modified_canvas/index';
 import LinearGradient from 'react-native-linear-gradient';
 import * as RNFS from 'react-native-fs';
 //import RNReadWriteExif from 'react-native-read-write-exif';
+import Share from 'react-native-share';
 
 const topLayer = 51 + 8 + 8;
 const maxZoom = 3;
@@ -24,7 +25,7 @@ const colors = {
   green: ['#00F815', '#005C05'],
   red: ['#FF0000', '#A20000'],
   black: ['#000000', '#000000'],
-  disabled: ['#A8C2D8','#A8C2D8']
+  disabled: ['#A8C2D8', '#A8C2D8']
 }
 
 class DoQueue {
@@ -150,6 +151,33 @@ export default class IssieEditPhoto extends React.Component {
 
       this.UpdateCanvas(true)
     }).catch((e) => {/*no json file yet*/ })
+
+    if (this.props.navigation.getParam('share', false)) {
+      setTimeout(()=> this.canvas.getBase64(
+        'jpg',
+        false, //transparent
+        true, //includeImage
+        true, //includeText
+        false, //cropToImageSize
+        (err, data) => {
+          if (err) {
+            Alert.alert("שגיאה", err.toString());
+            return;
+          }
+
+          let dataUrl = 'data:image/png;base64,' + data;
+
+          const shareOptions = {
+            title: 'שתף בעזרת...',
+            subject: 'דף עבודה',
+            url: dataUrl
+          };
+
+          Share.open(shareOptions).then(()=>{}).catch(err=>{
+            Alert.alert("הפעולה בוטלה");
+          });
+        }), 300);
+    }
   }
 
   Save = () => {
@@ -197,8 +225,6 @@ export default class IssieEditPhoto extends React.Component {
   //a = absolute, s=screen, c=canvas
   s2aW = (w) => { return (w - this.state.sideMargin) / this.state.zoom - this.state.xOffset }
   s2aH = (h) => { return (h - this.state.topView) / this.state.zoom - this.state.yOffset }// - this.state.inputTextHeight/2}
-  //a2sW = (w) => { return w + this.state.sideMargin }
-  //a2sH = (h) => { return h + this.state.topView } // + this.state.inputTextHeight / 2 }
   a2cW = (w) => { return (w + this.state.xOffset) * this.state.zoom + this.state.sideMargin }
   a2cH = (h) => { return (h + this.state.yOffset) * this.state.zoom + topLayer } // + this.state.inputTextHeight / 2 }
 
@@ -248,13 +274,13 @@ export default class IssieEditPhoto extends React.Component {
       //canvasTexts.splice(textElemIndex);
 
     }
-    this.setState({ 
-      showTextInput: true, 
-      inputTextValue: initialText, 
+    this.setState({
+      showTextInput: true,
+      inputTextValue: initialText,
       fontSize: fontSize,
       color: fontColor,
-      currentTextElem: textElem, 
-      xText: x, 
+      currentTextElem: textElem,
+      xText: x,
       yText: y
     });
   }
@@ -262,8 +288,8 @@ export default class IssieEditPhoto extends React.Component {
   SaveText = () => {
     let text = this.state.inputTextValue;
     //if (text.length > 0) { to be able to delete
-      this.state.queue.pushText(this.getTextElement(text));
-      this.UpdateCanvas(false, true);
+    this.state.queue.pushText(this.getTextElement(text));
+    this.UpdateCanvas(false, true);
     //}
   }
   findTextElement = (coordinates) => {
@@ -357,7 +383,7 @@ export default class IssieEditPhoto extends React.Component {
     }
     let newStrokeWidth = this.canvas.state.strokeWidth + inc;
     this.canvas.setState({ strokeWidth: newStrokeWidth });
-    this.setState({strokeWidth: newStrokeWidth})
+    this.setState({ strokeWidth: newStrokeWidth })
   }
 
   onLayout = async () => {
@@ -448,12 +474,12 @@ export default class IssieEditPhoto extends React.Component {
               this.getSquareButton(() => {
                 this.state.queue.redo();
                 this.UpdateCanvas();
-              }, this.state.queue.canRedo()?colors.gray:colors.disabled, this.state.queue.canRedo()?colors.gray:colors.disabled,
-                   undefined, "redo", 30, false)
+              }, this.state.queue.canRedo() ? colors.gray : colors.disabled, this.state.queue.canRedo() ? colors.gray : colors.disabled,
+                undefined, "redo", 30, false)
             }
             {this.getSpace(3)}
 
-            {this.getColorButton(colors.black)} 
+            {this.getColorButton(colors.black)}
             {this.getSpace(1)}
             {this.getColorButton(colors.red)}
             {this.getSpace(1)}
@@ -482,16 +508,16 @@ export default class IssieEditPhoto extends React.Component {
             }
             {this.getSpace(3)}
             {
-              this.state.textMode?<View/>:
+              this.state.textMode ? <View /> :
                 <LinearGradient colors={this.state.color} style={{
                   top: 20,
-                  width: this.state.strokeWidth+2,
-                  height: this.state.strokeWidth+2,
-                  borderRadius: (this.state.strokeWidth+2) / 2,
+                  width: this.state.strokeWidth + 2,
+                  height: this.state.strokeWidth + 2,
+                  borderRadius: (this.state.strokeWidth + 2) / 2,
                   alignItems: 'center',
-                  justifyContent: 'center'              
+                  justifyContent: 'center'
                 }
-                  }>
+                }>
                 </LinearGradient>
             }
           </View>
@@ -607,21 +633,21 @@ export default class IssieEditPhoto extends React.Component {
     return <View style={{ flex: 1, position: 'absolute', left: x, top: y, zIndex: 100 }} {...this._panResponder.panHandlers}>
       <TextInput ref={"textInput"}
         onChangeText={(text) => this.setState({ inputTextValue: text })}
-        autoFocus 
-        
-        style={[styles.textInput, { 
+        autoFocus
+
+        style={[styles.textInput, {
           width: this.getTextWidth(),
-          height: this.getTextHeight(), 
-          color: this.state.color[0], 
+          height: this.getTextHeight(),
+          color: this.state.color[0],
           fontSize: this.state.fontSize
         }]}
-        >{txt}</TextInput>
+      >{txt}</TextInput>
     </View>
   }
 
   getTextWidth = () => this.state.inputTextValue.length * 20 + 80;
   getTextHeight = () => this.state.fontSize + 1.2 + 15;
-  
+
 
 
 }

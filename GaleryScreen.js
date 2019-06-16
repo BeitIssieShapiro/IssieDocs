@@ -1,14 +1,20 @@
 import React from 'react';
 import {
   Image, StyleSheet, View,
-  TouchableOpacity, Button, ScrollView, Alert, Text
+  TouchableOpacity, Button, ScrollView, Alert, Text, ImagePickerIOS
 } from 'react-native';
 import * as RNFS from 'react-native-fs';
 import LinearGradient from 'react-native-linear-gradient';
+import ImagePicker from 'react-native-image-picker';
+import Dash from 'react-native-dash';
+import DeviceInfo from 'react-native-device-info';
+import { getSquareButton, colors } from './elements'
 
 import { Icon } from 'react-native-elements'
 import Photo from './Photo';
 import Folder from './Folder'
+import Share from 'react-native-share';
+
 
 export const FOLDERS_DIR = RNFS.DocumentDirectoryPath + '/folders/';
 export const pictureSize = 150;
@@ -30,7 +36,8 @@ export default class GalleryScreen extends React.Component {
     folders: [],
     selected: [],
     isFocused: false,
-    shelf: require('./shelf_transparent.png')
+    shelf: require('./shelf_transparent.png'),
+    isNewPageMode: false
   };
 
   componentWillUnmount() {
@@ -103,8 +110,27 @@ export default class GalleryScreen extends React.Component {
   renderNewPageFolder = () => {
     return <View key={'addNewPage'} style={[pictureWrapperStyle, { backgroundColor: 'white' }]} >
       <TouchableOpacity style={styles.button} onPress={(e) => {
-        this.props.navigation.navigate('Camera');
-      }}>
+        this.setState({ isNewPageMode: true });
+
+        // ImagePicker.showImagePicker({
+        //   title:'',
+        //   takePhotoButtonTitle:'מצלמה',
+        //   chooseFromLibraryButtonTitle:'ספריית תמונות',
+        //   mediaType:'photo',
+        //   noData: true
+
+        // }, (response)=> {
+        //   Alert.alert(JSON.stringify(response));
+        // });
+        // //this.props.navigation.navigate('Camera');
+        // ImagePickerIOS.openSelectDialog({}, imageUri => {
+        //   this.props.navigation.navigate('SavePhoto', {
+        //     uri: imageUri 
+        //   });
+        // })
+      }
+      }
+      >
         <Icon name="add" size={80} color='#424242' />
       </TouchableOpacity>
     </View>
@@ -117,7 +143,7 @@ export default class GalleryScreen extends React.Component {
 
   onPhotoPressed = (filePath) => {
     //console.warn(filePath + " was pressed");
-    this.props.navigation.navigate('EditPhoto', { uri: filePath })
+    this.props.navigation.navigate('EditPhoto', { uri: filePath, share:false })
   }
 
   onAllFolders = () => {
@@ -130,15 +156,89 @@ export default class GalleryScreen extends React.Component {
 
   Delete = () => {
     if (this.state.selected) {
-      //todo add verification questions
-      this.state.selected.forEach((toDelete) => {
-        RNFS.unlink(toDelete).then(() => {
-          RNFS.unlink(toDelete + ".json").catch((e) => {/*do nothing*/ });
-        });
-      })
-      this.setState({ selected: [] });
-      this.refresh();
+      Alert.alert(
+        'מחיקת דף',
+        'האם למחוק את הדף?',
+        [
+          {
+            text: 'מחק', onPress: () => {
+              this.state.selected.forEach((toDelete) => {
+                RNFS.unlink(toDelete).then(() => {
+                  RNFS.unlink(toDelete + ".json").catch((e) => {/*do nothing*/ });
+                });
+              })
+              this.setState({ selected: [] });
+              this.refresh();
+            },
+            style: 'destructive'
+          },
+          {
+            text: 'בטל', onPress: () => {
+              //do nothing
+            },
+            style: 'cancel'
+          }
+        ]
+      );
     }
+  }
+
+
+  showCamera = () => {
+    this.setState({ isNewPageMode: false });
+    if (DeviceInfo.isEmulator()) {
+      return this.props.navigation.navigate('Camera');
+    }
+    ImagePicker.launchCamera({
+      title: 'צילום דף עבודה',
+      mediaType: 'photo',
+      noData: true,
+      cancelButtonTitle: 'ביטול'
+    }, (response) => {
+      if (!response.didCancel) {
+        this.props.navigation.navigate('SavePhoto', {
+          uri: response.uri
+        });
+      }
+    });
+  }
+
+  showMediaLib = () => {
+    this.setState({ isNewPageMode: false });
+    ImagePicker.launchImageLibrary({
+      title: 'בחירת תמונה',
+      mediaType: 'photo',
+      noData: true
+    }, (response) => {
+      if (!response.didCancel) {
+        this.props.navigation.navigate('SavePhoto', {
+          uri: response.uri
+        });
+      }
+    });
+  }
+
+  Share = () => {
+    if (this.state.selected.length != 1) return;
+
+    this.props.navigation.navigate('EditPhoto', 
+    { 
+      uri: this.state.selected[0],
+      share:true
+    })
+/*
+    RNFS.readFile(this.state.selected[0], 'base64').then(data => {
+      let dataUrl = 'data:image/png;base64,' + data;
+
+      const shareOptions = {
+        title: 'שתף בעזרת...',
+        subject: 'דף עבודה',
+        url: dataUrl
+      };
+  
+      Share.open(shareOptions);
+    })
+*/
   }
 
   render() {
@@ -171,25 +271,63 @@ export default class GalleryScreen extends React.Component {
         this.addTop3Folders(galery);
         this.addTop3Files(galery);
         overview = true;
-        //Alert.alert("galery: "+ galery.length);
       }
-
-
-      // if (currentFolder.length == 0 ) {
-      //   galery = this.state.folders.filter(f => f.name != 'Default').map(this.renderFolder);
-      //   if (!galery) {
-      //     gelery = [];
-      //   }
-
-      //   //add pages w/o folder
-
-      // } else {
-      //   let selectedFolder = this.state.folders.find(f => f.name === currentFolder);
-      //   if (selectedFolder) {
-      //     galery = selectedFolder.files.map(this.renderPhoto);
-      //   }
-      // }
     }
+    // colors={[ 'rgba(255,255,255,.7)', 'rgba(255,255,255,.7)']}
+
+    let newPageViewOverlay = <View />
+    if (this.state.isNewPageMode) {
+      newPageViewOverlay = <View
+        style={{
+          flex: 1,
+          flexDirection: 'column',
+          position: 'absolute',
+          top: 0,
+          height: '100%',
+          left: 0,
+          width: '100%',
+          backgroundColor: 'rgba(0,0,0,.7)',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+        <View style={{
+          position: 'absolute',
+          right: '20%',
+          top: '20%',
+          width: '50%',
+          justifyContent: 'center',
+          alignItems: 'flex-end'
+        }}>
+          <TouchableOpacity onPress={this.showCamera}>
+            <View style={{ flexDirection: 'row-reverse', alignItems: 'center' }}
+
+            >
+              <Icon name={'camera-alt'} size={150} color={'white'} />
+              <Text>    </Text>
+              <Text style={{ fontSize: 70, color: 'white' }}>מצלמה</Text>
+            </View>
+          </TouchableOpacity>
+          <Text> </Text>
+          <Text> </Text>
+          <Dash style={{ width: '100%' }}
+            dashThickness={5}
+            dashColor={'white'}
+            dashGap={10}
+            dashLength={25} />
+          <Text> </Text>
+          <Text> </Text>
+          <TouchableOpacity onPress={this.showMediaLib}>
+
+            <View style={{ flexDirection: 'row-reverse', alignItems: 'center' }}>
+              <Icon name={'perm-media'} size={150} color={'white'} />
+              <Text>    </Text>
+              <Text style={{ fontSize: 70, color: 'white' }}>ספריית תמונות</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
+    }
+
     return (
       <LinearGradient style={styles.container} colors={['#F1EEE6', '#BEB39F']}>
         <ScrollView contentComponentStyle={{ flex: 1 }}>
@@ -197,9 +335,24 @@ export default class GalleryScreen extends React.Component {
             this.arrange(galery, overview)
           }
         </ScrollView>
-        {
-          this.state.selected.length > 0 ? this.getButton(this.Delete, '#8ed1fc', "מחק") : <View />
+        {//bottom buttons:
         }
+
+        <View style={{ flexDirection: 'row' }}>
+          {  //delete
+            this.state.selected.length > 0 ?
+              getSquareButton(this.Delete, colors.red, undefined, 'מחק', undefined, 30, false, { width: 180, height: 50 }) :
+              //this.getButton(this.Delete, '#8ed1fc', "מחק") : 
+              <View />
+          }
+          {  //Share
+            this.state.selected.length == 1 ?
+              getSquareButton(this.Share, colors.blue, undefined, 'שתף...', undefined, 30, false, { width: 180, height: 50 }) :
+              //this.getButton(this.Delete, '#8ed1fc', "מחק") : 
+              <View />
+          }
+        </View>
+        {newPageViewOverlay}
       </LinearGradient>
     );
   }
@@ -294,7 +447,7 @@ export default class GalleryScreen extends React.Component {
       marginHorizontal: 50
     }}>
 
-      <Text style={{ color: 'blue', fontSize: 23, textDecorationLine:'underline' }}
+      <Text style={{ color: 'blue', fontSize: 23, textDecorationLine: 'underline' }}
         onPress={eventHandler}>
         {linkText}
       </Text>
