@@ -1,8 +1,8 @@
 
 import React from 'react';
 import {
-  AppRegistry, Image, ScrollView, TouchableHighlight, StyleSheet, TextInput, View,
-  Button, TouchableOpacity, Text, Alert, PanResponder, Dimensions
+  AppRegistry, Image, ScrollView, StyleSheet, TextInput, View,
+  TouchableOpacity, Text, Alert, PanResponder, Dimensions
 } from 'react-native';
 import { Icon } from 'react-native-elements'
 import RNSketchCanvas from './modified_canvas/index';
@@ -10,70 +10,16 @@ import LinearGradient from 'react-native-linear-gradient';
 import * as RNFS from 'react-native-fs';
 //import RNReadWriteExif from 'react-native-read-write-exif';
 import Share from 'react-native-share';
+import DoQueue from './do-queue';
+
+import { getSquareButton, colors, getImageDimensions } from './elements'
+
 
 const topLayer = 51 + 8 + 8;
 const maxZoom = 3;
 const marginTop = 4;
 const TOP = 0, RIGHT = 1, BOTTOM = 2, LEFT = 3;
 const DEFAULT_STROKE_WIDTH = 5;
-
-const colors = {
-  gray: ['#5B748A', '#587189'],
-  orange: ['#FFA264', '#A24A04'],
-  blue: ['#0097F8', '#00145C'],
-  yellow: ['#FCF300', '#B0A000'],
-  green: ['#00F815', '#005C05'],
-  red: ['#FF0000', '#A20000'],
-  black: ['#000000', '#000000'],
-  disabled: ['#A8C2D8', '#A8C2D8']
-}
-
-class DoQueue {
-  constructor(name, level) {
-    this._doneQueue = []
-    this._undoQueue = []
-  }
-
-  pushText(elem) {
-    this.add({ elem: elem, type: 'text' });
-    //once new item added redo is reset
-    this._undoQueue = [];
-  }
-
-  pushPath(elem) {
-    this.add({ elem: elem, type: 'path' });
-    //once new item added redo is reset
-    this._undoQueue = [];
-  }
-
-  add(queueElem) {
-    this._doneQueue.push(queueElem);
-  }
-
-  undo() {
-    if (this._doneQueue.length > 0) {
-      this._undoQueue.push(this._doneQueue.pop());
-    }
-  }
-
-  redo() {
-    if (this._undoQueue.length > 0) {
-      this._doneQueue.push(this._undoQueue.pop());
-    }
-  }
-
-  canRedo() {
-    return (this._undoQueue.length > 0);
-  }
-
-  getAll() {
-    return this._doneQueue;
-  }
-  clear() {
-    this._doneQueue = []
-    this._undoQueue = []
-  }
-}
 
 
 export default class IssieEditPhoto extends React.Component {
@@ -120,17 +66,6 @@ export default class IssieEditPhoto extends React.Component {
       yText: 0
     }
 
-  }
-
-  async getImageDimensions(uri) {
-    return new Promise(
-      (resolve, reject) => {
-        Image.getSize(uri, (width, height) => {
-          resolve({ w: width, h: height });
-        });
-      },
-      error => reject(error)
-    );
   }
 
   componentDidMount = async () => {
@@ -185,17 +120,7 @@ export default class IssieEditPhoto extends React.Component {
       Alert.alert("no canvas on save");
       return;
     }
-    //Alert.alert("Save called")
-    /*
-    this.refs.canvas.save(
-        'jpg', 
-        false, 
-        'x', 
-        Date.now(), 
-        true, 
-        true,
-        false);
-    */
+
     let sketchState = this.state.queue.getAll();
     const uri = this.props.navigation.getParam('uri', '');
     const metaDataUri = uri + ".json";
@@ -246,20 +171,10 @@ export default class IssieEditPhoto extends React.Component {
     let x = this.s2aW(ev.nativeEvent.pageX);
     let y = this.s2aH(ev.nativeEvent.pageY);
 
-    //Alert.alert("x:" + x + ",y:" + y);
-
-    //Alert.alert("x:"+x+",y:"+y+ ", nativeX:"+ev.nativeEvent.pageX+", nativeY:"+ev.nativeEvent.pageY+", topView:"+ this.state.topView + ",topLayer:"+topLayer)
-    // if (x < 0 || x > this.state.canvasW || y < 0 || y > this.state.canvasH) {
-    //   return
-    // }
-
-
     let textElemIndex = this.findTextElement({ x: x, y: y });
     let initialText = '';
     let fontSize = this.state.fontSize;
     let fontColor = this.state.color;
-    //    let x = ev.nativeEvent.locationX, y = ev.nativeEvent.locationY
-    //let canvasTexts = this.state.canvasTexts;
 
     let textElem = undefined;
     if (textElemIndex >= 0) {
@@ -287,10 +202,8 @@ export default class IssieEditPhoto extends React.Component {
 
   SaveText = () => {
     let text = this.state.inputTextValue;
-    //if (text.length > 0) { to be able to delete
     this.state.queue.pushText(this.getTextElement(text));
     this.UpdateCanvas(false, true);
-    //}
   }
   findTextElement = (coordinates) => {
     let q = this.state.canvasTexts
@@ -318,8 +231,6 @@ export default class IssieEditPhoto extends React.Component {
     newTextElem.position = {
       x: this.state.xText,
       y: this.state.yText,
-      // x: this.state.textX / (this.state.zoom*this.state.scaleRatio), 
-      // y: this.state.textY / (this.state.zoom*this.state.scaleRatio) 
     };
     newTextElem.alignment = 'Right';
     newTextElem.fontColor = this.state.color[0];
@@ -398,11 +309,9 @@ export default class IssieEditPhoto extends React.Component {
 
     windowW = windowSize.width - sideMargin * 2;
     windowH = windowSize.height;
-    const imageSize = await this.getImageDimensions(uri);
-    //Alert.alert("w:"+imageSize.w+ ", h:"+ imageSize.h)
+    const imageSize = await getImageDimensions(uri);
     imageWidth = imageSize.w;
     imageHeight = imageSize.h;
-    //const { imageWidth, imageHeight } = await promise;
     wDiff = imageWidth - windowW;
     hDiff = imageHeight - windowH;
     let ratio = 1;
@@ -450,7 +359,7 @@ export default class IssieEditPhoto extends React.Component {
         <LinearGradient colors={['#94B2D1', '#6C97C0']} style={{ flex: 1, position: 'absolute', top: 0, width: '100%', height: '20%' }} >
           <View style={[styles.topPanel, { left: this.state.sideMargin }]}>
             {
-              this.getSquareButton(() => {
+              getSquareButton(() => {
                 if (this.state.zoom == maxZoom) {
                   this.setState({ zoom: 1, xOffset: 0, yOffset: 0 });
                   return;
@@ -463,7 +372,7 @@ export default class IssieEditPhoto extends React.Component {
             {this.getSpace(4)}
 
             {
-              this.getSquareButton(() => {
+              getSquareButton(() => {
                 this.state.queue.undo();
                 this.UpdateCanvas();
               }, colors.gray, colors.gray, undefined, "undo", 30, false)
@@ -471,7 +380,7 @@ export default class IssieEditPhoto extends React.Component {
             {this.getSpace(1)}
 
             {
-              this.getSquareButton(() => {
+              getSquareButton(() => {
                 this.state.queue.redo();
                 this.UpdateCanvas();
               }, this.state.queue.canRedo() ? colors.gray : colors.disabled, this.state.queue.canRedo() ? colors.gray : colors.disabled,
@@ -489,21 +398,21 @@ export default class IssieEditPhoto extends React.Component {
             {this.getSpace(3)}
 
             {
-              this.getSquareButton(() => { this.onTextButton(-1) },
+              getSquareButton(() => { this.onTextButton(-1) },
                 colors.gray, this.state.color, "א", undefined, 20, this.state.textMode)
             }
             {
-              this.getSquareButton(() => { this.onTextButton(1) },
+              getSquareButton(() => { this.onTextButton(1) },
                 colors.gray, this.state.color, "א", undefined, 30, this.state.textMode)
             }
             {this.getSpace(3)}
 
             {
-              this.getSquareButton(() => { this.onBrushButton(-1) },
+              getSquareButton(() => { this.onBrushButton(-1) },
                 colors.gray, this.state.color, undefined, "brush", 20, !this.state.textMode)
             }
             {
-              this.getSquareButton(() => { this.onBrushButton(1) },
+              getSquareButton(() => { this.onBrushButton(1) },
                 colors.gray, this.state.color, undefined, "brush", 30, !this.state.textMode)
             }
             {this.getSpace(3)}
@@ -611,24 +520,6 @@ export default class IssieEditPhoto extends React.Component {
     return <Text>{space}</Text>
   }
 
-
-
-
-
-
-  getSquareButton = (func, color, selectedColor, txt, icon, size, selected) => {
-    return <TouchableOpacity
-      onPress={func}
-
-    >
-      <LinearGradient
-        colors={selected ? selectedColor : color}
-        style={[styles.squareShapeView, selected ? styles.selected : styles.notSelected]}>
-        {txt ? <Text style={{ fontSize: size, color: 'white' }}>{txt}</Text> : <Icon name={icon} size={size} color='white' />}
-      </LinearGradient>
-    </TouchableOpacity>
-  }
-
   getTextInput = (txt, x, y) => {
     return <View style={{ flex: 1, position: 'absolute', left: x, top: y, zIndex: 100 }} {...this._panResponder.panHandlers}>
       <TextInput ref={"textInput"}
@@ -647,12 +538,9 @@ export default class IssieEditPhoto extends React.Component {
 
   getTextWidth = () => this.state.inputTextValue.length * 20 + 80;
   getTextHeight = () => this.state.fontSize + 1.2 + 15;
-
-
-
 }
-AppRegistry.registerComponent('IssieEditPhoto', () => IssieEditPhoto);
 
+AppRegistry.registerComponent('IssieEditPhoto', () => IssieEditPhoto);
 
 const styles = StyleSheet.create({
   mainContainer: {
@@ -679,15 +567,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center'
   },
-  squareShapeView: {
-    marginHorizontal: 2.5,
-    height: 50,
-    width: 50,
-    backgroundColor: '#39579A',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 5
-  },
   selected: {
     marginVertical: 0
   },
@@ -711,8 +590,5 @@ const styles = StyleSheet.create({
     top: marginTop,
     height: topLayer,
     backgroundColor: 'transparent'
-  },
-  alignRightPanel: {
-    right: 17
   }
 });
