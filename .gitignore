@@ -10,3 +10,6 @@ ios/build/
 *.ipa
 yarn-error.log
 *.DS_Store
+Packaging.log
+android/.gradle
+
