@@ -13,7 +13,6 @@ import { getSquareButton, colors } from './elements'
 import { Icon } from 'react-native-elements'
 import Photo from './Photo';
 import Folder from './Folder'
-import Share from 'react-native-share';
 
 
 export const FOLDERS_DIR = RNFS.DocumentDirectoryPath + '/folders/';
@@ -77,15 +76,20 @@ export default class GalleryScreen extends React.Component {
 
   }
 
-  toggleSelection = (uri, isSelected) => {
+  toggleSelection = (uri, isSelected, obj) => {
     let selected = this.state.selected;
     if (isSelected) {
-      selected.push(uri);
+      selected.push({ uri: uri, obj: obj });
     } else {
-      selected = selected.filter(item => item !== uri);
+      selected = selected.filter(item => item.uri !== uri);
     }
     this.setState({ selected });
   };
+
+  clearSelected = () => {
+    this.state.selected.map(sel => sel.obj.setState({ selected: false }));
+    this.setState({ selected:[] });
+  }
 
   renderPhoto = fileName => {
     return <Photo
@@ -112,22 +116,6 @@ export default class GalleryScreen extends React.Component {
       <TouchableOpacity style={styles.button} onPress={(e) => {
         this.setState({ isNewPageMode: true });
 
-        // ImagePicker.showImagePicker({
-        //   title:'',
-        //   takePhotoButtonTitle:'מצלמה',
-        //   chooseFromLibraryButtonTitle:'ספריית תמונות',
-        //   mediaType:'photo',
-        //   noData: true
-
-        // }, (response)=> {
-        //   Alert.alert(JSON.stringify(response));
-        // });
-        // //this.props.navigation.navigate('Camera');
-        // ImagePickerIOS.openSelectDialog({}, imageUri => {
-        //   this.props.navigation.navigate('SavePhoto', {
-        //     uri: imageUri 
-        //   });
-        // })
       }
       }
       >
@@ -139,19 +127,23 @@ export default class GalleryScreen extends React.Component {
   onFolderPress = (folder) => {
     //console.warn(folder.name + " was pressed");
     this.props.navigation.push('Home', { folder: folder.name });
+    this.clearSelected();
   }
 
   onPhotoPressed = (filePath) => {
     //console.warn(filePath + " was pressed");
-    this.props.navigation.navigate('EditPhoto', { uri: filePath, share:false })
+    this.props.navigation.navigate('EditPhoto', { uri: filePath, share: false })
+    this.clearSelected();
   }
 
   onAllFolders = () => {
     this.props.navigation.push('Home', { allFolders: true });
+    this.clearSelected();
   }
 
   onAllPages = () => {
     this.props.navigation.push('Home', { allFiles: 'all' });
+    this.clearSelected();
   }
 
   Delete = () => {
@@ -221,24 +213,24 @@ export default class GalleryScreen extends React.Component {
   Share = () => {
     if (this.state.selected.length != 1) return;
 
-    this.props.navigation.navigate('EditPhoto', 
-    { 
-      uri: this.state.selected[0],
-      share:true
-    })
-/*
-    RNFS.readFile(this.state.selected[0], 'base64').then(data => {
-      let dataUrl = 'data:image/png;base64,' + data;
-
-      const shareOptions = {
-        title: 'שתף בעזרת...',
-        subject: 'דף עבודה',
-        url: dataUrl
-      };
-  
-      Share.open(shareOptions);
-    })
-*/
+    this.props.navigation.navigate('EditPhoto',
+      {
+        uri: this.state.selected[0].uri,
+        share: true
+      })
+    /*
+        RNFS.readFile(this.state.selected[0], 'base64').then(data => {
+          let dataUrl = 'data:image/png;base64,' + data;
+    
+          const shareOptions = {
+            title: 'שתף בעזרת...',
+            subject: 'דף עבודה',
+            url: dataUrl
+          };
+      
+          Share.open(shareOptions);
+        })
+    */
   }
 
   render() {
@@ -402,9 +394,7 @@ export default class GalleryScreen extends React.Component {
     return array.map((item, index, array) => {
       if (index % 3 == 0) {
         return <View key={index}>
-          {this.getRowHeader(index, isOverview)
-            //this is the bool flag of overview
-          }
+          {this.getRowHeader(index, isOverview)}
 
           <View style={styles.pictures}>
 
