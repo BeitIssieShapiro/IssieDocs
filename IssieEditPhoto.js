@@ -69,26 +69,46 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   componentDidMount = async () => {
-    this.onLayout();
+    const page = this.props.navigation.getParam('page', '');
+    const currentFile = page.pages.length == 0 ? page.path : page.pages[0];
+
+    const metaDataUri = currentFile + ".json";
+    this.setState({ page: page, currentFile: currentFile, metaDataUri: metaDataUri })
     setTimeout(this.Load, 100);
   }
 
-  Load = () => {
-    const uri = this.props.navigation.getParam('uri', '');
-    const metaDataUri = uri + ".json";
-    RNFS.readFile(metaDataUri).then((value) => {
-      let sketchState = JSON.parse(value);
-      //Alert.alert("Load: "+sketchState.length)
-      this.state.queue.clear();
-      for (let i = 0; i < sketchState.length; i++) {
-        this.state.queue.add(sketchState[i])
-      }
-
-      this.UpdateCanvas(true)
-    }).catch((e) => {/*no json file yet*/ })
+  Load = async () => {
+    this.loadFile(this.state.metaDataUri);
 
     if (this.props.navigation.getParam('share', false)) {
-      setTimeout(()=> this.canvas.getBase64(
+      //iterates over all files and exports them
+      let dataUrls = [];
+
+      dataUrls.push(await this.exportToBase64());
+      for (let i = 1;i<this.state.page.pages.length;i++) {
+        const currentFile = this.state.page.pages[i];
+        const metaDataUri = currentFile + ".json";
+        this.setState({currentFile, metaDataUri })
+        this.loadFile(metaDataUri);
+        dataUrls.push(await this.exportToBase64());
+      }
+
+      const shareOptions = {
+        title: 'שתף בעזרת...',
+        subject: 'דף עבודה',
+        urls: dataUrls
+      };
+
+      Share.open(shareOptions).then(() => { }).catch(err => {
+        Alert.alert("הפעולה בוטלה");
+      });
+
+    }
+  }
+
+  exportToBase64 = async () => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => this.canvas.getBase64(
         'jpg',
         false, //transparent
         true, //includeImage
@@ -96,37 +116,37 @@ export default class IssieEditPhoto extends React.Component {
         false, //cropToImageSize
         (err, data) => {
           if (err) {
-            Alert.alert("שגיאה", err.toString());
+            reject(err.toString());
             return;
           }
+          resolve ( 'data:image/png;base64,' + data);
+        }
+      ), 300)
+    });
+  }
 
-          let dataUrl = 'data:image/png;base64,' + data;
 
-          const shareOptions = {
-            title: 'שתף בעזרת...',
-            subject: 'דף עבודה',
-            url: dataUrl
-          };
+  loadFile = (metaDataUri) => {
+    this.state.queue.clear();
+    RNFS.readFile(metaDataUri).then((value) => {
+      let sketchState = JSON.parse(value);
+      //Alert.alert("Load: "+sketchState.length)
+      for (let i = 0; i < sketchState.length; i++) {
+        this.state.queue.add(sketchState[i])
+      }
 
-          Share.open(shareOptions).then(()=>{}).catch(err=>{
-            Alert.alert("הפעולה בוטלה");
-          });
-        }), 300);
-    }
+    },
+      (err) => {/*no json file yet*/ }
+    ).catch((e) => {/*no json file yet*/ }).finally(() => {
+      this.UpdateCanvas(true)
+    });
   }
 
   Save = () => {
-    if (!this.canvas) {
-      Alert.alert("no canvas on save");
-      return;
-    }
-
     let sketchState = this.state.queue.getAll();
-    const uri = this.props.navigation.getParam('uri', '');
-    const metaDataUri = uri + ".json";
     const content = JSON.stringify(sketchState);
     RNFS.writeFile(
-      metaDataUri,
+      this.state.metaDataUri,
       content).then(
         //success
         undefined, //() =>  Alert.alert("File Saved"),
@@ -147,6 +167,7 @@ export default class IssieEditPhoto extends React.Component {
     this.state.queue.pushPath(p);
     this.Save()
   }
+
   //a = absolute, s=screen, c=canvas
   s2aW = (w) => { return (w - this.state.sideMargin) / this.state.zoom - this.state.xOffset }
   s2aH = (h) => { return (h - this.state.topView) / this.state.zoom - this.state.yOffset }// - this.state.inputTextHeight/2}
@@ -161,6 +182,7 @@ export default class IssieEditPhoto extends React.Component {
     }
     return this.state.color;
   }
+
   TextModeClick = (ev) => {
     if (this.state.showTextInput) {
       //a text box is visible and a click was pressed - save the text box contents first:
@@ -297,35 +319,63 @@ export default class IssieEditPhoto extends React.Component {
     this.setState({ strokeWidth: newStrokeWidth })
   }
 
-  onLayout = async () => {
+  movePage = (inc) => {
+    let currentIndex = -1;
+    for (let i = 0; i < this.state.page.pages.length; i++) {
+      if (this.state.page.pages[i] == this.state.currentFile) {
+        currentIndex = i;
+        break;
+      }
+    }
+    currentIndex += inc;
+    if (currentIndex < 0 || currentIndex >= this.state.page.pages.length) return;
+
+    const currentFile = this.state.page.pages[currentIndex];
+    const metaDataUri = currentFile + ".json";
+    this.setState({ currentFile: currentFile, metaDataUri: metaDataUri })
+    setTimeout(this.Load, 100);
+
+  }
+
+  onLayout = async (e) => {
+    let windowSize = e.nativeEvent.layout;
     const measure = this.topView.measure.bind(this.topView);
     setTimeout(measure, 50, (fx, fy, width, height, px, py) => {
       this.setState({ topView: py })
     });
 
-    const uri = this.props.navigation.getParam('uri', '');
-    let windowSize = Dimensions.get("window");
+    //let windowSize = Dimensions.get("window");
     let sideMargin = Math.floor(windowSize.width * .05)
 
     windowW = windowSize.width - sideMargin * 2;
-    windowH = windowSize.height;
-    const imageSize = await getImageDimensions(uri);
-    imageWidth = imageSize.w;
-    imageHeight = imageSize.h;
-    wDiff = imageWidth - windowW;
-    hDiff = imageHeight - windowH;
-    let ratio = 1;
-    if (wDiff <= 0 && hDiff <= 0) {
-      //image fit w/o scale
-    } else if (wDiff > hDiff) {
-      //scale to fit width
-      ratio = windowW / imageWidth;
-    } else {
-      //scale to fit height
-      ratio = windowH / imageHeight;
-    }
+    windowH = windowSize.height - topLayer * 1.1;
+    let currentFile = this.state.currentFile;
 
-    this.setState({ sideMargin: sideMargin, canvasW: imageWidth * ratio, canvasH: imageHeight * ratio, scaleRatio: ratio })
+    getImageDimensions(currentFile).then(imageSize => {
+      //Alert.alert("Dim:" + JSON.stringify(imageSize))
+      imageWidth = imageSize.w;
+      imageHeight = imageSize.h;
+      wDiff = imageWidth - windowW;
+      hDiff = imageHeight - windowH;
+      let ratio = 1;
+      if (wDiff <= 0 && hDiff <= 0) {
+        //image fit w/o scale
+      } else if (wDiff > hDiff) {
+        //scale to fit width
+        ratio = windowW / imageWidth;
+      } else {
+        //scale to fit height
+        ratio = windowH / imageHeight;
+      }
+
+      //ratio = .67;
+      //Alert.alert("ratio: " + ratio)
+      this.setState({ sideMargin: sideMargin, canvasW: imageWidth * ratio, canvasH: imageHeight * ratio, scaleRatio: ratio })
+      setTimeout(() => this.UpdateCanvas(true, false), 200);
+
+    }).catch(err => {
+      Alert.alert(JSON.stringify(err))
+    })
   }
 
   render() {
@@ -443,6 +493,7 @@ export default class IssieEditPhoto extends React.Component {
         {this.getArrow(TOP, () => this.setState({ yOffset: this.state.yOffset + 50 }))}
         {this.getArrow(RIGHT, () => this.setState({ xOffset: this.state.xOffset - 50 }))}
         {this.getArrow(BOTTOM, () => this.setState({ yOffset: this.state.yOffset - 50 }))}
+        {this.getPageNavigationArrows()}
 
       </LinearGradient>
     );
@@ -478,16 +529,76 @@ export default class IssieEditPhoto extends React.Component {
       />
     </View>
   }
-  getCanvas = () => {
-    const uri = this.props.navigation.getParam('uri', '');
+  getPageNavigationArrows = () => {
 
+    if (!this.state.page || this.state.page.pages.length == 0) {
+      return <View />;
+    }
+
+    return <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'stretch',
+        height: '10%',
+        position: 'absolute',
+        bottom: 0,
+        left: this.state.sideMargin,
+        width: this.state.canvasW,
+        zIndex: 1000
+      }}
+    >
+      {(this.state.currentFile == this.state.page.pages[0]) ?
+        <View /> :
+        <TouchableOpacity
+          onPress={() => this.movePage(-1)}
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center'
+
+          }}>
+
+          <Icon
+
+            name='chevron-left'
+            size={60}
+            color="black"
+          />
+          <Text style={{ fontSize: 25 }}>דף קודם</Text>
+        </TouchableOpacity>
+      }
+
+      {(this.state.currentFile == this.state.page.pages[this.state.page.pages.length - 1]) ?
+        <View /> :
+        <TouchableOpacity
+          onPress={() => this.movePage(1)}
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'flex-end'
+          }}>
+
+          <Text style={{ fontSize: 25 }}>דף הבא</Text>
+          <Icon
+
+            name='chevron-right'
+            size={60}
+            color="black"
+          />
+        </TouchableOpacity>
+      }
+    </View>
+  }
+
+  getCanvas = () => {
     return <RNSketchCanvas
       ref={component => this.canvas = component}
       scale={this.state.zoom}
       text={this.state.canvasTexts}
       containerStyle={[styles.container]}
       canvasStyle={[styles.canvas, { transform: [{ translateX: this.state.xOffset }, { translateY: this.state.yOffset }] }]}
-      localSourceImage={{ filename: uri, mode: 'AspectFit' }}
+      localSourceImage={{ filename: this.state.currentFile, mode: 'AspectFit' }}
       onStrokeEnd={this.SketchEnd}
       strokeColors={[{ color: colors.black[0] }]}
       defaultStrokeIndex={0}
@@ -522,7 +633,7 @@ export default class IssieEditPhoto extends React.Component {
 
   getTextInput = (txt, x, y) => {
     return <View style={{ flex: 1, position: 'absolute', left: x, top: y, zIndex: 100 }} {...this._panResponder.panHandlers}>
-      <TextInput ref={"textInput"}
+      <TextInput
         onChangeText={(text) => this.setState({ inputTextValue: text })}
         autoFocus
 

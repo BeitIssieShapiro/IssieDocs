@@ -1,7 +1,8 @@
-import { TouchableOpacity, Text,StyleSheet, Image } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, Image } from 'react-native';
 import { Icon } from 'react-native-elements'
 import LinearGradient from 'react-native-linear-gradient';
 import React from 'react';
+import { reject } from 'rsvp';
 
 export const colors = {
     gray: ['#5B748A', '#587189'],
@@ -11,13 +12,13 @@ export const colors = {
     green: ['#00F815', '#005C05'],
     red: ['#FF0000', '#A20000'],
     black: ['#000000', '#000000'],
-    disabled: ['#A8C2D8','#A8C2D8']
-  }
+    disabled: ['#A8C2D8', '#A8C2D8']
+}
 
 export function getSquareButton(func, color, selectedColor, txt, icon, size, selected, dimensions) {
     let dim = {
-        width:styles.squareShapeView.width,
-        width:styles.squareShapeView.height
+        width: styles.squareShapeView.width,
+        width: styles.squareShapeView.height
     }
     if (dimensions) {
         dim = dimensions
@@ -36,14 +37,17 @@ export function getSquareButton(func, color, selectedColor, txt, icon, size, sel
 
 export async function getImageDimensions(uri) {
     return new Promise(
-      (resolve, reject) => {
-        Image.getSize(uri, (width, height) => {
-          resolve({ w: width, h: height });
-        });
-      },
-      error => reject(error)
+        (resolve, reject) => {
+            Image.getSize(uri, (width, height) => {
+                resolve({ w: width, h: height });
+            },
+            (err) => {
+                //Alert.alert(err)
+                reject(err)
+            });
+        }
     );
-  }
+}
 
 const styles = StyleSheet.create({
     squareShapeView: {

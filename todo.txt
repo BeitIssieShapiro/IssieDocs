@@ -14,10 +14,10 @@ V* Send to mail
 * enlarge frame of folder picker
 * - optimize loading list if folders any times
 * headers' color (where navigation happens)
-* Move to another folder
+* Move page to another folder
 V * Delete button - style
 V * Ask before Delete
-* In editPhoto, when changing text size, the text does not change
+V * In editPhoto, when changing text size, the text does not change
 * Image for folders:
   * when creating new folder
   * when picking

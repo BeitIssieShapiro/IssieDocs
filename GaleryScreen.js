@@ -1,18 +1,23 @@
 import React from 'react';
 import {
   Image, StyleSheet, View,
-  TouchableOpacity, Button, ScrollView, Alert, Text, ImagePickerIOS
+  TouchableOpacity, Button, ScrollView, Alert, Text, Dimensions
 } from 'react-native';
 import * as RNFS from 'react-native-fs';
 import LinearGradient from 'react-native-linear-gradient';
 import ImagePicker from 'react-native-image-picker';
 import Dash from 'react-native-dash';
-import DeviceInfo from 'react-native-device-info';
 import { getSquareButton, colors } from './elements'
 
 import { Icon } from 'react-native-elements'
 import Photo from './Photo';
 import Folder from './Folder'
+import { SRC_CAMERA, getNewPage } from './newPage';
+
+const DELETE_PAGE_TITLE = 'מחיקת דף';
+const BEFORE_DELETE_PAGE_QUESTION = 'האם למחוק את הדף?';
+const DELETE_FOLDER_TITLE = 'מחיקת תיקייה';
+const BEFORE_DELETE_FOLDER_QUESTION = 'מחיקת תיקייה תגרום למחיקת כל הדפים בתוכה, האם למחוק?';
 
 
 export const FOLDERS_DIR = RNFS.DocumentDirectoryPath + '/folders/';
@@ -36,7 +41,8 @@ export default class GalleryScreen extends React.Component {
     selected: [],
     isFocused: false,
     shelf: require('./shelf_transparent.png'),
-    isNewPageMode: false
+    isNewPageMode: false,
+    windowSize: Dimensions.get("window")
   };
 
   componentWillUnmount() {
@@ -64,11 +70,21 @@ export default class GalleryScreen extends React.Component {
 
       for (let folder of folders) {
         //Alert.alert("reading files from: " + folder.path);
-        const filesItems = await RNFS.readDir(folder.path);
+        const items = await RNFS.readDir(folder.path);
+        const filesItems = items.filter(f => !f.name.endsWith(".json"));
+        let files = [];
+        for (let fi of filesItems) {
+          let pages = []
+          if (fi.isDirectory()) {
+            //read all pages
+            const innerPages = await RNFS.readDir(fi.path);
+            pages = innerPages.filter(f => !f.name.endsWith(".json")).map(p => p.path);
+          }
+          files.push( { name: fi.name, path: fi.path, isFolder: fi.isDirectory(), pages: pages});
+        }
 
-        const filesPath = filesItems.filter((f) => !f.name.endsWith(".json")).map(fileItem => fileItem.path);
-        foldersState.push({ name: folder.name, files: filesPath });
-
+        //Alert.alert(folder.name + " : "+JSON.stringify(files))
+        foldersState.push({ name: folder.name, files: files });
       }
       this.setState({ folders: foldersState });
 
@@ -76,27 +92,33 @@ export default class GalleryScreen extends React.Component {
 
   }
 
-  toggleSelection = (uri, isSelected, obj) => {
+  onLayout = () => {
+    let windowSize = Dimensions.get("window");
+    this.setState({ windowSize});
+  }
+
+  toggleSelection = (item, isSelected, obj, type) => {
     let selected = this.state.selected;
     if (isSelected) {
-      selected.push({ uri: uri, obj: obj });
+      selected.push({page: item, obj: obj, type: type });
     } else {
-      selected = selected.filter(item => item.uri !== uri);
+      selected = selected.filter(sel => sel.page.path !== item.path);
     }
     this.setState({ selected });
   };
 
   clearSelected = () => {
     this.state.selected.map(sel => sel.obj.setState({ selected: false }));
-    this.setState({ selected:[] });
+    this.setState({ selected: [] });
   }
 
-  renderPhoto = fileName => {
+  renderPhoto = (page) => {
+    //Alert.alert(JSON.stringify(page))
     return <Photo
-      key={fileName}
-      uri={fileName}
+      key={page.path}
+      page={page}
       onSelectionToggle={this.toggleSelection}
-      onPress={this.onPhotoPressed.bind(this, fileName)}
+      onPress={this.onPhotoPressed.bind(this, page)}
     />;
   }
 
@@ -130,9 +152,9 @@ export default class GalleryScreen extends React.Component {
     this.clearSelected();
   }
 
-  onPhotoPressed = (filePath) => {
+  onPhotoPressed = (page) => {
     //console.warn(filePath + " was pressed");
-    this.props.navigation.navigate('EditPhoto', { uri: filePath, share: false })
+    this.props.navigation.navigate('EditPhoto', { page: page, share: false })
     this.clearSelected();
   }
 
@@ -149,13 +171,14 @@ export default class GalleryScreen extends React.Component {
   Delete = () => {
     if (this.state.selected) {
       Alert.alert(
-        'מחיקת דף',
-        'האם למחוק את הדף?',
+        this.state.selected.type === 'folder' ? DELETE_FOLDER_TITLE : DELETE_PAGE_TITLE,
+        this.state.selected.type === 'folder' ? BEFORE_DELETE_FOLDER_QUESTION : BEFORE_DELETE_PAGE_QUESTION,
+
         [
           {
             text: 'מחק', onPress: () => {
               this.state.selected.forEach((toDelete) => {
-                RNFS.unlink(toDelete).then(() => {
+                RNFS.unlink(toDelete.page.path).then(() => {
                   RNFS.unlink(toDelete + ".json").catch((e) => {/*do nothing*/ });
                 });
               })
@@ -178,21 +201,13 @@ export default class GalleryScreen extends React.Component {
 
   showCamera = () => {
     this.setState({ isNewPageMode: false });
-    if (DeviceInfo.isEmulator()) {
-      return this.props.navigation.navigate('Camera');
-    }
-    ImagePicker.launchCamera({
-      title: 'צילום דף עבודה',
-      mediaType: 'photo',
-      noData: true,
-      cancelButtonTitle: 'ביטול'
-    }, (response) => {
-      if (!response.didCancel) {
-        this.props.navigation.navigate('SavePhoto', {
-          uri: response.uri
-        });
-      }
-    });
+    getNewPage(SRC_CAMERA,
+      (uri) => this.props.navigation.navigate('SavePhoto', {
+        uri: uri, imageSource: SRC_CAMERA
+      }),
+      //cancel
+      () => { }
+    );
   }
 
   showMediaLib = () => {
@@ -210,12 +225,17 @@ export default class GalleryScreen extends React.Component {
     });
   }
 
+  ShowFileExplorer = () => {
+    this.props.navigation.navigate('SavePhoto', {
+      uri: '/Users/I022021/dev/IssieDoc3/detective.doc'
+    });
+  }
+
   Share = () => {
     if (this.state.selected.length != 1) return;
-
     this.props.navigation.navigate('EditPhoto',
       {
-        uri: this.state.selected[0].uri,
+        page: this.state.selected[0].page,
         share: true
       })
     /*
@@ -316,20 +336,36 @@ export default class GalleryScreen extends React.Component {
               <Text style={{ fontSize: 70, color: 'white' }}>ספריית תמונות</Text>
             </View>
           </TouchableOpacity>
+          <Text> </Text>
+          <Text> </Text>
+          <Dash style={{ width: '100%' }}
+            dashThickness={5}
+            dashColor={'white'}
+            dashGap={10}
+            dashLength={25} />
+
+          <TouchableOpacity onPress={this.ShowFileExplorer}>
+
+            <View style={{ flexDirection: 'row-reverse', alignItems: 'center' }}>
+              <Icon name={'folder'} size={150} color={'white'} />
+              <Text>    </Text>
+              <Text style={{ fontSize: 70, color: 'white' }}>קובץ</Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </View>
     }
 
     return (
-      <LinearGradient style={styles.container} colors={['#F1EEE6', '#BEB39F']}>
+      <LinearGradient style={styles.container} colors={['#F1EEE6', '#BEB39F']}
+        onLayout={this.onLayout}>
+          
         <ScrollView contentComponentStyle={{ flex: 1 }}>
           {
             this.arrange(galery, overview)
           }
         </ScrollView>
-        {//bottom buttons:
-        }
-
+        
         <View style={{ flexDirection: 'row' }}>
           {  //delete
             this.state.selected.length > 0 ?
@@ -358,8 +394,10 @@ export default class GalleryScreen extends React.Component {
   addTop3Files = (galery) => {
     let files = [];
     this.state.folders.filter(f => f.name == 'Default').map(defFolder => {
-      defFolder.files.map(f => {
-        files.push(this.renderPhoto(f))
+      //Alert.alert(JSON.stringify(defFolder))
+      defFolder.files.map((page) => {
+        
+        files.push(this.renderPhoto(page))
       })
     });
     for (let i = 0; i < 3; i++) {
@@ -396,7 +434,10 @@ export default class GalleryScreen extends React.Component {
         return <View key={index}>
           {this.getRowHeader(index, isOverview)}
 
-          <View style={styles.pictures}>
+          <View style={{
+             flex: 1,
+             height: this.state.windowSize.height / 3.9 
+          }}>
 
             <Image source={this.state.shelf}
               style={[styles.shelf, { top: pictureSize * .42 }]}
@@ -518,10 +559,6 @@ const styles = StyleSheet.create({
     left: '3%',
     width: '94%',
     backgroundColor: 'transparent'
-  },
-  pictures: {
-    flex: 1,
-    height: pictureSize * 1.8
   },
   button: {
     padding: 20,

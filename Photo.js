@@ -26,15 +26,16 @@ export default class Photo extends React.Component {
   toggleSelection = () => {
     this.setState(
       { selected: !this.state.selected },
-      () => this.props.onSelectionToggle(this.props.uri, this.state.selected, this)
+      () => this.props.onSelectionToggle(this.props.page, this.state.selected, this, 'file')
     );
   }
 
   
   
   render() {
-    const { uri } = this.props;
-    const fileName = (uri.split('\\').pop().split('/').pop().split('.'))[0];
+    const { page } = this.props;
+    const fileName = (page.path.split('\\').pop().split('/').pop().split('.'))[0];
+    const pageCount = page.pages.length;
     return (
         <TouchableOpacity
           style={styles.pictureWrapper}
@@ -44,7 +45,7 @@ export default class Photo extends React.Component {
         >
           <ImageBackground
             style={styles.picture}
-            source={{ uri }}
+            source={{ uri:pageCount == 0?page.path:page.pages[0] }}
           >
           {
             this.state.selected && <Icon name="check-circle" size={30} color="#4630EB" />
@@ -60,7 +61,7 @@ export default class Photo extends React.Component {
             alignContent:'center', alignItems:'center',
             zIndex:2
             }}>
-            <Text style={{fontSize:40, color:'#505B64'}}>{fileName}</Text>
+            <Text style={{fontSize:40, color:'#505B64'}}>{fileName + (pageCount>1?'+':'')}</Text>
           </LinearGradient>
           <LinearGradient
           colors={['#325272', '#628EB6']}

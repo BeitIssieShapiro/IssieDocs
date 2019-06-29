@@ -4,13 +4,13 @@ import {
   ImageBackground, TextInput, Picker, StyleSheet, View, Text,
   Alert, Dimensions, PanResponder, ImageEditor, ImageStore, TouchableHighlight
 } from 'react-native';
-import { Button } from 'react-native-elements'
 import { FOLDERS_DIR } from './GaleryScreen';
 import * as RNFS from 'react-native-fs';
 import { getSquareButton, colors, getImageDimensions } from './elements'
 import ImageRotate from 'react-native-image-rotate';
 import ModalDropdown from 'react-native-modal-dropdown';
 import { Icon } from 'react-native-elements'
+import { getNewPage, saveFile } from './newPage'
 
 
 const OK_Cancel = 1;
@@ -32,7 +32,8 @@ export default class IssieSavePhoto extends React.Component {
     this.state = {
       phase: OK_Cancel,
       cropping: false,
-      topView: 0
+      topView: 0,
+      multiPageState: { pageCount: 0, pages: [] }
     };
     this.OK.bind(this);
 
@@ -134,8 +135,7 @@ export default class IssieSavePhoto extends React.Component {
     }
   }
 
-  save = () => {
-    const uri = this.state.uri;
+  save = async () => {
     let folderName = this.state.folder;
     let fileName = this.state.pageName;
 
@@ -151,50 +151,53 @@ export default class IssieSavePhoto extends React.Component {
 
     let targetFolder = FOLDERS_DIR + folderName;
     let filePath = targetFolder + "/" + fileName + ".jpg";
-    RNFS.mkdir(targetFolder).then(() => {
-      if (uri.startsWith("rct-image-store")) {
-        console.disableYellowBox = true;
-        ImageStore.getBase64ForTag(
-          uri,
-          //success
-          (base64Contents) => {
-            //let contents = base64.decode(base64Contents);
-            //todo optimize code
-            RNFS.writeFile(filePath, base64Contents, 'base64').then(
-              //Success
-              () => this.props.navigation.navigate('Home'),
-              //on error 
-              err => {
-                if (err.toString().includes("already exists")) {
-                  Alert.alert("קובץ בשם זה כבר קיים");
-                  return;
-                }
-                Alert.alert('Error saving file: ' + uri + ' to ' + filePath + ', err: ' + err)
-              }
-            ).catch(err => Alert.alert('Error saving file: ' + uri + ' to ' + filePath + ', err: ' + err));
-          }, (error) => {
-            Alert.alert(error);
-            //todo
-          });
-      } else {
-        RNFS.copyFile(uri, filePath).then(
-          //Success
-          () => this.props.navigation.navigate('Home'),
-          //on error 
-          err => {
-            if (err.toString().includes("already exists")) {
-              Alert.alert("קובץ בשם זה כבר קיים");
-              return;
-            }
-            Alert.alert('Error saving file: ' + uri + ' to ' + filePath + ', err: ' + err)
-          }
-        ).catch(err => Alert.alert('Error saving file: ' + uri + ' to ' + filePath + ', err: ' + err));
+    await RNFS.mkdir(targetFolder)
+
+
+     if (this.state.multiPageState.pages.length > 0) {
+      //create a folder with the name fo the file
+      targetFolder = targetFolder + "/" + fileName;
+      //todo check existing
+      await RNFS.mkdir(targetFolder);
+      let i = 0;
+      for (; i < this.state.multiPageState.pages.length; i++) {
+        let page = this.state.multiPageState.pages[i];
+        await saveFile(page.uri, targetFolder + "/" + i + ".jpg");
       }
-    });
+      filePath = targetFolder + "/" + i + ".jpg";
+     }
+
+     Alert.alert("saving:" +this.state.uri )
+    saveFile(this.state.uri, filePath).then(
+      ()=>this.props.navigation.navigate('Home'),
+      (err)=>Alert.alert("Error at end:"+ err)
+    );
   }
 
 
-  Cancel = () => this.props.navigation.goBack();
+  Cancel = () => {
+    let multiPageState = this.state.multiPageState;
+    if (multiPageState.pages.length == 0) {
+      this.props.navigation.goBack();
+    } else {
+      let lastPage = multiPageState.pages.pop();
+      this.setState({ uri: lastPage.uri, state: OK_Cancel, multiPageState: multiPageState })
+    }
+  }
+
+  AddPage = () => {
+    let imageSource = this.props.navigation.getParam('imageSource');
+    getNewPage(imageSource,
+      (uri) => {
+        let multiPageState = this.state.multiPageState;
+        let page = { uri: this.state.uri, index: multiPageState.pages.length }
+        multiPageState.pages.push(page);
+
+        this.setState({ uri: uri, state: OK_Cancel, multiPageState: multiPageState })
+      },
+      //cancel
+      () => { });
+  }
 
   rotateLeft = () => this.rotate(-90);
   rotateRight = () => this.rotate(90);
@@ -250,8 +253,8 @@ export default class IssieSavePhoto extends React.Component {
   initFolderList = async () => {
     if (this.state.folders) return this.state.folders;
 
-    RNFS.readDir(FOLDERS_DIR).then(folders=> {
-      this.setState({folders: folders.map(f=>f.name).filter(f=> f != 'Default')});
+    RNFS.readDir(FOLDERS_DIR).then(folders => {
+      this.setState({ folders: folders.map(f => f.name).filter(f => f != 'Default') });
     });
   }
 
@@ -259,17 +262,17 @@ export default class IssieSavePhoto extends React.Component {
     console.disableYellowBox = true;
     return <ModalDropdown
       style={[styles.pickerButton]}
-      dropdownStyle={{width:'60%', height:'25%'}}
+      dropdownStyle={{ width: '60%', height: '25%' }}
       onSelect={(itemIndex, itemValue) => this.setState({ folder: itemValue })}
       renderRow={this.pickerRenderRow.bind(this)}
       options={['ללא', ...this.state.folders, newFolderName]} >
-        <View style= {{
-          flexDirection:'row', justifyContent:'space-between',
-          alignItems:'center'
-        }}>
+      <View style={{
+        flexDirection: 'row', justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
         <Icon name='arrow-drop-down' size={50} color="#4630EB" />
-        <Text style={{ fontSize: 70, textAlign:'right' }}>{this.state.folder?this.state.folder:'ללא'}</Text>
-        </View>
+        <Text style={{ fontSize: 70, textAlign: 'right' }}>{this.state.folder ? this.state.folder : 'ללא'}</Text>
+      </View>
     </ModalDropdown>
   }
 
@@ -278,12 +281,12 @@ export default class IssieSavePhoto extends React.Component {
     return (
       <TouchableHighlight underlayColor='cornflowerblue'>
         <View style={[styles.textInput, {
-           backgroundColor: evenRow ? 'lemonchiffon' : 'white',
-           justifyContent:'flex-end'
-          }]}>
+          backgroundColor: evenRow ? 'lemonchiffon' : 'white',
+          justifyContent: 'flex-end'
+        }]}>
           {/* <Icon name='gavel' size={30} color="#4630EB" /> */}
 
-          <Text style={{ fontSize: 70 , textAlign:'right'}}>
+          <Text style={{ fontSize: 70, textAlign: 'right' }}>
             {`${rowData}`}
           </Text>
         </View>
@@ -299,14 +302,18 @@ export default class IssieSavePhoto extends React.Component {
     let PageNameInput = <View />;
     let SelectFolder = <View />;
     let NewFolderInput = <View />;
+    let saveMoreThanOne = this.state.multiPageState.pages.length > 0 ? '(' + (this.state.multiPageState.pages.length + 1) + ')' : ''
     if (!this.state.cropping &&
       (this.state.phase == OK_Cancel ||
         this.state.phase == PickName ||
         this.state.phase == PickFolder)) {
       buttons = <View style={styles.okCancelView}>
         {getSquareButton(this.Cancel, colors.red, undefined, "בטל", undefined, 30, undefined, { width: 200, height: 50 })}
-        <Text>        </Text>
-        {getSquareButton(this.OK, colors.green, undefined, "שמור", undefined, 30, undefined, { width: 200, height: 50 })}
+        <Text>     </Text>
+        {getSquareButton(this.OK, colors.green, undefined, "שמור" + saveMoreThanOne, undefined, 30, undefined, { width: 200, height: 50 })}
+        <Text>     </Text>
+        {getSquareButton(this.AddPage, colors.green, undefined, "הוסף", "add", 30, undefined, { width: 200, height: 50 })}
+
       </View>;
     }
 
