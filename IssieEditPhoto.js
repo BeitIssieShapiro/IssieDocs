@@ -23,9 +23,20 @@ const DEFAULT_STROKE_WIDTH = 5;
 
 
 export default class IssieEditPhoto extends React.Component {
-  static navigationOptions = {
-    title: 'עריכת דף',
-  };
+  static navigationOptions = ({ navigation }) => {
+    return {
+      title: 'עריכת דף',
+      headerStyle: {
+        backgroundColor: '#8EAFCE',
+      },
+      headerTintColor: 'white',
+      headerTitleStyle: {
+        fontSize: 30,
+        fontWeight:'bold'
+      },
+    };
+  }
+  
   constructor() {
     super();
 
@@ -442,18 +453,18 @@ export default class IssieEditPhoto extends React.Component {
             {this.getSpace(1)}
             {this.getColorButton(colors.red)}
             {this.getSpace(1)}
-            {this.getColorButton(colors.blue)}
+            {this.getColorButton(colors.yellow)}
             {this.getSpace(1)}
             {this.getColorButton(colors.green)}
             {this.getSpace(3)}
 
             {
               getSquareButton(() => { this.onTextButton(-1) },
-                colors.gray, this.state.color, "א", undefined, 20, this.state.textMode)
+                colors.gray, this.state.color, "א", undefined, 30, this.state.textMode)
             }
             {
               getSquareButton(() => { this.onTextButton(1) },
-                colors.gray, this.state.color, "א", undefined, 30, this.state.textMode)
+                colors.gray, this.state.color, "א", undefined, 40, this.state.textMode)
             }
             {this.getSpace(3)}
 

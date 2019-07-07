@@ -30,7 +30,8 @@ export function getSquareButton(func, color, selectedColor, txt, icon, size, sel
         <LinearGradient
             colors={selected ? selectedColor : color}
             style={[styles.squareShapeView, dim, selected ? styles.selected : styles.notSelected]}>
-            {txt ? <Text style={{ fontSize: size, color: 'white' }}>{txt}</Text> : <Icon name={icon} size={size} color='white' />}
+            <Text style={{ fontSize: size, color: 'white' }}>{txt?txt:''}</Text>
+            {icon?<Icon name={icon} size={size} color='white' />:null}
         </LinearGradient>
     </TouchableOpacity>
 }
@@ -52,11 +53,13 @@ export async function getImageDimensions(uri) {
 const styles = StyleSheet.create({
     squareShapeView: {
         marginHorizontal: 2.5,
+        alignItems:'center',
+        alignContent:'center',
+        flexDirection:'row',
         height: 50,
         width: 50,
         backgroundColor: '#39579A',
         justifyContent: 'center',
-        alignItems: 'center',
         borderRadius: 5
     },
     selected: {

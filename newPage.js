@@ -88,7 +88,6 @@ export async function saveFile(uri, filePath) {
                     handleSaveFileError(err, reject);
                 });
         } else {
-            //Alert.alert(filePath);
             RNFS.copyFile(uri, filePath).then(
                 //Success
                 () => {
@@ -103,7 +102,11 @@ export async function saveFile(uri, filePath) {
 }
 
 function handleSaveFileError(err, reject) {
-    Alert.alert("Error: " + JSON.stringify(err));
+    let errorStr = ""
+    for (let key in err) {
+        errorStr += JSON.stringify(err[key]).substr(15)+"\n";
+    }
+    Alert.alert("Error: " + errorStr);
     if (err.toString().includes("already exists")) {
         reject("קובץ בשם זה כבר קיים");
         return;
@@ -113,7 +116,13 @@ function handleSaveFileError(err, reject) {
 
 export function genTempFile(ext) {
     const date = new Date()
-    let fn =  date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + ' ' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2);
+    let fn =  Math.random()+ '-' + date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + ' ' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2);
 
     return RNFS.TemporaryDirectoryPath  + fn + "." + ext
+}
+
+export async function cloneToTemp(uri) {
+    let newUri = genTempFile('jpg')
+    await RNFS.copyFile(uri, newUri);
+    return newUri;
 }

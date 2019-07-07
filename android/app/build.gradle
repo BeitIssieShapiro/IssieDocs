@@ -138,6 +138,8 @@ android {
 }
 
 dependencies {
+    implementation project(':react-native-pdf')
+    implementation project(':rn-fetch-blob')
     implementation project(':react-native-share')
     implementation project(':react-native-image-picker')
     implementation project(':react-native-image-rotate')

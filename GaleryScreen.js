@@ -33,9 +33,22 @@ export const pictureWrapperStyle = {
 
 
 export default class GalleryScreen extends React.Component {
-  static navigationOptions = {
-    title: 'דפי עבודה',
-  };
+  static navigationOptions = ({ navigation }) => {
+    let folder = navigation.getParam('folder', 'דפי עבודה');
+    let allFolders = navigation.getParam('allFolders', false);
+    return {
+      title: allFolders? 'כל התיקיות':folder,
+      headerStyle: {
+        backgroundColor: '#8EAFCE',
+      },
+      headerTintColor: 'white',
+      headerTitleStyle: {
+        fontSize: 30,
+        fontWeight:'bold'
+      },
+    };
+  }
+
   state = {
     folders: [],
     selected: [],
@@ -79,6 +92,7 @@ export default class GalleryScreen extends React.Component {
             //read all pages
             const innerPages = await RNFS.readDir(fi.path);
             pages = innerPages.filter(f => !f.name.endsWith(".json")).map(p => p.path);
+            pages = pages.sort();
           }
           files.push( { name: fi.name, path: fi.path, isFolder: fi.isDirectory(), pages: pages});
         }
@@ -226,8 +240,10 @@ export default class GalleryScreen extends React.Component {
   }
 
   ShowFileExplorer = () => {
+    this.setState({ isNewPageMode: false });
+
     this.props.navigation.navigate('SavePhoto', {
-      uri: '/Users/I022021/dev/IssieDoc3/detective.doc'
+      uri: FOLDERS_DIR+ 'test/test2.pdf'
     });
   }
 
@@ -280,8 +296,8 @@ export default class GalleryScreen extends React.Component {
       } else {
         //default openning screen: 3 most recent folders, 3 most recent files
         this.addNewPage(galery);
+        this.addTop5Files(galery);
         this.addTop3Folders(galery);
-        this.addTop3Files(galery);
         overview = true;
       }
     }
@@ -387,11 +403,11 @@ export default class GalleryScreen extends React.Component {
 
   addNewPage = (galery) => {
     galery.push(this.renderNewPageFolder())
-    galery.push(Folder.empty());
-    galery.push(Folder.empty());
+    //galery.push(Folder.empty());
+    //galery.push(Folder.empty());
   }
 
-  addTop3Files = (galery) => {
+  addTop5Files = (galery) => {
     let files = [];
     this.state.folders.filter(f => f.name == 'Default').map(defFolder => {
       //Alert.alert(JSON.stringify(defFolder))
@@ -400,7 +416,8 @@ export default class GalleryScreen extends React.Component {
         files.push(this.renderPhoto(page))
       })
     });
-    for (let i = 0; i < 3; i++) {
+
+    for (let i = 0; i < 5; i++) {
       if (i < files.length) {
         galery.push(files[i]);
       } else {
@@ -461,11 +478,11 @@ export default class GalleryScreen extends React.Component {
 
   getRowHeader = (index, isOverview) => {
     if (!isOverview) return <View />;
-    if (index == 3) {
+    if (index == 6) {
       return this.getRowHeaderImpl('תיקיות', 'כל התיקיות', this.onAllFolders);
     }
-    if (index == 6) {
-      return this.getRowHeaderImpl('דפים', 'כל הדפים', this.onAllPages);
+    if (index == 3) {
+      return this.getRowHeaderImpl('', 'כל הדפים', this.onAllPages);
     }
     return <View />;
   }

@@ -6,11 +6,15 @@ import {
 } from 'react-native';
 import { FOLDERS_DIR } from './GaleryScreen';
 import * as RNFS from 'react-native-fs';
+import Pdf from 'react-native-pdf';
+import ViewShot from "react-native-view-shot";
+
 import { getSquareButton, colors, getImageDimensions } from './elements'
 import ImageRotate from 'react-native-image-rotate';
 import ModalDropdown from 'react-native-modal-dropdown';
 import { Icon } from 'react-native-elements'
-import { getNewPage, saveFile } from './newPage'
+import { getNewPage, saveFile, cloneToTemp } from './newPage'
+import { reject } from 'rsvp';
 
 
 const OK_Cancel = 1;
@@ -20,7 +24,7 @@ const PickFolder = 3;
 const headerHeight = 60;
 const panBroderDistance = 80;
 
-const newFolderName = 'ספריה חדשה';
+const newFolderName = 'תיקיה חדשה';
 
 export default class IssieSavePhoto extends React.Component {
   static navigationOptions = {
@@ -33,7 +37,7 @@ export default class IssieSavePhoto extends React.Component {
       phase: OK_Cancel,
       cropping: false,
       topView: 0,
-      multiPageState: { pageCount: 0, pages: [] }
+      multiPageState: { pages: [] }
     };
     this.OK.bind(this);
 
@@ -97,9 +101,16 @@ export default class IssieSavePhoto extends React.Component {
 
   componentDidMount = async () => {
     let uri = this.props.navigation.getParam('uri', '');
-    this.setState({ uri: uri });
+    let pdf = false;
+    if (uri.endsWith('.pdf')) {
+      pdf = true;
+      //      Alert.alert(FOLDERS_DIR);
+    }
+    this.setState({ uri, pdf , pdfPage:1});
     this.initFolderList()
-    this.updateImageDimension();
+    if (!pdf) {
+      this.updateImageDimension();
+    }
     this.onLayout();
   }
 
@@ -117,8 +128,37 @@ export default class IssieSavePhoto extends React.Component {
     });
   }
 
-  OK = () => {
+  OK = async () => {
     if (this.state.phase == OK_Cancel) {
+
+      if (this.state.pdf) {
+        let pages = [];
+        let currentPage = this.state.pdfPage;
+        if (this.state.pdfPageCount > 1) {
+          for (let i = 1; i < this.state.pdfPageCount; i++) {
+            let savedPdfPageUri = await this.exportPdfPage(i, currentPage);
+
+            let page = { uri: savedPdfPageUri, index: i - 1 }
+            //push at the begining
+            pages.push(page);
+          }
+          if (pages.length > 0) {
+            multiPageState = { pages: pages }
+          }
+
+        }
+
+        let uri = await this.exportPdfPage(this.state.pdfPageCount);
+    
+        this.setState({
+          uri: uri, multiPageState: pages.length > 0 ?
+            { pages: pages } :
+            this.state.multiPageState,
+          pdf: false
+        });
+
+      }
+
       this.setState({ phase: PickName, folder: "" });
     } else if (this.state.phase == PickName) {
       if (!this.state.pageName || this.state.pageName.length == 0) {
@@ -154,7 +194,8 @@ export default class IssieSavePhoto extends React.Component {
     await RNFS.mkdir(targetFolder)
 
 
-     if (this.state.multiPageState.pages.length > 0) {
+
+    if (this.state.multiPageState.pages.length > 0) {
       //create a folder with the name fo the file
       targetFolder = targetFolder + "/" + fileName;
       //todo check existing
@@ -165,15 +206,38 @@ export default class IssieSavePhoto extends React.Component {
         await saveFile(page.uri, targetFolder + "/" + i + ".jpg");
       }
       filePath = targetFolder + "/" + i + ".jpg";
-     }
+    }
 
-     Alert.alert("saving:" +this.state.uri )
     saveFile(this.state.uri, filePath).then(
-      ()=>this.props.navigation.navigate('Home'),
-      (err)=>Alert.alert("Error at end:"+ err)
+      () => this.props.navigation.navigate('Home'),
+      (err) => Alert.alert("Error at end:" + err)
     );
   }
 
+  exportPdfPage = async (page, currPage) => {
+    return new Promise((resolve, reject) => {
+      if (currPage !== page) {
+        this.setState({ pdfPage: page })
+        setTimeout(() => {
+          let viewShot = this.refs.viewShot;
+          viewShot.capture().then(
+            uri => cloneToTemp(uri).then(newUri => resolve(newUri)),
+            err => {
+              reject(err)
+            }
+          );
+         }, 100);
+      } else {
+        this.refs.viewShot.capture().then(
+          uri => cloneToTemp(uri).then(newUri => resolve(newUri)),
+          err => {
+            //Alert.alert(err);
+            reject(err)
+          }
+        );
+    }
+    });
+  }
 
   Cancel = () => {
     let multiPageState = this.state.multiPageState;
@@ -268,10 +332,10 @@ export default class IssieSavePhoto extends React.Component {
       options={['ללא', ...this.state.folders, newFolderName]} >
       <View style={{
         flexDirection: 'row', justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center', alignContent: 'center'
       }}>
         <Icon name='arrow-drop-down' size={50} color="#4630EB" />
-        <Text style={{ fontSize: 70, textAlign: 'right' }}>{this.state.folder ? this.state.folder : 'ללא'}</Text>
+        <Text style={styles.textInputPicker}>{this.state.folder ? this.state.folder : 'ללא'}</Text>
       </View>
     </ModalDropdown>
   }
@@ -310,14 +374,18 @@ export default class IssieSavePhoto extends React.Component {
       buttons = <View style={styles.okCancelView}>
         {getSquareButton(this.Cancel, colors.red, undefined, "בטל", undefined, 30, undefined, { width: 200, height: 50 })}
         <Text>     </Text>
-        {getSquareButton(this.OK, colors.green, undefined, "שמור" + saveMoreThanOne, undefined, 30, undefined, { width: 200, height: 50 })}
-        <Text>     </Text>
-        {getSquareButton(this.AddPage, colors.green, undefined, "הוסף", "add", 30, undefined, { width: 200, height: 50 })}
+        {getSquareButton(this.OK, colors.green, undefined, this.state.pdf ? "שמור כל הדפים" : "שמור" + saveMoreThanOne, "check", 30, undefined, { width: 200, height: 50 })}
+        {this.state.phase == OK_Cancel && !this.state.pdf ?
+          <Text>     </Text> : null}
+        {this.state.phase == OK_Cancel && !this.state.pdf ?
+          getSquareButton(this.AddPage, colors.green, undefined, "הוסף", "add", 30, undefined, { width: 200, height: 50 }) :
+          null
+        }
 
       </View>;
     }
 
-    if (this.state.phase == OK_Cancel) {
+    if (this.state.phase == OK_Cancel && !this.state.pdf) {
       header = <View style={{ flexDirection: 'row', height: headerHeight }}>
         {getSquareButton(this.crop, colors.blue, colors.blue, undefined, "crop", 45, this.state.cropping)}
         {this.state.cropping ? getSquareButton(this.cancelCrop, colors.blue, undefined, undefined, "cancel", 45, false) : <View />}
@@ -328,33 +396,11 @@ export default class IssieSavePhoto extends React.Component {
       </View>
     }
 
-    //todo - dynamic folders
     if (this.state.phase == PickName) {
       SelectFolder =
         <View style={styles.pickerView}>
-          <Text style={styles.titleText}>ספריה</Text>
+          <Text style={styles.titleText}>תיקיה</Text>
           {this.getFolderPicker()}
-          {/* <Picker
-            style={styles.textInput}
-            itemStyle={styles.textInput}
-            selectedValue={this.state.folder}
-            mode='dropdown'
-            onValueChange={(itemValue, itemIndex) =>
-              this.setState({ folder: itemValue })
-            }>
-
-            <Picker.Item label="ללא" value="" />
-            <Picker.Item label={<Text style={{ alignItems: 'center', flexDirection: 'row' }}>
-              <Thumbnail square style={{ width: 30, height: 20, marginTop: 5 }} source={require('../assets/+90.png')} 
-              /> +90</Text>
-            } value="+90"
-            />
-
-
-            <Picker.Item label="חשבון" value="חשבון" />
-            <Picker.Item label="תורה" value="תורה" />
-            <Picker.Item label="ספריה חדשה" value="new" />
-          </Picker> */}
         </View>
     }
 
@@ -364,7 +410,7 @@ export default class IssieSavePhoto extends React.Component {
         <TextInput style={styles.textInput}
           onChangeText={(text) => this.setState({ pageName: text })}
         />
-        <Text style={styles.titleText}>ספריה</Text>
+        <Text style={styles.titleText}>תיקיה</Text>
         {this.getFolderPicker()}
 
       </View>
@@ -372,7 +418,7 @@ export default class IssieSavePhoto extends React.Component {
 
     if (this.state.phase == PickFolder) {
       NewFolderInput = <View style={styles.textInputView}>
-        <Text style={styles.titleText}>שם הספרייה החדשה</Text>
+        <Text style={styles.titleText}>שם התיקיה החדשה</Text>
         <TextInput style={styles.textInput}
           onChangeText={(text) => this.setState({ newFolderName: text })}
         />
@@ -405,16 +451,43 @@ export default class IssieSavePhoto extends React.Component {
         onLayout={this.onLayout}>
 
         {header}
-        <ImageBackground
-          style={styles.bgImage}
-          blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
-          source={this.state.phase == OK_Cancel ? { uri } : undefined}
-        >
-          {cropFrame}
-          {PageNameInput}
-          {NewFolderInput}
-          {buttons}
-        </ImageBackground>
+        {this.state.pdf ?
+          <View style={{
+            flex: 1
+          }}>
+            <ViewShot ref="viewShot" options={{ format: "jpg", quality: 0.9 }}
+              style={{
+                flex: 1
+              }}>
+              <Pdf
+                source={{ uri: this.state.uri }}
+                page={this.state.pdfPage}
+                style={{ flex: 1, width: '100%' }}
+                onLoadComplete={(numberOfPages, filePath) => {
+                  this.setState({ pdfPageCount: numberOfPages });
+                }}
+
+                onError={(error) => {
+                  //Alert.alert(error);
+                }}
+              >
+
+              </Pdf>
+            </ViewShot>
+            {PageNameInput}
+            {NewFolderInput}
+            {buttons}
+          </View> :
+          <ImageBackground
+            style={styles.bgImage}
+            blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
+            source={this.state.phase == OK_Cancel ? { uri } : undefined}
+          >
+            {cropFrame}
+            {PageNameInput}
+            {NewFolderInput}
+            {buttons}
+          </ImageBackground>}
       </View>
     );
   };
@@ -447,7 +520,7 @@ const styles = StyleSheet.create({
 
   okCancelView: {
     position: 'absolute',
-    top: "80%",
+    top: "5%",
     left: 50, right: 50, //middle
     flex: 1,
     alignItems: 'center',
@@ -483,22 +556,6 @@ const styles = StyleSheet.create({
     top: "15%",
     backgroundColor: 'transparent'
   },
-  textInput: {
-    fontSize: 70,
-    textAlign: "right",
-    fontWeight: 'bold',
-    color: 'black',
-    width: "100%",
-    backgroundColor: 'white'
-  },
-  pickerButton: {
-    flex: 1,
-    height: 70,
-    fontWeight: 'bold',
-    color: 'black',
-    width: "100%",
-    backgroundColor: 'white'
-  },
   titleText: {
     fontSize: 70,
     textAlign: "right",
@@ -506,5 +563,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
     backgroundColor: 'transparent'
+  },
+  textInput: {
+    fontSize: 70,
+    textAlign: "right",
+    fontWeight: 'bold',
+    color: 'black',
+    width: '100%',
+    backgroundColor: 'white'
+  },
+  textInputPicker: {
+    fontSize: 70,
+    textAlign: "right",
+    fontWeight: 'bold',
+    color: 'black',
+    backgroundColor: 'white'
+  },
+  pickerButton: {
+    flex: 1,
+    height: 80,
+    fontSize: 70,
+    fontWeight: 'bold',
+    color: 'black',
+    width: "100%",
+    backgroundColor: 'white'
   }
 });
