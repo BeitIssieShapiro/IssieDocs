@@ -217,7 +217,8 @@ export default class GalleryScreen extends React.Component {
     this.setState({ isNewPageMode: false });
     getNewPage(SRC_CAMERA,
       (uri) => this.props.navigation.navigate('SavePhoto', {
-        uri: uri, imageSource: SRC_CAMERA
+        uri: uri, imageSource: SRC_CAMERA,
+        folder: this.props.navigation.getParam('folder', '')
       }),
       //cancel
       () => { }
@@ -233,7 +234,8 @@ export default class GalleryScreen extends React.Component {
     }, (response) => {
       if (!response.didCancel) {
         this.props.navigation.navigate('SavePhoto', {
-          uri: response.uri
+          uri: response.uri,
+          folder: this.props.navigation.getParam('folder', '')
         });
       }
     });
@@ -243,7 +245,8 @@ export default class GalleryScreen extends React.Component {
     this.setState({ isNewPageMode: false });
 
     this.props.navigation.navigate('SavePhoto', {
-      uri: FOLDERS_DIR+ 'test/test2.pdf'
+      uri: FOLDERS_DIR+ 'test/test2.pdf',
+      folder: this.props.navigation.getParam('folder', '')
     });
   }
 

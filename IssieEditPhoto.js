@@ -2,7 +2,7 @@
 import React from 'react';
 import {
   AppRegistry, Image, ScrollView, StyleSheet, TextInput, View,
-  TouchableOpacity, Text, Alert, PanResponder, Dimensions
+  TouchableOpacity, Text, Alert, PanResponder, Dimensions, Keyboard
 } from 'react-native';
 import { Icon } from 'react-native-elements'
 import RNSketchCanvas from './modified_canvas/index';
@@ -32,21 +32,21 @@ export default class IssieEditPhoto extends React.Component {
       headerTintColor: 'white',
       headerTitleStyle: {
         fontSize: 30,
-        fontWeight:'bold'
+        fontWeight: 'bold'
       },
     };
   }
-  
+
   constructor() {
     super();
 
     this.Load = this.Load.bind(this);
 
     this._panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: (evt, gestureState) => this.state.showTextInput,
-      onStartShouldSetPanResponderCapture: (evt, gestureState) => this.state.showTextInput,
-      onMoveShouldSetPanResponder: (evt, gestureState) => this.state.showTextInput,
-      onMoveShouldSetPanResponderCapture: (evt, gestureState) => this.state.showTextInput,
+      onStartShouldSetPanResponder: (evt, gestureState) => this._shouldDragText(evt, gestureState),
+      onStartShouldSetPanResponderCapture: (evt, gestureState) => this._shouldDragText(evt, gestureState),
+      onMoveShouldSetPanResponder: (evt, gestureState) => this._shouldDragText(evt, gestureState),
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => this._shouldDragText(evt, gestureState),
       onPanResponderMove: (evt, gestureState) => {
         if (this.state.textMode) {
           this.setState({
@@ -55,6 +55,9 @@ export default class IssieEditPhoto extends React.Component {
         }
       }
     });
+
+    this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this._keyboardDidShow);
+    this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this._keyboardDidHide);
 
     this.state = {
       color: colors.black,
@@ -74,9 +77,22 @@ export default class IssieEditPhoto extends React.Component {
       xOffset: 0,
       yOffset: 0,
       xText: 0,
-      yText: 0
+      yText: 0,
+      keyboardHeight:0 
     }
 
+  }
+
+  _shouldDragText = (evt, gestureState) => {
+    return this.state.showTextInput;
+  }
+
+  _keyboardDidShow = (e) => {
+    this.setState({ keyboardHeight: e.endCoordinates.height });
+  }
+
+  _keyboardDidHide = (e) => {
+    this.setState({ keyboardHeight: 0 });
   }
 
   componentDidMount = async () => {
@@ -96,10 +112,10 @@ export default class IssieEditPhoto extends React.Component {
       let dataUrls = [];
 
       dataUrls.push(await this.exportToBase64());
-      for (let i = 1;i<this.state.page.pages.length;i++) {
+      for (let i = 1; i < this.state.page.pages.length; i++) {
         const currentFile = this.state.page.pages[i];
         const metaDataUri = currentFile + ".json";
-        this.setState({currentFile, metaDataUri })
+        this.setState({ currentFile, metaDataUri })
         this.loadFile(metaDataUri);
         dataUrls.push(await this.exportToBase64());
       }
@@ -130,7 +146,7 @@ export default class IssieEditPhoto extends React.Component {
             reject(err.toString());
             return;
           }
-          resolve ( 'data:image/png;base64,' + data);
+          resolve('data:image/png;base64,' + data);
         }
       ), 300)
     });
@@ -343,7 +359,10 @@ export default class IssieEditPhoto extends React.Component {
 
     const currentFile = this.state.page.pages[currentIndex];
     const metaDataUri = currentFile + ".json";
-    this.setState({ currentFile: currentFile, metaDataUri: metaDataUri })
+    this.setState({
+      currentFile: currentFile, metaDataUri: metaDataUri,
+      zoom: 1, xOffset: 0, yOffset: 0
+    });
     setTimeout(this.Load, 100);
 
   }
@@ -411,8 +430,17 @@ export default class IssieEditPhoto extends React.Component {
           <View style={{ flex: 1 }}
             ref={v => this.topView = v}
             pointerEvents={this.state.textMode ? 'box-only' : 'auto'}
+          
           >
-            <ScrollView minimumZoomScale={1} maximumZoomScale={maxZoom} zoomScale={this.state.zoom} style={{ flex: 1 }} contentContainerStyle={{ flex: 1 }}>
+            <ScrollView 
+              minimumZoomScale={1} 
+              maximumZoomScale={maxZoom} 
+              zoomScale={this.state.zoom} 
+              style={{ flex:1 }} 
+              contentContainerStyle={{flex:1}}
+              scrollEnabled={true}
+              onScroll={event => Alert.alert("Scroll")}
+              >
               {this.getCanvas()}
             </ScrollView>
           </View>
@@ -511,7 +539,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getArrow = (location, func) => {
-    let style = { flex: 1, position: 'absolute', zIndex: 100 }
+    let style = { flex: 1, position: 'absolute', zIndex: 10000 }
     let deg = 0;
     if (location == TOP && this.state.yOffset < 0) {
       style.top = topLayer, style.left = 100, deg = -90;
@@ -519,8 +547,8 @@ export default class IssieEditPhoto extends React.Component {
     } else if (location == RIGHT && this.state.zoom > 1) {
       style.top = topLayer + this.state.canvasH / 2;
       style.right = 5, deg = 0;
-    } else if (location == BOTTOM && this.state.zoom > 1) {
-      style.top = topLayer + this.state.canvasH, deg = 90;
+    } else if (location == BOTTOM && (this.state.zoom > 1 || this.state.keyboardHeight > this.state.yOffset)) {
+      style.top = topLayer + this.state.canvasH - 60 - this.state.keyboardHeight, deg = 90;
       style.left = this.state.sideMargin + this.state.canvasW / 2
     } else if (location == LEFT && this.state.xOffset < 0) {
       style.top = topLayer + this.state.canvasH / 2;
@@ -535,8 +563,8 @@ export default class IssieEditPhoto extends React.Component {
       <Icon
         onPress={func}
         name='play-arrow'
-        size={30}
-        color="#4630EB"
+        size={70}
+        color="#D16F28"
       />
     </View>
   }
@@ -549,55 +577,25 @@ export default class IssieEditPhoto extends React.Component {
     return <View
       style={{
         flexDirection: 'row',
-        alignItems: 'stretch',
         height: '10%',
         position: 'absolute',
         bottom: 0,
         left: this.state.sideMargin,
         width: this.state.canvasW,
+        justifyContent: 'space-between',
         zIndex: 1000
       }}
     >
       {(this.state.currentFile == this.state.page.pages[0]) ?
         <View /> :
-        <TouchableOpacity
-          onPress={() => this.movePage(-1)}
-          style={{
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center'
+        getSquareButton(() => this.movePage(-1), colors.green, undefined, 'דף קודם', 'chevron-left', 30, undefined, { width: 150, height: 60 }, 60, true, 15)
 
-          }}>
-
-          <Icon
-
-            name='chevron-left'
-            size={60}
-            color="black"
-          />
-          <Text style={{ fontSize: 25 }}>דף קודם</Text>
-        </TouchableOpacity>
       }
 
       {(this.state.currentFile == this.state.page.pages[this.state.page.pages.length - 1]) ?
         <View /> :
-        <TouchableOpacity
-          onPress={() => this.movePage(1)}
-          style={{
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'flex-end'
-          }}>
+        getSquareButton(() => this.movePage(1), colors.green, undefined, 'דף הבא', 'chevron-right', 30, undefined, { width: 150, height: 60 }, 60, false, 0, 15 )
 
-          <Text style={{ fontSize: 25 }}>דף הבא</Text>
-          <Icon
-
-            name='chevron-right'
-            size={60}
-            color="black"
-          />
-        </TouchableOpacity>
       }
     </View>
   }

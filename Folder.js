@@ -74,11 +74,12 @@ export default class Folder extends React.Component {
           height: pictureSize * heightBar,
           right: -10,
           left: -10,
-          alignContent: 'center', alignItems: 'center',
+          alignItems: 'center',
+          justifyContent:'center',
           zIndex: 2,
           borderRadius: 5
         }}>
-          <Text style={{ fontSize: 40, color: '#505B64' }}>{this.props.name}</Text>
+          <Text style={{ fontSize: 45, fontWeight:'bold', color: '#505B64' }}>{this.props.name}</Text>
         </LinearGradient>
         <LinearGradient
           colors={['#325272', '#628EB6']}

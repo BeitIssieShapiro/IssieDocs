@@ -15,23 +15,32 @@ export const colors = {
     disabled: ['#A8C2D8', '#A8C2D8']
 }
 
-export function getSquareButton(func, color, selectedColor, txt, icon, size, selected, dimensions) {
+export function getSquareButton(func, color, selectedColor, txt, icon, size, selected, dimensions,
+    iconSize, iconFirst, rMargin, lMargin) {
     let dim = {
         width: styles.squareShapeView.width,
-        width: styles.squareShapeView.height
+        height: styles.squareShapeView.height
     }
     if (dimensions) {
         dim = dimensions
     }
+    if (!iconSize)
+        iconSize = size;
+
+    if (!rMargin) rMargin=0;
+    if (!lMargin) lMargin=0;
+
+    if (iconFirst == undefined)
+        iconFirst = false;
 
     return <TouchableOpacity
         onPress={func}
     >
         <LinearGradient
             colors={selected ? selectedColor : color}
-            style={[styles.squareShapeView, dim, selected ? styles.selected : styles.notSelected]}>
-            <Text style={{ fontSize: size, color: 'white' }}>{txt?txt:''}</Text>
-            {icon?<Icon name={icon} size={size} color='white' />:null}
+            style={[styles.squareShapeView, dim, selected ? styles.selected : styles.notSelected, iconFirst?{flexDirection:'row-reverse'}:{}]}>
+            <Text style={{ fontSize: size, color: 'white', marginLeft:lMargin, marginRight:rMargin }}>{txt ? txt : ''}</Text>
+            {icon ? <Icon name={icon} size={iconSize} color='white' /> : null}
         </LinearGradient>
     </TouchableOpacity>
 }
@@ -42,10 +51,10 @@ export async function getImageDimensions(uri) {
             Image.getSize(uri, (width, height) => {
                 resolve({ w: width, h: height });
             },
-            (err) => {
-                //Alert.alert(err)
-                reject(err)
-            });
+                (err) => {
+                    //Alert.alert(err)
+                    reject(err)
+                });
         }
     );
 }
@@ -53,9 +62,9 @@ export async function getImageDimensions(uri) {
 const styles = StyleSheet.create({
     squareShapeView: {
         marginHorizontal: 2.5,
-        alignItems:'center',
-        alignContent:'center',
-        flexDirection:'row',
+        alignItems: 'center',
+        alignContent: 'center',
+        flexDirection: 'row',
         height: 50,
         width: 50,
         backgroundColor: '#39579A',

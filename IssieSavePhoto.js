@@ -101,12 +101,14 @@ export default class IssieSavePhoto extends React.Component {
 
   componentDidMount = async () => {
     let uri = this.props.navigation.getParam('uri', '');
+    let folder = this.props.navigation.getParam('folder', '')
+
     let pdf = false;
     if (uri.endsWith('.pdf')) {
       pdf = true;
       //      Alert.alert(FOLDERS_DIR);
     }
-    this.setState({ uri, pdf , pdfPage:1});
+    this.setState({ uri, pdf , pdfPage:1, folder:folder});
     this.initFolderList()
     if (!pdf) {
       this.updateImageDimension();
@@ -159,7 +161,7 @@ export default class IssieSavePhoto extends React.Component {
 
       }
 
-      this.setState({ phase: PickName, folder: "" });
+      this.setState({ phase: PickName });
     } else if (this.state.phase == PickName) {
       if (!this.state.pageName || this.state.pageName.length == 0) {
         Alert.alert('חובה לבחור שם לדף');
@@ -209,7 +211,8 @@ export default class IssieSavePhoto extends React.Component {
     }
 
     saveFile(this.state.uri, filePath).then(
-      () => this.props.navigation.navigate('Home'),
+      () => this.props.navigation.navigate('Home', 
+      this.state.folder == 'Default'? {}: {folder:this.state.folder}),
       (err) => Alert.alert("Error at end:" + err)
     );
   }
@@ -231,7 +234,6 @@ export default class IssieSavePhoto extends React.Component {
         this.refs.viewShot.capture().then(
           uri => cloneToTemp(uri).then(newUri => resolve(newUri)),
           err => {
-            //Alert.alert(err);
             reject(err)
           }
         );
@@ -374,11 +376,11 @@ export default class IssieSavePhoto extends React.Component {
       buttons = <View style={styles.okCancelView}>
         {getSquareButton(this.Cancel, colors.red, undefined, "בטל", undefined, 30, undefined, { width: 200, height: 50 })}
         <Text>     </Text>
-        {getSquareButton(this.OK, colors.green, undefined, this.state.pdf ? "שמור כל הדפים" : "שמור" + saveMoreThanOne, "check", 30, undefined, { width: 200, height: 50 })}
+        {getSquareButton(this.OK, colors.green, undefined, this.state.pdf ? "שמור כל הדפים" : "שמור" + saveMoreThanOne, "check", 30, undefined, { width: 200, height: 50 }, 45, true)}
         {this.state.phase == OK_Cancel && !this.state.pdf ?
           <Text>     </Text> : null}
         {this.state.phase == OK_Cancel && !this.state.pdf ?
-          getSquareButton(this.AddPage, colors.green, undefined, "הוסף", "add", 30, undefined, { width: 200, height: 50 }) :
+          getSquareButton(this.AddPage, colors.green, undefined, "הוסף", "add", 30, undefined, { width: 200, height: 50 }, 45, true) :
           null
         }
 

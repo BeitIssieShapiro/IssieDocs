@@ -58,10 +58,10 @@ export default class Photo extends React.Component {
             height:pictureSize*heightBar,
             right:-10,
             left:-10,
-            alignContent:'center', alignItems:'center',
+            justifyContent:'center', alignItems:'center',
             zIndex:2
             }}>
-            <Text style={{fontSize:40, color:'#505B64'}}>{fileName + (pageCount>1?'+':'')}</Text>
+            <Text style={{fontSize:30, color:'#505B64'}}>{fileName + (pageCount>1?'+':'')}</Text>
           </LinearGradient>
           <LinearGradient
           colors={['#325272', '#628EB6']}
