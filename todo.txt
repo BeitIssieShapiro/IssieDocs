@@ -1,31 +1,41 @@
+Features
+--------
 V* Import from albom
 V* export to albom (via share)
 V* Send to mail
-* Multiple photos in one pages
-* Support import pdf
-* Scroll edited page when keyboard opened
-
-* Add app-configuration
-  * Navigate with buttons and not swipe
-  
-  
-* In zoom - move arround with swipe
-* new from within folder, goes to folder
-* enlarge frame of folder picker
-* - optimize loading list if folders any times
-* headers' color (where navigation happens)
+V* Multiple photos in one pages
+V* Support import pdf
+X* Scroll edited page when keyboard opened  
 * Move page to another folder
+* brush size cosmetics
+
+X* In zoom - move arround with swipe
+V* new from within folder, goes to folder
+V* enlarge frame of folder picker
+* optimize loading list of folders any times
+V* headers' color (where navigation happens)
+
 V * Delete button - style
 V * Ask before Delete
 V * In editPhoto, when changing text size, the text does not change
-* Image for folders:
-  * when creating new folder
-  * when picking
-  * in galery
+* Add app-configuration
+  * Navigate with buttons and not swipe
+
+V* Image for folders:
+  V* when creating new folder
+  V* when picking
+  V* in galery
 V * cancel button in camera screen
 V * zoom in camera
 
 
 Bugs:
-* no shalef for pages - only in iPad?
+-----
+* top:nan when picking folder
+V* no shalef for pages - only in iPad?
 * input Text positioning - fine tune
+* Input text position after rotation
+V* Unselect folder crash
+* import pdf - extra page
+* cosmetics of new folder
+

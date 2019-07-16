@@ -34,17 +34,15 @@ export default class Folder extends React.Component {
   toggleSelection = () => {
     this.setState(
       { selected: !this.state.selected },
-      () => this.props.onSelectionToggle(this.props.uri, this.state.selected, this, 'folder')
+      () => this.props.onSelectionToggle({path:this.props.path}, this.state.selected, this, 'folder')
     );
   }
   getBackgroundImage = () => {
-
     if (this.props.files && this.props.files.length > 0) {
-      //Alert.alert('File:'+this.props.files[0]);
       return <View style={styles.picture}>
         <ImageBackground
           style={styles.picture}
-          source={{ uri: this.props.files[0] }}
+          source={{ uri: this.props.files[0].path }}
         >
           {
             this.state.selected && <Icon name="check-circle" size={30} color="#4630EB" />
@@ -60,6 +58,14 @@ export default class Folder extends React.Component {
   }
 
   render() {
+    let folderName = this.props.name;
+    let iconName = '';
+    let parts = folderName.split("$")
+    if (parts.length == 2) {
+        folderName = parts[0]
+        iconName = parts[1]
+    }
+
     return (
       <TouchableOpacity
         style={styles.pictureWrapper}
@@ -79,7 +85,8 @@ export default class Folder extends React.Component {
           zIndex: 2,
           borderRadius: 5
         }}>
-          <Text style={{ fontSize: 45, fontWeight:'bold', color: '#505B64' }}>{this.props.name}</Text>
+          <Text style={{ fontSize: 45, fontWeight:'bold', color: '#505B64' }}>{folderName}</Text>
+          {iconName && iconName.length>0?<Icon name={iconName} size={40}></Icon>:null}
         </LinearGradient>
         <LinearGradient
           colors={['#325272', '#628EB6']}

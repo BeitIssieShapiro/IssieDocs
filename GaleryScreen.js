@@ -6,6 +6,7 @@ import {
 import * as RNFS from 'react-native-fs';
 import LinearGradient from 'react-native-linear-gradient';
 import ImagePicker from 'react-native-image-picker';
+import DocumentPicker from 'react-native-document-picker';
 import Dash from 'react-native-dash';
 import { getSquareButton, colors } from './elements'
 
@@ -17,8 +18,10 @@ import { SRC_CAMERA, getNewPage } from './newPage';
 const DELETE_PAGE_TITLE = 'מחיקת דף';
 const BEFORE_DELETE_PAGE_QUESTION = 'האם למחוק את הדף?';
 const DELETE_FOLDER_TITLE = 'מחיקת תיקייה';
-const BEFORE_DELETE_FOLDER_QUESTION = 'מחיקת תיקייה תגרום למחיקת כל הדפים בתוכה, האם למחוק?';
+const DELETE_FOLDER_AN_PAGE_TITLE = 'מחיקת תיקיות ודפים';
 
+const BEFORE_DELETE_FOLDER_QUESTION = 'מחיקת תיקייה תגרום למחיקת כל הדפים בתוכה, האם למחוק?';
+const BEFORE_DELETE_FOLDER_AND_PAGES_QUESTION = 'בחרת למחוק דפים ותיקיות. מחיקת התיקיות תמחק אם כל הדפים בתוכן. האם להמשיך?';
 
 export const FOLDERS_DIR = RNFS.DocumentDirectoryPath + '/folders/';
 export const pictureSize = 150;
@@ -35,16 +38,18 @@ export const pictureWrapperStyle = {
 export default class GalleryScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
     let folder = navigation.getParam('folder', 'דפי עבודה');
+    folder = folder.split('$')[0]
+
     let allFolders = navigation.getParam('allFolders', false);
     return {
-      title: allFolders? 'כל התיקיות':folder,
+      title: allFolders ? 'כל התיקיות' : folder,
       headerStyle: {
         backgroundColor: '#8EAFCE',
       },
       headerTintColor: 'white',
       headerTitleStyle: {
         fontSize: 30,
-        fontWeight:'bold'
+        fontWeight: 'bold'
       },
     };
   }
@@ -94,11 +99,11 @@ export default class GalleryScreen extends React.Component {
             pages = innerPages.filter(f => !f.name.endsWith(".json")).map(p => p.path);
             pages = pages.sort();
           }
-          files.push( { name: fi.name, path: fi.path, isFolder: fi.isDirectory(), pages: pages});
+          files.push({ name: fi.name, path: fi.path, isFolder: fi.isDirectory(), pages: pages });
         }
 
         //Alert.alert(folder.name + " : "+JSON.stringify(files))
-        foldersState.push({ name: folder.name, files: files });
+        foldersState.push({ name: folder.name, path: folder.path,files: files });
       }
       this.setState({ folders: foldersState });
 
@@ -108,15 +113,15 @@ export default class GalleryScreen extends React.Component {
 
   onLayout = () => {
     let windowSize = Dimensions.get("window");
-    this.setState({ windowSize});
+    this.setState({ windowSize });
   }
 
   toggleSelection = (item, isSelected, obj, type) => {
     let selected = this.state.selected;
     if (isSelected) {
-      selected.push({page: item, obj: obj, type: type });
+      selected.push({ item: item, obj: obj, type: type });
     } else {
-      selected = selected.filter(sel => sel.page.path !== item.path);
+      selected = selected.filter(sel => (sel.item && sel.item.path  !== item.path)); 
     }
     this.setState({ selected });
   };
@@ -127,7 +132,6 @@ export default class GalleryScreen extends React.Component {
   }
 
   renderPhoto = (page) => {
-    //Alert.alert(JSON.stringify(page))
     return <Photo
       key={page.path}
       page={page}
@@ -141,6 +145,7 @@ export default class GalleryScreen extends React.Component {
       key={folder.name}
       name={folder.name}
       files={folder.files}
+      path={folder.path}
       onSelectionToggle={this.toggleSelection}
       onPress={this.onFolderPress.bind(this, folder)}
     />;
@@ -183,16 +188,35 @@ export default class GalleryScreen extends React.Component {
   }
 
   Delete = () => {
-    if (this.state.selected) {
-      Alert.alert(
-        this.state.selected.type === 'folder' ? DELETE_FOLDER_TITLE : DELETE_PAGE_TITLE,
-        this.state.selected.type === 'folder' ? BEFORE_DELETE_FOLDER_QUESTION : BEFORE_DELETE_PAGE_QUESTION,
 
+    let isFolders = false;
+    let isPages = false;
+
+    if (this.state.selected.length) {
+      for (let i=0;i< this.state.selected.length;i++) {
+        let isFolder = this.state.selected[i].type == 'folder'
+        isPages = isPages || !isFolder;
+        isFolders = isFolders || isFolder;
+      }
+      let title, msg;
+      if (isFolders && isPages) {
+        title = DELETE_FOLDER_AN_PAGE_TITLE;
+        msg = BEFORE_DELETE_FOLDER_AND_PAGES_QUESTION;
+      } else if (isFolders) {
+        title = DELETE_FOLDER_TITLE;
+        msg = BEFORE_DELETE_FOLDER_QUESTION;
+      } else {
+        title = DELETE_PAGE_TITLE;
+        msg = BEFORE_DELETE_PAGE_QUESTION;
+      }
+
+
+      Alert.alert(title, msg,
         [
           {
             text: 'מחק', onPress: () => {
               this.state.selected.forEach((toDelete) => {
-                RNFS.unlink(toDelete.page.path).then(() => {
+                RNFS.unlink(toDelete.item.path).then(() => {
                   RNFS.unlink(toDelete + ".json").catch((e) => {/*do nothing*/ });
                 });
               })
@@ -212,6 +236,9 @@ export default class GalleryScreen extends React.Component {
     }
   }
 
+  MoveTo = () => {
+    Alert.alert("אפשרות זו טרם מומשה...");
+  }
 
   showCamera = () => {
     this.setState({ isNewPageMode: false });
@@ -244,10 +271,18 @@ export default class GalleryScreen extends React.Component {
   ShowFileExplorer = () => {
     this.setState({ isNewPageMode: false });
 
-    this.props.navigation.navigate('SavePhoto', {
-      uri: FOLDERS_DIR+ 'test/test2.pdf',
-      folder: this.props.navigation.getParam('folder', '')
-    });
+   DocumentPicker.pick({
+        type: [DocumentPicker.types.images, DocumentPicker.types.pdf]
+      }).then( res => {
+        this.props.navigation.navigate('SavePhoto', {
+          uri: res.uri,
+          folder: this.props.navigation.getParam('folder', '')
+        });
+      }).catch(err=> {
+        if (!DocumentPicker.isCancel(err)) {
+          Alert.alert(err);
+        }
+      });
   }
 
   Share = () => {
@@ -257,19 +292,6 @@ export default class GalleryScreen extends React.Component {
         page: this.state.selected[0].page,
         share: true
       })
-    /*
-        RNFS.readFile(this.state.selected[0], 'base64').then(data => {
-          let dataUrl = 'data:image/png;base64,' + data;
-    
-          const shareOptions = {
-            title: 'שתף בעזרת...',
-            subject: 'דף עבודה',
-            url: dataUrl
-          };
-      
-          Share.open(shareOptions);
-        })
-    */
   }
 
   render() {
@@ -378,18 +400,22 @@ export default class GalleryScreen extends React.Component {
     return (
       <LinearGradient style={styles.container} colors={['#F1EEE6', '#BEB39F']}
         onLayout={this.onLayout}>
-          
+
         <ScrollView contentComponentStyle={{ flex: 1 }}>
           {
             this.arrange(galery, overview)
           }
         </ScrollView>
-        
+
         <View style={{ flexDirection: 'row' }}>
           {  //delete
             this.state.selected.length > 0 ?
               getSquareButton(this.Delete, colors.red, undefined, 'מחק', undefined, 30, false, { width: 180, height: 50 }) :
-              //this.getButton(this.Delete, '#8ed1fc', "מחק") : 
+              <View />
+          }
+          {  //move
+            this.state.selected.length == 1 && this.state.selected[0].type !== 'folder' ?
+              getSquareButton(this.MoveTo, colors.blue, undefined, 'העבר ל...', undefined, 30, false, { width: 180, height: 50 }) :
               <View />
           }
           {  //Share
@@ -415,7 +441,7 @@ export default class GalleryScreen extends React.Component {
     this.state.folders.filter(f => f.name == 'Default').map(defFolder => {
       //Alert.alert(JSON.stringify(defFolder))
       defFolder.files.map((page) => {
-        
+
         files.push(this.renderPhoto(page))
       })
     });
@@ -455,8 +481,8 @@ export default class GalleryScreen extends React.Component {
           {this.getRowHeader(index, isOverview)}
 
           <View style={{
-             flex: 1,
-             height: this.state.windowSize.height / 3.9 
+            flex: 1,
+            height: this.state.windowSize.height / 3.9
           }}>
 
             <Image source={this.state.shelf}
@@ -587,3 +613,23 @@ const styles = StyleSheet.create({
     color: 'white',
   }
 });
+
+// function show(obj, level) {
+
+// }
+
+// function showDeep(obj, level) {
+//   let msg
+//   for (let key in obj) {
+//     if (obj[key]
+//     msg += obj[key]
+//   }
+// }
+
+// function IsPrimaryDataType( input ) {
+// 	var returnFlag = false;
+// 	if( input === null || input === 'undefined' || typeof input !==  'object' ) {
+// 		returnFlag = true;
+// 	}
+// 	return returnFlag;
+// }

@@ -5011,6 +5011,11 @@ react-native-device-info@^1.6.1:
   resolved "https://registry.yarnpkg.com/react-native-device-info/-/react-native-device-info-1.6.1.tgz#717171d9ad1ce38358e8f92ade21d41a7047fc02"
   integrity sha512-txl6xVbRyGe3QTIRtMgUXZqwxcTT5w48urbFWVlGmbR0fi49GsoVY1q6DiA2fa/HMksD8osAZh8eHuNLSiRMhg==
 
+react-native-document-picker@^3.2.2:
+  version "3.2.2"
+  resolved "https://registry.yarnpkg.com/react-native-document-picker/-/react-native-document-picker-3.2.2.tgz#d9774cb95d44f9b993600a048b0f18e7dd5ecea2"
+  integrity sha512-0vnWKfAWNxKlo7swZE0I66uF4zqp7uy6eUD/TjhD+xd1xkX9WNX5rbD/xMS46KOAcyZsp+OatxRWd7acPSL/Xg==
+
 react-native-elements@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/react-native-elements/-/react-native-elements-1.1.0.tgz#f99bcda4459a886f3ab4591c684c099d37aedf2b"
@@ -5023,6 +5028,11 @@ react-native-elements@^1.1.0:
     prop-types "^15.5.8"
     react-native-ratings "^6.3.0"
     react-native-status-bar-height "^2.2.0"
+
+react-native-file-picker@^0.0.16:
+  version "0.0.16"
+  resolved "https://registry.yarnpkg.com/react-native-file-picker/-/react-native-file-picker-0.0.16.tgz#febaf0d4fe2ffef10d8e5c5c0e1f54ee32228718"
+  integrity sha512-6eRpO8zTbD/4NCn0roFmZpPi3/RzGVH86OYAfzb1wlPicqdl5Ep0l4RVuftjDtBl/XHz7iUIdsZFfDW9UrfOKQ==
 
 react-native-fs@^2.13.3:
   version "2.13.3"
@@ -5112,6 +5122,11 @@ react-native-tab-view@^1.2.0, react-native-tab-view@^1.3.4:
   integrity sha512-YnTO4tavO0TXN1nHVQel+4IB0SYoke+moAbdsai9I5DlQ2PTtW4077Vm2N9cdN7zCb5JoWKHulyB9jtTdKR3fQ==
   dependencies:
     prop-types "^15.6.1"
+
+react-native-text-size@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/react-native-text-size/-/react-native-text-size-3.0.0.tgz#2a85757cb44c7497ad6422ebb2d53344c6634821"
+  integrity sha512-FCYpPVd8PYwgt6JSU7+k7eQtJtTAdupQVGqUNPViy/ggoUY0GlQL+rskRkuq/xd0PDro2jKkdo0w/LtAxZDh6A==
 
 react-native-vector-icons@^6.4.2:
   version "6.4.2"

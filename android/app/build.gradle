@@ -138,6 +138,9 @@ android {
 }
 
 dependencies {
+    implementation project(':react-native-text-size')
+    implementation project(':react-native-document-picker')
+    implementation project(':react-native-file-picker')
     implementation project(':react-native-pdf')
     implementation project(':rn-fetch-blob')
     implementation project(':react-native-share')

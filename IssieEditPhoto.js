@@ -13,14 +13,25 @@ import Share from 'react-native-share';
 import DoQueue from './do-queue';
 
 import { getSquareButton, colors, getImageDimensions } from './elements'
-
+import rnTextSize from 'react-native-text-size'
 
 const topLayer = 51 + 8 + 8;
 const maxZoom = 3;
 const marginTop = 4;
 const TOP = 0, RIGHT = 1, BOTTOM = 2, LEFT = 3;
 const DEFAULT_STROKE_WIDTH = 5;
+const INITIAL_TEXT_SIZE = 80;
 
+async function measureText(fontSize, txt) {
+  return rnTextSize.measure({
+    text: txt,             // text to measure, can include symbols
+    width: 1000,            // max-width of the "virtual" container
+    fontFamily: undefined,
+    fontSize: fontSize,
+    fontStyle: 'normal',
+    fontWeight: 'normal'
+  })
+}
 
 export default class IssieEditPhoto extends React.Component {
   static navigationOptions = ({ navigation }) => {
@@ -53,6 +64,9 @@ export default class IssieEditPhoto extends React.Component {
             xText: this.s2aW(gestureState.moveX), yText: this.s2aH(gestureState.moveY)
           });
         }
+      },
+      onPanResponderRelease: () => {
+        if (this.state.textMode) this.SaveText();
       }
     });
 
@@ -67,9 +81,11 @@ export default class IssieEditPhoto extends React.Component {
       strokeWidth: DEFAULT_STROKE_WIDTH,
       queue: new DoQueue(),
       sideMargin: 0,
+      windowW: 1000,
       canvasW: 1000,
       canvasH: 1000,
       inputTextHeight: 40,
+      inputTextWidth: 0,
       canvasTexts: [],
       topView: 0,
       zoom: 1.0,
@@ -78,7 +94,10 @@ export default class IssieEditPhoto extends React.Component {
       yOffset: 0,
       xText: 0,
       yText: 0,
-      keyboardHeight:0 
+      keyboardHeight: 0,
+      needCanvasUpdate: false,
+      needCanavaDataSave: false,
+      needCanvasUpdateTextOnly: false
     }
 
   }
@@ -100,9 +119,11 @@ export default class IssieEditPhoto extends React.Component {
     const currentFile = page.pages.length == 0 ? page.path : page.pages[0];
 
     const metaDataUri = currentFile + ".json";
-    this.setState({ page: page, currentFile: currentFile, metaDataUri: metaDataUri })
-    setTimeout(this.Load, 100);
+    this.setState({ page: page, currentFile: currentFile, metaDataUri: metaDataUri },
+      this.Load);
+    //setTimeout(this.Load, 500);
   }
+
 
   Load = async () => {
     this.loadFile(this.state.metaDataUri);
@@ -165,7 +186,8 @@ export default class IssieEditPhoto extends React.Component {
     },
       (err) => {/*no json file yet*/ }
     ).catch((e) => {/*no json file yet*/ }).finally(() => {
-      this.UpdateCanvas(true)
+      //this.UpdateCanvas(true)
+      this.setState({ needCanvasUpdate: true, needCanavaDataSave: false });
     });
   }
 
@@ -196,8 +218,8 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   //a = absolute, s=screen, c=canvas
-  s2aW = (w) => { return (w - this.state.sideMargin) / this.state.zoom - this.state.xOffset }
-  s2aH = (h) => { return (h - this.state.topView) / this.state.zoom - this.state.yOffset }// - this.state.inputTextHeight/2}
+  s2aW = (w) => { return (w - this.state.sideMargin) / ((this.state.zoom - this.state.xOffset)) }
+  s2aH = (h) => { return (h - this.state.topView) / ((this.state.zoom - this.state.yOffset)) }// - this.state.inputTextHeight/2}
   a2cW = (w) => { return (w + this.state.xOffset) * this.state.zoom + this.state.sideMargin }
   a2cH = (h) => { return (h + this.state.yOffset) * this.state.zoom + topLayer } // + this.state.inputTextHeight / 2 }
 
@@ -226,18 +248,22 @@ export default class IssieEditPhoto extends React.Component {
     let fontColor = this.state.color;
 
     let textElem = undefined;
+    let textEditingExisting = undefined;
     if (textElemIndex >= 0) {
       textElem = this.state.canvasTexts[textElemIndex];
       initialText = textElem.text;
       fontSize = textElem.fontSize;
       fontColor = this.findColor(textElem.fontColor);
-      x = textElem.position.x;
+      x = textElem.position.x + textElem.width;
       y = textElem.position.y;
-
+      textEditingExisting = textElem;
+      //Alert.alert(initialText)
       //remove the text from the canvas:
       //canvasTexts.splice(textElemIndex);
 
     }
+
+    //Alert.alert("a-x:" + x + ",a-y:" + y + ", ratio:" + this.state.scaleRatio)
     this.setState({
       showTextInput: true,
       inputTextValue: initialText,
@@ -245,22 +271,46 @@ export default class IssieEditPhoto extends React.Component {
       color: fontColor,
       currentTextElem: textElem,
       xText: x,
-      yText: y
+      yText: y,
+      textEditingExisting: textEditingExisting
     });
   }
 
   SaveText = () => {
     let text = this.state.inputTextValue;
-    this.state.queue.pushText(this.getTextElement(text));
-    this.UpdateCanvas(false, true);
+    let origElem = this.state.textEditingExisting;
+    if (text.length == 0 && !origElem) return;
+
+    let txtWidth = this.state.inputTextWidth;
+    let txtHeight = this.state.inputTextHeight;
+    let newElem = this.getTextElement(text, txtWidth, txtHeight);
+    if (origElem) {
+      if( origElem.text == newElem.text &&
+      origElem.position.x == newElem.position.x &&
+      origElem.position.y == newElem.position.y && 
+      origElem.height == newElem.height) {
+        return;
+    } else {
+      Alert.alert(JSON.stringify(origElem) + "---" + JSON.stringify(newElem))
+    }
+    } 
+    this.state.queue.pushText(newElem);
+    this.setState({
+      needCanvasUpdate: true, needCanavaDataSave: true,
+      needCanvasUpdateTextOnly: true
+    });
   }
   findTextElement = (coordinates) => {
     let q = this.state.canvasTexts
+   // Alert.alert(JSON.stringify(q))
     for (let i = q.length - 1; i >= 0; i--) {
-      if (q[i].position.x - 15 < coordinates.x &&
-        q[i].position.x + 65 > coordinates.x &&
-        q[i].position.y - 15 < coordinates.y &&
-        q[i].position.y + 65 > coordinates.y) {
+      if (q[i].position.x < coordinates.x + 15 &&
+        q[i].position.x + q[i].width > coordinates.x - 15 
+         &&
+         q[i].position.y  < coordinates.y + 15 &&
+         q[i].position.y +  q[i].height > coordinates.y - 15
+        ) {
+          //Alert.alert("found:"+ q[i].text)
         return i;
       }
     }
@@ -268,8 +318,8 @@ export default class IssieEditPhoto extends React.Component {
     return -1;
   }
 
-  getTextElement = (newText) => {
-    newTextElem = { text: newText }
+  getTextElement = (newText, width, height) => {
+    newTextElem = { text: newText, width:width, height: height}
     if (this.state.currentTextElem) {
       newTextElem.id = this.state.currentTextElem.id;
     } else {
@@ -278,8 +328,8 @@ export default class IssieEditPhoto extends React.Component {
 
     newTextElem.anchor = { x: 0, y: 0 };
     newTextElem.position = {
-      x: this.state.xText,
-      y: this.state.yText,
+      x: this.state.xText/this.state.scaleRatio - width,
+      y: this.state.yText/this.state.scaleRatio
     };
     newTextElem.alignment = 'Right';
     newTextElem.fontColor = this.state.color[0];
@@ -287,17 +337,24 @@ export default class IssieEditPhoto extends React.Component {
     return newTextElem;
   }
 
-  UpdateCanvas = (dontSave, textOnly) => {
-    textOnly = (textOnly === undefined) ? false : textOnly;
+  UpdateCanvas = (canvas) => {
+    if (!canvas) return;
 
-    if (!textOnly) {
-      this.canvas.clear();
+    if (!this.state.needCanvasUpdateTextOnly) {
+      canvas.clear();
     }
     let q = this.state.queue.getAll();
     let canvasTexts = [];
     for (let i = 0; i < q.length; i++) {
       if (q[i].type === 'text') {
-        let txtElem = q[i].elem;
+
+        //clone and align to canvas size:
+        let txtElem = {};
+        Object.assign(txtElem, q[i].elem);
+        txtElem.position = {
+          x: (txtElem.position.x+txtElem.width)*this.state.scaleRatio - txtElem.width,
+          y: txtElem.position.y*this.state.scaleRatio
+        };
 
         //first try to find same ID and replace, or add it
         let found = false;
@@ -310,14 +367,14 @@ export default class IssieEditPhoto extends React.Component {
           }
         }
         if (!found) canvasTexts.push(txtElem);
-      } else if (q[i].type === 'path' && !textOnly) {
-        this.canvas.addPath(q[i].elem);
+      } else if (q[i].type === 'path' && !this.state.needCanvasUpdateTextOnly) {
+        canvas.addPath(q[i].elem);
       }
     }
-    if (!dontSave) {
+    if (this.state.needCanavaDataSave) {
       this.Save()
     }
-    this.setState({ canvasTexts: canvasTexts });
+    this.setState({ canvasTexts: canvasTexts, needCanvasUpdate: false, needCanavaDataSave: false, needCanvasUpdateTextOnly: false });
 
   }
 
@@ -363,8 +420,7 @@ export default class IssieEditPhoto extends React.Component {
       currentFile: currentFile, metaDataUri: metaDataUri,
       zoom: 1, xOffset: 0, yOffset: 0
     });
-    setTimeout(this.Load, 100);
-
+    setTimeout(this.Load, 200)
   }
 
   onLayout = async (e) => {
@@ -398,10 +454,7 @@ export default class IssieEditPhoto extends React.Component {
         ratio = windowH / imageHeight;
       }
 
-      //ratio = .67;
-      //Alert.alert("ratio: " + ratio)
-      this.setState({ sideMargin: sideMargin, canvasW: imageWidth * ratio, canvasH: imageHeight * ratio, scaleRatio: ratio })
-      setTimeout(() => this.UpdateCanvas(true, false), 200);
+      this.setState({ windowW: windowW, sideMargin: sideMargin, canvasW: imageWidth * ratio, canvasH: imageHeight * ratio, scaleRatio: ratio, needCanvasUpdate: true, needCanavaDataSave: false });
 
     }).catch(err => {
       Alert.alert(JSON.stringify(err))
@@ -430,17 +483,15 @@ export default class IssieEditPhoto extends React.Component {
           <View style={{ flex: 1 }}
             ref={v => this.topView = v}
             pointerEvents={this.state.textMode ? 'box-only' : 'auto'}
-          
+
           >
-            <ScrollView 
-              minimumZoomScale={1} 
-              maximumZoomScale={maxZoom} 
-              zoomScale={this.state.zoom} 
-              style={{ flex:1 }} 
-              contentContainerStyle={{flex:1}}
-              scrollEnabled={true}
-              onScroll={event => Alert.alert("Scroll")}
-              >
+            <ScrollView
+              minimumZoomScale={1}
+              maximumZoomScale={maxZoom}
+              zoomScale={this.state.zoom}
+              style={{ flex: 1 }}
+              contentContainerStyle={{ flex: 1 }}
+            >
               {this.getCanvas()}
             </ScrollView>
           </View>
@@ -463,7 +514,7 @@ export default class IssieEditPhoto extends React.Component {
             {
               getSquareButton(() => {
                 this.state.queue.undo();
-                this.UpdateCanvas();
+                this.setState({ needCanvasUpdate: true, needCanavaDataSave: true });
               }, colors.gray, colors.gray, undefined, "undo", 30, false)
             }
             {this.getSpace(1)}
@@ -471,7 +522,7 @@ export default class IssieEditPhoto extends React.Component {
             {
               getSquareButton(() => {
                 this.state.queue.redo();
-                this.UpdateCanvas();
+                this.setState({ needCanvasUpdate: true, needCanavaDataSave: true });
               }, this.state.queue.canRedo() ? colors.gray : colors.disabled, this.state.queue.canRedo() ? colors.gray : colors.disabled,
                 undefined, "redo", 30, false)
             }
@@ -594,7 +645,7 @@ export default class IssieEditPhoto extends React.Component {
 
       {(this.state.currentFile == this.state.page.pages[this.state.page.pages.length - 1]) ?
         <View /> :
-        getSquareButton(() => this.movePage(1), colors.green, undefined, 'דף הבא', 'chevron-right', 30, undefined, { width: 150, height: 60 }, 60, false, 0, 15 )
+        getSquareButton(() => this.movePage(1), colors.green, undefined, 'דף הבא', 'chevron-right', 30, undefined, { width: 150, height: 60 }, 60, false, 0, 15)
 
       }
     </View>
@@ -602,7 +653,13 @@ export default class IssieEditPhoto extends React.Component {
 
   getCanvas = () => {
     return <RNSketchCanvas
-      ref={component => this.canvas = component}
+      ref={component => {
+        this.canvas = component;
+        if (this.state.needCanvasUpdate) {
+          setTimeout(() =>
+            this.UpdateCanvas(component), 100);
+        }
+      }}
       scale={this.state.zoom}
       text={this.state.canvasTexts}
       containerStyle={[styles.container]}
@@ -641,13 +698,17 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getTextInput = (txt, x, y) => {
-    return <View style={{ flex: 1, position: 'absolute', left: x, top: y, zIndex: 100 }} {...this._panResponder.panHandlers}>
+    return <View style={{ flex: 1, position: 'absolute', right: this.state.windowW - x + INITIAL_TEXT_SIZE, top: y, zIndex: 100 }} {...this._panResponder.panHandlers}>
       <TextInput
-        onChangeText={(text) => this.setState({ inputTextValue: text })}
+        onChangeText={(text) => {
+          measureText(this.state.fontSize, this.state.inputTextValue).then(size =>
+            this.setState({ inputTextValue: text, inputTextWidth: size.width }));
+        }}
+
         autoFocus
 
         style={[styles.textInput, {
-          width: this.getTextWidth(),
+          width: this.state.inputTextWidth < INITIAL_TEXT_SIZE ? INITIAL_TEXT_SIZE : this.state.inputTextWidth,
           height: this.getTextHeight(),
           color: this.state.color[0],
           fontSize: this.state.fontSize
@@ -656,7 +717,8 @@ export default class IssieEditPhoto extends React.Component {
     </View>
   }
 
-  getTextWidth = () => this.state.inputTextValue.length * 20 + 80;
+
+
   getTextHeight = () => this.state.fontSize + 1.2 + 15;
 }
 
@@ -674,10 +736,10 @@ const styles = StyleSheet.create({
     zIndex: 10
   },
   textInput: {
-    borderColor:
-      'black',
+    borderColor: 'black',
     borderWidth: 1,
-    backgroundColor: 'white'
+    backgroundColor: 'white',
+    textAlign: 'right'
 
   },
   CircleShapeView: {
