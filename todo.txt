@@ -8,6 +8,8 @@ V* Support import pdf
 X* Scroll edited page when keyboard opened  
 * Move page to another folder
 * brush size cosmetics
+* multiple pages header 1of2 etc.
+
 
 X* In zoom - move arround with swipe
 V* new from within folder, goes to folder
