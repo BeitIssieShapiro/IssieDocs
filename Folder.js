@@ -71,7 +71,7 @@ export default class Folder extends React.Component {
         style={styles.pictureWrapper}
         onLongPress={this.toggleSelection}
         onPress={this.props.onPress}
-        activeOpacity={1}
+        activeOpacity={0.8}
       >
         {this.getBackgroundImage()}
         <LinearGradient colors={['#AEC6DD', '#749DC5']} style={{

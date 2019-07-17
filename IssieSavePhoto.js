@@ -398,7 +398,7 @@ export default class IssieSavePhoto extends React.Component {
           <View style={{flex:1, width:'100%'}}>
             <Text style={styles.titleText}>שם התיקיה</Text>
             <View style={{ flex: 1, flexDirection: 'row-reverse' }}>
-              <TextInput style={[globalStyles.textInput,{backgroundColor:'white', width:'78%'}]}
+              <TextInput style={[globalStyles.textInput,{backgroundColor:'white', width:'75%'}]}
                 onChangeText={(text) => this.setState({ newFolderName: text })}
                 value={currentNewFolderName}
               />
@@ -466,6 +466,8 @@ export default class IssieSavePhoto extends React.Component {
                 page={this.state.pdfPage}
                 style={{ flex: 1, width: '100%' }}
                 onLoadComplete={(numberOfPages, filePath) => {
+                 // Alert.alert("pdf pages:"+numberOfPages)
+
                   this.setState({ pdfPageCount: numberOfPages });
                 }}
 

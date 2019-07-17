@@ -71,7 +71,7 @@ export function getFolderPicker(folder, folders, callback) {
     }
     return <ModalDropdown
         style={[styles.pickerButton]}
-        dropdownStyle={{ flex: 1, top: 0, width: '60%', height: '25%' }}
+        dropdownStyle={{ flex: 1, top: 0, width: '60%', height: 300 }}
         onSelect={callback}
         renderRow={pickerRenderRow}
         options={[NO_FOLDER_NAME, ...folders, NEW_FOLDER_NAME]} >
@@ -105,8 +105,6 @@ function pickerRenderRow(rowData, rowID, highlighted) {
                 alignItems:'center',
                 flexDirection:'row'
             }]}>
-                {/* <Icon name='gavel' size={30} color="#4630EB" /> */}
-
                 <Icon name={iconName} size={50}></Icon>
                 <Text style={{ fontSize: 70, textAlign: 'right' }}>
                     {folderName}
@@ -121,7 +119,7 @@ export function getIconPicker(pickerIcon, icons, callback) {
     }
     console.disableYellowBox = true;
     return <ModalDropdown
-        style={[styles.pickerButton, {  width: '25%' }]}
+        style={[styles.pickerButton, {  width: '30%' }]}
         dropdownStyle={{
             flex:1,
             width:'60%',
@@ -132,6 +130,7 @@ export function getIconPicker(pickerIcon, icons, callback) {
         renderRow={pickerRenderIcon}
         options={icons} >
         <View style={{
+            height:'100%',
             flexDirection: 'row', justifyContent: 'space-between',
             alignItems: 'center', alignContent: 'center'
         }}>
@@ -141,11 +140,12 @@ export function getIconPicker(pickerIcon, icons, callback) {
     </ModalDropdown>
 }
 export const folderIcons = [
+    { icon: 'language', text: 'אנגלית' },
     { icon: 'music-note', text: 'מוזיקה' },
     { icon: 'pets', text: 'בעלי חיים' },
     { icon: 'exposure-plus-1', text: 'חשבון' },
     { icon: 'wb-incandescent', text: 'מדעים' },
-    { icon: 'calendar-today', text: 'היסטוריה' },
+    { icon: 'watch-later', text: 'היסטוריה' },
     { icon: 'book', text: 'תורה' },
     { icon: 'speaker-notes', text: 'לשון' },
     { icon: 'local-bar', text: 'חגים' }
@@ -154,12 +154,12 @@ export const folderIcons = [
 function pickerRenderIcon(rowData, rowID, highlighted) {
     return (
         <TouchableHighlight underlayColor='cornflowerblue'>
-            <View style={{
+            <View style={[globalStyles.textInput,{
                 flex: 1,
                 flexDirection: 'row',
                 backgroundColor: 'white',
                 alignItems:'stretch'
-            }}>
+            }]}>
                 <Icon name={rowData.icon} size={50} color="#4630EB" />
                 <Text style={{fontSize:35}}>{rowData.text}</Text>
             </View>

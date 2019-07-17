@@ -217,7 +217,7 @@ export default class GalleryScreen extends React.Component {
             text: 'מחק', onPress: () => {
               this.state.selected.forEach((toDelete) => {
                 RNFS.unlink(toDelete.item.path).then(() => {
-                  RNFS.unlink(toDelete + ".json").catch((e) => {/*do nothing*/ });
+                  RNFS.unlink(toDelete.item.path + ".json").catch((e) => {/*do nothing*/ });
                 });
               })
               this.setState({ selected: [] });
@@ -289,7 +289,7 @@ export default class GalleryScreen extends React.Component {
     if (this.state.selected.length != 1) return;
     this.props.navigation.navigate('EditPhoto',
       {
-        page: this.state.selected[0].page,
+        page: this.state.selected[0].item,
         share: true
       })
   }

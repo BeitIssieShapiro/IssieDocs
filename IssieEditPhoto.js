@@ -167,7 +167,7 @@ export default class IssieEditPhoto extends React.Component {
             reject(err.toString());
             return;
           }
-          resolve('data:image/png;base64,' + data);
+          resolve('data:image/jpg;base64,' + data);
         }
       ), 300)
     });
@@ -240,24 +240,24 @@ export default class IssieEditPhoto extends React.Component {
 
     //check that the click is in the canvas area:
     let x = this.s2aW(ev.nativeEvent.pageX);
-    let y = this.s2aH(ev.nativeEvent.pageY);
+    let y = this.s2aH(ev.nativeEvent.pageY) - this.getTextHeight()/2;
 
     let textElemIndex = this.findTextElement({ x: x, y: y });
     let initialText = '';
     let fontSize = this.state.fontSize;
     let fontColor = this.state.color;
-
+    let inputTextWidth = this.state.inputTextWidth;
+    let inputTextHeight = this.state.inputTextHeight;
     let textElem = undefined;
-    let textEditingExisting = undefined;
     if (textElemIndex >= 0) {
       textElem = this.state.canvasTexts[textElemIndex];
       initialText = textElem.text;
       fontSize = textElem.fontSize;
       fontColor = this.findColor(textElem.fontColor);
-      x = textElem.position.x + textElem.width;
-      y = textElem.position.y;
-      textEditingExisting = textElem;
-      //Alert.alert(initialText)
+      inputTextWidth = textElem.width;
+      inputTextHeight = textElem.height;
+      x = textElem.normPosition.x*this.state.scaleRatio;
+      y = textElem.normPosition.y*this.state.scaleRatio;
       //remove the text from the canvas:
       //canvasTexts.splice(textElemIndex);
 
@@ -267,50 +267,55 @@ export default class IssieEditPhoto extends React.Component {
     this.setState({
       showTextInput: true,
       inputTextValue: initialText,
-      fontSize: fontSize,
+      fontSize,
+      inputTextWidth,
+      inputTextHeight,
       color: fontColor,
       currentTextElem: textElem,
       xText: x,
-      yText: y,
-      textEditingExisting: textEditingExisting
+      yText: y
     });
   }
 
   SaveText = () => {
     let text = this.state.inputTextValue;
-    let origElem = this.state.textEditingExisting;
+    let origElem = this.state.currentTextElem;
     if (text.length == 0 && !origElem) return;
 
     let txtWidth = this.state.inputTextWidth;
     let txtHeight = this.state.inputTextHeight;
     let newElem = this.getTextElement(text, txtWidth, txtHeight);
     if (origElem) {
-      if( origElem.text == newElem.text &&
-      origElem.position.x == newElem.position.x &&
-      origElem.position.y == newElem.position.y && 
-      origElem.height == newElem.height) {
+      if (origElem.text == newElem.text &&
+        origElem.position.x == newElem.position.x &&
+        origElem.position.y == newElem.position.y &&
+        origElem.height == newElem.height) {
         return;
-    } else {
-      Alert.alert(JSON.stringify(origElem) + "---" + JSON.stringify(newElem))
+      } else {
+        //Alert.alert(JSON.stringify(origElem) + "---" + JSON.stringify(newElem))
+      }
     }
-    } 
     this.state.queue.pushText(newElem);
     this.setState({
       needCanvasUpdate: true, needCanavaDataSave: true,
       needCanvasUpdateTextOnly: true
     });
   }
+
   findTextElement = (coordinates) => {
     let q = this.state.canvasTexts
-   // Alert.alert(JSON.stringify(q))
+    // Alert.alert(JSON.stringify(q))
     for (let i = q.length - 1; i >= 0; i--) {
-      if (q[i].position.x < coordinates.x + 15 &&
-        q[i].position.x + q[i].width > coordinates.x - 15 
-         &&
-         q[i].position.y  < coordinates.y + 15 &&
-         q[i].position.y +  q[i].height > coordinates.y - 15
-        ) {
-          //Alert.alert("found:"+ q[i].text)
+      // Alert.alert(JSON.stringify(q[i].normPosition) + '--\n' + 
+      //             JSON.stringify(q[i].position) + '--\n' + 
+      //             JSON.stringify(coordinates))
+      if (q[i].position.x  < coordinates.x + 15 &&
+        q[i].position.x + q[i].width > coordinates.x - 15
+        &&
+        q[i].position.y < coordinates.y + 15 &&
+        q[i].position.y + q[i].height > coordinates.y - 15
+      ) {
+        //Alert.alert("found:"+ q[i].text)
         return i;
       }
     }
@@ -319,7 +324,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getTextElement = (newText, width, height) => {
-    newTextElem = { text: newText, width:width, height: height}
+    newTextElem = { text: newText, width: width, height: height }
     if (this.state.currentTextElem) {
       newTextElem.id = this.state.currentTextElem.id;
     } else {
@@ -327,10 +332,11 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     newTextElem.anchor = { x: 0, y: 0 };
-    newTextElem.position = {
-      x: this.state.xText/this.state.scaleRatio - width,
+    newTextElem.normPosition = {
+      x: this.state.xText/this.state.scaleRatio ,
       y: this.state.yText/this.state.scaleRatio
     };
+    newTextElem.position = {x:0,y:0};
     newTextElem.alignment = 'Right';
     newTextElem.fontColor = this.state.color[0];
     newTextElem.fontSize = this.state.fontSize;
@@ -349,11 +355,10 @@ export default class IssieEditPhoto extends React.Component {
       if (q[i].type === 'text') {
 
         //clone and align to canvas size:
-        let txtElem = {};
-        Object.assign(txtElem, q[i].elem);
+        let txtElem = q[i].elem;
         txtElem.position = {
-          x: (txtElem.position.x+txtElem.width)*this.state.scaleRatio - txtElem.width,
-          y: txtElem.position.y*this.state.scaleRatio
+          x: txtElem.normPosition.x *this.state.scaleRatio - txtElem.width - 15 ,
+          y: txtElem.normPosition.y*this.state.scaleRatio 
         };
 
         //first try to find same ID and replace, or add it
@@ -639,13 +644,13 @@ export default class IssieEditPhoto extends React.Component {
     >
       {(this.state.currentFile == this.state.page.pages[0]) ?
         <View /> :
-        getSquareButton(() => this.movePage(-1), colors.green, undefined, 'דף קודם', 'chevron-left', 30, undefined, { width: 150, height: 60 }, 60, true, 15)
+        getSquareButton(() => this.movePage(-1), colors.navyBlue, undefined, 'דף קודם', 'chevron-left', 30, undefined, { width: 150, height: 60 }, 60, true, 15)
 
       }
 
       {(this.state.currentFile == this.state.page.pages[this.state.page.pages.length - 1]) ?
         <View /> :
-        getSquareButton(() => this.movePage(1), colors.green, undefined, 'דף הבא', 'chevron-right', 30, undefined, { width: 150, height: 60 }, 60, false, 0, 15)
+        getSquareButton(() => this.movePage(1), colors.navyBlue, undefined, 'דף הבא', 'chevron-right', 30, undefined, { width: 150, height: 60 }, 60, false, 0, 15)
 
       }
     </View>
@@ -708,7 +713,7 @@ export default class IssieEditPhoto extends React.Component {
         autoFocus
 
         style={[styles.textInput, {
-          width: this.state.inputTextWidth < INITIAL_TEXT_SIZE ? INITIAL_TEXT_SIZE : this.state.inputTextWidth,
+          width: this.state.inputTextWidth < INITIAL_TEXT_SIZE - 20 ? INITIAL_TEXT_SIZE : this.state.inputTextWidth+20,
           height: this.getTextHeight(),
           color: this.state.color[0],
           fontSize: this.state.fontSize

@@ -41,7 +41,7 @@ export default class Photo extends React.Component {
           style={styles.pictureWrapper}
           onLongPress={this.toggleSelection}
           onPress={this.props.onPress}
-          activeOpacity={1}
+          activeOpacity={0.8}
         >
           <ImageBackground
             style={styles.picture}
