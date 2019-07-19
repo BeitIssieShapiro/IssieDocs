@@ -47,6 +47,7 @@ export function getSquareButton(func, color, selectedColor, txt, icon, size, sel
         iconFirst = false;
 
     return <TouchableOpacity
+        activeOpacity={0.7}
         onPress={func}
     >
         <LinearGradient

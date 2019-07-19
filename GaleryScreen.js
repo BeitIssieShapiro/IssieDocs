@@ -46,6 +46,7 @@ export default class GalleryScreen extends React.Component {
       headerStyle: {
         backgroundColor: '#8EAFCE',
       },
+     
       headerTintColor: 'white',
       headerTitleStyle: {
         fontSize: 30,
