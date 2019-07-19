@@ -36,8 +36,14 @@ async function measureText(fontSize, txt) {
 
 export default class IssieEditPhoto extends React.Component {
   static navigationOptions = ({ navigation }) => {
+    const page = navigation.getParam('page', '');
+    let fileName = page.path.replace(/^.*[\\\/]/, '');
+    if (fileName.endsWith('.jpg')) {
+      fileName = fileName.substr(0, fileName.length - 4);
+    }
+    
     return {
-      title: 'עריכת דף',
+      title: fileName,
       headerStyle: {
         backgroundColor: '#8EAFCE',
       },
@@ -123,14 +129,8 @@ export default class IssieEditPhoto extends React.Component {
     const metaDataUri = currentFile + ".json";
     this.setState({ page: page, currentFile: currentFile, metaDataUri: metaDataUri },
       this.Load);
-    //setTimeout(this.Load, 500);
   }
 
-  componentWillUnmount = () => {
-    if (this.state.showTextInput) {
-      this.SaveText(true);
-    }
-  }
 
   Load = async () => {
     this.loadFile(this.state.metaDataUri);
