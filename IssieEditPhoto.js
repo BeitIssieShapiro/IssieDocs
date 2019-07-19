@@ -288,7 +288,7 @@ export default class IssieEditPhoto extends React.Component {
   SaveText = (beforeExit) => {
     let text = this.state.inputTextValue;
     let origElem = this.state.currentTextElem;
-    if (text.length == 0 && !origElem) return;
+    if (!text || text.length == 0 && !origElem) return;
 
     let txtWidth = this.state.inputTextWidth;
     let txtHeight = this.state.inputTextHeight;
