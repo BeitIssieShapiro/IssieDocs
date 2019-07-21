@@ -1,26 +1,26 @@
 Features
 --------
+* Move page to another folder
+* brush size cosmetics
+* multiple pages header 1of2 etc.
+* PDF - allow seeing all pages, and select which to save
+* Photo - show (n) instead of +
+* optimize loading list of folders any times
+
 V* Import from albom
 V* export to albom (via share)
 V* Send to mail
 V* Multiple photos in one pages
 V* Support import pdf
 X* Scroll edited page when keyboard opened  
-* Move page to another folder
-* brush size cosmetics
-* multiple pages header 1of2 etc.
-
-
 X* In zoom - move arround with swipe
 V* new from within folder, goes to folder
 V* enlarge frame of folder picker
-* optimize loading list of folders any times
 V* headers' color (where navigation happens)
-
 V * Delete button - style
 V * Ask before Delete
 V * In editPhoto, when changing text size, the text does not change
-* Add app-configuration
+X* Add app-configuration
   * Navigate with buttons and not swipe
 
 V* Image for folders:
@@ -33,11 +33,18 @@ V * zoom in camera
 
 Bugs:
 -----
-* top:nan when picking folder
-V* no shalef for pages - only in iPad?
+V* no shelf for pages - only in iPad?
 * input Text positioning - fine tune
-* Input text position after rotation
 V* Unselect folder crash
 * import pdf - extra page
 * cosmetics of new folder
+V* share - missing paths
+V* when clicking a text, and after that save text, if same text and same posyion - do nothing
+* save-all-pages is not wide enough
+V* PDF - viewshot is not the size of the pdf
+* PDF - 1st page is saved twice
+* when scrolling down, can't position text below
+V* PDF - even if one page, says save-all-pages
+* add new page and then cancel?
+* enlarge navigation back
 

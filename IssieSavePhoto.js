@@ -37,7 +37,9 @@ export default class IssieSavePhoto extends React.Component {
       phase: OK_Cancel,
       cropping: false,
       topView: 0,
-      multiPageState: { pages: [] }
+      multiPageState: { pages: [] },
+      pdfWidth: '100%',
+      pdfHeight: '100%'
     };
     this.OK.bind(this);
 
@@ -167,13 +169,13 @@ export default class IssieSavePhoto extends React.Component {
         Alert.alert('חובה לבחור שם לדף');
         return;
       }
-      if (this.state.folder === NEW_FOLDER_NAME && 
-          (!this.state.newFolderName || this.state.newFolderName.length == 0)) {
+      if (this.state.folder === NEW_FOLDER_NAME &&
+        (!this.state.newFolderName || this.state.newFolderName.length == 0)) {
         Alert.alert('חובה לבחור שם לתיקיה החדשה');
         return;
       }
       this.save();
-    } 
+    }
   }
 
   save = async () => {
@@ -346,7 +348,7 @@ export default class IssieSavePhoto extends React.Component {
       buttons = <View style={styles.okCancelView}>
         {getSquareButton(this.Cancel, colors.gray, undefined, "בטל", "close", 35, undefined, { width: 200, height: 50 }, 45, true)}
         <Text>     </Text>
-        {getSquareButton(this.OK, colors.navyBlue, undefined, this.state.pdf ? "שמור כל הדפים" : "שמור" + saveMoreThanOne, "check", 35, undefined, { width: 200, height: 50 }, 45, true)}
+        {getSquareButton(this.OK, colors.navyBlue, undefined, "שמור" + saveMoreThanOne, "check", 35, undefined, { width: 200, height: 50 }, 45, true)}
         {this.state.phase == OK_Cancel && !this.state.pdf ?
           <Text>     </Text> : null}
         {this.state.phase == OK_Cancel && !this.state.pdf ?
@@ -395,16 +397,16 @@ export default class IssieSavePhoto extends React.Component {
         }
         {this.state.folder == NEW_FOLDER_NAME ?
           //New folder picker
-          <View style={{flex:1, width:'100%'}}>
+          <View style={{ flex: 1, width: '100%' }}>
             <Text style={styles.titleText}>שם התיקיה</Text>
             <View style={{ flex: 1, flexDirection: 'row-reverse' }}>
-              <TextInput style={[globalStyles.textInput,{backgroundColor:'white', width:'75%'}]}
+              <TextInput style={[globalStyles.textInput, { backgroundColor: 'white', width: '75%' }]}
                 onChangeText={(text) => this.setState({ newFolderName: text })}
                 value={currentNewFolderName}
               />
               <Text>   </Text>
               {getIconPicker(currentNewIconName, folderIcons, (itemIndex, itemValue) => {
-                  this.setState({ newFolderName: itemValue.text + '$'+itemValue.icon });
+                this.setState({ newFolderName: itemValue.text + '$' + itemValue.icon });
               })}
             </View>
           </View>
@@ -459,16 +461,16 @@ export default class IssieSavePhoto extends React.Component {
           }}>
             <ViewShot ref="viewShot" options={{ format: "jpg", quality: 0.9 }}
               style={{
-                flex: 1
+                flex: 1, position:'absolute', width: this.state.pdfWidth, height: this.state.pdfHeight 
               }}>
               <Pdf
                 source={{ uri: this.state.uri }}
                 page={this.state.pdfPage}
-                style={{ flex: 1, width: '100%' }}
-                onLoadComplete={(numberOfPages, filePath) => {
-                 // Alert.alert("pdf pages:"+numberOfPages)
-
-                  this.setState({ pdfPageCount: numberOfPages });
+                style={{ flex: 1}}
+                onLoadComplete={(numberOfPages, filePath, dim) => {
+                  if (!this.state.pdfWidthOnce) {
+                     this.setState({ pdfWidthOnce:true, pdfPageCount: numberOfPages, pdfWidth: dim.width, pdfHeight: dim.height });
+                  }
                 }}
 
                 onError={(error) => {

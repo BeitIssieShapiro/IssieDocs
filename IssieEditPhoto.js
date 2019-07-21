@@ -41,7 +41,7 @@ export default class IssieEditPhoto extends React.Component {
     if (fileName.endsWith('.jpg')) {
       fileName = fileName.substr(0, fileName.length - 4);
     }
-    
+
     return {
       title: fileName,
       headerStyle: {
@@ -139,7 +139,8 @@ export default class IssieEditPhoto extends React.Component {
       //iterates over all files and exports them
       let dataUrls = [];
 
-      dataUrls.push(await this.exportToBase64());
+      let data = await this.exportToBase64();
+      dataUrls.push(data);
       for (let i = 1; i < this.state.page.pages.length; i++) {
         const currentFile = this.state.page.pages[i];
         const metaDataUri = currentFile + ".json";
@@ -153,7 +154,7 @@ export default class IssieEditPhoto extends React.Component {
         subject: 'דף עבודה',
         urls: dataUrls
       };
-
+      //Alert.alert(JSON.stringify(dataUrls))
       Share.open(shareOptions).then(() => { }).catch(err => {
         Alert.alert("הפעולה בוטלה");
       });
@@ -163,21 +164,26 @@ export default class IssieEditPhoto extends React.Component {
 
   exportToBase64 = async () => {
     return new Promise((resolve, reject) => {
-      setTimeout(() => this.canvas.getBase64(
-        'jpg',
-        false, //transparent
-        true, //includeImage
-        true, //includeText
-        false, //cropToImageSize
-        (err, data) => {
-          if (err) {
-            reject(err.toString());
-            return;
-          }
-          resolve('data:image/jpg;base64,' + data);
-        }
-      ), 300)
+      this.setState({ needExport: { resolve, reject }})
     });
+  }
+
+  doExport = (canvas, resolve, reject) => {
+    if (canvas == null) return;
+    canvas.getBase64(
+      'jpg',
+      false, //transparent
+      true, //includeImage
+      true, //includeText
+      false, //cropToImageSize
+      (err, data) => {
+        if (err) {
+          reject(err.toString());
+          return;
+        }
+        resolve('data:image/jpg;base64,' + data);
+      }
+    )
   }
 
 
@@ -192,10 +198,11 @@ export default class IssieEditPhoto extends React.Component {
 
     },
       (err) => {/*no json file yet*/ }
-    ).catch((e) => {/*no json file yet*/ }).finally(() => {
-      //this.UpdateCanvas(true)
-      this.setState({ needCanvasUpdate: true, needCanavaDataSave: false });
-    });
+    ).catch((e) => {/*no json file yet*/ })
+      .finally(() => {
+        //this.UpdateCanvas(true)
+        this.setState({ needCanvasUpdate: true, needCanavaDataSave: false });
+      });
   }
 
   Save = () => {
@@ -227,7 +234,7 @@ export default class IssieEditPhoto extends React.Component {
   //a = absolute, s=screen, c=canvas
   s2aW = (w) => { return (w - this.state.sideMargin) / this.state.zoom - this.state.xOffset }
   s2aH = (h) => { return (h - this.state.topView) / this.state.zoom - this.state.yOffset }// - this.state.inputTextHeight/2}
-  a2cW = (w) => { return w * this.state.zoom + this.state.xOffset + this.state.sideMargin }
+  a2cW = (w) => { return (w + this.state.xOffset)* this.state.zoom+this.state.sideMargin }
   a2cH = (h) => { return (h + this.state.yOffset) * this.state.zoom + topLayer } // + this.state.inputTextHeight / 2 }
 
   findColor = (fc) => {
@@ -281,7 +288,8 @@ export default class IssieEditPhoto extends React.Component {
       color: fontColor,
       currentTextElem: textElem,
       xText: x,
-      yText: y
+      yText: y,
+      debugText: "x:" + x + ",y:" + y + ", textW:" + this.state.inputTextWidth +"xOffset:"+ this.state.xOffset+ "z:"+ this.state.zoom+"sm:"+this.state.sideMargin
     });
   }
 
@@ -295,13 +303,12 @@ export default class IssieEditPhoto extends React.Component {
     let newElem = this.getTextElement(text, txtWidth, txtHeight);
     if (origElem) {
       if (origElem.text == newElem.text &&
-        origElem.position.x == newElem.position.x &&
-        origElem.position.y == newElem.position.y &&
-        origElem.height == newElem.height) {
+        origElem.normPosition.x == newElem.normPosition.x &&
+        origElem.normPosition.y == newElem.normPosition.y &&
+        origElem.fontSize == newElem.fontSize &&
+        origElem.color == newElem.color) {
         return;
-      } else {
-        //Alert.alert(JSON.stringify(origElem) + "---" + JSON.stringify(newElem))
-      }
+      } 
     }
     this.state.queue.pushText(newElem);
     if (beforeExit) {
@@ -369,7 +376,7 @@ export default class IssieEditPhoto extends React.Component {
         //clone and align to canvas size:
         let txtElem = q[i].elem;
         txtElem.position = {
-          x: txtElem.normPosition.x * this.state.scaleRatio - txtElem.width - 15,
+          x: (txtElem.normPosition.x - txtElem.width) * this.state.scaleRatio - 30,
           y: txtElem.normPosition.y * this.state.scaleRatio
         };
 
@@ -458,7 +465,7 @@ export default class IssieEditPhoto extends React.Component {
 
     windowW = windowSize.width - sideMargin * 2;
     windowH = windowSize.height - topLayer * 1.1;
-    this.CalcImageSize(windowW, windowH,sideMargin);
+    this.CalcImageSize(windowW, windowH, sideMargin);
   }
 
 
@@ -506,7 +513,7 @@ export default class IssieEditPhoto extends React.Component {
 
       <LinearGradient colors={['#E2DCCE', '#D4CDBC', '#C1B7A1']} style={styles.mainContainer}
         onLayout={this.onLayout}>
-
+        {/* <Text style={{ flex: 1, position: 'absolute', top: 0, left: 0, zIndex: 10000, height: 25 }}>{this.state.debugText}</Text> */}
         <TouchableOpacity onPress={this.TextModeClick}
           activeOpacity={1}
           style={[drawingAreaStyle, { backgroundColor: 'black' }]} >
@@ -689,10 +696,20 @@ export default class IssieEditPhoto extends React.Component {
       ref={component => {
         this.canvas = component;
         if (this.state.needCanvasUpdate) {
-          setTimeout(() =>
-            this.UpdateCanvas(component), 100);
+          setTimeout(() => {
+            if (component) {
+              this.UpdateCanvas(component);
+            }
+          }, 100);
+        } else if (this.state.needExport) {
+          let promise = this.state.needExport;
+          this.setState({ needExport: undefined })
+          setTimeout(() => {
+            this.doExport(component, promise.resolve, promise.reject);
+          }, 500);
         }
-      }}
+      }
+      }
       scale={this.state.zoom}
       text={this.state.canvasTexts}
       containerStyle={[styles.container]}
@@ -731,7 +748,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getTextInput = (txt, x, y) => {
-    return <View style={{ flex: 1, position: 'absolute', right: this.state.windowW - x + INITIAL_TEXT_SIZE / this.state.zoom, top: y, zIndex: 100 }} {...this._panResponder.panHandlers}>
+    return <View style={{ flex: 1, position: 'absolute', left: x - this.getTextWidth() , top: y, zIndex: 100 }} {...this._panResponder.panHandlers}>
       <TextInput
         onChangeText={(text) => {
           measureText(this.state.fontSize, this.state.inputTextValue).then(size =>
