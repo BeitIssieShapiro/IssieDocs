@@ -85,7 +85,7 @@ export default class Folder extends React.Component {
           zIndex: 2,
           borderRadius: 5
         }}>
-          <Text style={{ fontSize: 45, fontWeight:'bold', color: '#505B64' }}>{folderName}</Text>
+          <Text style={{ fontSize: 35, fontWeight:'bold', color: '#505B64' }}>{folderName}</Text>
           {iconName && iconName.length>0?<Icon name={iconName} size={40}></Icon>:null}
         </LinearGradient>
         <LinearGradient

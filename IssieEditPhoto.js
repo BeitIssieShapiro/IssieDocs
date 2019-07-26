@@ -104,7 +104,8 @@ export default class IssieEditPhoto extends React.Component {
       keyboardHeight: 0,
       needCanvasUpdate: false,
       needCanavaDataSave: false,
-      needCanvasUpdateTextOnly: false
+      needCanvasUpdateTextOnly: false,
+      sharing:false
     }
 
   }
@@ -137,6 +138,7 @@ export default class IssieEditPhoto extends React.Component {
 
     if (this.props.navigation.getParam('share', false)) {
       //iterates over all files and exports them
+      this.setState({sharing:true});
       let dataUrls = [];
 
       let data = await this.exportToBase64();
@@ -155,7 +157,9 @@ export default class IssieEditPhoto extends React.Component {
         urls: dataUrls
       };
       //Alert.alert(JSON.stringify(dataUrls))
-      Share.open(shareOptions).then(() => { }).catch(err => {
+      Share.open(shareOptions).then(() => { 
+        Alert.alert("שיתוף הסתיים בהצלחה");
+      }).catch(err => {
         Alert.alert("הפעולה בוטלה");
       });
 
@@ -529,6 +533,10 @@ export default class IssieEditPhoto extends React.Component {
               style={{ flex: 1 }}
               contentContainerStyle={{ flex: 1 }}
             >
+              {this.state.sharing?
+              <View style={{position:'absolute', top:this.state.canvasH/2,left:this.state.sideMargin, width:this.state.canvasW,zIndex:1000, backgroundColor:'white'}}>
+              <Text style={{fontSize:45}}>מייצא דף עבודה. נא להמתין...</Text>
+              </View>:null}
               {this.getCanvas()}
             </ScrollView>
           </View>
@@ -706,7 +714,7 @@ export default class IssieEditPhoto extends React.Component {
           this.setState({ needExport: undefined })
           setTimeout(() => {
             this.doExport(component, promise.resolve, promise.reject);
-          }, 500);
+          }, 1500);
         }
       }
       }
