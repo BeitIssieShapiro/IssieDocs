@@ -1,4 +1,6 @@
 rootProject.name = 'IssieDoc3'
+include ':react-native-measure-text'
+project(':react-native-measure-text').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-measure-text/android')
 include ':react-native-text-size'
 project(':react-native-text-size').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-text-size/android')
 include ':react-native-document-picker'

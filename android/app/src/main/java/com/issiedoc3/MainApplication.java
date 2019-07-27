@@ -3,6 +3,7 @@ package com.issiedoc3;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import io.github.airamrguez.RNMeasureTextPackage;
 import com.github.amarcruz.rntextsize.RNTextSizePackage;
 import io.github.elyx0.reactnativedocumentpicker.DocumentPickerPackage;
 import com.filepicker.FilePickerPackage;
@@ -41,6 +42,7 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new RNMeasureTextPackage(),
             new RNTextSizePackage(),
             new DocumentPickerPackage(),
             new FilePickerPackage(),

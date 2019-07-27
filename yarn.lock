@@ -5066,6 +5066,11 @@ react-native-linear-gradient@^2.5.4:
   resolved "https://registry.yarnpkg.com/react-native-linear-gradient/-/react-native-linear-gradient-2.5.4.tgz#dce133526f5a5510a639af94544f1ed0c984bd1e"
   integrity sha512-FF1NhlerA4uBiS0gFIHa4FBp8/aftv4vPj14Y47lGNkYjSI94tnI6oYO3EfUxXjEyCUPiOVNKZOB9kScyjc5Ew==
 
+react-native-measure-text@^1.0.0-beta.1:
+  version "1.0.0-beta.1"
+  resolved "https://registry.yarnpkg.com/react-native-measure-text/-/react-native-measure-text-1.0.0-beta.1.tgz#b7aab0ef2e5a234f349e15a656af84919af82698"
+  integrity sha512-L34+6zHpj3JUfohBD3pgUUWd1ZZPRnq/NED5Be2Gt9plySssTGiAXSrX9pgaDUrTnHwf+HKzGVP2/b+mn87G+g==
+
 react-native-measureme@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/react-native-measureme/-/react-native-measureme-0.0.1.tgz#8b1c5595cdbb1cfdf85bff98fe36d33e98b6162c"

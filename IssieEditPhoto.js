@@ -13,7 +13,8 @@ import Share from 'react-native-share';
 import DoQueue from './do-queue';
 
 import { getSquareButton, colors, getImageDimensions } from './elements'
-import rnTextSize from 'react-native-text-size'
+//import rnTextSize from 'react-native-text-size'
+import MeasureText from 'react-native-measure-text';
 
 const topLayer = 51 + 8 + 8;
 const maxZoom = 3;
@@ -24,14 +25,20 @@ const INITIAL_TEXT_SIZE = 80;
 const MAX_STROKE_WIDTH = 12;
 
 async function measureText(fontSize, txt) {
-  return rnTextSize.measure({
-    text: txt,             // text to measure, can include symbols
-    width: 1000,            // max-width of the "virtual" container
-    fontFamily: undefined,
+  // return rnTextSize.measure({
+  //   text: txt,             // text to measure, can include symbols
+  //   width: 1000,            // max-width of the "virtual" container
+  //   fontFamily: undefined,
+  //   fontSize: fontSize,
+  //   fontStyle: 'normal',
+  //   fontWeight: 'normal'
+  // })
+  return MeasureText.widths({
+    texts:[txt],
     fontSize: fontSize,
-    fontStyle: 'normal',
     fontWeight: 'normal'
   })
+  
 }
 
 export default class IssieEditPhoto extends React.Component {
@@ -380,8 +387,8 @@ export default class IssieEditPhoto extends React.Component {
         //clone and align to canvas size:
         let txtElem = q[i].elem;
         txtElem.position = {
-          x: (txtElem.normPosition.x - txtElem.width) * this.state.scaleRatio - 30,
-          y: txtElem.normPosition.y * this.state.scaleRatio
+          x: (txtElem.normPosition.x ) * this.state.scaleRatio - txtElem.width-15,
+          y: txtElem.normPosition.y * this.state.scaleRatio + 6
         };
 
         //first try to find same ID and replace, or add it
@@ -759,8 +766,8 @@ export default class IssieEditPhoto extends React.Component {
     return <View style={{ flex: 1, position: 'absolute', left: x - this.getTextWidth() , top: y, zIndex: 100 }} {...this._panResponder.panHandlers}>
       <TextInput
         onChangeText={(text) => {
-          measureText(this.state.fontSize, this.state.inputTextValue).then(size =>
-            this.setState({ inputTextValue: text, inputTextWidth: size.width }));
+          measureText(this.state.fontSize, this.state.inputTextValue).then(width =>
+            this.setState({ inputTextValue: text, inputTextWidth: width[0]}));
         }}
 
         autoFocus
