@@ -34,6 +34,12 @@ export const pictureWrapperStyle = {
   zIndex: 1
 }
 
+function sortLastUpdate(arr) {
+  arr.sort((a, b) => {
+    return b.lastUpdate - a.lastUpdate;
+  })
+}
+
 
 export default class GalleryScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
@@ -46,7 +52,7 @@ export default class GalleryScreen extends React.Component {
       headerStyle: {
         backgroundColor: '#8EAFCE',
       },
-     
+
       headerTintColor: 'white',
       headerTitleStyle: {
         fontSize: 30,
@@ -84,7 +90,6 @@ export default class GalleryScreen extends React.Component {
   refresh = async () => {
 
     RNFS.readDir(FOLDERS_DIR).then(async (folders) => {
-      //Alert.alert("Loading " + folders.length + " folders");
       let foldersState = [];
 
       for (let folder of folders) {
@@ -93,19 +98,38 @@ export default class GalleryScreen extends React.Component {
         const filesItems = items.filter(f => !f.name.endsWith(".json"));
         let files = [];
         for (let fi of filesItems) {
+          let lastUpdate = Number(fi.mtime);
+          //finds the .json file if exists
+          let dotJsonFile = items.find(f => f.name === fi.name+".json");
+          if (dotJsonFile) {
+            lastUpdate = Number(dotJsonFile.mtime);
+          }
+
           let pages = []
           if (fi.isDirectory()) {
             //read all pages
             const innerPages = await RNFS.readDir(fi.path);
+
+            // //calculate last update
+            // dotJsonFiles = innerPages.filter(f => f.name.endsWith(".json"));
+            // for (dotJsonFile of dotJsonFiles) {
+         
+            //   if (Number(dotJsonFile.mtime)> lastUpdate) {
+            //     Alert.alert('x')
+            //     lastUpdate = Number(dotJsonFile.mtime);
+            //   }
+            // }
             pages = innerPages.filter(f => !f.name.endsWith(".json")).map(p => p.path);
             pages = pages.sort();
           }
-          files.push({ name: fi.name, path: fi.path, isFolder: fi.isDirectory(), pages: pages });
+          files.push({ name: fi.name, lastUpdate, path: fi.path, isFolder: fi.isDirectory(), pages: pages });
         }
-
+        //sortLastUpdate(files);
         //Alert.alert(folder.name + " : "+JSON.stringify(files))
-        foldersState.push({ name: folder.name, path: folder.path,files: files });
+        foldersState.push({ name: folder.name, lastUpdate: Number(folder.mtime), path: folder.path, files: files });
       }
+      //sortLastUpdate(foldersState);
+
       this.setState({ folders: foldersState });
 
     })
@@ -122,7 +146,7 @@ export default class GalleryScreen extends React.Component {
     if (isSelected) {
       selected.push({ item: item, obj: obj, type: type });
     } else {
-      selected = selected.filter(sel => (sel.item && sel.item.path  !== item.path)); 
+      selected = selected.filter(sel => (sel.item && sel.item.path !== item.path));
     }
     this.setState({ selected });
   };
@@ -194,7 +218,7 @@ export default class GalleryScreen extends React.Component {
     let isPages = false;
 
     if (this.state.selected.length) {
-      for (let i=0;i< this.state.selected.length;i++) {
+      for (let i = 0; i < this.state.selected.length; i++) {
         let isFolder = this.state.selected[i].type == 'folder'
         isPages = isPages || !isFolder;
         isFolders = isFolders || isFolder;
@@ -272,18 +296,18 @@ export default class GalleryScreen extends React.Component {
   ShowFileExplorer = () => {
     this.setState({ isNewPageMode: false });
 
-   DocumentPicker.pick({
-        type: [DocumentPicker.types.images, DocumentPicker.types.pdf]
-      }).then( res => {
-        this.props.navigation.navigate('SavePhoto', {
-          uri: res.uri,
-          folder: this.props.navigation.getParam('folder', '')
-        });
-      }).catch(err=> {
-        if (!DocumentPicker.isCancel(err)) {
-          Alert.alert(err);
-        }
+    DocumentPicker.pick({
+      type: [DocumentPicker.types.images, DocumentPicker.types.pdf]
+    }).then(res => {
+      this.props.navigation.navigate('SavePhoto', {
+        uri: res.uri,
+        folder: this.props.navigation.getParam('folder', '')
       });
+    }).catch(err => {
+      if (!DocumentPicker.isCancel(err)) {
+        Alert.alert(err);
+      }
+    });
   }
 
   Share = () => {

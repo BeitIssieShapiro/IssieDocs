@@ -2,9 +2,9 @@ Features
 --------
 * Move page to another folder
 * brush size cosmetics
-* multiple pages header 1of2 etc.
+X* multiple pages header 1of2 etc.
 * PDF - allow seeing all pages, and select which to save
-* Photo - show (n) instead of +
+V* Photo - show (n) instead of +
 * optimize loading list of folders any times
 
 V* Import from albom
