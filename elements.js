@@ -1,6 +1,6 @@
 import {
     TouchableOpacity, Text, StyleSheet, Image, View,
-    TouchableHighlight
+    TouchableHighlight, Alert
 } from 'react-native';
 import { Icon } from 'react-native-elements'
 import LinearGradient from 'react-native-linear-gradient';
@@ -102,9 +102,9 @@ function pickerRenderRow(rowData, rowID, highlighted) {
         <TouchableHighlight underlayColor='cornflowerblue'>
             <View style={[globalStyles.textInput, {
                 backgroundColor: evenRow ? 'lemonchiffon' : 'white',
-                alignContent:'flex-end',justifyContent: 'space-between', 
-                alignItems:'center',
-                flexDirection:'row'
+                alignContent: 'flex-end', justifyContent: 'space-between',
+                alignItems: 'center',
+                flexDirection: 'row'
             }]}>
                 <Icon name={iconName} size={50}></Icon>
                 <Text style={{ fontSize: 70, textAlign: 'right' }}>
@@ -120,18 +120,18 @@ export function getIconPicker(pickerIcon, icons, callback) {
     }
     console.disableYellowBox = true;
     return <ModalDropdown
-        style={[styles.pickerButton, {  width: '30%' }]}
+        style={[styles.pickerButton, { width: '30%' }]}
         dropdownStyle={{
-            flex:1,
-            width:'60%',
-            height:300,
+            flex: 1,
+            width: '60%',
+            height: 300,
             top: 0
         }}
         onSelect={callback}
         renderRow={pickerRenderIcon}
         options={icons} >
         <View style={{
-            height:'100%',
+            height: '100%',
             flexDirection: 'row', justifyContent: 'space-between',
             alignItems: 'center', alignContent: 'center'
         }}>
@@ -155,14 +155,16 @@ export const folderIcons = [
 function pickerRenderIcon(rowData, rowID, highlighted) {
     return (
         <TouchableHighlight underlayColor='cornflowerblue'>
-            <View style={[globalStyles.textInput,{
+            <View style={[globalStyles.textInput, {
                 flex: 1,
                 flexDirection: 'row',
                 backgroundColor: 'white',
-                alignItems:'stretch'
+                alignItems: 'center',
+                
+                justifyContent:'space-between'
             }]}>
                 <Icon name={rowData.icon} size={50} color="#4630EB" />
-                <Text style={{fontSize:35}}>{rowData.text}</Text>
+                <Text style={{ fontSize: 55 }}>{rowData.text}</Text>
             </View>
         </TouchableHighlight>
     );
@@ -182,10 +184,37 @@ export async function getImageDimensions(uri) {
     );
 }
 
+export function getPageNavigationButtons(left, width, isFirst, isLast, callback) {
+
+    return <View
+        style={{
+            flexDirection: 'row',
+            height: '10%',
+            position: 'absolute',
+            bottom: 0,
+            left: left,
+            width: width,
+            justifyContent: 'space-between',
+            zIndex: 1001
+        }}
+    >
+        {isFirst ?
+            <View /> :
+            getSquareButton(() => callback(-1), colors.navyBlue, undefined, 'דף קודם', 'chevron-left', 30, undefined, { width: 150, height: 60 }, 60, true, 15)
+        }
+
+        {isLast ?
+            <View /> :
+            getSquareButton(() => callback(1), colors.navyBlue, undefined, 'דף הבא', 'chevron-right', 30, undefined, { width: 150, height: 60 }, 60, false, 0, 15)
+        }
+    </View>
+}
+
 export const globalStyles = StyleSheet.create({
 
     textInput: {
-        fontSize: 70,
+        fontSize: 60,
+        height: 80,
         textAlign: "right",
         fontWeight: 'bold',
         color: 'black',

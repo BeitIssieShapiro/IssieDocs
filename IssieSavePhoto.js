@@ -13,7 +13,7 @@ import { StackActions } from 'react-navigation';
 import {
   getSquareButton, colors, getImageDimensions,
   getFolderPicker, globalStyles, NEW_FOLDER_NAME, NO_FOLDER_NAME, DEFAULT_FOLDER_NAME,
-  getIconPicker, folderIcons
+  getIconPicker, folderIcons, getPageNavigationButtons
 } from './elements'
 import ImageRotate from 'react-native-image-rotate';
 import { getNewPage, saveFile, cloneToTemp } from './newPage'
@@ -39,7 +39,8 @@ export default class IssieSavePhoto extends React.Component {
       topView: 0,
       multiPageState: { pages: [] },
       pdfWidth: '100%',
-      pdfHeight: '100%'
+      pdfHeight: '100%',
+      pdfPageCount: 0
     };
     this.OK.bind(this);
 
@@ -137,10 +138,9 @@ export default class IssieSavePhoto extends React.Component {
 
       if (this.state.pdf) {
         let pages = [];
-        let currentPage = this.state.pdfPage;
         if (this.state.pdfPageCount > 1) {
           for (let i = 1; i < this.state.pdfPageCount; i++) {
-            let savedPdfPageUri = await this.exportPdfPage(i, currentPage);
+            let savedPdfPageUri = await this.exportPdfPage(i);
 
             let page = { uri: savedPdfPageUri, index: i - 1 }
             //push at the begining
@@ -224,10 +224,10 @@ export default class IssieSavePhoto extends React.Component {
     );
   }
 
-  exportPdfPage = async (page, currPage) => {
+  exportPdfPage = async (page) => {
     return new Promise((resolve, reject) => {
-      if (currPage !== page) {
-        this.setState({ pdfPage: page },
+        this.setState({ pdfPage: page });
+        setTimeout(
           () => {
             let viewShot = this.refs.viewShot;
             viewShot.capture().then(
@@ -236,16 +236,9 @@ export default class IssieSavePhoto extends React.Component {
                 reject(err)
               }
             );
-          });
-      } else {
-        this.refs.viewShot.capture().then(
-          uri => cloneToTemp(uri).then(newUri => resolve(newUri)),
-          err => {
-            reject(err)
-          }
-        );
-      }
-    });
+          }, 1000);
+      } 
+    );
   }
 
   Cancel = () => {
@@ -331,6 +324,9 @@ export default class IssieSavePhoto extends React.Component {
     });
   }
 
+  movePage = (inc) => {
+    this.setState({pdfPage:this.state.pdfPage+inc});
+  }
 
 
   render() {
@@ -444,7 +440,7 @@ export default class IssieSavePhoto extends React.Component {
         }}
         {...this._panResponder.panHandlers}
       >
-        <Text>{this.state.msg}</Text>
+        {/* <Text>{this.state.msg}</Text> */}
 
       </View>
     }
@@ -494,6 +490,12 @@ export default class IssieSavePhoto extends React.Component {
             {NewFolderInput}
             {buttons}
           </ImageBackground>}
+          {this.state.PickName || this.state.pdf && this.state.pdfPageCount < 2 || !this.state.pdf?
+            null:
+            getPageNavigationButtons(0, this.state.pdfWidth, 
+            this.state.pdfPage == 1, //isFirst
+            this.state.pdfPage == this.state.pdfPageCount, //isLast
+            (inc) => this.movePage(inc))}
       </View>
     );
   };
@@ -533,7 +535,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   titleText: {
-    fontSize: 70,
+    fontSize: 60,
     textAlign: "right",
     width: "100%",
     fontWeight: 'bold',
@@ -548,7 +550,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     width: "60%",
     right: "20%",
-    top: "15%",
+    top: "12%",
     backgroundColor: 'transparent'
   }
 });

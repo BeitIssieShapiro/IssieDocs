@@ -23,6 +23,14 @@ export default class Photo extends React.Component {
     this._mounted = false;
   }
 
+  onPress = () => {
+    if (this.state.selected) {
+      this.toggleSelection()
+    } else {
+      this.props.onPress();
+    }
+  }
+  
   toggleSelection = () => {
     this.setState(
       { selected: !this.state.selected },
@@ -40,7 +48,7 @@ export default class Photo extends React.Component {
         <TouchableOpacity
           style={styles.pictureWrapper}
           onLongPress={this.toggleSelection}
-          onPress={this.props.onPress}
+          onPress={() =>this.onPress()}
           activeOpacity={0.8}
         >
           <ImageBackground

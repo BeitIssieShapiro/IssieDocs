@@ -31,6 +31,14 @@ export default class Folder extends React.Component {
     />
   }
 
+  onPress = () => {
+    if (this.state.selected) {
+      this.toggleSelection()
+    } else {
+      this.props.onPress();
+    }
+  }
+
   toggleSelection = () => {
     this.setState(
       { selected: !this.state.selected },
@@ -70,7 +78,7 @@ export default class Folder extends React.Component {
       <TouchableOpacity
         style={styles.pictureWrapper}
         onLongPress={this.toggleSelection}
-        onPress={this.props.onPress}
+        onPress={() => this.onPress()}
         activeOpacity={0.8}
       >
         {this.getBackgroundImage()}

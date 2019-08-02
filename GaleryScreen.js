@@ -43,12 +43,14 @@ function sortLastUpdate(arr) {
 
 export default class GalleryScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
-    let folder = navigation.getParam('folder', 'דפי עבודה');
+    let folder = navigation.getParam('folder', 'IssieDocs - שולחן העבודה שלי');
     folder = folder.split('$')[0]
 
     let allFolders = navigation.getParam('allFolders', false);
+    let allFiles = navigation.getParam('allFiles', false);
+    
     return {
-      title: allFolders ? 'כל התיקיות' : folder,
+      title: allFolders ? 'כל התיקיות' : (allFiles? 'כל הדפים' : folder),
       headerStyle: {
         backgroundColor: '#8EAFCE',
       },
@@ -192,6 +194,7 @@ export default class GalleryScreen extends React.Component {
 
   onFolderPress = (folder) => {
     //console.warn(folder.name + " was pressed");
+    if (folder)
     this.props.navigation.push('Home', { folder: folder.name });
     this.clearSelected();
   }
@@ -208,7 +211,7 @@ export default class GalleryScreen extends React.Component {
   }
 
   onAllPages = () => {
-    this.props.navigation.push('Home', { allFiles: 'all' });
+    this.props.navigation.push('Home', { allFiles: true });
     this.clearSelected();
   }
 
@@ -322,7 +325,7 @@ export default class GalleryScreen extends React.Component {
   render() {
 
     const currentFolder = this.props.navigation.getParam('folder', '');
-    const allFiles = this.props.navigation.getParam('allFiles', '');
+    const allFiles = this.props.navigation.getParam('allFiles', false);
     const allFolders = this.props.navigation.getParam('allFolders', false);
     let overview = false;
 
@@ -331,6 +334,7 @@ export default class GalleryScreen extends React.Component {
       if (allFolders) {
         galery = this.state.folders.filter(f => f.name != 'Default').map(this.renderFolder);
       } else if (allFiles) {
+        this.addNewPage(galery);
         this.state.folders.filter(f => f.name == 'Default').map(defFolder => {
           defFolder.files.map(f => {
             galery.push(this.renderPhoto(f))
@@ -419,6 +423,12 @@ export default class GalleryScreen extends React.Component {
             </View>
           </TouchableOpacity>
         </View>
+        <View style={{position:'absolute', bottom: '10%', left:'10%', height:70, width:180}}>
+        {getSquareButton(()=>{
+              this.setState({ isNewPageMode: false });
+        }, colors.gray,undefined, "", "cancel", 55,
+        false, { width: 70, height: 70 }, 55)}
+        </View>
       </View>
     }
 
@@ -444,7 +454,7 @@ export default class GalleryScreen extends React.Component {
               <View />
           }
           {  //Share
-            this.state.selected.length == 1 ?
+            this.state.selected.length == 1 && this.state.selected[0].type === 'file' ?
               getSquareButton(this.Share, colors.blue, undefined, 'שתף...', undefined, 30, false, { width: 180, height: 50 }) :
               //this.getButton(this.Delete, '#8ed1fc', "מחק") : 
               <View />
