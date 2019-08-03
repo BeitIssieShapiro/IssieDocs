@@ -8,7 +8,11 @@ import LinearGradient from 'react-native-linear-gradient';
 import ImagePicker from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
 import Dash from 'react-native-dash';
-import { getSquareButton, colors } from './elements'
+import {
+  getSquareButton, colors, getFileNameDialog,
+  DEFAULT_FOLDER_NAME, getFolderAndIcon, globalStyles, NO_FOLDER_NAME, NEW_FOLDER_NAME,
+  validPathPart
+} from './elements'
 
 import { Icon } from 'react-native-elements'
 import Photo from './Photo';
@@ -48,9 +52,9 @@ export default class GalleryScreen extends React.Component {
 
     let allFolders = navigation.getParam('allFolders', false);
     let allFiles = navigation.getParam('allFiles', false);
-    
+
     return {
-      title: allFolders ? 'כל התיקיות' : (allFiles? 'כל הדפים' : folder),
+      title: allFolders ? 'כל התיקיות' : (allFiles ? 'כל הדפים' : folder),
       headerStyle: {
         backgroundColor: '#8EAFCE',
       },
@@ -90,7 +94,6 @@ export default class GalleryScreen extends React.Component {
   };
 
   refresh = async () => {
-
     RNFS.readDir(FOLDERS_DIR).then(async (folders) => {
       let foldersState = [];
 
@@ -102,7 +105,7 @@ export default class GalleryScreen extends React.Component {
         for (let fi of filesItems) {
           let lastUpdate = Number(fi.mtime);
           //finds the .json file if exists
-          let dotJsonFile = items.find(f => f.name === fi.name+".json");
+          let dotJsonFile = items.find(f => f.name === fi.name + ".json");
           if (dotJsonFile) {
             lastUpdate = Number(dotJsonFile.mtime);
           }
@@ -115,7 +118,7 @@ export default class GalleryScreen extends React.Component {
             // //calculate last update
             // dotJsonFiles = innerPages.filter(f => f.name.endsWith(".json"));
             // for (dotJsonFile of dotJsonFiles) {
-         
+
             //   if (Number(dotJsonFile.mtime)> lastUpdate) {
             //     Alert.alert('x')
             //     lastUpdate = Number(dotJsonFile.mtime);
@@ -195,7 +198,7 @@ export default class GalleryScreen extends React.Component {
   onFolderPress = (folder) => {
     //console.warn(folder.name + " was pressed");
     if (folder)
-    this.props.navigation.push('Home', { folder: folder.name });
+      this.props.navigation.push('Home', { folder: folder.name });
     this.clearSelected();
   }
 
@@ -264,8 +267,91 @@ export default class GalleryScreen extends React.Component {
     }
   }
 
-  MoveTo = () => {
-    Alert.alert("אפשרות זו טרם מומשה...");
+  Rename = () => {
+    if (this.state.selected.length == 1) {
+      let selected = this.state.selected[0];
+
+      let fileName = selected.item.name;
+      let folderName = "";
+      if (fileName.endsWith(".jpg")) {
+        fileName = fileName.substr(0, fileName.length - 4);
+      }
+
+      if (selected.type != 'file') {
+        folderName = fileName
+      } else {
+        let parts = selected.item.path.split('/');
+        folderName = parts[parts.length - 2];
+      }
+
+      //Alert.alert(fileName+ "-" + folderName)
+      this.setState({
+        rename: true,
+        renameFileName: fileName,
+        renameFolderName: folderName,
+        renameFolderTo: "",
+        renameFolders: this.state.folders.map(f => f.name).filter(f => f != DEFAULT_FOLDER_NAME)
+      })
+    }
+  }
+
+  doRename = async () => {
+    if (this.state.selected.length == 1) {
+      let selected = this.state.selected[0];
+      if (selected.type == 'file') {
+        let filePath = selected.item.path;
+        let parts = filePath.split('/');
+        let dirty = false;
+
+        //folder:
+        let curFolder = parts[parts.length-2];
+        let newFolder = this.state.renameFolderName;
+        if (!newFolder || newFolder == NO_FOLDER_NAME) {
+          newFolder = DEFAULT_FOLDER_NAME;
+        } else if (newFolder == NEW_FOLDER_NAME) {
+          newFolder = this.state.renameFolderTo;
+          if (!validPathPart(newFolder)) {
+            Alert.alert("שם תיקיה חדשה חסר או לא תקין")
+            return;
+          }
+          //Alert.alert('validate: mkdir(' + parts.slice(0,-2).join('/')+ '/' + newFolder + ')')
+          await RNFS.mkdir(parts.slice(0,-2).join('/')+ '/' + newFolder);
+        }
+        if (curFolder != newFolder) {
+          //verify the new folder exists
+          parts[parts.length-2] = newFolder;
+          dirty = true;
+        }
+
+        if (!dirty && (parts[parts.length-1] == this.state.renameFileName ||
+          parts[parts.length-1] == this.state.renameFileName + '.jpg')) {
+            //same file name and same folder - nothing to do
+        } else {
+          if (selected.item.path.endsWith('.jpg')) {
+            //it is a file
+            parts[parts.length-1] = this.state.renameFileName + '.jpg';
+
+            //Alert.alert('validate (file): move:' + selected.item.path + "\nto:"+ parts.join('/'));
+            try {
+              await RNFS.moveFile(selected.item.path+'.json', parts.join('/')+'.json');
+            } catch (e){/*may not exist*/}
+
+          } else {
+            //it is a folder representing multiple pages
+            parts[parts.length-1] = this.state.renameFileName;
+            //Alert.alert('validate (multi-file): move:' + selected.item.path + "\nto:"+ parts.join('/'));
+
+          }
+          await RNFS.moveFile(selected.item.path, parts.join('/'));
+        }
+
+      } else {
+        //todo
+      }
+    }
+    this.setState({ rename: false });
+    this.clearSelected();
+    this.refresh();
   }
 
   showCamera = () => {
@@ -423,11 +509,11 @@ export default class GalleryScreen extends React.Component {
             </View>
           </TouchableOpacity>
         </View>
-        <View style={{position:'absolute', bottom: '10%', left:'10%', height:70, width:180}}>
-        {getSquareButton(()=>{
-              this.setState({ isNewPageMode: false });
-        }, colors.gray,undefined, "", "cancel", 55,
-        false, { width: 70, height: 70 }, 55)}
+        <View style={{ position: 'absolute', bottom: '10%', left: '10%', height: 70, width: 180 }}>
+          {getSquareButton(() => {
+            this.setState({ isNewPageMode: false });
+          }, colors.gray, undefined, "", "cancel", 55,
+            false, { width: 70, height: 70 }, 55)}
         </View>
       </View>
     }
@@ -436,27 +522,54 @@ export default class GalleryScreen extends React.Component {
       <LinearGradient style={styles.container} colors={['#F1EEE6', '#BEB39F']}
         onLayout={this.onLayout}>
 
+
         <ScrollView contentComponentStyle={{ flex: 1 }}>
           {
-            this.arrange(galery, overview)
+            this.state.rename ?
+              <View style={{ flex: 1, flexDirection: 'column' }}>
+                <View style={globalStyles.okCancelView}>
+                  {  //Cancel
+                    getSquareButton(() => {
+                      this.clearSelected();
+                      this.setState({ rename: false });
+                    }, colors.gray, undefined, 'בטל', 'cancel', 30, false, { width: 180, height: 50 }, 35, true)
+                  }
+                  {  //Cancel
+                    getSquareButton(() => {
+                      this.doRename();
+                    }, colors.navyBlue, undefined, 'בצע', 'check', 30, false, { width: 180, height: 50 }, 35, true)
+                  }
+                </View>
+                <View style={{ flex: 1, position: 'absolute', top: 100, width: '100%' }}>
+
+                  {
+                    getFileNameDialog(this.state.renameFileName, this.state.renameFolderName, this.state.renameFolders,
+                      ...getFolderAndIcon(this.state.renameFolderTo),
+                      (text) => this.setState({ renameFileName: text }),
+                      (text) => this.setState({ renameFolderName: text }),
+                      (text) => this.setState({ renameFolderTo: text }))
+                  }
+                </View>
+              </View>
+              :
+              this.arrange(galery, overview)
           }
         </ScrollView>
 
         <View style={{ flexDirection: 'row' }}>
           {  //delete
-            this.state.selected.length > 0 ?
-              getSquareButton(this.Delete, colors.red, undefined, 'מחק', undefined, 30, false, { width: 180, height: 50 }) :
+            this.state.selected.length > 0 && !this.state.rename ?
+              getSquareButton(this.Delete, colors.red, undefined, 'מחק', 'delete-forever', 30, false, { width: 180, height: 50 }, 35, true) :
               <View />
           }
           {  //move
-            this.state.selected.length == 1 && this.state.selected[0].type !== 'folder' ?
-              getSquareButton(this.MoveTo, colors.blue, undefined, 'העבר ל...', undefined, 30, false, { width: 180, height: 50 }) :
+            this.state.selected.length == 1 && this.state.selected[0].type !== 'folder' && !this.state.rename ?
+              getSquareButton(this.Rename, colors.blue, undefined, 'שנה שם', 'text-fields', 30, false, { width: 180, height: 50 }, 35, true) :
               <View />
           }
           {  //Share
-            this.state.selected.length == 1 && this.state.selected[0].type === 'file' ?
-              getSquareButton(this.Share, colors.blue, undefined, 'שתף...', undefined, 30, false, { width: 180, height: 50 }) :
-              //this.getButton(this.Delete, '#8ed1fc', "מחק") : 
+            this.state.selected.length == 1 && this.state.selected[0].type === 'file' && !this.state.rename ?
+              getSquareButton(this.Share, colors.blue, undefined, 'שתף', 'share', 30, false, { width: 180, height: 50 }, 35, true) :
               <View />
           }
         </View>

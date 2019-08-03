@@ -106,7 +106,7 @@ function handleSaveFileError(err, reject) {
     for (let key in err) {
         errorStr += JSON.stringify(err[key]).substr(15)+"\n";
     }
-    Alert.alert("Error: " + errorStr);
+    //Alert.alert("Error: " + errorStr);
     if (err.toString().includes("already exists")) {
         reject("קובץ בשם זה כבר קיים");
         return;

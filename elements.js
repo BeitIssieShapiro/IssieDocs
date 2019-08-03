@@ -1,6 +1,6 @@
 import {
     TouchableOpacity, Text, StyleSheet, Image, View,
-    TouchableHighlight, Alert
+    TouchableHighlight, Alert, TextInput
 } from 'react-native';
 import { Icon } from 'react-native-elements'
 import LinearGradient from 'react-native-linear-gradient';
@@ -27,6 +27,15 @@ export const NO_FOLDER_NAME = 'ללא';
 export const DEFAULT_FOLDER_NAME = 'Default';
 const FOLDER_NO_ICON = 'sentiment-satisfied';
 
+export function validPathPart(pathPart) {
+    if (!pathPart || pathPart.length == 0) {
+        return false;
+    }
+    if (pathPart.includes('/')) {
+        return false
+    }
+    return true;
+}
 
 export function getSquareButton(func, color, selectedColor, txt, icon, size, selected, dimensions,
     iconSize, iconFirst, rMargin, lMargin) {
@@ -57,6 +66,59 @@ export function getSquareButton(func, color, selectedColor, txt, icon, size, sel
             {icon ? <Icon name={icon} size={iconSize} color='white' /> : null}
         </LinearGradient>
     </TouchableOpacity>
+}
+
+export function getFolderAndIcon(folderName) {
+    if (folderName) {
+        let parts = folderName.split("$")
+        if (parts.length == 2) {
+            return parts;
+        }
+        return [folderName, ""];
+    }
+    return ["", ""];
+}
+
+export function getFileNameDialog(fileName, folderName, folders, newFolderName, newFolderIcon,
+    onChangeName, onChangeFolder, onChangeNewFolder) {
+    if (folderName == DEFAULT_FOLDER_NAME) {
+        folderName = NO_FOLDER_NAME;
+    }
+    return (
+        <View style={styles.textInputView}>
+            <Text style={styles.titleText}>שם הדף</Text>
+            <TextInput style={globalStyles.textInput}
+                onChangeText={onChangeName}
+            >{fileName}</TextInput>
+            <Text style={styles.titleText}>תיקיה</Text>
+            {getFolderPicker(folderName, folders,
+                (itemIndex, itemValue) => {
+                    if (itemValue == NO_FOLDER_NAME) {
+                        itemValue = undefined;
+                    }
+                    onChangeFolder(itemValue)
+                })
+            }
+            {folderName == NEW_FOLDER_NAME ?
+                //New folder picker
+                <View style={{ flex: 1, width: '100%' }}>
+                    <Text style={styles.titleText}>שם התיקיה</Text>
+                    <View style={{ flex: 1, flexDirection: 'row-reverse' }}>
+                        <TextInput style={[globalStyles.textInput, { backgroundColor: 'white', width: '75%' }]}
+                            onChangeText={onChangeNewFolder}
+                            value={newFolderName}
+                        />
+                        <Text>   </Text>
+                        {getIconPicker(newFolderIcon, folderIcons, (itemIndex, itemValue) => {
+                            onChangeNewFolder(itemValue.text + '$' + itemValue.icon);
+                        })}
+                    </View>
+                </View>
+                :
+                //Not new folder
+                null
+            }
+        </View>);
 }
 
 export function getFolderPicker(folder, folders, callback) {
@@ -160,8 +222,8 @@ function pickerRenderIcon(rowData, rowID, highlighted) {
                 flexDirection: 'row',
                 backgroundColor: 'white',
                 alignItems: 'center',
-                
-                justifyContent:'space-between'
+
+                justifyContent: 'space-between'
             }]}>
                 <Icon name={rowData.icon} size={50} color="#4630EB" />
                 <Text style={{ fontSize: 55 }}>{rowData.text}</Text>
@@ -220,7 +282,16 @@ export const globalStyles = StyleSheet.create({
         color: 'black',
         width: '100%',
         backgroundColor: 'white'
-    }
+    },
+    okCancelView: {
+        position: 'absolute',
+        top: "5%",
+        left: 50, right: 50, //middle
+        flex: 1,
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: "center",
+      }
 })
 
 
@@ -263,4 +334,23 @@ const styles = StyleSheet.create({
     notSelected: {
         marginVertical: 10
     },
+    textInputView: {
+        position: 'absolute',
+        flex: 1,
+        flexDirection: 'column',
+        alignItems: "center",
+        justifyContent: "flex-end",
+        width: "60%",
+        right: "20%",
+        top: "12%",
+        backgroundColor: 'transparent'
+    },
+    titleText: {
+        fontSize: 60,
+        textAlign: "right",
+        width: "100%",
+        fontWeight: 'bold',
+        color: 'white',
+        backgroundColor: 'transparent'
+    }
 });

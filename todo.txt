@@ -1,23 +1,25 @@
 Features
 --------
 V* click deselect
-* rename
+V* rename file
+* rename folder
+* save camera does not show whole page
 V* cancel new
 V* main page title: IssieDoc, שולחן העבודה שלי
 V* crop data - remove
 *12.3
 V* new folder gets covered by keyboard
-* multiline text
+V* multiline text
 V* + for all pages
 V* share for folder - remove
 * back arrow with icons
 * main page with home icon
 * icon for all pgaes/folder
 * icons for selected folder
-* Move page to another folder
+V* Move page to another folder
 * brush size cosmetics
 X* multiple pages header 1of2 etc.
-* PDF - allow seeing all pages, and select which to save
+V* PDF - allow seeing all pages
 V* Photo - show (n) instead of +
 * optimize loading list of folders any times
 
@@ -51,15 +53,15 @@ V* no shelf for pages - only in iPad?
 * input Text positioning - fine tune
 V* Unselect folder crash
 V* import pdf - extra page
-* cosmetics of new folder
+V* cosmetics of new folder
 V* share - missing paths
 V* when clicking a text, and after that save text, if same text and same posyion - do nothing
 * save-all-pages is not wide enough
 V* PDF - viewshot is not the size of the pdf
-* PDF - 1st page is saved twice
-* when scrolling down, can't position text below
+V* PDF - 1st page is saved twice
+V* when scrolling down, can't position text below
 V* PDF - even if one page, says save-all-pages
-* add new page and then cancel?
+V* add new page and then cancel?
 * enlarge navigation back
 
 Design:

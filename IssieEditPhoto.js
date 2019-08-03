@@ -13,8 +13,8 @@ import Share from 'react-native-share';
 import DoQueue from './do-queue';
 
 import { getSquareButton, colors, getImageDimensions, getPageNavigationButtons } from './elements'
-//import rnTextSize from 'react-native-text-size'
-import MeasureText from 'react-native-measure-text';
+import rnTextSize from 'react-native-text-size'
+//import MeasureText from 'react-native-measure-text';
 
 const topLayer = 51 + 8 + 8;
 const maxZoom = 3;
@@ -25,19 +25,19 @@ const INITIAL_TEXT_SIZE = 80;
 const MAX_STROKE_WIDTH = 12;
 
 async function measureText(fontSize, txt) {
-  // return rnTextSize.measure({
-  //   text: txt,             // text to measure, can include symbols
-  //   width: 1000,            // max-width of the "virtual" container
-  //   fontFamily: undefined,
-  //   fontSize: fontSize,
-  //   fontStyle: 'normal',
-  //   fontWeight: 'normal'
-  // })
-  return MeasureText.widths({
-    texts: [txt],
+  return rnTextSize.measure({
+    text: txt,             // text to measure, can include symbols
+    width: 1000,            // max-width of the "virtual" container
+    fontFamily: undefined,
     fontSize: fontSize,
+    fontStyle: 'normal',
     fontWeight: 'normal'
   })
+  // return MeasureText.widths({
+  //   texts: [txt],
+  //   fontSize: fontSize,
+  //   fontWeight: 'normal'
+  // })
 
 }
 
@@ -102,7 +102,11 @@ export default class IssieEditPhoto extends React.Component {
           yOffsetBegin, yOffset: newYOffset
         });
       },
-      onPanResponderRelease: () => {
+      onPanResponderRelease: (evt, gestureState) => {
+        if (Math.abs(gestureState.dx) == 0 || Math.abs(gestureState.dy) == 0) {
+          //no move - click
+          this.TextModeClick(evt)
+        }
         this.setState({
           yOffsetBegin: undefined
         });
@@ -299,7 +303,7 @@ export default class IssieEditPhoto extends React.Component {
     //check that the click is in the canvas area:
     let x = this.s2aW(ev.nativeEvent.pageX);
     //Alert.alert("x:"+x+", xOffset:"+this.state.xOffset+",zoom:"+ this.state.zoom)
-    let y = this.s2aH(ev.nativeEvent.pageY) - this.getTextHeight() / 2;
+    let y = this.s2aH(ev.nativeEvent.pageY) - this.state.fontSize/2;
 
     let textElemIndex = this.findTextElement({ x: x, y: y });
     let initialText = '';
@@ -420,8 +424,8 @@ export default class IssieEditPhoto extends React.Component {
         //clone and align to canvas size:
         let txtElem = q[i].elem;
         txtElem.position = {
-          x: (txtElem.normPosition.x) * this.state.scaleRatio - txtElem.width - 15,
-          y: txtElem.normPosition.y * this.state.scaleRatio + 6
+          x: (txtElem.normPosition.x) * this.state.scaleRatio - txtElem.width, // - 15,
+          y: txtElem.normPosition.y * this.state.scaleRatio // + 6
         };
 
         //first try to find same ID and replace, or add it
@@ -780,10 +784,23 @@ export default class IssieEditPhoto extends React.Component {
     return <View style={{ flex: 1, position: 'absolute', left: x - this.getTextWidth(), top: y, zIndex: 100 }} {...this._panResponder.panHandlers}>
       <TextInput
         onChangeText={(text) => {
-          measureText(this.state.fontSize, this.state.inputTextValue).then(width =>
-            this.setState({ inputTextValue: text, inputTextWidth: width[0] }));
+          this.setState({ inputTextValue: text});
+          // measureText(this.state.fontSize, this.state.inputTextValue).then(dim => {
+          //   let addExtra = text.endsWith('\n') ? this.state.fontSize+1.2 : 0;
+          //   this.setState({ inputTextValue: text, inputTextWidth: dim.width, inputTextHeight: dim.height + addExtra })
+          // });
         }}
-
+        onContentSizeChange={(event) => {
+          let dim = event.nativeEvent.contentSize;
+          //let addExtra = text.endsWith('\n') ? this.state.fontSize+1.2 : 0;
+          this.setState({ 
+            inputTextWidth: dim.width, 
+            inputTextHeight: dim.height //+ addExtra 
+          })
+        }}
+        autoCapitalize={'none'}
+        autoCorrect={false}
+        multiline={true}
         autoFocus
 
         style={[styles.textInput, {
@@ -793,12 +810,12 @@ export default class IssieEditPhoto extends React.Component {
           fontSize: this.state.fontSize
         }]}
       >{txt}</TextInput>
-    </View>
+    </View >
   }
 
 
   getTextWidth = () => this.state.inputTextWidth < INITIAL_TEXT_SIZE - 20 ? INITIAL_TEXT_SIZE : this.state.inputTextWidth + 20;
-  getTextHeight = () => this.state.fontSize + 1.2 + 15;
+  getTextHeight = () => Math.max(this.state.inputTextHeight, this.state.fontSize + 1.2);
 }
 
 AppRegistry.registerComponent('IssieEditPhoto', () => IssieEditPhoto);
