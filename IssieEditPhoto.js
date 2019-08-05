@@ -12,9 +12,11 @@ import * as RNFS from 'react-native-fs';
 import Share from 'react-native-share';
 import DoQueue from './do-queue';
 
-import { getSquareButton, colors, getImageDimensions, getPageNavigationButtons } from './elements'
+import { getSquareButton, colors, DEFAULT_FOLDER_NAME, getFolderAndIcon, getImageDimensions,
+  getPageNavigationButtons } from './elements'
 import rnTextSize from 'react-native-text-size'
 //import MeasureText from 'react-native-measure-text';
+//import ReactNativeComponentTree from 'react-native/Libraries/Renderer/shims/ReactNativeComponentTree';
 
 const topLayer = 51 + 8 + 8;
 const maxZoom = 3;
@@ -23,6 +25,7 @@ const TOP = 0, RIGHT = 1, BOTTOM = 2, LEFT = 3;
 const DEFAULT_STROKE_WIDTH = 5;
 const INITIAL_TEXT_SIZE = 80;
 const MAX_STROKE_WIDTH = 12;
+const DRAG_ICON_SIZE = 30;
 
 async function measureText(fontSize, txt) {
   return rnTextSize.measure({
@@ -44,11 +47,14 @@ async function measureText(fontSize, txt) {
 export default class IssieEditPhoto extends React.Component {
   static navigationOptions = ({ navigation }) => {
     const page = navigation.getParam('page', '');
+    let pathParts = page.path.split('/');
+
     let fileName = page.path.replace(/^.*[\\\/]/, '');
     if (fileName.endsWith('.jpg')) {
       fileName = fileName.substr(0, fileName.length - 4);
     }
-
+    let isPageOnHome = pathParts[pathParts.length - 2] == DEFAULT_FOLDER_NAME;
+    let parts = getFolderAndIcon(pathParts[pathParts.length - 2]);
     return {
       title: fileName,
       headerStyle: {
@@ -59,6 +65,18 @@ export default class IssieEditPhoto extends React.Component {
         fontSize: 30,
         fontWeight: 'bold'
       },
+      headerLeft: isPageOnHome ? undefined :
+        <View >
+          <TouchableOpacity onPress={() => { navigation.pop()}}
+            activeOpacity={1}
+            style={{flexDirection: 'row', alignItems:'center'}}>
+            <Icon name='keyboard-arrow-left' color='white' size={35} />
+            <Text style ={{color:'white', fontSize: 20 }}>{parts[0]}</Text>
+            <Icon name='folder' color='white' size={30} />
+          </TouchableOpacity>
+
+        </View>
+      ,
     };
   }
 
@@ -68,18 +86,18 @@ export default class IssieEditPhoto extends React.Component {
     this.Load = this.Load.bind(this);
 
     this._panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: (evt, gestureState) => this._shouldDragText(evt, gestureState),
-      onStartShouldSetPanResponderCapture: (evt, gestureState) => this._shouldDragText(evt, gestureState),
-      onMoveShouldSetPanResponder: (evt, gestureState) => this._shouldDragText(evt, gestureState),
-      onMoveShouldSetPanResponderCapture: (evt, gestureState) => this._shouldDragText(evt, gestureState),
+      onStartShouldSetPanResponder: (evt, gestureState) => this._shouldDragText(evt, gestureState) && (Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3),
+      onStartShouldSetPanResponderCapture: (evt, gestureState) => this._shouldDragText(evt, gestureState) && (Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3),
+      onMoveShouldSetPanResponder: (evt, gestureState) => this._shouldDragText(evt, gestureState) && (Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3),
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => false && this._shouldDragText(evt, gestureState) && (Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3),
       onPanResponderMove: (evt, gestureState) => {
         if (this.state.textMode) {
           this.setState({
-            xText: this.s2aW(gestureState.moveX), yText: this.s2aH(gestureState.moveY)
+            xText: this.s2aW(gestureState.moveX - DRAG_ICON_SIZE / 2), yText: this.s2aH(gestureState.moveY - DRAG_ICON_SIZE / 2)
           });
         }
       },
-      onPanResponderRelease: () => {
+      onPanResponderRelease: (evt, gestureState) => {
         if (this.state.textMode) this.SaveText();
       }
     });
@@ -103,7 +121,7 @@ export default class IssieEditPhoto extends React.Component {
         });
       },
       onPanResponderRelease: (evt, gestureState) => {
-        if (Math.abs(gestureState.dx) == 0 || Math.abs(gestureState.dy) == 0) {
+        if (gestureState.dx == 0 && gestureState.dy == 0) {
           //no move - click
           this.TextModeClick(evt)
         }
@@ -303,7 +321,7 @@ export default class IssieEditPhoto extends React.Component {
     //check that the click is in the canvas area:
     let x = this.s2aW(ev.nativeEvent.pageX);
     //Alert.alert("x:"+x+", xOffset:"+this.state.xOffset+",zoom:"+ this.state.zoom)
-    let y = this.s2aH(ev.nativeEvent.pageY) - this.state.fontSize/2;
+    let y = this.s2aH(ev.nativeEvent.pageY) - this.state.fontSize / 2;
 
     let textElemIndex = this.findTextElement({ x: x, y: y });
     let initialText = '';
@@ -781,10 +799,13 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getTextInput = (txt, x, y) => {
-    return <View style={{ flex: 1, position: 'absolute', left: x - this.getTextWidth(), top: y, zIndex: 100 }} {...this._panResponder.panHandlers}>
+    return <View style={{ flex: 1, flexDirection: 'row-reverse', position: 'absolute', left: x - this.getTextWidth(), top: y, zIndex: 100 }}>
+      <View {...this._panResponder.panHandlers}>
+        <Icon name='open-with' size={DRAG_ICON_SIZE} />
+      </View>
       <TextInput
         onChangeText={(text) => {
-          this.setState({ inputTextValue: text});
+          this.setState({ inputTextValue: text });
           // measureText(this.state.fontSize, this.state.inputTextValue).then(dim => {
           //   let addExtra = text.endsWith('\n') ? this.state.fontSize+1.2 : 0;
           //   this.setState({ inputTextValue: text, inputTextWidth: dim.width, inputTextHeight: dim.height + addExtra })
@@ -793,8 +814,8 @@ export default class IssieEditPhoto extends React.Component {
         onContentSizeChange={(event) => {
           let dim = event.nativeEvent.contentSize;
           //let addExtra = text.endsWith('\n') ? this.state.fontSize+1.2 : 0;
-          this.setState({ 
-            inputTextWidth: dim.width, 
+          this.setState({
+            inputTextWidth: dim.width,
             inputTextHeight: dim.height //+ addExtra 
           })
         }}
@@ -814,7 +835,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
 
-  getTextWidth = () => this.state.inputTextWidth < INITIAL_TEXT_SIZE - 20 ? INITIAL_TEXT_SIZE : this.state.inputTextWidth + 20;
+  getTextWidth = () => this.state.inputTextWidth < INITIAL_TEXT_SIZE - 20 ? INITIAL_TEXT_SIZE : this.state.inputTextWidth + this.state.fontSize*2;
   getTextHeight = () => Math.max(this.state.inputTextHeight, this.state.fontSize + 1.2);
 }
 

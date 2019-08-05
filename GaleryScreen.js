@@ -17,7 +17,7 @@ import {
 import { Icon } from 'react-native-elements'
 import Photo from './Photo';
 import Folder from './Folder'
-import { SRC_CAMERA, getNewPage } from './newPage';
+import { SRC_CAMERA, SRC_GALLERY, getNewPage } from './newPage';
 
 const DELETE_PAGE_TITLE = 'מחיקת דף';
 const BEFORE_DELETE_PAGE_QUESTION = 'האם למחוק את הדף?';
@@ -376,7 +376,8 @@ export default class GalleryScreen extends React.Component {
       if (!response.didCancel) {
         this.props.navigation.navigate('SavePhoto', {
           uri: response.uri,
-          folder: this.props.navigation.getParam('folder', '')
+          folder: this.props.navigation.getParam('folder', ''),
+          imageSource: SRC_GALLERY
         });
       }
     });

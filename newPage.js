@@ -7,8 +7,8 @@ import DeviceInfo from 'react-native-device-info';
 import ImagePicker from 'react-native-image-picker';
 import * as RNFS from 'react-native-fs';
 export const SRC_CAMERA = 'camera';
-export const SRC_GALLERY = 'camera';
-export const SRC_FILE = 'camera';
+export const SRC_GALLERY = 'gallery';
+export const SRC_FILE = 'file';
 
 import mock from './mock.jpg'
 let mockFileName;
