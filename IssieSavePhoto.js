@@ -13,7 +13,7 @@ import { StackActions } from 'react-navigation';
 import {
   getSquareButton, colors, getImageDimensions,
    globalStyles, NEW_FOLDER_NAME, NO_FOLDER_NAME, DEFAULT_FOLDER_NAME,
-  getPageNavigationButtons, getFileNameDialog
+  getPageNavigationButtons, getFileNameDialog, semanticColors
 } from './elements'
 import ImageRotate from 'react-native-image-rotate';
 import { getNewPage, saveFile, cloneToTemp } from './newPage'
@@ -214,11 +214,11 @@ export default class IssieSavePhoto extends React.Component {
     saveFile(this.state.uri, filePath).then(
       () => {
         this.props.navigation.dispatch(StackActions.popToTop());
-        if (folderName !== DEFAULT_FOLDER_NAME) {
-          this.props.navigation.push('Home', { folder: folderName });
-        } else {
-          this.props.navigation.pop();
-        }
+        // if (folderName !== DEFAULT_FOLDER_NAME) {
+        //   this.props.navigation.push('Home', { folder: folderName });
+        // } else {
+        //   this.props.navigation.pop();
+        // }
       },
       (err) => Alert.alert(err )
     ).catch(err => {
@@ -343,13 +343,13 @@ export default class IssieSavePhoto extends React.Component {
         this.state.phase == PickName ||
         this.state.phase == PickFolder)) {
       buttons = <View style={globalStyles.okCancelView}>
-        {getSquareButton(this.Cancel, colors.gray, undefined, "בטל", "close", 35, undefined, { width: 200, height: 50 }, 45, true)}
+        {getSquareButton(this.Cancel, semanticColors.cancelButtonG, undefined, "בטל", "close", 35, undefined, { width: 200, height: 50 }, 45, true)}
         <Text>     </Text>
-        {getSquareButton(this.OK, colors.navyBlue, undefined, "שמור" + saveMoreThanOne, "check", 35, undefined, { width: 200, height: 50 }, 45, true)}
+        {getSquareButton(this.OK, semanticColors.okButtonG, undefined, "שמור" + saveMoreThanOne, "check", 35, undefined, { width: 200, height: 50 }, 45, true)}
         {this.state.phase == OK_Cancel && !this.state.pdf ?
           <Text>     </Text> : null}
         {this.state.phase == OK_Cancel && !this.state.pdf ?
-          getSquareButton(this.AddPage, colors.lightBlue, undefined, "הוסף", "add", 35, undefined, { width: 200, height: 50 }, 45, true) :
+          getSquareButton(this.AddPage, semanticColors.addButtonG, undefined, "הוסף", "add", 35, undefined, { width: 200, height: 50 }, 45, true) :
           null
         }
 
@@ -358,12 +358,12 @@ export default class IssieSavePhoto extends React.Component {
 
     if (this.state.phase == OK_Cancel && !this.state.pdf) {
       header = <View style={{ flexDirection: 'row', height: headerHeight }}>
-        {getSquareButton(this.crop, colors.blue, colors.blue, undefined, "crop", 45, this.state.cropping)}
-        {this.state.cropping ? getSquareButton(this.cancelCrop, colors.blue, undefined, undefined, "cancel", 45, false) : <View />}
-        {this.state.cropping ? getSquareButton(this.acceptCrop, colors.blue, undefined, undefined, "check", 45, false) : <View />}
+        {getSquareButton(this.crop, semanticColors.actionButtonG, semanticColors.actionButtonG, undefined, "crop", 45, this.state.cropping)}
+        {this.state.cropping ? getSquareButton(this.cancelCrop, semanticColors.actionButtonG, undefined, undefined, "cancel", 45, false) : <View />}
+        {this.state.cropping ? getSquareButton(this.acceptCrop, semanticColors.actionButtonG, undefined, undefined, "check", 45, false) : <View />}
 
-        {this.state.cropping ? <View /> : getSquareButton(this.rotateLeft, colors.blue, undefined, undefined, "rotate-left", 45, false)}
-        {this.state.cropping ? <View /> : getSquareButton(this.rotateRight, colors.blue, undefined, undefined, "rotate-right", 45, false)}
+        {this.state.cropping ? <View /> : getSquareButton(this.rotateLeft, semanticColors.actionButtonG, undefined, undefined, "rotate-left", 45, false)}
+        {this.state.cropping ? <View /> : getSquareButton(this.rotateRight, semanticColors.actionButtonG, undefined, undefined, "rotate-right", 45, false)}
       </View>
     }
 

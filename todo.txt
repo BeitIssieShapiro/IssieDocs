@@ -65,5 +65,6 @@ V* add new page and then cancel?
 * enlarge navigation back
 
 Design:
-- icon
-- 
+- icon colors
+V- rename background
+- Add scale for brush and text

@@ -13,8 +13,9 @@ import Share from 'react-native-share';
 import DoQueue from './do-queue';
 
 import { getSquareButton, colors, DEFAULT_FOLDER_NAME, getFolderAndIcon, getImageDimensions,
-  getPageNavigationButtons } from './elements'
-import rnTextSize from 'react-native-text-size'
+  getPageNavigationButtons, 
+  semanticColors} from './elements'
+//import rnTextSize from 'react-native-text-size'
 //import MeasureText from 'react-native-measure-text';
 //import ReactNativeComponentTree from 'react-native/Libraries/Renderer/shims/ReactNativeComponentTree';
 
@@ -27,22 +28,22 @@ const INITIAL_TEXT_SIZE = 80;
 const MAX_STROKE_WIDTH = 12;
 const DRAG_ICON_SIZE = 30;
 
-async function measureText(fontSize, txt) {
-  return rnTextSize.measure({
-    text: txt,             // text to measure, can include symbols
-    width: 1000,            // max-width of the "virtual" container
-    fontFamily: undefined,
-    fontSize: fontSize,
-    fontStyle: 'normal',
-    fontWeight: 'normal'
-  })
-  // return MeasureText.widths({
-  //   texts: [txt],
-  //   fontSize: fontSize,
-  //   fontWeight: 'normal'
-  // })
+// async function measureText(fontSize, txt) {
+//   return rnTextSize.measure({
+//     text: txt,             // text to measure, can include symbols
+//     width: 1000,            // max-width of the "virtual" container
+//     fontFamily: undefined,
+//     fontSize: fontSize,
+//     fontStyle: 'normal',
+//     fontWeight: 'normal'
+//   })
+//   // return MeasureText.widths({
+//   //   texts: [txt],
+//   //   fontSize: fontSize,
+//   //   fontWeight: 'normal'
+//   // })
 
-}
+// }
 
 export default class IssieEditPhoto extends React.Component {
   static navigationOptions = ({ navigation }) => {
@@ -58,7 +59,7 @@ export default class IssieEditPhoto extends React.Component {
     return {
       title: fileName,
       headerStyle: {
-        backgroundColor: '#8EAFCE',
+        backgroundColor: semanticColors.header,
       },
       headerTintColor: 'white',
       headerTitleStyle: {
@@ -618,7 +619,7 @@ export default class IssieEditPhoto extends React.Component {
                 // }
                 this.setState({ zoom: newZoom })
               }
-                , colors.gray, colors.orange, undefined, "search", 30, this.state.zoom > 1)
+                , semanticColors.disabledButtonG, semanticColors.activeZoomButtonG, undefined, "zoom-in", 30, this.state.zoom > 1)
             }
 
             {this.getSpace(4)}
@@ -627,7 +628,7 @@ export default class IssieEditPhoto extends React.Component {
               getSquareButton(() => {
                 this.state.queue.undo();
                 this.setState({ needCanvasUpdate: true, needCanavaDataSave: true });
-              }, colors.gray, colors.gray, undefined, "undo", 30, false)
+              }, semanticColors.undoButtonG, undefined, undefined, "undo", 30, false)
             }
             {this.getSpace(1)}
 
@@ -635,7 +636,7 @@ export default class IssieEditPhoto extends React.Component {
               getSquareButton(() => {
                 this.state.queue.redo();
                 this.setState({ needCanvasUpdate: true, needCanavaDataSave: true });
-              }, this.state.queue.canRedo() ? colors.gray : colors.disabled, this.state.queue.canRedo() ? colors.gray : colors.disabled,
+              }, this.state.queue.canRedo() ? semanticColors.undoButtonG : semanticColors.disabledButtonG, undefined,
                 undefined, "redo", 30, false)
             }
             {this.getSpace(3)}
@@ -651,21 +652,21 @@ export default class IssieEditPhoto extends React.Component {
 
             {
               getSquareButton(() => { this.onTextButton(-1) },
-                colors.gray, this.state.color, "א", undefined, 30, this.state.textMode)
+                semanticColors.InactiveModeButtonG, this.state.color, "א", undefined, 30, this.state.textMode)
             }
             {
               getSquareButton(() => { this.onTextButton(1) },
-                colors.gray, this.state.color, "א", undefined, 40, this.state.textMode)
+              semanticColors.InactiveModeButtonG, this.state.color, "א", undefined, 40, this.state.textMode)
             }
             {this.getSpace(3)}
 
             {
               getSquareButton(() => { this.onBrushButton(-1) },
-                colors.gray, this.state.color, undefined, "brush", 20, !this.state.textMode)
+              semanticColors.InactiveModeButtonG, this.state.color, undefined, "brush", 20, !this.state.textMode)
             }
             {
               getSquareButton(() => { this.onBrushButton(1) },
-                colors.gray, this.state.color, undefined, "brush", 30, !this.state.textMode)
+              semanticColors.InactiveModeButtonG, this.state.color, undefined, "brush", 30, !this.state.textMode)
             }
             {this.getSpace(3)}
             {
@@ -726,7 +727,7 @@ export default class IssieEditPhoto extends React.Component {
         onPress={func}
         name='play-arrow'
         size={70}
-        color="#D16F28"
+        color={semanticColors.moveInZoomButton}
       />
     </View>
   }

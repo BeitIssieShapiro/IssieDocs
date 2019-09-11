@@ -53,7 +53,7 @@ export default class Folder extends React.Component {
           source={{ uri: this.props.files[0].path }}
         >
           {
-            this.state.selected && <Icon name="check-circle" size={30} color="#4630EB" />
+            this.state.selected && <Icon name="check-circle" size={30} color={semanticColors.selectedCheck} />
           }
         </ImageBackground>
         <View style={[styles.picture, { backgroundColor: 'white', transform: [{ rotate: '6deg' }, { translateY: -10 }], zIndex: 0 }]} />
@@ -132,34 +132,11 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     zIndex: 1
   },
-  facesContainer: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    left: 0,
-    top: 0,
-  },
   pictureWrapper: {
     width: pictureSize * 4 / 5,
     height: pictureSize,
     alignItems: 'center',
     justifyContent: 'center',
     margin: 5,
-  },
-  face: {
-    borderWidth: 2,
-    borderRadius: 2,
-    position: 'absolute',
-    borderColor: '#FFD700',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  faceText: {
-    color: '#FFD700',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    margin: 2,
-    fontSize: 10,
-    backgroundColor: 'transparent',
   }
 });

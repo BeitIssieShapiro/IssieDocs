@@ -2,6 +2,7 @@ import React from 'react';
 import { ImageBackground, StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import {Icon} from 'react-native-elements'
 import LinearGradient from 'react-native-linear-gradient';
+import { semanticColors } from './elements';
 
 const pictureSize = 150;
 const topBar = .38;
@@ -30,7 +31,7 @@ export default class Photo extends React.Component {
       this.props.onPress();
     }
   }
-  
+
   toggleSelection = () => {
     this.setState(
       { selected: !this.state.selected },
@@ -56,7 +57,7 @@ export default class Photo extends React.Component {
             source={{ uri:pageCount == 0?page.path:page.pages[0] }}
           >
           {
-            this.state.selected && <Icon name="check-circle" size={30} color="#4630EB" />
+            this.state.selected && <Icon name="check-circle" size={30} color={semanticColors.selectedCheck} />
           }
           </ImageBackground>
           <LinearGradient colors={['#AEC6DD','#749DC5']} style={{

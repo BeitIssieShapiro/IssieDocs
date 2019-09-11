@@ -11,7 +11,8 @@ import Dash from 'react-native-dash';
 import {
   getSquareButton, colors, getFileNameDialog,
   DEFAULT_FOLDER_NAME, getFolderAndIcon, globalStyles, NO_FOLDER_NAME, NEW_FOLDER_NAME,
-  validPathPart
+  validPathPart,
+  semanticColors
 } from './elements'
 
 import { Icon } from 'react-native-elements'
@@ -56,7 +57,7 @@ export default class GalleryScreen extends React.Component {
     return {
       title: allFolders ? 'כל התיקיות' : (allFiles ? 'כל הדפים' : folder),
       headerStyle: {
-        backgroundColor: '#8EAFCE',
+        backgroundColor: semanticColors.header,
       },
 
       headerTintColor: 'white',
@@ -184,9 +185,8 @@ export default class GalleryScreen extends React.Component {
 
   renderNewPageFolder = () => {
     return <View key={'addNewPage'} style={[pictureWrapperStyle, { backgroundColor: 'white' }]} >
-      <TouchableOpacity style={styles.button} onPress={(e) => {
+      <TouchableOpacity onPress={(e) => {
         this.setState({ isNewPageMode: true });
-
       }
       }
       >
@@ -513,14 +513,14 @@ export default class GalleryScreen extends React.Component {
         <View style={{ position: 'absolute', bottom: '10%', left: '10%', height: 70, width: 180 }}>
           {getSquareButton(() => {
             this.setState({ isNewPageMode: false });
-          }, colors.gray, undefined, "", "cancel", 55,
+          }, semanticColors.cancelButtonG, undefined, "", "cancel", 55,
             false, { width: 70, height: 70 }, 55)}
         </View>
       </View>
     }
 
     return (
-      <LinearGradient style={styles.container} colors={['#F1EEE6', '#BEB39F']}
+      <LinearGradient style={styles.container} colors={this.state.rename? ['gray','gray']:['#F1EEE6', '#BEB39F']}
         onLayout={this.onLayout}>
 
 
@@ -533,12 +533,12 @@ export default class GalleryScreen extends React.Component {
                     getSquareButton(() => {
                       this.clearSelected();
                       this.setState({ rename: false });
-                    }, colors.gray, undefined, 'בטל', 'cancel', 30, false, { width: 180, height: 50 }, 35, true)
+                    }, semanticColors.cancelButtonG, undefined, 'בטל', 'cancel', 30, false, { width: 180, height: 50 }, 35, true)
                   }
-                  {  //Cancel
+                  {  //ok
                     getSquareButton(() => {
                       this.doRename();
-                    }, colors.navyBlue, undefined, 'בצע', 'check', 30, false, { width: 180, height: 50 }, 35, true)
+                    }, semanticColors.okButtonG, undefined, 'בצע', 'check', 30, false, { width: 180, height: 50 }, 35, true)
                   }
                 </View>
                 <View style={{ flex: 1, position: 'absolute', top: 100, width: '100%' }}>
@@ -560,17 +560,17 @@ export default class GalleryScreen extends React.Component {
         <View style={{ flexDirection: 'row' }}>
           {  //delete
             this.state.selected.length > 0 && !this.state.rename ?
-              getSquareButton(this.Delete, colors.red, undefined, 'מחק', 'delete-forever', 30, false, { width: 180, height: 50 }, 35, true) :
+              getSquareButton(this.Delete, semanticColors.deleteButtonG, undefined, 'מחק', 'delete-forever', 30, false, { width: 180, height: 50 }, 35, true) :
               <View />
           }
           {  //move
             this.state.selected.length == 1 && this.state.selected[0].type !== 'folder' && !this.state.rename ?
-              getSquareButton(this.Rename, colors.blue, undefined, 'שנה שם', 'text-fields', 30, false, { width: 180, height: 50 }, 35, true) :
+              getSquareButton(this.Rename, semanticColors.actionButtonG, undefined, 'שנה שם', 'text-fields', 30, false, { width: 180, height: 50 }, 35, true) :
               <View />
           }
           {  //Share
             this.state.selected.length == 1 && this.state.selected[0].type === 'file' && !this.state.rename ?
-              getSquareButton(this.Share, colors.blue, undefined, 'שתף', 'share', 30, false, { width: 180, height: 50 }, 35, true) :
+              getSquareButton(this.Share, semanticColors.actionButtonG, undefined, 'שתף', 'share', 30, false, { width: 180, height: 50 }, 35, true) :
               <View />
           }
         </View>
@@ -707,46 +707,11 @@ export default class GalleryScreen extends React.Component {
 
 }
 
-export const globalStyle = StyleSheet.create({
-  buttonOk: {
-    backgroundColor: 'green',
-    borderWidth: 1,
-    borderColor: 'black',
-    paddingTop: 4,
-    paddingBottom: 4,
-    paddingRight: "25%",
-    paddingLeft: "25%",
-    marginTop: 10,
-    width: 60
-  }
-});
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 20,
     backgroundColor: 'white',
-  },
-  CircleShapeView: {
-    marginVertical: 2,
-    width: 35,
-    height: 35,
-    borderRadius: 35 / 2,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  navbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#4630EB',
-  },
-  folder: {
-    alignContent: "center",
-    width: 100,
-    height: 100,
-    backgroundColor: 'powderblue',
-    borderColor: 'black'
   },
   shelf: {
     flex: 1,
@@ -754,12 +719,6 @@ const styles = StyleSheet.create({
     left: '3%',
     width: '94%',
     backgroundColor: 'transparent'
-  },
-  button: {
-    padding: 20,
-  },
-  whiteText: {
-    color: 'white',
   }
 });
 

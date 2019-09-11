@@ -13,18 +13,61 @@ export const colors = {
     blue: ['#0097F8', '#00145C'],
     lightBlue: ['#2F8AF2', '#1A427C'],
     navyBlue: ['#1A427C', '#1A427C'],
-    gray: ['#D2DEEA', '#D2DEEA'],
+    //gray: ['#D2DEEA', '#D2DEEA'],
     yellow: ['#FCF300', '#B0A000'],
     green: ['#00F815', '#005C05'],
     red: ['#FF0000', '#A20000'],
     black: ['#000000', '#000000'],
-    disabled: ['#A8C2D8', '#A8C2D8']
+    lightGray: ['#A8C2D8', '#A8C2D8']
 }
 
+export const semanticColors = {
+    disabledButtonG : colors.lightGray,
+    disabledButton : colors.lightGray[0],
+    cancelButtonG: colors.gray,
+    cancelButton: colors.gray[0],
+    okButtonG: colors.navyBlue,
+    okButton: colors.navyBlue[0],
+    deleteButtonG: colors.red,
+    deleteButton: colors.red[0],
+    addButtonG: colors.navyBlue,
+    addButton: colors.navyBlue[0],
+    undoButtonG: colors.gray,
+    undoButton: colors.gray[0],
+    InactiveModeButtonG: colors.gray,
+    InactiveModeButton: colors.gray[0],
+    activeZoomButtonG: colors.orange,
+    activeZoomButton: colors.orange[0],
+    actionButtonG: colors.blue,
+    actionButton:colors.blue[0],
+    folderIcons:colors.navyBlue,
+    pageNavigationButtonG:colors.navyBlue,
+    selectedCheck: "#4630EB",
+    moveInZoomButton:"#D16F28",
+    header: '#8EAFCE',
+    headerG: ['#6487B1','#8EAFCE'],
+    title: '#DFE8EC',
+    selectedFolder: '#446997'
+    
+}
+
+export const folderIcons = [
+    { icon: 'language', text: 'אנגלית' },
+    { icon: 'music-note', text: 'מוזיקה' },
+    { icon: 'pets', text: 'בעלי חיים' },
+    { icon: 'exposure-plus-1', text: 'חשבון' },
+    { icon: 'wb-incandescent', text: 'מדעים' },
+    { icon: 'watch-later', text: 'היסטוריה' },
+    { icon: 'book', text: 'תורה' },
+    { icon: 'speaker-notes', text: 'לשון' },
+    { icon: 'local-bar', text: 'חגים' }
+]
 
 export const NEW_FOLDER_NAME = 'תיקיה חדשה';
 export const NO_FOLDER_NAME = 'ללא';
 export const DEFAULT_FOLDER_NAME = 'Default';
+export const DEFAULT_FOLDER_TITLE = "ללא תיקיה";
+
 const FOLDER_NO_ICON = 'sentiment-satisfied';
 
 export function validPathPart(pathPart) {
@@ -77,6 +120,13 @@ export function getFolderAndIcon(folderName) {
         return [folderName, ""];
     }
     return ["", ""];
+}
+
+export function normalizeTitle(title) {
+    if (title ==  DEFAULT_FOLDER_NAME) {
+        return DEFAULT_FOLDER_TITLE;
+    } 
+    return title;
 }
 
 export function getFileNameDialog(fileName, folderName, folders, newFolderName, newFolderIcon,
@@ -142,8 +192,8 @@ export function getFolderPicker(folder, folders, callback) {
             flexDirection: 'row', justifyContent: 'space-between',
             alignItems: 'center', alignContent: 'center'
         }}>
-            <Icon name='arrow-drop-down' size={50} color="#4630EB" />
-            <Icon name={iconName} size={50} color="#4630EB" />
+            <Icon name='arrow-drop-down' size={50} color={semanticColors.folderIcons} />
+            <Icon name={iconName} size={50} color={semanticColors.folderIcons} />
             <Text style={styles.textInputPicker}>{folderName ? folderName : 'ללא'}</Text>
         </View>
     </ModalDropdown>
@@ -168,7 +218,7 @@ function pickerRenderRow(rowData, rowID, highlighted) {
                 alignItems: 'center',
                 flexDirection: 'row'
             }]}>
-                <Icon name={iconName} size={50}></Icon>
+                <Icon name={iconName} size={50} color={semanticColors.folderIcons}></Icon>
                 <Text style={{ fontSize: 70, textAlign: 'right' }}>
                     {folderName}
                 </Text>
@@ -197,22 +247,12 @@ export function getIconPicker(pickerIcon, icons, callback) {
             flexDirection: 'row', justifyContent: 'space-between',
             alignItems: 'center', alignContent: 'center'
         }}>
-            <Icon name='arrow-drop-down' size={50} color="#4630EB" />
-            <Icon name={pickerIcon} size={50} color="#4630EB" />
+            <Icon name='arrow-drop-down' size={50} color={semanticColors.folderIcons} />
+            <Icon name={pickerIcon} size={50} color={semanticColors.folderIcons} />
         </View>
     </ModalDropdown>
 }
-export const folderIcons = [
-    { icon: 'language', text: 'אנגלית' },
-    { icon: 'music-note', text: 'מוזיקה' },
-    { icon: 'pets', text: 'בעלי חיים' },
-    { icon: 'exposure-plus-1', text: 'חשבון' },
-    { icon: 'wb-incandescent', text: 'מדעים' },
-    { icon: 'watch-later', text: 'היסטוריה' },
-    { icon: 'book', text: 'תורה' },
-    { icon: 'speaker-notes', text: 'לשון' },
-    { icon: 'local-bar', text: 'חגים' }
-]
+
 
 function pickerRenderIcon(rowData, rowID, highlighted) {
     return (
@@ -225,7 +265,7 @@ function pickerRenderIcon(rowData, rowID, highlighted) {
 
                 justifyContent: 'space-between'
             }]}>
-                <Icon name={rowData.icon} size={50} color="#4630EB" />
+                <Icon name={rowData.icon} size={50} color={semanticColors.folderIcons} />
                 <Text style={{ fontSize: 55 }}>{rowData.text}</Text>
             </View>
         </TouchableHighlight>
@@ -262,12 +302,12 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
     >
         {isFirst ?
             <View /> :
-            getSquareButton(() => callback(-1), colors.navyBlue, undefined, 'דף קודם', 'chevron-left', 30, undefined, { width: 150, height: 60 }, 60, true, 15)
+            getSquareButton(() => callback(-1), semanticColors.pageNavigationButtonG, undefined, 'דף קודם', 'chevron-left', 30, undefined, { width: 150, height: 60 }, 60, true, 15)
         }
 
         {isLast ?
             <View /> :
-            getSquareButton(() => callback(1), colors.navyBlue, undefined, 'דף הבא', 'chevron-right', 30, undefined, { width: 150, height: 60 }, 60, false, 0, 15)
+            getSquareButton(() => callback(1), semanticColors.pageNavigationButtonG, undefined, 'דף הבא', 'chevron-right', 30, undefined, { width: 150, height: 60 }, 60, false, 0, 15)
         }
     </View>
 }
