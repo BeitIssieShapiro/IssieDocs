@@ -544,8 +544,9 @@ export default class GalleryScreen extends React.Component {
                 <View style={{ flex: 1, position: 'absolute', top: 100, width: '100%' }}>
 
                   {
-                    getFileNameDialog(this.state.renameFileName, this.state.renameFolderName, this.state.renameFolders,
-                      ...getFolderAndIcon(this.state.renameFolderTo),
+                    getFileNameDialog(this.state.renameFileName, 
+                      this.state.renameFolderName, this.state.renameFolders,
+                      getFolderAndIcon(this.state.renameFolderTo),
                       (text) => this.setState({ renameFileName: text }),
                       (text) => this.setState({ renameFolderName: text }),
                       (text) => this.setState({ renameFolderTo: text }))

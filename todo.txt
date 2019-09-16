@@ -1,3 +1,10 @@
+V- when back from rename or save, move out of edit, and move to new folder
+V- larger icon on navigation
+
+
+
+
+
 Features
 --------
 V* click deselect

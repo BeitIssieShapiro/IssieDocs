@@ -104,7 +104,7 @@ export function getSquareButton(func, color, selectedColor, txt, icon, size, sel
     >
         <LinearGradient
             colors={selected ? selectedColor : color}
-            style={[styles.squareShapeView, dim, selected ? styles.selected : styles.notSelected, iconFirst ? { flexDirection: 'row-reverse' } : {}]}>
+            style={[styles.squareShapeView, dim, styles.notSelected, iconFirst ? { flexDirection: 'row-reverse' } : {}]}>
             <Text style={{ fontSize: size, color: 'white', marginLeft: lMargin, marginRight: rMargin }}>{txt ? txt : ''}</Text>
             {icon ? <Icon name={icon} size={iconSize} color='white' /> : null}
         </LinearGradient>
@@ -115,11 +115,11 @@ export function getFolderAndIcon(folderName) {
     if (folderName) {
         let parts = folderName.split("$")
         if (parts.length == 2) {
-            return parts;
+            return {name: parts[0], icon: parts[1]};
         }
-        return [folderName, ""];
+        return {name: folderName, icon:""};
     }
-    return ["", ""];
+    return {name:"", icon:""};
 }
 
 export function normalizeTitle(title) {
@@ -129,19 +129,28 @@ export function normalizeTitle(title) {
     return title;
 }
 
-export function getFileNameDialog(fileName, folderName, folders, newFolderName, newFolderIcon,
-    onChangeName, onChangeFolder, onChangeNewFolder) {
+export function getFileNameDialog(fileName, folderAndIcon, newFolderAndIcon, folders, 
+    onChangeName, onChangeFolder, onChangeNewFolder, panResponder, yOffset) {
+    
+    
+    if (!yOffset) {
+        yOffset = 0;
+    }
+    let folderName = folderAndIcon.name;
     if (folderName == DEFAULT_FOLDER_NAME) {
         folderName = NO_FOLDER_NAME;
     }
+    //Alert.alert("folder:"+ folderName)
     return (
-        <View style={styles.textInputView}>
+        <View style={[styles.textInputView, {
+            transform: [{ translateY: yOffset }]
+        }]} {...panResponder}>
             <Text style={styles.titleText}>שם הדף</Text>
             <TextInput style={globalStyles.textInput}
                 onChangeText={onChangeName}
             >{fileName}</TextInput>
             <Text style={styles.titleText}>תיקיה</Text>
-            {getFolderPicker(folderName, folders,
+            {getFolderPicker(folderName, folderAndIcon.icon, folders,
                 (itemIndex, itemValue) => {
                     if (itemValue == NO_FOLDER_NAME) {
                         itemValue = undefined;
@@ -156,10 +165,10 @@ export function getFileNameDialog(fileName, folderName, folders, newFolderName, 
                     <View style={{ flex: 1, flexDirection: 'row-reverse' }}>
                         <TextInput style={[globalStyles.textInput, { backgroundColor: 'white', width: '75%' }]}
                             onChangeText={onChangeNewFolder}
-                            value={newFolderName}
+                            value={newFolderAndIcon.name}
                         />
                         <Text>   </Text>
-                        {getIconPicker(newFolderIcon, folderIcons, (itemIndex, itemValue) => {
+                        {getIconPicker(newFolderAndIcon.icon, folderIcons, (itemIndex, itemValue) => {
                             onChangeNewFolder(itemValue.text + '$' + itemValue.icon);
                         })}
                     </View>
@@ -171,17 +180,9 @@ export function getFileNameDialog(fileName, folderName, folders, newFolderName, 
         </View>);
 }
 
-export function getFolderPicker(folder, folders, callback) {
+function getFolderPicker(folderName, iconName, folders, callback) {
     console.disableYellowBox = true;
-    let folderName = folder;
-    let iconName = '';
-    if (folder) {
-        let parts = folder.split("$")
-        if (parts.length == 2) {
-            folderName = parts[0]
-            iconName = parts[1]
-        }
-    }
+
     return <ModalDropdown
         style={[styles.pickerButton]}
         dropdownStyle={{ flex: 1, top: 0, width: '60%', height: 300 }}
@@ -311,6 +312,9 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
         }
     </View>
 }
+export function removeFileExt(filePath) {
+    return (filePath.split('\\').pop().split('/').pop().split('.'))[0];
+}
 
 export const globalStyles = StyleSheet.create({
 
@@ -331,9 +335,19 @@ export const globalStyles = StyleSheet.create({
         alignItems: 'center',
         flexDirection: 'row',
         justifyContent: "center",
-      }
+      },
+    btnDimensions: { 
+        width: 60, 
+        height: 60 
+    }
+
 })
 
+export function Spacer(props) {
+    return (
+        <View style={{ width: props.width || 20 }} />
+    );
+}
 
 const styles = StyleSheet.create({
     squareShapeView: {
@@ -394,3 +408,4 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent'
     }
 });
+

@@ -9,6 +9,7 @@ import * as RNFS from 'react-native-fs';
 export const SRC_CAMERA = 'camera';
 export const SRC_GALLERY = 'gallery';
 export const SRC_FILE = 'file';
+export const SRC_RENAME = 'rename'
 
 import mock from './mock.jpg'
 let mockFileName;
@@ -88,7 +89,7 @@ export async function saveFile(uri, filePath) {
                     handleSaveFileError(err, reject);
                 });
         } else {
-            RNFS.copyFile(uri, filePath).then(
+            RNFS.moveFile(uri, filePath).then(
                 //Success
                 () => {
                     //Alert.alert("save ok. uri:" + uri + " to " + filePath)

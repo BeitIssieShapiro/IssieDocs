@@ -12,12 +12,13 @@ import { StackActions } from 'react-navigation';
 
 import {
   getSquareButton, colors, getImageDimensions,
-   globalStyles, NEW_FOLDER_NAME, NO_FOLDER_NAME, DEFAULT_FOLDER_NAME,
-  getPageNavigationButtons, getFileNameDialog, semanticColors
+  globalStyles, NEW_FOLDER_NAME, NO_FOLDER_NAME, DEFAULT_FOLDER_NAME,
+  getPageNavigationButtons, getFileNameDialog, semanticColors, getFolderAndIcon,
+  Spacer
 } from './elements'
 import ImageRotate from 'react-native-image-rotate';
-import { getNewPage, saveFile, cloneToTemp } from './newPage'
-
+import { getNewPage, saveFile, cloneToTemp, SRC_RENAME } from './newPage'
+import { pushFolderOrder } from './sort'
 
 const OK_Cancel = 1;
 const PickName = 2;
@@ -33,6 +34,35 @@ export default class IssieSavePhoto extends React.Component {
 
   constructor() {
     super();
+
+    let panResponderMoveSaveForm = PanResponder.create({
+      onStartShouldSetPanResponder: (evt, gestureState) => true,
+      onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
+      onMoveShouldSetPanResponder: (evt, gestureState) => true,
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
+      onPanResponderMove: (evt, gestureState) => {
+        let yOffsetBegin = this.state.yOffsetBegin;
+        if (!yOffsetBegin) {
+          yOffsetBegin = this.state.yOffset;
+        }
+        let newYOffset = yOffsetBegin + gestureState.dy;
+        if (newYOffset > 0) {
+          newYOffset = 0;
+        }
+        this.setState({
+          yOffsetBegin, yOffset: newYOffset
+        });
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        if (gestureState.dx == 0 && gestureState.dy == 0) {
+          return
+        }
+        this.setState({
+          yOffsetBegin: undefined
+        });
+      }
+    });
+
     this.state = {
       phase: OK_Cancel,
       cropping: false,
@@ -40,7 +70,9 @@ export default class IssieSavePhoto extends React.Component {
       multiPageState: { pages: [] },
       pdfWidth: '100%',
       pdfHeight: '100%',
-      pdfPageCount: 0
+      pdfPageCount: 0,
+      yOffset:0,
+      panResponderMoveSaveForm
     };
     this.OK.bind(this);
 
@@ -100,24 +132,36 @@ export default class IssieSavePhoto extends React.Component {
       }
     });
 
+
+
+    
+
+    
+
   }
 
   componentDidMount = async () => {
     let uri = this.props.navigation.getParam('uri', '');
     let folder = this.props.navigation.getParam('folder', '')
-
+    let pageName = this.props.navigation.getParam('name', '')
     let pdf = false;
     if (uri.endsWith('.pdf')) {
       pdf = true;
       //      Alert.alert(FOLDERS_DIR);
     }
-    this.setState({ uri, pdf, pdfPage: 1, folder: folder });
-    this.initFolderList()
+    //Alert.alert(JSON.stringify({ uri, pdf, pdfPage: 1, folder, newFolderName:folder, pageName, phase }))
+    await this.initFolderList()
+    this.setState({ uri, pdf, pdfPage: 1, folder, pageName });
     if (!pdf) {
       this.updateImageDimension();
     }
     this.onLayout();
+    if (this.isRename()) {
+      setTimeout(() => this.setState({ phase: PickName }), 50);
+    }
   }
+
+  isRename = () => this.props.navigation.getParam('imageSource', '') === SRC_RENAME;
 
   updateImageDimension = async () => {
     setTimeout(async () => {
@@ -194,11 +238,18 @@ export default class IssieSavePhoto extends React.Component {
 
     let targetFolder = FOLDERS_DIR + folderName;
     let filePath = targetFolder + "/" + fileName + ".jpg";
-    await RNFS.mkdir(targetFolder)
 
+    //first check if folder exists - if not create it and make it first in order
+    try {
+      let stat = await RNFS.stat(targetFolder);
+    } catch (e) {
+      await RNFS.mkdir(targetFolder);
+      if (folderName !== DEFAULT_FOLDER_NAME) {
+        await pushFolderOrder(folderName)
+      }
+    }
 
-
-    if (this.state.multiPageState.pages.length > 0) {
+    if (this.state.multiPageState.pages.length > 0 && !this.isRename()) {
       //create a folder with the name fo the file
       targetFolder = targetFolder + "/" + fileName;
       //todo check existing
@@ -212,7 +263,18 @@ export default class IssieSavePhoto extends React.Component {
     }
 
     saveFile(this.state.uri, filePath).then(
-      () => {
+      async () => {
+        if (this.isRename() && this.state.uri.endsWith('.jpg')) {
+          try {
+            await saveFile(this.state.uri + ".json", filePath + ".json");
+          } catch (e) {
+            //ignore, as maybe json is missing
+          }
+        }
+        let returnFolderCallback = this.props.navigation.getParam('returnFolderCallback', undefined);
+        if (returnFolderCallback) {
+          returnFolderCallback(folderName);
+        }
         this.props.navigation.dispatch(StackActions.popToTop());
         // if (folderName !== DEFAULT_FOLDER_NAME) {
         //   this.props.navigation.push('Home', { folder: folderName });
@@ -220,26 +282,26 @@ export default class IssieSavePhoto extends React.Component {
         //   this.props.navigation.pop();
         // }
       },
-      (err) => Alert.alert(err )
+      (err) => Alert.alert(err)
     ).catch(err => {
-      Alert.alert(err )
-    }) ;
+      Alert.alert(err)
+    });
   }
 
   exportPdfPage = async (page) => {
     return new Promise((resolve, reject) => {
-        this.setState({ pdfPage: page });
-        setTimeout(
-          () => {
-            let viewShot = this.refs.viewShot;
-            viewShot.capture().then(
-              uri => cloneToTemp(uri).then(newUri => resolve(newUri)),
-              err => {
-                reject(err)
-              }
-            );
-          }, 1000);
-      } 
+      this.setState({ pdfPage: page });
+      setTimeout(
+        () => {
+          let viewShot = this.refs.viewShot;
+          viewShot.capture().then(
+            uri => cloneToTemp(uri).then(newUri => resolve(newUri)),
+            err => {
+              reject(err)
+            }
+          );
+        }, 1000);
+    }
     );
   }
 
@@ -322,64 +384,71 @@ export default class IssieSavePhoto extends React.Component {
     if (this.state.folders) return this.state.folders;
 
     RNFS.readDir(FOLDERS_DIR).then(folders => {
-      this.setState({ folders: folders.map(f => f.name).filter(f => f != DEFAULT_FOLDER_NAME) });
+      this.setState({ folders: folders.filter(f => f.isDirectory() && f.name !== DEFAULT_FOLDER_NAME).map(f => f.name) });
     });
   }
 
   movePage = (inc) => {
-    this.setState({pdfPage:this.state.pdfPage+inc});
+    this.setState({ pdfPage: this.state.pdfPage + inc });
   }
 
 
   render() {
     let uri = this.state.uri;
+    //if (uri && uri.length > 0) Alert.alert(uri)
 
     let header = <View />;
     let buttons = <View />;
     let PageNameInput = <View />;
-    let saveMoreThanOne = this.state.multiPageState.pages.length > 0 ? '(' + (this.state.multiPageState.pages.length + 1) + ')' : ''
+    let saveMoreThanOne = this.state.multiPageState.pages.length > 0 ? '-' + (this.state.multiPageState.pages.length + 1) : ''
     if (!this.state.cropping &&
       (this.state.phase == OK_Cancel ||
         this.state.phase == PickName ||
         this.state.phase == PickFolder)) {
-      buttons = <View style={globalStyles.okCancelView}>
-        {getSquareButton(this.Cancel, semanticColors.cancelButtonG, undefined, "בטל", "close", 35, undefined, { width: 200, height: 50 }, 45, true)}
-        <Text>     </Text>
-        {getSquareButton(this.OK, semanticColors.okButtonG, undefined, "שמור" + saveMoreThanOne, "check", 35, undefined, { width: 200, height: 50 }, 45, true)}
+      buttons = <View style={{
+        position: 'absolute',
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        right: '5%', height: 60, top: 10
+      }}>
+
+        {getSquareButton(this.Cancel, semanticColors.cancelButtonG, undefined, "בטל", "close", 35, undefined, { width: 150, height: 50 }, 45, true)}
+        <Spacer width={10} />
+        {getSquareButton(this.OK, semanticColors.okButtonG, undefined, "שמור" + saveMoreThanOne, "check", 35, undefined, { width: 150, height: 50 }, 45, true)}
         {this.state.phase == OK_Cancel && !this.state.pdf ?
-          <Text>     </Text> : null}
+          <Spacer width={10} /> : null}
         {this.state.phase == OK_Cancel && !this.state.pdf ?
-          getSquareButton(this.AddPage, semanticColors.addButtonG, undefined, "הוסף", "add", 35, undefined, { width: 200, height: 50 }, 45, true) :
+          getSquareButton(this.AddPage, semanticColors.addButtonG, undefined, "דף נוסף", "add", 35, undefined, { width: 150, height: 50 }, 45, true) :
           null
         }
 
       </View>;
     }
 
-    if (this.state.phase == OK_Cancel && !this.state.pdf) {
-      header = <View style={{ flexDirection: 'row', height: headerHeight }}>
+    let editPhoto = this.state.phase == OK_Cancel && !this.state.pdf;
+
+    header = <View style={{ flexDirection: 'row', height: headerHeight }}>
+      {editPhoto ? <View style={{ flexDirection: 'row' }}>
         {getSquareButton(this.crop, semanticColors.actionButtonG, semanticColors.actionButtonG, undefined, "crop", 45, this.state.cropping)}
+        <Spacer width={10} />
         {this.state.cropping ? getSquareButton(this.cancelCrop, semanticColors.actionButtonG, undefined, undefined, "cancel", 45, false) : <View />}
+        {this.state.cropping ? <Spacer width={10} /> : null}
         {this.state.cropping ? getSquareButton(this.acceptCrop, semanticColors.actionButtonG, undefined, undefined, "check", 45, false) : <View />}
 
         {this.state.cropping ? <View /> : getSquareButton(this.rotateLeft, semanticColors.actionButtonG, undefined, undefined, "rotate-left", 45, false)}
+        <Spacer width={10} />
         {this.state.cropping ? <View /> : getSquareButton(this.rotateRight, semanticColors.actionButtonG, undefined, undefined, "rotate-right", 45, false)}
-      </View>
-    }
+      </View> : null}
+      {buttons}
+    </View>
+
 
     if (this.state.phase == PickName) {
-      let currentNewFolderName = this.state.newFolderName;
-      let currentNewIconName = '';
-      if (this.state.newFolderName) {
-        let parts = this.state.newFolderName.split('$');
-        if (parts.length == 2) {
-          currentNewFolderName = parts[0];
-          currentNewIconName = parts[1];
-        }
-      }
-
-      PageNameInput = getFileNameDialog(this.state.pageName, this.state.folder,this.state.folders,
-        currentNewFolderName, currentNewIconName, 
+      PageNameInput = getFileNameDialog(
+        this.state.pageName,
+        getFolderAndIcon(this.state.folder), 
+        getFolderAndIcon(this.state.newFolderName),
+        this.state.folders,
         (text) => this.setState({ pageName: text }),
         (text) => this.setState({ folder: text }),
         (text) => this.setState({ newFolderName: text })
@@ -419,15 +488,15 @@ export default class IssieSavePhoto extends React.Component {
           }}>
             <ViewShot ref="viewShot" options={{ format: "jpg", quality: 0.9 }}
               style={{
-                flex: 1, position:'absolute', width: this.state.pdfWidth, height: this.state.pdfHeight 
+                flex: 1, position: 'absolute', width: this.state.pdfWidth, height: this.state.pdfHeight
               }}>
               <Pdf
                 source={{ uri: this.state.uri }}
                 page={this.state.pdfPage}
-                style={{ flex: 1}}
+                style={{ flex: 1 }}
                 onLoadComplete={(numberOfPages, filePath, dim) => {
                   if (!this.state.pdfWidthOnce) {
-                     this.setState({ pdfWidthOnce:true, pdfPageCount: numberOfPages, pdfWidth: dim.width, pdfHeight: dim.height });
+                    this.setState({ pdfWidthOnce: true, pdfPageCount: numberOfPages, pdfWidth: dim.width, pdfHeight: dim.height });
                   }
                 }}
 
@@ -439,21 +508,20 @@ export default class IssieSavePhoto extends React.Component {
               </Pdf>
             </ViewShot>
             {PageNameInput}
-            {buttons}
           </View> :
           <ImageBackground
             style={styles.bgImage}
-            imageStyle={{resizeMode:'contain'}}
+            imageStyle={{ resizeMode: 'contain' }}
             blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
             source={this.state.phase == OK_Cancel ? { uri } : undefined}
           >
             {cropFrame}
             {PageNameInput}
-            {buttons}
+
           </ImageBackground>}
-          {this.state.PickName || this.state.pdf && this.state.pdfPageCount < 2 || !this.state.pdf?
-            null:
-            getPageNavigationButtons(0, this.state.pdfWidth, 
+        {this.state.PickName || this.state.pdf && this.state.pdfPageCount < 2 || !this.state.pdf ?
+          null :
+          getPageNavigationButtons(0, this.state.pdfWidth,
             this.state.pdfPage == 1, //isFirst
             this.state.pdfPage == this.state.pdfPageCount, //isLast
             (inc) => this.movePage(inc))}
@@ -486,5 +554,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'grey',
     opacity: 5
   }
-  
+
 });
