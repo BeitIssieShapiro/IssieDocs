@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Image, StyleSheet, View,
-    TouchableOpacity, Button, ScrollView, Alert, Text, Dimensions, PanResponder
+    TouchableOpacity, Button, ScrollView, Alert, Text, Dimensions, Linking
 } from 'react-native';
 import * as RNFS from 'react-native-fs';
 import LinearGradient from 'react-native-linear-gradient';
@@ -13,7 +13,7 @@ import {
     semanticColors, getSquareButton,
     Spacer, globalStyles, removeFileExt
 } from './elements'
-import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, getNewPage } from './newPage';
+import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, getNewPage, SRC_FILE } from './newPage';
 import ImagePicker from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
 import { sortFolders, swapFolders, saveFolderOrder } from './sort'
@@ -66,17 +66,38 @@ export default class FolderGallery extends React.Component {
     }
 
     componentDidMount = async () => {
+
+        Linking.getInitialURL().then((url) => {
+            if (url) {
+                this._handleOpenURL({url});
+            }
+        })
+
         //verify exists:
         RNFS.mkdir(FOLDERS_DIR).catch(() => { });
 
-        this.subs = [
-            this.props.navigation.addListener("didFocus", async () => {
-                this.refresh();
-            }),
-        ];
+        this.props.navigation.addListener("didFocus", async () => {
+            this.refresh();
+        })
 
+        Linking.addEventListener("url", this._handleOpenURL);
         await this.refresh();
     };
+
+    componentWillUnmount = () => {
+        Linking.removeAllListeners();
+        this.props.navigation.removeAllListeners();
+    }
+
+    _handleOpenURL = (event)  => {
+        this.props.navigation.navigate('SavePhoto', {
+            uri: event.url,
+            imageSource: SRC_FILE,
+            folder: this.state.currentFolder ? this.state.currentFolder.name : undefined,
+            returnFolderCallback: (f) => this.setReturnFolder(f)
+        })
+    }
+ 
     refresh = async () => {
         RNFS.readDir(FOLDERS_DIR).then(async (folders) => {
             let foldersState = [];
@@ -123,7 +144,7 @@ export default class FolderGallery extends React.Component {
             }
 
 
-            this.setState({ folders: await sortFolders(foldersState), currentFolder , returnFolderName: undefined});
+            this.setState({ folders: await sortFolders(foldersState), currentFolder, returnFolderName: undefined });
 
         })
 
@@ -306,7 +327,7 @@ export default class FolderGallery extends React.Component {
     }
 
     render() {
-        
+
         return (
             <LinearGradient style={styles.container} colors={['#F1EEE6', '#BEB39F']}
                 onLayout={this.onLayout}>
@@ -404,7 +425,7 @@ export default class FolderGallery extends React.Component {
                                 onSelect: () => this.toggleSelection(f, 'folder'),
                                 onMoveUp: () => this.moveFolderUp(f),
                                 onMoveDown: () => this.moveFolderDown(f)
-                            })) : <Text style={{fontSize:25}}>עדיין ללא תיקיות</Text>}
+                            })) : <Text style={{ fontSize: 25 }}>עדיין ללא תיקיות</Text>}
                     </LinearGradient>
                 </View>
             </LinearGradient>
