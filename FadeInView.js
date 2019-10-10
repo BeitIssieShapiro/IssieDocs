@@ -8,8 +8,8 @@ const FadeInView = (props) => {
     Animated.timing(
       fadeAdmin,
       {
-        toValue: props.height,
-        duration: 500,
+        toValue: props.width?props.width:props.height,
+        duration: props.duration || 500,
       }
     ).start();
   }, [])
@@ -18,9 +18,8 @@ const FadeInView = (props) => {
     <Animated.View                 // Special animatable View
       style={[props.style, {
         overflow: "hidden",
-        height: fadeAdmin,
         opacity: fadeAdmin,         // Bind opacity to animated value
-      }]}
+      }, props.width?{width:fadeAdmin}:{height:fadeAdmin}]}
     >
       {props.children}
     </Animated.View>

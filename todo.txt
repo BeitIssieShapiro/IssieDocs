@@ -1,6 +1,9 @@
-V- when back from rename or save, move out of edit, and move to new folder
-V- larger icon on navigation
-
+V * multi page header 1/3
+V * nav buttons of multi page design
+V* tiles option
+* about text
+* splash screen
+* hour glass when share
 
 
 

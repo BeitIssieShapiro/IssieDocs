@@ -14,7 +14,7 @@ import {
   getSquareButton, colors, getImageDimensions,
   globalStyles, NEW_FOLDER_NAME, NO_FOLDER_NAME, DEFAULT_FOLDER_NAME,
   getPageNavigationButtons, getFileNameDialog, semanticColors, getFolderAndIcon,
-  Spacer
+  Spacer, getRoundedButton, dimensions
 } from './elements'
 import ImageRotate from 'react-native-image-rotate';
 import { getNewPage, saveFile, cloneToTemp, SRC_RENAME } from './newPage'
@@ -30,6 +30,9 @@ const panBroderDistance = 80;
 export default class IssieSavePhoto extends React.Component {
   static navigationOptions = {
     title: 'שמור דף',
+    headerStyle: globalStyles.headerStyle,
+    headerTintColor: 'white',
+    headerTitleStyle: globalStyles.headerTitleStyle,
   };
 
   constructor() {
@@ -71,7 +74,7 @@ export default class IssieSavePhoto extends React.Component {
       pdfWidth: '100%',
       pdfHeight: '100%',
       pdfPageCount: 0,
-      yOffset:0,
+      yOffset: 0,
       panResponderMoveSaveForm
     };
     this.OK.bind(this);
@@ -132,12 +135,6 @@ export default class IssieSavePhoto extends React.Component {
       }
     });
 
-
-
-    
-
-    
-
   }
 
   componentDidMount = async () => {
@@ -147,9 +144,7 @@ export default class IssieSavePhoto extends React.Component {
     let pdf = false;
     if (uri.endsWith('.pdf')) {
       pdf = true;
-      //      Alert.alert(FOLDERS_DIR);
     }
-    //Alert.alert(JSON.stringify({ uri, pdf, pdfPage: 1, folder, newFolderName:folder, pageName, phase }))
     await this.initFolderList()
     this.setState({ uri, pdf, pdfPage: 1, folder, pageName });
     if (!pdf) {
@@ -187,7 +182,7 @@ export default class IssieSavePhoto extends React.Component {
             let savedPdfPageUri = await this.exportPdfPage(i);
 
             let page = { uri: savedPdfPageUri, index: i - 1 }
-            //push at the begining
+            //push at the beginning
             pages.push(page);
           }
           if (pages.length > 0) {
@@ -260,10 +255,13 @@ export default class IssieSavePhoto extends React.Component {
         await saveFile(page.uri, targetFolder + "/" + i + ".jpg");
       }
       filePath = targetFolder + "/" + i + ".jpg";
-    }
+    } 
+
+    
 
     saveFile(this.state.uri, filePath).then(
       async () => {
+//        Alert.alert("Save to file: " + filePath)
         if (this.isRename() && this.state.uri.endsWith('.jpg')) {
           try {
             await saveFile(this.state.uri + ".json", filePath + ".json");
@@ -319,6 +317,7 @@ export default class IssieSavePhoto extends React.Component {
     let imageSource = this.props.navigation.getParam('imageSource');
     getNewPage(imageSource,
       (uri) => {
+        //Alert.alert("add page: " + uri)
         let multiPageState = this.state.multiPageState;
         let page = { uri: this.state.uri, index: multiPageState.pages.length }
         multiPageState.pages.push(page);
@@ -339,7 +338,7 @@ export default class IssieSavePhoto extends React.Component {
         x: 0,
         y: 0,
         width: windowSize.width,
-        height: windowSize.height - headerHeight - this.state.topView,
+        height: windowSize.height - dimensions.topView - this.state.topView,
         scaleX: windowSize.width / this.state.imgSize.w,
         scaleY: windowSize.height / this.state.imgSize.h
       },
@@ -397,56 +396,72 @@ export default class IssieSavePhoto extends React.Component {
     let uri = this.state.uri;
     //if (uri && uri.length > 0) Alert.alert(uri)
 
-    let header = <View />;
-    let buttons = <View />;
+    let editPicButtons = <View />;
+    let actionButtons = <View />;
     let PageNameInput = <View />;
     let saveMoreThanOne = this.state.multiPageState.pages.length > 0 ? '-' + (this.state.multiPageState.pages.length + 1) : ''
     if (!this.state.cropping &&
       (this.state.phase == OK_Cancel ||
         this.state.phase == PickName ||
         this.state.phase == PickFolder)) {
-      buttons = <View style={{
-        position: 'absolute',
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        right: '5%', height: 60, top: 10
-      }}>
+      actionButtons =
+        <View style={{
+          position: 'absolute',
+          height: '100%',
+          right: 10,
+          flexDirection: 'row',
+          alignItems: 'center'
+        }}>
 
-        {getSquareButton(this.Cancel, semanticColors.cancelButtonG, undefined, "בטל", "close", 35, undefined, { width: 150, height: 50 }, 45, true)}
-        <Spacer width={10} />
-        {getSquareButton(this.OK, semanticColors.okButtonG, undefined, "שמור" + saveMoreThanOne, "check", 35, undefined, { width: 150, height: 50 }, 45, true)}
-        {this.state.phase == OK_Cancel && !this.state.pdf ?
-          <Spacer width={10} /> : null}
-        {this.state.phase == OK_Cancel && !this.state.pdf ?
-          getSquareButton(this.AddPage, semanticColors.addButtonG, undefined, "דף נוסף", "add", 35, undefined, { width: 150, height: 50 }, 45, true) :
-          null
-        }
 
-      </View>;
+
+          {  //Cancel
+            getRoundedButton(this.Cancel, 'close', 'בטל', 30, 30, { width: 150, height: 40 })
+          }
+          <Spacer width={10} />
+          {  //Save
+            getRoundedButton(this.OK, 'check', 'שמור' + saveMoreThanOne, 30, 30, { width: 150, height: 40 })
+          }
+
+          { //Add page
+            this.state.phase == OK_Cancel && !this.state.pdf ?
+              <Spacer width={10} /> : null}
+          {this.state.phase == OK_Cancel && !this.state.pdf ?
+            getRoundedButton(this.AddPage, 'add', 'דף נוסף', 30, 30, { width: 150, height: 40 }) :
+            null
+          }
+
+        </View>;
     }
 
     let editPhoto = this.state.phase == OK_Cancel && !this.state.pdf;
 
-    header = <View style={{ flexDirection: 'row', height: headerHeight }}>
-      {editPhoto ? <View style={{ flexDirection: 'row' }}>
-        {getSquareButton(this.crop, semanticColors.actionButtonG, semanticColors.actionButtonG, undefined, "crop", 45, this.state.cropping)}
-        <Spacer width={10} />
-        {this.state.cropping ? getSquareButton(this.cancelCrop, semanticColors.actionButtonG, undefined, undefined, "cancel", 45, false) : <View />}
-        {this.state.cropping ? <Spacer width={10} /> : null}
-        {this.state.cropping ? getSquareButton(this.acceptCrop, semanticColors.actionButtonG, undefined, undefined, "check", 45, false) : <View />}
+    editPicButtons =
+      <View style={{
+        position: 'absolute',
+        height: '100%',
+        left: 10,
+        flexDirection: 'row',
+        alignItems: 'center'
+      }}>
+        {editPhoto ? <View style={{ flexDirection: 'row' }}>
+          {getSquareButton(this.crop, semanticColors.actionButtonG, semanticColors.actionButtonG, undefined, "crop", 45, this.state.cropping)}
+          <Spacer width={10} />
+          {this.state.cropping ? getSquareButton(this.cancelCrop, semanticColors.actionButtonG, undefined, undefined, "cancel", 45, false) : <View />}
+          {this.state.cropping ? <Spacer width={10} /> : null}
+          {this.state.cropping ? getSquareButton(this.acceptCrop, semanticColors.actionButtonG, undefined, undefined, "check", 45, false) : <View />}
 
-        {this.state.cropping ? <View /> : getSquareButton(this.rotateLeft, semanticColors.actionButtonG, undefined, undefined, "rotate-left", 45, false)}
-        <Spacer width={10} />
-        {this.state.cropping ? <View /> : getSquareButton(this.rotateRight, semanticColors.actionButtonG, undefined, undefined, "rotate-right", 45, false)}
-      </View> : null}
-      {buttons}
-    </View>
+          {this.state.cropping ? <View /> : getSquareButton(this.rotateLeft, semanticColors.actionButtonG, undefined, undefined, "rotate-left", 45, false)}
+          <Spacer width={10} />
+          {this.state.cropping ? <View /> : getSquareButton(this.rotateRight, semanticColors.actionButtonG, undefined, undefined, "rotate-right", 45, false)}
+        </View> : null}
+      </View>
 
 
     if (this.state.phase == PickName) {
       PageNameInput = getFileNameDialog(
         this.state.pageName,
-        getFolderAndIcon(this.state.folder), 
+        getFolderAndIcon(this.state.folder),
         getFolderAndIcon(this.state.newFolderName),
         this.state.folders,
         (text) => this.setState({ pageName: text }),
@@ -480,12 +495,17 @@ export default class IssieSavePhoto extends React.Component {
       <View style={styles.container}
         ref={v => this.topView = v}
         onLayout={this.onLayout}>
+        {/* Toolbar */}
+        <View style={{
+          flex: 1, zIndex: 5, position: 'absolute', top: 0, width: '100%',
+          height: dimensions.toolbarHeight, backgroundColor: semanticColors.subTitle
+        }} >
+          {editPicButtons}
+          {actionButtons}
+        </View>
 
-        {header}
         {this.state.pdf ?
-          <View style={{
-            flex: 1
-          }}>
+          <View style={bgImage}>
             <ViewShot ref="viewShot" options={{ format: "jpg", quality: 0.9 }}
               style={{
                 flex: 1, position: 'absolute', width: this.state.pdfWidth, height: this.state.pdfHeight
@@ -531,28 +551,16 @@ export default class IssieSavePhoto extends React.Component {
 
 }
 const styles = StyleSheet.create({
-  bgImageView: {
-    backgroundColor: 'blue',
-    flex: 1,
-    position: 'absolute',
-    top: 0, bottom: 0, right: 0, left: 0,
-    justifyContent: 'center',
-    width: '100%',
-    height: '100%',
-  },
   container: {
     flex: 1,
     flexDirection: 'column',
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'grey',
+    backgroundColor: semanticColors.mainAreaBG,
     opacity: 5
   },
   bgImage: {
-    flex: 1,
-    width: '100%',
-    backgroundColor: 'grey',
-    opacity: 5
+    flex: 1, 
+    width: '100%', 
+    top: dimensions.toolbarHeight + dimensions.toolbarMargin
   }
 
 });

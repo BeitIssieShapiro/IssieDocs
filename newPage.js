@@ -89,10 +89,20 @@ export async function saveFile(uri, filePath) {
                     handleSaveFileError(err, reject);
                 });
         } else {
+            //Alert.alert("before save:"+ uri + ", to:"+ filePath)
+            if (uri.endsWith(mockFileName)) {
+                return RNFS.copyFile(uri, filePath).then(
+                    //Success
+                    () => {
+                        return resolve()
+                    },
+                    //on error 
+                    err => handleSaveFileError(err, reject)
+                ).catch(err => handleSaveFileError(err, reject));
+            }
             RNFS.moveFile(uri, filePath).then(
                 //Success
                 () => {
-                    //Alert.alert("save ok. uri:" + uri + " to " + filePath)
                     return resolve()
                 },
                 //on error 
@@ -107,7 +117,7 @@ function handleSaveFileError(err, reject) {
     for (let key in err) {
         errorStr += JSON.stringify(err[key]).substr(15)+"\n";
     }
-    //Alert.alert("Error: " + errorStr);
+    Alert.alert("Error: " + errorStr);
     if (err.toString().includes("already exists")) {
         reject("קובץ בשם זה כבר קיים");
         return;

@@ -51,6 +51,7 @@
 		69C389E2ADE8474BADCF2043 /* MaterialIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9DCDEAE5F6B446A0A09741D7 /* MaterialIcons.ttf */; };
 		6A11C7B122C62FB4001F7CFF /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6A11C7B022C62FB4001F7CFF /* Media.xcassets */; };
 		6A6E56522330025E00877E88 /* libRCTPushNotification.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A6E564F2330020700877E88 /* libRCTPushNotification.a */; };
+		6AD4B4DD234F6B0100125275 /* libART.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AD4B49D234F6ADB00125275 /* libART.a */; };
 		6ADD63AB22B91E450028D646 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6ADD63AA22B91E450028D646 /* Assets.xcassets */; };
 		6E28A2F7F78B4F29A8DA6551 /* Octicons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DA9AA63110704BACA9D73F5F /* Octicons.ttf */; };
 		7559069D8AC24B2998BB5B40 /* libRNFetchBlob.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CBEB35933C2340A1AA9A7386 /* libRNFetchBlob.a */; };
@@ -506,6 +507,20 @@
 			remoteGlobalIDString = DEFBA2581F322B6000A4545C;
 			remoteInfo = RNSketchCanvas;
 		};
+		6AD4B49C234F6ADB00125275 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6AD4B497234F6ADA00125275 /* ART.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 0CF68AC11AF0540F00FF9E5C;
+			remoteInfo = ART;
+		};
+		6AD4B49E234F6ADB00125275 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6AD4B497234F6ADA00125275 /* ART.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 323A12871E5F266B004975B8;
+			remoteInfo = "ART-tvOS";
+		};
 		78C398B81ACF4ADC00677621 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 78C398B01ACF4ADC00677621 /* RCTLinking.xcodeproj */;
@@ -579,6 +594,7 @@
 		6A9AEDED22C6268E000CB311 /* detective.doc */ = {isa = PBXFileReference; lastKnownFileType = file; name = detective.doc; path = ../detective.doc; sourceTree = "<group>"; };
 		6A9AEE2522C6268E000CB311 /* mock.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = mock.jpg; path = ../mock.jpg; sourceTree = "<group>"; };
 		6A9AEE2622C6268F000CB311 /* שלום1.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = "שלום1.pdf"; path = "../שלום1.pdf"; sourceTree = "<group>"; };
+		6AD4B497234F6ADA00125275 /* ART.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ART.xcodeproj; path = "../node_modules/react-native/Libraries/ART/ART.xcodeproj"; sourceTree = "<group>"; };
 		6ADD63AA22B91E450028D646 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6ECE075D45C4438EBFAE54A2 /* libRNShare.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNShare.a; sourceTree = "<group>"; };
 		6F5CB887FC544F6680CD6417 /* Zocial.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Zocial.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Zocial.ttf"; sourceTree = "<group>"; };
@@ -642,6 +658,7 @@
 				00C302E81ABCBA2D00DB3ED1 /* libRCTImage.a in Frameworks */,
 				133E29F31AD74F7200F7D852 /* libRCTLinking.a in Frameworks */,
 				00C302E91ABCBA2D00DB3ED1 /* libRCTNetwork.a in Frameworks */,
+				6AD4B4DD234F6B0100125275 /* libART.a in Frameworks */,
 				139105C61AF99C1200B5F7CC /* libRCTSettings.a in Frameworks */,
 				832341BD1AAA6AB300B99B32 /* libRCTText.a in Frameworks */,
 				00C302EA1ABCBA2D00DB3ED1 /* libRCTVibration.a in Frameworks */,
@@ -1017,6 +1034,15 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		6AD4B498234F6ADA00125275 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6AD4B49D234F6ADB00125275 /* libART.a */,
+				6AD4B49F234F6ADB00125275 /* libART-tvOS.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		78C398B11ACF4ADC00677621 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -1029,6 +1055,7 @@
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				6AD4B497234F6ADA00125275 /* ART.xcodeproj */,
 				6A6E56492330020600877E88 /* RCTPushNotification.xcodeproj */,
 				6A1AFF6A22B56F4500FA0321 /* RCTCameraRoll.xcodeproj */,
 				5E91572D1DD0AC6500FF2AA8 /* RCTAnimation.xcodeproj */,
@@ -1260,6 +1287,10 @@
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
 			projectReferences = (
+				{
+					ProductGroup = 6AD4B498234F6ADA00125275 /* Products */;
+					ProjectRef = 6AD4B497234F6ADA00125275 /* ART.xcodeproj */;
+				},
 				{
 					ProductGroup = 6A24594422A28B150080CE5E /* Products */;
 					ProjectRef = B0325E2FA769438AAE178352 /* BVLinearGradient.xcodeproj */;
@@ -1809,6 +1840,20 @@
 			remoteRef = 6AA9E9D42295D49F00D783B5 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
+		6AD4B49D234F6ADB00125275 /* libART.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libART.a;
+			remoteRef = 6AD4B49C234F6ADB00125275 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		6AD4B49F234F6ADB00125275 /* libART-tvOS.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "libART-tvOS.a";
+			remoteRef = 6AD4B49E234F6ADB00125275 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		78C398B91ACF4ADC00677621 /* libRCTLinking.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
@@ -2092,7 +2137,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 11;
 				DEAD_CODE_STRIPPING = NO;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				HEADER_SEARCH_PATHS = (
@@ -2138,7 +2183,7 @@
 				CODE_SIGN_ENTITLEMENTS = IssieDoc.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 11;
 				DEAD_CODE_STRIPPING = NO;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				HEADER_SEARCH_PATHS = (

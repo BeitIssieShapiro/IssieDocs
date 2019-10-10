@@ -1,22 +1,27 @@
 import React from 'react';
 import {
     Image, StyleSheet, View,
-    TouchableOpacity, Button, ScrollView, Alert, Text, Dimensions, Linking
+    TouchableOpacity, Button, ScrollView, Alert, Text, Dimensions, Linking, Settings
 } from 'react-native';
+import { Icon } from 'react-native-elements'
+import Menu from './settings'
+
 import * as RNFS from 'react-native-fs';
-import LinearGradient from 'react-native-linear-gradient';
 import FolderNew from './FolderNew';
 import FileNew from './FileNew'
 import {
     getFolderAndIcon, normalizeTitle,
     DEFAULT_FOLDER_NAME,
     semanticColors, getSquareButton,
-    Spacer, globalStyles, removeFileExt
+    Spacer, globalStyles, removeFileExt,
+    getIconButton, FolderTextStyle, getRoundedButton, dimensions
 } from './elements'
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, getNewPage, SRC_FILE } from './newPage';
 import ImagePicker from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
 import { sortFolders, swapFolders, saveFolderOrder } from './sort'
+import { SafeAreaView } from 'react-navigation';
+import { FlatList } from 'react-native-gesture-handler';
 
 export const FOLDERS_DIR = RNFS.DocumentDirectoryPath + '/folders/';
 const DELETE_PAGE_TITLE = 'מחיקת דף';
@@ -30,23 +35,41 @@ const BEFORE_DELETE_FOLDER_AND_PAGES_QUESTION = 'בחרת למחוק דפים ו
 export default class FolderGallery extends React.Component {
     static navigationOptions = ({ navigation }) => {
         let title = 'IssieDocs - שולחן העבודה שלי';
+        let menuIcon = 'menu';
+
+        let isMenuOpened = navigation.getParam('isMenuOpened')
+        if (isMenuOpened ) {
+            menuIcon = 'close';
+        }
 
         return {
             title,
-            headerStyle: {
-                backgroundColor: semanticColors.header,
-            },
-
+            headerStyle: globalStyles.headerStyle,
             headerTintColor: 'white',
-            headerTitleStyle: {
-                fontSize: 30,
-                fontWeight: 'bold'
-            },
+            headerTitleStyle: globalStyles.headerTitleStyle,
+            headerRight: (
+             <View style={{flexDirection:'row-reverse'}}>
+                <Spacer />
+                <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={()=> {
+                        let menuHandler = navigation.getParam('menuHandler')
+                        if (menuHandler) {
+                            menuHandler();
+                        }
+                    }
+                }
+                >
+                    <Icon name={menuIcon} color='white' size={35}/>
+                </TouchableOpacity>
+            </View>)
         };
     }
     constructor(props) {
         super(props);
-        this.state = {}
+        this.state = {
+            windowSize: {width: 500, height: 1024}
+        }
 
         // this._panResponder = PanResponder.create({
         //     onStartShouldSetPanResponder: (evt, gestureState) => true,
@@ -69,7 +92,7 @@ export default class FolderGallery extends React.Component {
 
         Linking.getInitialURL().then((url) => {
             if (url) {
-                this._handleOpenURL({url});
+                this._handleOpenURL({ url });
             }
         })
 
@@ -80,6 +103,8 @@ export default class FolderGallery extends React.Component {
             this.refresh();
         })
 
+        this.props.navigation.setParams({ menuHandler: ()=>this._menuHandler() });
+
         Linking.addEventListener("url", this._handleOpenURL);
         await this.refresh();
     };
@@ -89,7 +114,12 @@ export default class FolderGallery extends React.Component {
         this.props.navigation.removeAllListeners();
     }
 
-    _handleOpenURL = (event)  => {
+    _menuHandler = () => {
+        this.setState({showMenu:!this.state.showMenu})
+        this.props.navigation.setParams({ isMenuOpened: !this.state.showMenu});
+    }
+
+    _handleOpenURL = (event) => {
         this.props.navigation.navigate('SavePhoto', {
             uri: event.url,
             imageSource: SRC_FILE,
@@ -97,7 +127,7 @@ export default class FolderGallery extends React.Component {
             returnFolderCallback: (f) => this.setReturnFolder(f)
         })
     }
- 
+
     refresh = async () => {
         RNFS.readDir(FOLDERS_DIR).then(async (folders) => {
             let foldersState = [];
@@ -326,94 +356,144 @@ export default class FolderGallery extends React.Component {
         }
     }
 
+    gotoAbout = () => {
+        this.closeMenu();
+        this.props.navigation.navigate('About')
+    }
+
+    closeMenu = () => {
+        this.setState({showMenu:false});
+        this.props.navigation.setParams({ isMenuOpened: false});
+    }
     render() {
+        let curFolder = getFolderAndIcon(this.state.currentFolder && this.state.currentFolder.name);
+        let viewStyle = Settings.get('viewStyle');
+        let asTiles = viewStyle === 2;
+        let treeWidth = .34 * this.state.windowSize.width;
+        let pagesContainerWidth = this.state.windowSize.width - treeWidth;
+        let tileWidth = 143;
+        let numColumnsForTiles = Math.floor(pagesContainerWidth / tileWidth);
 
         return (
-            <LinearGradient style={styles.container} colors={['#F1EEE6', '#BEB39F']}
+            <View style={styles.container}
                 onLayout={this.onLayout}>
+
+                {this.state.showMenu?
+                <Menu onAbout={()=>this.gotoAbout()} onClose={()=>this.closeMenu()}/>:null}
                 {/* header */}
                 <View style={{
-                    flex: 1, width: "100%", top: 0, left: 0, height: "10%", backgroundColor: semanticColors.header,
-                    flexDirection: "row"
+                    position: 'absolute', width: "100%", height: dimensions.toolbarHeight, top: 0, left: 0, backgroundColor: 'white',
+                    shadowColor: "gray",
+                    shadowOpacity: 0.8,
+                    shadowOffset: { width: 0, height: 1 },
+                    elevation: 1,
+                    zIndex: 5,
+                    flexDirection: "row",
+                    alignItems: "center"
                 }} >
                     {/*Left buttons*/}
                     <Spacer />
                     {
-                        getSquareButton(() => {
+                        getIconButton(() => {
                             this.newFromCamera();
-                        }, semanticColors.addButtonG, undefined, "", "camera-alt", 45, false, globalStyles.btnDimension, 45)
+                        }, semanticColors.addButton, "camera-alt", 50)
                     }
                     <Spacer />
                     {
-                        getSquareButton(() => {
+                        getIconButton(() => {
                             this.newFromMediaLib();
-                        }, semanticColors.addButtonG, undefined, "", "photo-library", 45, false, globalStyles.btnDimension, 45)
+                        }, semanticColors.addButton, "photo-library", 50)
                     }
                     <Spacer />
                     {
-                        getSquareButton(() => {
+                        getIconButton(() => {
                             this.newFromFileExplorer();
-                        }, semanticColors.addButtonG, undefined, "", "picture-as-pdf", 45, false, globalStyles.btnDimension, 45)
+                        }, semanticColors.addButton, "picture-as-pdf", 50)
                     }
                     {/*right buttons */}
-                    <View style={{ position: 'absolute', right: 0, flexDirection: 'row-reverse' }}>
+                    <View style={{ position: 'absolute', right: 0, flexDirection: 'row-reverse', alignItems:'center' }}>
                         {
-                            getSquareButton(() => {
+                            getIconButton(() => {
                                 let selected = this.state.editMode ? undefined : this.state.selected;
 
                                 this.setState({ editMode: !this.state.editMode, selected });
-                            }, semanticColors.addButtonG, undefined, "", this.state.editMode ? "clear" : "edit", 45, false, globalStyles.btnDimension, 45)
+                            }, semanticColors.addButton, this.state.editMode ? "clear" : "edit", 50)
                         }
+                        {<Spacer width={10}/>}
                         {  //delete
                             this.state.selected && this.state.selected.length > 0 && !this.state.rename ?
-                                getSquareButton(this.Delete, semanticColors.deleteButtonG, undefined, 'מחק', 'delete-forever', 30, false, { width: 150, height: 50 }, 45, true) :
-                                <View />
+                                getRoundedButton(this.Delete, 'delete-forever', 'מחק', 30, 30, { width: 140, height: 40 }) :
+                                null
                         }
+                        {<Spacer width={10}/>}
                         {  //move
                             this.state.selected && this.state.selected.length == 1 && this.state.selected[0].type !== 'folder' && !this.state.rename ?
-                                getSquareButton(this.Rename, semanticColors.actionButtonG, undefined, 'שנה שם', 'text-fields', 30, false, { width: 150, height: 50 }, 45, true) :
-                                <View />
+                                getRoundedButton(this.Rename, 'text-fields', 'שנה שם', 30, 30, { width: 140, height: 40 }) :
+                                null
                         }
+                        {<Spacer width={10}/>}
                         {  //Share
                             this.state.selected && this.state.selected.length == 1 && this.state.selected[0].type === 'file' && !this.state.rename ?
-                                getSquareButton(this.Share, semanticColors.actionButtonG, undefined, 'שתף', 'share', 30, false, { width: 150, height: 50 }, 45, true) :
-                                <View />
+                                getRoundedButton(this.Share, 'share', 'שתף', 30, 30, { width: 140, height: 40 }) :
+                                null
                         }
                     </View>
                 </View>
-                <View style={{ flex: 1, flexDirection: "row", position: 'absolute', width: "100%", top: "10%", left: 0, height: "90%" }} >
+                <View style={{
+                    flex: 1, flexDirection: "row", backgroundColor: semanticColors.mainAreaBG, position: 'absolute', width: "100%", top: dimensions.toolbarHeight, left: 0, height: "94%", zIndex: 4,
+                }} >
                     {/* MainExplored */}
-                    <View style={[{ flex: 1, flexDirection: "column", position: 'absolute', top: 0, width: "66%", left: 0, height: "100%" }
-                        , styles.borderW]}>
+                    <View style={{
+                        flex: 1, flexDirection: "column", position: 'absolute', top: 0, width: pagesContainerWidth, left: 0, height: "100%",
+                    }}>
                         {/* pagesTitle */}
-                        <View style={{ flex: 1, height: "5%", backgroundColor: semanticColors.title, position: 'absolute', width: "100%", top: 0, height: '10%', alignItems: 'center', justifyContent: 'center' }}>
-                            <Text style={{ fontSize: 35 }}>{normalizeTitle(getFolderAndIcon(this.state.currentFolder && this.state.currentFolder.name).name)}</Text>
+                        <View style={{ flex: 1, flexDirection: "row-reverse", height: "5%", position: 'absolute', width: "100%", top: 0, height: '10%', alignItems: 'center', justifyContent: 'flex-start', paddingRight: '5%' }}>
+                            {curFolder.icon !== "" ? <Icon name={curFolder.icon} size={30} color={semanticColors.titleText} /> : <Spacer />}
+                            <Text style={FolderTextStyle}>{normalizeTitle(curFolder.name)}</Text>
                         </View>
                         {/* pages */}
-                        <View style={[{
-                            flex: 1, backgroundColor: "white", position: 'absolute', top: "10%", width: "100%", height: '90%',
-                        }, styles.borderW]}>
-                            {
-                                this.state.currentFolder && this.state.currentFolder.files ? this.state.currentFolder.files.map(p => FileNew({
-                                    page: p,
-                                    name: removeFileExt(p.name),
+                        <View style={{
+                            flex: 1, backgroundColor: semanticColors.mainAreaBG, position: 'absolute', top: "10%", width: "100%", height: '90%'
+                        }}>
+                            {this.state.currentFolder && this.state.currentFolder.files ?
+                            <FlatList 
+                                contentContainerStyle={{width:'100%', alignItems: 'flex-end'}}
+                                
+                                key={asTiles?numColumnsForTiles.toString():"list"}
+                                data={ this.state.currentFolder.files } 
+                                renderItem={({item}) => FileNew({
+                                    page: item,
+                                    asTile: asTiles,
+                                    name: removeFileExt(item.name),
+                                    rowWidth: pagesContainerWidth,
                                     editMode: this.state.editMode,
-                                    selected: this.state.editMode ? this.isSelected(p) : false,
-                                    onPress: () => this.props.navigation.navigate('EditPhoto', { page: p, share: false }),
-                                    onSelect: () => this.toggleSelection(p, 'file'),
-                                    //this.state selected.push({ item: item, obj: obj, type: type });
-                                    count: p.pages.length
-                                })) : null
-                            }
+                                    selected: this.state.editMode ? this.isSelected(item) : false,
+                                    onPress: () => this.props.navigation.navigate('EditPhoto', { page: item, share: false }),
+                                    onSelect: () => this.toggleSelection(item, 'file'),
+                                    count: item.pages.length
+                                })}
+                                numColumns={asTiles?numColumnsForTiles:1}
+                                keyExtractor={(item, index) => index.toString()}
+                            />
+                            
+                            
+                            :<Text> אין עדיין דפים</Text>}
                         </View>
                     </View>
                     {/* tree */}
-                    <LinearGradient colors={semanticColors.headerG}
-                        style={[{ flex: 1, flexDirection: "column", position: 'absolute', top: 0, width: "34%", right: 0, height: "100%", alignItems: "flex-end", justifyContent: "flex-start" },
-                        styles.borderW]}>
+                    <View
+                        style={{
+                            flex: 1,
+                            flexDirection: "column",
+                            position: 'absolute',
+                            top: 0, width: treeWidth, right: 0, height: "100%",
+                            alignItems: "flex-end", justifyContent: "flex-start",
+                            backgroundColor: 'white'
+                        }}>
 
                         {this.state.folders && this.state.folders.length ?
-                            this.state.folders.map(f => FolderNew({
+                            this.state.folders.map((f, i) => FolderNew({
+                                index: i,
                                 id: f.name,
                                 name: f.name,
                                 editMode: this.state.editMode,
@@ -426,9 +506,9 @@ export default class FolderGallery extends React.Component {
                                 onMoveUp: () => this.moveFolderUp(f),
                                 onMoveDown: () => this.moveFolderDown(f)
                             })) : <Text style={{ fontSize: 25 }}>עדיין ללא תיקיות</Text>}
-                    </LinearGradient>
+                    </View>
                 </View>
-            </LinearGradient>
+            </View>
         );
     }
 }
@@ -440,8 +520,8 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
     },
     borderW: {
-        borderWidth: 3,
-        borderColor: "#D1CFCF"
+        //borderWidth: 3,
+        //borderColor: "#D1CFCF"
     }
 });
 

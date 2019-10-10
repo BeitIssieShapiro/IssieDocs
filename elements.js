@@ -7,6 +7,12 @@ import LinearGradient from 'react-native-linear-gradient';
 import React from 'react';
 import ModalDropdown from 'react-native-modal-dropdown';
 
+export const dimensions = {
+     toolbarHeight : 65,
+     toolbarMargin : 5,
+     topView: 70
+}
+
 export const colors = {
     gray: ['#5B748A', '#587189'],
     orange: ['#FFA264', '#A24A04'],
@@ -21,17 +27,19 @@ export const colors = {
     lightGray: ['#A8C2D8', '#A8C2D8']
 }
 
+
+
 export const semanticColors = {
-    disabledButtonG : colors.lightGray,
-    disabledButton : colors.lightGray[0],
+    disabledButtonG: colors.lightGray,
+    disabledButton: colors.lightGray[0],
     cancelButtonG: colors.gray,
     cancelButton: colors.gray[0],
     okButtonG: colors.navyBlue,
     okButton: colors.navyBlue[0],
     deleteButtonG: colors.red,
     deleteButton: colors.red[0],
-    addButtonG: colors.navyBlue,
-    addButton: colors.navyBlue[0],
+    addButtonG: ['#1aaeff', '#1aaeff'],
+    addButton: '#1aaeff',
     undoButtonG: colors.gray,
     undoButton: colors.gray[0],
     InactiveModeButtonG: colors.gray,
@@ -39,16 +47,27 @@ export const semanticColors = {
     activeZoomButtonG: colors.orange,
     activeZoomButton: colors.orange[0],
     actionButtonG: colors.blue,
-    actionButton:colors.blue[0],
-    folderIcons:colors.navyBlue,
-    pageNavigationButtonG:colors.navyBlue,
+    actionButton: colors.blue[0],
+    folderIcons: colors.navyBlue,
+    pageNavigationButtonG: colors.navyBlue,
     selectedCheck: "#4630EB",
-    moveInZoomButton:"#D16F28",
-    header: '#8EAFCE',
-    headerG: ['#6487B1','#8EAFCE'],
+    moveInZoomButton: "#D16F28",
+    header: '#183d72',
+    header2: 'white',
+    headerG: ['#6487B1', '#8EAFCE'],
+    mainAreaBG: '#eeeded',
     title: '#DFE8EC',
-    selectedFolder: '#446997'
-    
+    subTitle: '#315890',
+    titleText: '#183d72',
+    selectedFolder: '#eeeded',
+    editPhotoButton: 'white'
+
+}
+
+export const FolderTextStyle = {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: semanticColors.titleText
 }
 
 export const folderIcons = [
@@ -61,6 +80,23 @@ export const folderIcons = [
     { icon: 'book', text: 'תורה' },
     { icon: 'speaker-notes', text: 'לשון' },
     { icon: 'local-bar', text: 'חגים' }
+]
+
+export const availableColorPicker = [
+    'black', '#fee100', '#20ad57', '#5db7dd', '#2958af', '#d62796', '#65309c', '#da3242', '#f5771c'
+]
+
+export const availableTextSize = [
+    25,30,35,40,45
+]
+
+export const availableBrushSize = [
+    1,3,5,7,9
+]
+
+
+export const folderColors = [
+    '#f5771c', '#da3242', '#65309c', '#2958af', '#5db7dd', '#20ad57'
 ]
 
 export const NEW_FOLDER_NAME = 'תיקיה חדשה';
@@ -111,28 +147,77 @@ export function getSquareButton(func, color, selectedColor, txt, icon, size, sel
     </TouchableOpacity>
 }
 
+export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction) {
+    return <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={callback}
+        style={{...dim}}
+    >
+        <View
+            style={{ 
+                flex:1,
+                zIndex:6,
+                borderRadius: 25,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor:'#eeeded',
+                shadowColor: 'black',
+                shadowOpacity: 0.8, 
+                elevation: 1,
+                shadowOffset:{width:0, height:-2},
+                flexDirection: direction?direction:'row-reverse' 
+            }}>
+            <Text style={{fontSize: textSize, color: semanticColors.titleText, textAlignVertical:'center' }}>{text ? ' '+text : ''}</Text>
+            <Spacer width={10}/>
+            <Icon name={icon} size={iconSize } color={semanticColors.titleText} />
+        </View>
+    </TouchableOpacity>
+}
+export function getIconButton(callback, color, icon, size, isText, iconSize, selected) {
+    return <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={callback}
+        style={{ 
+            backgroundColor: selected?'white':'transparent', 
+            width: size, height: size, 
+            alignContent:'center', 
+            alignItems:'center',
+            borderRadius: size/2,
+            justifyContent: 'center'}}
+    >
+            {isText?
+            <Text style={{fontSize:iconSize?iconSize:size, color:color, paddingTop:6}}>{icon}</Text>:
+            <Icon name={icon} size={iconSize?iconSize:size} color={color} />}
+       
+    </TouchableOpacity>
+}
+
+
+
 export function getFolderAndIcon(folderName) {
     if (folderName) {
         let parts = folderName.split("$")
         if (parts.length == 2) {
-            return {name: parts[0], icon: parts[1]};
+            return { name: parts[0], icon: parts[1] };
         }
-        return {name: folderName, icon:""};
+        return { name: folderName, icon: "" };
     }
-    return {name:"", icon:""};
+    return { name: "", icon: "" };
 }
 
 export function normalizeTitle(title) {
-    if (title ==  DEFAULT_FOLDER_NAME) {
+    if (title == DEFAULT_FOLDER_NAME) {
         return DEFAULT_FOLDER_TITLE;
-    } 
+    }
     return title;
 }
 
-export function getFileNameDialog(fileName, folderAndIcon, newFolderAndIcon, folders, 
-    onChangeName, onChangeFolder, onChangeNewFolder, panResponder, yOffset) {
-    
-    
+export function getFileNameDialog(fileName,
+    folderAndIcon, newFolderAndIcon, folders,
+    onChangeName, onChangeFolder, onChangeNewFolder,
+    panResponder, yOffset) {
+
+
     if (!yOffset) {
         yOffset = 0;
     }
@@ -168,9 +253,8 @@ export function getFileNameDialog(fileName, folderAndIcon, newFolderAndIcon, fol
                             value={newFolderAndIcon.name}
                         />
                         <Text>   </Text>
-                        {getIconPicker(newFolderAndIcon.icon, folderIcons, (itemIndex, itemValue) => {
-                            onChangeNewFolder(itemValue.text + '$' + itemValue.icon);
-                        })}
+                        {getIconPicker(newFolderAndIcon.icon, folderIcons, (itemIndex, itemValue) =>
+                            onChangeNewFolder(itemValue.text + '$' + itemValue.icon))}
                     </View>
                 </View>
                 :
@@ -302,13 +386,15 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
         }}
     >
         {isFirst ?
-            <View /> :
-            getSquareButton(() => callback(-1), semanticColors.pageNavigationButtonG, undefined, 'דף קודם', 'chevron-left', 30, undefined, { width: 150, height: 60 }, 60, true, 15)
+            <View/> :
+            //getSquareButton(() => callback(-1), semanticColors.pageNavigationButtonG, undefined, 'דף קודם', 'chevron-left', 30, undefined, { width: 150, height: 60 }, 60, true, 15)
+            getRoundedButton(() => callback(-1), 'chevron-left', 'דף קודם', 30, 30, { width: 155, height: 40 })
         }
 
         {isLast ?
-            <View /> :
-            getSquareButton(() => callback(1), semanticColors.pageNavigationButtonG, undefined, 'דף הבא', 'chevron-right', 30, undefined, { width: 150, height: 60 }, 60, false, 0, 15)
+            <View/> :
+            //getSquareButton(() => callback(1), semanticColors.pageNavigationButtonG, undefined, 'דף הבא', 'chevron-right', 30, undefined, { width: 150, height: 60 }, 60, false, 0, 15)
+            getRoundedButton(() => callback(1), 'chevron-right', 'דף הבא', 30, 30, { width: 155, height: 40 }, 'row')
         }
     </View>
 }
@@ -317,13 +403,20 @@ export function removeFileExt(filePath) {
 }
 
 export const globalStyles = StyleSheet.create({
-
+    headerStyle: {
+        backgroundColor: semanticColors.header,
+        height: 75
+    },
+    headerTitleStyle: {
+        fontSize: 30,
+        fontWeight: 'bold'
+    },
     textInput: {
-        fontSize: 60,
-        height: 80,
+        fontSize: 40,
+        height: 70,
         textAlign: "right",
         fontWeight: 'bold',
-        color: 'black',
+        color: semanticColors.titleText,
         width: '100%',
         backgroundColor: 'white'
     },
@@ -335,10 +428,10 @@ export const globalStyles = StyleSheet.create({
         alignItems: 'center',
         flexDirection: 'row',
         justifyContent: "center",
-      },
-    btnDimensions: { 
-        width: 60, 
-        height: 60 
+    },
+    btnDimensions: {
+        width: 60,
+        height: 60
     }
 
 })
@@ -396,7 +489,7 @@ const styles = StyleSheet.create({
         justifyContent: "flex-end",
         width: "60%",
         right: "20%",
-        top: "12%",
+        top: "3%",
         backgroundColor: 'transparent'
     },
     titleText: {
@@ -404,7 +497,7 @@ const styles = StyleSheet.create({
         textAlign: "right",
         width: "100%",
         fontWeight: 'bold',
-        color: 'white',
+        color: semanticColors.titleText,
         backgroundColor: 'transparent'
     }
 });

@@ -52,8 +52,10 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>8</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
@@ -72,8 +74,6 @@
 	<string>save pages in gallery</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Using camera to capture new pages</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Save images to local pictures</string>
 	<key>NSPhotoLibraryUsageDescription</key>
