@@ -52,6 +52,7 @@
 		6A11C7B122C62FB4001F7CFF /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6A11C7B022C62FB4001F7CFF /* Media.xcassets */; };
 		6A6E56522330025E00877E88 /* libRCTPushNotification.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A6E564F2330020700877E88 /* libRCTPushNotification.a */; };
 		6AD4B4DD234F6B0100125275 /* libART.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AD4B49D234F6ADB00125275 /* libART.a */; };
+		6AD4B4DF234FBAC100125275 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AD4B4DE234FBAC000125275 /* CloudKit.framework */; };
 		6ADD63AB22B91E450028D646 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6ADD63AA22B91E450028D646 /* Assets.xcassets */; };
 		6E28A2F7F78B4F29A8DA6551 /* Octicons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DA9AA63110704BACA9D73F5F /* Octicons.ttf */; };
 		7559069D8AC24B2998BB5B40 /* libRNFetchBlob.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CBEB35933C2340A1AA9A7386 /* libRNFetchBlob.a */; };
@@ -591,10 +592,9 @@
 		6A1AFF6A22B56F4500FA0321 /* RCTCameraRoll.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTCameraRoll.xcodeproj; path = "../../IssieDocs2/node_modules/react-native/Libraries/CameraRoll/RCTCameraRoll.xcodeproj"; sourceTree = "<group>"; };
 		6A21604422DBBD1F000BE18F /* IssieDoc.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IssieDoc.entitlements; sourceTree = "<group>"; };
 		6A6E56492330020600877E88 /* RCTPushNotification.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTPushNotification.xcodeproj; path = "../node_modules/react-native/Libraries/PushNotificationIOS/RCTPushNotification.xcodeproj"; sourceTree = "<group>"; };
-		6A9AEDED22C6268E000CB311 /* detective.doc */ = {isa = PBXFileReference; lastKnownFileType = file; name = detective.doc; path = ../detective.doc; sourceTree = "<group>"; };
 		6A9AEE2522C6268E000CB311 /* mock.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = mock.jpg; path = ../mock.jpg; sourceTree = "<group>"; };
-		6A9AEE2622C6268F000CB311 /* שלום1.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = "שלום1.pdf"; path = "../שלום1.pdf"; sourceTree = "<group>"; };
 		6AD4B497234F6ADA00125275 /* ART.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ART.xcodeproj; path = "../node_modules/react-native/Libraries/ART/ART.xcodeproj"; sourceTree = "<group>"; };
+		6AD4B4DE234FBAC000125275 /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
 		6ADD63AA22B91E450028D646 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6ECE075D45C4438EBFAE54A2 /* libRNShare.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNShare.a; sourceTree = "<group>"; };
 		6F5CB887FC544F6680CD6417 /* Zocial.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Zocial.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Zocial.ttf"; sourceTree = "<group>"; };
@@ -666,6 +666,7 @@
 				DC363DA69D3D44CFA8AD248E /* libRNSketchCanvas.a in Frameworks */,
 				98CC1FFE14AF41BEA1AB5778 /* libReactNativeCameraKit.a in Frameworks */,
 				49DF923DF8D443829F79A2BF /* libRNFS.a in Frameworks */,
+				6AD4B4DF234FBAC100125275 /* CloudKit.framework in Frameworks */,
 				C65835809CEA47D6A3984EF7 /* libRNGestureHandler.a in Frameworks */,
 				F3B4A20052B84D9093A5B0AA /* libRNVectorIcons.a in Frameworks */,
 				625E318A241D44B685A87450 /* libRNDeviceInfo.a in Frameworks */,
@@ -833,6 +834,7 @@
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				6AD4B4DE234FBAC000125275 /* CloudKit.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				ED2971642150620600B7C4FE /* JavaScriptCore.framework */,
 				2D16E6891FA4F8E400B85C8A /* libReact.a */,
@@ -1131,9 +1133,7 @@
 		850BA4741F32408A91264609 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				6A9AEDED22C6268E000CB311 /* detective.doc */,
 				6A9AEE2522C6268E000CB311 /* mock.jpg */,
-				6A9AEE2622C6268F000CB311 /* שלום1.pdf */,
 				4CB89FB7D42D46DBBAFAA89C /* AntDesign.ttf */,
 				D167DFBE30894B238B941B43 /* Entypo.ttf */,
 				2FDBEB37EC294C459DECD1C0 /* EvilIcons.ttf */,

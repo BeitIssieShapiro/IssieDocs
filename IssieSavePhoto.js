@@ -139,6 +139,8 @@ export default class IssieSavePhoto extends React.Component {
 
   componentDidMount = async () => {
     let uri = this.props.navigation.getParam('uri', '');
+    uri = decodeURI(uri);
+    //Alert.alert(uri)
     let folder = this.props.navigation.getParam('folder', '')
     let pageName = this.props.navigation.getParam('name', '')
     let pdf = false;
@@ -505,7 +507,7 @@ export default class IssieSavePhoto extends React.Component {
         </View>
 
         {this.state.pdf ?
-          <View style={bgImage}>
+          <View style={styles.bgImage}>
             <ViewShot ref="viewShot" options={{ format: "jpg", quality: 0.9 }}
               style={{
                 flex: 1, position: 'absolute', width: this.state.pdfWidth, height: this.state.pdfHeight
@@ -521,7 +523,7 @@ export default class IssieSavePhoto extends React.Component {
                 }}
 
                 onError={(error) => {
-                  //Alert.alert(error);
+                  Alert.alert('טעינת PDF נכשלה');
                 }}
               >
 

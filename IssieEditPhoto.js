@@ -221,7 +221,7 @@ export default class IssieEditPhoto extends React.Component {
 
       let interval = this.state.page.pages.length * shareTimeMs / 11;
 
-      setInterval(()=>this.setState({shareProgress : this.state.shareProgress + .1}), interval);
+      let intervalObj = setInterval(()=>this.setState({shareProgress : this.state.shareProgress + .1}), interval);
 
       let data = await this.exportToBase64();
       dataUrls.push(data);
@@ -235,6 +235,7 @@ export default class IssieEditPhoto extends React.Component {
         dataUrls.push(await this.exportToBase64());
       }
 
+      clearInterval(intervalObj);
       this.setState({ sharing: false });
       //avoid reshare again
       this.props.navigation.setParams({share:false});
