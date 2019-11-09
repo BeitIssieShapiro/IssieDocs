@@ -26,7 +26,7 @@ export default function FileNew(props) {
                     <View style={{ borderWidth: 1.5, borderColor: "#D1CFCF", height: '100%', width: '100%' }}>
                         <View style={{ flexDirection: 'column', alignItems: 'center' }}>
                             {props.editMode ?
-                                <View style={{ position: 'absolute', top: -5, right: -6, width: 40, height: 40, zIndex: 5 }}>
+                                <View style={{ position: 'absolute', top: 0, right: 0, width: 40, height: 40, zIndex: 5, backgroundColor:'white' }}>
                                     <Icon name={props.selected ? "check-box" : "check-box-outline-blank"} size={35} />
                                 </View>
                                 : null}
@@ -43,12 +43,12 @@ export default function FileNew(props) {
                     </View>
                 </View>
                 :
-                <View style={{ alignContent: 'center', height: lineHeight, borderWidth: 1.5, borderColor: "#D1CFCF", width: '100%' }}>
-                    <View style={{ flexDirection: 'row-reverse', alignItems: 'center' }}>
+                <View style={{ alignContent: 'center', height: lineHeight, borderWidth: 1.5, borderColor: "#D1CFCF", width: '100%',paddingRight:5 }}>
+                    <View style={{ flexDirection: 'row-reverse', alignItems: 'center', paddingTop:3 }}>
                         {props.editMode ?
                             <Icon name={props.selected ? "check-box" : "check-box-outline-blank"} size={35} />
                             : null}
-                        <View style={{ borderWidth: .5, borderColor: colors.lightBlue }}>
+                        <View style={{ borderWidth: .5, borderColor: colors.lightBlue}}>
                             <Image source={{ uri: imageSrc }} style={{ width: 50, height: 60 }} />
                         </View>
                         <Text style={{ paddingRight: 20, fontSize: 25, color: semanticColors.titleText }}>

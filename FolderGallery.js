@@ -389,7 +389,9 @@ export default class FolderGallery extends React.Component {
                     elevation: 1,
                     zIndex: 5,
                     flexDirection: "row",
-                    alignItems: "center"
+                    alignItems: "center", 
+                    backgroundColor: semanticColors.subTitle
+
                 }} >
                     {/*Left buttons*/}
                     <Spacer />
@@ -447,8 +449,11 @@ export default class FolderGallery extends React.Component {
                         flex: 1, flexDirection: "column", position: 'absolute', top: 0, width: pagesContainerWidth, left: 0, height: "100%",
                     }}>
                         {/* pagesTitle */}
-                        <View style={{ flex: 1, flexDirection: "row-reverse", height: "5%", position: 'absolute', width: "100%", top: 0, height: '10%', alignItems: 'center', justifyContent: 'flex-start', paddingRight: '5%' }}>
-                            {curFolder.icon !== "" ? <Icon name={curFolder.icon} size={30} color={semanticColors.titleText} /> : <Spacer />}
+                        <View style={{ flex: 1, flexDirection: "row-reverse", height: "5%", position: 'absolute', 
+                            width: "100%", top: 0, height: '10%', alignItems: 'center', justifyContent: 'flex-start', 
+                            paddingRight: '5%' }}>
+                            <Spacer/>
+                            {curFolder.icon !== "" ? <Icon name={curFolder.icon} size={30} color={semanticColors.titleText} /> : <Spacer width={30}/>}
                             <Text style={FolderTextStyle}>{normalizeTitle(curFolder.name)}</Text>
                         </View>
                         {/* pages */}
@@ -477,7 +482,9 @@ export default class FolderGallery extends React.Component {
                             />
                             
                             
-                            :<Text> אין עדיין דפים</Text>}
+                            :<View style={{alignItems:'center'}}>
+                                <Text style={{fontSize:35}}> אין עדיין דפים</Text>
+                             </View>}
                         </View>
                     </View>
                     {/* tree */}
@@ -492,8 +499,9 @@ export default class FolderGallery extends React.Component {
                         }}>
 
                         {this.state.folders && this.state.folders.length ?
-                            this.state.folders.map((f, i) => FolderNew({
+                            this.state.folders.map((f, i, arr) => FolderNew({
                                 index: i,
+                                isLast: i+1 == arr.length,
                                 id: f.name,
                                 name: f.name,
                                 editMode: this.state.editMode,
@@ -505,7 +513,7 @@ export default class FolderGallery extends React.Component {
                                 onSelect: () => this.toggleSelection(f, 'folder'),
                                 onMoveUp: () => this.moveFolderUp(f),
                                 onMoveDown: () => this.moveFolderDown(f)
-                            })) : <Text style={{ fontSize: 25 }}>עדיין ללא תיקיות</Text>}
+                            })) : <Text style={{ fontSize: 25 }}>אין עדיין תיקיות</Text>}
                     </View>
                 </View>
             </View>

@@ -78,7 +78,12 @@ export function swapFolders(folders, from, to) {
 }
 
 export async function pushFolderOrder(folderName) {
-    let orderStr = await RNFS.readFile(FOLDERS_DIR + ORDER_FILE_NAME, 'utf8');
+    let orderStr = '[]';
+    try {
+        orderStr = await RNFS.readFile(FOLDERS_DIR + ORDER_FILE_NAME, 'utf8');
+    } catch (e) {
+        //intentionally ignored, as sort.json is missing
+    }
     // /Alert.alert(orderStr.toString('utf-8'))
     let order = JSON.parse(orderStr.toString('utf8'));
 
@@ -90,9 +95,9 @@ export async function pushFolderOrder(folderName) {
 
     RNFS.writeFile(FOLDERS_DIR + ORDER_FILE_NAME, JSON.stringify(order), 'utf8').then(
         //Success
-        () => resolve(),
+        undefined,
         //on error 
-        err => reject(err)
+        err => Promise.reject(err)
     )
 
 }

@@ -52,20 +52,20 @@ export default function FolderNew(props) {
                             </View>
                         }
                         <Spacer width={8}/>
-                        <Text style={FolderTextStyle}>{caption}</Text>
+                        <Text style={[FolderTextStyle, props.current && {fontSize:32}]}>{caption}</Text>
                     </View>
 
                 </View>
-                {
-                    props.editMode && !props.fixedFolder ?
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Icon name={"expand-less"} size={55} onPress={props.onMoveUp} />
-                            <Icon name={"expand-more"} size={55} onPress={props.onMoveDown} />
-                        </View> :
-                        <View />
-                }
+                
             </View>
-
+{
+    props.editMode && !props.fixedFolder ?
+        <View style={{ position:'absolute', left:0, top:10, flexDirection: 'row', alignItems: 'center' }}>
+            <Icon name={"expand-less"} size={55} color={props.index == 1?'gray':'black'} onPress={props.index > 1?props.onMoveUp:undefined} />
+            <Icon name={"expand-more"} size={55} color={props.isLast?'gray':'black'} onPress={props.isLast?undefined:props.onMoveDown} />
+        </View> :
+        <View />
+}
         </TouchableOpacity>
     );
 }

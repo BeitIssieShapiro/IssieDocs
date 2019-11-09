@@ -29,17 +29,18 @@ export default function Menu(props) {
 
                 backgroundColor: 'white', borderColor: 'gray', borderWidth: 1
             }}>
-            <View style={{ position: 'absolute', alignItems: 'flex-end', top: '3%', height: '5%', width: '100%', borderBottomWidth: 1, borderBottomColor: 'gray' }}>
-                <Text style={{ fontSize: 35, color: semanticColors.titleText }}>תפריט</Text>
+            <View style={{ position: 'absolute', alignItems: 'flex-end', top: '3%', height: '5%', width: '100%', paddingRight:25
+                 }}>
+                <Text style={{ fontSize: 35, textDecorationLine:'underline', color: semanticColors.titleText }}>תפריט</Text>
             </View>
             <View style={{ position: 'absolute', alignItems: 'flex-end', top: '12%', width: '100%' }}>
-                <TouchableOpacity onPress={props.onAbout} style={{ flexDirection: 'row' }}>
+                <TouchableOpacity onPress={props.onAbout} style={{ flexDirection: 'row', paddingRight:25 }}>
                     <Text style={{ fontSize: 25, color: semanticColors.titleText }}>עלינו - About us</Text>
                     <Spacer />
                     <Icon name={'info'} size={35} color={semanticColors.titleText} />
                 </TouchableOpacity>
 
-                <View style={{ width: '100%', paddingTop: 25, alignItems: 'flex-end' }}>
+                <View style={{ width: '100%', paddingTop: 25, paddingRight:25, alignItems: 'flex-end' }}>
                     <Text style={styles.SettingsHeaderText}>תצוגת דפים:</Text>
 
                     <TouchableOpacity

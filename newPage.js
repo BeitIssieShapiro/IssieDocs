@@ -83,10 +83,10 @@ export async function saveFile(uri, filePath) {
                         //Success
                         () => resolve(),
                         //on error 
-                        err => handleSaveFileError(err, reject)
-                    ).catch(err => handleSaveFileError(err, reject));
+                        err => handleSaveFileError('', err, reject)
+                    ).catch(err => handleSaveFileError('', err, reject));
                 }, (err) => {
-                    handleSaveFileError(err, reject);
+                    handleSaveFileError('', err, reject);
                 });
         } else {
             //Alert.alert("before save:"+ uri + ", to:"+ filePath)
@@ -97,8 +97,8 @@ export async function saveFile(uri, filePath) {
                         return resolve()
                     },
                     //on error 
-                    err => handleSaveFileError(err, reject)
-                ).catch(err => handleSaveFileError(err, reject));
+                    err => handleSaveFileError(uri, err, reject)
+                ).catch(err => handleSaveFileError(uri, err, reject));
             }
             RNFS.moveFile(uri, filePath).then(
                 //Success
@@ -106,23 +106,23 @@ export async function saveFile(uri, filePath) {
                     return resolve()
                 },
                 //on error 
-                err => handleSaveFileError(err, reject)
-            ).catch(err => handleSaveFileError(err, reject));
+                err => handleSaveFileError(uri, err, reject)
+            ).catch(err => handleSaveFileError(uri, err, reject));
         }
     });
 }
 
-function handleSaveFileError(err, reject) {
+function handleSaveFileError(uri, err, reject) {
     let errorStr = ""
     for (let key in err) {
         errorStr += JSON.stringify(err[key]).substr(15)+"\n";
     }
-    Alert.alert("Error: " + errorStr);
+    //Alert.alert("Error: " + errorStr);
     if (err.toString().includes("already exists")) {
         reject("קובץ בשם זה כבר קיים");
         return;
     }
-    reject('Error saving file: ' + uri + ' to ' + filePath + ', err: ' + err);
+    reject('Error saving file: ' + uri , 'err: ' + err);
 }
 
 export function genTempFile(ext) {

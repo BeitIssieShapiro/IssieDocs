@@ -5,6 +5,11 @@ V* tiles option
 V* splash screen
 V* hour glass when share
 
+V* rename page name throws error and succeed
+V* import/share pdf in landscape - progress not in the middle
+XX* swipe in text mode, only get swipe on the canvas, not on the margins (landscape)
+V* checkbox of page in tile/edit should not be transparent, fix the white background
+
 
 
 

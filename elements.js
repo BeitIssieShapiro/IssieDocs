@@ -1,16 +1,15 @@
 import {
-    TouchableOpacity, Text, StyleSheet, Image, View,
-    TouchableHighlight, Alert, TextInput
+    TouchableOpacity, Text, StyleSheet, Image, View
+    , Alert, TextInput
 } from 'react-native';
 import { Icon } from 'react-native-elements'
 import LinearGradient from 'react-native-linear-gradient';
-import React from 'react';
-import ModalDropdown from 'react-native-modal-dropdown';
+import React, { useState } from 'react';
 
 export const dimensions = {
-     toolbarHeight : 65,
-     toolbarMargin : 5,
-     topView: 70
+    toolbarHeight: 65,
+    toolbarMargin: 5,
+    topView: 70
 }
 
 export const colors = {
@@ -27,8 +26,6 @@ export const colors = {
     lightGray: ['#A8C2D8', '#A8C2D8']
 }
 
-
-
 export const semanticColors = {
     disabledButtonG: colors.lightGray,
     disabledButton: colors.lightGray[0],
@@ -38,8 +35,7 @@ export const semanticColors = {
     okButton: colors.navyBlue[0],
     deleteButtonG: colors.red,
     deleteButton: colors.red[0],
-    addButtonG: ['#1aaeff', '#1aaeff'],
-    addButton: '#1aaeff',
+    addButton: 'white', 
     undoButtonG: colors.gray,
     undoButton: colors.gray[0],
     InactiveModeButtonG: colors.gray,
@@ -59,7 +55,7 @@ export const semanticColors = {
     title: '#DFE8EC',
     subTitle: '#315890',
     titleText: '#183d72',
-    selectedFolder: '#eeeded',
+    selectedFolder: '#C7D4E8',
     editPhotoButton: 'white'
 
 }
@@ -83,15 +79,15 @@ export const folderIcons = [
 ]
 
 export const availableColorPicker = [
-    'black', '#fee100', '#20ad57', '#5db7dd', '#2958af', '#d62796', '#65309c', '#da3242', '#f5771c'
+    '#000000', '#fee100', '#20ad57', '#5db7dd', '#2958af', '#d62796', '#65309c', '#da3242', '#f5771c'
 ]
 
 export const availableTextSize = [
-    25,30,35,40,45
+    25, 30, 35, 40, 45
 ]
 
 export const availableBrushSize = [
-    1,3,5,7,9
+    1, 3, 5, 7, 9
 ]
 
 
@@ -102,7 +98,7 @@ export const folderColors = [
 export const NEW_FOLDER_NAME = 'תיקיה חדשה';
 export const NO_FOLDER_NAME = 'ללא';
 export const DEFAULT_FOLDER_NAME = 'Default';
-export const DEFAULT_FOLDER_TITLE = "ללא תיקיה";
+export const DEFAULT_FOLDER_TITLE = "ללא נושא";
 
 const FOLDER_NO_ICON = 'sentiment-satisfied';
 
@@ -151,25 +147,25 @@ export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, 
     return <TouchableOpacity
         activeOpacity={0.7}
         onPress={callback}
-        style={{...dim}}
+        style={{ ...dim }}
     >
         <View
-            style={{ 
-                flex:1,
-                zIndex:6,
+            style={{
+                flex: 1,
+                zIndex: 6,
                 borderRadius: 25,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor:'#eeeded',
+                backgroundColor: '#eeeded',
                 shadowColor: 'black',
-                shadowOpacity: 0.8, 
+                shadowOpacity: 0.8,
                 elevation: 1,
-                shadowOffset:{width:0, height:-2},
-                flexDirection: direction?direction:'row-reverse' 
+                shadowOffset: { width: 0, height: -2 },
+                flexDirection: direction ? direction : 'row-reverse'
             }}>
-            <Text style={{fontSize: textSize, color: semanticColors.titleText, textAlignVertical:'center' }}>{text ? ' '+text : ''}</Text>
-            <Spacer width={10}/>
-            <Icon name={icon} size={iconSize } color={semanticColors.titleText} />
+            <Text style={{ fontSize: textSize, color: semanticColors.titleText, textAlignVertical: 'center' }}>{text ? ' ' + text : ''}</Text>
+            <Spacer width={10} />
+            <Icon name={icon} size={iconSize} color={semanticColors.titleText} />
         </View>
     </TouchableOpacity>
 }
@@ -177,18 +173,19 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
     return <TouchableOpacity
         activeOpacity={0.7}
         onPress={callback}
-        style={{ 
-            backgroundColor: selected?'white':'transparent', 
-            width: size, height: size, 
-            alignContent:'center', 
-            alignItems:'center',
-            borderRadius: size/2,
-            justifyContent: 'center'}}
+        style={{
+            backgroundColor: selected ? 'white' : 'transparent',
+            width: size, height: size,
+            alignContent: 'center',
+            alignItems: 'center',
+            borderRadius: size / 2,
+            justifyContent: 'center'
+        }}
     >
-            {isText?
-            <Text style={{fontSize:iconSize?iconSize:size, color:color, paddingTop:6}}>{icon}</Text>:
-            <Icon name={icon} size={iconSize?iconSize:size} color={color} />}
-       
+        {isText ?
+            <Text style={{ fontSize: iconSize ? iconSize : size, color: color, paddingTop: 6 }}>{icon}</Text> :
+            <Icon name={icon} size={iconSize ? iconSize : size} color={color} />}
+
     </TouchableOpacity>
 }
 
@@ -214,48 +211,53 @@ export function normalizeTitle(title) {
 
 export function getFileNameDialog(fileName,
     folderAndIcon, newFolderAndIcon, folders,
-    onChangeName, onChangeFolder, onChangeNewFolder,
-    panResponder, yOffset) {
+    onChangeName, onChangeFolder, onChangeNewFolder) {
 
-
-    if (!yOffset) {
-        yOffset = 0;
-    }
     let folderName = folderAndIcon.name;
     if (folderName == DEFAULT_FOLDER_NAME) {
         folderName = NO_FOLDER_NAME;
     }
-    //Alert.alert("folder:"+ folderName)
+
     return (
-        <View style={[styles.textInputView, {
-            transform: [{ translateY: yOffset }]
-        }]} {...panResponder}>
+        <View style={styles.textInputView} >
             <Text style={styles.titleText}>שם הדף</Text>
             <TextInput style={globalStyles.textInput}
                 onChangeText={onChangeName}
             >{fileName}</TextInput>
+            <Spacer/>
             <Text style={styles.titleText}>תיקיה</Text>
-            {getFolderPicker(folderName, folderAndIcon.icon, folders,
-                (itemIndex, itemValue) => {
-                    if (itemValue == NO_FOLDER_NAME) {
-                        itemValue = undefined;
+            <Picker
+                name={folderName}
+                icon={folderAndIcon.icon}
+                items={[NO_FOLDER_NAME, ...folders, NEW_FOLDER_NAME]}
+                textEditable={false}
+                renderRow={pickerRenderRow}
+                emptyValue={'ללא'}
+                selectCallback={
+                    (itemIndex, itemValue) => {
+                        if (itemValue == NO_FOLDER_NAME) {
+                            itemValue = undefined;
+                        }
+                        onChangeFolder(itemValue)
                     }
-                    onChangeFolder(itemValue)
-                })
-            }
+                }
+
+            />
             {folderName == NEW_FOLDER_NAME ?
                 //New folder picker
                 <View style={{ flex: 1, width: '100%' }}>
+                    <Spacer/>
                     <Text style={styles.titleText}>שם התיקיה</Text>
-                    <View style={{ flex: 1, flexDirection: 'row-reverse' }}>
-                        <TextInput style={[globalStyles.textInput, { backgroundColor: 'white', width: '75%' }]}
-                            onChangeText={onChangeNewFolder}
-                            value={newFolderAndIcon.name}
-                        />
-                        <Text>   </Text>
-                        {getIconPicker(newFolderAndIcon.icon, folderIcons, (itemIndex, itemValue) =>
-                            onChangeNewFolder(itemValue.text + '$' + itemValue.icon))}
-                    </View>
+                    <Picker
+                        name={newFolderAndIcon.name}
+                        icon={newFolderAndIcon.icon}
+                        items={folderIcons}
+                        textEditable={true}
+                        renderRow={pickerRenderIcon}
+                        emptyValue={''}
+                        onChangeText={onChangeNewFolder}
+                        selectCallback={(itemIndex, itemValue) => onChangeNewFolder(itemValue.text + '$' + itemValue.icon)}
+                    />
                 </View>
                 :
                 //Not new folder
@@ -264,28 +266,51 @@ export function getFileNameDialog(fileName,
         </View>);
 }
 
-function getFolderPicker(folderName, iconName, folders, callback) {
-    console.disableYellowBox = true;
 
-    return <ModalDropdown
-        style={[styles.pickerButton]}
-        dropdownStyle={{ flex: 1, top: 0, width: '60%', height: 300 }}
-        onSelect={callback}
-        renderRow={pickerRenderRow}
-        options={[NO_FOLDER_NAME, ...folders, NEW_FOLDER_NAME]} >
-        <View style={{
-            flexDirection: 'row', justifyContent: 'space-between',
-            alignItems: 'center', alignContent: 'center'
-        }}>
-            <Icon name='arrow-drop-down' size={50} color={semanticColors.folderIcons} />
-            <Icon name={iconName} size={50} color={semanticColors.folderIcons} />
-            <Text style={styles.textInputPicker}>{folderName ? folderName : 'ללא'}</Text>
-        </View>
-    </ModalDropdown>
+function Picker(props) {
+    const [expanded, setExpanded] = useState(false);
+
+    return (
+        <View style={{ flex: 1, width: '100%' }}>
+            <TouchableOpacity
+                onPress={() => setExpanded(!expanded)}
+                style={{
+                    flexDirection: 'row', justifyContent: 'space-between',
+                    alignItems: 'center', alignContent: 'center', backgroundColor: 'white'
+                }}>
+
+                <Icon name='arrow-drop-down' size={50} color={semanticColors.folderIcons[0]} />
+                {props.icon != '' ? <Icon name={props.icon} size={50} color={semanticColors.folderIcons[0]} /> : null}
+                <TextInput
+                    editable={props.textEditable}
+                    onChangeText={props.onChangeText}
+                    style={styles.textInputPicker}>{props.name ? props.name : props.emptyValue}
+                </TextInput>
+
+            </TouchableOpacity>
+            {expanded ?
+                <View style={{ borderTopWidth: 1, borderTopColor: 'gray' }}>
+                    {props.items.map((item, index) => (
+                        <TouchableOpacity key={index} onPress={() => {
+                            setExpanded(false);
+                            props.selectCallback(index, item)
+                        }}>
+
+                            {props.renderRow(item, index)}
+                        </TouchableOpacity>
+                    ))}
+
+                </View>
+                :
+                null}
+
+        </View>)
+
 }
 
+
+
 function pickerRenderRow(rowData, rowID, highlighted) {
-    let evenRow = rowID % 2;
     let folderName = rowData;
     let iconName = '';
     if (rowData) {
@@ -296,64 +321,33 @@ function pickerRenderRow(rowData, rowID, highlighted) {
         }
     }
     return (
-        <TouchableHighlight underlayColor='cornflowerblue'>
-            <View style={[globalStyles.textInput, {
-                backgroundColor: evenRow ? 'lemonchiffon' : 'white',
-                alignContent: 'flex-end', justifyContent: 'space-between',
-                alignItems: 'center',
-                flexDirection: 'row'
-            }]}>
-                <Icon name={iconName} size={50} color={semanticColors.folderIcons}></Icon>
-                <Text style={{ fontSize: 70, textAlign: 'right' }}>
-                    {folderName}
-                </Text>
-            </View>
-        </TouchableHighlight>
+        <View style={[globalStyles.textInput, {
+            backgroundColor: 'white',
+            alignContent: 'flex-end', justifyContent: 'space-between',
+            alignItems: 'center',
+            flexDirection: 'row'
+        }]}>
+            {iconName != '' ? <Icon name={iconName} size={50} color={semanticColors.folderIcons[0]}></Icon> : <View />}
+            <Text style={{ fontSize: 50, textAlign: 'right' }}>
+                {folderName}
+            </Text>
+        </View>
     );
 }
-export function getIconPicker(pickerIcon, icons, callback) {
-    if (!pickerIcon || pickerIcon.length == 0) {
-        pickerIcon = FOLDER_NO_ICON;
-    }
-    console.disableYellowBox = true;
-    return <ModalDropdown
-        style={[styles.pickerButton, { width: '30%' }]}
-        dropdownStyle={{
-            flex: 1,
-            width: '60%',
-            height: 300,
-            top: 0
-        }}
-        onSelect={callback}
-        renderRow={pickerRenderIcon}
-        options={icons} >
-        <View style={{
-            height: '100%',
-            flexDirection: 'row', justifyContent: 'space-between',
-            alignItems: 'center', alignContent: 'center'
-        }}>
-            <Icon name='arrow-drop-down' size={50} color={semanticColors.folderIcons} />
-            <Icon name={pickerIcon} size={50} color={semanticColors.folderIcons} />
-        </View>
-    </ModalDropdown>
-}
-
 
 function pickerRenderIcon(rowData, rowID, highlighted) {
     return (
-        <TouchableHighlight underlayColor='cornflowerblue'>
-            <View style={[globalStyles.textInput, {
-                flex: 1,
-                flexDirection: 'row',
-                backgroundColor: 'white',
-                alignItems: 'center',
+        <View style={[globalStyles.textInput, {
+            flex: 1,
+            flexDirection: 'row',
+            backgroundColor: 'white',
+            alignItems: 'center',
 
-                justifyContent: 'space-between'
-            }]}>
-                <Icon name={rowData.icon} size={50} color={semanticColors.folderIcons} />
-                <Text style={{ fontSize: 55 }}>{rowData.text}</Text>
-            </View>
-        </TouchableHighlight>
+            justifyContent: 'space-between'
+        }]}>
+            <Icon name={rowData.icon} size={50} color={semanticColors.folderIcons[0]} />
+            <Text style={{ fontSize: 55 }}>{rowData.text}</Text>
+        </View>
     );
 }
 
@@ -386,13 +380,13 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
         }}
     >
         {isFirst ?
-            <View/> :
+            <View /> :
             //getSquareButton(() => callback(-1), semanticColors.pageNavigationButtonG, undefined, 'דף קודם', 'chevron-left', 30, undefined, { width: 150, height: 60 }, 60, true, 15)
             getRoundedButton(() => callback(-1), 'chevron-left', 'דף קודם', 30, 30, { width: 155, height: 40 })
         }
 
         {isLast ?
-            <View/> :
+            <View /> :
             //getSquareButton(() => callback(1), semanticColors.pageNavigationButtonG, undefined, 'דף הבא', 'chevron-right', 30, undefined, { width: 150, height: 60 }, 60, false, 0, 15)
             getRoundedButton(() => callback(1), 'chevron-right', 'דף הבא', 30, 30, { width: 155, height: 40 }, 'row')
         }
@@ -438,7 +432,7 @@ export const globalStyles = StyleSheet.create({
 
 export function Spacer(props) {
     return (
-        <View style={{ width: props.width || 20 }} />
+        <View style={{ width: props.width || 20, height: props.height || 20 }} />
     );
 }
 
@@ -467,12 +461,13 @@ const styles = StyleSheet.create({
 
     textInputPicker: {
         flex: 1,
-        fontSize: 70,
+        fontSize: 55,
         textAlign: "right",
+        paddingTop: 10,
         fontWeight: 'bold',
         color: 'black',
         backgroundColor: 'white',
-        justifyContent: 'center',
+        justifyContent: 'flex-end',
         alignItems: 'center'
     },
     selected: {

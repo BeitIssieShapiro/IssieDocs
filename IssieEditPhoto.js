@@ -18,7 +18,7 @@ import * as Progress from 'react-native-progress';
 import {
   getSquareButton, colors, DEFAULT_FOLDER_NAME, getFolderAndIcon, getImageDimensions,
   getPageNavigationButtons,
-  semanticColors, getIconButton, dimensions, availableTextSize,availableBrushSize, availableColorPicker
+  semanticColors, getIconButton, dimensions, availableTextSize, availableBrushSize, availableColorPicker
 } from './elements'
 //import rnTextSize from 'react-native-text-size'
 //import MeasureText from 'react-native-measure-text';
@@ -81,15 +81,8 @@ export default class IssieEditPhoto extends React.Component {
       onPanResponderMove: (evt, gestureState) => {
         let xUnderFlow = 0;
         let xText = this.s2aW(gestureState.moveX - DRAG_ICON_SIZE / 2);
-        if (xText - this.state.inputTextWidth < this.state.sideMargin) {
-          // if (xText - this.state.sideMargin > INITIAL_TEXT_SIZE) {
-          //   xUnderFlow = 
-          //    (this.state.sideMargin + this.state.inputTextWidth) - xText;
-          // } else {
-          //   xUnderFlow = this.state.inputTextWidth - INITIAL_TEXT_SIZE;
-          // }
-          xText = this.state.sideMargin + this.state.inputTextWidth;
-
+        if (xText  < 25) {
+          xText = 25 ;
         } else if (xText > this.state.canvasW) {
           xText = this.state.canvasW;
         }
@@ -100,9 +93,11 @@ export default class IssieEditPhoto extends React.Component {
         } else if (yText > (this.state.canvasH - this.inputTextHeight)) {
           yText = this.state.canvasH - this.inputTextHeight;
         }
+
+        let inputTextWidth = this.limitTextWidth(this.state.inputTextWidth, xText, yText);
         if (this.state.textMode) {
           this.setState({
-            xText, yText, xUnderFlow
+            xText, yText, inputTextWidth, xUnderFlow
           });
         }
       },
@@ -200,7 +195,7 @@ export default class IssieEditPhoto extends React.Component {
     const currentFile = page.pages.length == 0 ? page.path : page.pages[0];
 
     if (page.pages.length > 0) {
-       this.props.navigation.setParams({pageTitleAddition: this.pageTitleAddition(page.pages, 0)})
+      this.props.navigation.setParams({ pageTitleAddition: this.pageTitleAddition(page.pages, 0) })
     }
 
     const metaDataUri = currentFile + ".json";
@@ -208,7 +203,7 @@ export default class IssieEditPhoto extends React.Component {
       this.Load);
   }
 
-  pageTitleAddition = (pages, index) => " - " + (index + 1) + "/" + pages.length 
+  pageTitleAddition = (pages, index) => " - " + (index + 1) + "/" + pages.length
 
 
   Load = async () => {
@@ -216,17 +211,17 @@ export default class IssieEditPhoto extends React.Component {
 
     if (this.props.navigation.getParam('share', false)) {
       //iterates over all files and exports them
-      this.setState({ sharing: true, shareProgress: 0 , shareProgressPage:1 });
+      this.setState({ sharing: true, shareProgress: 0, shareProgressPage: 1 });
       let dataUrls = [];
 
       let interval = this.state.page.pages.length * shareTimeMs / 11;
 
-      let intervalObj = setInterval(()=>this.setState({shareProgress : this.state.shareProgress + .1}), interval);
+      let intervalObj = setInterval(() => this.setState({ shareProgress: this.state.shareProgress + .1 }), interval);
 
       let data = await this.exportToBase64();
       dataUrls.push(data);
       for (let i = 1; i < this.state.page.pages.length; i++) {
-        this.setState({shareProgressPage: i+1});
+        this.setState({ shareProgressPage: i + 1 });
 
         const currentFile = this.state.page.pages[i];
         const metaDataUri = currentFile + ".json";
@@ -238,7 +233,7 @@ export default class IssieEditPhoto extends React.Component {
       clearInterval(intervalObj);
       this.setState({ sharing: false });
       //avoid reshare again
-      this.props.navigation.setParams({share:false});
+      this.props.navigation.setParams({ share: false });
 
       const shareOptions = {
         title: 'שתף בעזרת...',
@@ -371,6 +366,8 @@ export default class IssieEditPhoto extends React.Component {
 
     }
 
+    inputTextWidth = this.limitTextWidth(inputTextWidth, x, y)
+
     //Alert.alert("a-x:" + x + ",a-y:" + y + ", ratio:" + this.state.scaleRatio)
     this.setState({
       showTextInput: true,
@@ -385,6 +382,9 @@ export default class IssieEditPhoto extends React.Component {
       xUnderFlow: 0,
       debugText: "x:" + x + ",y:" + y + ", textW:" + this.state.inputTextWidth + "xOffset:" + this.state.xOffset + "z:" + this.state.zoom + "sm:" + this.state.sideMargin
     });
+  }
+  limitTextWidth = (width, x, y) => {
+    return width;
   }
 
   SaveText = (beforeExit, afterDrag) => {
@@ -518,6 +518,8 @@ export default class IssieEditPhoto extends React.Component {
 
   onTextSize = (size) => {
     this.setState({ fontSize: size });
+    setTimeout(()=> this.setState({showTextSizePicker:false}), 700);
+
   }
 
   onBrushButtonPicker = () => {
@@ -548,6 +550,7 @@ export default class IssieEditPhoto extends React.Component {
     }
     this.canvas.setState({ strokeWidth: newStrokeWidth });
     this.setState({ strokeWidth: newStrokeWidth })
+    setTimeout(()=> this.setState({showBrushSizePicker:false}), 700);
   }
 
   movePage = (inc) => {
@@ -562,7 +565,7 @@ export default class IssieEditPhoto extends React.Component {
     if (currentIndex < 0 || currentIndex >= this.state.page.pages.length) return;
 
 
-    this.props.navigation.setParams({pageTitleAddition: this.pageTitleAddition(this.state.page.pages, currentIndex)})
+    this.props.navigation.setParams({ pageTitleAddition: this.pageTitleAddition(this.state.page.pages, currentIndex) })
 
     const currentFile = this.state.page.pages[currentIndex];
     const metaDataUri = currentFile + ".json";
@@ -570,7 +573,10 @@ export default class IssieEditPhoto extends React.Component {
       currentFile: currentFile, metaDataUri: metaDataUri,
       zoom: 1, xOffset: 0, yOffset: 0
     });
-    setTimeout(this.Load, 200)
+    this.CalcImageSize(currentFile, this.state.origWindowW, this.state.windowH);
+    setTimeout(() => {
+      this.Load();
+    }, 200)
   }
 
   onLayout = async (e) => {
@@ -584,36 +590,37 @@ export default class IssieEditPhoto extends React.Component {
 
     windowW = windowSize.width - sideMargin * 2;
     windowH = windowSize.height - topLayer - dimensions.toolbarMargin;// * .88;// - topLayer * 1.1;
-    this.CalcImageSize(windowW, windowH, sideMargin);
+    this.CalcImageSize(this.state.currentFile, windowW, windowH);
   }
 
 
-  CalcImageSize = (windowW, windowH, sideMargin, forceScaleNutral) => {
-    let currentFile = this.state.currentFile;
+  CalcImageSize = (currentFile, windowW, windowH) => {
     getImageDimensions(currentFile).then(imageSize => {
-      //Alert.alert("Dim:" + JSON.stringify(imageSize))
-      imageWidth = imageSize.w;
-      imageHeight = imageSize.h;
+      let sideMargin = Math.floor(windowW * .05)
+
+      let imageWidth = imageSize.w;
+      let imageHeight = imageSize.h;
       wDiff = imageWidth - windowW;
       hDiff = imageHeight - windowH;
       let ratio = 1.0;
 
-      if (!forceScaleNutral && this.state.zoom != 1.01) {
-        if (wDiff <= 0 && hDiff <= 0) {
-          //image fit w/o scale
-        } else if (wDiff > hDiff) {
-          //scale to fit width
-          ratio = windowW / imageWidth;
-        } else {
-          //scale to fit height
-          ratio = windowH / imageHeight;
-        }
+      if (wDiff <= 0 && hDiff <= 0) {
+        //image fit w/o scale
+      } else if (wDiff > hDiff) {
+        //scale to fit width
+        ratio = windowW / imageWidth;
+      } else {
+        //scale to fit height
+        ratio = windowH / imageHeight;
       }
-      windowW += 2 * sideMargin
-      this.setState({ windowW: windowW, sideMargin: (windowW - imageWidth * ratio) / 2, canvasW: imageWidth * ratio, canvasH: imageHeight * ratio, scaleRatio: ratio, needCanvasUpdate: true, needCanavaDataSave: false });
+
+      //Alert.alert("Dim:" + JSON.stringify({ imageSize, windowH, windowW: windowW, sideMargin: (windowW - imageWidth * ratio) / 2, canvasW: imageWidth * ratio, canvasH: imageHeight * ratio, scaleRatio: ratio, needCanvasUpdate: true, needCanavaDataSave: false }))
+      let origWindowW = windowW;
+      windowW += 2 * sideMargin;
+      this.setState({ origWindowW, windowW , windowH, sideMargin: (windowW - imageWidth * ratio) / 2, canvasW: imageWidth * ratio, canvasH: imageHeight * ratio, scaleRatio: ratio, needCanvasUpdate: true, needCanavaDataSave: false });
 
     }).catch(err => {
-      Alert.alert(JSON.stringify(err))
+      //Alert.alert("ee: " + JSON.stringify(err))
     })
   }
 
@@ -629,7 +636,7 @@ export default class IssieEditPhoto extends React.Component {
     };
     let toolbarSideMargin = this.state.sideMargin > 250 ? 250 : this.state.sideMargin;
     let spaceBetweenButtons = <Spacer width={23} />
-    let colorButtonSize = this.state.canvasW / (availableColorPicker.length*1.4);
+    let colorButtonSize = this.state.canvasW / (availableColorPicker.length * 1.4);
 
     return (
 
@@ -652,9 +659,9 @@ export default class IssieEditPhoto extends React.Component {
               contentContainerStyle={{ flex: 1 }}
             >
               {this.state.sharing ?
-                <View style={{ position: 'absolute', top: this.state.canvasH / 2, left: this.state.sideMargin, width: this.state.canvasW, zIndex: 1000, backgroundColor: 'white', alignItems:'center' }}>
-                 
-                  <Progress.Circle size={200} progress={this.state.shareProgress} showsText={true} textStyle={{ zIndex:100, fontSize:25}} formatText={(prog)=> "מייצא דף " + this.state.shareProgressPage + ' מתוך ' + this.state.page.pages.length} thickness={5}/>
+                <View style={{ position: 'absolute', top: '25%', left: 0, width: this.state.canvasW, zIndex: 1000, backgroundColor: 'white', alignItems: 'center' }}>
+
+                  <Progress.Circle size={200} progress={this.state.shareProgress} showsText={true} textStyle={{ zIndex: 100, fontSize: 25 }} formatText={(prog) => "מייצא דף " + this.state.shareProgressPage + ' מתוך ' + (this.state.page.pages.length > 0?this.state.page.pages.length:1)} thickness={5} />
                 </View> : null}
               {this.getCanvas()}
             </ScrollView>
@@ -747,9 +754,9 @@ export default class IssieEditPhoto extends React.Component {
 
         { //View for selecting color
           this.state.showColorPicker ?
-            <FadeInView height={70} style={[styles.pickerView, { left: this.state.sideMargin, width:this.state.canvasW }]}>
+            <FadeInView height={70} style={[styles.pickerView, { left: this.state.sideMargin, width: this.state.canvasW }]}>
               <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
-                {availableColorPicker.map((c,i)=>this.getColorButton((c), colorButtonSize, i))}
+                {availableColorPicker.map((c, i) => this.getColorButton((c), colorButtonSize, i))}
               </View>
             </FadeInView>
             :
@@ -758,18 +765,18 @@ export default class IssieEditPhoto extends React.Component {
 
         {
           this.state.showTextSizePicker && this.state.textMode ?
-            <FadeInView height={70} style={[styles.pickerView, { left: this.state.sideMargin, width:this.state.canvasW }]}>
-              <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-evenly', alignContent: 'center', alignItems:'center' }}>
-                {availableTextSize.map((size,i) => this.getTextSizePicker(this.state.color[0], colorButtonSize, size, i))}
+            <FadeInView height={70} style={[styles.pickerView, { left: this.state.sideMargin, width: this.state.canvasW }]}>
+              <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-evenly', alignContent: 'center', alignItems: 'center' }}>
+                {availableTextSize.map((size, i) => this.getTextSizePicker(this.state.color[0], colorButtonSize, size, i))}
               </View>
             </FadeInView>
             : null
         }
         {
           this.state.showBrushSizePicker && !this.state.textMode ?
-            <FadeInView height={70} style={[styles.pickerView, { left: this.state.sideMargin, width:this.state.canvasW }]}>
+            <FadeInView height={70} style={[styles.pickerView, { left: this.state.sideMargin, width: this.state.canvasW }]}>
               <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
-              {availableBrushSize.map((size,i) => this.getBrushSizePicker(this.state.color[0], colorButtonSize, size, i))}
+                {availableBrushSize.map((size, i) => this.getBrushSizePicker(this.state.color[0], colorButtonSize, size, i))}
 
               </View>
             </FadeInView>
@@ -888,19 +895,26 @@ export default class IssieEditPhoto extends React.Component {
     let func = () => {
       this.canvas.setState({ color: color })
       this.setState({ color: [color] })
+      setTimeout(()=> this.setState({showColorPicker:false}), 700);
     }
 
     return <TouchableOpacity
       onPress={func}
       activeOpacity={0.7}
-      key={""+index}
+      key={"" + index}
     >
-      <View style={{backgroundColor:color,
-      borderRadius: size / 2,
-      width:size,
-      height:size
-    }} 
+      <View style={{
+        backgroundColor: color,
+        borderRadius: size / 2,
+        width: size,
+        height: size,
+        alignItems:'center',
+        justifyContent: 'center'
+
+      }}
       >
+        
+        {color == this.state.color[0] ? <Icon color="white" name="check"></Icon>:null}
       </View>
     </TouchableOpacity>
   }
@@ -909,17 +923,18 @@ export default class IssieEditPhoto extends React.Component {
     return <TouchableOpacity
       onPress={() => this.onTextSize(textSize)}
       activeOpacity={0.7}
-      key={""+index}
+      key={"" + index}
     >
-      <View style={{backgroundColor:textSize === this.state.fontSize?'#eeeded':'transparent',
-      borderRadius: size / 2,
-      width:size,
-      height:size,
-      justifyContent:'center',
-      alignItems: 'center'
-    }} 
+      <View style={{
+        backgroundColor: textSize === this.state.fontSize ? '#eeeded' : 'transparent',
+        borderRadius: size / 2,
+        width: size,
+        height: size,
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}
       >
-        <Text style={{fontSize:textSize, color: color}}>א</Text>
+        <Text style={{ fontSize: textSize, color: color }}>א</Text>
       </View>
     </TouchableOpacity>
   }
@@ -928,21 +943,22 @@ export default class IssieEditPhoto extends React.Component {
     return <TouchableOpacity
       onPress={() => this.onBrushSize(brushSize)}
       activeOpacity={0.7}
-      key={""+index}
+      key={"" + index}
     >
-      <View style={{backgroundColor:brushSize === this.state.strokeWidth?'#eeeded':'transparent',
-      borderRadius: size / 2,
-      width:size,
-      height:size,
-      justifyContent:'center',
-      alignItems: 'center'
-    }} 
+      <View style={{
+        backgroundColor: brushSize === this.state.strokeWidth ? '#eeeded' : 'transparent',
+        borderRadius: size / 2,
+        width: size,
+        height: size,
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}
       >
         <Icon name={"brush"} color={color} size={brushSize * 4 + 12}></Icon>
       </View>
     </TouchableOpacity>
   }
-  
+
 
   getSpace = (dist) => {
     let space = ''
@@ -1045,7 +1061,7 @@ const styles = StyleSheet.create({
     zIndex: 99999,
     left: 0,
     borderColor: 'gray',
-    borderWidth:1
+    borderWidth: 1
   }
 }
 );

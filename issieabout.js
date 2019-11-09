@@ -4,12 +4,14 @@ import { semanticColors } from './elements';
 
 
 export default function IssieAbout(props) {
+
+    const textStyle = { fontSize: 18, color: 'black', textAlign: 'right' }
+    const titleStyle = { fontSize: 25, fontFace:'bold', color: 'black', textAlign: 'right' }
+
     return <View style={{ backgroundColor: semanticColors.mainAreaBG, height:'100%', width:'100%' }}>
-        <Text style={{ fontSize: 18, color: 'black', textAlign: 'right' }}>
-            בית איזי שפירא לשינוי באיכות חייהם של אנשים עם מוגבלויות, הינו ארגון פורץ דרך הפועל למעלה מ-39 שנים, משפיע על חייהם של כחצי מיליון בוגרים וילדים בשנה ומהווה מודל לעשייה בתחום הן במישור הארצי והן בזה הבינלאומי.
-    
-    הארגון נוסד לזכרו של איזי שפירא ז”ל ובהמשך לדרכו ולפילוסופית החיים שלו כי “לכל אדם הזכות לחיות בכבוד ובהתאם למלוא יכולותיו”.
-    
-הארגון פועל כדי להבטיח לאנשים עם מוגבלויות שותפות מלאה בחיי הקהילה ואיכות חיים טובה יותר, כאשר כל אדם עם מוגבלות הינו אזרח שווה זכויות, מעורב ופעיל בחיי הקהילה. זאת על ידי מתן ופיתוח שירותים חינוכיים טיפוליים חדשניים, פעילות רחבה ליצירת שינוי עמדות חברתי והפעלת מרכז למצוינות, מחקר והכשרה מקצועית בתחום המוגבלויות.        </Text>
+        <Text style={titleStyle}>אפליקציית IssieDoc</Text>
+        <Text style={textStyle}>אפליקציה מבית איזי שפירא. משמשת ילדים עם מוגבליות לבצע מטלות לימודיות</Text>
+        <Text style={textStyle}>פותח בשיתוף עם מעבדות SAP בישראל</Text>
+
     </View>
 }

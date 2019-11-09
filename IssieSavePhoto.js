@@ -10,8 +10,8 @@ import Pdf from 'react-native-pdf';
 import ViewShot from "react-native-view-shot";
 import { StackActions } from 'react-navigation';
 
-import {
-  getSquareButton, colors, getImageDimensions,
+import { getIconButton,
+  getImageDimensions,
   globalStyles, NEW_FOLDER_NAME, NO_FOLDER_NAME, DEFAULT_FOLDER_NAME,
   getPageNavigationButtons, getFileNameDialog, semanticColors, getFolderAndIcon,
   Spacer, getRoundedButton, dimensions
@@ -38,12 +38,13 @@ export default class IssieSavePhoto extends React.Component {
   constructor() {
     super();
 
-    let panResponderMoveSaveForm = PanResponder.create({
-      onStartShouldSetPanResponder: (evt, gestureState) => true,
-      onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
-      onMoveShouldSetPanResponder: (evt, gestureState) => true,
-      onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
+    this._panResponderMove = PanResponder.create({
+      onStartShouldSetPanResponder: (evt, gestureState) => Math.abs(gestureState.dy) > 5,
+      onStartShouldSetPanResponderCapture: (evt, gestureState) => Math.abs(gestureState.dy) > 5,
+      onMoveShouldSetPanResponder: (evt, gestureState) => Math.abs(gestureState.dy) > 5,
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => Math.abs(gestureState.dy) > 5,
       onPanResponderMove: (evt, gestureState) => {
+
         let yOffsetBegin = this.state.yOffsetBegin;
         if (!yOffsetBegin) {
           yOffsetBegin = this.state.yOffset;
@@ -52,6 +53,7 @@ export default class IssieSavePhoto extends React.Component {
         if (newYOffset > 0) {
           newYOffset = 0;
         }
+
         this.setState({
           yOffsetBegin, yOffset: newYOffset
         });
@@ -74,8 +76,7 @@ export default class IssieSavePhoto extends React.Component {
       pdfWidth: '100%',
       pdfHeight: '100%',
       pdfPageCount: 0,
-      yOffset: 0,
-      panResponderMoveSaveForm
+      yOffset: 0
     };
     this.OK.bind(this);
 
@@ -257,13 +258,13 @@ export default class IssieSavePhoto extends React.Component {
         await saveFile(page.uri, targetFolder + "/" + i + ".jpg");
       }
       filePath = targetFolder + "/" + i + ".jpg";
-    } 
+    }
 
-    
+
 
     saveFile(this.state.uri, filePath).then(
       async () => {
-//        Alert.alert("Save to file: " + filePath)
+        //        Alert.alert("Save to file: " + filePath)
         if (this.isRename() && this.state.uri.endsWith('.jpg')) {
           try {
             await saveFile(this.state.uri + ".json", filePath + ".json");
@@ -446,30 +447,38 @@ export default class IssieSavePhoto extends React.Component {
         flexDirection: 'row',
         alignItems: 'center'
       }}>
-        {editPhoto ? <View style={{ flexDirection: 'row' }}>
-          {getSquareButton(this.crop, semanticColors.actionButtonG, semanticColors.actionButtonG, undefined, "crop", 45, this.state.cropping)}
+        {editPhoto ? <View style={{ flexDirection: 'row', alignItems:'center' }}>
+          {
+            getIconButton(this.crop, semanticColors.addButton, "crop", 45)
+          }
           <Spacer width={10} />
-          {this.state.cropping ? getSquareButton(this.cancelCrop, semanticColors.actionButtonG, undefined, undefined, "cancel", 45, false) : <View />}
+          {this.state.cropping ? getIconButton(this.cancelCrop, semanticColors.addButton, "cancel", 45):<View />}
           {this.state.cropping ? <Spacer width={10} /> : null}
-          {this.state.cropping ? getSquareButton(this.acceptCrop, semanticColors.actionButtonG, undefined, undefined, "check", 45, false) : <View />}
-
-          {this.state.cropping ? <View /> : getSquareButton(this.rotateLeft, semanticColors.actionButtonG, undefined, undefined, "rotate-left", 45, false)}
+          {this.state.cropping ? getIconButton(this.acceptCrop, semanticColors.addButton, "check", 45):<View />}
+          {this.state.cropping ? <View /> :           getIconButton(this.rotateLeft, semanticColors.addButton, "rotate-left", 45)}
           <Spacer width={10} />
-          {this.state.cropping ? <View /> : getSquareButton(this.rotateRight, semanticColors.actionButtonG, undefined, undefined, "rotate-right", 45, false)}
+          {this.state.cropping ? <View /> : getIconButton(this.rotateRight, semanticColors.addButton, "rotate-right", 45)}
         </View> : null}
       </View>
 
 
     if (this.state.phase == PickName) {
-      PageNameInput = getFileNameDialog(
-        this.state.pageName,
-        getFolderAndIcon(this.state.folder),
-        getFolderAndIcon(this.state.newFolderName),
-        this.state.folders,
-        (text) => this.setState({ pageName: text }),
-        (text) => this.setState({ folder: text }),
-        (text) => this.setState({ newFolderName: text })
-      )
+      PageNameInput =
+        <View style={{
+          width: '100%', height: '100%',
+          transform: [{ translateY: this.state.yOffset }]
+        }}
+          {...this._panResponderMove.panHandlers}>
+          {getFileNameDialog(
+            this.state.pageName,
+            getFolderAndIcon(this.state.folder),
+            getFolderAndIcon(this.state.newFolderName),
+            this.state.folders,
+            (text) => this.setState({ pageName: text }),
+            (text) => this.setState({ folder: text }),
+            (text) => this.setState({ newFolderName: text })
+          )}
+        </View>
     }
 
     let cropFrame = <View />;
@@ -493,10 +502,12 @@ export default class IssieSavePhoto extends React.Component {
       </View>
     }
 
+
     return (
       <View style={styles.container}
         ref={v => this.topView = v}
         onLayout={this.onLayout}>
+
         {/* Toolbar */}
         <View style={{
           flex: 1, zIndex: 5, position: 'absolute', top: 0, width: '100%',
@@ -560,8 +571,8 @@ const styles = StyleSheet.create({
     opacity: 5
   },
   bgImage: {
-    flex: 1, 
-    width: '100%', 
+    flex: 1,
+    width: '100%',
     top: dimensions.toolbarHeight + dimensions.toolbarMargin
   }
 
