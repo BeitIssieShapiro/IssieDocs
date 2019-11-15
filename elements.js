@@ -13,44 +13,33 @@ export const dimensions = {
 }
 
 export const colors = {
-    gray: ['#5B748A', '#587189'],
-    orange: ['#FFA264', '#A24A04'],
-    blue: ['#0097F8', '#00145C'],
-    lightBlue: ['#2F8AF2', '#1A427C'],
-    navyBlue: ['#1A427C', '#1A427C'],
-    //gray: ['#D2DEEA', '#D2DEEA'],
-    yellow: ['#FCF300', '#B0A000'],
-    green: ['#00F815', '#005C05'],
-    red: ['#FF0000', '#A20000'],
-    black: ['#000000', '#000000'],
-    lightGray: ['#A8C2D8', '#A8C2D8']
+    gray: '#5B748A',
+    orange: '#FFA264',
+    blue: '#0097F8', 
+    lightBlue: '#2F8AF2',
+    navyBlue: '#1A427C',
+    yellow: '#FCF300', 
+    green: '#00F815', 
+    red: '#FF0000', 
+    black: '#000000', 
+    lightGray: '#A8C2D8',
 }
 
 export const semanticColors = {
-    disabledButtonG: colors.lightGray,
-    disabledButton: colors.lightGray[0],
-    cancelButtonG: colors.gray,
-    cancelButton: colors.gray[0],
-    okButtonG: colors.navyBlue,
-    okButton: colors.navyBlue[0],
-    deleteButtonG: colors.red,
-    deleteButton: colors.red[0],
+    disabledButton: colors.lightGray,
+    cancelButton: colors.gray,
+    okButton: colors.navyBlue,
+    deleteButton: colors.red,
     addButton: 'white', 
-    undoButtonG: colors.gray,
-    undoButton: colors.gray[0],
-    InactiveModeButtonG: colors.gray,
-    InactiveModeButton: colors.gray[0],
-    activeZoomButtonG: colors.orange,
-    activeZoomButton: colors.orange[0],
-    actionButtonG: colors.blue,
-    actionButton: colors.blue[0],
+    undoButton: colors.gray,
+    InactiveModeButton: colors.gray,
+    activeZoomButton: colors.orange,
+    actionButton: colors.blue,
     folderIcons: colors.navyBlue,
-    pageNavigationButtonG: colors.navyBlue,
     selectedCheck: "#4630EB",
     moveInZoomButton: "#D16F28",
     header: '#183d72',
     header2: 'white',
-    headerG: ['#6487B1', '#8EAFCE'],
     mainAreaBG: '#eeeded',
     title: '#DFE8EC',
     subTitle: '#315890',
@@ -279,8 +268,8 @@ function Picker(props) {
                     alignItems: 'center', alignContent: 'center', backgroundColor: 'white'
                 }}>
 
-                <Icon name='arrow-drop-down' size={50} color={semanticColors.folderIcons[0]} />
-                {props.icon != '' ? <Icon name={props.icon} size={50} color={semanticColors.folderIcons[0]} /> : null}
+                <Icon name='arrow-drop-down' size={50} color={semanticColors.folderIcons} />
+                {props.icon != '' ? <Icon name={props.icon} size={50} color={semanticColors.folderIcons} /> : null}
                 <TextInput
                     editable={props.textEditable}
                     onChangeText={props.onChangeText}
@@ -327,7 +316,7 @@ function pickerRenderRow(rowData, rowID, highlighted) {
             alignItems: 'center',
             flexDirection: 'row'
         }]}>
-            {iconName != '' ? <Icon name={iconName} size={50} color={semanticColors.folderIcons[0]}></Icon> : <View />}
+            {iconName != '' ? <Icon name={iconName} size={50} color={semanticColors.folderIcons}></Icon> : <View />}
             <Text style={{ fontSize: 50, textAlign: 'right' }}>
                 {folderName}
             </Text>
@@ -345,7 +334,7 @@ function pickerRenderIcon(rowData, rowID, highlighted) {
 
             justifyContent: 'space-between'
         }]}>
-            <Icon name={rowData.icon} size={50} color={semanticColors.folderIcons[0]} />
+            <Icon name={rowData.icon} size={50} color={semanticColors.folderIcons} />
             <Text style={{ fontSize: 55 }}>{rowData.text}</Text>
         </View>
     );
