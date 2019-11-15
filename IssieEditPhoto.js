@@ -642,7 +642,7 @@ export default class IssieEditPhoto extends React.Component {
 
       <View style={styles.mainContainer}
         onLayout={this.onLayout}>
-        {/* <Text style={{ flex: 1, position: 'absolute', top: 0, left: 0, zIndex: 10000, height: 25 }}>{this.state.debugText}</Text> */}
+        <Text style={{ flex: 1, position: 'absolute', top: 0, left: 0, zIndex: 10000, height: 25 }}>{"textW: " + this.state.inputTextWidth + ", textH:"+ this.state.inputTextHeight}</Text>
         <TouchableOpacity onPress={this.TextModeClick}
           activeOpacity={1}
           style={[drawingAreaStyle, { backgroundColor: 'black' }]} >
@@ -984,6 +984,7 @@ export default class IssieEditPhoto extends React.Component {
         onContentSizeChange={(event) => {
           let dim = event.nativeEvent.contentSize;
           //let addExtra = text.endsWith('\n') ? this.state.fontSize+1.2 : 0;
+          
           this.setState({
             inputTextWidth: dim.width,
             inputTextHeight: dim.height //+ addExtra 
@@ -998,14 +999,16 @@ export default class IssieEditPhoto extends React.Component {
           width: this.getTextWidth() - this.state.xUnderFlow,
           height: this.getTextHeight(),
           color: this.state.color[0],
-          fontSize: this.state.fontSize
+          fontSize: this.state.fontSize,
+          borderWidth: 0,
+          wi
         }]}
       >{txt}</TextInput>
     </View >
   }
 
 
-  getTextWidth = () => this.state.inputTextWidth < INITIAL_TEXT_SIZE - 20 ? INITIAL_TEXT_SIZE : this.state.inputTextWidth + this.state.fontSize * 2;
+  getTextWidth = () => Math.max(this.state.inputTextWidth + 20, 20); //< INITIAL_TEXT_SIZE - 20 ? INITIAL_TEXT_SIZE : this.state.inputTextWidth + this.state.fontSize * 2;
   getTextHeight = () => Math.max(this.state.inputTextHeight, this.state.fontSize + 1.2);
 }
 
