@@ -1000,8 +1000,7 @@ export default class IssieEditPhoto extends React.Component {
           height: this.getTextHeight(),
           color: this.state.color[0],
           fontSize: this.state.fontSize,
-          borderWidth: 0,
-          wi
+          borderWidth: 0
         }]}
       >{txt}</TextInput>
     </View >
