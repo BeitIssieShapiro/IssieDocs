@@ -15,13 +15,13 @@ export const dimensions = {
 export const colors = {
     gray: '#5B748A',
     orange: '#FFA264',
-    blue: '#0097F8', 
+    blue: '#0097F8',
     lightBlue: '#2F8AF2',
     navyBlue: '#1A427C',
-    yellow: '#FCF300', 
-    green: '#00F815', 
-    red: '#FF0000', 
-    black: '#000000', 
+    yellow: '#FCF300',
+    green: '#00F815',
+    red: '#FF0000',
+    black: '#000000',
     lightGray: '#A8C2D8',
 }
 
@@ -30,7 +30,7 @@ export const semanticColors = {
     cancelButton: colors.gray,
     okButton: colors.navyBlue,
     deleteButton: colors.red,
-    addButton: 'white', 
+    addButton: 'white',
     undoButton: colors.gray,
     InactiveModeButton: colors.gray,
     activeZoomButton: colors.orange,
@@ -198,6 +198,25 @@ export function normalizeTitle(title) {
     return title;
 }
 
+export function getNewFolderDialog(props) {
+    return (
+        <View style={{ flex: 1, width: '100%' }}>
+            <Spacer />
+            <Text style={styles.titleText}>שם התיקיה</Text>
+            <Picker
+                name={props.name}
+                icon={props.icon}
+                items={suggestedFolders}
+                textEditable={true}
+                renderRow={pickerRenderIcon}
+                emptyValue={''}
+                onChangeText={props.onChangeNewFolder}
+                selectCallback={(itemIndex, itemValue) => onChangeNewFolder(itemValue.text + '$' + itemValue.icon)}
+            />
+        </View>
+    );
+}
+
 export function getFileNameDialog(fileName,
     folderAndIcon, newFolderAndIcon, folders,
     onChangeName, onChangeFolder, onChangeNewFolder) {
@@ -213,7 +232,7 @@ export function getFileNameDialog(fileName,
             <TextInput style={globalStyles.textInput}
                 onChangeText={onChangeName}
             >{fileName}</TextInput>
-            <Spacer/>
+            <Spacer />
             <Text style={styles.titleText}>תיקיה</Text>
             <Picker
                 name={folderName}
@@ -235,7 +254,7 @@ export function getFileNameDialog(fileName,
             {folderName == NEW_FOLDER_NAME ?
                 //New folder picker
                 <View style={{ flex: 1, width: '100%' }}>
-                    <Spacer/>
+                    <Spacer />
                     <Text style={styles.titleText}>שם התיקיה</Text>
                     <Picker
                         name={newFolderAndIcon.name}
@@ -368,6 +387,7 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
             zIndex: 1001
         }}
     >
+
         {isFirst ?
             <View /> :
             //getSquareButton(() => callback(-1), semanticColors.pageNavigationButtonG, undefined, 'דף קודם', 'chevron-left', 30, undefined, { width: 150, height: 60 }, 60, true, 15)
@@ -379,6 +399,7 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
             //getSquareButton(() => callback(1), semanticColors.pageNavigationButtonG, undefined, 'דף הבא', 'chevron-right', 30, undefined, { width: 150, height: 60 }, 60, false, 0, 15)
             getRoundedButton(() => callback(1), 'chevron-right', 'דף הבא', 30, 30, { width: 155, height: 40 }, 'row')
         }
+
     </View>
 }
 export function removeFileExt(filePath) {

@@ -12,7 +12,7 @@ const FadeInView = (props) => {
         duration: props.duration || 500,
       }
     ).start();
-  }, [])
+  }, [props.height, props.width])
 
   return (
     <Animated.View                 // Special animatable View

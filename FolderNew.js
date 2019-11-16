@@ -16,7 +16,7 @@ export default function FolderNew(props) {
 
 
     return (
-        <TouchableOpacity key={props.id} onPress={props.onPress}
+        <TouchableOpacity key={props.id} onPress={(e)=>props.onPress(e, folderColor)}
             style={{
                 alignContent: 'center',
                 width: '92%', height: 76,
@@ -52,7 +52,7 @@ export default function FolderNew(props) {
                             </View>
                         }
                         <Spacer width={8}/>
-                        <Text style={[FolderTextStyle, props.current && {fontSize:32}]}>{caption}</Text>
+                        <Text style={[FolderTextStyle, (props.current || props.asTitle) && {fontSize:32}]}>{caption}</Text>
                     </View>
 
                 </View>

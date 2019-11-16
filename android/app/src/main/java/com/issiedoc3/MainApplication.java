@@ -3,6 +3,7 @@ package com.issiedoc3;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import org.devio.rn.splashscreen.SplashScreenReactPackage;
 import io.github.airamrguez.RNMeasureTextPackage;
 import com.github.amarcruz.rntextsize.RNTextSizePackage;
 import io.github.elyx0.reactnativedocumentpicker.DocumentPickerPackage;
@@ -42,6 +43,7 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new SplashScreenReactPackage(),
             new RNMeasureTextPackage(),
             new RNTextSizePackage(),
             new DocumentPickerPackage(),

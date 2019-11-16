@@ -14,7 +14,8 @@ import {
     DEFAULT_FOLDER_NAME,
     semanticColors, getSquareButton,
     Spacer, globalStyles, removeFileExt,
-    getIconButton, FolderTextStyle, getRoundedButton, dimensions
+    getIconButton, FolderTextStyle, getRoundedButton, dimensions,
+    folderColors
 } from './elements'
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, getNewPage, SRC_FILE } from './newPage';
 import ImagePicker from 'react-native-image-picker';
@@ -22,6 +23,7 @@ import DocumentPicker from 'react-native-document-picker';
 import { sortFolders, swapFolders, saveFolderOrder } from './sort'
 import { SafeAreaView } from 'react-navigation';
 import { FlatList } from 'react-native-gesture-handler';
+import SplashScreen from 'react-native-splash-screen';
 
 export const FOLDERS_DIR = RNFS.DocumentDirectoryPath + '/folders/';
 const DELETE_PAGE_TITLE = 'מחיקת דף';
@@ -38,7 +40,7 @@ export default class FolderGallery extends React.Component {
         let menuIcon = 'menu';
 
         let isMenuOpened = navigation.getParam('isMenuOpened')
-        if (isMenuOpened ) {
+        if (isMenuOpened) {
             menuIcon = 'close';
         }
 
@@ -48,27 +50,27 @@ export default class FolderGallery extends React.Component {
             headerTintColor: 'white',
             headerTitleStyle: globalStyles.headerTitleStyle,
             headerRight: (
-             <View style={{flexDirection:'row-reverse'}}>
-                <Spacer />
-                <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={()=> {
-                        let menuHandler = navigation.getParam('menuHandler')
-                        if (menuHandler) {
-                            menuHandler();
+                <View style={{ flexDirection: 'row-reverse' }}>
+                    <Spacer />
+                    <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => {
+                            let menuHandler = navigation.getParam('menuHandler')
+                            if (menuHandler) {
+                                menuHandler();
+                            }
                         }
-                    }
-                }
-                >
-                    <Icon name={menuIcon} color='white' size={35}/>
-                </TouchableOpacity>
-            </View>)
+                        }
+                    >
+                        <Icon name={menuIcon} color='white' size={35} />
+                    </TouchableOpacity>
+                </View>)
         };
     }
     constructor(props) {
         super(props);
         this.state = {
-            windowSize: {width: 500, height: 1024}
+            windowSize: { width: 500, height: 1024 }
         }
 
         // this._panResponder = PanResponder.create({
@@ -89,24 +91,27 @@ export default class FolderGallery extends React.Component {
     }
 
     componentDidMount = async () => {
+        try {
+            Linking.getInitialURL().then((url) => {
+                if (url) {
+                    this._handleOpenURL({ url });
+                }
+            })
 
-        Linking.getInitialURL().then((url) => {
-            if (url) {
-                this._handleOpenURL({ url });
-            }
-        })
+            //verify exists:
+            RNFS.mkdir(FOLDERS_DIR).catch(() => { });
 
-        //verify exists:
-        RNFS.mkdir(FOLDERS_DIR).catch(() => { });
+            this.props.navigation.addListener("didFocus", async () => {
+                this.refresh();
+            })
 
-        this.props.navigation.addListener("didFocus", async () => {
-            this.refresh();
-        })
+            this.props.navigation.setParams({ menuHandler: () => this._menuHandler() });
 
-        this.props.navigation.setParams({ menuHandler: ()=>this._menuHandler() });
-
-        Linking.addEventListener("url", this._handleOpenURL);
-        await this.refresh();
+            Linking.addEventListener("url", this._handleOpenURL);
+            await this.refresh();
+        } finally {
+            SplashScreen.hide();
+        }
     };
 
     componentWillUnmount = () => {
@@ -115,13 +120,13 @@ export default class FolderGallery extends React.Component {
     }
 
     _menuHandler = () => {
-        this.setState({showMenu:!this.state.showMenu})
-        this.props.navigation.setParams({ isMenuOpened: !this.state.showMenu});
+        this.setState({ showMenu: !this.state.showMenu })
+        this.props.navigation.setParams({ isMenuOpened: !this.state.showMenu });
     }
 
     _handleOpenURL = (event) => {
         this.props.navigation.navigate('SavePhoto', {
-            uri: decodeURI( event.url),
+            uri: decodeURI(event.url),
             imageSource: SRC_FILE,
             folder: this.state.currentFolder ? this.state.currentFolder.name : undefined,
             returnFolderCallback: (f) => this.setReturnFolder(f)
@@ -362,11 +367,17 @@ export default class FolderGallery extends React.Component {
     }
 
     closeMenu = () => {
-        this.setState({showMenu:false});
-        this.props.navigation.setParams({ isMenuOpened: false});
+        this.setState({ showMenu: false });
+        this.props.navigation.setParams({ isMenuOpened: false });
     }
     render() {
-        let curFolder = getFolderAndIcon(this.state.currentFolder && this.state.currentFolder.name);
+        let curFolderFullName = this.state.currentFolder ? this.state.currentFolder.name : "";
+        let curFolder = getFolderAndIcon(curFolderFullName);
+        let fIndex = 0;
+        if (this.state.folders && this.state.folders.length) {
+            fIndex = this.state.folders.findIndex(f => f.name == curFolderFullName);
+        }
+        //        let folderColor = folderColors[fIndex % folderColors.length];
         let viewStyle = Settings.get('viewStyle');
         let asTiles = viewStyle === 2;
         let treeWidth = .34 * this.state.windowSize.width;
@@ -378,8 +389,8 @@ export default class FolderGallery extends React.Component {
             <View style={styles.container}
                 onLayout={this.onLayout}>
 
-                {this.state.showMenu?
-                <Menu onAbout={()=>this.gotoAbout()} onClose={()=>this.closeMenu()}/>:null}
+                {this.state.showMenu ?
+                    <Menu onAbout={() => this.gotoAbout()} onClose={() => this.closeMenu()} /> : null}
                 {/* header */}
                 <View style={{
                     position: 'absolute', width: "100%", height: dimensions.toolbarHeight, top: 0, left: 0, backgroundColor: 'white',
@@ -389,7 +400,7 @@ export default class FolderGallery extends React.Component {
                     elevation: 1,
                     zIndex: 5,
                     flexDirection: "row",
-                    alignItems: "center", 
+                    alignItems: "center",
                     backgroundColor: semanticColors.subTitle
 
                 }} >
@@ -412,8 +423,15 @@ export default class FolderGallery extends React.Component {
                             this.newFromFileExplorer();
                         }, semanticColors.addButton, "picture-as-pdf", 50)
                     }
+                    <Spacer />
+                    {
+                        getIconButton(() => {
+
+                        }, semanticColors.addButton, "create-new-folder", 50)
+                    }
+
                     {/*right buttons */}
-                    <View style={{ position: 'absolute', right: 0, flexDirection: 'row-reverse', alignItems:'center' }}>
+                    <View style={{ position: 'absolute', right: 0, flexDirection: 'row-reverse', alignItems: 'center' }}>
                         {
                             getIconButton(() => {
                                 let selected = this.state.editMode ? undefined : this.state.selected;
@@ -421,19 +439,20 @@ export default class FolderGallery extends React.Component {
                                 this.setState({ editMode: !this.state.editMode, selected });
                             }, semanticColors.addButton, this.state.editMode ? "clear" : "edit", 50)
                         }
-                        {<Spacer width={10}/>}
+                        {<Spacer width={10} />}
+
                         {  //delete
                             this.state.selected && this.state.selected.length > 0 && !this.state.rename ?
                                 getRoundedButton(this.Delete, 'delete-forever', 'מחק', 30, 30, { width: 140, height: 40 }) :
                                 null
                         }
-                        {<Spacer width={10}/>}
+                        {<Spacer width={10} />}
                         {  //move
                             this.state.selected && this.state.selected.length == 1 && this.state.selected[0].type !== 'folder' && !this.state.rename ?
                                 getRoundedButton(this.Rename, 'text-fields', 'שנה שם', 30, 30, { width: 140, height: 40 }) :
                                 null
                         }
-                        {<Spacer width={10}/>}
+                        {<Spacer width={10} />}
                         {  //Share
                             this.state.selected && this.state.selected.length == 1 && this.state.selected[0].type === 'file' && !this.state.rename ?
                                 getRoundedButton(this.Share, 'share', 'שתף', 30, 30, { width: 140, height: 40 }) :
@@ -444,47 +463,48 @@ export default class FolderGallery extends React.Component {
                 <View style={{
                     flex: 1, flexDirection: "row", backgroundColor: semanticColors.mainAreaBG, position: 'absolute', width: "100%", top: dimensions.toolbarHeight, left: 0, height: "94%", zIndex: 4,
                 }} >
-                    {/* MainExplored */}
+                    {/* MainExplorer */}
                     <View style={{
                         flex: 1, flexDirection: "column", position: 'absolute', top: 0, width: pagesContainerWidth, left: 0, height: "100%",
                     }}>
                         {/* pagesTitle */}
-                        <View style={{ flex: 1, flexDirection: "row-reverse", height: "5%", position: 'absolute', 
-                            width: "100%", top: 0, height: '10%', alignItems: 'center', justifyContent: 'flex-start', 
-                            paddingRight: '5%' }}>
-                            <Spacer/>
-                            {curFolder.icon !== "" ? <Icon name={curFolder.icon} size={30} color={semanticColors.titleText} /> : <Spacer width={30}/>}
-                            <Text style={FolderTextStyle}>{normalizeTitle(curFolder.name)}</Text>
+                        <View style={{
+                            flex: 1, flexDirection: "row-reverse", height: "5%", position: 'absolute',
+                            width: "100%", top: 0, height: '10%', alignItems: 'center', justifyContent: 'flex-start',
+                            paddingRight: '5%', borderBottomWidth: 1, borderBottomColor: 'gray'
+                        }}>
+                            <FolderNew index={fIndex} id="1" name={curFolderFullName} asTitle={true}
+                            />
                         </View>
                         {/* pages */}
                         <View style={{
                             flex: 1, backgroundColor: semanticColors.mainAreaBG, position: 'absolute', top: "10%", width: "100%", height: '90%'
                         }}>
                             {this.state.currentFolder && this.state.currentFolder.files ?
-                            <FlatList 
-                                contentContainerStyle={{width:'100%', alignItems: 'flex-end'}}
-                                
-                                key={asTiles?numColumnsForTiles.toString():"list"}
-                                data={ this.state.currentFolder.files } 
-                                renderItem={({item}) => FileNew({
-                                    page: item,
-                                    asTile: asTiles,
-                                    name: removeFileExt(item.name),
-                                    rowWidth: pagesContainerWidth,
-                                    editMode: this.state.editMode,
-                                    selected: this.state.editMode ? this.isSelected(item) : false,
-                                    onPress: () => this.props.navigation.navigate('EditPhoto', { page: item, share: false }),
-                                    onSelect: () => this.toggleSelection(item, 'file'),
-                                    count: item.pages.length
-                                })}
-                                numColumns={asTiles?numColumnsForTiles:1}
-                                keyExtractor={(item, index) => index.toString()}
-                            />
-                            
-                            
-                            :<View style={{alignItems:'center'}}>
-                                <Text style={{fontSize:35}}> אין עדיין דפים</Text>
-                             </View>}
+                                <FlatList
+                                    contentContainerStyle={{ width: '100%', alignItems: 'flex-end' }}
+
+                                    key={asTiles ? numColumnsForTiles.toString() : "list"}
+                                    data={this.state.currentFolder.files}
+                                    renderItem={({ item }) => FileNew({
+                                        page: item,
+                                        asTile: asTiles,
+                                        name: removeFileExt(item.name),
+                                        rowWidth: pagesContainerWidth,
+                                        editMode: this.state.editMode,
+                                        selected: this.state.editMode ? this.isSelected(item) : false,
+                                        onPress: () => this.props.navigation.navigate('EditPhoto', { page: item, share: false }),
+                                        onSelect: () => this.toggleSelection(item, 'file'),
+                                        count: item.pages.length
+                                    })}
+                                    numColumns={asTiles ? numColumnsForTiles : 1}
+                                    keyExtractor={(item, index) => index.toString()}
+                                />
+
+
+                                : <View style={{ alignItems: 'center' }}>
+                                    <Text style={{ fontSize: 35 }}> אין עדיין דפים</Text>
+                                </View>}
                         </View>
                     </View>
                     {/* tree */}
@@ -501,7 +521,7 @@ export default class FolderGallery extends React.Component {
                         {this.state.folders && this.state.folders.length ?
                             this.state.folders.map((f, i, arr) => FolderNew({
                                 index: i,
-                                isLast: i+1 == arr.length,
+                                isLast: i + 1 == arr.length,
                                 id: f.name,
                                 name: f.name,
                                 editMode: this.state.editMode,
