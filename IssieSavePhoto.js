@@ -19,6 +19,7 @@ import { getIconButton,
 import ImageRotate from 'react-native-image-rotate';
 import { getNewPage, saveFile, cloneToTemp, SRC_RENAME } from './newPage'
 import { pushFolderOrder } from './sort'
+import * as Progress from 'react-native-progress';
 
 const OK_Cancel = 1;
 const PickName = 2;
@@ -182,6 +183,7 @@ export default class IssieSavePhoto extends React.Component {
         let pages = [];
         if (this.state.pdfPageCount > 1) {
           for (let i = 1; i < this.state.pdfPageCount; i++) {
+            this.setState({pdfInProcess: i})
             let savedPdfPageUri = await this.exportPdfPage(i);
 
             let page = { uri: savedPdfPageUri, index: i - 1 }
@@ -193,10 +195,12 @@ export default class IssieSavePhoto extends React.Component {
           }
 
         }
+        this.setState({pdfInProcess: this.state.pdfPageCount})
 
         let uri = await this.exportPdfPage(this.state.pdfPageCount);
 
         this.setState({
+          pdfInProcess: undefined,
           uri: uri, multiPageState: pages.length > 0 ?
             { pages: pages } :
             this.state.multiPageState,
@@ -519,6 +523,11 @@ export default class IssieSavePhoto extends React.Component {
 
         {this.state.pdf ?
           <View style={styles.bgImage}>
+            {this.state.pdfInProcess ?
+                <View style={{ position: 'absolute', top: '25%', left: 0, width: '100%', zIndex: 1000, alignItems: 'center' }}>
+
+                  <Progress.Circle size={200} progress={this.state.pdfInProcess/this.state.pdfPageCount} showsText={true} textStyle={{ zIndex: 100, fontSize: 25 }} formatText={(prog) => "מייבא דף " + this.state.pdfInProcess + ' מתוך ' + (this.state.pdfPageCount)} thickness={5} />
+                </View> : null}
             <ViewShot ref="viewShot" options={{ format: "jpg", quality: 0.9 }}
               style={{
                 flex: 1, position: 'absolute', width: this.state.pdfWidth, height: this.state.pdfHeight
@@ -554,7 +563,7 @@ export default class IssieSavePhoto extends React.Component {
           </ImageBackground>}
         {this.state.PickName || this.state.pdf && this.state.pdfPageCount < 2 || !this.state.pdf ?
           null :
-          getPageNavigationButtons(0, this.state.pdfWidth,
+          getPageNavigationButtons(0, '100%',
             this.state.pdfPage == 1, //isFirst
             this.state.pdfPage == this.state.pdfPageCount, //isLast
             (inc) => this.movePage(inc))}
@@ -573,7 +582,8 @@ const styles = StyleSheet.create({
   bgImage: {
     flex: 1,
     width: '100%',
-    top: dimensions.toolbarHeight + dimensions.toolbarMargin
+    top: dimensions.toolbarHeight + dimensions.toolbarMargin,
+    alignItems: 'center'
   }
 
 });

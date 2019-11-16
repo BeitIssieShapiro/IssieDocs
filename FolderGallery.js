@@ -121,7 +121,7 @@ export default class FolderGallery extends React.Component {
 
     _handleOpenURL = (event) => {
         this.props.navigation.navigate('SavePhoto', {
-            uri: event.url,
+            uri: decodeURI( event.url),
             imageSource: SRC_FILE,
             folder: this.state.currentFolder ? this.state.currentFolder.name : undefined,
             returnFolderCallback: (f) => this.setReturnFolder(f)
