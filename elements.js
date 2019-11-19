@@ -67,6 +67,16 @@ export const folderIcons = [
     { icon: 'local-bar', text: 'חגים' }
 ]
 
+export const availableIcons = [
+    "account-balance",
+    "alarm",
+    "cake",
+    "build",
+    "location-city",
+    "grade",
+    "flight-takeoff"
+]
+
 export const availableColorPicker = [
     '#000000', '#fee100', '#20ad57', '#5db7dd', '#2958af', '#d62796', '#65309c', '#da3242', '#f5771c'
 ]
@@ -275,7 +285,7 @@ export function getFileNameDialog(fileName,
 }
 
 
-function Picker(props) {
+export function Picker(props) {
     const [expanded, setExpanded] = useState(false);
 
     return (
@@ -420,7 +430,7 @@ export const globalStyles = StyleSheet.create({
         height: 70,
         textAlign: "right",
         fontWeight: 'bold',
-        color: semanticColors.titleText,
+        color: 'black',
         width: '100%',
         backgroundColor: 'white'
     },

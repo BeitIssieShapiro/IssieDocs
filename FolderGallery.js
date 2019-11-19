@@ -9,13 +9,16 @@ import Menu from './settings'
 import * as RNFS from 'react-native-fs';
 import FolderNew from './FolderNew';
 import FileNew from './FileNew'
+import { pushFolderOrder } from './sort'
+
+
 import {
-    getFolderAndIcon, normalizeTitle,
+    getFolderAndIcon, 
     DEFAULT_FOLDER_NAME,
-    semanticColors, getSquareButton,
+    semanticColors, 
     Spacer, globalStyles, removeFileExt,
-    getIconButton, FolderTextStyle, getRoundedButton, dimensions,
-    folderColors
+    getIconButton, getRoundedButton, dimensions,
+    validPathPart
 } from './elements'
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, getNewPage, SRC_FILE } from './newPage';
 import ImagePicker from 'react-native-image-picker';
@@ -110,7 +113,7 @@ export default class FolderGallery extends React.Component {
             Linking.addEventListener("url", this._handleOpenURL);
             await this.refresh();
         } finally {
-            SplashScreen.hide();
+            setTimeout(() => SplashScreen.hide(), 1000);
         }
     };
 
@@ -343,6 +346,30 @@ export default class FolderGallery extends React.Component {
         this.setState({ returnFolderName: folderName });
     }
 
+    saveNewFolder = async (newFolderName) => {
+        if (!newFolderName || newFolderName.length == 0) {
+            Alert.alert("חובה להזין שם תיקיה");
+            return false;
+        }
+
+        if (!validPathPart(newFolderName)) {
+            Alert.alert("שם תיקיה מכיל תווים לא חוקיים")
+            return false;
+        }
+        let targetFolder = FOLDERS_DIR + newFolderName;
+        try {
+            await RNFS.stat(targetFolder);
+            //folder exists:
+            Alert.alert("תיקיה בשם זה כבר קיימת");
+            return false;
+          } catch (e) {
+            await RNFS.mkdir(targetFolder);
+            await pushFolderOrder(newFolderName)
+          }
+          this.setState({returnFolderName: newFolderName}, () => this.refresh());
+          return true;
+    }
+
     moveFolderUp = (folder) => {
         let index = this.state.folders.findIndex(f => f.name === folder.name);
         if (index >= 1) {
@@ -426,7 +453,8 @@ export default class FolderGallery extends React.Component {
                     <Spacer />
                     {
                         getIconButton(() => {
-
+                            this.props.navigation.navigate('CreateFolder',
+                            {saveNewFolder: (newFolder) => this.saveNewFolder(newFolder)});
                         }, semanticColors.addButton, "create-new-folder", 50)
                     }
 
@@ -460,10 +488,11 @@ export default class FolderGallery extends React.Component {
                         }
                     </View>
                 </View>
-                <View style={{
+                
+                    <View style={{
                     flex: 1, flexDirection: "row", backgroundColor: semanticColors.mainAreaBG, position: 'absolute', width: "100%", top: dimensions.toolbarHeight, left: 0, height: "94%", zIndex: 4,
                 }} >
-                    {/* MainExplorer */}
+                    {/* MainExplorer*/}
                     <View style={{
                         flex: 1, flexDirection: "column", position: 'absolute', top: 0, width: pagesContainerWidth, left: 0, height: "100%",
                     }}>
@@ -535,7 +564,8 @@ export default class FolderGallery extends React.Component {
                                 onMoveDown: () => this.moveFolderDown(f)
                             })) : <Text style={{ fontSize: 25 }}>אין עדיין תיקיות</Text>}
                     </View>
-                </View>
+                    
+                </View> 
             </View>
         );
     }
