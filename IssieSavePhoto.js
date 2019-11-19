@@ -475,12 +475,11 @@ export default class IssieSavePhoto extends React.Component {
           {...this._panResponderMove.panHandlers}>
           {getFileNameDialog(
             this.state.pageName,
-            getFolderAndIcon(this.state.folder),
-            getFolderAndIcon(this.state.newFolderName),
+            this.state.folder,
             this.state.folders,
             (text) => this.setState({ pageName: text }),
-            (text) => this.setState({ folder: text }),
-            (text) => this.setState({ newFolderName: text })
+            (text) => this.setState({ folder: text }), 
+            this.props.navigation
           )}
         </View>
     }

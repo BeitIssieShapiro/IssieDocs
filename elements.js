@@ -55,7 +55,7 @@ export const FolderTextStyle = {
     color: semanticColors.titleText
 }
 
-export const folderIcons = [
+export const foldersAndIcons = [
     { icon: 'language', text: 'אנגלית' },
     { icon: 'music-note', text: 'מוזיקה' },
     { icon: 'pets', text: 'בעלי חיים' },
@@ -228,14 +228,20 @@ export function getNewFolderDialog(props) {
 }
 
 export function getFileNameDialog(fileName,
-    folderAndIcon, newFolderAndIcon, folders,
-    onChangeName, onChangeFolder, onChangeNewFolder) {
+    currentFolderName, folders,
+    onChangeName, onChangeFolder, navigation) {
 
-    let folderName = folderAndIcon.name;
-    if (folderName == DEFAULT_FOLDER_NAME) {
-        folderName = NO_FOLDER_NAME;
+    if (currentFolderName === DEFAULT_FOLDER_NAME || currentFolderName === '') {
+        currentFolderName = NO_FOLDER_NAME;
     }
 
+    let fullListFolder = [NO_FOLDER_NAME, ...folders];
+    foldersAndIcons.forEach((itm)=> {
+        let fni = itm.text+'$'+itm.icon;
+        if (fullListFolder.findIndex(f=>f === fni) == -1) {
+            fullListFolder.push(fni);
+        }
+    })
     return (
         <View style={styles.textInputView} >
             <Text style={styles.titleText}>שם הדף</Text>
@@ -243,44 +249,35 @@ export function getFileNameDialog(fileName,
                 onChangeText={onChangeName}
             >{fileName}</TextInput>
             <Spacer />
-            <Text style={styles.titleText}>תיקיה</Text>
-            <Picker
-                name={folderName}
-                icon={folderAndIcon.icon}
-                items={[NO_FOLDER_NAME, ...folders, NEW_FOLDER_NAME]}
-                textEditable={false}
-                renderRow={pickerRenderRow}
-                emptyValue={'ללא'}
-                selectCallback={
-                    (itemIndex, itemValue) => {
-                        if (itemValue == NO_FOLDER_NAME) {
-                            itemValue = undefined;
-                        }
-                        onChangeFolder(itemValue)
-                    }
-                }
 
-            />
-            {folderName == NEW_FOLDER_NAME ?
-                //New folder picker
-                <View style={{ flex: 1, width: '100%' }}>
-                    <Spacer />
-                    <Text style={styles.titleText}>שם התיקיה</Text>
-                    <Picker
-                        name={newFolderAndIcon.name}
-                        icon={newFolderAndIcon.icon}
-                        items={folderIcons}
-                        textEditable={true}
-                        renderRow={pickerRenderIcon}
-                        emptyValue={''}
-                        onChangeText={onChangeNewFolder}
-                        selectCallback={(itemIndex, itemValue) => onChangeNewFolder(itemValue.text + '$' + itemValue.icon)}
-                    />
+            <View style={{
+                flex: 1, flexDirection: 'row-reverse',
+                width: '100%',
+                alignContent: 'space-between',
+                alignItems: 'center'
+            }}>
+                <Text style={[styles.titleText, { width: '30%' }]}>תיקיה</Text>
+                {getRoundedButton(() => navigation.navigate('CreateFolder', { saveNewFolder: (newFolder) => this.saveNewFolder(newFolder) }),
+                    'create-new-folder', 'תיקיה חדשה', 30, 30, { width: 200, height: 40 })}
+            </View>
+            <Spacer />
+            <View style={{
+                flex: 1, width: '100%',
+                flexDirection: 'column', alignContent: 'flex-end'
+            }}>
+                <View style={{ flex: 1 }}>
+                    {fullListFolder.map((item, index) => (
+                        <TouchableOpacity key={index} style={{ height: 65, width: '100%', justifyContent: 'flex-end' }}
+                            onPress={() => onChangeFolder(item)}>
+
+                            {pickerRenderRow(item, currentFolderName === item)}
+                        </TouchableOpacity>
+                    ))}
                 </View>
-                :
-                //Not new folder
-                null
-            }
+            </View>
+
+
+
         </View>);
 }
 
@@ -328,26 +325,19 @@ export function Picker(props) {
 
 
 
-function pickerRenderRow(rowData, rowID, highlighted) {
-    let folderName = rowData;
-    let iconName = '';
-    if (rowData) {
-        let parts = rowData.split("$")
-        if (parts.length == 2) {
-            folderName = parts[0]
-            iconName = parts[1]
-        }
-    }
+function pickerRenderRow(rowData, highlighted) {
+    let folderAndIcon = getFolderAndIcon(rowData);
+
     return (
         <View style={[globalStyles.textInput, {
-            backgroundColor: 'white',
+            backgroundColor: highlighted ? 'blue' : 'white',
             alignContent: 'flex-end', justifyContent: 'space-between',
             alignItems: 'center',
             flexDirection: 'row'
         }]}>
-            {iconName != '' ? <Icon name={iconName} size={50} color={semanticColors.folderIcons}></Icon> : <View />}
+            {folderAndIcon.icon != '' ? <Icon name={folderAndIcon.icon} size={50} color={semanticColors.folderIcons}></Icon> : <View />}
             <Text style={{ fontSize: 50, textAlign: 'right' }}>
-                {folderName}
+                {folderAndIcon.name}
             </Text>
         </View>
     );
@@ -502,8 +492,8 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         alignItems: "center",
         justifyContent: "flex-end",
-        width: "60%",
-        right: "20%",
+        width: "90%",
+        right: "5%",
         top: "3%",
         backgroundColor: 'transparent'
     },
