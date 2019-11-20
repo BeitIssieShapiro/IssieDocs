@@ -77,7 +77,8 @@ export default class IssieSavePhoto extends React.Component {
       pdfWidth: '100%',
       pdfHeight: '100%',
       pdfPageCount: 0,
-      yOffset: 0
+      yOffset: 0,
+      windowSize: {width:0, height:0}
     };
     this.OK.bind(this);
 
@@ -320,6 +321,11 @@ export default class IssieSavePhoto extends React.Component {
     }
   }
 
+  onLayout = () => {
+    let windowSize = Dimensions.get("window");
+    this.setState({ windowSize });
+  }
+
   AddPage = () => {
     let imageSource = this.props.navigation.getParam('imageSource');
     getNewPage(imageSource,
@@ -398,6 +404,17 @@ export default class IssieSavePhoto extends React.Component {
     this.setState({ pdfPage: this.state.pdfPage + inc });
   }
 
+  saveNewFolder = async (newFolder) => {
+    let saveNewFolder = this.props.navigation.getParam('saveNewFolder', undefined);
+    if (!saveNewFolder) {
+      return false;
+    }
+    if (await saveNewFolder(newFolder)) {
+      this.setState({folders: [newFolder, ...this.state.folders]});
+      return true;
+    }
+    return false
+  }
 
   render() {
     let uri = this.state.uri;
@@ -423,11 +440,11 @@ export default class IssieSavePhoto extends React.Component {
 
 
           {  //Cancel
-            getRoundedButton(this.Cancel, 'close', 'בטל', 30, 30, { width: 150, height: 40 })
+            getRoundedButton(this.Cancel, 'cancel', 'בטל', 30, 30, { width: 150, height: 40 })
           }
           <Spacer width={10} />
           {  //Save
-            getRoundedButton(this.OK, 'check', 'שמור' + saveMoreThanOne, 30, 30, { width: 150, height: 40 })
+            getRoundedButton(this.OK, 'check-circle', 'שמור' + saveMoreThanOne, 30, 30, { width: 150, height: 40 })
           }
 
           { //Add page
@@ -479,7 +496,9 @@ export default class IssieSavePhoto extends React.Component {
             this.state.folders,
             (text) => this.setState({ pageName: text }),
             (text) => this.setState({ folder: text }), 
-            this.props.navigation
+            (folder) => this.saveNewFolder(folder),
+            this.props.navigation,
+            this.state.windowSize.width > this.state.windowSize.height //isLandscape
           )}
         </View>
     }

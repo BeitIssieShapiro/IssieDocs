@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Alert, Text, TouchableOpacity, PanResponder, StyleSheet } from 'react-native';
+import { View, Alert, Text, TouchableOpacity, PanResponder, StyleSheet , Dimensions} from 'react-native';
 import { Icon } from 'react-native-elements'
 import { FlatList } from 'react-native-gesture-handler';
 
@@ -60,6 +60,19 @@ export default class IssieCreateFolder extends React.Component {
         };
     }
 
+    onLayout = () => {
+        let windowSize = Dimensions.get("window");
+        this.setState({ windowSize });
+    }
+
+    isLandscape = () => {
+        let dim = this.state.windowSize;
+        if (!dim) {
+            return false;
+        }
+        return dim.width > dim.height;
+    }
+
     pickerRenderIcon(rowData, rowID, highlighted) {
         return (
             <View style={[globalStyles.textInput, {
@@ -91,6 +104,7 @@ export default class IssieCreateFolder extends React.Component {
     }
 
     render() {
+        //Alert.alert("isLandscape:"+this.isLandscape())
 
         let actionButtons = <View style={{
             position: 'absolute',
@@ -103,14 +117,33 @@ export default class IssieCreateFolder extends React.Component {
 
 
             {  //Cancel
-                getRoundedButton(() => this.props.navigation.goBack(), 'close', 'בטל', 30, 30, { width: 150, height: 40 })
+                getRoundedButton(() => this.props.navigation.goBack(), 'cancel', 'בטל', 30, 30, { width: 150, height: 40 })
             }
             <Spacer width={10} />
             {  //Save
-                getRoundedButton(() => this.Save(), 'check', 'שמור', 30, 30, { width: 150, height: 40 })
+                getRoundedButton(() => this.Save(), 'check-circle', 'שמור', 30, 30, { width: 150, height: 40 })
             }
         </View>
 
+
+        let iconsSelection = <View style={{ flex:1, flexDirection: 'column', alignItems: 'center' }}>
+                        <Text style={styles.subTitleText}>מבחר סמלים</Text>
+
+                        <FlatList
+                            data={availableIcons}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity style={{ padding: 20 }} onPress={() => {
+                                    this.setState({ icon: item, yOffset: 0 })
+                                }}>
+                                    <Icon name={item} size={55} />
+                                </TouchableOpacity>
+                            )}
+                            //Setting the number of column
+                            numColumns={this.isLandscape?3:5}
+                            keyExtractor={(item, index) => index.toString()}
+                        />
+
+                    </View>
         return (
             <View style={styles.container}
                 ref={v => this.topView = v}
@@ -130,15 +163,15 @@ export default class IssieCreateFolder extends React.Component {
                     height: '85%',
                     top: dimensions.toolbarHeight,
                     left: '5%', width: '90%',
-                    justifyContent: 'center',
+                    
                     transform: [{ translateY: this.state.yOffset }]
                 }}
                     {...this._panResponderMove.panHandlers}>
 
-                    <View style={{ flex: 1, flexDirection: 'row-reverse', alignContent: 'space-between', height: 200 }}>
+                    <View style={{ flexDirection: 'row-reverse', alignContent: 'space-between' }}>
                         <View style={{ flex: 1, flexDirection: 'column', alignItems: 'flex-end' }}>
                             <Text style={styles.titleText}>שם התיקיה</Text>
-                            <TextInput style={[globalStyles.textInput, { right: 0, width: '90%' }]} value={this.state.name}
+                            <TextInput style={[globalStyles.textInput, { right: 0, width: '100%' }]} value={this.state.name}
                                 onChangeText={(txt) => this.setState({ name: txt })}
                             />
                         </View>
@@ -148,26 +181,10 @@ export default class IssieCreateFolder extends React.Component {
                             {this.state.icon !== '' ? <Icon name={this.state.icon} size={55} /> : null}
                             </View>
                         </View>
+                        {this.isLandscape()? iconsSelection:null}
                     </View>
                     <Spacer />
-                    <View style={{ position:'absolute', width:'100%', left:0, top:180,flexDirection: 'column', alignItems: 'center' }}>
-                        <Text style={styles.subTitleText}>מבחר סמלים</Text>
-
-                        <FlatList
-                            data={availableIcons}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity style={{ padding: 20 }} onPress={() => {
-                                    this.setState({ icon: item, yOffset: 0 })
-                                }}>
-                                    <Icon name={item} size={55} />
-                                </TouchableOpacity>
-                            )}
-                            //Setting the number of column
-                            numColumns={5}
-                            keyExtractor={(item, index) => index.toString()}
-                        />
-
-                    </View>
+                    {this.isLandscape()? null:iconsSelection}
 
                 </View>
             </View>

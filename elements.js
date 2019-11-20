@@ -143,6 +143,13 @@ export function getSquareButton(func, color, selectedColor, txt, icon, size, sel
 }
 
 export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction) {
+    let color = semanticColors.titleText;
+    if (icon === 'check-circle') {
+        color = 'green';
+    } else if (icon === 'cancel') {
+        color = 'red';
+    }
+
     return <TouchableOpacity
         activeOpacity={0.7}
         onPress={callback}
@@ -154,17 +161,18 @@ export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, 
                 zIndex: 6,
                 borderRadius: 25,
                 alignItems: 'center',
-                justifyContent: 'center',
+                alignContent: 'center',
+                justifyContent: 'flex-end',
                 backgroundColor: '#eeeded',
                 shadowColor: 'black',
                 shadowOpacity: 0.8,
                 elevation: 1,
                 shadowOffset: { width: 0, height: -2 },
-                flexDirection: direction ? direction : 'row-reverse'
+                flexDirection: direction ? direction : 'row'
             }}>
-            <Text style={{ fontSize: textSize, color: semanticColors.titleText, textAlignVertical: 'center' }}>{text ? ' ' + text : ''}</Text>
-            <Spacer width={10} />
-            <Icon name={icon} size={iconSize} color={semanticColors.titleText} />
+            <Text style={{position:'absolute', left:0, width:'80%', fontSize: textSize, color: semanticColors.titleText, textAlign:'center', textAlignVertical: 'center' }}>{text ? text : ''}</Text>
+            <Icon name={icon} size={iconSize} color={color} />
+            <Spacer width={5} />
         </View>
     </TouchableOpacity>
 }
@@ -229,50 +237,55 @@ export function getNewFolderDialog(props) {
 
 export function getFileNameDialog(fileName,
     currentFolderName, folders,
-    onChangeName, onChangeFolder, navigation) {
+    onChangeName, onChangeFolder, onSaveNewFolder,
+    navigation, isLandscape) {
 
+    
     if (currentFolderName === DEFAULT_FOLDER_NAME || currentFolderName === '') {
         currentFolderName = NO_FOLDER_NAME;
     }
 
     let fullListFolder = [NO_FOLDER_NAME, ...folders];
-    foldersAndIcons.forEach((itm)=> {
-        let fni = itm.text+'$'+itm.icon;
-        if (fullListFolder.findIndex(f=>f === fni) == -1) {
+    foldersAndIcons.forEach((itm) => {
+        let fni = itm.text + '$' + itm.icon;
+        if (fullListFolder.findIndex(f => f === fni) == -1) {
             fullListFolder.push(fni);
         }
     })
     return (
-        <View style={styles.textInputView} >
-            <Text style={styles.titleText}>שם הדף</Text>
-            <TextInput style={globalStyles.textInput}
-                onChangeText={onChangeName}
-            >{fileName}</TextInput>
-            <Spacer />
-
-            <View style={{
-                flex: 1, flexDirection: 'row-reverse',
-                width: '100%',
-                alignContent: 'space-between',
-                alignItems: 'center'
-            }}>
-                <Text style={[styles.titleText, { width: '30%' }]}>תיקיה</Text>
-                {getRoundedButton(() => navigation.navigate('CreateFolder', { saveNewFolder: (newFolder) => this.saveNewFolder(newFolder) }),
-                    'create-new-folder', 'תיקיה חדשה', 30, 30, { width: 200, height: 40 })}
+        <View style={[styles.textInputView,isLandscape?{flexDirection:'row-reverse'}:{}]} >
+            <View style={{flex:1, width:'100%'}}>
+                <Text style={styles.titleText}>שם הדף</Text>
+                <TextInput style={globalStyles.textInput}
+                    onChangeText={onChangeName}
+                >{fileName}</TextInput>
             </View>
             <Spacer />
-            <View style={{
-                flex: 1, width: '100%',
-                flexDirection: 'column', alignContent: 'flex-end'
-            }}>
-                <View style={{ flex: 1 }}>
-                    {fullListFolder.map((item, index) => (
-                        <TouchableOpacity key={index} style={{ height: 65, width: '100%', justifyContent: 'flex-end' }}
-                            onPress={() => onChangeFolder(item)}>
+            <View style={{flex:1, width:'100%'}}>
+                <View style={{
+                    flex: 1, flexDirection: 'row-reverse',
+                    width: '100%',
+                    alignItems: 'center'
+                }}>
+                    <Text style={[styles.titleText, { width: isLandscape?'50%':'30%' }]}>תיקיה</Text>
+                    {getRoundedButton(() => navigation.navigate('CreateFolder', 
+                        { saveNewFolder: onSaveNewFolder}),
+                        'create-new-folder', 'תיקיה חדשה', 30, 30, { width: 200, height: 40 })}
+                </View>
+                <Spacer />
+                <View style={{
+                    flex: 1, width: '100%',
+                    flexDirection: 'column', alignContent: 'flex-end'
+                }}>
+                    <View style={{ flex: 1 }}>
+                        {fullListFolder.map((item, index) => (
+                            <TouchableOpacity key={index} style={{ height: 65, width: '100%', justifyContent: 'flex-end' }}
+                                onPress={() => onChangeFolder(item)}>
 
-                            {pickerRenderRow(item, currentFolderName === item)}
-                        </TouchableOpacity>
-                    ))}
+                                {pickerRenderRow(item, currentFolderName === item)}
+                            </TouchableOpacity>
+                        ))}
+                    </View>
                 </View>
             </View>
 
@@ -330,7 +343,7 @@ function pickerRenderRow(rowData, highlighted) {
 
     return (
         <View style={[globalStyles.textInput, {
-            backgroundColor: highlighted ? 'blue' : 'white',
+            backgroundColor: highlighted ? '#a7a7a7' : 'white',
             alignContent: 'flex-end', justifyContent: 'space-between',
             alignItems: 'center',
             flexDirection: 'row'
@@ -391,7 +404,7 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
         {isFirst ?
             <View /> :
             //getSquareButton(() => callback(-1), semanticColors.pageNavigationButtonG, undefined, 'דף קודם', 'chevron-left', 30, undefined, { width: 150, height: 60 }, 60, true, 15)
-            getRoundedButton(() => callback(-1), 'chevron-left', 'דף קודם', 30, 30, { width: 155, height: 40 })
+            getRoundedButton(() => callback(-1), 'chevron-left', 'דף קודם', 30, 30, { width: 155, height: 40 }, 'row-reverse')
         }
 
         {isLast ?
@@ -490,8 +503,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         flex: 1,
         flexDirection: 'column',
-        alignItems: "center",
-        justifyContent: "flex-end",
+        justifyContent: "flex-start",
         width: "90%",
         right: "5%",
         top: "3%",

@@ -132,7 +132,8 @@ export default class FolderGallery extends React.Component {
             uri: decodeURI(event.url),
             imageSource: SRC_FILE,
             folder: this.state.currentFolder ? this.state.currentFolder.name : undefined,
-            returnFolderCallback: (f) => this.setReturnFolder(f)
+            returnFolderCallback: (f) => this.setReturnFolder(f),
+            saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false)
         })
     }
 
@@ -195,7 +196,8 @@ export default class FolderGallery extends React.Component {
                     uri: uri,
                     imageSource: SRC_CAMERA,
                     folder: this.state.currentFolder ? this.state.currentFolder.name : undefined,
-                    returnFolderCallback: (f) => this.setReturnFolder(f)
+                    returnFolderCallback: (f) => this.setReturnFolder(f),
+                    saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false)
 
                 })
             },
@@ -216,7 +218,9 @@ export default class FolderGallery extends React.Component {
                     uri: response.uri,
                     folder: this.state.currentFolder ? this.state.currentFolder.name : undefined,
                     imageSource: SRC_GALLERY,
-                    returnFolderCallback: (f) => this.setReturnFolder(f)
+                    returnFolderCallback: (f) => this.setReturnFolder(f),
+                    saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false)
+
                 });
             }
         });
@@ -231,7 +235,9 @@ export default class FolderGallery extends React.Component {
             this.props.navigation.navigate('SavePhoto', {
                 uri: res.uri,
                 folder: this.state.currentFolder ? this.state.currentFolder.name : undefined,
-                returnFolderCallback: (f) => this.setReturnFolder(f)
+                returnFolderCallback: (f) => this.setReturnFolder(f),
+                saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false)
+
             });
         }).catch(err => {
             if (!DocumentPicker.isCancel(err)) {
@@ -336,7 +342,9 @@ export default class FolderGallery extends React.Component {
             imageSource: SRC_RENAME,
             folder: this.state.currentFolder ? this.state.currentFolder.name : '',
             name: removeFileExt(this.state.selected[0].item.name),
-            returnFolderCallback: (f) => this.setReturnFolder(f)
+            returnFolderCallback: (f) => this.setReturnFolder(f),
+            saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false)
+
         });
 
         this.setState({ editMode: false, selected: undefined })
@@ -346,7 +354,7 @@ export default class FolderGallery extends React.Component {
         this.setState({ returnFolderName: folderName });
     }
 
-    saveNewFolder = async (newFolderName) => {
+    saveNewFolder = async (newFolderName, setReturnFolder) => {
         if (!newFolderName || newFolderName.length == 0) {
             Alert.alert("חובה להזין שם תיקיה");
             return false;
@@ -366,7 +374,12 @@ export default class FolderGallery extends React.Component {
             await RNFS.mkdir(targetFolder);
             await pushFolderOrder(newFolderName)
           }
-          this.setState({returnFolderName: newFolderName}, () => this.refresh());
+          if (setReturnFolder) {
+            this.setState({returnFolderName: newFolderName}, () => this.refresh());
+          } else {
+              //add the folder to the list:
+
+          }
           return true;
     }
 
@@ -392,6 +405,7 @@ export default class FolderGallery extends React.Component {
         this.closeMenu();
         this.props.navigation.navigate('About')
     }
+    isLandscape = () => this.state.windowSize.width>this.state.windowSize.height
 
     closeMenu = () => {
         this.setState({ showMenu: false });
@@ -454,7 +468,8 @@ export default class FolderGallery extends React.Component {
                     {
                         getIconButton(() => {
                             this.props.navigation.navigate('CreateFolder',
-                            {saveNewFolder: (newFolder) => this.saveNewFolder(newFolder)});
+                            {saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, true),
+                            isLandscape: this.isLandscape()});
                         }, semanticColors.addButton, "create-new-folder", 50)
                     }
 
@@ -471,19 +486,19 @@ export default class FolderGallery extends React.Component {
 
                         {  //delete
                             this.state.selected && this.state.selected.length > 0 && !this.state.rename ?
-                                getRoundedButton(this.Delete, 'delete-forever', 'מחק', 30, 30, { width: 140, height: 40 }) :
+                                getRoundedButton(this.Delete, 'delete-forever', 'מחק', 30, 30, { width: 120, height: 40 }) :
                                 null
                         }
                         {<Spacer width={10} />}
                         {  //move
                             this.state.selected && this.state.selected.length == 1 && this.state.selected[0].type !== 'folder' && !this.state.rename ?
-                                getRoundedButton(this.Rename, 'text-fields', 'שנה שם', 30, 30, { width: 140, height: 40 }) :
+                                getRoundedButton(this.Rename, 'text-fields', 'שנה שם', 30, 30, { width: 135, height: 40 }) :
                                 null
                         }
                         {<Spacer width={10} />}
                         {  //Share
                             this.state.selected && this.state.selected.length == 1 && this.state.selected[0].type === 'file' && !this.state.rename ?
-                                getRoundedButton(this.Share, 'share', 'שתף', 30, 30, { width: 140, height: 40 }) :
+                                getRoundedButton(this.Share, 'share', 'שתף', 30, 30, { width: 120, height: 40 }) :
                                 null
                         }
                     </View>
@@ -502,7 +517,7 @@ export default class FolderGallery extends React.Component {
                             width: "100%", top: 0, height: '10%', alignItems: 'center', justifyContent: 'flex-start',
                             paddingRight: '5%', borderBottomWidth: 1, borderBottomColor: 'gray'
                         }}>
-                            <FolderNew index={fIndex} id="1" name={curFolderFullName} asTitle={true}
+                            <FolderNew index={fIndex} id="1" name={curFolderFullName} asTitle={true} isLandscape={this.isLandscape()}
                             />
                         </View>
                         {/* pages */}
@@ -561,7 +576,8 @@ export default class FolderGallery extends React.Component {
                                 onPress: () => this.onFolderPressed(f),
                                 onSelect: () => this.toggleSelection(f, 'folder'),
                                 onMoveUp: () => this.moveFolderUp(f),
-                                onMoveDown: () => this.moveFolderDown(f)
+                                onMoveDown: () => this.moveFolderDown(f),
+                                isLandscape: this.isLandscape()
                             })) : <Text style={{ fontSize: 25 }}>אין עדיין תיקיות</Text>}
                     </View>
                     

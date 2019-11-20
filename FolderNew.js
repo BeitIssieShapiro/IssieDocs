@@ -9,14 +9,19 @@ import { getFolderAndIcon, normalizeTitle, semanticColors, FolderTextStyle, fold
 export default function FolderNew(props) {
     let folderColor = folderColors[props.index % folderColors.length];
     let folderAndIcon = getFolderAndIcon(props.name);
-    let caption = normalizeTitle(folderAndIcon.name)
-    if (props.editMode && caption.length > 9) {
-        caption = caption.substring(0, 7) + '...';
+    let caption = normalizeTitle(folderAndIcon.name);
+    let captionLimit = props.isLandscape?15:10;
+
+    if (props.editMode) {
+        captionLimit -= 2;
     }
 
+    if (!props.asTitle && caption.length > captionLimit) {
+        caption = caption.substring(0, captionLimit) + '...';
+    }
 
     return (
-        <TouchableOpacity key={props.id} onPress={(e)=>props.onPress(e, folderColor)}
+        <TouchableOpacity key={props.id} onPress={props.onPress?(e)=>props.onPress(e, folderColor):undefined}
             style={{
                 alignContent: 'center',
                 width: '92%', height: 76,
