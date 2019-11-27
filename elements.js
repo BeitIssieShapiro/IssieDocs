@@ -35,7 +35,7 @@ export const semanticColors = {
     InactiveModeButton: colors.gray,
     activeZoomButton: colors.orange,
     actionButton: colors.blue,
-    folderIcons: colors.navyBlue,
+    folderIcons: '#27b0ff', //colors.navyBlue,
     selectedCheck: "#4630EB",
     moveInZoomButton: "#D16F28",
     header: '#183d72',
@@ -44,8 +44,13 @@ export const semanticColors = {
     title: '#DFE8EC',
     subTitle: '#315890',
     titleText: '#183d72',
+    inputBorder: '#d0cfcf',
     selectedFolder: '#C7D4E8',
-    editPhotoButton: 'white'
+    editPhotoButton: 'white',
+    availableIconColor: '#9a9fa9',
+    selectedListItem: '#e0ecf7',
+    listBackground: '#f1f2f4'
+
 
 }
 
@@ -74,7 +79,26 @@ export const availableIcons = [
     "build",
     "location-city",
     "grade",
-    "flight-takeoff"
+    "flight-takeoff",
+    "face",
+    "favorite",
+    "home",
+    "room",
+    "shopping-cart",
+    "today",
+    "cloud",
+    "headset",
+    "computer",
+    "toys",
+    "brush",
+    "color-lens",
+    "filter-vintage",
+    "directions-run",
+    "local-pizza",
+    "traffic",
+    "beach-access",
+    "child-friendly",
+    "pool"
 ]
 
 export const availableColorPicker = [
@@ -98,8 +122,6 @@ export const NEW_FOLDER_NAME = 'תיקיה חדשה';
 export const NO_FOLDER_NAME = 'ללא';
 export const DEFAULT_FOLDER_NAME = 'Default';
 export const DEFAULT_FOLDER_TITLE = "ללא נושא";
-
-const FOLDER_NO_ICON = 'sentiment-satisfied';
 
 export function validPathPart(pathPart) {
     if (!pathPart || pathPart.length == 0) {
@@ -170,7 +192,7 @@ export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, 
                 shadowOffset: { width: 0, height: -2 },
                 flexDirection: direction ? direction : 'row'
             }}>
-            <Text style={{position:'absolute', left:0, width:'80%', fontSize: textSize, color: semanticColors.titleText, textAlign:'center', textAlignVertical: 'center' }}>{text ? text : ''}</Text>
+            <Text style={{ position: 'absolute', paddingTop:5, left: 0, width: '80%', fontSize: textSize, color: semanticColors.titleText, textAlign: 'center' }}>{text ? text : ''}</Text>
             <Icon name={icon} size={iconSize} color={color} />
             <Spacer width={5} />
         </View>
@@ -216,31 +238,14 @@ export function normalizeTitle(title) {
     return title;
 }
 
-export function getNewFolderDialog(props) {
-    return (
-        <View style={{ flex: 1, width: '100%' }}>
-            <Spacer />
-            <Text style={styles.titleText}>שם התיקיה</Text>
-            <Picker
-                name={props.name}
-                icon={props.icon}
-                items={suggestedFolders}
-                textEditable={true}
-                renderRow={pickerRenderIcon}
-                emptyValue={''}
-                onChangeText={props.onChangeNewFolder}
-                selectCallback={(itemIndex, itemValue) => onChangeNewFolder(itemValue.text + '$' + itemValue.icon)}
-            />
-        </View>
-    );
-}
+
 
 export function getFileNameDialog(fileName,
     currentFolderName, folders,
     onChangeName, onChangeFolder, onSaveNewFolder,
     navigation, isLandscape) {
 
-    
+
     if (currentFolderName === DEFAULT_FOLDER_NAME || currentFolderName === '') {
         currentFolderName = NO_FOLDER_NAME;
     }
@@ -253,23 +258,23 @@ export function getFileNameDialog(fileName,
         }
     })
     return (
-        <View style={[styles.textInputView,isLandscape?{flexDirection:'row-reverse'}:{}]} >
-            <View style={{flex:1, width:'100%'}}>
+        <View style={[styles.textInputView, isLandscape ? { flexDirection: 'row-reverse' } : {}]} >
+            <View style={{ flex: 1, width: '100%' }}>
                 <Text style={styles.titleText}>שם הדף</Text>
                 <TextInput style={globalStyles.textInput}
                     onChangeText={onChangeName}
                 >{fileName}</TextInput>
             </View>
             <Spacer />
-            <View style={{flex:1, width:'100%'}}>
+            <View style={{ flex: 1, width: '100%' }}>
                 <View style={{
                     flex: 1, flexDirection: 'row-reverse',
                     width: '100%',
                     alignItems: 'center'
                 }}>
-                    <Text style={[styles.titleText, { width: isLandscape?'50%':'30%' }]}>תיקיה</Text>
-                    {getRoundedButton(() => navigation.navigate('CreateFolder', 
-                        { saveNewFolder: onSaveNewFolder}),
+                    <Text style={[styles.titleText, { width: isLandscape ? '50%' : '30%' }]}>תיקיה</Text>
+                    {getRoundedButton(() => navigation.navigate('CreateFolder',
+                        { saveNewFolder: onSaveNewFolder }),
                         'create-new-folder', 'תיקיה חדשה', 30, 30, { width: 200, height: 40 })}
                 </View>
                 <Spacer />
@@ -277,7 +282,7 @@ export function getFileNameDialog(fileName,
                     flex: 1, width: '100%',
                     flexDirection: 'column', alignContent: 'flex-end'
                 }}>
-                    <View style={{ flex: 1 }}>
+                    <View style={{ flex: 1, backgroundColor: semanticColors.listBackground }}>
                         {fullListFolder.map((item, index) => (
                             <TouchableOpacity key={index} style={{ height: 65, width: '100%', justifyContent: 'flex-end' }}
                                 onPress={() => onChangeFolder(item)}>
@@ -343,34 +348,25 @@ function pickerRenderRow(rowData, highlighted) {
 
     return (
         <View style={[globalStyles.textInput, {
-            backgroundColor: highlighted ? '#a7a7a7' : 'white',
+            backgroundColor: highlighted ? semanticColors.selectedListItem : semanticColors.listBackground,
             alignContent: 'flex-end', justifyContent: 'space-between',
             alignItems: 'center',
             flexDirection: 'row'
         }]}>
-            {folderAndIcon.icon != '' ? <Icon name={folderAndIcon.icon} size={50} color={semanticColors.folderIcons}></Icon> : <View />}
-            <Text style={{ fontSize: 50, textAlign: 'right' }}>
+            {folderAndIcon.icon != '' ?
+                <View style={{flexDirection:'row'}}>
+                    <Spacer />
+                    <Icon name={folderAndIcon.icon} size={50} color={semanticColors.folderIcons}></Icon>
+                </View>
+                : <View />}
+            <Text style={{ fontSize: 26, textAlign: 'right', paddingRight: 25 }}>
                 {folderAndIcon.name}
             </Text>
         </View>
     );
 }
 
-function pickerRenderIcon(rowData, rowID, highlighted) {
-    return (
-        <View style={[globalStyles.textInput, {
-            flex: 1,
-            flexDirection: 'row',
-            backgroundColor: 'white',
-            alignItems: 'center',
 
-            justifyContent: 'space-between'
-        }]}>
-            <Icon name={rowData.icon} size={50} color={semanticColors.folderIcons} />
-            <Text style={{ fontSize: 55 }}>{rowData.text}</Text>
-        </View>
-    );
-}
 
 export async function getImageDimensions(uri) {
     return new Promise(
@@ -435,7 +431,9 @@ export const globalStyles = StyleSheet.create({
         fontWeight: 'bold',
         color: 'black',
         width: '100%',
-        backgroundColor: 'white'
+        backgroundColor: 'white',
+        borderColor: semanticColors.inputBorder,
+        borderWidth: 1
     },
     okCancelView: {
         position: 'absolute',
@@ -510,7 +508,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent'
     },
     titleText: {
-        fontSize: 60,
+        fontSize: 35,
         textAlign: "right",
         width: "100%",
         fontWeight: 'bold',

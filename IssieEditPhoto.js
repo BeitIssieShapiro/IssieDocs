@@ -571,6 +571,11 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   movePage = (inc) => {
+
+    if (this.state.showTextInput) {
+      this.SaveText(true, false)
+    }
+
     let currentIndex = -1;
     for (let i = 0; i < this.state.page.pages.length; i++) {
       if (this.state.page.pages[i] == this.state.currentFile) {
@@ -588,7 +593,7 @@ export default class IssieEditPhoto extends React.Component {
     const metaDataUri = currentFile + ".json";
     this.setState({
       currentFile: currentFile, metaDataUri: metaDataUri,
-      zoom: 1, xOffset: 0, yOffset: 0
+      zoom: 1, xOffset: 0, yOffset: 0, showTextInput: false, inputTextValue:''
     });
     this.CalcImageSize(currentFile, this.state.origWindowW, this.state.windowH);
     setTimeout(() => {
@@ -600,7 +605,7 @@ export default class IssieEditPhoto extends React.Component {
     let windowSize = e.nativeEvent.layout;
     const measure = this.topView.measure.bind(this.topView);
     setTimeout(measure, 50, (fx, fy, width, height, px, py) => {
-      this.setState({ topView: py })
+      this.setState({ topView: py, windowSize })
     });
 
     let sideMargin = Math.floor(windowSize.width * .05)
@@ -652,6 +657,11 @@ export default class IssieEditPhoto extends React.Component {
       zIndex: 5
     };
     let toolbarSideMargin = this.state.sideMargin > 250 ? 250 : this.state.sideMargin;
+
+    if (this.state.windowSize && this.state.windowSize.width - 2*toolbarSideMargin < 300) {
+      toolbarSideMargin = 100;
+    }
+
     let spaceBetweenButtons = <Spacer width={23} />
     let colorButtonSize = this.state.canvasW / (availableColorPicker.length * 1.4);
 

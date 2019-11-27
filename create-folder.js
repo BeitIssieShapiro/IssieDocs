@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Alert, Text, TouchableOpacity, PanResponder, StyleSheet , Dimensions} from 'react-native';
+import { View, Alert, Text, TouchableOpacity, PanResponder, StyleSheet, Dimensions } from 'react-native';
 import { Icon } from 'react-native-elements'
 import { FlatList } from 'react-native-gesture-handler';
 
@@ -126,24 +126,32 @@ export default class IssieCreateFolder extends React.Component {
         </View>
 
 
-        let iconsSelection = <View style={{ flex:1, flexDirection: 'column', alignItems: 'center' }}>
-                        <Text style={styles.subTitleText}>מבחר סמלים</Text>
+        let iconsSelection = <View style={{
+            flex: 2.7,
+            top: 25,
+            borderRadius: 10,
+            backgroundColor: 'white',
+            flexDirection: 'column',
+            alignItems: 'center'
+        }}>
+            <Text style={styles.subTitleText}>מבחר סמלים</Text>
 
-                        <FlatList
-                            data={availableIcons}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity style={{ padding: 20 }} onPress={() => {
-                                    this.setState({ icon: item, yOffset: 0 })
-                                }}>
-                                    <Icon name={item} size={55} />
-                                </TouchableOpacity>
-                            )}
-                            //Setting the number of column
-                            numColumns={this.isLandscape?3:5}
-                            keyExtractor={(item, index) => index.toString()}
-                        />
+            <FlatList
 
-                    </View>
+                data={availableIcons}
+                renderItem={({ item }) => (
+                    <TouchableOpacity style={{ padding: 20 }} onPress={() => {
+                        this.setState({ icon: item, yOffset: 0 })
+                    }}>
+                        <Icon name={item} size={55} color={semanticColors.availableIconColor} />
+                    </TouchableOpacity>
+                )}
+                //Setting the number of column
+                numColumns={this.isLandscape ? 5 : 5}
+                keyExtractor={(item, index) => index.toString()}
+            />
+
+        </View>
         return (
             <View style={styles.container}
                 ref={v => this.topView = v}
@@ -163,28 +171,37 @@ export default class IssieCreateFolder extends React.Component {
                     height: '85%',
                     top: dimensions.toolbarHeight,
                     left: '5%', width: '90%',
-                    
+
                     transform: [{ translateY: this.state.yOffset }]
                 }}
                     {...this._panResponderMove.panHandlers}>
 
-                    <View style={{ flexDirection: 'row-reverse', alignContent: 'space-between' }}>
-                        <View style={{ flex: 1, flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <Text style={styles.titleText}>שם התיקיה</Text>
-                            <TextInput style={[globalStyles.textInput, { right: 0, width: '100%' }]} value={this.state.name}
-                                onChangeText={(txt) => this.setState({ name: txt })}
-                            />
-                        </View>
-                        <View style={{ flex: 1, paddingRight: 100, flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <Text style={[styles.titleText,{paddingTop:15}]}>סמל</Text>
-                            <View style={{backgroundColor:'white', width:70, height:70, justifyContent:'center'}}>
-                            {this.state.icon !== '' ? <Icon name={this.state.icon} size={55} /> : null}
+                    <View style={{ flexDirection: 'row-reverse' }}>
+                            <View style={{
+                                flex: 1, flexDirection: 'column', alignItems: 'flex-end',
+                            }}>
+                                <Text style={styles.titleText}>שם התיקיה</Text>
+                                <TextInput style={[globalStyles.textInput, { right: 0, width: '100%' }]} value={this.state.name}
+                                    onChangeText={(txt) => this.setState({ name: txt })}
+                                />
                             </View>
-                        </View>
-                        {this.isLandscape()? iconsSelection:null}
+                            <View style={{ flex: 1, paddingRight: 100, flexDirection: 'column', alignItems: 'flex-end' }}>
+                                <Text style={styles.titleText}>סמל</Text>
+                                <View style={{
+                                    backgroundColor: 'white',
+                                    borderColor: semanticColors.inputBorder,
+                                    borderWidth: 1,
+
+                                    width: 70, height: 70, justifyContent: 'center'
+                                }}>
+                                    {this.state.icon !== '' ? <Icon name={this.state.icon} size={55} /> : null}
+                                </View>
+                            </View>
+                     
+                        {this.isLandscape() ? iconsSelection : null}
                     </View>
                     <Spacer />
-                    {this.isLandscape()? null:iconsSelection}
+                    {this.isLandscape() ? null : iconsSelection}
 
                 </View>
             </View>
@@ -211,8 +228,9 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent'
     },
     titleText: {
-        fontSize: 60,
+        fontSize: 35,
         height: 70,
+        paddingTop: 25,
         textAlign: "right",
         width: "100%",
         fontWeight: 'bold',
@@ -221,7 +239,8 @@ const styles = StyleSheet.create({
     },
     subTitleText: {
         fontSize: 35,
-        textAlign: "center",
+        textAlign: "right",
+        paddingRight: 15,
         width: "100%",
         fontWeight: 'bold',
         color: semanticColors.titleText,

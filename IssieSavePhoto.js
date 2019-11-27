@@ -10,11 +10,12 @@ import Pdf from 'react-native-pdf';
 import ViewShot from "react-native-view-shot";
 import { StackActions } from 'react-navigation';
 
-import { getIconButton,
+import {
+  getIconButton,
   getImageDimensions,
   globalStyles, NEW_FOLDER_NAME, NO_FOLDER_NAME, DEFAULT_FOLDER_NAME,
   getPageNavigationButtons, getFileNameDialog, semanticColors, getFolderAndIcon,
-  Spacer, getRoundedButton, dimensions
+  Spacer, getRoundedButton, dimensions, validPathPart
 } from './elements'
 import ImageRotate from 'react-native-image-rotate';
 import { getNewPage, saveFile, cloneToTemp, SRC_RENAME } from './newPage'
@@ -78,7 +79,7 @@ export default class IssieSavePhoto extends React.Component {
       pdfHeight: '100%',
       pdfPageCount: 0,
       yOffset: 0,
-      windowSize: {width:0, height:0}
+      windowSize: { width: 0, height: 0 }
     };
     this.OK.bind(this);
 
@@ -111,7 +112,7 @@ export default class IssieSavePhoto extends React.Component {
           let top = panStartY - ocd.y;
           let bottom = ocd.y + ocd.height - panStartY;
 
-          if (left < panBroderDistance) {
+          if (left - this.state.cropXOffset < panBroderDistance) {
             cd.x = ocd.x + gestureState.dx;
             cd.width = ocd.width - gestureState.dx;
             moved = true
@@ -165,15 +166,31 @@ export default class IssieSavePhoto extends React.Component {
 
   updateImageDimension = async () => {
     setTimeout(async () => {
-      let size = await getImageDimensions(this.state.uri);
-      this.setState({ imgSize: size })
+      let imgSize = await getImageDimensions(this.state.uri);
+      let windowSize = Dimensions.get("window");
+      windowSize = {
+        width: windowSize.width,
+        height: windowSize.height - dimensions.topView - this.state.topView - 10
+      };
+
+      let dx = windowSize.width - imgSize.w;
+      let dy = windowSize.height - imgSize.h;
+
+      let scale = 1;
+      if (dx < 0 || dy < 0) {
+        scaleW = windowSize.width / imgSize.w;
+        scaleH = windowSize.height / imgSize.h;
+        scale = Math.min(scaleW, scaleH);
+      }
+      this.setState({ imgSize, scale, windowSize })
     }, 50);
   }
 
   onLayout = async () => {
     const measure = this.topView.measure.bind(this.topView);
+
     setTimeout(measure, 50, (fx, fy, width, height, px, py) => {
-      this.setState({ topView: py })
+      this.setState({ topView: py }, this.updateImageDimension);
     });
   }
 
@@ -184,7 +201,7 @@ export default class IssieSavePhoto extends React.Component {
         let pages = [];
         if (this.state.pdfPageCount > 1) {
           for (let i = 1; i < this.state.pdfPageCount; i++) {
-            this.setState({pdfInProcess: i})
+            this.setState({ pdfInProcess: i })
             let savedPdfPageUri = await this.exportPdfPage(i);
 
             let page = { uri: savedPdfPageUri, index: i - 1 }
@@ -196,7 +213,7 @@ export default class IssieSavePhoto extends React.Component {
           }
 
         }
-        this.setState({pdfInProcess: this.state.pdfPageCount})
+        this.setState({ pdfInProcess: this.state.pdfPageCount })
 
         let uri = await this.exportPdfPage(this.state.pdfPageCount);
 
@@ -229,8 +246,13 @@ export default class IssieSavePhoto extends React.Component {
     let folderName = this.state.folder;
     let fileName = this.state.pageName;
 
-    if (!fileName) {
+    if (!fileName || fileName.length == 0) {
       Alert.alert('חובה לבחור שם לדף');
+      return;
+    }
+
+    if (!validPathPart(fileName)) {
+      Alert.alert('שם הקובץ מכיל תווים לא חוקיים');
       return;
     }
     if (!folderName || folderName == NO_FOLDER_NAME) {
@@ -321,11 +343,6 @@ export default class IssieSavePhoto extends React.Component {
     }
   }
 
-  onLayout = () => {
-    let windowSize = Dimensions.get("window");
-    this.setState({ windowSize });
-  }
-
   AddPage = () => {
     let imageSource = this.props.navigation.getParam('imageSource');
     getNewPage(imageSource,
@@ -344,29 +361,38 @@ export default class IssieSavePhoto extends React.Component {
   rotateLeft = () => this.rotate(-90);
   rotateRight = () => this.rotate(90);
   crop = () => {
-    let windowSize = Dimensions.get("window");
+    let winSize = this.state.windowSize;
+    let imgSize = this.state.imgSize;
+    let cropXOffset = (winSize.width - imgSize.w * this.state.scale)/2;
     this.setState({
       cropping: true,
+      cropXOffset,
       cropData: {
         x: 0,
         y: 0,
-        width: windowSize.width,
-        height: windowSize.height - dimensions.topView - this.state.topView,
-        scaleX: windowSize.width / this.state.imgSize.w,
-        scaleY: windowSize.height / this.state.imgSize.h
-      },
-      windowSize: windowSize
+        width: imgSize.w * this.state.scale,
+        height: imgSize.h * this.state.scale
+      }
     });
   }
   cancelCrop = () => this.setState({ cropping: false });
   acceptCrop = () => {
     let cd = this.state.cropData;
+    let windowSize = this.state.windowSize;
+    let targetSizeScale = 1;
+    if (cd.width < windowSize.width || cd.height < windowSize.height) {
+      targetSizeScale = Math.min(
+        windowSize.width/cd.width,
+        windowSize.height/cd.height
+      );
+    }
+
     let cropData = {
-      offset: { x: cd.x / cd.scaleX, y: cd.y / cd.scaleY },
-      size: { width: cd.width / cd.scaleX, height: cd.height / cd.scaleY },
+      offset: { x: cd.x/this.state.scale, y: cd.y/this.state.scale },
+      size: { width: cd.width/this.state.scale, height: cd.height/this.state.scale },
       displaySize: {
-        width: this.state.imgSize.w,
-        height: this.state.imgSize.h
+        width: cd.width*targetSizeScale,
+        height: cd.height*targetSizeScale
       },
       resizeMode: 'stretch'
     };
@@ -410,7 +436,7 @@ export default class IssieSavePhoto extends React.Component {
       return false;
     }
     if (await saveNewFolder(newFolder)) {
-      this.setState({folders: [newFolder, ...this.state.folders]});
+      this.setState({ folders: [newFolder, ...this.state.folders], folder: newFolder });
       return true;
     }
     return false
@@ -468,15 +494,15 @@ export default class IssieSavePhoto extends React.Component {
         flexDirection: 'row',
         alignItems: 'center'
       }}>
-        {editPhoto ? <View style={{ flexDirection: 'row', alignItems:'center' }}>
+        {editPhoto ? <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {
             getIconButton(this.crop, semanticColors.addButton, "crop", 45)
           }
           <Spacer width={10} />
-          {this.state.cropping ? getIconButton(this.cancelCrop, semanticColors.addButton, "cancel", 45):<View />}
+          {this.state.cropping ? getIconButton(this.cancelCrop, semanticColors.addButton, "cancel", 45) : <View />}
           {this.state.cropping ? <Spacer width={10} /> : null}
-          {this.state.cropping ? getIconButton(this.acceptCrop, semanticColors.addButton, "check", 45):<View />}
-          {this.state.cropping ? <View /> :           getIconButton(this.rotateLeft, semanticColors.addButton, "rotate-left", 45)}
+          {this.state.cropping ? getIconButton(this.acceptCrop, semanticColors.addButton, "check", 45) : <View />}
+          {this.state.cropping ? <View /> : getIconButton(this.rotateLeft, semanticColors.addButton, "rotate-left", 45)}
           <Spacer width={10} />
           {this.state.cropping ? <View /> : getIconButton(this.rotateRight, semanticColors.addButton, "rotate-right", 45)}
         </View> : null}
@@ -495,7 +521,7 @@ export default class IssieSavePhoto extends React.Component {
             this.state.folder,
             this.state.folders,
             (text) => this.setState({ pageName: text }),
-            (text) => this.setState({ folder: text }), 
+            (text) => this.setState({ folder: text }),
             (folder) => this.saveNewFolder(folder),
             this.props.navigation,
             this.state.windowSize.width > this.state.windowSize.height //isLandscape
@@ -508,10 +534,10 @@ export default class IssieSavePhoto extends React.Component {
       cropFrame = <View
         style={{
           position: 'absolute',
-          width: this.state.cropData.width,
+          width: this.state.cropData.width ,
           height: this.state.cropData.height,
           top: this.state.cropData.y,
-          left: this.state.cropData.x,
+          left: this.state.cropData.x + this.state.cropXOffset,
 
           borderColor: 'black',
           borderWidth: 5,
@@ -523,7 +549,6 @@ export default class IssieSavePhoto extends React.Component {
 
       </View>
     }
-
 
     return (
       <View style={styles.container}
@@ -542,10 +567,10 @@ export default class IssieSavePhoto extends React.Component {
         {this.state.pdf ?
           <View style={styles.bgImage}>
             {this.state.pdfInProcess ?
-                <View style={{ position: 'absolute', top: '25%', left: 0, width: '100%', zIndex: 1000, alignItems: 'center' }}>
+              <View style={{ position: 'absolute', top: '25%', left: 0, width: '100%', zIndex: 1000, alignItems: 'center' }}>
 
-                  <Progress.Circle size={200} progress={this.state.pdfInProcess/this.state.pdfPageCount} showsText={true} textStyle={{ zIndex: 100, fontSize: 25 }} formatText={(prog) => "מייבא דף " + this.state.pdfInProcess + ' מתוך ' + (this.state.pdfPageCount)} thickness={5} />
-                </View> : null}
+                <Progress.Circle size={200} progress={this.state.pdfInProcess / this.state.pdfPageCount} showsText={true} textStyle={{ zIndex: 100, fontSize: 25 }} formatText={(prog) => "מייבא דף " + this.state.pdfInProcess + ' מתוך ' + (this.state.pdfPageCount)} thickness={5} />
+              </View> : null}
             <ViewShot ref="viewShot" options={{ format: "jpg", quality: 0.9 }}
               style={{
                 flex: 1, position: 'absolute', width: this.state.pdfWidth, height: this.state.pdfHeight
@@ -569,16 +594,18 @@ export default class IssieSavePhoto extends React.Component {
             </ViewShot>
             {PageNameInput}
           </View> :
-          <ImageBackground
-            style={styles.bgImage}
-            imageStyle={{ resizeMode: 'contain' }}
-            blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
-            source={this.state.phase == OK_Cancel ? { uri } : undefined}
-          >
-            {cropFrame}
-            {PageNameInput}
+          <View style={{ width: this.state.windowSize.width, height: this.state.windowSize.height }}>
+            <ImageBackground
+              style={styles.bgImage}
+              imageStyle={{ resizeMode: 'contain' }}
+              blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
+              source={this.state.phase == OK_Cancel ? { uri } : undefined}
+            >
+              {cropFrame}
+              {PageNameInput}
 
-          </ImageBackground>}
+            </ImageBackground>
+          </View>}
         {this.state.PickName || this.state.pdf && this.state.pdfPageCount < 2 || !this.state.pdf ?
           null :
           getPageNavigationButtons(0, '100%',
@@ -600,6 +627,7 @@ const styles = StyleSheet.create({
   bgImage: {
     flex: 1,
     width: '100%',
+    height: '100%',
     top: dimensions.toolbarHeight + dimensions.toolbarMargin,
     alignItems: 'center'
   }
