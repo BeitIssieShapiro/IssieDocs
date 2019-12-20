@@ -10,10 +10,10 @@ export default function FolderNew(props) {
     let folderColor = folderColors[props.index % folderColors.length];
     let folderAndIcon = getFolderAndIcon(props.name);
     let caption = normalizeTitle(folderAndIcon.name);
-    let captionLimit = props.isLandscape?15:10;
+    let captionLimit = props.isLandscape?20:14;
 
     if (props.editMode) {
-        captionLimit -= 2;
+        captionLimit -= 3;
     }
 
     if (!props.asTitle && caption.length > captionLimit) {
@@ -48,14 +48,14 @@ export default function FolderNew(props) {
                     <View
                         style={{ flexDirection: 'row-reverse', alignItems: 'center' }}
                     >
-                        {props.editMode ? null :
+                        
                             <View style={{ alignContent: 'center' , paddingRight:20}}>
                                 <Icon name="folder" size={38} color={folderColor} />
                                 <View style={{ position: 'absolute', left: 10, top: 11 }}>
                                     {folderAndIcon.icon.length > 0 ? <Icon name={folderAndIcon.icon} size={20} color='white' /> : null}
                                 </View>
                             </View>
-                        }
+                        
                         <Spacer width={8}/>
                         <Text style={[FolderTextStyle, (props.current || props.asTitle) && {fontSize:32}]}>{caption}</Text>
                     </View>
@@ -66,7 +66,7 @@ export default function FolderNew(props) {
 {
     props.editMode && !props.fixedFolder ?
         <View style={{ position:'absolute', left:0, top:10, flexDirection: 'row', alignItems: 'center' }}>
-            <Icon name={"expand-less"} size={55} color={props.index == 1?'gray':'black'} onPress={props.index > 1?props.onMoveUp:undefined} />
+            <Icon name={"expand-less"} size={55}  color={props.index == 1?'gray':'black'} onPress={props.index > 1?props.onMoveUp:undefined} />
             <Icon name={"expand-more"} size={55} color={props.isLast?'gray':'black'} onPress={props.isLast?undefined:props.onMoveDown} />
         </View> :
         <View />

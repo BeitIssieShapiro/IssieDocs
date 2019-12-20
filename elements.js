@@ -30,7 +30,7 @@ export const semanticColors = {
     cancelButton: colors.gray,
     okButton: colors.navyBlue,
     deleteButton: colors.red,
-    addButton: 'white',
+    addButton: '#1aaeff',
     undoButton: colors.gray,
     InactiveModeButton: colors.gray,
     activeZoomButton: colors.orange,
@@ -40,13 +40,13 @@ export const semanticColors = {
     moveInZoomButton: "#D16F28",
     header: '#183d72',
     header2: 'white',
-    mainAreaBG: '#eeeded',
+    mainAreaBG: '#f1f2f4',
     title: '#DFE8EC',
-    subTitle: '#315890',
+    subTitle: 'white', //'#315890',
     titleText: '#183d72',
     inputBorder: '#d0cfcf',
     selectedFolder: '#C7D4E8',
-    editPhotoButton: 'white',
+    editPhotoButton: '#1aaeff',
     availableIconColor: '#9a9fa9',
     selectedListItem: '#e0ecf7',
     listBackground: '#f1f2f4'
@@ -420,7 +420,7 @@ export function removeFileExt(filePath) {
 export const globalStyles = StyleSheet.create({
     headerStyle: {
         backgroundColor: semanticColors.header,
-        height: 75
+        height: 55
     },
     headerTitleStyle: {
         fontSize: 30,

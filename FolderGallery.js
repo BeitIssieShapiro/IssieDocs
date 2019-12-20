@@ -39,7 +39,7 @@ const BEFORE_DELETE_FOLDER_AND_PAGES_QUESTION = 'בחרת למחוק דפים ו
 
 export default class FolderGallery extends React.Component {
     static navigationOptions = ({ navigation }) => {
-        let title = 'בית$home';
+        let title = 'IssieDocs - שולחן העבודה שלי';
         let menuIcon = 'menu';
 
         let isMenuOpened = navigation.getParam('isMenuOpened')
@@ -421,7 +421,7 @@ export default class FolderGallery extends React.Component {
         //        let folderColor = folderColors[fIndex % folderColors.length];
         let viewStyle = Settings.get('viewStyle');
         let asTiles = viewStyle === 2;
-        let treeWidth = .34 * this.state.windowSize.width;
+        let treeWidth = .36 * this.state.windowSize.width;
         let pagesContainerWidth = this.state.windowSize.width - treeWidth;
         let tileWidth = 143;
         let numColumnsForTiles = Math.floor(pagesContainerWidth / tileWidth);
@@ -450,19 +450,19 @@ export default class FolderGallery extends React.Component {
                     {
                         getIconButton(() => {
                             this.newFromCamera();
-                        }, semanticColors.addButton, "camera-alt", 50)
+                        }, semanticColors.addButton, "camera-alt", 45)
                     }
                     <Spacer />
                     {
                         getIconButton(() => {
                             this.newFromMediaLib();
-                        }, semanticColors.addButton, "photo-library", 50)
+                        }, semanticColors.addButton, "photo-library", 45)
                     }
                     <Spacer />
                     {
                         getIconButton(() => {
                             this.newFromFileExplorer();
-                        }, semanticColors.addButton, "picture-as-pdf", 50)
+                        }, semanticColors.addButton, "picture-as-pdf", 45)
                     }
                     <Spacer />
                     {
@@ -470,7 +470,7 @@ export default class FolderGallery extends React.Component {
                             this.props.navigation.navigate('CreateFolder',
                             {saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, true),
                             isLandscape: this.isLandscape()});
-                        }, semanticColors.addButton, "create-new-folder", 50)
+                        }, semanticColors.addButton, "create-new-folder", 45)
                     }
 
                     {/*right buttons */}
@@ -480,7 +480,7 @@ export default class FolderGallery extends React.Component {
                                 let selected = this.state.editMode ? undefined : this.state.selected;
 
                                 this.setState({ editMode: !this.state.editMode, selected });
-                            }, semanticColors.addButton, this.state.editMode ? "clear" : "edit", 50)
+                            }, semanticColors.addButton, this.state.editMode ? "clear" : "edit", 35)
                         }
                         {<Spacer width={10} />}
 

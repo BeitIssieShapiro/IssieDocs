@@ -80,10 +80,10 @@ export default class IssieEditPhoto extends React.Component {
       onMoveShouldSetPanResponderCapture: (evt, gestureState) => false && this._shouldDragText(evt, gestureState) && (Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3),
       onPanResponderMove: (evt, gestureState) => {
         let xText = this.s2aW(gestureState.moveX - DRAG_ICON_SIZE / 2);
-        if (xText < 25 + this.state.sideMargin) {
-          xText = 25 + this.state.sideMargin;
-        } else if (xText > this.state.canvasW + this.state.sideMargin+DRAG_ICON_SIZE/2) {
-          xText = this.state.canvasW + this.state.sideMargin+DRAG_ICON_SIZE/2;
+        if (xText < 25) {
+          xText = 25 ;
+        } else if (xText > this.state.canvasW + DRAG_ICON_SIZE/2) {
+          xText = this.state.canvasW + DRAG_ICON_SIZE/2;
         }
 
         let yText = this.s2aH(gestureState.moveY - DRAG_ICON_SIZE / 2)
@@ -337,9 +337,9 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   //a = absolute, s=screen, c=canvas
-  s2aW = (w) => { return (w) / this.state.zoom - this.state.xOffset }
+  s2aW = (w) => { return (w - this.state.sideMargin) / this.state.zoom - this.state.xOffset }
   s2aH = (h) => { return (h - this.state.topView) / this.state.zoom - this.state.yOffset }// - this.state.inputTextHeight/2}
-  a2cW = (w) => { return (w + this.state.xOffset) * this.state.zoom  }
+  a2cW = (w) => { return (w + this.state.xOffset) * this.state.zoom  + this.state.sideMargin }
   a2cH = (h) => { return (h + this.state.yOffset) * this.state.zoom + topLayer } // + this.state.inputTextHeight / 2 }
 
   findColor = (fc) => {
@@ -694,8 +694,8 @@ export default class IssieEditPhoto extends React.Component {
               minimumZoomScale={1}
               maximumZoomScale={maxZoom}
               zoomScale={this.state.zoom}
-              style={{ flex: 1 }}
-              contentContainerStyle={{ flex: 1 }}
+              style={{ position:'absolute', top: 0, height:this.state.canvasH, left: this.state.sideMargin, width: this.state.canvasW }}
+              contentContainerStyle={{ flex: 1}}
             >
               {this.state.sharing ?
                 <View style={{ position: 'absolute', top: '25%', left: 0, width: this.state.canvasW, zIndex: 1000, backgroundColor: 'white', alignItems: 'center' }}>
@@ -904,7 +904,7 @@ export default class IssieEditPhoto extends React.Component {
       }
       scale={this.state.zoom}
       text={this.state.canvasTexts}
-      containerStyle={[styles.container]}
+      containerStyle={styles.container}
       canvasStyle={[styles.canvas, { transform: [{ translateX: this.state.xOffset }, { translateY: this.state.yOffset }] }]}
       localSourceImage={{ filename: this.state.currentFile, mode: 'AspectFit' }}
       onStrokeEnd={this.SketchEnd}
