@@ -126,21 +126,23 @@ export default class IssieCreateFolder extends React.Component {
         </View>
 
 
-        let iconsSelection = <View style={{
+        let iconsSelection = <View style={{flex:1, alignItems: 'flex-end'}}>
+        <Text style={styles.titleText}>סמל</Text>
+
+        <View style={{
             flex: 2.7,
-            top: 25,
             borderRadius: 10,
             backgroundColor: 'white',
             flexDirection: 'column',
             alignItems: 'center'
         }}>
-            <Text style={styles.subTitleText}>מבחר סמלים</Text>
 
             <FlatList
 
                 data={availableIcons}
                 renderItem={({ item }) => (
-                    <TouchableOpacity style={{ padding: 20 }} onPress={() => {
+                    <TouchableOpacity style={{ padding: 20, backgroundColor:
+                        this.state.icon ===  item? 'gray':'transparent'}} onPress={() => {
                         this.setState({ icon: item, yOffset: 0 })
                     }}>
                         <Icon name={item} size={55} color={semanticColors.availableIconColor} />
@@ -150,7 +152,7 @@ export default class IssieCreateFolder extends React.Component {
                 numColumns={this.isLandscape ? 5 : 5}
                 keyExtractor={(item, index) => index.toString()}
             />
-
+            </View>
         </View>
         return (
             <View style={styles.container}
@@ -171,12 +173,12 @@ export default class IssieCreateFolder extends React.Component {
                     height: '85%',
                     top: dimensions.toolbarHeight,
                     left: '5%', width: '90%',
-
                     transform: [{ translateY: this.state.yOffset }]
                 }}
                     {...this._panResponderMove.panHandlers}>
 
-                    <View style={{ flexDirection: 'row-reverse' }}>
+                    <View style={[{flexDirection: 'row-reverse'}, 
+                    this.isLandscape()?{height:'100%' }:{}]}>
                             <View style={{
                                 flex: 1, flexDirection: 'column', alignItems: 'flex-end',
                             }}>
@@ -185,18 +187,7 @@ export default class IssieCreateFolder extends React.Component {
                                     onChangeText={(txt) => this.setState({ name: txt })}
                                 />
                             </View>
-                            <View style={{ flex: 1, paddingRight: 100, flexDirection: 'column', alignItems: 'flex-end' }}>
-                                <Text style={styles.titleText}>סמל</Text>
-                                <View style={{
-                                    backgroundColor: 'white',
-                                    borderColor: semanticColors.inputBorder,
-                                    borderWidth: 1,
-
-                                    width: 70, height: 70, justifyContent: 'center'
-                                }}>
-                                    {this.state.icon !== '' ? <Icon name={this.state.icon} size={55} /> : null}
-                                </View>
-                            </View>
+                            <Spacer />
                      
                         {this.isLandscape() ? iconsSelection : null}
                     </View>

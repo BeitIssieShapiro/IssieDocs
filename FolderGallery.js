@@ -39,7 +39,7 @@ const BEFORE_DELETE_FOLDER_AND_PAGES_QUESTION = 'בחרת למחוק דפים ו
 
 export default class FolderGallery extends React.Component {
     static navigationOptions = ({ navigation }) => {
-        let title = 'IssieDocs - שולחן העבודה שלי';
+        let title = 'בית$home';
         let menuIcon = 'menu';
 
         let isMenuOpened = navigation.getParam('isMenuOpened')

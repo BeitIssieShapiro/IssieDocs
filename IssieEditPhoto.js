@@ -12,11 +12,11 @@ import * as RNFS from 'react-native-fs';
 import Share from 'react-native-share';
 import DoQueue from './do-queue';
 import FadeInView from './FadeInView'
-import { Spacer, globalStyles } from './elements'
+import { Spacer, globalStyles, getRoundedButton } from './elements'
 import * as Progress from 'react-native-progress';
 
 import {
-  getSquareButton, colors, DEFAULT_FOLDER_NAME, getFolderAndIcon, getImageDimensions,
+  colors, DEFAULT_FOLDER_NAME, getFolderAndIcon, getImageDimensions,
   getPageNavigationButtons,
   semanticColors, getIconButton, dimensions, availableTextSize, availableBrushSize, availableColorPicker
 } from './elements'
@@ -80,17 +80,19 @@ export default class IssieEditPhoto extends React.Component {
       onMoveShouldSetPanResponderCapture: (evt, gestureState) => false && this._shouldDragText(evt, gestureState) && (Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3),
       onPanResponderMove: (evt, gestureState) => {
         let xText = this.s2aW(gestureState.moveX - DRAG_ICON_SIZE / 2);
-        if (xText < 25) {
-          xText = 25;
-        } else if (xText > this.state.canvasW) {
-          xText = this.state.canvasW;
+        if (xText < 25 + this.state.sideMargin) {
+          xText = 25 + this.state.sideMargin;
+        } else if (xText > this.state.canvasW + this.state.sideMargin+DRAG_ICON_SIZE/2) {
+          xText = this.state.canvasW + this.state.sideMargin+DRAG_ICON_SIZE/2;
         }
 
         let yText = this.s2aH(gestureState.moveY - DRAG_ICON_SIZE / 2)
-        if (yText < 0) {
-          yText = 0;
+        if (yText < -this.state.yOffset) {
+          yText = -this.state.yOffset;
         } else if (yText > (this.state.canvasH - this.inputTextHeight)) {
           yText = this.state.canvasH - this.inputTextHeight;
+        } else if (yText > this.state.canvasH - this.state.keyboardHeight - this.state.yOffset - 10) {
+          yText = this.state.canvasH - this.state.keyboardHeight - this.state.yOffset - 10;
         }
 
         let inputTextWidth = this.limitTextWidth(this.state.inputTextWidth, xText, yText);
@@ -118,6 +120,9 @@ export default class IssieEditPhoto extends React.Component {
         let newYOffset = yOffsetBegin + gestureState.dy;
         if (newYOffset > 0) {
           newYOffset = 0;
+        }
+        if (newYOffset < -(this.state.keyboardHeight-5)) {
+          newYOffset = -(this.state.keyboardHeight-5);
         }
         this.setState({
           yOffsetBegin, yOffset: newYOffset
@@ -181,12 +186,14 @@ export default class IssieEditPhoto extends React.Component {
 
   _keyboardDidShow = (e) => {
     let yOffset = this.state.yOffset;
+    let kbTop = this.state.canvasH - e.endCoordinates.height;
     // if keyboard hides the textInput, scroll the window
     if (this.state.showTextInput &&
-      this.state.yText + yOffset >= this.state.canvasH - e.endCoordinates.height) {
-      yOffset = -(e.endCoordinates.height + this.state.inputTextHeight);
+      this.state.yText + 25 >= kbTop) {
+        yOffset = kbTop - (this.state.yText + 25);
     }
-    this.setState({ yOffset, keyboardHeight: e.endCoordinates.height });
+    this.setState({ yOffset, keyboardHeight: e.endCoordinates.height,
+    msg: "yText="+this.state.yText+", keyb="+ e.endCoordinates.height+",canv="+this.state.canvasH});
   }
 
   _keyboardDidHide = (e) => {
@@ -330,9 +337,9 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   //a = absolute, s=screen, c=canvas
-  s2aW = (w) => { return (w - this.state.sideMargin) / this.state.zoom - this.state.xOffset }
+  s2aW = (w) => { return (w) / this.state.zoom - this.state.xOffset }
   s2aH = (h) => { return (h - this.state.topView) / this.state.zoom - this.state.yOffset }// - this.state.inputTextHeight/2}
-  a2cW = (w) => { return (w + this.state.xOffset) * this.state.zoom + this.state.sideMargin }
+  a2cW = (w) => { return (w + this.state.xOffset) * this.state.zoom  }
   a2cH = (h) => { return (h + this.state.yOffset) * this.state.zoom + topLayer } // + this.state.inputTextHeight / 2 }
 
   findColor = (fc) => {
@@ -345,15 +352,20 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   TextModeClick = (ev) => {
+
+    //check that the click is in the canvas area:
+    if (ev.nativeEvent.pageX < this.state.sideMargin ||
+      ev.nativeEvent.pageX > this.state.sideMargin + this.state.canvasW) {
+      return;
+    }
     let needCanvasUpdate = false;
     if (this.state.showTextInput) {
       //a text box is visible and a click was pressed - save the text box contents first:
       needCanvasUpdate = this.SaveText();
     }
 
-    //check that the click is in the canvas area:
-    let x = this.s2aW(ev.nativeEvent.pageX);
     //Alert.alert("x:"+x+", xOffset:"+this.state.xOffset+",zoom:"+ this.state.zoom)
+    let x = this.s2aW(ev.nativeEvent.pageX);
     let y = this.s2aH(ev.nativeEvent.pageY) - this.state.fontSize / 2;
 
     let textElemIndex = this.findTextElement({ x: x, y: y });
@@ -651,10 +663,10 @@ export default class IssieEditPhoto extends React.Component {
       flex: 1,
       position: 'absolute',
       top: topLayer,
-      left: this.state.sideMargin,
-      width: this.state.canvasW,
-      height: this.state.canvasH,
-      zIndex: 5
+      left: 0,
+      width: '100%',
+      height: '100%',
+      zIndex: 5,
     };
     let toolbarSideMargin = this.state.sideMargin > 250 ? 250 : this.state.sideMargin;
 
@@ -672,7 +684,7 @@ export default class IssieEditPhoto extends React.Component {
         {/* <Text style={{ flex: 1, position: 'absolute', top: 0, left: 0, zIndex: 10000, height: 25 }}>{"yOffset:" + this.state.yOffset + ", kbH:" + this.state.keyboardHeight}</Text> */}
         <TouchableOpacity onPress={this.TextModeClick}
           activeOpacity={1}
-          style={[drawingAreaStyle, { backgroundColor: 'black' }]} >
+          style={drawingAreaStyle} >
           <View style={{ flex: 1 }}
             ref={v => this.topView = v}
             pointerEvents={this.state.textMode ? 'box-only' : 'auto'}
@@ -694,6 +706,8 @@ export default class IssieEditPhoto extends React.Component {
             </ScrollView>
           </View>
         </TouchableOpacity>
+        
+        {/* Toolbar */}
         <View style={{
           flex: 1, position: 'absolute', top: 0, width: '100%',
           height: dimensions.toolbarHeight, backgroundColor: semanticColors.subTitle,
@@ -729,9 +743,7 @@ export default class IssieEditPhoto extends React.Component {
               left: this.state.windowW / 2 - toolbarSideMargin - 40,
               width: 80,
               height: '65%', backgroundColor: 'white',
-              shadowColor: "black",
-              shadowOpacity: 0.6,
-              shadowOffset: { width: 2, height: 5 },
+              
               elevation: 4,
               justifyContent: 'center',
               alignItems: 'center'
@@ -774,25 +786,31 @@ export default class IssieEditPhoto extends React.Component {
 
               {
                 getIconButton(() => this.onBrushButtonPicker(),
-                  this.state.textMode ? semanticColors.editPhotoButton : this.state.color, "brush", 55, false, 45, !this.state.textMode) //(20 + this.state.strokeWidth * 3))
+                  this.state.textMode ? semanticColors.editPhotoButton : this.state.color, "edit", 55, false, 45, !this.state.textMode) //(20 + this.state.strokeWidth * 3))
               }
             </View>
           </View>
         </View>
-
+        {/*debug msg * /}
+        <View style={{position:'absolute', top:0, height:40, left:0, width:200,zIndex:100}}>
+          <Text size={20}>{this.state.msg}</Text>
+        </View>
+        {/** */}
         {/*View for selecting color*/}
         <FadeInView height={this.state.showColorPicker ? 70 : 0} style={[styles.pickerView, { left: this.state.sideMargin, width: this.state.canvasW }]}>
           <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
             {availableColorPicker.map((c, i) => this.getColorButton((c), colorButtonSize, i))}
           </View>
         </FadeInView>
-        {/*View for text size*/}
+
+        {/*View for selecting text size*/}
         <FadeInView height={this.state.showTextSizePicker && this.state.textMode ? 70 : 0} style={[styles.pickerView, { left: this.state.sideMargin, width: this.state.canvasW }]}>
           <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-evenly', alignContent: 'center', alignItems: 'center' }}>
             {availableTextSize.map((size, i) => this.getTextSizePicker(this.state.color, colorButtonSize, size, i))}
           </View>
         </FadeInView>
-        {/*View for brush size*/}
+
+        {/*View for selecting brush size*/}
         <FadeInView height={this.state.showBrushSizePicker && !this.state.textMode ? 70 : 0} style={[styles.pickerView, { left: this.state.sideMargin, width: this.state.canvasW }]}>
           <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
             {availableBrushSize.map((size, i) => this.getBrushSizePicker(this.state.color, colorButtonSize, size, i))}
@@ -812,8 +830,24 @@ export default class IssieEditPhoto extends React.Component {
         {this.getArrow(TOP, () => this.setState({ yOffset: this.state.yOffset + 50 }))}
         {this.getArrow(RIGHT, () => this.setState({ xOffset: this.state.xOffset - 50 }))}
         {this.getArrow(BOTTOM, () => this.setState({ yOffset: this.state.yOffset - 50 }))}
-        {this.getPageNavigationArrows()}
 
+        {/** previous page button */}
+        {
+          this.state.page && this.state.page.pages.length  > 0 && this.state.currentFile !== this.state.page.pages[0]?
+          <View style={{position:'absolute', bottom:50, left:10, width:155, height:40, zIndex:100}}>
+              {getRoundedButton(() => this.movePage(-1), 'chevron-left', 'דף קודם', 30, 30, { width: 155, height: 40 }, 'row-reverse')}
+          </View> :
+          null
+        }
+        {/** next page button */}
+        {
+          this.state.page && this.state.page.pages.length > 0 && 
+          this.state.currentFile !== this.state.page.pages[this.state.page.pages.length - 1] ?
+          <View style={{position:'absolute', bottom:50, right:10, width:155, height:40, zIndex:100}}>
+              {getRoundedButton(() => this.movePage(1), 'chevron-right', 'דף הבא', 30, 30, { width: 155, height: 40 }, 'row')}
+          </View> :
+          null
+        }
       </View >
     );
   }
@@ -847,17 +881,7 @@ export default class IssieEditPhoto extends React.Component {
       />
     </View>
   }
-  getPageNavigationArrows = () => {
-
-    if (!this.state.page || this.state.page.pages.length == 0) {
-      return <View />;
-    }
-
-    return getPageNavigationButtons(0, '100%',
-      this.state.currentFile == this.state.page.pages[0], //isFirst
-      this.state.currentFile == this.state.page.pages[this.state.page.pages.length - 1], //isLast
-      this.movePage);
-  }
+ 
 
   getCanvas = () => {
     return <RNSketchCanvas
@@ -984,7 +1008,7 @@ export default class IssieEditPhoto extends React.Component {
         alignItems: 'center'
       }}
       >
-        <Icon name={"brush"} color={color} size={brushSize * 4 + 12}></Icon>
+        <Icon name={"edit"} color={color} size={brushSize * 4 + 12}></Icon>
       </View>
     </TouchableOpacity>
   }
@@ -999,7 +1023,10 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getTextInput = (x, y) => {
-    return <View style={{ flex: 1, flexDirection: 'row-reverse', position: 'absolute', left: x - this.getTextWidth(), top: y, zIndex: 20 }}>
+    return (
+    <View style={{ flex: 1, flexDirection: 'row-reverse', position: 'absolute', 
+      left: x - this.getTextWidth(), top: y, zIndex: 20
+    }}>
       <View {...this._panResponder.panHandlers} style={{ top: -5 }}>
         <Icon name='open-with' size={DRAG_ICON_SIZE} />
       </View>
@@ -1021,25 +1048,32 @@ export default class IssieEditPhoto extends React.Component {
         autoCorrect={false}
         multiline={true}
         autoFocus
-
+        
         style={{
-          backgroundColor: 'white',
+          backgroundColor: 'transparent',
           textAlign: 'right',
           width: this.getTextWidth(),
           height: this.getTextHeight(),
           borderWidth: 0,
           fontSize: this.state.fontSize,
-          color: this.state.color
+          color: this.state.color,
+          zIndex:21
         }}
 
 
         value={this.state.inputTextValue}
       />
-    </View >
+      <View style={{position:'absolute', left:DRAG_ICON_SIZE+3, top:0, 
+          width: this.state.inputTextWidth+5, height: this.state.inputTextHeight,
+          zIndex:20
+          }}
+          backgroundColor={this.state.color === '#fee100'?'gray':'yellow'}
+      />
+    </View >);
   }
 
 
-  getTextWidth = () => Math.max(this.state.inputTextWidth + 40, 40); //< INITIAL_TEXT_SIZE - 20 ? INITIAL_TEXT_SIZE : this.state.inputTextWidth + this.state.fontSize * 2;
+  getTextWidth = () => 2000;//Math.max(this.state.inputTextWidth + 40, 40); //< INITIAL_TEXT_SIZE - 20 ? INITIAL_TEXT_SIZE : this.state.inputTextWidth + this.state.fontSize * 2;
   getTextHeight = () => Math.max(this.state.inputTextHeight, this.state.fontSize + 1.2);
 }
 
@@ -1065,9 +1099,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
-    shadowColor: 'black',
-    shadowOffset: { width: 10, height: 10 },
-    shadowOpacity: 3
   },
   canvas: {
     flex: 1,

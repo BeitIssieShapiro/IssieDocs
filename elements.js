@@ -272,10 +272,10 @@ export function getFileNameDialog(fileName,
                     width: '100%',
                     alignItems: 'center'
                 }}>
-                    <Text style={[styles.titleText, { width: isLandscape ? '50%' : '30%' }]}>תיקיה</Text>
+                    <Text style={[styles.titleText, { width: isLandscape ? '40%' : '30%' }]}>תיקיה</Text>
                     {getRoundedButton(() => navigation.navigate('CreateFolder',
                         { saveNewFolder: onSaveNewFolder }),
-                        'create-new-folder', 'תיקיה חדשה', 30, 30, { width: 200, height: 40 })}
+                        'create-new-folder', 'תיקיה חדשה', 30, 30, { width: 250, height: 40 })}
                 </View>
                 <Spacer />
                 <View style={{
@@ -393,7 +393,9 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
             left: left,
             width: width,
             justifyContent: 'space-between',
-            zIndex: 1001
+            zIndex: 1001,
+            backgroundColor:'green'
+
         }}
     >
 

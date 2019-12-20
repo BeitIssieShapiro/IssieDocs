@@ -48,7 +48,7 @@ function sortLastUpdate(arr) {
 
 export default class GalleryScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
-    let folder = navigation.getParam('folder', 'IssieDocs - שולחן העבודה שלי');
+    let folder = navigation.getParam('folder', 'בית$home');
     folder = folder.split('$')[0]
 
     let allFolders = navigation.getParam('allFolders', false);

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import {
-  ImageBackground, TextInput, StyleSheet, View, Text,
+  ImageBackground, TouchableOpacity, StyleSheet, View, Text,
   Alert, Dimensions, PanResponder, ImageEditor
 } from 'react-native';
 import { FOLDERS_DIR } from './GaleryScreen';
@@ -9,6 +9,7 @@ import * as RNFS from 'react-native-fs';
 import Pdf from 'react-native-pdf';
 import ViewShot from "react-native-view-shot";
 import { StackActions } from 'react-navigation';
+import { Icon } from 'react-native-elements'
 
 import {
   getIconButton,
@@ -30,12 +31,24 @@ const headerHeight = 60;
 const panBroderDistance = 80;
 
 export default class IssieSavePhoto extends React.Component {
-  static navigationOptions = {
+  static navigationOptions = ({ navigation }) => {
+    return {
     title: 'שמור דף',
     headerStyle: globalStyles.headerStyle,
     headerTintColor: 'white',
     headerTitleStyle: globalStyles.headerTitleStyle,
-  };
+    headerLeft:(<View >
+          <TouchableOpacity onPress={() => { navigation.pop() }}
+            activeOpacity={1}
+            style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Icon name='keyboard-arrow-left' color='white' size={35} />
+            <Text style={{ color: 'white', fontSize: 20, top: 2 }}>{'בית'}</Text>
+            <Spacer width={10} />
+            <Icon name={'home'} color='white' size={30} />
+          </TouchableOpacity>
+
+        </View>)
+  }};
 
   constructor() {
     super();
