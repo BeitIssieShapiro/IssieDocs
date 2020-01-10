@@ -4,6 +4,7 @@ import {
   AppRegistry, Image, ScrollView, StyleSheet, TextInput, View,
   TouchableOpacity, Text, Alert, PanResponder, Dimensions, Keyboard
 } from 'react-native';
+import {Svg, Path} from 'react-native-svg'
 import { Icon } from 'react-native-elements'
 import RNSketchCanvas from './modified_canvas/index';
 import LinearGradient from 'react-native-linear-gradient';
@@ -675,7 +676,7 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     let spaceBetweenButtons = <Spacer width={23} />
-    let colorButtonSize = this.state.canvasW / (availableColorPicker.length * 1.4);
+    let colorButtonSize = this.state.canvasW / (availableColorPicker.length * 1.1);
 
     return (
 
@@ -736,30 +737,45 @@ export default class IssieEditPhoto extends React.Component {
                 this.setState({ needCanvasUpdate: true, needCanavaDataSave: true });
               }, semanticColors.editPhotoButton, "redo", 55)
             }
-            { /* text size indicator */}
+            { /* text size preview */}
 
             <View style={{
               position: 'absolute',
-              left: this.state.windowW / 2 - toolbarSideMargin - 40,
-              width: 80,
-              height: '65%', backgroundColor: 'white',
-              
-              elevation: 4,
+              left: this.state.windowW / 2 - toolbarSideMargin - 50,
+              width: 100,
+              height: '100%', 
+              backgroundColor: 'transparent',//'#eef4fa',
+              //borderWidth:3,
+              //borderColor: 'rgba(238,244,250, .7)',
+              borderRadius: 24.5,
               justifyContent: 'center',
-              alignItems: 'center'
+              alignItems: 'center',
+              alignContent: 'center'
             }}>
               {this.state.textMode ?
                 <Text style={{
                   fontSize: this.state.fontSize,
                   color: this.state.color,
                   textAlignVertical: 'center'
-                }}>אבג</Text> :
-                <View style={{
-                  width: this.state.strokeWidth + 2,
-                  height: this.state.strokeWidth + 2,
-                  borderRadius: (this.state.strokeWidth + 2) / 2,
-                  backgroundColor: this.state.color
-                }} />}
+                }}>א ב ג</Text> :
+                // <View style={{
+                //   width: this.state.strokeWidth + 2,
+                //   height: this.state.strokeWidth + 2,
+                //   borderRadius: (this.state.strokeWidth + 2) / 2,
+                //   backgroundColor: this.state.color
+                // }} />
+                //d="M160,303 C305,258 285,196 285,196 C285,196 243,70 176,146 C109,222 525,312 482,221 C439,130 347,191 347,191 C347,191 180,328 347,292 C514,256 433,110 381,124 C329,138 294,162 294,162 "
+
+                <Svg height="100%" width="100%">
+                  <Path
+                    stroke={this.state.color}
+                    strokeWidth={this.state.strokeWidth}
+                    d="M20 10 L75 45 "
+                    fill="none"
+                   
+                  />
+                </Svg>
+                }
             </View>
 
             <View style={{
@@ -835,7 +851,7 @@ export default class IssieEditPhoto extends React.Component {
         {
           this.state.page && this.state.page.pages.length  > 0 && this.state.currentFile !== this.state.page.pages[0]?
           <View style={{position:'absolute', bottom:50, left:10, width:155, height:40, zIndex:100}}>
-              {getRoundedButton(() => this.movePage(-1), 'chevron-left', 'דף קודם', 30, 30, { width: 155, height: 40 }, 'row-reverse')}
+              {getRoundedButton(() => this.movePage(-1), 'chevron-left', 'דף קודם', 30, 30, { width: 155, height: 40 }, 'row-reverse', true)}
           </View> :
           null
         }
@@ -844,7 +860,7 @@ export default class IssieEditPhoto extends React.Component {
           this.state.page && this.state.page.pages.length > 0 && 
           this.state.currentFile !== this.state.page.pages[this.state.page.pages.length - 1] ?
           <View style={{position:'absolute', bottom:50, right:10, width:155, height:40, zIndex:100}}>
-              {getRoundedButton(() => this.movePage(1), 'chevron-right', 'דף הבא', 30, 30, { width: 155, height: 40 }, 'row')}
+              {getRoundedButton(() => this.movePage(1), 'chevron-right', 'דף הבא', 30, 30, { width: 155, height: 40 }, 'row', true)}
           </View> :
           null
         }
@@ -995,15 +1011,15 @@ export default class IssieEditPhoto extends React.Component {
 
   getBrushSizePicker = (color, size, brushSize, index) => {
     return <TouchableOpacity
+      style={{width: size, height: size}}
       onPress={() => this.onBrushSize(brushSize)}
       activeOpacity={0.7}
       key={"" + index}
     >
       <View style={{
+        flex:1,
         backgroundColor: brushSize === this.state.strokeWidth ? '#eeeded' : 'transparent',
         borderRadius: size / 2,
-        width: size,
-        height: size,
         justifyContent: 'center',
         alignItems: 'center'
       }}

@@ -3,6 +3,7 @@ package com.issiedoc3;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import com.horcrux.svg.SvgPackage;
 import org.devio.rn.splashscreen.SplashScreenReactPackage;
 import io.github.airamrguez.RNMeasureTextPackage;
 import com.github.amarcruz.rntextsize.RNTextSizePackage;
@@ -43,6 +44,7 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new SvgPackage(),
             new SplashScreenReactPackage(),
             new RNMeasureTextPackage(),
             new RNTextSizePackage(),

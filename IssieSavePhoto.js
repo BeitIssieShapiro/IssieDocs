@@ -105,7 +105,7 @@ export default class IssieSavePhoto extends React.Component {
         if (this.state.cropping) {
           let panStartX = gestureState.x0, panStartY = gestureState.y0 - this.state.topView - headerHeight;
 
-          let msg = ("x:" + panStartX + " d-" + gestureState.dx + ", y:" + panStartY + " d-" + gestureState.dy);
+          //let msg = ("x:" + panStartX + " d-" + gestureState.dx + ", y:" + panStartY + " d-" + gestureState.dy);
           let cd = this.state.cropData;
           if (this.state.panStartX != panStartX && this.state.panStartY != panStartY) {
             let panStartCD = {};
@@ -147,7 +147,7 @@ export default class IssieSavePhoto extends React.Component {
             cd.x = ocd.x + gestureState.dx;
             cd.y = ocd.y + gestureState.dy;
           }
-          this.setState({ msg: msg, cropData: cd });;
+          this.setState({ cropData: cd });;
         }
       }
     });
@@ -560,6 +560,18 @@ export default class IssieSavePhoto extends React.Component {
       >
         {/* <Text>{this.state.msg}</Text> */}
 
+        <View style={{position:'absolute', left:5, top:5}}>
+          <Icon name={'border-style'} size={45} />
+        </View>
+        <View style={{position:'absolute', transform:[{rotate: 90 + 'deg' }], right:5, top:5}}>
+          <Icon name={'border-style'} size={45} />
+        </View>
+        <View style={{position:'absolute', transform:[{rotate: 180 + 'deg' }], right:5, bottom:5}}>
+          <Icon name={'border-style'} size={45} />
+        </View>
+        <View style={{position:'absolute', transform:[{rotate: 270 + 'deg' }], left:5, bottom:5}}>
+          <Icon name={'border-style'} size={45} />
+        </View>
       </View>
     }
 

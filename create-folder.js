@@ -13,14 +13,17 @@ import {
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
 
 export default class IssieCreateFolder extends React.Component {
-    static navigationOptions = {
-        title: 'יצירת תיקיה חדשה',
+    static navigationOptions = ({navigation}) => { 
+        let curFolder = navigation.getParam('currentFolderName', undefined);
+        let title = curFolder ? "עריכת שם תיקיה":"יצירת תיקיה חדשה";
+    return {
+        title,
         headerStyle: globalStyles.headerStyle,
         headerTintColor: 'white',
         headerTitleStyle: globalStyles.headerTitleStyle,
-    };
+    }};
 
-    constructor() {
+    constructor(props) {
         super();
 
         this._panResponderMove = PanResponder.create({
@@ -53,10 +56,19 @@ export default class IssieCreateFolder extends React.Component {
             }
         });
 
+        let name = '', icon = '';
+        let currentFolderName = props.navigation.getParam('currentFolderName', undefined);
+        if (currentFolderName) {
+            let curFolder = getFolderAndIcon(currentFolderName);
+            name = curFolder.name;
+            icon = curFolder.icon;
+        }
+
         this.state = {
             yOffset: 0,
-            name: '',
-            icon: ''
+            name,
+            icon,
+            currentFolderName
         };
     }
 
@@ -96,7 +108,7 @@ export default class IssieCreateFolder extends React.Component {
             if (folderName.length > 0 && this.state.icon.length > 0) {
                 folderName += '$' + this.state.icon;
             }
-            success = await saveNewFolder(folderName);
+            success = await saveNewFolder(folderName, this.state.currentFolderName);
         }
         if (success) {
             this.props.navigation.goBack();
@@ -104,8 +116,6 @@ export default class IssieCreateFolder extends React.Component {
     }
 
     render() {
-        //Alert.alert("isLandscape:"+this.isLandscape())
-
         let actionButtons = <View style={{
             position: 'absolute',
             height: '100%',
@@ -141,11 +151,10 @@ export default class IssieCreateFolder extends React.Component {
 
                 data={availableIcons}
                 renderItem={({ item }) => (
-                    <TouchableOpacity style={{ padding: 20, backgroundColor:
-                        this.state.icon ===  item? 'gray':'transparent'}} onPress={() => {
+                    <TouchableOpacity style={{ padding: 20}} onPress={() => {
                         this.setState({ icon: item, yOffset: 0 })
                     }}>
-                        <Icon name={item} size={55} color={semanticColors.availableIconColor} />
+                        <Icon name={item} size={55} color={this.state.icon ===  item? semanticColors.selectedIconColor : semanticColors.availableIconColor} />
                     </TouchableOpacity>
                 )}
                 //Setting the number of column

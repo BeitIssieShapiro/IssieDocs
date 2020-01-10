@@ -53,7 +53,7 @@ export async function sortFolders(folders) {
                 let len = folders.length;
                 folders = swapFolders(folders, foundFolderIndex, nextPlace);
                 nextPlace++;
-                msg += order[i]+ ": "+ foundFolderIndex + "->"+nextPlace
+                msg += order[i] + ": " + foundFolderIndex + "->" + nextPlace
                 if (len !== folders.length)
                     Alert.alert(msg)
             }
@@ -88,7 +88,7 @@ export async function pushFolderOrder(folderName) {
     let order = JSON.parse(orderStr.toString('utf8'));
 
     //verify this folderName is not in the array:
-    order = order.filter(f=>f !== folderName)
+    order = order.filter(f => f !== folderName)
 
     order.unshift(folderName);
     //Alert.alert(order)
@@ -99,5 +99,30 @@ export async function pushFolderOrder(folderName) {
         //on error 
         err => Promise.reject(err)
     )
+
+}
+
+export async function renameFolder(fromFolder, toFolder) {
+    let orderStr = '[]';
+    try {
+        orderStr = await RNFS.readFile(FOLDERS_DIR + ORDER_FILE_NAME, 'utf8');
+    } catch (e) {
+        //intentionally ignored, as sort.json is missing
+    }
+    // /Alert.alert(orderStr.toString('utf-8'))
+    let order = JSON.parse(orderStr.toString('utf8'));
+
+    //verify this folderName is not in the array:
+    let inx = order.findIndex(f => f === fromFolder)
+    if (inx != -1) {
+        order[inx] = toFolder;
+
+        RNFS.writeFile(FOLDERS_DIR + ORDER_FILE_NAME, JSON.stringify(order), 'utf8').then(
+            //Success
+            undefined,
+            //on error 
+            err => Promise.reject(err)
+        )
+    }
 
 }

@@ -48,8 +48,9 @@ export const semanticColors = {
     selectedFolder: '#C7D4E8',
     editPhotoButton: '#1aaeff',
     availableIconColor: '#9a9fa9',
+    selectedIconColor: '#1aaeff',
     selectedListItem: '#e0ecf7',
-    listBackground: '#f1f2f4'
+    listBackground: 'white' //'#f1f2f4'
 
 
 }
@@ -164,7 +165,7 @@ export function getSquareButton(func, color, selectedColor, txt, icon, size, sel
     </TouchableOpacity>
 }
 
-export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction) {
+export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction, dark) {
     let color = semanticColors.titleText;
     if (icon === 'check-circle') {
         color = 'green';
@@ -185,11 +186,7 @@ export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, 
                 alignItems: 'center',
                 alignContent: 'center',
                 justifyContent: 'flex-end',
-                backgroundColor: '#eeeded',
-                shadowColor: 'black',
-                shadowOpacity: 0.8,
-                elevation: 1,
-                shadowOffset: { width: 0, height: -2 },
+                backgroundColor: dark? '#a7a7a7':'#eeeded',
                 flexDirection: direction ? direction : 'row'
             }}>
             <Text style={{ position: 'absolute', paddingTop:5, left: 0, width: '80%', fontSize: textSize, color: semanticColors.titleText, textAlign: 'center' }}>{text ? text : ''}</Text>
@@ -203,7 +200,7 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
         activeOpacity={0.7}
         onPress={callback}
         style={{
-            backgroundColor: selected ? 'white' : 'transparent',
+            backgroundColor: selected ? '#eeeded' : 'transparent',
             width: size, height: size,
             alignContent: 'center',
             alignItems: 'center',
@@ -275,7 +272,7 @@ export function getFileNameDialog(fileName,
                     <Text style={[styles.titleText, { width: isLandscape ? '40%' : '30%' }]}>תיקיה</Text>
                     {getRoundedButton(() => navigation.navigate('CreateFolder',
                         { saveNewFolder: onSaveNewFolder }),
-                        'create-new-folder', 'תיקיה חדשה', 30, 30, { width: 250, height: 40 })}
+                        'create-new-folder', 'תיקיה חדשה', 30, 30, { width: 250, height: 40 },undefined,true)}
                 </View>
                 <Spacer />
                 <View style={{
