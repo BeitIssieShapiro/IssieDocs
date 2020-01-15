@@ -7,6 +7,7 @@ import {
 import { getFolderAndIcon, normalizeTitle, semanticColors, FolderTextStyle, folderColors, Spacer } from './elements'
 
 import FadeInView from './FadeInView'
+import { translate } from './lang';
 
 
 
@@ -29,41 +30,45 @@ export default function Menu(props) {
 
                 backgroundColor: 'white', borderColor: 'gray', borderWidth: 1
             }}>
-            <View style={{ position: 'absolute', alignItems: 'flex-end', top: '3%', height: '5%', width: '100%', paddingRight:25
+            {/* <View style={{ position: 'absolute', alignItems: 'flex-end', top: '3%', height: '5%', width: '100%', paddingRight:25
                  }}>
-                <Text style={{ fontSize: 35, textDecorationLine:'underline', color: semanticColors.titleText }}>תפריט</Text>
-            </View>
-            <View style={{ position: 'absolute', alignItems: 'flex-end', top: '12%', width: '100%' }}>
+                <Text style={{ fontSize: 35, textDecorationLine:'underline', color: semanticColors.titleText }}>{translate("Menu")}</Text>
+            </View> */}
+            <View style={{ position: 'absolute', alignItems: 'flex-end', top: '5%', width: '100%' }}>
                 <TouchableOpacity onPress={props.onAbout} style={{ flexDirection: 'row', paddingRight:25 }}>
-                    <Text style={{ fontSize: 25, color: semanticColors.titleText }}>עלינו - About us</Text>
+                    
                     <Spacer />
                     <Icon name={'info'} size={35} color={semanticColors.titleText} />
                 </TouchableOpacity>
 
                 <View style={{ width: '100%', paddingTop: 25, paddingRight:25, alignItems: 'flex-end' }}>
-                    <Text style={styles.SettingsHeaderText}>תצוגת דפים:</Text>
+                    <Text style={styles.SettingsHeaderText}>{translate("Display")+ ":"}</Text>
 
                     <TouchableOpacity
-                        style={{ flexDirection: 'row', paddingRight: 35, paddingTop: 15 }}
+                        style={{ flexDirection: 'row', paddingRight: 35, paddingTop: 15, alignItems:'center' }}
                         onPress={() => {
                             Settings.set({ viewStyle: 1 })
                             setViewStyle(1);
+                            props.onViewChange(1);
                         }}
                     >
-                        <Text style={styles.radioText}>רשימה</Text>
+                        {/* <Text style={styles.radioText}>רשימה</Text> */}
+                        <Icon name="view-list" size={45}/>
                         <Spacer />
                         <View style={styles.circle}>
                             {viewStyle == 1 && <View style={styles.checkedCircle} />}
                         </View>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        style={{ flexDirection: 'row', paddingRight: 35, paddingTop: 15 }}
+                        style={{ flexDirection: 'row', paddingRight: 35, paddingTop: 15, alignItems:'center' }}
                         onPress={() => {
                             Settings.set({ viewStyle: 2 });
                             setViewStyle(2);
+                            props.onViewChange(1);
                         }}
                     >
-                        <Text style={styles.radioText}>משבצות</Text>
+                        {/* <Text style={styles.radioText}>משבצות</Text> */}
+                        <Icon name="view-module" size={45}/>
                         <Spacer />
                         <View style={styles.circle}>
                             {viewStyle == 2 && <View style={styles.checkedCircle} />}

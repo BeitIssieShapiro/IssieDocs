@@ -10,7 +10,7 @@ import * as RNFS from 'react-native-fs';
 import FolderNew from './FolderNew';
 import FileNew from './FileNew'
 import { pushFolderOrder, renameFolder } from './sort'
-
+import {registerLangEvent, unregisterLangEvent, translate, fTranslate } from "./lang.js"
 
 import {
     getFolderAndIcon,
@@ -29,17 +29,10 @@ import { FlatList } from 'react-native-gesture-handler';
 import SplashScreen from 'react-native-splash-screen';
 
 export const FOLDERS_DIR = RNFS.DocumentDirectoryPath + '/folders/';
-const DELETE_PAGE_TITLE = 'מחיקת דף';
-const BEFORE_DELETE_PAGE_QUESTION = 'האם למחוק את הדף?';
-const DELETE_FOLDER_TITLE = 'מחיקת תיקייה';
-const DELETE_FOLDER_AN_PAGE_TITLE = 'מחיקת תיקיות ודפים';
-
-const BEFORE_DELETE_FOLDER_QUESTION = 'מחיקת תיקייה תגרום למחיקת כל הדפים בתוכה, האם למחוק?';
-const BEFORE_DELETE_FOLDER_AND_PAGES_QUESTION = 'בחרת למחוק דפים ותיקיות. מחיקת התיקיות תמחק אם כל הדפים בתוכן. האם להמשיך?';
 
 export default class FolderGallery extends React.Component {
     static navigationOptions = ({ navigation }) => {
-        let title = 'IssieDocs - שולחן העבודה שלי';
+        let title = fTranslate("DefaultAppTitle", "IssieDocs");
         let menuIcon = 'menu';
 
         let isMenuOpened = navigation.getParam('isMenuOpened')
@@ -101,6 +94,8 @@ export default class FolderGallery extends React.Component {
                 }
             })
 
+            registerLangEvent()
+
             //verify exists:
             RNFS.mkdir(FOLDERS_DIR).catch(() => { });
 
@@ -111,6 +106,9 @@ export default class FolderGallery extends React.Component {
             this.props.navigation.setParams({ menuHandler: () => this._menuHandler() });
 
             Linking.addEventListener("url", this._handleOpenURL);
+
+
+
             await this.refresh();
         } finally {
             setTimeout(() => SplashScreen.hide(), 1000);
@@ -118,6 +116,8 @@ export default class FolderGallery extends React.Component {
     };
 
     componentWillUnmount = () => {
+        unregisterLangEvent()
+
         Linking.removeAllListeners();
         this.props.navigation.removeAllListeners();
     }
@@ -297,14 +297,14 @@ export default class FolderGallery extends React.Component {
             }
             let title, msg;
             if (isFolders && isPages) {
-                title = DELETE_FOLDER_AN_PAGE_TITLE;
-                msg = BEFORE_DELETE_FOLDER_AND_PAGES_QUESTION;
+                title = translate("DeleteFoldersAndPagesTitle");
+                msg = translate("BeforeDeleteFoldersAndPagesQuestion");
             } else if (isFolders) {
-                title = DELETE_FOLDER_TITLE;
-                msg = BEFORE_DELETE_FOLDER_QUESTION;
+                title = translate("DeleteFolderTitle");
+                msg = translate("BeforeDeleteFolderQuestion");
             } else {
-                title = DELETE_PAGE_TITLE;
-                msg = BEFORE_DELETE_PAGE_QUESTION;
+                title = translate("DeletePageTitle");
+                msg = translate("BeforeDeletePageQuestion");
             }
 
 
@@ -366,20 +366,43 @@ setReturnFolder = (folderName) => {
 
 
 saveNewFolder = async (newFolderName, setReturnFolder, originalFolderName) => {
+    
     if (!newFolderName || newFolderName.length == 0) {
-        Alert.alert("חובה להזין שם תיקיה");
+        Alert.alert(translate("MissingFolderName"));
         return false;
+    }
+    let fAndi = getFolderAndIcon(newFolderName);
+    if (fAndi.name == 0 && fAndi.icon !== "") {
+        let proceed = await new Promise((resolve)=>
+            Alert.alert(translate("Warning"), translate("SaveFolderWithEmptyNameQuestion"),
+            [
+            {
+                text: translate("BtnContinue"), onPress: () => {
+                    resolve(true);
+                },
+                style: 'default'
+            },
+            {
+                text: translate("BtnCancel"), onPress: () => {
+                    resolve(false);
+                },
+                style: 'cancel'
+            }
+            ]
+        ));
+        if (!proceed)
+            return;
     }
 
     if (!validPathPart(newFolderName)) {
-        Alert.alert("שם תיקיה מכיל תווים לא חוקיים")
+        Alert.alert(translate("IllegalCharacterInFolderName"));
         return false;
     }
     let targetFolder = FOLDERS_DIR + newFolderName;
     try {
         await RNFS.stat(targetFolder);
         //folder exists:
-        Alert.alert("תיקיה בשם זה כבר קיימת");
+        Alert.alert(translate("FolderAlreadyExists"));
         return false;
     } catch (e) {
         await RNFS.mkdir(targetFolder);
@@ -454,7 +477,11 @@ render() {
             onLayout={this.onLayout}>
 
             {this.state.showMenu ?
-                <Menu onAbout={() => this.gotoAbout()} onClose={() => this.closeMenu()} /> : null}
+                <Menu 
+                    onAbout={() => this.gotoAbout()} 
+                    onClose={() => this.closeMenu()} 
+                    onViewChange={(style)=>this.setState({viewStyle:style})} 
+                /> : null}
             {/* header */}
             <View style={{
                 position: 'absolute', width: "100%", height: dimensions.toolbarHeight, top: 0, left: 0, backgroundColor: 'white',
@@ -473,7 +500,7 @@ render() {
                 {
                     getIconButton(() => {
                         this.newFromCamera();
-                    }, semanticColors.addButton, "camera-alt", 45)
+                    }, semanticColors.addButton, "add-a-photo", 45)
                 }
                 <Spacer />
                 {
@@ -572,7 +599,7 @@ render() {
 
 
                             : <View style={{ alignItems: 'center' }}>
-                                <Text style={{ fontSize: 35 }}> אין עדיין דפים</Text>
+                            <Text style={{ fontSize: 35 }}> {translate("NoPagesYet")}</Text>
                             </View>}
                     </View>
                 </View>
@@ -603,7 +630,7 @@ render() {
                             onMoveUp: () => this.moveFolderUp(f),
                             onMoveDown: () => this.moveFolderDown(f),
                             isLandscape: this.isLandscape()
-                        })) : <Text style={{ fontSize: 25 }}>אין עדיין תיקיות</Text>}
+                        })) : <Text style={{ fontSize: 25 }}>{translate("NoFoldersYet")}</Text>}
                 </View>
 
             </View>

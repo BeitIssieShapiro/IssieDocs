@@ -13,15 +13,16 @@ import {
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
 
 export default class IssieCreateFolder extends React.Component {
-    static navigationOptions = ({navigation}) => { 
+    static navigationOptions = ({ navigation }) => {
         let curFolder = navigation.getParam('currentFolderName', undefined);
-        let title = curFolder ? "עריכת שם תיקיה":"יצירת תיקיה חדשה";
-    return {
-        title,
-        headerStyle: globalStyles.headerStyle,
-        headerTintColor: 'white',
-        headerTitleStyle: globalStyles.headerTitleStyle,
-    }};
+        let title = curFolder ? "עריכת שם תיקיה" : "יצירת תיקיה חדשה";
+        return {
+            title,
+            headerStyle: globalStyles.headerStyle,
+            headerTintColor: 'white',
+            headerTitleStyle: globalStyles.headerTitleStyle,
+        }
+    };
 
     constructor(props) {
         super();
@@ -85,27 +86,13 @@ export default class IssieCreateFolder extends React.Component {
         return dim.width > dim.height;
     }
 
-    pickerRenderIcon(rowData, rowID, highlighted) {
-        return (
-            <View style={[globalStyles.textInput, {
-                flex: 1,
-                flexDirection: 'row',
-                backgroundColor: 'white',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-            }]}>
-                <Icon name={rowData.icon} size={50} color={semanticColors.folderIcons} />
-                <Text style={{ fontSize: 40 }}>{rowData.text}</Text>
-            </View>
-        );
-    }
 
     Save = async () => {
         let success = true;
         let saveNewFolder = this.props.navigation.getParam('saveNewFolder', undefined);
         if (saveNewFolder) {
             let folderName = this.state.name;
-            if (folderName.length > 0 && this.state.icon.length > 0) {
+            if (this.state.icon.length > 0) {
                 folderName += '$' + this.state.icon;
             }
             success = await saveNewFolder(folderName, this.state.currentFolderName);
@@ -136,31 +123,31 @@ export default class IssieCreateFolder extends React.Component {
         </View>
 
 
-        let iconsSelection = <View style={{flex:1, alignItems: 'flex-end'}}>
-        <Text style={styles.titleText}>סמל</Text>
+        let iconsSelection = <View style={{ flex: 1, alignItems: 'flex-end', width:'100%' }}>
+            <Text style={styles.titleText}>סמל</Text>
 
-        <View style={{
-            flex: 2.7,
-            borderRadius: 10,
-            backgroundColor: 'white',
-            flexDirection: 'column',
-            alignItems: 'center'
-        }}>
-
-            <FlatList
-
-                data={availableIcons}
-                renderItem={({ item }) => (
-                    <TouchableOpacity style={{ padding: 20}} onPress={() => {
-                        this.setState({ icon: item, yOffset: 0 })
-                    }}>
-                        <Icon name={item} size={55} color={this.state.icon ===  item? semanticColors.selectedIconColor : semanticColors.availableIconColor} />
-                    </TouchableOpacity>
-                )}
-                //Setting the number of column
-                numColumns={this.isLandscape ? 5 : 5}
-                keyExtractor={(item, index) => index.toString()}
-            />
+            <View style={{
+                width:'100%',
+                borderRadius: 10,
+                backgroundColor: 'white',
+                flexDirection: 'row-reverse',
+                alignItems: 'center',
+                flexWrap: 'wrap'
+            }}>
+                <TouchableOpacity style={{ padding: 20 }} onPress={() => {
+                            this.setState({ icon: "", yOffset: 0 })
+                        }}>
+                            <Text style={{fontSize:35, color:(this.state.icon === "" ? semanticColors.selectedIconColor : semanticColors.availableIconColor)}} >ללא</Text>
+                </TouchableOpacity>
+                {
+                    availableIcons.map((item, i) => (
+                        <TouchableOpacity style={{ padding: 20 }} key={i} onPress={() => {
+                            this.setState({ icon: item, yOffset: 0 })
+                        }}>
+                            <Icon name={item} size={55} color={this.state.icon === item ? semanticColors.selectedIconColor : semanticColors.availableIconColor} />
+                        </TouchableOpacity>
+                    ))
+                }
             </View>
         </View>
         return (
@@ -186,18 +173,26 @@ export default class IssieCreateFolder extends React.Component {
                 }}
                     {...this._panResponderMove.panHandlers}>
 
-                    <View style={[{flexDirection: 'row-reverse'}, 
-                    this.isLandscape()?{height:'100%' }:{}]}>
-                            <View style={{
-                                flex: 1, flexDirection: 'column', alignItems: 'flex-end',
+                    <View style={[{ flexDirection: 'row-reverse' },
+                        this.isLandscape() ? { height: '100%' } : {}]}>
+                        <View style={{
+                            flex: 1, flexDirection: 'column'
                             }}>
-                                <Text style={styles.titleText}>שם התיקיה</Text>
-                                <TextInput style={[globalStyles.textInput, { right: 0, width: '100%' }]} value={this.state.name}
+                            <Text style={styles.titleText}>שם התיקיה</Text>
+                            <View style={{width:'100%', flexDirection:'row-reverse', alignContent: 'stretch'}}>
+                                
+                                <View style={{ width:100, alignContent: 'flex-end'}}>
+                                    <Icon name="folder" size={70} color={'orange'} />
+                                    <View style={{ position: 'absolute', left: 30, top: 17 }}>
+                                        {this.state.icon?<Icon name={this.state.icon} size={40} color='white' /> :null}
+                                    </View>
+                                </View>
+                                <TextInput style={[globalStyles.textInput, {flex:8, right: 0 }]} value={this.state.name}
                                     onChangeText={(txt) => this.setState({ name: txt })}
                                 />
                             </View>
-                            <Spacer />
-                     
+                        </View>
+                        {this.isLandscape() ? <Spacer /> : null }
                         {this.isLandscape() ? iconsSelection : null}
                     </View>
                     <Spacer />

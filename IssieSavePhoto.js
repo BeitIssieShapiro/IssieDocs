@@ -4,7 +4,7 @@ import {
   ImageBackground, TouchableOpacity, StyleSheet, View, Text,
   Alert, Dimensions, PanResponder, ImageEditor
 } from 'react-native';
-import { FOLDERS_DIR } from './GaleryScreen';
+import { FOLDERS_DIR } from './FolderGallery';
 import * as RNFS from 'react-native-fs';
 import Pdf from 'react-native-pdf';
 import ViewShot from "react-native-view-shot";
@@ -33,22 +33,23 @@ const panBroderDistance = 80;
 export default class IssieSavePhoto extends React.Component {
   static navigationOptions = ({ navigation }) => {
     return {
-    title: 'שמור דף',
-    headerStyle: globalStyles.headerStyle,
-    headerTintColor: 'white',
-    headerTitleStyle: globalStyles.headerTitleStyle,
-    headerLeft:(<View >
-          <TouchableOpacity onPress={() => { navigation.pop() }}
-            activeOpacity={1}
-            style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Icon name='keyboard-arrow-left' color='white' size={35} />
-            <Text style={{ color: 'white', fontSize: 20, top: 2 }}>{'בית'}</Text>
-            <Spacer width={10} />
-            <Icon name={'home'} color='white' size={30} />
-          </TouchableOpacity>
+      title: 'שמור דף',
+      headerStyle: globalStyles.headerStyle,
+      headerTintColor: 'white',
+      headerTitleStyle: globalStyles.headerTitleStyle,
+      headerLeft: (<View >
+        <TouchableOpacity onPress={() => { navigation.pop() }}
+          activeOpacity={1}
+          style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Icon name='keyboard-arrow-left' color='white' size={35} />
+          <Text style={{ color: 'white', fontSize: 20, top: 2 }}>{'בית'}</Text>
+          <Spacer width={10} />
+          <Icon name={'home'} color='white' size={30} />
+        </TouchableOpacity>
 
-        </View>)
-  }};
+      </View>)
+    }
+  };
 
   constructor() {
     super();
@@ -243,13 +244,34 @@ export default class IssieSavePhoto extends React.Component {
       this.setState({ phase: PickName });
     } else if (this.state.phase == PickName) {
       if (!this.state.pageName || this.state.pageName.length == 0) {
-        Alert.alert('חובה לבחור שם לדף');
+
+        Alert.alert(translate("MissingPageName"));
         return;
       }
-      if (this.state.folder === NEW_FOLDER_NAME &&
-        (!this.state.newFolderName || this.state.newFolderName.length == 0)) {
-        Alert.alert('חובה לבחור שם לתיקיה החדשה');
-        return;
+      if (this.state.folder === NEW_FOLDER_NAME) {
+        let fAndI = getFolderAndIcon(this.state.newFolderName);
+        if (!this.state.newFolderName || this.state.newFolderName.length == 0) {
+          Alert.alert(translate("MissingFolderName"));
+          return;
+        } else if (fAndI.name === "" && fAndI.icon !== "") {
+          Alert.alert(title, translate("SaveFolderWithEmptyNameQuestion"),
+            [
+              {
+                text: translate("BtnContinue"), onPress: () => {
+                  this.save();
+                },
+                style: 'default'
+              },
+              {
+                text: translate("BtnCancel"), onPress: () => {
+                  //do nothing
+                },
+                style: 'cancel'
+              }
+            ]
+          );
+          return;
+        }
       }
       this.save();
     }
@@ -260,12 +282,12 @@ export default class IssieSavePhoto extends React.Component {
     let fileName = this.state.pageName;
 
     if (!fileName || fileName.length == 0) {
-      Alert.alert('חובה לבחור שם לדף');
+      Alert.alert(translate("MissingPageName"));
       return;
     }
 
     if (!validPathPart(fileName)) {
-      Alert.alert('שם הקובץ מכיל תווים לא חוקיים');
+      Alert.alert(translate("IllegalCharacterInPageName"));
       return;
     }
     if (!folderName || folderName == NO_FOLDER_NAME) {
@@ -376,7 +398,7 @@ export default class IssieSavePhoto extends React.Component {
   crop = () => {
     let winSize = this.state.windowSize;
     let imgSize = this.state.imgSize;
-    let cropXOffset = (winSize.width - imgSize.w * this.state.scale)/2;
+    let cropXOffset = (winSize.width - imgSize.w * this.state.scale) / 2;
     this.setState({
       cropping: true,
       cropXOffset,
@@ -395,17 +417,17 @@ export default class IssieSavePhoto extends React.Component {
     let targetSizeScale = 1;
     if (cd.width < windowSize.width || cd.height < windowSize.height) {
       targetSizeScale = Math.min(
-        windowSize.width/cd.width,
-        windowSize.height/cd.height
+        windowSize.width / cd.width,
+        windowSize.height / cd.height
       );
     }
 
     let cropData = {
-      offset: { x: cd.x/this.state.scale, y: cd.y/this.state.scale },
-      size: { width: cd.width/this.state.scale, height: cd.height/this.state.scale },
+      offset: { x: cd.x / this.state.scale, y: cd.y / this.state.scale },
+      size: { width: cd.width / this.state.scale, height: cd.height / this.state.scale },
       displaySize: {
-        width: cd.width*targetSizeScale,
-        height: cd.height*targetSizeScale
+        width: cd.width * targetSizeScale,
+        height: cd.height * targetSizeScale
       },
       resizeMode: 'stretch'
     };
@@ -547,7 +569,7 @@ export default class IssieSavePhoto extends React.Component {
       cropFrame = <View
         style={{
           position: 'absolute',
-          width: this.state.cropData.width ,
+          width: this.state.cropData.width,
           height: this.state.cropData.height,
           top: this.state.cropData.y,
           left: this.state.cropData.x + this.state.cropXOffset,
@@ -560,16 +582,16 @@ export default class IssieSavePhoto extends React.Component {
       >
         {/* <Text>{this.state.msg}</Text> */}
 
-        <View style={{position:'absolute', left:5, top:5}}>
+        <View style={{ position: 'absolute', left: 5, top: 5 }}>
           <Icon name={'border-style'} size={45} />
         </View>
-        <View style={{position:'absolute', transform:[{rotate: 90 + 'deg' }], right:5, top:5}}>
+        <View style={{ position: 'absolute', transform: [{ rotate: 90 + 'deg' }], right: 5, top: 5 }}>
           <Icon name={'border-style'} size={45} />
         </View>
-        <View style={{position:'absolute', transform:[{rotate: 180 + 'deg' }], right:5, bottom:5}}>
+        <View style={{ position: 'absolute', transform: [{ rotate: 180 + 'deg' }], right: 5, bottom: 5 }}>
           <Icon name={'border-style'} size={45} />
         </View>
-        <View style={{position:'absolute', transform:[{rotate: 270 + 'deg' }], left:5, bottom:5}}>
+        <View style={{ position: 'absolute', transform: [{ rotate: 270 + 'deg' }], left: 5, bottom: 5 }}>
           <Icon name={'border-style'} size={45} />
         </View>
       </View>
@@ -594,7 +616,8 @@ export default class IssieSavePhoto extends React.Component {
             {this.state.pdfInProcess ?
               <View style={{ position: 'absolute', top: '25%', left: 0, width: '100%', zIndex: 1000, alignItems: 'center' }}>
 
-                <Progress.Circle size={200} progress={this.state.pdfInProcess / this.state.pdfPageCount} showsText={true} textStyle={{ zIndex: 100, fontSize: 25 }} formatText={(prog) => "מייבא דף " + this.state.pdfInProcess + ' מתוך ' + (this.state.pdfPageCount)} thickness={5} />
+                <Progress.Circle size={200} progress={this.state.pdfInProcess / this.state.pdfPageCount} showsText={true} textStyle={{ zIndex: 100, fontSize: 25 }} formatText={
+                  (prog) => "מייבא דף " + this.state.pdfInProcess + ' מתוך ' + (this.state.pdfPageCount)} thickness={5} />
               </View> : null}
             <ViewShot ref="viewShot" options={{ format: "jpg", quality: 0.9 }}
               style={{
@@ -611,7 +634,7 @@ export default class IssieSavePhoto extends React.Component {
                 }}
 
                 onError={(error) => {
-                  Alert.alert('טעינת PDF נכשלה');
+                  Alert.alert(translate("PDFLoadFailed"));
                 }}
               >
 

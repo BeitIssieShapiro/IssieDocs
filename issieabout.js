@@ -7,12 +7,12 @@ import {
 
 export default function IssieAbout(props) {
 
-    const textStyle = { fontSize: 19, color: 'black', textAlign: 'left' }
+    const textStyle = { fontSize: 19, color: 'black', textAlign: 'left', marginLeft:20  }
     const linkStyle = { fontSize: 19, color: 'blue', textAlign: 'left' }
-    const titleStyle = { fontSize: 25, fontWeight: 'bold', color: 'black', textAlign: 'left' }
-    const headerStyle = { fontSize: 25, fontWeight: 'bold', color: 'black', textAlign: 'center' }
+    const titleStyle = { fontSize: 25, fontWeight: 'bold', color: 'black', textAlign: 'left' , marginLeft:20 }
+    const headerStyle = { fontSize: 25, fontWeight: 'bold', color: 'black', textAlign: 'center' , marginLeft:20 }
 
-    return <ScrollView style={{ backgroundColor: semanticColors.mainAreaBG, height: '100%', width: '100%' }}>
+    return <ScrollView style={{ backgroundColor: semanticColors.mainAreaBG, height: '100%', width: '100%'}}>
         <Text style={headerStyle}>IssieDocs</Text>
         <Text > </Text>
         <Text > </Text>

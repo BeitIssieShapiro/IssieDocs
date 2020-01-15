@@ -5,6 +5,7 @@ import {
 import { Icon } from 'react-native-elements'
 import LinearGradient from 'react-native-linear-gradient';
 import React, { useState } from 'react';
+import {translate} from "./lang.js";
 
 export const dimensions = {
     toolbarHeight: 65,
@@ -77,6 +78,7 @@ export const availableIcons = [
     "account-balance",
     "alarm",
     "cake",
+    "exposure-plus-2",
     "build",
     "location-city",
     "grade",
@@ -119,10 +121,9 @@ export const folderColors = [
     '#f5771c', '#da3242', '#65309c', '#2958af', '#5db7dd', '#20ad57'
 ]
 
-export const NEW_FOLDER_NAME = 'תיקיה חדשה';
-export const NO_FOLDER_NAME = 'ללא';
+export const NEW_FOLDER_NAME = 'NewFolder'; //todo lang
+export const NO_FOLDER_NAME = 'Without'; //todo lang
 export const DEFAULT_FOLDER_NAME = 'Default';
-export const DEFAULT_FOLDER_TITLE = "ללא נושא";
 
 export function validPathPart(pathPart) {
     if (!pathPart || pathPart.length == 0) {
@@ -230,7 +231,7 @@ export function getFolderAndIcon(folderName) {
 
 export function normalizeTitle(title) {
     if (title == DEFAULT_FOLDER_NAME) {
-        return DEFAULT_FOLDER_TITLE;
+        return translate("DefaultFolderLanguage");
     }
     return title;
 }

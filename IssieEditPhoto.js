@@ -21,6 +21,7 @@ import {
   getPageNavigationButtons,
   semanticColors, getIconButton, dimensions, availableTextSize, availableBrushSize, availableColorPicker
 } from './elements'
+import { translate } from './lang';
 //import rnTextSize from 'react-native-text-size'
 //import MeasureText from 'react-native-measure-text';
 //import ReactNativeComponentTree from 'react-native/Libraries/Renderer/shims/ReactNativeComponentTree';
@@ -59,9 +60,9 @@ export default class IssieEditPhoto extends React.Component {
             activeOpacity={1}
             style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Icon name='keyboard-arrow-left' color='white' size={35} />
-            <Text style={{ color: 'white', fontSize: 20, top: 2 }}>{isPageOnHome ? 'בית' : folderAndIcon.name}</Text>
+            {/* <Text style={{ color: 'white', fontSize: 20, top: 2 }}>{isPageOnHome ? 'בית' : folderAndIcon.name}</Text> */}
             <Spacer width={10} />
-            <Icon name={isPageOnHome ? 'home' : 'folder'} color='white' size={30} />
+            <Icon name={isPageOnHome ? 'home' : 'home'} color='white' size={30} />
           </TouchableOpacity>
 
         </View>
@@ -187,7 +188,7 @@ export default class IssieEditPhoto extends React.Component {
 
   _keyboardDidShow = (e) => {
     let yOffset = this.state.yOffset;
-    let kbTop = this.state.canvasH - e.endCoordinates.height;
+    let kbTop = this.state.windowH - e.endCoordinates.height;
     // if keyboard hides the textInput, scroll the window
     if (this.state.showTextInput &&
       this.state.yText + 25 >= kbTop) {
@@ -260,9 +261,9 @@ export default class IssieEditPhoto extends React.Component {
       };
       //Alert.alert(JSON.stringify(dataUrls))
       Share.open(shareOptions).then(() => {
-        Alert.alert("שיתוף הסתיים בהצלחה");
+        Alert.alert(translate("ShareSuccessful"));
       }).catch(err => {
-        Alert.alert("הפעולה בוטלה");
+        Alert.alert(translate("ActionCancelled"));
       });
 
     }
@@ -669,14 +670,14 @@ export default class IssieEditPhoto extends React.Component {
       height: '100%',
       zIndex: 5,
     };
-    let toolbarSideMargin = this.state.sideMargin > 250 ? 250 : this.state.sideMargin;
+    let toolbarSideMargin = this.state.sideMargin > 150 ? 150 : this.state.sideMargin;
 
     if (this.state.windowSize && this.state.windowSize.width - 2*toolbarSideMargin < 300) {
       toolbarSideMargin = 100;
     }
 
     let spaceBetweenButtons = <Spacer width={23} />
-    let colorButtonSize = this.state.canvasW / (availableColorPicker.length * 1.1);
+    let colorButtonSize = (this.state.windowW - 2*toolbarSideMargin) / (availableColorPicker.length * 1.1);
 
     return (
 
@@ -757,7 +758,7 @@ export default class IssieEditPhoto extends React.Component {
                   fontSize: this.state.fontSize,
                   color: this.state.color,
                   textAlignVertical: 'center'
-                }}>א ב ג</Text> :
+                }}>{translate("A B C")}</Text> :
                 // <View style={{
                 //   width: this.state.strokeWidth + 2,
                 //   height: this.state.strokeWidth + 2,
@@ -766,11 +767,12 @@ export default class IssieEditPhoto extends React.Component {
                 // }} />
                 //d="M160,303 C305,258 285,196 285,196 C285,196 243,70 176,146 C109,222 525,312 482,221 C439,130 347,191 347,191 C347,191 180,328 347,292 C514,256 433,110 381,124 C329,138 294,162 294,162 "
 
-                <Svg height="100%" width="100%">
+                <Svg height="100%" width="100%" preserveAspectRatio="xMidYMid meet" viewBox="-30 -30 150 200">
                   <Path
                     stroke={this.state.color}
-                    strokeWidth={this.state.strokeWidth}
-                    d="M20 10 L75 45 "
+                    strokeLinecap="round"
+                    strokeWidth={(this.state.strokeWidth+2)*2}
+                    d="M93.25 143.84C60.55 100.51 87.43 56.85 80.24 51.37C73.05 45.89 9.35 83.22 1.47 68.49C-6.4 53.77 19.28 8.22 31.61 0"
                     fill="none"
                    
                   />
@@ -795,7 +797,7 @@ export default class IssieEditPhoto extends React.Component {
 
               {
                 getIconButton(() => this.onTextButtonPicker(),
-                  this.state.textMode ? this.state.color : semanticColors.editPhotoButton, "א", 55, true, 45, this.state.textMode)
+                  this.state.textMode ? this.state.color : semanticColors.editPhotoButton, translate("A"), 55, true, 45, this.state.textMode)
               }
 
               {spaceBetweenButtons}
@@ -813,21 +815,21 @@ export default class IssieEditPhoto extends React.Component {
         </View>
         {/** */}
         {/*View for selecting color*/}
-        <FadeInView height={this.state.showColorPicker ? 70 : 0} style={[styles.pickerView, { left: this.state.sideMargin, width: this.state.canvasW }]}>
+        <FadeInView height={this.state.showColorPicker ? 70 : 0} style={[styles.pickerView, { left: toolbarSideMargin, right: toolbarSideMargin }]}>
           <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
             {availableColorPicker.map((c, i) => this.getColorButton((c), colorButtonSize, i))}
           </View>
         </FadeInView>
 
         {/*View for selecting text size*/}
-        <FadeInView height={this.state.showTextSizePicker && this.state.textMode ? 70 : 0} style={[styles.pickerView, { left: this.state.sideMargin, width: this.state.canvasW }]}>
+        <FadeInView height={this.state.showTextSizePicker && this.state.textMode ? 70 : 0} style={[styles.pickerView, { left: toolbarSideMargin, right: toolbarSideMargin }]}>
           <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-evenly', alignContent: 'center', alignItems: 'center' }}>
             {availableTextSize.map((size, i) => this.getTextSizePicker(this.state.color, colorButtonSize, size, i))}
           </View>
         </FadeInView>
 
         {/*View for selecting brush size*/}
-        <FadeInView height={this.state.showBrushSizePicker && !this.state.textMode ? 70 : 0} style={[styles.pickerView, { left: this.state.sideMargin, width: this.state.canvasW }]}>
+        <FadeInView height={this.state.showBrushSizePicker && !this.state.textMode ? 70 : 0} style={[styles.pickerView, { left: toolbarSideMargin, right: toolbarSideMargin }]}>
           <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
             {availableBrushSize.map((size, i) => this.getBrushSizePicker(this.state.color, colorButtonSize, size, i))}
 
@@ -1046,6 +1048,7 @@ export default class IssieEditPhoto extends React.Component {
       <View {...this._panResponder.panHandlers} style={{ top: -5 }}>
         <Icon name='open-with' size={DRAG_ICON_SIZE} />
       </View>
+      
       <TextInput
         ref={textInput => this._textInput = textInput}
         onChangeText={(text) => {
@@ -1063,7 +1066,7 @@ export default class IssieEditPhoto extends React.Component {
         autoCapitalize={'none'}
         autoCorrect={false}
         multiline={true}
-        autoFocus
+        //autofocus
         
         style={{
           backgroundColor: 'transparent',
@@ -1078,7 +1081,7 @@ export default class IssieEditPhoto extends React.Component {
 
 
         value={this.state.inputTextValue}
-      />
+      /> 
       <View style={{position:'absolute', left:DRAG_ICON_SIZE+3, top:0, 
           width: this.state.inputTextWidth+5, height: this.state.inputTextHeight,
           zIndex:20

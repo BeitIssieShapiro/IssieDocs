@@ -1,6 +1,5 @@
 import IssieSavePhoto from './IssieSavePhoto'
 import {createStackNavigator, createAppContainer} from 'react-navigation';
-//import GalleryScreen from './GaleryScreen';
 import FolderGallery from './FolderGallery';
 import IssieEditPhoto from './IssieEditPhoto';
 import IssieAbout from './issieabout'
