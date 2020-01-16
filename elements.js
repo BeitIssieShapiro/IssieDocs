@@ -156,7 +156,7 @@ export function getSquareButton(func, color, selectedColor, txt, icon, size, sel
 
 export function getEmbeddedButton(callback, icon, iconSize, index) {
     return <Icon 
-        key={""+index}
+        key={index}
         name={icon} size={iconSize} 
         color={semanticColors.titleText} 
         onPress={callback}

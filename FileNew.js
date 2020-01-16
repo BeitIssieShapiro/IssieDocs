@@ -89,12 +89,12 @@ export default function FileNew(props) {
 function getActionButtons(props) {
     return [
         getEmbeddedButton(props.onDelete, 'delete-forever', 30, 1),
-        <Spacer width={7} key={"2"} />,
+        <Spacer width={7} key={2} />,
         getEmbeddedButton(props.onRename, 'save', 30, 3),
-        <Spacer width={7} key={"4"} />,
+        <Spacer width={7} key={4} />,
         getEmbeddedButton(props.onDuplicate, 'collections', 30, 5),
-        <Spacer width={7} key={"6"} />,
+        <Spacer width={7} key={6} />,
         getEmbeddedButton(props.onShare, 'share', 30, 7),
-        <Spacer width={7} key={"8"} />,
+        <Spacer width={7} key={8} />,
     ];
 }
