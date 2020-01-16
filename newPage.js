@@ -12,6 +12,7 @@ export const SRC_FILE = 'file';
 export const SRC_RENAME = 'rename'
 
 import mock from './mock.jpg'
+import { translate } from './lang';
 let mockFileName;
 
 
@@ -40,10 +41,10 @@ export async function getNewPage(src, okEvent, cancelEvent) {
         }
 
         ImagePicker.launchCamera({
-            title: 'צילום דף עבודה',
+            title: translate("CameraTitle"),
             mediaType: 'photo',
             noData: true,
-            cancelButtonTitle: 'ביטול',
+            cancelButtonTitle: translate("BtnCancel"),
             showsCameraControls: false
         }, (response) => {
             if (!response.didCancel) {
@@ -55,7 +56,7 @@ export async function getNewPage(src, okEvent, cancelEvent) {
     } else if (src == SRC_GALLERY) {
 
         ImagePicker.launchImageLibrary({
-            title: 'בחירת תמונה',
+            title: translate("MediaPickerTitle"),
             mediaType: 'photo',
             noData: true
         }, (response) => {
@@ -119,7 +120,7 @@ function handleSaveFileError(uri, err, reject) {
     }
     //Alert.alert("Error: " + errorStr);
     if (err.toString().includes("already exists")) {
-        reject("קובץ בשם זה כבר קיים");
+        reject(translate("PageAlreadyExists"));
         return;
     }
     reject('Error saving file: ' + uri , 'err: ' + err);

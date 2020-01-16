@@ -19,6 +19,13 @@ export default function Menu(props) {
     }
     const [viewStyle, setViewStyle] = useState(viewStyleSetting);
 
+    // let btnTextSetting = Settings.get('btnText');
+    // if (btnTextSetting === undefined) {
+    //     btnTextSetting = 1;
+    // }
+    // const [btnText, setBtnText] = useState(btnTextSetting);
+
+
 
     return <TouchableOpacity onPress={props.onClose} style={{position:'absolute', 
         zIndex: 100, top:0, left:0, width:'100%', height:'100%'}}>

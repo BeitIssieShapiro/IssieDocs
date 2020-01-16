@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Alert, Text, TouchableOpacity, PanResponder, StyleSheet, Dimensions } from 'react-native';
 import { Icon } from 'react-native-elements'
-import { FlatList } from 'react-native-gesture-handler';
+import {translate} from './lang.js'
 
 import {
     getIconButton, folderIcons, availableIcons,
@@ -15,7 +15,7 @@ import { ScrollView, TextInput } from 'react-native-gesture-handler';
 export default class IssieCreateFolder extends React.Component {
     static navigationOptions = ({ navigation }) => {
         let curFolder = navigation.getParam('currentFolderName', undefined);
-        let title = curFolder ? "עריכת שם תיקיה" : "יצירת תיקיה חדשה";
+        let title = curFolder ? translate("EditFolderFormTitle") : translate("NewFolderFormTitle");
         return {
             title,
             headerStyle: globalStyles.headerStyle,
@@ -114,17 +114,17 @@ export default class IssieCreateFolder extends React.Component {
 
 
             {  //Cancel
-                getRoundedButton(() => this.props.navigation.goBack(), 'cancel', 'בטל', 30, 30, { width: 150, height: 40 })
+                getRoundedButton(() => this.props.navigation.goBack(), 'cancel', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })
             }
             <Spacer width={10} />
             {  //Save
-                getRoundedButton(() => this.Save(), 'check-circle', 'שמור', 30, 30, { width: 150, height: 40 })
+                getRoundedButton(() => this.Save(), 'check-circle', translate("BtnSave"), 30, 30, { width: 150, height: 40 })
             }
         </View>
 
 
         let iconsSelection = <View style={{ flex: 1, alignItems: 'flex-end', width:'100%' }}>
-            <Text style={styles.titleText}>סמל</Text>
+            <Text style={styles.titleText}>{translate("CaptionIcon")}</Text>
 
             <View style={{
                 width:'100%',
@@ -137,7 +137,7 @@ export default class IssieCreateFolder extends React.Component {
                 <TouchableOpacity style={{ padding: 20 }} onPress={() => {
                             this.setState({ icon: "", yOffset: 0 })
                         }}>
-                            <Text style={{fontSize:35, color:(this.state.icon === "" ? semanticColors.selectedIconColor : semanticColors.availableIconColor)}} >ללא</Text>
+                            <Text style={{fontSize:35, color:(this.state.icon === "" ? semanticColors.selectedIconColor : semanticColors.availableIconColor)}} >{translate("NoIcon")}</Text>
                 </TouchableOpacity>
                 {
                     availableIcons.map((item, i) => (
@@ -178,7 +178,7 @@ export default class IssieCreateFolder extends React.Component {
                         <View style={{
                             flex: 1, flexDirection: 'column'
                             }}>
-                            <Text style={styles.titleText}>שם התיקיה</Text>
+                            <Text style={styles.titleText}>{translate("CaptionFolderNameInput")}</Text>
                             <View style={{width:'100%', flexDirection:'row-reverse', alignContent: 'stretch'}}>
                                 
                                 <View style={{ width:100, alignContent: 'flex-end'}}>

@@ -10,6 +10,7 @@ import Pdf from 'react-native-pdf';
 import ViewShot from "react-native-view-shot";
 import { StackActions } from 'react-navigation';
 import { Icon } from 'react-native-elements'
+import {translate} from './lang.js'
 
 import {
   getIconButton,
@@ -22,6 +23,7 @@ import ImageRotate from 'react-native-image-rotate';
 import { getNewPage, saveFile, cloneToTemp, SRC_RENAME } from './newPage'
 import { pushFolderOrder } from './sort'
 import * as Progress from 'react-native-progress';
+import { fTranslate } from './lang';
 
 const OK_Cancel = 1;
 const PickName = 2;
@@ -33,7 +35,7 @@ const panBroderDistance = 80;
 export default class IssieSavePhoto extends React.Component {
   static navigationOptions = ({ navigation }) => {
     return {
-      title: 'שמור דף',
+      title: translate("SavePageFormTitle"),
       headerStyle: globalStyles.headerStyle,
       headerTintColor: 'white',
       headerTitleStyle: globalStyles.headerTitleStyle,
@@ -42,7 +44,6 @@ export default class IssieSavePhoto extends React.Component {
           activeOpacity={1}
           style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Icon name='keyboard-arrow-left' color='white' size={35} />
-          <Text style={{ color: 'white', fontSize: 20, top: 2 }}>{'בית'}</Text>
           <Spacer width={10} />
           <Icon name={'home'} color='white' size={30} />
         </TouchableOpacity>
@@ -501,18 +502,18 @@ export default class IssieSavePhoto extends React.Component {
 
 
           {  //Cancel
-            getRoundedButton(this.Cancel, 'cancel', 'בטל', 30, 30, { width: 150, height: 40 })
+            getRoundedButton(this.Cancel, 'cancel', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })
           }
           <Spacer width={10} />
           {  //Save
-            getRoundedButton(this.OK, 'check-circle', 'שמור' + saveMoreThanOne, 30, 30, { width: 150, height: 40 })
+            getRoundedButton(this.OK, 'check-circle', translate("BtnSave") + saveMoreThanOne, 30, 30, { width: 150, height: 40 })
           }
 
           { //Add page
             this.state.phase == OK_Cancel && !this.state.pdf ?
               <Spacer width={10} /> : null}
           {this.state.phase == OK_Cancel && !this.state.pdf ?
-            getRoundedButton(this.AddPage, 'add', 'דף נוסף', 30, 30, { width: 150, height: 40 }) :
+            getRoundedButton(this.AddPage, 'add', translate("BtnAddPage"), 30, 30, { width: 150, height: 40 }) :
             null
           }
 
@@ -616,8 +617,12 @@ export default class IssieSavePhoto extends React.Component {
             {this.state.pdfInProcess ?
               <View style={{ position: 'absolute', top: '25%', left: 0, width: '100%', zIndex: 1000, alignItems: 'center' }}>
 
-                <Progress.Circle size={200} progress={this.state.pdfInProcess / this.state.pdfPageCount} showsText={true} textStyle={{ zIndex: 100, fontSize: 25 }} formatText={
-                  (prog) => "מייבא דף " + this.state.pdfInProcess + ' מתוך ' + (this.state.pdfPageCount)} thickness={5} />
+                <Progress.Circle size={200} 
+                  progress={this.state.pdfInProcess / this.state.pdfPageCount} 
+                  showsText={true} 
+                  textStyle={{ zIndex: 100, fontSize: 25 }} 
+                  formatText={(prog) => fTranslate("ImportProgress", this.state.pdfInProcess, this.state.pdfPageCount)} 
+                  thickness={5} />
               </View> : null}
             <ViewShot ref="viewShot" options={{ format: "jpg", quality: 0.9 }}
               style={{

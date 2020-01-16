@@ -5,7 +5,7 @@ import {
 import { Icon } from 'react-native-elements'
 import LinearGradient from 'react-native-linear-gradient';
 import React, { useState } from 'react';
-import {translate} from "./lang.js";
+import {translate, getLocalizedFoldersAndIcons} from "./lang.js";
 
 export const dimensions = {
     toolbarHeight: 65,
@@ -61,18 +61,6 @@ export const FolderTextStyle = {
     fontWeight: 'bold',
     color: semanticColors.titleText
 }
-
-export const foldersAndIcons = [
-    { icon: 'language', text: 'אנגלית' },
-    { icon: 'music-note', text: 'מוזיקה' },
-    { icon: 'pets', text: 'בעלי חיים' },
-    { icon: 'exposure-plus-1', text: 'חשבון' },
-    { icon: 'wb-incandescent', text: 'מדעים' },
-    { icon: 'watch-later', text: 'היסטוריה' },
-    { icon: 'book', text: 'תורה' },
-    { icon: 'speaker-notes', text: 'לשון' },
-    { icon: 'local-bar', text: 'חגים' }
-]
 
 export const availableIcons = [
     "account-balance",
@@ -166,6 +154,16 @@ export function getSquareButton(func, color, selectedColor, txt, icon, size, sel
     </TouchableOpacity>
 }
 
+export function getEmbeddedButton(callback, icon, iconSize, index) {
+    return <Icon 
+        key={""+index}
+        name={icon} size={iconSize} 
+        color={semanticColors.titleText} 
+        onPress={callback}
+    />
+}
+
+
 export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction, dark) {
     let color = semanticColors.titleText;
     if (icon === 'check-circle') {
@@ -249,7 +247,7 @@ export function getFileNameDialog(fileName,
     }
 
     let fullListFolder = [NO_FOLDER_NAME, ...folders];
-    foldersAndIcons.forEach((itm) => {
+    getLocalizedFoldersAndIcons().forEach((itm) => {
         let fni = itm.text + '$' + itm.icon;
         if (fullListFolder.findIndex(f => f === fni) == -1) {
             fullListFolder.push(fni);
@@ -258,7 +256,7 @@ export function getFileNameDialog(fileName,
     return (
         <View style={[styles.textInputView, isLandscape ? { flexDirection: 'row-reverse' } : {}]} >
             <View style={{ flex: 1, width: '100%' }}>
-                <Text style={styles.titleText}>שם הדף</Text>
+                <Text style={styles.titleText}>{translate("CaptionPageName")}</Text>
                 <TextInput style={globalStyles.textInput}
                     onChangeText={onChangeName}
                 >{fileName}</TextInput>
@@ -270,10 +268,10 @@ export function getFileNameDialog(fileName,
                     width: '100%',
                     alignItems: 'center'
                 }}>
-                    <Text style={[styles.titleText, { width: isLandscape ? '40%' : '30%' }]}>תיקיה</Text>
+                    <Text style={[styles.titleText, { width: isLandscape ? '40%' : '30%' }]}>{translate("CaptionFolderNameList")}</Text>
                     {getRoundedButton(() => navigation.navigate('CreateFolder',
                         { saveNewFolder: onSaveNewFolder }),
-                        'create-new-folder', 'תיקיה חדשה', 30, 30, { width: 250, height: 40 },undefined,true)}
+                        'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 250, height: 40 },undefined,true)}
                 </View>
                 <Spacer />
                 <View style={{
@@ -399,14 +397,12 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
 
         {isFirst ?
             <View /> :
-            //getSquareButton(() => callback(-1), semanticColors.pageNavigationButtonG, undefined, 'דף קודם', 'chevron-left', 30, undefined, { width: 150, height: 60 }, 60, true, 15)
-            getRoundedButton(() => callback(-1), 'chevron-left', 'דף קודם', 30, 30, { width: 155, height: 40 }, 'row-reverse')
+            getRoundedButton(() => callback(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 155, height: 40 }, 'row-reverse')
         }
 
         {isLast ?
             <View /> :
-            //getSquareButton(() => callback(1), semanticColors.pageNavigationButtonG, undefined, 'דף הבא', 'chevron-right', 30, undefined, { width: 150, height: 60 }, 60, false, 0, 15)
-            getRoundedButton(() => callback(1), 'chevron-right', 'דף הבא', 30, 30, { width: 155, height: 40 }, 'row')
+            getRoundedButton(() => callback(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 155, height: 40 }, 'row')
         }
 
     </View>

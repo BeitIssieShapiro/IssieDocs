@@ -15,6 +15,7 @@ import DoQueue from './do-queue';
 import FadeInView from './FadeInView'
 import { Spacer, globalStyles, getRoundedButton } from './elements'
 import * as Progress from 'react-native-progress';
+import {fTranslate} from './lang.js'
 
 import {
   colors, DEFAULT_FOLDER_NAME, getFolderAndIcon, getImageDimensions,
@@ -147,7 +148,7 @@ export default class IssieEditPhoto extends React.Component {
     this.state = {
       color: colors.black,
       fontSize: 25,
-      textMode: false,
+      textMode: true,
       showTextInput: false,
       strokeWidth: DEFAULT_STROKE_WIDTH,
       queue: new DoQueue(),
@@ -189,13 +190,19 @@ export default class IssieEditPhoto extends React.Component {
   _keyboardDidShow = (e) => {
     let yOffset = this.state.yOffset;
     let kbTop = this.state.windowH - e.endCoordinates.height;
+
+    //Alert.alert("kbTop:"+kbTop+", wH:"+this.state.windowH+",cH:"+this.state.canvasH)
+
+    //ignore the part of keyboard that is below the canvas
+    let kbHeight = e.endCoordinates.height - (this.state.windowH - topLayer - this.state.canvasH);
+
     // if keyboard hides the textInput, scroll the window
-    if (this.state.showTextInput &&
-      this.state.yText + 25 >= kbTop) {
-        yOffset = kbTop - (this.state.yText + 25);
+    if (this.state.showTextInput && this.state.yText + 20 >= kbTop) {
+      yOffset -= this.state.yText - kbTop + 20;
     }
-    this.setState({ yOffset, keyboardHeight: e.endCoordinates.height,
-    msg: "yText="+this.state.yText+", keyb="+ e.endCoordinates.height+",canv="+this.state.canvasH});
+    
+    this.setState({ yOffset, keyboardHeight: kbHeight,
+    msg: "yText="+this.state.yText+", keyb="+ kbHeight+",canv="+this.state.canvasH});
   }
 
   _keyboardDidHide = (e) => {
@@ -255,8 +262,8 @@ export default class IssieEditPhoto extends React.Component {
       this.props.navigation.setParams({ share: false });
 
       const shareOptions = {
-        title: 'שתף בעזרת...',
-        subject: 'דף עבודה',
+        title: translate("ShareWithTitle"),
+        subject: translate("ShareEmailSubject"),
         urls: dataUrls
       };
       //Alert.alert(JSON.stringify(dataUrls))
@@ -702,7 +709,9 @@ export default class IssieEditPhoto extends React.Component {
               {this.state.sharing ?
                 <View style={{ position: 'absolute', top: '25%', left: 0, width: this.state.canvasW, zIndex: 1000, backgroundColor: 'white', alignItems: 'center' }}>
 
-                  <Progress.Circle size={200} progress={this.state.shareProgress} showsText={true} textStyle={{ zIndex: 100, fontSize: 25 }} formatText={(prog) => "מייצא דף " + this.state.shareProgressPage + ' מתוך ' + (this.state.page.pages.length > 0 ? this.state.page.pages.length : 1)} thickness={5} />
+                  <Progress.Circle size={200} progress={this.state.shareProgress} showsText={true} textStyle={{ zIndex: 100, fontSize: 25 }} formatText={(prog) => 
+                    fTranslate("ExportProgress", this.state.shareProgressPage, (this.state.page.pages.length > 0 ? this.state.page.pages.length : 1))}
+                    thickness={5} />
                 </View> : null}
               {this.getCanvas()}
             </ScrollView>
@@ -794,18 +803,19 @@ export default class IssieEditPhoto extends React.Component {
               }
               {spaceBetweenButtons}
 
-
+              {
+                getIconButton(() => this.onBrushButtonPicker(),
+                  this.state.textMode ? semanticColors.editPhotoButton : this.state.color, "edit", 55, false, 45, !this.state.textMode) //(20 + this.state.strokeWidth * 3))
+              }
+              {spaceBetweenButtons}
               {
                 getIconButton(() => this.onTextButtonPicker(),
                   this.state.textMode ? this.state.color : semanticColors.editPhotoButton, translate("A"), 55, true, 45, this.state.textMode)
               }
 
-              {spaceBetweenButtons}
+              
 
-              {
-                getIconButton(() => this.onBrushButtonPicker(),
-                  this.state.textMode ? semanticColors.editPhotoButton : this.state.color, "edit", 55, false, 45, !this.state.textMode) //(20 + this.state.strokeWidth * 3))
-              }
+              
             </View>
           </View>
         </View>
@@ -853,7 +863,7 @@ export default class IssieEditPhoto extends React.Component {
         {
           this.state.page && this.state.page.pages.length  > 0 && this.state.currentFile !== this.state.page.pages[0]?
           <View style={{position:'absolute', bottom:50, left:10, width:155, height:40, zIndex:100}}>
-              {getRoundedButton(() => this.movePage(-1), 'chevron-left', 'דף קודם', 30, 30, { width: 155, height: 40 }, 'row-reverse', true)}
+              {getRoundedButton(() => this.movePage(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 155, height: 40 }, 'row-reverse', true)}
           </View> :
           null
         }
@@ -862,7 +872,7 @@ export default class IssieEditPhoto extends React.Component {
           this.state.page && this.state.page.pages.length > 0 && 
           this.state.currentFile !== this.state.page.pages[this.state.page.pages.length - 1] ?
           <View style={{position:'absolute', bottom:50, right:10, width:155, height:40, zIndex:100}}>
-              {getRoundedButton(() => this.movePage(1), 'chevron-right', 'דף הבא', 30, 30, { width: 155, height: 40 }, 'row', true)}
+              {getRoundedButton(() => this.movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 155, height: 40 }, 'row', true)}
           </View> :
           null
         }
@@ -1006,7 +1016,7 @@ export default class IssieEditPhoto extends React.Component {
         alignItems: 'center'
       }}
       >
-        <Text style={{ fontSize: textSize, color: color }}>א</Text>
+        <Text style={{ fontSize: textSize, color: color }}>{translate("A")}</Text>
       </View>
     </TouchableOpacity>
   }
@@ -1066,7 +1076,7 @@ export default class IssieEditPhoto extends React.Component {
         autoCapitalize={'none'}
         autoCorrect={false}
         multiline={true}
-        //autofocus
+        autoFocus
         
         style={{
           backgroundColor: 'transparent',

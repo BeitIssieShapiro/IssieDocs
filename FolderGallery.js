@@ -10,7 +10,7 @@ import * as RNFS from 'react-native-fs';
 import FolderNew from './FolderNew';
 import FileNew from './FileNew'
 import { pushFolderOrder, renameFolder } from './sort'
-import {registerLangEvent, unregisterLangEvent, translate, fTranslate } from "./lang.js"
+import { registerLangEvent, unregisterLangEvent, translate, fTranslate } from "./lang.js"
 
 import {
     getFolderAndIcon,
@@ -209,7 +209,7 @@ export default class FolderGallery extends React.Component {
     newFromMediaLib = () => {
         this.setState({ isNewPageMode: false });
         ImagePicker.launchImageLibrary({
-            title: 'בחירת תמונה',
+            title: translate("MediaPickerTitle"),
             mediaType: 'photo',
             noData: true
         }, (response) => {
@@ -258,385 +258,380 @@ export default class FolderGallery extends React.Component {
         if (this.state.selected && page) {
             //alert(JSON.stringify(this.state.selected))
             //alert(JSON.stringify(page))
-            return (this.state.selected.find(sel => sel.item.path == page.path) != undefined)
+            //return (this.state.selected.find(sel => sel.item.path == page.path) != undefined)
+            return (this.state.selected.path === page.path)
         }
         return false
     }
+    setSelected = (page) => {
+        this.setState({ selected: page });
+    }
+
     toggleSelection = (item, type) => {
-        let selected = this.state.selected;
-        if (!this.isSelected(item)) {
-            if (!selected) {
-                selected = [];
-            }
-            selected.push({ item: item, type });
+        if (this.isSelected(item)) {
+            this.setState({ selected: undefined });
         } else {
-            selected = selected.filter(sel => (sel.item && sel.item.path !== item.path));
+            this.setSelected(item);
         }
-        this.setState({ selected });
     };
 
     Share = () => {
-        if (this.state.selected.length != 1) return;
+        if (!this.state.selected) return;
         this.props.navigation.navigate('EditPhoto',
             {
-                page: this.state.selected[0].item,
+                page: this.state.selected,
                 share: true
             })
     }
-
-    Delete = () => {
-
-        let isFolders = false;
-        let isPages = false;
-
-        if (this.state.selected.length) {
-            for (let i = 0; i < this.state.selected.length; i++) {
-                let isFolder = this.state.selected[i].type == 'folder'
-                isPages = isPages || !isFolder;
-                isFolders = isFolders || isFolder;
-            }
-            let title, msg;
-            if (isFolders && isPages) {
-                title = translate("DeleteFoldersAndPagesTitle");
-                msg = translate("BeforeDeleteFoldersAndPagesQuestion");
-            } else if (isFolders) {
-                title = translate("DeleteFolderTitle");
-                msg = translate("BeforeDeleteFolderQuestion");
-            } else {
-                title = translate("DeletePageTitle");
-                msg = translate("BeforeDeletePageQuestion");
-            }
-
-
-            Alert.alert(title, msg,
-                [
-                    {
-                        text: 'מחק', onPress: () => {
-                            this.state.selected.forEach((toDelete) => {
-                                RNFS.unlink(toDelete.item.path).then(() => {
-                                    RNFS.unlink(toDelete.item.path + ".json").catch((e) => {/*do nothing*/ });
-                                });
-                            })
-                            this.setState({ selected: [] });
-                            this.refresh();
-                        },
-                        style: 'destructive'
+    DeleteFolder = () => {
+        if (!this.state.currentFolder) return;
+        Alert.alert(translate("DeleteFolderTitle"), translate("BeforeDeleteFolderQuestion"),
+            [
+                {
+                    text: translate("BtnDelete"), onPress: () => {
+                        RNFS.unlink(this.state.currentFolder.path);
+                        this.setState({currentFolder:undefined});
+                        this.refresh();
                     },
-                    {
-                        text: 'בטל', onPress: () => {
-                            //do nothing
-                        },
-                        style: 'cancel'
-                    }
-                ]
-            );
-        }
+                    style: 'destructive'
+                },
+                {
+                    text: translate("BtnCancel"), onPress: () => {
+                        //do nothing
+                    },
+                    style: 'cancel'
+                }
+            ]
+        );
     }
 
-    Rename = () => {
-        if (this.state.selected.length != 1) return;
+    DeletePage = () => {
+        if (!this.state.selected) return;
 
-        if (this.state.selected[0].type == 'file') {
-            this.props.navigation.navigate('SavePhoto', {
-                uri: this.state.selected[0].item.path,
-                imageSource: SRC_RENAME,
-                folder: this.state.currentFolder ? this.state.currentFolder.name : '',
-                name: removeFileExt(this.state.selected[0].item.name),
-                returnFolderCallback: (f) => this.setReturnFolder(f),
-                saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false)
-
-            });
-        } else {
-            //rename folder
-
-            this.props.navigation.navigate('CreateFolder',
+        Alert.alert(translate("DeletePageTitle"), translate("BeforeDeletePageQuestion"),
+            [
                 {
-                    saveNewFolder: (newFolder, currFolder) => this.saveNewFolder(newFolder, false, currFolder),
-                    isLandscape: this.isLandscape(),
-                    currentFolderName: this.state.selected[0].item.name
-                });
-        }
-    
+                    text: translate("BtnDelete"), onPress: () => {
+                        RNFS.unlink(this.state.selected).then(() => {
+                            RNFS.unlink(this.state.selected + ".json").catch((e) => {/*do nothing*/ });
+                        });
+                        this.setState({ selected: undefined });
+                        this.refresh();
+                    },
+                    style: 'destructive'
+                },
+                {
+                    text: translate("BtnCancel"), onPress: () => {
+                        //do nothing
+                    },
+                    style: 'cancel'
+                }
+            ]
+        );
+    }
+
+    RenamePage = () => {
+        if (!this.state.selected) return;
+        this.props.navigation.navigate('SavePhoto', {
+            uri: this.state.selected.path,
+            imageSource: SRC_RENAME,
+            folder: this.state.currentFolder ? this.state.currentFolder.name : '',
+            name: removeFileExt(this.state.selected.name),
+            returnFolderCallback: (f) => this.setReturnFolder(f),
+            saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false)
+
+        });
+        this.setState({ editMode: false, selected: undefined })
+
+    }
+
+    RenameFolder = () => {
+        if (!this.state.currentFolder) return;
+
+        //rename folder
+        this.props.navigation.navigate('CreateFolder',
+            {
+                saveNewFolder: (newFolder, currFolder) => this.saveNewFolder(newFolder, false, currFolder),
+                isLandscape: this.isLandscape(),
+                currentFolderName: this.state.currentFolder.name
+            });
         this.setState({ editMode: false, selected: undefined })
     }
 
-setReturnFolder = (folderName) => {
-    this.setState({ returnFolderName: folderName });
-}
-
-
-saveNewFolder = async (newFolderName, setReturnFolder, originalFolderName) => {
-    
-    if (!newFolderName || newFolderName.length == 0) {
-        Alert.alert(translate("MissingFolderName"));
-        return false;
+    DuplicatePage = () => {
+        Alert.alert("TODO");
     }
-    let fAndi = getFolderAndIcon(newFolderName);
-    if (fAndi.name == 0 && fAndi.icon !== "") {
-        let proceed = await new Promise((resolve)=>
-            Alert.alert(translate("Warning"), translate("SaveFolderWithEmptyNameQuestion"),
-            [
-            {
-                text: translate("BtnContinue"), onPress: () => {
-                    resolve(true);
-                },
-                style: 'default'
-            },
-            {
-                text: translate("BtnCancel"), onPress: () => {
-                    resolve(false);
-                },
-                style: 'cancel'
+
+
+    setReturnFolder = (folderName) => {
+        this.setState({ returnFolderName: folderName });
+    }
+
+
+    saveNewFolder = async (newFolderName, setReturnFolder, originalFolderName) => {
+
+        if (!newFolderName || newFolderName.length == 0) {
+            Alert.alert(translate("MissingFolderName"));
+            return false;
+        }
+        let fAndi = getFolderAndIcon(newFolderName);
+        if (fAndi.name == 0 && fAndi.icon !== "") {
+            let proceed = await new Promise((resolve) =>
+                Alert.alert(translate("Warning"), translate("SaveFolderWithEmptyNameQuestion"),
+                    [
+                        {
+                            text: translate("BtnContinue"), onPress: () => {
+                                resolve(true);
+                            },
+                            style: 'default'
+                        },
+                        {
+                            text: translate("BtnCancel"), onPress: () => {
+                                resolve(false);
+                            },
+                            style: 'cancel'
+                        }
+                    ]
+                ));
+            if (!proceed)
+                return;
+        }
+
+        if (!validPathPart(newFolderName)) {
+            Alert.alert(translate("IllegalCharacterInFolderName"));
+            return false;
+        }
+        let targetFolder = FOLDERS_DIR + newFolderName;
+        try {
+            await RNFS.stat(targetFolder);
+            //folder exists:
+            Alert.alert(translate("FolderAlreadyExists"));
+            return false;
+        } catch (e) {
+            await RNFS.mkdir(targetFolder);
+            if (!originalFolderName) {
+                await pushFolderOrder(newFolderName)
+            } else {
+                //rename existing
+                //move all files and delete old folder
+                await RNFS.readDir(FOLDERS_DIR + originalFolderName).then(async (files) => {
+                    for (let f of files) {
+                        await RNFS.moveFile(f.path, FOLDERS_DIR + newFolderName + "/" + f.name);
+                    }
+                });
+                await RNFS.unlink(FOLDERS_DIR + originalFolderName);
+                await renameFolder(originalFolderName, newFolderName);
             }
-            ]
-        ));
-        if (!proceed)
-            return;
+        }
+        if (setReturnFolder) {
+            this.setState({ returnFolderName: newFolderName }, () => this.refresh());
+        } else {
+            //add the folder to the list:
+            this.refresh();
+        }
+        return true;
     }
 
-    if (!validPathPart(newFolderName)) {
-        Alert.alert(translate("IllegalCharacterInFolderName"));
-        return false;
-    }
-    let targetFolder = FOLDERS_DIR + newFolderName;
-    try {
-        await RNFS.stat(targetFolder);
-        //folder exists:
-        Alert.alert(translate("FolderAlreadyExists"));
-        return false;
-    } catch (e) {
-        await RNFS.mkdir(targetFolder);
-        if (!originalFolderName) {
-            await pushFolderOrder(newFolderName)
-        } else {
-            //rename existing
-            //move all files and delete old folder
-            await RNFS.readDir(FOLDERS_DIR + originalFolderName).then(async (files) => {
-                for (let f of files) {
-                    await RNFS.moveFile(f.path, FOLDERS_DIR + newFolderName + "/" + f.name);
-                }
-            });
-            await RNFS.unlink(FOLDERS_DIR + originalFolderName);
-            await renameFolder(originalFolderName, newFolderName);
+    moveFolderUp = (folder) => {
+        let index = this.state.folders.findIndex(f => f.name === folder.name);
+        if (index >= 1) {
+            let newFolders = swapFolders(this.state.folders, index, index - 1)
+            this.setState({ folders: newFolders })
+            saveFolderOrder(newFolders);
         }
     }
-    if (setReturnFolder) {
-        this.setState({ returnFolderName: newFolderName }, () => this.refresh());
-    } else {
-        //add the folder to the list:
-        this.refresh();
+
+    moveFolderDown = (folder) => {
+        let index = this.state.folders.findIndex(f => f.name === folder.name);
+        if (index >= 0 && index < this.state.folders.length - 1) {
+            let newFolders = swapFolders(this.state.folders, index, index + 1)
+            this.setState({ folders: newFolders })
+            saveFolderOrder(newFolders);
+        }
     }
-    return true;
-}
 
-moveFolderUp = (folder) => {
-    let index = this.state.folders.findIndex(f => f.name === folder.name);
-    if (index >= 1) {
-        let newFolders = swapFolders(this.state.folders, index, index - 1)
-        this.setState({ folders: newFolders })
-        saveFolderOrder(newFolders);
+    gotoAbout = () => {
+        this.closeMenu();
+        this.props.navigation.navigate('About')
     }
-}
+    isLandscape = () => this.state.windowSize.width > this.state.windowSize.height
 
-moveFolderDown = (folder) => {
-    let index = this.state.folders.findIndex(f => f.name === folder.name);
-    if (index >= 0 && index < this.state.folders.length - 1) {
-        let newFolders = swapFolders(this.state.folders, index, index + 1)
-        this.setState({ folders: newFolders })
-        saveFolderOrder(newFolders);
+    closeMenu = () => {
+        this.setState({ showMenu: false });
+        this.props.navigation.setParams({ isMenuOpened: false });
     }
-}
+    render() {
+        let curFolderFullName = this.state.currentFolder ? this.state.currentFolder.name : "";
+        let curFolder = getFolderAndIcon(curFolderFullName);
+        let fIndex = 0;
+        if (this.state.folders && this.state.folders.length) {
+            fIndex = this.state.folders.findIndex(f => f.name == curFolderFullName);
+        }
+        //        let folderColor = folderColors[fIndex % folderColors.length];
+        let viewStyle = Settings.get('viewStyle');
+        let asTiles = viewStyle === 2;
+        let treeWidth = .36 * this.state.windowSize.width;
+        let pagesContainerWidth = this.state.windowSize.width - treeWidth;
+        let tileWidth = 143;
+        let numColumnsForTiles = Math.floor(pagesContainerWidth / tileWidth);
 
-gotoAbout = () => {
-    this.closeMenu();
-    this.props.navigation.navigate('About')
-}
-isLandscape = () => this.state.windowSize.width > this.state.windowSize.height
+        return (
+            <View style={styles.container}
+                onLayout={this.onLayout}>
 
-closeMenu = () => {
-    this.setState({ showMenu: false });
-    this.props.navigation.setParams({ isMenuOpened: false });
-}
-render() {
-    let curFolderFullName = this.state.currentFolder ? this.state.currentFolder.name : "";
-    let curFolder = getFolderAndIcon(curFolderFullName);
-    let fIndex = 0;
-    if (this.state.folders && this.state.folders.length) {
-        fIndex = this.state.folders.findIndex(f => f.name == curFolderFullName);
-    }
-    //        let folderColor = folderColors[fIndex % folderColors.length];
-    let viewStyle = Settings.get('viewStyle');
-    let asTiles = viewStyle === 2;
-    let treeWidth = .36 * this.state.windowSize.width;
-    let pagesContainerWidth = this.state.windowSize.width - treeWidth;
-    let tileWidth = 143;
-    let numColumnsForTiles = Math.floor(pagesContainerWidth / tileWidth);
+                {this.state.showMenu ?
+                    <Menu
+                        onAbout={() => this.gotoAbout()}
+                        onClose={() => this.closeMenu()}
+                        onViewChange={(style) => this.setState({ viewStyle: style })}
+                    /> : null}
+                {/* header */}
+                <View style={{
+                    position: 'absolute', width: "100%", height: dimensions.toolbarHeight, top: 0, left: 0, backgroundColor: 'white',
+                    shadowColor: "gray",
+                    shadowOpacity: 0.8,
+                    shadowOffset: { width: 0, height: 1 },
+                    elevation: 1,
+                    zIndex: 5,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    backgroundColor: semanticColors.subTitle
 
-    return (
-        <View style={styles.container}
-            onLayout={this.onLayout}>
-
-            {this.state.showMenu ?
-                <Menu 
-                    onAbout={() => this.gotoAbout()} 
-                    onClose={() => this.closeMenu()} 
-                    onViewChange={(style)=>this.setState({viewStyle:style})} 
-                /> : null}
-            {/* header */}
-            <View style={{
-                position: 'absolute', width: "100%", height: dimensions.toolbarHeight, top: 0, left: 0, backgroundColor: 'white',
-                shadowColor: "gray",
-                shadowOpacity: 0.8,
-                shadowOffset: { width: 0, height: 1 },
-                elevation: 1,
-                zIndex: 5,
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: semanticColors.subTitle
-
-            }} >
-                {/*Left buttons*/}
-                <Spacer />
-                {
-                    getIconButton(() => {
-                        this.newFromCamera();
-                    }, semanticColors.addButton, "add-a-photo", 45)
-                }
-                <Spacer />
-                {
-                    getIconButton(() => {
-                        this.newFromMediaLib();
-                    }, semanticColors.addButton, "photo-library", 45)
-                }
-                <Spacer />
-                {
-                    getIconButton(() => {
-                        this.newFromFileExplorer();
-                    }, semanticColors.addButton, "picture-as-pdf", 45)
-                }
-                <Spacer />
-                {
-                    getIconButton(() => {
-                        this.props.navigation.navigate('CreateFolder',
-                            {
-                                saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, true),
-                                isLandscape: this.isLandscape()
-                            });
-                    }, semanticColors.addButton, "create-new-folder", 45)
-                }
-
-                {/*right buttons */}
-                <View style={{ position: 'absolute', right: 0, flexDirection: 'row-reverse', alignItems: 'center' }}>
+                }} >
+                    {/*Left buttons*/}
+                    <Spacer />
                     {
                         getIconButton(() => {
-                            let selected = this.state.editMode ? undefined : this.state.selected;
+                            this.newFromCamera();
+                        }, semanticColors.addButton, "add-a-photo", 45)
+                    }
+                    <Spacer />
+                    {
+                        getIconButton(() => {
+                            this.newFromMediaLib();
+                        }, semanticColors.addButton, "photo-library", 45)
+                    }
+                    <Spacer />
+                    {
+                        getIconButton(() => {
+                            this.newFromFileExplorer();
+                        }, semanticColors.addButton, "picture-as-pdf", 45)
+                    }
+                    <Spacer />
+                    {
+                        getIconButton(() => {
+                            this.props.navigation.navigate('CreateFolder',
+                                {
+                                    saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, true),
+                                    isLandscape: this.isLandscape()
+                                });
+                        }, semanticColors.addButton, "create-new-folder", 45)
+                    }
 
-                            this.setState({ editMode: !this.state.editMode, selected });
-                        }, semanticColors.addButton, this.state.editMode ? "clear" : "edit", 35)
-                    }
-                    {<Spacer width={10} />}
+                    {/*right buttons */}
+                    <View style={{ position: 'absolute', right: 0, flexDirection: 'row-reverse', alignItems: 'center' }}>
+                        {
+                            getIconButton(() => {
+                                let selected = this.state.editMode ? undefined : this.state.selected;
 
-                    {  //delete
-                        this.state.selected && this.state.selected.length > 0 ?
-                            getRoundedButton(this.Delete, 'delete-forever', 'מחק', 30, 30, { width: 120, height: 40 }) :
-                            null
-                    }
-                    {<Spacer width={10} />}
-                    {  //move
-                        this.state.selected && this.state.selected.length == 1 ?
-                            getRoundedButton(this.Rename, 'text-fields', 'שנה שם', 30, 30, { width: 135, height: 40 }) :
-                            null
-                    }
-                    {<Spacer width={10} />}
-                    {  //Share
-                        this.state.selected && this.state.selected.length == 1 && this.state.selected[0].type === 'file' ?
-                            getRoundedButton(this.Share, 'share', 'שתף', 30, 30, { width: 120, height: 40 }) :
-                            null
-                    }
+                                this.setState({ editMode: !this.state.editMode, selected });
+                            }, semanticColors.addButton, this.state.editMode ? "clear" : "edit", 35)
+                        }
+                    </View>
                 </View>
-            </View>
 
-            <View style={{
-                flex: 1, flexDirection: "row", backgroundColor: semanticColors.mainAreaBG, position: 'absolute', width: "100%", top: dimensions.toolbarHeight, left: 0, height: "94%", zIndex: 4,
-            }} >
-                {/* MainExplorer*/}
                 <View style={{
-                    flex: 1, flexDirection: "column", position: 'absolute', top: 0, width: pagesContainerWidth, left: 0, height: "100%",
-                }}>
-                    {/* pagesTitle */}
+                    flex: 1, flexDirection: "row", backgroundColor: semanticColors.mainAreaBG, position: 'absolute', width: "100%", top: dimensions.toolbarHeight, left: 0, height: "94%", zIndex: 4,
+                }} >
+                    {/* MainExplorer*/}
                     <View style={{
-                        flex: 1, flexDirection: "row-reverse", height: "5%", position: 'absolute',
-                        width: "100%", top: 0, height: '10%', alignItems: 'center', justifyContent: 'flex-start',
-                        paddingRight: '5%', borderBottomWidth: 1, borderBottomColor: 'gray'
+                        flex: 1, flexDirection: "column", position: 'absolute', top: 0, width: pagesContainerWidth, left: 0, height: "100%",
                     }}>
-                        <FolderNew index={fIndex} id="1" name={curFolderFullName} asTitle={true} isLandscape={this.isLandscape()}
-                        />
-                    </View>
-                    {/* pages */}
-                    <View style={{
-                        flex: 1, backgroundColor: semanticColors.mainAreaBG, position: 'absolute', top: "10%", width: "100%", height: '90%'
-                    }}>
-                        {this.state.currentFolder && this.state.currentFolder.files ?
-                            <FlatList
-                                contentContainerStyle={{ width: '100%', alignItems: 'flex-end' }}
-
-                                key={asTiles ? numColumnsForTiles.toString() : "list"}
-                                data={this.state.currentFolder.files}
-                                renderItem={({ item }) => FileNew({
-                                    page: item,
-                                    asTile: asTiles,
-                                    name: removeFileExt(item.name),
-                                    rowWidth: pagesContainerWidth,
-                                    editMode: this.state.editMode,
-                                    selected: this.state.editMode ? this.isSelected(item) : false,
-                                    onPress: () => this.props.navigation.navigate('EditPhoto', { page: item, share: false }),
-                                    onSelect: () => this.toggleSelection(item, 'file'),
-                                    count: item.pages.length
-                                })}
-                                numColumns={asTiles ? numColumnsForTiles : 1}
-                                keyExtractor={(item, index) => index.toString()}
+                        {/* pagesTitle */}
+                        <View style={{
+                            flex: 1, flexDirection: "row-reverse", height: "5%", position: 'absolute',
+                            width: "100%", top: 0, height: '10%', alignItems: 'center', justifyContent: 'flex-start',
+                            paddingRight: '5%', borderBottomWidth: 1, borderBottomColor: 'gray'
+                        }}>
+                            <FolderNew 
+                                index={fIndex} 
+                                id="1" 
+                                name={curFolderFullName} 
+                                asTitle={true} 
+                                isLandscape={this.isLandscape()}
+                                editMode={this.state.editMode}
+                                onDelete={()=>this.DeleteFolder()}
+                                onRename={()=>this.RenameFolder()}
+                                fixedFolder={curFolderFullName === DEFAULT_FOLDER_NAME}
                             />
+                        </View>
+                        {/* pages */}
+                        <View style={{
+                            flex: 1, backgroundColor: semanticColors.mainAreaBG, position: 'absolute', top: "10%", width: "100%", height: '90%'
+                        }}>
+                            {this.state.currentFolder && this.state.currentFolder.files ?
+                                <FlatList
+                                    contentContainerStyle={{ width: '100%', alignItems: 'flex-end' }}
+
+                                    key={asTiles ? numColumnsForTiles.toString() : "list"}
+                                    data={this.state.currentFolder.files}
+                                    renderItem={({ item }) => FileNew({
+                                        page: item,
+                                        asTile: asTiles,
+                                        name: removeFileExt(item.name),
+                                        rowWidth: pagesContainerWidth,
+                                        editMode: this.state.editMode,
+                                        selected: this.state.editMode ? this.isSelected(item) : false,
+                                        onPress: () => this.props.navigation.navigate('EditPhoto', { page: item, share: false }),
+                                        onSelect: () => this.toggleSelection(item, 'file'), 
+                                        onDelete: () => this.DeletePage(),
+                                        onRename: () => this.RenamePage(),
+                                        onShare: () => this.Share(),
+                                        onDuplicate: () => this.DuplicatePage(),
+                                        count: item.pages.length
+                                    })}
+                                    numColumns={asTiles ? numColumnsForTiles : 1}
+                                    keyExtractor={(item, index) => index.toString()}
+                                />
 
 
-                            : <View style={{ alignItems: 'center' }}>
-                            <Text style={{ fontSize: 35 }}> {translate("NoPagesYet")}</Text>
-                            </View>}
+                                : <View style={{ alignItems: 'center' }}>
+                                    <Text style={{ fontSize: 35 }}> {translate("NoPagesYet")}</Text>
+                                </View>}
+                        </View>
                     </View>
-                </View>
-                {/* tree */}
-                <View
-                    style={{
-                        flex: 1,
-                        flexDirection: "column",
-                        position: 'absolute',
-                        top: 0, width: treeWidth, right: 0, height: "100%",
-                        alignItems: "flex-end", justifyContent: "flex-start",
-                        backgroundColor: 'white'
-                    }}>
+                    {/* tree */}
+                    <View
+                        style={{
+                            flex: 1,
+                            flexDirection: "column",
+                            position: 'absolute',
+                            top: 0, width: treeWidth, right: 0, height: "100%",
+                            alignItems: "flex-end", justifyContent: "flex-start",
+                            backgroundColor: 'white'
+                        }}>
 
-                    {this.state.folders && this.state.folders.length ?
-                        this.state.folders.map((f, i, arr) => FolderNew({
-                            index: i,
-                            isLast: i + 1 == arr.length,
-                            id: f.name,
-                            name: f.name,
-                            editMode: this.state.editMode,
-                            fixedFolder: f.name === DEFAULT_FOLDER_NAME,
-                            //dragPanResponder: this._panResponder.panHandlers, 
-                            selected: this.state.editMode ? this.isSelected(f) : false,
-                            current: (this.state.currentFolder && f.name == this.state.currentFolder.name),
-                            onPress: () => this.onFolderPressed(f),
-                            onSelect: () => this.toggleSelection(f, 'folder'),
-                            onMoveUp: () => this.moveFolderUp(f),
-                            onMoveDown: () => this.moveFolderDown(f),
-                            isLandscape: this.isLandscape()
-                        })) : <Text style={{ fontSize: 25 }}>{translate("NoFoldersYet")}</Text>}
-                </View>
+                        {this.state.folders && this.state.folders.length ?
+                            this.state.folders.map((f, i, arr) => FolderNew({
+                                index: i,
+                                isLast: i + 1 == arr.length,
+                                id: f.name,
+                                name: f.name,
+                                editMode: this.state.editMode,
+                                fixedFolder: f.name === DEFAULT_FOLDER_NAME,
+                                //dragPanResponder: this._panResponder.panHandlers, 
+                                current: (this.state.currentFolder && f.name == this.state.currentFolder.name),
+                                onPress: () => this.onFolderPressed(f),
+                                onMoveUp: () => this.moveFolderUp(f),
+                                onMoveDown: () => this.moveFolderDown(f),
+                                isLandscape: this.isLandscape()
+                            })) : <Text style={{ fontSize: 25 }}>{translate("NoFoldersYet")}</Text>}
+                    </View>
 
+                </View>
             </View>
-        </View>
-    );
-}
+        );
+    }
 }
 
 const styles = StyleSheet.create({
