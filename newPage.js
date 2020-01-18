@@ -10,9 +10,11 @@ export const SRC_CAMERA = 'camera';
 export const SRC_GALLERY = 'gallery';
 export const SRC_FILE = 'file';
 export const SRC_RENAME = 'rename'
+export const SRC_DUPLICATE = 'duplicate'
 
 import mock from './mock.jpg'
 import { translate } from './lang';
+import { usesAutoTimeZone } from 'react-native-localize';
 let mockFileName;
 
 
@@ -69,7 +71,7 @@ export async function getNewPage(src, okEvent, cancelEvent) {
     }
 }
 
-export async function saveFile(uri, filePath) {
+export async function saveFile(uri, filePath, isCopy) {
 
     return new Promise((resolve, reject) => {
         if (uri.startsWith("rct-image-store")) {
@@ -101,7 +103,15 @@ export async function saveFile(uri, filePath) {
                     err => handleSaveFileError(uri, err, reject)
                 ).catch(err => handleSaveFileError(uri, err, reject));
             }
-            RNFS.moveFile(uri, filePath).then(
+
+            let ret
+            if (isCopy) {
+                ret = copyDeep(uri, filePath);
+            } else {
+                ret = RNFS.moveFile(uri, filePath)
+            }
+
+            ret.then(
                 //Success
                 () => {
                     return resolve()
@@ -109,28 +119,45 @@ export async function saveFile(uri, filePath) {
                 //on error 
                 err => handleSaveFileError(uri, err, reject)
             ).catch(err => handleSaveFileError(uri, err, reject));
+
         }
     });
+}
+//assumed folder is there already
+async function copyDeep(src, dst) {
+    let stats = await RNFS.stat(src);
+    if (stats.isDirectory()) {
+        //in case of multi page, it is in fact folder
+        await RNFS.mkdir(dst);
+        
+        let items = await RNFS.readDir(src);
+        for (index in items) {
+            const item = items[index];
+            await RNFS.copyFile(item.path, dst + '/' + item.name);
+        }
+    } else {
+        return RNFS.copyFile(src, dst); 
+    }
 }
 
 function handleSaveFileError(uri, err, reject) {
     let errorStr = ""
     for (let key in err) {
-        errorStr += JSON.stringify(err[key]).substr(15)+"\n";
+        errorStr += JSON.stringify(err[key]).substr(15) + "\n";
     }
     //Alert.alert("Error: " + errorStr);
     if (err.toString().includes("already exists")) {
         reject(translate("PageAlreadyExists"));
         return;
     }
-    reject('Error saving file: ' + uri , 'err: ' + err);
+    reject('Error saving file: ' + uri, 'err: ' + err);
 }
 
 export function genTempFile(ext) {
     const date = new Date()
-    let fn =  Math.random()+ '-' + date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + ' ' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2);
+    let fn = Math.random() + '-' + date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + ' ' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2);
 
-    return RNFS.TemporaryDirectoryPath  + fn + "." + ext
+    return RNFS.TemporaryDirectoryPath + fn + "." + ext
 }
 
 export async function cloneToTemp(uri) {

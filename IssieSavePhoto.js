@@ -10,7 +10,7 @@ import Pdf from 'react-native-pdf';
 import ViewShot from "react-native-view-shot";
 import { StackActions } from 'react-navigation';
 import { Icon } from 'react-native-elements'
-import {translate} from './lang.js'
+import { translate } from './lang.js'
 
 import {
   getIconButton,
@@ -20,7 +20,7 @@ import {
   Spacer, getRoundedButton, dimensions, validPathPart
 } from './elements'
 import ImageRotate from 'react-native-image-rotate';
-import { getNewPage, saveFile, cloneToTemp, SRC_RENAME } from './newPage'
+import { getNewPage, saveFile, cloneToTemp, SRC_RENAME, SRC_DUPLICATE } from './newPage'
 import { pushFolderOrder } from './sort'
 import * as Progress from 'react-native-progress';
 import { fTranslate } from './lang';
@@ -171,17 +171,22 @@ export default class IssieSavePhoto extends React.Component {
     if (!pdf) {
       this.updateImageDimension();
     }
-    this.onLayout();
-    if (this.isRename()) {
+    if (this.isRename() || this.isDuplicate()) {
       setTimeout(() => this.setState({ phase: PickName }), 50);
     }
+    this.onLayout();
   }
 
   isRename = () => this.props.navigation.getParam('imageSource', '') === SRC_RENAME;
+  isDuplicate = () => this.props.navigation.getParam('imageSource', '') === SRC_DUPLICATE;
 
   updateImageDimension = async () => {
     setTimeout(async () => {
-      let imgSize = await getImageDimensions(this.state.uri);
+      let imgSize =
+        (this.isDuplicate() || this.isRename()) ?
+          { w: 0, h: 0 } :
+          await getImageDimensions(this.state.uri);
+
       let windowSize = Dimensions.get("window");
       windowSize = {
         width: windowSize.width,
@@ -298,7 +303,16 @@ export default class IssieSavePhoto extends React.Component {
     }
 
     let targetFolder = FOLDERS_DIR + folderName;
-    let filePath = targetFolder + "/" + fileName + ".jpg";
+    let filePath = targetFolder + "/" + fileName;
+
+    //add .jpg only if not rename or dup
+    if (this.isDuplicate || this.isRename()) {
+      if (this.state.uri.endsWith(".jpg")) {
+        filePath += ".jpg";
+      }
+    } else {
+      filePath += ".jpg";
+    }
 
     //first check if folder exists - if not create it and make it first in order
     try {
@@ -309,6 +323,7 @@ export default class IssieSavePhoto extends React.Component {
         await pushFolderOrder(folderName)
       }
     }
+
 
     if (this.state.multiPageState.pages.length > 0 && !this.isRename()) {
       //create a folder with the name fo the file
@@ -325,12 +340,12 @@ export default class IssieSavePhoto extends React.Component {
 
 
 
-    saveFile(this.state.uri, filePath).then(
+    saveFile(this.state.uri, filePath, this.isDuplicate()).then(
       async () => {
         //        Alert.alert("Save to file: " + filePath)
-        if (this.isRename() && this.state.uri.endsWith('.jpg')) {
+        if ((this.isRename() || this.isDuplicate()) && this.state.uri.endsWith('.jpg')) {
           try {
-            await saveFile(this.state.uri + ".json", filePath + ".json");
+            await saveFile(this.state.uri + ".json", filePath + ".json", this.isDuplicate());
           } catch (e) {
             //ignore, as maybe json is missing
           }
@@ -617,11 +632,11 @@ export default class IssieSavePhoto extends React.Component {
             {this.state.pdfInProcess ?
               <View style={{ position: 'absolute', top: '25%', left: 0, width: '100%', zIndex: 1000, alignItems: 'center' }}>
 
-                <Progress.Circle size={200} 
-                  progress={this.state.pdfInProcess / this.state.pdfPageCount} 
-                  showsText={true} 
-                  textStyle={{ zIndex: 100, fontSize: 25 }} 
-                  formatText={(prog) => fTranslate("ImportProgress", this.state.pdfInProcess, this.state.pdfPageCount)} 
+                <Progress.Circle size={200}
+                  progress={this.state.pdfInProcess / this.state.pdfPageCount}
+                  showsText={true}
+                  textStyle={{ zIndex: 100, fontSize: 25 }}
+                  formatText={(prog) => fTranslate("ImportProgress", this.state.pdfInProcess, this.state.pdfPageCount)}
                   thickness={5} />
               </View> : null}
             <ViewShot ref="viewShot" options={{ format: "jpg", quality: 0.9 }}
@@ -647,10 +662,11 @@ export default class IssieSavePhoto extends React.Component {
             </ViewShot>
             {PageNameInput}
           </View> :
-          <View style={{ width: this.state.windowSize.width, 
-              height: this.state.windowSize.height,
-              justifyContent:'flex-start',
-            }}>
+          <View style={{
+            width: this.state.windowSize.width,
+            height: this.state.windowSize.height,
+            justifyContent: 'flex-start',
+          }}>
             <ImageBackground
               style={styles.bgImage}
               imageStyle={{ resizeMode: 'contain' }}

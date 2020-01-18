@@ -20,7 +20,7 @@ import {
     getIconButton, getRoundedButton, dimensions,
     validPathPart
 } from './elements'
-import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, getNewPage, SRC_FILE } from './newPage';
+import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
 import ImagePicker from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
 import { sortFolders, swapFolders, saveFolderOrder } from './sort'
@@ -312,8 +312,9 @@ export default class FolderGallery extends React.Component {
             [
                 {
                     text: translate("BtnDelete"), onPress: () => {
-                        RNFS.unlink(this.state.selected).then(() => {
-                            RNFS.unlink(this.state.selected + ".json").catch((e) => {/*do nothing*/ });
+                        let selectedPath = this.state.selected.path;
+                        RNFS.unlink(selectedPath).then(() => {
+                            RNFS.unlink(selectedPath + ".json").catch((e) => {/*do nothing*/ });
                         });
                         this.setState({ selected: undefined });
                         this.refresh();
@@ -359,7 +360,16 @@ export default class FolderGallery extends React.Component {
     }
 
     DuplicatePage = () => {
-        Alert.alert("TODO");
+        if (!this.state.selected) return;
+
+        this.props.navigation.navigate('SavePhoto', {
+            uri: this.state.selected.path,
+            imageSource: SRC_DUPLICATE,
+            folder: this.state.currentFolder ? this.state.currentFolder.name : undefined,
+            returnFolderCallback: (f) => this.setReturnFolder(f),
+            saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false)
+
+        })
     }
 
 

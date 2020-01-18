@@ -51,6 +51,7 @@ export const semanticColors = {
     editPhotoButton: '#1aaeff',
     availableIconColor: '#9a9fa9',
     selectedIconColor: '#1aaeff',
+    selectedEditToolColor: '#a7a7a7',
     selectedListItem: '#e0ecf7',
     listBackground: 'white' //'#f1f2f4'
 
@@ -200,7 +201,7 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
         activeOpacity={0.7}
         onPress={callback}
         style={{
-            backgroundColor: selected ? '#eeeded' : 'transparent',
+            backgroundColor: selected ? semanticColors.selectedEditToolColor : 'transparent',
             width: size, height: size,
             alignContent: 'center',
             alignItems: 'center',
@@ -463,7 +464,7 @@ export function getEraserIcon(callback, size, color, selected) {
                 width:size,
                 alignItems: 'center',
                 justifyContent: 'flex-end',
-                backgroundColor: selected? '#eeeded':'transparent'
+                backgroundColor: selected? semanticColors.selectedEditToolColor:'transparent'
         }}><Svg 
         width={size*.8} height={size*.8} 
         

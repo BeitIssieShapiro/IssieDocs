@@ -29,8 +29,8 @@ export default function FileNew(props) {
                                 position: 'absolute', top: 0,
                                 right: 0, width: '100%', height: '100%',
                                 zIndex: 100,
-                                flexDirection:'row',
-                                flexWrap:'wrap'
+                                flexDirection: 'row',
+                                flexWrap: 'wrap'
                             }}>
                                 <TouchableOpacity
                                     onPress={props.onSelect} >
@@ -39,18 +39,16 @@ export default function FileNew(props) {
                                 {props.selected ? getActionButtons(props) : null}
                             </View>
                             : null}
-                        <View style={{ flexDirection: 'column', alignItems: 'center' }}>
+                        <View style={{ flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
 
 
-                            <View style={{ position: 'absolute', top: 0, right: 0, width: '100%', height: tileHeight - titleHeight }}>
-                                <Image source={{ uri: imageSrc }} style={{ width: '100%', height: '100%' }} />
+                            <Image source={{ uri: imageSrc }} style={{ flex: 10, width: '100%' }} />
+                            <View style={{ flex: 2, backgroundColor: '#a7a7a7', alignItems: 'flex-end', width:'100%' }} >
+                                <Text style={{ fontSize: 20, textAlign: 'right', color: 'white', paddingRight: 15 }}>
+                                    {props.name}
+                                    {props.count > 0 ? ' (' + props.count + ')' : ''}
+                                </Text>
                             </View>
-                        </View>
-                        <View style={{ position: 'absolute', bottom: 0, width: '100%', height: titleHeight, backgroundColor: '#a7a7a7', alignItems: 'flex-end' }} >
-                            <Text style={{ fontSize: 20, textAlign: 'right', color: 'white', paddingRight: 15 }}>
-                                {props.name}
-                                {props.count > 0 ? ' (' + props.count + ')' : ''}
-                            </Text>
                         </View>
                     </View>
                 </View>
