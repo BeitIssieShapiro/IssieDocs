@@ -647,7 +647,10 @@ export default class IssieSavePhoto extends React.Component {
             </ViewShot>
             {PageNameInput}
           </View> :
-          <View style={{ width: this.state.windowSize.width, height: this.state.windowSize.height }}>
+          <View style={{ width: this.state.windowSize.width, 
+              height: this.state.windowSize.height,
+              justifyContent:'flex-start',
+            }}>
             <ImageBackground
               style={styles.bgImage}
               imageStyle={{ resizeMode: 'contain' }}
