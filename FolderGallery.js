@@ -10,7 +10,9 @@ import * as RNFS from 'react-native-fs';
 import FolderNew from './FolderNew';
 import FileNew from './FileNew'
 import { pushFolderOrder, renameFolder } from './sort'
-import { registerLangEvent, unregisterLangEvent, translate, fTranslate } from "./lang.js"
+import { registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage,
+} from "./lang.js"
+import {USE_COLOR, getUseColorSetting} from './settings.js'
 
 import {
     getFolderAndIcon,
@@ -66,7 +68,8 @@ export default class FolderGallery extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            windowSize: { width: 500, height: 1024 }
+            windowSize: { width: 500, height: 1024 },
+            folderColor : (getUseColorSetting() === USE_COLOR.yes)
         }
 
         // this._panResponder = PanResponder.create({
@@ -477,7 +480,6 @@ export default class FolderGallery extends React.Component {
         if (this.state.folders && this.state.folders.length) {
             fIndex = this.state.folders.findIndex(f => f.name == curFolderFullName);
         }
-        //        let folderColor = folderColors[fIndex % folderColors.length];
         let viewStyle = Settings.get('viewStyle');
         let asTiles = viewStyle === 2;
         let treeWidth = .36 * this.state.windowSize.width;
@@ -494,6 +496,14 @@ export default class FolderGallery extends React.Component {
                         onAbout={() => this.gotoAbout()}
                         onClose={() => this.closeMenu()}
                         onViewChange={(style) => this.setState({ viewStyle: style })}
+                        onLanguageChange={(lang) => {
+                            loadLanguage();
+                            this.forceUpdate();
+                        }}
+                        onFolderColorChange={(folderColor)=>{
+                            this.setState({folderColor:(folderColor == USE_COLOR.yes)})
+                        }}
+                        onTextBtnChange={(textBtn)=>{/* nothing to do for now */}}
                     /> : null}
                 {/* header */}
                 <View style={{
@@ -566,6 +576,7 @@ export default class FolderGallery extends React.Component {
                             <FolderNew 
                                 index={fIndex} 
                                 id="1" 
+                                useColors={this.state.folderColor}
                                 name={curFolderFullName} 
                                 asTitle={true} 
                                 isLandscape={this.isLandscape()}
@@ -625,6 +636,7 @@ export default class FolderGallery extends React.Component {
                             this.state.folders.map((f, i, arr) => FolderNew({
                                 index: i,
                                 isLast: i + 1 == arr.length,
+                                useColors: this.state.folderColor,
                                 id: f.name,
                                 name: f.name,
                                 editMode: this.state.editMode,

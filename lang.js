@@ -1,6 +1,7 @@
 import * as RNLocalize from "react-native-localize";
-import { Alert } from "react-native";
+import { Alert, Settings } from "react-native";
 import DeviceInfo from 'react-native-device-info';
+import { LANGUAGE } from "./settings";
 
 export var gCurrentLang = { languageTag: "he", isRTL: true }
 const DEFAULT_LANG = "he";
@@ -46,6 +47,9 @@ var strings = {
 
         "Menu": "תפריט",
         "Display": "תצוגה",
+        "Language": "שפה",
+        "TextInButtons":"טקסט בכפתורים",
+        "FolderColors":"צבעי תיקיות",
         "Warning": "אזהרה",
         "BtnContinue": "המשך",
         "BtnCancel": "בטל",
@@ -70,7 +74,7 @@ var strings = {
 
     },
     "ar": {
-        "DefaultAppTitle": "{1} - My Desktop",
+        "DefaultAppTitle": "{1} - سطح المكتب",
         "MissingFolderName": "يجب إدخال اسم مجلد",
         "SaveFolderWithEmptyNameQuestion": "حفظ مجلد بدون اسم؟",
         "MissingPageName": "يجب إدخال اسم الصفحة",
@@ -83,7 +87,7 @@ var strings = {
         "PDFLoadFailed": "فشل تحميل PDF",
         "DefaultFolderLanguage": "بلا موضوع",
 
-        "DeletePageTitle": "Delete Page",
+        "DeletePageTitle": "حذف الصفحة",
         "DeleteFolderTitle": "حذف المجلد",
         "BeforeDeletePageQuestion": "حذف الصفحة؟",
         "DeleteFoldersAndPagesTitle": "حذف المجلدات والصفحات",
@@ -107,6 +111,9 @@ var strings = {
 
         "Menu": "القائمة",
         "Display": "العرض",
+        "Language": "اللغة",
+        "TextInButtons":"نص الزر",
+        "FolderColors":"ألوان المجلد",
         "Warning": "تحذير",
         "BtnContinue": "متابعة",
         "BtnCancel": "إلغاء",
@@ -124,10 +131,10 @@ var strings = {
         "CaptionFolderNameList": "مجلد",
         "CaptionFolderNameInput": "اسم المجلد",
         "NoIcon": "بلا",
-        "CaptionIcon": "Icon",
+        "CaptionIcon": "آخر",
 
         "ImportProgress": "استيراد الصفحة {1} من {2}",
-        "ExportProgress": "Export page {1} of {2}"
+        "ExportProgress": "صفحة التصدير {1} من {2}"
     }
 }
 
@@ -173,17 +180,32 @@ var currStrings = strings[DEFAULT_LANG];
 
 
 export function registerLangEvent() {
-    RNLocalize.addEventListener("change", initLanguage);
-    initLanguage();
+    RNLocalize.addEventListener("change", loadLanguage);
+    loadLanguage();
 
 }
 
 export function unregisterLangEvent() {
-    RNLocalize.removeEventListener("change", initLanguage)
+    RNLocalize.removeEventListener("change", loadLanguage)
 }
 
-function initLanguage() {
-    gCurrentLang = RNLocalize.findBestAvailableLanguage(["he", "ar", "en-US", "en"])
+export function loadLanguage() {
+    let langSetting = Settings.get('language');
+    if (langSetting === undefined || langSetting === LANGUAGE.default) {
+        gCurrentLang = RNLocalize.findBestAvailableLanguage(["he", "ar", "en-US", "en"])
+    } else {
+        switch (langSetting) {
+            case LANGUAGE.hebrew:
+                gCurrentLang = { languageTag: "he", isRTL: true }
+                break;
+            case LANGUAGE.arabic:
+                gCurrentLang = { languageTag: "ar", isRTL: true }
+                break;
+            case LANGUAGE.english:
+                gCurrentLang = { languageTag: "en", isRTL: false }
+                break;
+        }
+    }
     currStrings = strings[gCurrentLang.languageTag];
     if (!currStrings) {
         //remove the specifics
@@ -200,7 +222,7 @@ function initLanguage() {
 
     if (DeviceInfo.isEmulator()) {
         gPrefix = "."
-    } 
+    }
 
     //Alert.alert(JSON.stringify(currStrings));
 

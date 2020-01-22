@@ -10,7 +10,7 @@ import {
 
 
 export default function FolderNew(props) {
-    let folderColor = folderColors[props.index % folderColors.length];
+    let folderColor = props.useColors?folderColors[props.index % folderColors.length]: 'gray';
     let folderAndIcon = getFolderAndIcon(props.name);
     let caption = normalizeTitle(folderAndIcon.name);
     let captionLimit = props.isLandscape ? 20 : 14;
