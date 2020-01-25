@@ -421,8 +421,7 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
             left: left,
             width: width,
             justifyContent: 'space-between',
-            zIndex: 1001,
-            backgroundColor: 'green'
+            zIndex: 1001
 
         }}
     >
