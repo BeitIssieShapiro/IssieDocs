@@ -1,7 +1,8 @@
 import React from 'react';
 import {
     Image, StyleSheet, View,
-    TouchableOpacity, Button, ScrollView, Alert, Text, Dimensions, Linking, Settings
+    TouchableOpacity, Button, ScrollView, Alert, Text, Dimensions, Linking, Settings,
+    TextInput
 } from 'react-native';
 import { Icon } from 'react-native-elements'
 import Menu from './settings'
@@ -10,9 +11,10 @@ import * as RNFS from 'react-native-fs';
 import FolderNew from './FolderNew';
 import FileNew from './FileNew'
 import { pushFolderOrder, renameFolder } from './sort'
-import { registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage,
+import {
+    registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage,
 } from "./lang.js"
-import {USE_COLOR, getUseColorSetting} from './settings.js'
+import { USE_COLOR, getUseColorSetting } from './settings.js'
 
 import {
     getFolderAndIcon,
@@ -20,7 +22,7 @@ import {
     semanticColors,
     Spacer, globalStyles, removeFileExt,
     getIconButton, getRoundedButton, dimensions,
-    validPathPart
+    validPathPart, getEmbeddedSvgButton
 } from './elements'
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
 import ImagePicker from 'react-native-image-picker';
@@ -34,19 +36,43 @@ export const FOLDERS_DIR = RNFS.DocumentDirectoryPath + '/folders/';
 
 export default class FolderGallery extends React.Component {
     static navigationOptions = ({ navigation }) => {
-        let title = fTranslate("DefaultAppTitle", "IssieDocs");
         let menuIcon = 'menu';
 
         let isMenuOpened = navigation.getParam('isMenuOpened')
         if (isMenuOpened) {
             menuIcon = 'close';
         }
+        let editMode = navigation.getParam('editMode', false)
+        let titleEditMode = editMode && navigation.getParam('titleEditMode', false)
+        let titleSetting = Settings.get('appTitle');
+        if (titleSetting === undefined) {
+            titleSetting = fTranslate("DefaultAppTitle", "IssieDocs");
+        }
+
+        let title = titleEditMode ? navigation.getParam('titleEditText', '') :
+            titleSetting;
 
         return {
+            headerTitle: editMode && titleEditMode ? () => <TextInput
+                value={title}
+                style={[globalStyles.headerTitleStyle, { color: 'white' }]}
+                autoFocus
+                onChangeText={(txt) => navigation.setParams({ titleEditText: txt })}
+            /> : undefined,
+
+
             title,
             headerStyle: globalStyles.headerStyle,
             headerTintColor: 'white',
             headerTitleStyle: globalStyles.headerTitleStyle,
+            headerLeft: editMode && (<View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', width: 150 }}>
+                {!titleEditMode ? getEmbeddedSvgButton(() => navigation.setParams({ titleEditMode: true, titleEditText: title }), 'rename', 40, 1, 'white') : null}
+                {titleEditMode ? getIconButton(() => navigation.setParams({ titleEditMode: false }), semanticColors.addButton, "cancel", 45) : null}
+                {titleEditMode ? getIconButton(() => {
+                    Settings.set({ appTitle: title });
+                    navigation.setParams({ titleEditMode: false });
+                }, semanticColors.addButton, "check", 45) : null}
+            </View>),
             headerRight: (
                 <View style={{ flexDirection: 'row-reverse' }}>
                     <Spacer />
@@ -69,7 +95,7 @@ export default class FolderGallery extends React.Component {
         super(props);
         this.state = {
             windowSize: { width: 500, height: 1024 },
-            folderColor : (getUseColorSetting() === USE_COLOR.yes)
+            folderColor: (getUseColorSetting() === USE_COLOR.yes)
         }
 
         // this._panResponder = PanResponder.create({
@@ -293,7 +319,7 @@ export default class FolderGallery extends React.Component {
                 {
                     text: translate("BtnDelete"), onPress: () => {
                         RNFS.unlink(this.state.currentFolder.path);
-                        this.setState({currentFolder:undefined});
+                        this.setState({ currentFolder: undefined });
                         this.refresh();
                     },
                     style: 'destructive'
@@ -334,7 +360,7 @@ export default class FolderGallery extends React.Component {
         );
     }
 
-    RenamePage = () => {
+    RenamePage = (isRename) => {
         if (!this.state.selected) return;
         this.props.navigation.navigate('SavePhoto', {
             uri: this.state.selected.path,
@@ -342,12 +368,21 @@ export default class FolderGallery extends React.Component {
             folder: this.state.currentFolder ? this.state.currentFolder.name : '',
             name: removeFileExt(this.state.selected.name),
             returnFolderCallback: (f) => this.setReturnFolder(f),
-            saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false)
+            saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false),
+            title: isRename ? translate("RenameFormTitle") : translate("MovePageFormTitle")
 
         });
-        this.setState({ editMode: false, selected: undefined })
+        this.setState({ selected: undefined })
+        this.toggleEditMode(false);
 
     }
+    toggleEditMode(force) {
+        let changeTo = force !== undefined ? force : !this.state.editMode;
+        this.setState({ editMode: changeTo });
+        this.props.navigation.setParams({ editMode: changeTo });
+    }
+
+
 
     RenameFolder = () => {
         if (!this.state.currentFolder) return;
@@ -357,9 +392,11 @@ export default class FolderGallery extends React.Component {
             {
                 saveNewFolder: (newFolder, currFolder) => this.saveNewFolder(newFolder, false, currFolder),
                 isLandscape: this.isLandscape(),
-                currentFolderName: this.state.currentFolder.name
+                currentFolderName: this.state.currentFolder.name,
+                title: translate("RenameFormTitle")
             });
-        this.setState({ editMode: false, selected: undefined })
+        this.toggleEditMode(false);
+        this.setState({ selected: undefined })
     }
 
     DuplicatePage = () => {
@@ -370,7 +407,8 @@ export default class FolderGallery extends React.Component {
             imageSource: SRC_DUPLICATE,
             folder: this.state.currentFolder ? this.state.currentFolder.name : undefined,
             returnFolderCallback: (f) => this.setReturnFolder(f),
-            saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false)
+            saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false),
+            title: translate("DuplicatePageFormTitle")
 
         })
     }
@@ -484,9 +522,17 @@ export default class FolderGallery extends React.Component {
         let asTiles = viewStyle === 2;
         let treeWidth = .36 * this.state.windowSize.width;
         let pagesContainerWidth = this.state.windowSize.width - treeWidth;
-        let tileWidth = 143;
-        let numColumnsForTiles = Math.floor(pagesContainerWidth / tileWidth);
+        let numColumnsForTiles = Math.floor(pagesContainerWidth / dimensions.tileWidth);
+        let foldersCount = this.state.folders ? this.state.folders.length : 1;
+        let foldersHeightSize = dimensions.topView + dimensions.toolbarHeight + foldersCount * dimensions.folderHeight;
+        let needFoldersScroll = foldersHeightSize > this.state.windowSize.height;
 
+        let pagesCount = this.state.currentFolder ? this.state.currentFolder.files.length : 1;
+        let pagesLines = asTiles ? Math.ceil(pagesCount / numColumnsForTiles) : pagesCount;
+        let pageHeight = asTiles ? dimensions.tileHeight : dimensions.lineHeight;
+        let pagesAreaWindowHeight = 0.9 * (this.state.windowSize.height - dimensions.topView + dimensions.toolbarHeight);
+        let pagesHeightSize = pagesLines * pageHeight * 1.2;
+        let needPagesScroll = pagesHeightSize > pagesAreaWindowHeight;
         return (
             <View style={styles.container}
                 onLayout={this.onLayout}>
@@ -500,10 +546,10 @@ export default class FolderGallery extends React.Component {
                             loadLanguage();
                             this.forceUpdate();
                         }}
-                        onFolderColorChange={(folderColor)=>{
-                            this.setState({folderColor:(folderColor == USE_COLOR.yes)})
+                        onFolderColorChange={(folderColor) => {
+                            this.setState({ folderColor: (folderColor == USE_COLOR.yes) })
                         }}
-                        onTextBtnChange={(textBtn)=>{/* nothing to do for now */}}
+                        onTextBtnChange={(textBtn) => {/* nothing to do for now */ }}
                     /> : null}
                 {/* header */}
                 <View style={{
@@ -553,15 +599,14 @@ export default class FolderGallery extends React.Component {
                         {
                             getIconButton(() => {
                                 let selected = this.state.editMode ? undefined : this.state.selected;
-
-                                this.setState({ editMode: !this.state.editMode, selected });
+                                this.toggleEditMode()
                             }, semanticColors.addButton, this.state.editMode ? "clear" : "edit", 35)
                         }
                     </View>
                 </View>
 
                 <View style={{
-                    flex: 1, flexDirection: "row", backgroundColor: semanticColors.mainAreaBG, position: 'absolute', width: "100%", top: dimensions.toolbarHeight, left: 0, height: "94%", zIndex: 4,
+                    flex: 1, flexDirection: "row", backgroundColor: semanticColors.mainAreaBG, position: 'absolute', width: "100%", top: dimensions.toolbarHeight, left: 0, height: this.state.windowSize.height - dimensions.toolbarHeight, zIndex: 4,
                 }} >
                     {/* MainExplorer*/}
                     <View style={{
@@ -573,27 +618,35 @@ export default class FolderGallery extends React.Component {
                             width: "100%", top: 0, height: '10%', alignItems: 'center', justifyContent: 'flex-start',
                             paddingRight: '5%', borderBottomWidth: 1, borderBottomColor: 'gray'
                         }}>
-                            <FolderNew 
-                                index={fIndex} 
-                                id="1" 
+                            <FolderNew
+                                index={fIndex}
+                                id="1"
                                 useColors={this.state.folderColor}
-                                name={curFolderFullName} 
-                                asTitle={true} 
+                                name={curFolderFullName}
+                                asTitle={true}
                                 isLandscape={this.isLandscape()}
                                 editMode={this.state.editMode}
-                                onDelete={()=>this.DeleteFolder()}
-                                onRename={()=>this.RenameFolder()}
+                                onDelete={() => this.DeleteFolder()}
+                                onRename={() => this.RenameFolder()}
                                 fixedFolder={curFolderFullName === DEFAULT_FOLDER_NAME}
                             />
                         </View>
                         {/* pages */}
                         <View style={{
-                            flex: 1, backgroundColor: semanticColors.mainAreaBG, position: 'absolute', top: "10%", width: "100%", height: '90%'
+                            flex: 1,
+                            backgroundColor: semanticColors.mainAreaBG,
+                            position: 'absolute', top: "10%", width: "100%",
+                            height: '90%'
                         }}>
                             {this.state.currentFolder && this.state.currentFolder.files ?
                                 <FlatList
-                                    contentContainerStyle={{ width: '100%', alignItems: 'flex-end' }}
-
+                                    style={{
+                                    }}
+                                    contentContainerStyle={{
+                                        width: '100%', alignItems: 'flex-end',
+                                        height: needPagesScroll ? pagesHeightSize : '100%'
+                                    }}
+                                    bounces={needPagesScroll}
                                     key={asTiles ? numColumnsForTiles.toString() : "list"}
                                     data={this.state.currentFolder.files}
                                     renderItem={({ item }) => FileNew({
@@ -604,9 +657,10 @@ export default class FolderGallery extends React.Component {
                                         editMode: this.state.editMode,
                                         selected: this.state.editMode ? this.isSelected(item) : false,
                                         onPress: () => this.props.navigation.navigate('EditPhoto', { page: item, share: false }),
-                                        onSelect: () => this.toggleSelection(item, 'file'), 
+                                        onSelect: () => this.toggleSelection(item, 'file'),
                                         onDelete: () => this.DeletePage(),
-                                        onRename: () => this.RenamePage(),
+                                        onRename: () => this.RenamePage(true),
+                                        onMove: () => this.RenamePage(false),
                                         onShare: () => this.Share(),
                                         onDuplicate: () => this.DuplicatePage(),
                                         count: item.pages.length
@@ -622,14 +676,22 @@ export default class FolderGallery extends React.Component {
                         </View>
                     </View>
                     {/* tree */}
-                    <View
+                    <ScrollView
                         style={{
                             flex: 1,
                             flexDirection: "column",
                             position: 'absolute',
-                            top: 0, width: treeWidth, right: 0, height: "100%",
-                            alignItems: "flex-end", justifyContent: "flex-start",
+                            top: 0, width: treeWidth, right: 0,
+                            height: this.state.windowSize.height - dimensions.topView - dimensions.toolbarHeight,
                             backgroundColor: 'white'
+                        }}
+                        bounces={needFoldersScroll}
+
+                        contentContainerStyle={{
+
+                            alignItems: "flex-end",
+                            justifyContent: "flex-start",
+
                         }}>
 
                         {this.state.folders && this.state.folders.length ?
@@ -648,7 +710,7 @@ export default class FolderGallery extends React.Component {
                                 onMoveDown: () => this.moveFolderDown(f),
                                 isLandscape: this.isLandscape()
                             })) : <Text style={{ fontSize: 25 }}>{translate("NoFoldersYet")}</Text>}
-                    </View>
+                    </ScrollView>
 
                 </View>
             </View>

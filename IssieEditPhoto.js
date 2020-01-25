@@ -806,7 +806,6 @@ export default class IssieEditPhoto extends React.Component {
                     strokeWidth={(this.state.strokeWidth + 2) * 2}
                     d="M93.25 143.84C60.55 100.51 87.43 56.85 80.24 51.37C73.05 45.89 9.35 83.22 1.47 68.49C-6.4 53.77 19.28 8.22 31.61 0"
                     fill="none"
-
                   />
                 </Svg>
               }
@@ -894,7 +893,7 @@ export default class IssieEditPhoto extends React.Component {
         {
           this.state.page && this.state.page.pages.length > 0 &&
             this.state.currentFile !== this.state.page.pages[this.state.page.pages.length - 1] ?
-            <View style={{ position: 'absolute', bottom: 50, right: 10, width: 155, height: 40, zIndex: 100 }}>
+            <View style={{ position: 'absolute', bottom: 50, right: 10, height: 40, zIndex: 100 }}>
               {getRoundedButton(() => this.movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 155, height: 40 }, 'row', true)}
             </View> :
             null

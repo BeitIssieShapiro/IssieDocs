@@ -33,6 +33,10 @@ var strings = {
         "NoFoldersYet": "אין עדיין תיקיות",
 
         "SavePageFormTitle": "שמור דף",
+        "RenameFormTitle": "שנה שם",
+        "DuplicatePageFormTitle": "שכפל דף",
+        "MovePageFormTitle": "העבר דף",
+
         "EditFolderFormTitle": "עריכת שם תיקיה",
         "NewFolderFormTitle": "יצירת תיקיה חדשה",
         "ShareWithTitle": "'שתף בעזרת...'",
@@ -98,6 +102,10 @@ var strings = {
         "NoFoldersYet": "لا توجد مجلدات بعد",
 
         "SavePageFormTitle": "حفظ الصفحة",
+        "RenameFormTitle": "تغيير هناك",
+        "DuplicatePageFormTitle": "صفحة مكررة",
+        "MovePageFormTitle": "نقل الصفحة",
+
         "EditFolderFormTitle": "تحرير اسم المجلد",
         "NewFolderFormTitle": "إنشاء مجلد جديد",
         "ShareWithTitle": "المشاركة مع ...",

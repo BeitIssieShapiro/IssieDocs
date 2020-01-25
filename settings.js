@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { Icon } from 'react-native-elements'
 import {
     View, Alert, Text, TouchableOpacity, StyleSheet,
-    Settings
+    Settings, ScrollView
 } from 'react-native';
 import {
     getFolderAndIcon, normalizeTitle, semanticColors,
-    getIcon, getSvgIcon, FolderTextStyle, folderColors, Spacer,
+    getIcon, FolderTextStyle, folderColors, Spacer,
     getRoundedButtonInt
 } from './elements'
+
+import { getSvgIcon } from './svg-icons.js'
 
 import FadeInView from './FadeInView'
 import { translate } from './lang';
@@ -105,6 +107,7 @@ export default function Menu(props) {
         position: 'absolute',
         zIndex: 100, top: 0, left: 0, width: '100%', height: '100%'
     }}>
+
         <FadeInView
             duration={500}
             width={300}
@@ -113,65 +116,74 @@ export default function Menu(props) {
 
                 backgroundColor: 'white', borderColor: 'gray', borderWidth: 1
             }}>
-            
-            <View style={{ position: 'absolute', alignItems: 'flex-end', top: '5%', width: '100%' }}>
-                <TouchableOpacity onPress={props.onAbout} style={{ flexDirection: 'row', paddingRight: 25 }}>
 
-                    <Spacer />
-                    <Icon name={'info'} size={35} color={semanticColors.titleText} />
+            <ScrollView style={{
+                flex: 1,
+                position: 'absolute', top: '5%',
+                width: '100%', height: '95%'
+            }}
+            >
+                <TouchableOpacity activeOpacity={1} style={{ alignItems: 'flex-end' }} >
+
+
+                    <TouchableOpacity onPress={props.onAbout} style={{ flexDirection: 'row', paddingRight: 25 }}>
+
+                        <Spacer />
+                        <Icon name={'info'} size={35} color={semanticColors.titleText} />
+                    </TouchableOpacity>
+                    {getGroup(props, translate("Display") + ":", [
+                        {
+                            icon: getIcon('view-list', 45), selected: viewStyleSetting == VIEW.list,
+                            callback: () => setView(VIEW.list)
+                        },
+                        {
+                            icon: getIcon('view-module', 45), selected: viewStyleSetting == VIEW.tiles,
+                            callback: () => setView(VIEW.tiles)
+                        },
+
+                    ])}
+                    {getGroup(props, translate("Language") + ":", [
+                        {
+                            icon: getSvgIcon('lang-system', 45), selected: langSetting == LANGUAGE.default,
+                            callback: () => setLanguage(LANGUAGE.default)
+                        },
+                        {
+                            icon: getSvgIcon('lang-he', 45), selected: langSetting == LANGUAGE.hebrew,
+                            callback: () => setLanguage(LANGUAGE.hebrew)
+                        },
+                        {
+                            icon: getSvgIcon('lang-ar', 45), selected: langSetting == LANGUAGE.arabic,
+                            callback: () => setLanguage(LANGUAGE.arabic)
+                        }
+                        // ,
+                        // {
+                        //     icon: getSvgIcon('lang-en', 45), selected: langSetting ==  LANGUAGE.english,
+                        //     callback: () => setLanguage(LANGUAGE.english)
+                        // }
+                    ])}
+                    {getGroup(props, translate("TextInButtons") + ":", [
+                        {
+                            icon: getButtonWithText(), selected: textBtnSetting === TEXT_BUTTON.yes,
+                            callback: () => setTextBtnHandler(TEXT_BUTTON.yes)
+                        },
+                        {
+                            icon: getButtonWithoutText(), selected: textBtnSetting === TEXT_BUTTON.no,
+                            callback: () => setTextBtnHandler(TEXT_BUTTON.no)
+                        }
+                    ])}
+
+                    {getGroup(props, translate("FolderColors") + ":", [
+                        {
+                            icon: getIcon("folder", 35, 'red'), selected: useColorSetting === USE_COLOR.yes,
+                            callback: () => setUseColorHandler(USE_COLOR.yes)
+                        },
+                        {
+                            icon: getIcon("folder", 35, 'gray'), selected: useColorSetting === USE_COLOR.no,
+                            callback: () => setUseColorHandler(USE_COLOR.no)
+                        }
+                    ])}
                 </TouchableOpacity>
-                {getGroup(props, translate("Display") + ":", [
-                    {
-                        icon: getIcon('view-list', 45), selected: viewStyleSetting == VIEW.list,
-                        callback: () => setView(VIEW.list)
-                    },
-                    {
-                        icon: getIcon('view-module', 45), selected: viewStyleSetting == VIEW.tiles,
-                        callback: () => setView(VIEW.tiles)
-                    },
-
-                ])}
-                {getGroup(props, translate("Language") + ":", [
-                    {
-                        icon: getSvgIcon('lang-system', 45), selected: langSetting == LANGUAGE.default,
-                        callback: () => setLanguage(LANGUAGE.default)
-                    },
-                    {
-                        icon: getSvgIcon('lang-he', 45), selected: langSetting ==  LANGUAGE.hebrew,
-                        callback: () => setLanguage(LANGUAGE.hebrew)
-                    },
-                    {
-                        icon: getSvgIcon('lang-ar', 45), selected: langSetting ==  LANGUAGE.arabic,
-                        callback: () => setLanguage(LANGUAGE.arabic)
-                    }
-                    // ,
-                    // {
-                    //     icon: getSvgIcon('lang-en', 45), selected: langSetting ==  LANGUAGE.english,
-                    //     callback: () => setLanguage(LANGUAGE.english)
-                    // }
-                ])}
-                {getGroup(props, translate("TextInButtons") + ":", [
-                    {
-                        icon: getButtonWithText(), selected: textBtnSetting === TEXT_BUTTON.yes,
-                        callback: () => setTextBtnHandler(TEXT_BUTTON.yes)
-                    },
-                    {
-                        icon: getButtonWithoutText(), selected: textBtnSetting === TEXT_BUTTON.no,
-                        callback: () => setTextBtnHandler(TEXT_BUTTON.no)
-                    }
-                ])}
-
-                {getGroup(props, translate("FolderColors") + ":", [
-                    {
-                        icon: getIcon("folder", 35, 'red'), selected: useColorSetting === USE_COLOR.yes,
-                        callback: () => setUseColorHandler(USE_COLOR.yes)
-                    },
-                    {
-                        icon: getIcon("folder", 35, 'gray'), selected: useColorSetting === USE_COLOR.no,
-                        callback: () => setUseColorHandler(USE_COLOR.no)
-                    }
-                ])}
-            </View>
+            </ScrollView>
 
         </FadeInView>
     </TouchableOpacity>

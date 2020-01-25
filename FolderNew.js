@@ -3,7 +3,7 @@ import { Icon } from 'react-native-elements'
 import { View, Alert, Text, TouchableOpacity } from 'react-native';
 import {
     getFolderAndIcon, normalizeTitle, semanticColors, FolderTextStyle,
-    getEmbeddedButton, folderColors, Spacer
+    getEmbeddedButton, getEmbeddedSvgButton, folderColors, Spacer, dimensions
 } from './elements'
 
 
@@ -28,7 +28,7 @@ export default function FolderNew(props) {
             key={props.id}
             style={{
                 alignContent: 'center',
-                width: '100%', height: 76,
+                width: '100%', height: dimensions.folderHeight,
                 paddingTop: 10, paddingBottom: 10
             }}>
 
@@ -43,9 +43,9 @@ export default function FolderNew(props) {
                     alignItems: 'center',
                     zIndex:100
                 }}>
-                    {getEmbeddedButton(props.onDelete, 'delete-forever', 30)}
+                    {getEmbeddedButton(props.onDelete, 'delete-forever', 40)}
                     <Spacer width={7} />
-                    {getEmbeddedButton(props.onRename, 'save', 30)}
+                    {getEmbeddedSvgButton(props.onRename, 'rename', 50)}
                 </View> : null
             }
 

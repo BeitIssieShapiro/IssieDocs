@@ -4,12 +4,9 @@ import { View, Alert, Image, Text, TouchableOpacity, CheckBox } from 'react-nati
 import { Icon } from 'react-native-elements'
 
 import {
-    colors, semanticColors, getEmbeddedButton, Spacer
+    colors, semanticColors, getEmbeddedButton, Spacer, dimensions, getEmbeddedSvgButton
 } from './elements'
 
-const titleHeight = 25;
-const lineHeight = 70;
-const tileHeight = 197;
 
 export default function FileNew(props) {
     let imageSrc = props.page.pages.length == 0 ? props.page.path : props.page.pages[0];
@@ -19,7 +16,7 @@ export default function FileNew(props) {
             key={props.name}
             onPress={props.onPress}
             activeOpacity={0.8}
-            style={{ width: props.asTile ? 143 : props.rowWidth, height: props.asTile ? tileHeight : lineHeight }}
+            style={{ width: props.asTile ? 143 : props.rowWidth, height: props.asTile ? dimensions.tileHeight : dimensions.lineHeight }}
         >
             {props.asTile ?
                 <View style={{ alignContent: 'center', padding: 12, height: '100%', width: '100%' }}>
@@ -28,22 +25,29 @@ export default function FileNew(props) {
                             <View style={{
                                 position: 'absolute', top: 0,
                                 right: 0, width: '100%', height: '100%',
-                                zIndex: 100,
-                                flexDirection: 'row',
-                                flexWrap: 'wrap'
+                                zIndex: 100, alignItems: 'flex-start'
+
                             }}>
                                 <TouchableOpacity
                                     onPress={props.onSelect} >
                                     <Icon name={'more-vert'} size={35} />
                                 </TouchableOpacity>
-                                {props.selected ? getActionButtons(props) : null}
+                                {props.selected ?
+                                    <View style={{
+                                        flexDirection: 'row',
+                                        flexWrap: 'wrap', backgroundColor: 'white'
+                                    }}>
+                                        {getActionButtons(props)}
+                                    </View> : null
+
+                                }
                             </View>
                             : null}
                         <View style={{ flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
 
 
                             <Image source={{ uri: imageSrc }} style={{ flex: 10, width: '100%' }} />
-                            <View style={{ flex: 2, backgroundColor: '#a7a7a7', alignItems: 'flex-end', width:'100%' }} >
+                            <View style={{ flex: 2, backgroundColor: '#a7a7a7', alignItems: 'flex-end', width: '100%' }} >
                                 <Text style={{ fontSize: 20, textAlign: 'right', color: 'white', paddingRight: 15 }}>
                                     {props.name}
                                     {props.count > 0 ? ' (' + props.count + ')' : ''}
@@ -53,7 +57,7 @@ export default function FileNew(props) {
                     </View>
                 </View>
                 :
-                <View style={{ alignContent: 'center', height: lineHeight, borderWidth: 1.5, borderColor: "#D1CFCF", width: '100%', paddingRight: 5 }}>
+                <View style={{ alignContent: 'center', height: dimensions.lineHeight, borderWidth: 1.5, borderColor: "#D1CFCF", width: '100%', paddingRight: 5 }}>
                     <View style={{ flexDirection: 'row-reverse', alignItems: 'center', paddingTop: 3 }}>
                         <View style={{ borderWidth: .5, borderColor: colors.lightBlue }}>
                             <Image source={{ uri: imageSrc }} style={{ width: 50, height: 60 }} />
@@ -86,13 +90,15 @@ export default function FileNew(props) {
 
 function getActionButtons(props) {
     return [
-        getEmbeddedButton(props.onDelete, 'delete-forever', 30, 1),
+        getEmbeddedButton(props.onDelete, 'delete-forever', 40, 1),
         <Spacer width={7} key={2} />,
-        getEmbeddedButton(props.onRename, 'save', 30, 3),
+        getEmbeddedSvgButton(props.onRename, 'rename', 40, 3),
         <Spacer width={7} key={4} />,
-        getEmbeddedButton(props.onDuplicate, 'collections', 30, 5),
+        getEmbeddedSvgButton(props.onMove, 'move-folder', 50, 5),
         <Spacer width={7} key={6} />,
-        getEmbeddedButton(props.onShare, 'share', 30, 7),
+        getEmbeddedSvgButton(props.onDuplicate, 'duplicate', 50, 7),
         <Spacer width={7} key={8} />,
+        getEmbeddedButton(props.onShare, 'share', 40, 9),
+        <Spacer width={7} key={10} />,
     ];
 }

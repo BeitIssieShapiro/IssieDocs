@@ -17,7 +17,7 @@ import {
   getImageDimensions,
   globalStyles, NEW_FOLDER_NAME, NO_FOLDER_NAME, DEFAULT_FOLDER_NAME,
   getPageNavigationButtons, getFileNameDialog, semanticColors, getFolderAndIcon,
-  Spacer, getRoundedButton, dimensions, validPathPart
+  Spacer, getRoundedButton, dimensions, validPathPart, getHeaderBackButton
 } from './elements'
 import ImageRotate from 'react-native-image-rotate';
 import { getNewPage, saveFile, cloneToTemp, SRC_RENAME, SRC_DUPLICATE } from './newPage'
@@ -34,21 +34,13 @@ const panBroderDistance = 80;
 
 export default class IssieSavePhoto extends React.Component {
   static navigationOptions = ({ navigation }) => {
+    let title = navigation.getParam('title', translate("SavePageFormTitle"));
     return {
-      title: translate("SavePageFormTitle"),
+      title: title,
       headerStyle: globalStyles.headerStyle,
       headerTintColor: 'white',
       headerTitleStyle: globalStyles.headerTitleStyle,
-      headerLeft: (<View >
-        <TouchableOpacity onPress={() => { navigation.pop() }}
-          activeOpacity={1}
-          style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Icon name='keyboard-arrow-left' color='white' size={35} />
-          <Spacer width={10} />
-          <Icon name={'home'} color='white' size={30} />
-        </TouchableOpacity>
-
-      </View>)
+      headerLeft: getHeaderBackButton(navigation)
     }
   };
 
