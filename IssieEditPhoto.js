@@ -701,7 +701,7 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     let spaceBetweenButtons = <Spacer width={23} />
-    let colorButtonSize = (this.state.windowW - 2 * toolbarSideMargin) / (availableColorPicker.length * 1.1);
+    let colorButtonSize = (this.state.windowW - 2 * toolbarSideMargin) / (availableColorPicker.length * 1.4);
 
     return (
 

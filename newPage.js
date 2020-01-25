@@ -82,6 +82,7 @@ export async function saveFile(uri, filePath, isCopy) {
                 (base64Contents) => {
                     //let contents = base64.decode(base64Contents);
                     //todo optimize code
+                    
                     RNFS.writeFile(filePath, base64Contents, 'base64').then(
                         //Success
                         () => resolve(),

@@ -53,12 +53,16 @@ export default class FolderGallery extends React.Component {
             titleSetting;
 
         return {
-            headerTitle: editMode && titleEditMode ? () => <TextInput
+            headerTitle: editMode && titleEditMode ? () => <View
+                style={{width:'60%', alignItems:'center'}}
+                >
+                <TextInput
                 value={title}
-                style={[globalStyles.headerTitleStyle, { color: 'white' }]}
+                style={[globalStyles.headerTitleStyle, { color: 'white', width:'100%' }]}
                 autoFocus
                 onChangeText={(txt) => navigation.setParams({ titleEditText: txt })}
-            /> : undefined,
+            />
+            </View> : undefined,
 
 
             title,

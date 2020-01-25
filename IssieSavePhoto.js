@@ -86,7 +86,9 @@ export default class IssieSavePhoto extends React.Component {
       pdfHeight: '100%',
       pdfPageCount: 0,
       yOffset: 0,
-      windowSize: { width: 0, height: 0 }
+      windowSize: { width: 0, height: 0 },
+      imgSize: { w: 100, h: 100 },
+      scale: 1
     };
     this.OK.bind(this);
 
@@ -99,7 +101,7 @@ export default class IssieSavePhoto extends React.Component {
         if (this.state.cropping) {
           let panStartX = gestureState.x0, panStartY = gestureState.y0 - this.state.topView - headerHeight;
 
-          //let msg = ("x:" + panStartX + " d-" + gestureState.dx + ", y:" + panStartY + " d-" + gestureState.dy);
+          let msg = ("x:" + panStartX + " d-" + gestureState.dx + ", y:" + panStartY + " d-" + gestureState.dy);
           let cd = this.state.cropData;
           if (this.state.panStartX != panStartX && this.state.panStartY != panStartY) {
             let panStartCD = {};
@@ -108,7 +110,7 @@ export default class IssieSavePhoto extends React.Component {
               panStartX: panStartX,
               panStartY: panStartY,
               panStartCropData: panStartCD,
-              msg: 'startPan'
+              msg
             })
             return;
           }
@@ -298,7 +300,7 @@ export default class IssieSavePhoto extends React.Component {
     let filePath = targetFolder + "/" + fileName;
 
     //add .jpg only if not rename or dup
-    if (this.isDuplicate || this.isRename()) {
+    if (this.isDuplicate() || this.isRename()) {
       if (this.state.uri.endsWith(".jpg")) {
         filePath += ".jpg";
       }
@@ -306,6 +308,7 @@ export default class IssieSavePhoto extends React.Component {
       filePath += ".jpg";
     }
 
+    Alert.alert(filePath);
     //first check if folder exists - if not create it and make it first in order
     try {
       let stat = await RNFS.stat(targetFolder);
@@ -488,7 +491,6 @@ export default class IssieSavePhoto extends React.Component {
   render() {
     let uri = this.state.uri;
     //if (uri && uri.length > 0) Alert.alert(uri)
-
     let editPicButtons = <View />;
     let actionButtons = <View />;
     let PageNameInput = <View />;
@@ -588,7 +590,7 @@ export default class IssieSavePhoto extends React.Component {
         }}
         {...this._panResponder.panHandlers}
       >
-        {/* <Text>{this.state.msg}</Text> */}
+        <Text>{JSON.stringify(this.state.cropData)}</Text>
 
         <View style={{ position: 'absolute', left: 5, top: 5 }}>
           <Icon name={'border-style'} size={45} />
@@ -654,21 +656,36 @@ export default class IssieSavePhoto extends React.Component {
             </ViewShot>
             {PageNameInput}
           </View> :
-          <View style={{
-            width: this.state.windowSize.width,
-            height: this.state.windowSize.height,
+          <View style={[{
             justifyContent: 'flex-start',
-          }}>
-            <ImageBackground
-              style={styles.bgImage}
+            alignItems: 'center',
+            top: dimensions.toolbarHeight
+          },
+          this.state.phase == OK_Cancel ? 
+          
+            {
+              width: '100%',
+              height: (this.state.imgSize.h * this.state.scale)
+            }:
+            {
+              width: this.state.windowSize.width,
+              height: this.state.windowSize.height,
+            } 
+          ]}>
+            {this.state.phase == OK_Cancel ? <ImageBackground
+              style={{
+                width: '100%',
+                height: '100%'
+              }}
+
               imageStyle={{ resizeMode: 'contain' }}
               blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
-              source={this.state.phase == OK_Cancel ? { uri } : undefined}
-            >
-              {cropFrame}
-              {PageNameInput}
+              source={{ uri }}
+            /> : null}
 
-            </ImageBackground>
+
+            {cropFrame}
+            {PageNameInput}
           </View>}
         {this.state.PickName || this.state.pdf && this.state.pdfPageCount < 2 || !this.state.pdf ?
           null :
