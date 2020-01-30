@@ -308,7 +308,7 @@ export default class IssieSavePhoto extends React.Component {
       filePath += ".jpg";
     }
 
-    Alert.alert(filePath);
+    //Alert.alert(filePath);
     //first check if folder exists - if not create it and make it first in order
     try {
       let stat = await RNFS.stat(targetFolder);
@@ -590,7 +590,7 @@ export default class IssieSavePhoto extends React.Component {
         }}
         {...this._panResponder.panHandlers}
       >
-        <Text>{JSON.stringify(this.state.cropData)}</Text>
+        {/* <Text>{JSON.stringify(this.state.cropData)}</Text> */}
 
         <View style={{ position: 'absolute', left: 5, top: 5 }}>
           <Icon name={'border-style'} size={45} />
