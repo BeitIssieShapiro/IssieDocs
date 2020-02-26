@@ -119,7 +119,6 @@ export const folderColors = [
 ]
 
 export const NEW_FOLDER_NAME = 'NewFolder'; //todo lang
-export const NO_FOLDER_NAME = 'Without'; //todo lang
 export const DEFAULT_FOLDER_NAME = 'Default';
 
 export function validPathPart(PathPart) {
@@ -261,7 +260,7 @@ export function getFolderAndIcon(folderName) {
 
 export function normalizeTitle(title) {
     if (title == DEFAULT_FOLDER_NAME) {
-        return translate("DefaultFolderLanguage");
+        return translate("DefaultFolder");
     }
     return title;
 }
@@ -272,13 +271,15 @@ export function getFileNameDialog(fileName,
     currentFolderName, folders,
     onChangeName, onChangeFolder, onSaveNewFolder,
     navigation, isLandscape) {
+    
+    const defFolderName = translate("DefaultFolder")
 
 
     if (currentFolderName === DEFAULT_FOLDER_NAME || currentFolderName === '') {
-        currentFolderName = NO_FOLDER_NAME;
+        currentFolderName = defFolderName;
     }
 
-    let fullListFolder = [NO_FOLDER_NAME, ...folders];
+    let fullListFolder = [defFolderName, ...folders];
     getLocalizedFoldersAndIcons().forEach((itm) => {
         let fni = itm.text + '$' + itm.icon;
         if (fullListFolder.findIndex(f => f === fni) == -1) {

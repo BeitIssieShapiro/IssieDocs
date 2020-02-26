@@ -15,7 +15,7 @@ import { translate } from './lang.js'
 import {
   getIconButton,
   getImageDimensions,
-  globalStyles, NEW_FOLDER_NAME, NO_FOLDER_NAME, DEFAULT_FOLDER_NAME,
+  globalStyles, NEW_FOLDER_NAME, DEFAULT_FOLDER_NAME,
   getPageNavigationButtons, getFileNameDialog, semanticColors, getFolderAndIcon,
   Spacer, getRoundedButton, dimensions, validPathPart, getHeaderBackButton
 } from './elements'
@@ -290,7 +290,7 @@ export default class IssieSavePhoto extends React.Component {
       Alert.alert(translate("IllegalCharacterInPageName"));
       return;
     }
-    if (!folderName || folderName == NO_FOLDER_NAME) {
+    if (!folderName || folderName === translate("DefaultFolder")) {
       folderName = DEFAULT_FOLDER_NAME;
     } else if (folderName == NEW_FOLDER_NAME) {
       folderName = this.state.newFolderName;

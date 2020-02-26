@@ -210,7 +210,7 @@ export default class IssieEditPhoto extends React.Component {
 
   _keyboardDidHide = (e) => {
     this.SaveText()
-    this.setState({ keyboardHeight: 0, showTextInput: false });
+    this.setState({ keyboardHeight: 0, yOffset:0, showTextInput: false });
   }
 
   componentDidMount = async () => {

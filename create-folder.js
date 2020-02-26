@@ -6,7 +6,7 @@ import {translate} from './lang.js'
 import {
     getIconButton, folderIcons, availableIcons,
     getImageDimensions,
-    globalStyles, NEW_FOLDER_NAME, NO_FOLDER_NAME, DEFAULT_FOLDER_NAME,
+    globalStyles,
     getPageNavigationButtons, getFileNameDialog, semanticColors, getFolderAndIcon,
     Spacer, getRoundedButton, dimensions, validPathPart
 } from './elements'

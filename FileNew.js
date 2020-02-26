@@ -33,12 +33,8 @@ export default function FileNew(props) {
                                     <Icon name={'more-vert'} size={35} />
                                 </TouchableOpacity>
                                 {props.selected ?
-                                    <View style={{
-                                        flexDirection: 'row',
-                                        flexWrap: 'wrap', backgroundColor: 'white'
-                                    }}>
-                                        {getActionButtons(props)}
-                                    </View> : null
+                                    getActionButtons(props)
+                                    : null}
 
                                 }
                             </View>
@@ -89,16 +85,19 @@ export default function FileNew(props) {
 }
 
 function getActionButtons(props) {
-    return [
-        getEmbeddedButton(props.onDelete, 'delete-forever', 40, 1),
-        <Spacer width={7} key={2} />,
-        getEmbeddedSvgButton(props.onRename, 'rename', 40, 3),
-        <Spacer width={7} key={4} />,
-        getEmbeddedSvgButton(props.onMove, 'move-folder', 50, 5),
-        <Spacer width={7} key={6} />,
-        getEmbeddedSvgButton(props.onDuplicate, 'duplicate', 50, 7),
-        <Spacer width={7} key={8} />,
-        getEmbeddedButton(props.onShare, 'share', 40, 9),
-        <Spacer width={7} key={10} />,
-    ];
+    return <View style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap', backgroundColor: 'white'
+    }}>
+        {getEmbeddedButton(props.onDelete, 'delete-forever', 40, 1)}
+        <Spacer width={7} key={2} />
+        {getEmbeddedSvgButton(props.onRename, 'rename', 40, 3)}
+        <Spacer width={7} key={4} />
+        {getEmbeddedSvgButton(props.onMove, 'move-folder', 50, 5)}
+        <Spacer width={7} key={6} />
+        {getEmbeddedSvgButton(props.onDuplicate, 'duplicate', 50, 7)}
+        <Spacer width={7} key={8} />
+        {getEmbeddedButton(props.onShare, 'share', 40, 9)}
+        <Spacer width={7} key={10} />
+    </View>
 }
