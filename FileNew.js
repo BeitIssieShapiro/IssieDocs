@@ -35,8 +35,6 @@ export default function FileNew(props) {
                                 {props.selected ?
                                     getActionButtons(props)
                                     : null}
-
-                                }
                             </View>
                             : null}
                         <View style={{ flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
@@ -87,15 +85,15 @@ export default function FileNew(props) {
 function getActionButtons(props) {
     return <View style={{
         flexDirection: 'row',
-        flexWrap: 'wrap', backgroundColor: 'white'
+        flexWrap: 'wrap', backgroundColor: semanticColors.mainAreaBG
     }}>
         {getEmbeddedButton(props.onDelete, 'delete-forever', 40, 1)}
         <Spacer width={7} key={2} />
-        {getEmbeddedSvgButton(props.onRename, 'rename', 40, 3)}
+        {getEmbeddedButton(props.onRename, 'edit', 40, 3)}
         <Spacer width={7} key={4} />
-        {getEmbeddedSvgButton(props.onMove, 'move-folder', 50, 5)}
+        {getEmbeddedButton(props.onMove, 'exit-to-app', 40, 5)}
         <Spacer width={7} key={6} />
-        {getEmbeddedSvgButton(props.onDuplicate, 'duplicate', 50, 7)}
+        {getEmbeddedButton(props.onDuplicate, 'layers', 40, 7)}
         <Spacer width={7} key={8} />
         {getEmbeddedButton(props.onShare, 'share', 40, 9)}
         <Spacer width={7} key={10} />

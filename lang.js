@@ -70,6 +70,7 @@ var strings = {
         "CaptionPageName": "שם הדף",
         "CaptionFolderNameList": "תיקיה",
         "CaptionFolderNameInput": "שם התיקיה",
+        "CaptionFolderColor":"צבע התיקיה", //todo translate
         "NoIcon": "ללא",
         "CaptionIcon": "סמל",
 
@@ -148,15 +149,15 @@ var strings = {
 
 const foldersAndIcons = {
     "he": [
-        { icon: 'language', text: 'אנגלית' },
-        { icon: 'music-note', text: 'מוזיקה' },
-        { icon: 'pets', text: 'בעלי חיים' },
         { icon: 'exposure-plus-1', text: 'חשבון' },
+        { icon: 'speaker-notes', text: 'עברית' },
+        { icon: 'language', text: 'אנגלית' },
         { icon: 'wb-incandescent', text: 'מדעים' },
-        { icon: 'watch-later', text: 'היסטוריה' },
         { icon: 'book', text: 'תורה' },
-        { icon: 'speaker-notes', text: 'לשון' },
-        { icon: 'local-bar', text: 'חגים' }
+        { icon: 'watch-later', text: 'היסטוריה' },
+        { icon: 'public', text: 'גיאוגרפיה' },
+        { icon: 'music-note', text: 'מוזיקה' },
+        { icon: 'local-library', text: 'ספרות' }
     ],
     "en": [
         { icon: 'language', text: 'אנגלית' },

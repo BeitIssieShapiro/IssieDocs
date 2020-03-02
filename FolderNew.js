@@ -10,8 +10,9 @@ import {
 
 
 export default function FolderNew(props) {
-    let folderColor = props.useColors?folderColors[props.index % folderColors.length]: 'gray';
+    //let folderColor = props.useColors?folderColors[props.index % folderColors.length]: 'gray';
     let folderAndIcon = getFolderAndIcon(props.name);
+    let folderColor = folderAndIcon.color.length > 0? folderAndIcon.color : 'gray';
     let caption = normalizeTitle(folderAndIcon.name);
     let captionLimit = props.isLandscape ? 20 : 14;
 
@@ -45,7 +46,7 @@ export default function FolderNew(props) {
                 }}>
                     {getEmbeddedButton(props.onDelete, 'delete-forever', 40)}
                     <Spacer width={7} />
-                    {getEmbeddedSvgButton(props.onRename, 'rename', 50)}
+                    {getEmbeddedButton(props.onRename, 'edit', 50)}
                 </View> : null
             }
 

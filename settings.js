@@ -5,8 +5,8 @@ import {
     Settings, ScrollView
 } from 'react-native';
 import {
-    getFolderAndIcon, normalizeTitle, semanticColors,
-    getIcon, FolderTextStyle, folderColors, Spacer,
+    semanticColors,
+    getIcon, Spacer,
     getRoundedButtonInt
 } from './elements'
 

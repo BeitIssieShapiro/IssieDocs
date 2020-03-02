@@ -212,7 +212,7 @@ export default class FolderGallery extends React.Component {
             }
             if (!currentFolder) {
                 //Alert.alert(JSON.stringify(foldersState))
-                currentFolder = foldersState.find(f => f.name == DEFAULT_FOLDER_NAME);
+                //currentFolder = foldersState.find(f => f.name == DEFAULT_FOLDER_NAME);
             }
 
 
@@ -430,7 +430,7 @@ export default class FolderGallery extends React.Component {
             return false;
         }
         let fAndi = getFolderAndIcon(newFolderName);
-        if (fAndi.name == 0 && fAndi.icon !== "") {
+        if (fAndi.name.length == 0 && fAndi.icon !== "") {
             let proceed = await new Promise((resolve) =>
                 Alert.alert(translate("Warning"), translate("SaveFolderWithEmptyNameQuestion"),
                     [
@@ -517,7 +517,6 @@ export default class FolderGallery extends React.Component {
     }
     render() {
         let curFolderFullName = this.state.currentFolder ? this.state.currentFolder.name : "";
-        let curFolder = getFolderAndIcon(curFolderFullName);
         let fIndex = 0;
         if (this.state.folders && this.state.folders.length) {
             fIndex = this.state.folders.findIndex(f => f.name == curFolderFullName);

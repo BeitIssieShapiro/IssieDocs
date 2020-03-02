@@ -13,7 +13,7 @@ import * as RNFS from 'react-native-fs';
 import Share from 'react-native-share';
 import DoQueue from './do-queue';
 import FadeInView from './FadeInView'
-import { Spacer, globalStyles, getRoundedButton, getEraserIcon } from './elements'
+import { Spacer, globalStyles, getRoundedButton, getEraserIcon, getColorButton } from './elements'
 import * as Progress from 'react-native-progress';
 import { fTranslate } from './lang.js'
 
@@ -23,6 +23,7 @@ import {
   semanticColors, getIconButton, dimensions, availableTextSize, availableBrushSize, availableColorPicker
 } from './elements'
 import { translate } from './lang';
+import { getSvgIcon } from './svg-icons';
 //import rnTextSize from 'react-native-text-size'
 //import MeasureText from 'react-native-measure-text';
 //import ReactNativeComponentTree from 'react-native/Libraries/Renderer/shims/ReactNativeComponentTree';
@@ -47,7 +48,6 @@ export default class IssieEditPhoto extends React.Component {
       fileName = fileName.substr(0, fileName.length - 4);
     }
     let isPageOnHome = pathParts[pathParts.length - 2] == DEFAULT_FOLDER_NAME;
-    let folderAndIcon = getFolderAndIcon(pathParts[pathParts.length - 2]);
     let multiPageTitleAddition = navigation.getParam('pageTitleAddition', '');
 
     return {
@@ -210,7 +210,7 @@ export default class IssieEditPhoto extends React.Component {
 
   _keyboardDidHide = (e) => {
     this.SaveText()
-    this.setState({ keyboardHeight: 0, yOffset:0, showTextInput: false });
+    this.setState({ keyboardHeight: 0, yOffset: 0, showTextInput: false });
   }
 
   componentDidMount = async () => {
@@ -381,10 +381,10 @@ export default class IssieEditPhoto extends React.Component {
     let y = this.s2aH(ev.nativeEvent.pageY) - this.state.fontSize / 2;
 
     let textElemIndex = this.findTextElement({ x: x, y: y });
-    
+
     //in erase mode, only act on found texts
-    if (textElemIndex < 0 && this.state.eraseMode) return; 
-    
+    if (textElemIndex < 0 && this.state.eraseMode) return;
+
     let initialText = '';
     let fontSize = this.state.fontSize;
     let fontColor = this.state.color;
@@ -534,7 +534,7 @@ export default class IssieEditPhoto extends React.Component {
             this.state.currentTextElem == undefined ||
             this.state.currentTextElem.id != txtElem.id ||
             !this.state.showTextInput)) {
-              //avoid showing the current edited text
+          //avoid showing the current edited text
           canvasTexts.push(txtElem);
         }
       } else if (q[i].type === 'path' && !this.state.needCanvasUpdateTextOnly) {
@@ -575,8 +575,8 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   onEraserButton = () => {
-    this.canvas.setState({ color: (this.state.eraseMode ?  this.state.color : '#00000000' )})
-    this.setState({eraseMode : !this.state.eraseMode, showTextInput:false});
+    this.canvas.setState({ color: (this.state.eraseMode ? this.state.color : '#00000000') })
+    this.setState({ eraseMode: !this.state.eraseMode, showTextInput: false });
   }
   onBrushButtonPicker = () => {
 
@@ -766,7 +766,7 @@ export default class IssieEditPhoto extends React.Component {
             }
             {spaceBetweenButtons}
             {
-              getEraserIcon(() => this.onEraserButton(), 55, semanticColors.editPhotoButton, this.state.eraseMode)
+              getEraserIcon(() => this.onEraserButton(), 55, this.state.eraseMode ? 'black' : semanticColors.editPhotoButton, this.state.eraseMode)
               // getIconButton(() => this.onEraserButton(),
               //    semanticColors.editPhotoButton, "panorama-fish-eye", 55, false, 45, this.state.eraseMode)
             }
@@ -799,15 +799,16 @@ export default class IssieEditPhoto extends React.Component {
                 // }} />
                 //d="M160,303 C305,258 285,196 285,196 C285,196 243,70 176,146 C109,222 525,312 482,221 C439,130 347,191 347,191 C347,191 180,328 347,292 C514,256 433,110 381,124 C329,138 294,162 294,162 "
 
-                <Svg height="100%" width="100%" preserveAspectRatio="xMidYMid meet" viewBox="-30 -30 150 200">
-                  <Path
-                    stroke={this.state.color}
-                    strokeLinecap="round"
-                    strokeWidth={(this.state.strokeWidth + 2) * 2}
-                    d="M93.25 143.84C60.55 100.51 87.43 56.85 80.24 51.37C73.05 45.89 9.35 83.22 1.47 68.49C-6.4 53.77 19.28 8.22 31.61 0"
-                    fill="none"
-                  />
-                </Svg>
+                // <Svg height="100%" width="100%" preserveAspectRatio="xMidYMid meet" viewBox="-30 -30 150 200">
+                //   <Path
+                //     stroke={this.state.color}
+                //     strokeLinecap="round"
+                //     strokeWidth={(this.state.strokeWidth + 2) * 2}
+                //     d="M93.25 143.84C60.55 100.51 87.43 56.85 80.24 51.37C73.05 45.89 9.35 83.22 1.47 68.49C-6.4 53.77 19.28 8.22 31.61 0"
+                //     fill="none"
+                //   />
+                // </Svg>
+                getSvgIcon('doodle', 55, this.state.color, this.state.strokeWidth * .8)
               }
             </View>
 
@@ -847,21 +848,26 @@ export default class IssieEditPhoto extends React.Component {
         </View>
         {/** */}
         {/*View for selecting color*/}
-        <FadeInView height={this.state.showColorPicker ? 70 : 0} style={[styles.pickerView, { left: toolbarSideMargin, right: toolbarSideMargin }]}>
+        <FadeInView height={this.state.showColorPicker ? 70 : 0} style={[styles.pickerView, { left: 0, right: 0 }]}>
           <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
-            {availableColorPicker.map((c, i) => this.getColorButton((c), colorButtonSize, i))}
+            {availableColorPicker.map((color, i) => getColorButton(() => {
+                this.canvas.setState({ color: color })
+                this.setState({ color: color, showColorPicker: false, eraseMode: false })
+                this.updateInputText();
+              }, color, colorButtonSize, color == this.state.color && !this.state.eraseMode, i))
+            }
           </View>
         </FadeInView>
 
         {/*View for selecting text size*/}
-        <FadeInView height={this.state.showTextSizePicker && this.state.textMode ? 70 : 0} style={[styles.pickerView, { left: toolbarSideMargin, right: toolbarSideMargin }]}>
+        <FadeInView height={this.state.showTextSizePicker && this.state.textMode ? 70 : 0} style={[styles.pickerView, { left: 0, right: 0 }]}>
           <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-evenly', alignContent: 'center', alignItems: 'center' }}>
             {availableTextSize.map((size, i) => this.getTextSizePicker(this.state.color, colorButtonSize, size, i))}
           </View>
         </FadeInView>
 
         {/*View for selecting brush size*/}
-        <FadeInView height={this.state.showBrushSizePicker && !this.state.textMode ? 70 : 0} style={[styles.pickerView, { left: toolbarSideMargin, right: toolbarSideMargin }]}>
+        <FadeInView height={this.state.showBrushSizePicker && !this.state.textMode ? 70 : 0} style={[styles.pickerView, { left: 0, right: 0 }]}>
           <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
             {availableBrushSize.map((size, i) => this.getBrushSizePicker(this.state.color, colorButtonSize, size, i))}
 
@@ -994,34 +1000,6 @@ export default class IssieEditPhoto extends React.Component {
     }
   }
 
-
-  getColorButton = (color, size, index) => {
-    let func = () => {
-      this.canvas.setState({ color: color })
-      this.setState({ color: color, showColorPicker: false , eraseMode:false})
-      this.updateInputText();
-    }
-
-    return <TouchableOpacity
-      onPress={func}
-      activeOpacity={0.7}
-      key={"" + index}
-    >
-      <View style={{
-        backgroundColor: color,
-        borderRadius: size / 2,
-        width: size,
-        height: size,
-        alignItems: 'center',
-        justifyContent: 'center'
-
-      }}
-      >
-
-        {color == this.state.color && !this.state.eraseMode ? <Icon color="white" name="check"></Icon> : null}
-      </View>
-    </TouchableOpacity>
-  }
 
   getTextSizePicker = (color, size, textSize, index) => {
     return <TouchableOpacity
