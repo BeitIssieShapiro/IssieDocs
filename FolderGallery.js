@@ -21,14 +21,13 @@ import {
     DEFAULT_FOLDER_NAME,
     semanticColors,
     Spacer, globalStyles, removeFileExt,
-    getIconButton, getRoundedButton, dimensions,
+    getIconButton, getMaterialCommunityIconButton, dimensions,
     validPathPart, getEmbeddedSvgButton
 } from './elements'
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
 import ImagePicker from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
 import { sortFolders, swapFolders, saveFolderOrder } from './sort'
-import { SafeAreaView } from 'react-navigation';
 import { FlatList } from 'react-native-gesture-handler';
 import SplashScreen from 'react-native-splash-screen';
 
@@ -570,40 +569,40 @@ export default class FolderGallery extends React.Component {
                     {/*Left buttons*/}
                     <Spacer />
                     {
-                        getIconButton(() => {
+                        getMaterialCommunityIconButton(() => {
                             this.newFromCamera();
-                        }, semanticColors.addButton, "add-a-photo", 45)
+                        }, semanticColors.addButton, "camera-outline", 45)
                     }
                     <Spacer />
                     {
-                        getIconButton(() => {
+                        getMaterialCommunityIconButton(() => {
                             this.newFromMediaLib();
-                        }, semanticColors.addButton, "photo-library", 45)
+                        }, semanticColors.addButton, "image-outline", 45)
                     }
                     <Spacer />
                     {
-                        getIconButton(() => {
+                        getMaterialCommunityIconButton(() => {
                             this.newFromFileExplorer();
-                        }, semanticColors.addButton, "picture-as-pdf", 45)
+                        }, semanticColors.addButton, "file-pdf-outline", 45)
                     }
                     <Spacer />
                     {
-                        getIconButton(() => {
+                        getMaterialCommunityIconButton(() => {
                             this.props.navigation.navigate('CreateFolder',
                                 {
                                     saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, true),
                                     isLandscape: this.isLandscape()
                                 });
-                        }, semanticColors.addButton, "create-new-folder", 45)
+                        }, semanticColors.addButton, "folder-plus-outline", 45)
                     }
 
                     {/*right buttons */}
                     <View style={{ position: 'absolute', right: 0, flexDirection: 'row-reverse', alignItems: 'center' }}>
                         {
-                            getIconButton(() => {
+                            getMaterialCommunityIconButton(() => {
                                 let selected = this.state.editMode ? undefined : this.state.selected;
                                 this.toggleEditMode()
-                            }, semanticColors.addButton, this.state.editMode ? "clear" : "edit", 35)
+                            }, semanticColors.addButton, this.state.editMode ? "close-outline" : "pencil-outline", 35)
                         }
                     </View>
                 </View>

@@ -33,7 +33,7 @@ export default function FolderNew(props) {
                 paddingTop: 10, paddingBottom: 10
             }}>
 
-            {props.editMode && props.asTitle && !props.fixedFolder ?
+            {props.editMode && props.asTitle && !props.fixedFolder && props.name && props.name.length > 0 ?
                 <View style={{
                     position: 'absolute', flexDirection: 'row-reverse',
                     left: 0,
@@ -46,7 +46,7 @@ export default function FolderNew(props) {
                 }}>
                     {getEmbeddedButton(props.onDelete, 'delete-forever', 40)}
                     <Spacer width={7} />
-                    {getEmbeddedButton(props.onRename, 'edit', 50)}
+                    {getEmbeddedButton(props.onRename, 'edit', 40)}
                 </View> : null
             }
 

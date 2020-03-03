@@ -227,7 +227,13 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
         </View>
     </TouchableOpacity>
 }
-export function getIconButton(callback, color, icon, size, isText, iconSize, selected) {
+
+export function getMaterialCommunityIconButton(callback, color, icon, size, isText, iconSize, selected) {
+    return getIconButton(callback, color, icon, size, isText, iconSize, selected, "material-community")
+}
+export function getIconButton(callback, color, icon, size, isText, iconSize, selected, iconType) {
+    iconType = iconType || "material";
+
     return <TouchableOpacity
         activeOpacity={0.7}
         onPress={callback}
@@ -242,7 +248,7 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
     >
         {isText ?
             <Text style={{ fontSize: iconSize ? iconSize : size, color: color, paddingTop: 6 }}>{icon}</Text> :
-            <Icon name={icon} size={iconSize ? iconSize : size} color={color} />}
+            <Icon name={icon} type={iconType} size={iconSize ? iconSize : size} color={color} />}
 
     </TouchableOpacity>
 }
