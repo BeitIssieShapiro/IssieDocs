@@ -13,7 +13,8 @@ export const dimensions = {
     toolbarHeight: 65,
     toolbarMargin: 5,
     topView: 70,
-    folderHeight: 76,
+    folderHeight: 130,
+    folderAsTitleHeight: 56,
     tileWidth: 143,
     lineHeight: 70,
     tileHeight: 197
@@ -67,7 +68,8 @@ export const semanticColors = {
 export const FolderTextStyle = {
     fontSize: 26,
     fontWeight: 'bold',
-    color: semanticColors.titleText
+    color: semanticColors.titleText,
+    textAlign:'center'
 }
 
 export const availableIcons = [
@@ -170,9 +172,11 @@ export function getSquareButton(func, color, selectedColor, txt, icon, size, sel
     </TouchableOpacity>
 }
 
-export function getEmbeddedButton(callback, icon, iconSize, index) {
+export function getEmbeddedButton(callback, icon, iconSize, index, iconType) {
+    iconType = iconType || 'material'
     return <Icon
         key={index}
+        type={iconType}
         name={icon} size={iconSize}
         color={semanticColors.titleText}
         onPress={callback}

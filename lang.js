@@ -31,6 +31,7 @@ var strings = {
 
         "NoPagesYet": "אין עדיין דפים",
         "NoFoldersYet": "אין עדיין תיקיות",
+        "ChooseFolder": "בחר תיקיה",
 
         "SavePageFormTitle": "שמור דף",
         "RenameFormTitle": "שנה שם",
@@ -50,9 +51,11 @@ var strings = {
         "A B C": "א ב ג",
 
         "Menu": "תפריט",
+        "Settings":"הגדרות",
         "Display": "תצוגה",
         "Language": "שפה",
-        "TextInButtons":"טקסט בכפתורים",
+        "AllowEditTitle": "עריכת כותרת",
+        "TextInButtons":"עיצוב כפתורים",
         "FolderColors":"צבעי תיקיות",
         "Warning": "אזהרה",
         "BtnContinue": "המשך",
@@ -101,7 +104,7 @@ var strings = {
 
                 "NoPagesYet": "لا توجد صفحات حتى الآن",
                 "NoFoldersYet": "لا توجد مجلدات حتى الآن",
-
+                "ChooseFolder": "todo",
                 "SavePageFormTitle": "حفظ الصفحة",
                 "RenameFormTitle": "تغيير العنوان",
                 "DuplicatePageFormTitle": "صفحة مكررة",
@@ -118,10 +121,12 @@ var strings = {
                 "A": "أ",
                 "A B C": "أ ب ج",
 
+                "Settings":"todo",
                 "Menu": "القائمة",
                 "Display": "العرض",
                 "Language": "اللغة",
-                "TextInButtons":"نص الزر",
+                "AllowEditTitle":"todo",
+                "TextInButtons":"todo",
                 "FolderColors":"ألوان المجلد",
                 "Warning": "تحذير",
                 "BtnContinue": "متابعة",

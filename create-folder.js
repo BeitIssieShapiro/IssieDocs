@@ -6,7 +6,7 @@ import { translate } from './lang.js'
 
 import {
     getIconButton, folderIcons, availableIcons,
-    getImageDimensions,availableColorPicker,
+    getImageDimensions, availableColorPicker,
     globalStyles,
     getPageNavigationButtons, getFileNameDialog, semanticColors, getFolderAndIcon,
     Spacer, getRoundedButton, dimensions, getColorButton
@@ -159,14 +159,20 @@ export default class IssieCreateFolder extends React.Component {
             </View>
         </View>
 
-        let colorSelection = <View style={{ flexDirection: 'row', 
-            width: '100%', bottom: 0, 
-            justifyContent: 'space-evenly', 
+        let colorSelection = <View style={{
+            flexDirection: 'row',
+            width: '100%', bottom: 0,
+            justifyContent: 'space-evenly',
             alignItems: 'center',
-            flexWrap: 'wrap' }}>
-            {availableColorPicker.map((color, i) => getColorButton(
-                () => this.setState({color:color}), color, 50, color == this.state.color, i))}
-          </View>
+            flexWrap: 'wrap'
+        }}>
+            {availableColorPicker.map((color, i) => (
+                <View key={i} style={[this.isLandscape() && {height: 100, width:'30%', alignItems:'center'}]}>
+                    {getColorButton(() => this.setState({ color: color }),
+                        color, 50, color == this.state.color, i)}
+                </View>))
+            }
+        </View>
 
 
         return (

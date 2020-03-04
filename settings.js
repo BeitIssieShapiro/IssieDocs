@@ -10,7 +10,6 @@ import {
     getRoundedButtonInt
 } from './elements'
 
-import { getSvgIcon } from './svg-icons.js'
 
 import FadeInView from './FadeInView'
 import { translate } from './lang';
@@ -40,6 +39,12 @@ export const TEXT_BUTTON = {
     no: 2
 }
 
+export const EDIT_TITLE = {
+    name: 'editTitle',
+    yes: 1,
+    no: 2
+}
+
 export function getUseColorSetting() {
     return getSetting(USE_COLOR.name, USE_COLOR.yes);
 }
@@ -64,6 +69,9 @@ export default function Menu(props) {
 
     let langSetting = getSetting(LANGUAGE.name, LANGUAGE.default);
     const [lang, setLang] = useState(langSetting);
+
+    let editTitleSetting = getSetting(EDIT_TITLE.name, EDIT_TITLE.no);
+    const [editTitle, setEditTitle] = useState(editTitleSetting);
 
     let textBtnSetting = getSetting(TEXT_BUTTON.name, TEXT_BUTTON.yes);
     const [textBtn, setTextBtn] = useState(textBtnSetting);
@@ -103,6 +111,13 @@ export default function Menu(props) {
         props.onTextBtnChange(tb);
     }
 
+    const setEditTitleHandler = (tb) => {
+        let obj = {}
+        obj[EDIT_TITLE.name] = tb;
+        Settings.set(obj)
+        setTextBtn(tb);
+    }
+
     return <TouchableOpacity onPress={props.onClose} style={{
         position: 'absolute',
         zIndex: 100, top: 0, left: 0, width: '100%', height: '100%'
@@ -116,11 +131,16 @@ export default function Menu(props) {
 
                 backgroundColor: 'white', borderColor: 'gray', borderWidth: 1
             }}>
-
+            <View style={{ flexDirection: 'row-reverse', justifyContent: 'flex-start', alignItems: 'center' }}>
+                <Spacer width={11} />
+                <Icon name={'close'} onPress={props.onClose} size={45} />
+                <Spacer />
+                <Text style={styles.SettingsHeaderText}>{translate("Settings")}</Text>
+            </View>
             <ScrollView style={{
                 flex: 1,
-                position: 'absolute', top: '5%',
-                width: '100%', height: '95%'
+                position: 'absolute', top: '10%',
+                width: '100%', height: '90%'
             }}
             >
                 <TouchableOpacity activeOpacity={1} style={{ alignItems: 'flex-end' }} >
@@ -131,6 +151,29 @@ export default function Menu(props) {
                         <Spacer />
                         <Icon name={'info'} size={35} color={semanticColors.titleText} />
                     </TouchableOpacity>
+                    {getGroup(props, translate("Language") + ":", [
+                        /*{
+                            icon: getSvgIcon('lang-system', 45), selected: langSetting == LANGUAGE.default,
+                            callback: () => setLanguage(LANGUAGE.default)
+                        },*/
+                        {
+                            icon: <Text style={{ fontSize: 25 }}>עברית</Text>,
+                            //getSvgIcon('lang-he', 45), 
+                            selected: langSetting == LANGUAGE.hebrew,
+                            callback: () => setLanguage(LANGUAGE.hebrew)
+                        },
+                        {
+                            icon: <Text style={{ fontSize: 25 }}>عربيه</Text>,
+                            //getSvgIcon('lang-ar', 45), 
+                            selected: langSetting == LANGUAGE.arabic,
+                            callback: () => setLanguage(LANGUAGE.arabic)
+                        }
+                        // ,
+                        // {
+                        //     icon: getSvgIcon('lang-en', 45), selected: langSetting ==  LANGUAGE.english,
+                        //     callback: () => setLanguage(LANGUAGE.english)
+                        // }
+                    ])}
                     {getGroup(props, translate("Display") + ":", [
                         {
                             icon: getIcon('view-list', 45), selected: viewStyleSetting == VIEW.list,
@@ -142,25 +185,7 @@ export default function Menu(props) {
                         },
 
                     ])}
-                    {getGroup(props, translate("Language") + ":", [
-                        {
-                            icon: getSvgIcon('lang-system', 45), selected: langSetting == LANGUAGE.default,
-                            callback: () => setLanguage(LANGUAGE.default)
-                        },
-                        {
-                            icon: getSvgIcon('lang-he', 45), selected: langSetting == LANGUAGE.hebrew,
-                            callback: () => setLanguage(LANGUAGE.hebrew)
-                        },
-                        {
-                            icon: getSvgIcon('lang-ar', 45), selected: langSetting == LANGUAGE.arabic,
-                            callback: () => setLanguage(LANGUAGE.arabic)
-                        }
-                        // ,
-                        // {
-                        //     icon: getSvgIcon('lang-en', 45), selected: langSetting ==  LANGUAGE.english,
-                        //     callback: () => setLanguage(LANGUAGE.english)
-                        // }
-                    ])}
+
                     {getGroup(props, translate("TextInButtons") + ":", [
                         {
                             icon: getButtonWithText(), selected: textBtnSetting === TEXT_BUTTON.yes,
@@ -171,7 +196,16 @@ export default function Menu(props) {
                             callback: () => setTextBtnHandler(TEXT_BUTTON.no)
                         }
                     ])}
+                    
+                    {getCheckbox(translate("AllowEditTitle"), 
+                        () => {
+                            let newValue = editTitle == EDIT_TITLE.yes ? EDIT_TITLE.no : EDIT_TITLE.yes;
+                            setEditTitle(newValue);
+                            setEditTitleHandler(newValue)
+                        }, 
+                        editTitle == EDIT_TITLE.yes)}
 
+                    
                     {getGroup(props, translate("FolderColors") + ":", [
                         {
                             icon: getIcon("folder", 35, 'red'), selected: useColorSetting === USE_COLOR.yes,
@@ -217,6 +251,23 @@ function getGroup(props, name, items) {
 
     </View>
 }
+
+function getCheckbox(name, callback, selected) {
+    return <View style={{ width: '100%', paddingTop: 25, 
+        paddingRight: 25, alignItems: 'flex-end' }}>
+        <TouchableOpacity
+            style={{ flexDirection: 'row-reverse', paddingRight: 35, paddingTop: 15, alignItems: 'center' }}
+            onPress={callback}
+        >
+            <Spacer />
+            <View style={styles.circle}>
+                {selected && <View style={styles.checkedCircle} />}
+            </View>
+            <Text style={styles.SettingsHeaderText}>{name}</Text>
+        </TouchableOpacity>
+    </View>
+}
+
 
 const styles = StyleSheet.create({
     buttonContainer: {

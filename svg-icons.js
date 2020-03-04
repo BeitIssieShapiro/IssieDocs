@@ -1,5 +1,5 @@
 import React from 'react';
-import { Svg, Path, Circle, Rect, Polygon, G } from 'react-native-svg'
+import { Svg, Path, Line, Rect, Polygon, G } from 'react-native-svg'
 
 
 export function getSvgIcon(name, size, color, strokeWidth) {
@@ -117,6 +117,17 @@ export function getSvgIcon(name, size, color, strokeWidth) {
                 </G>
             </G>
         </Svg>
+        case 'folder':
+            return <Svg width="140px" height="184px" viewBox="0 0 140 184" preserveAspectRatio="xMidYMid meet">
+                <Rect stroke="darkgray" x="5.998932px" height="48.032841px" y="43.004684px" strokeWidth="1px" width="69.5px" id="rect2" fill="#ffffff" transform="rotate(-13.375336 51.75 63)"></Rect>
+                <Rect stroke="darkgray" x="49.627937px" height="48.032841px" y="41.230129px" strokeWidth="1px" id="rect3" width="69.5px" fill="#ffffff" transform="rotate(35.407425 90.457466 76.271042) rotate(-13.375336 51.75 63)"></Rect>
+                <Rect stroke="darkgray" x="37.5px" height="50px" y="30px" id="rect1" strokeWidth="1px" width="69.5px" fill="#ffffff" transform=""></Rect>
+                <Polygon points="2.5,70 12,152 126,152 137.5,59 84,58.5 74,70 " stroke="#000000" id="polygon1" strokeWidth="0px" fill="#1aaeff" transform=""></Polygon>
+                <Line stroke="darkgray" y1="40.000000px" id="line1" x1="50.000000px" strokeWidth="3px" y2="40.000000px" x2="95.000000px" transform=""></Line>
+                <Line stroke="#000000" y1="47px" id="line2" x1="49px" strokeWidth="3px" y2="47px" x2="49px" transform=""></Line>
+                <Line stroke="darkgray" y1="48.000000px" id="line3" x1="50.000000px" strokeWidth="3px" y2="48.000000px" x2="95.000000px" transform=""></Line>
+                <Line stroke="darkgray" y1="56px" id="line4" x1="50px" strokeWidth="3px" y2="56px" x2="95px" transform=""></Line>
+            </Svg>
 
     }
 }

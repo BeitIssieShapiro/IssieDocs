@@ -91,9 +91,9 @@ function getActionButtons(props) {
         <Spacer width={7} key={2} />
         {getEmbeddedButton(props.onRename, 'edit', 40, 3)}
         <Spacer width={7} key={4} />
-        {getEmbeddedButton(props.onMove, 'exit-to-app', 40, 5)}
+        {getEmbeddedButton(props.onMove, 'folder-move', 40, 5, 'material-community')}
         <Spacer width={7} key={6} />
-        {getEmbeddedButton(props.onDuplicate, 'layers', 40, 7)}
+        {getEmbeddedButton(props.onDuplicate, 'file-multiple', 40, 7, 'material-community')}
         <Spacer width={7} key={8} />
         {getEmbeddedButton(props.onShare, 'share', 40, 9)}
         <Spacer width={7} key={10} />

@@ -557,26 +557,31 @@ export default class IssieEditPhoto extends React.Component {
       this.setState({
         showTextInput: false,
         textMode: true,
-        showTextSizePicker: this.state.showBrushSizePicker
+        showTextSizePicker: this.state.showBrushSizePicker,
+        eraseMode: false
       });
       return;
     }
     this.setState({
       showTextSizePicker: !this.state.showTextSizePicker,
       showColorPicker: false,
-      showBrushSizePicker: false
+      showBrushSizePicker: false,
+      eraseMode: false
 
     });
   }
 
   onTextSize = (size) => {
-    this.setState({ fontSize: size, showTextSizePicker: false });
+    this.setState({
+      fontSize: size, showTextSizePicker: false, eraseMode: false
+    });
     this.updateInputText();
   }
 
   onEraserButton = () => {
     this.canvas.setState({ color: (this.state.eraseMode ? this.state.color : '#00000000') })
     this.setState({ eraseMode: !this.state.eraseMode, showTextInput: false });
+    setTimeout(() => this.onBrushSize(this.state.strokeWidth, true), 100);
   }
   onBrushButtonPicker = () => {
 
@@ -586,17 +591,19 @@ export default class IssieEditPhoto extends React.Component {
         showTextInput: false,
         textMode: false,
         yOffset: this.state.zoom == 1 ? 0 : this.state.yOffset,
-        showBrushSizePicker: this.state.showTextSizePicker
+        showBrushSizePicker: this.state.showTextSizePicker,
+        eraseMode: false
       });
       return;
     }
     this.setState({
       showBrushSizePicker: !this.state.showBrushSizePicker,
       showColorPicker: false,
-      showTextSizePicker: false
+      showTextSizePicker: false,
+      eraseMode: false
     })
   }
-  onBrushSize = (size) => {
+  onBrushSize = (size, calledFromEraserHandler) => {
     let newStrokeWidth = size; //this.canvas.state.strokeWidth + inc;
     if (newStrokeWidth < 1) {
       newStrokeWidth = 1;
@@ -604,8 +611,10 @@ export default class IssieEditPhoto extends React.Component {
     if (newStrokeWidth > MAX_STROKE_WIDTH) {
       newStrokeWidth = MAX_STROKE_WIDTH;
     }
-    this.canvas.setState({ strokeWidth: newStrokeWidth });
-    this.setState({ strokeWidth: newStrokeWidth, showBrushSizePicker: false })
+    this.canvas.setState({ strokeWidth: this.state.eraseMode ? (newStrokeWidth * 3 < 15 ? 15 : newStrokeWidth * 3) : newStrokeWidth });
+    this.setState({
+      strokeWidth: newStrokeWidth, showBrushSizePicker: false, eraseMode: (calledFromEraserHandler? this.state.eraseMode: false)
+    })
   }
 
   movePage = (inc) => {
@@ -851,10 +860,10 @@ export default class IssieEditPhoto extends React.Component {
         <FadeInView height={this.state.showColorPicker ? 70 : 0} style={[styles.pickerView, { left: 0, right: 0 }]}>
           <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
             {availableColorPicker.map((color, i) => getColorButton(() => {
-                this.canvas.setState({ color: color })
-                this.setState({ color: color, showColorPicker: false, eraseMode: false })
-                this.updateInputText();
-              }, color, colorButtonSize, color == this.state.color && !this.state.eraseMode, i))
+              this.canvas.setState({ color: color })
+              this.setState({ color: color, showColorPicker: false, eraseMode: false })
+              this.updateInputText();
+            }, color, colorButtonSize, color == this.state.color && !this.state.eraseMode, i))
             }
           </View>
         </FadeInView>

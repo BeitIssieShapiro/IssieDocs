@@ -5,7 +5,8 @@ import {
     TextInput
 } from 'react-native';
 import { Icon } from 'react-native-elements'
-import Menu from './settings'
+import Menu, { EDIT_TITLE } from './settings'
+import TitleEdit from './title-edit.js'
 
 import * as RNFS from 'react-native-fs';
 import FolderNew from './FolderNew';
@@ -21,8 +22,8 @@ import {
     DEFAULT_FOLDER_NAME,
     semanticColors,
     Spacer, globalStyles, removeFileExt,
-    getIconButton, getMaterialCommunityIconButton, dimensions,
-    validPathPart, getEmbeddedSvgButton
+    getMaterialCommunityIconButton, dimensions,
+    validPathPart, 
 } from './elements'
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
 import ImagePicker from 'react-native-image-picker';
@@ -30,52 +31,44 @@ import DocumentPicker from 'react-native-document-picker';
 import { sortFolders, swapFolders, saveFolderOrder } from './sort'
 import { FlatList } from 'react-native-gesture-handler';
 import SplashScreen from 'react-native-splash-screen';
+import { getSvgIcon } from './svg-icons';
 
 export const FOLDERS_DIR = RNFS.DocumentDirectoryPath + '/folders/';
 
 export default class FolderGallery extends React.Component {
     static navigationOptions = ({ navigation }) => {
-        let menuIcon = 'menu';
+        let menuIcon = 'settings';
 
         let isMenuOpened = navigation.getParam('isMenuOpened')
         if (isMenuOpened) {
-            menuIcon = 'close';
+            //menuIcon = 'close';
         }
         let editMode = navigation.getParam('editMode', false)
-        let titleEditMode = editMode && navigation.getParam('titleEditMode', false)
         let titleSetting = Settings.get('appTitle');
         if (titleSetting === undefined) {
             titleSetting = fTranslate("DefaultAppTitle", "IssieDocs");
         }
 
-        let title = titleEditMode ? navigation.getParam('titleEditText', '') :
-            titleSetting;
+        let editTitleSetting = Settings.get(EDIT_TITLE.name);
+        if (editTitleSetting === undefined) {
+            editTitleSetting = EDIT_TITLE.no;
+        }
+
+        let title = titleSetting;
 
         return {
-            headerTitle: editMode && titleEditMode ? () => <View
-                style={{width:'60%', alignItems:'center'}}
-                >
-                <TextInput
-                value={title}
-                style={[globalStyles.headerTitleStyle, { color: 'white', width:'100%' }]}
-                autoFocus
-                onChangeText={(txt) => navigation.setParams({ titleEditText: txt })}
-            />
-            </View> : undefined,
-
-
+            headerTitle: editMode && editTitleSetting == EDIT_TITLE.yes ? (() => 
+            <TitleEdit 
+                title={title}
+                onSave={(newTitle) => {
+                Settings.set({ appTitle: newTitle });
+                navigation.setParams({saveTitle:true})//to cause refresh
+            }}/>) : undefined,
             title,
             headerStyle: globalStyles.headerStyle,
             headerTintColor: 'white',
             headerTitleStyle: globalStyles.headerTitleStyle,
-            headerLeft: editMode && (<View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', width: 150 }}>
-                {!titleEditMode ? getEmbeddedSvgButton(() => navigation.setParams({ titleEditMode: true, titleEditText: title }), 'rename', 40, 1, 'white') : null}
-                {titleEditMode ? getIconButton(() => navigation.setParams({ titleEditMode: false }), semanticColors.addButton, "cancel", 45) : null}
-                {titleEditMode ? getIconButton(() => {
-                    Settings.set({ appTitle: title });
-                    navigation.setParams({ titleEditMode: false });
-                }, semanticColors.addButton, "check", 45) : null}
-            </View>),
+            //headerLeft: 
             headerRight: (
                 <View style={{ flexDirection: 'row-reverse' }}>
                     <Spacer />
@@ -522,7 +515,7 @@ export default class FolderGallery extends React.Component {
         }
         let viewStyle = Settings.get('viewStyle');
         let asTiles = viewStyle === 2;
-        let treeWidth = .36 * this.state.windowSize.width;
+        let treeWidth = 180;//.36 * this.state.windowSize.width;
         let pagesContainerWidth = this.state.windowSize.width - treeWidth;
         let numColumnsForTiles = Math.floor(pagesContainerWidth / dimensions.tileWidth);
         let foldersCount = this.state.folders ? this.state.folders.length : 1;
@@ -597,7 +590,7 @@ export default class FolderGallery extends React.Component {
                     }
 
                     {/*right buttons */}
-                    <View style={{ position: 'absolute', right: 0, flexDirection: 'row-reverse', alignItems: 'center' }}>
+                    <View style={{ position: 'absolute', right: 17, flexDirection: 'row-reverse', alignItems: 'center' }}>
                         {
                             getMaterialCommunityIconButton(() => {
                                 let selected = this.state.editMode ? undefined : this.state.selected;
@@ -618,9 +611,9 @@ export default class FolderGallery extends React.Component {
                         <View style={{
                             flex: 1, flexDirection: "row-reverse", height: "5%", position: 'absolute',
                             width: "100%", top: 0, height: '10%', alignItems: 'center', justifyContent: 'flex-start',
-                            paddingRight: '5%', borderBottomWidth: 1, borderBottomColor: 'gray'
+                            paddingRight: '5%', borderBottomWidth: this.state.currentFolder ? 1 : 0, borderBottomColor: 'gray'
                         }}>
-                            <FolderNew
+                            {this.state.currentFolder ? <FolderNew
                                 index={fIndex}
                                 id="1"
                                 useColors={this.state.folderColor}
@@ -631,7 +624,7 @@ export default class FolderGallery extends React.Component {
                                 onDelete={() => this.DeleteFolder()}
                                 onRename={() => this.RenameFolder()}
                                 fixedFolder={curFolderFullName === DEFAULT_FOLDER_NAME}
-                            />
+                            /> : null}
                         </View>
                         {/* pages */}
                         <View style={{
@@ -640,7 +633,7 @@ export default class FolderGallery extends React.Component {
                             position: 'absolute', top: "10%", width: "100%",
                             height: '90%'
                         }}>
-                            {this.state.currentFolder && this.state.currentFolder.files ?
+                            {this.state.currentFolder && this.state.currentFolder.files && this.state.currentFolder.files.length > 0 ?
                                 <FlatList
                                     style={{
                                     }}
@@ -672,9 +665,14 @@ export default class FolderGallery extends React.Component {
                                 />
 
 
-                                : <View style={{ alignItems: 'center' }}>
-                                    <Text style={{ fontSize: 35 }}> {translate("NoPagesYet")}</Text>
-                                </View>}
+                                : this.state.currentFolder ?
+                                    <View style={{ alignItems: 'center',marginTop:50 }}>
+                                        {getSvgIcon('folder')}
+                                        <Text style={{ fontSize: 35 }}> {translate("NoPagesYet")}</Text>
+                                    </View> :
+                                    <View style={{ alignItems: 'center', marginTop:50 }}>
+                                        <Text style={{ fontSize: 35 }}> {translate("ChooseFolder")}</Text>
+                                    </View>}
                         </View>
                     </View>
                     {/* tree */}
