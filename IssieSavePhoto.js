@@ -511,11 +511,11 @@ export default class IssieSavePhoto extends React.Component {
 
 
           {  //Cancel
-            getRoundedButton(this.Cancel, 'cancel', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })
+            getRoundedButton(this.Cancel, 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })
           }
           <Spacer width={10} />
           {  //Save
-            getRoundedButton(this.OK, 'check-circle', translate("BtnSave") + saveMoreThanOne, 30, 30, { width: 150, height: 40 })
+            getRoundedButton(this.OK, 'check-green', translate("BtnSave") + saveMoreThanOne, 30, 30, { width: 150, height: 40 })
           }
 
           { //Add page
@@ -544,7 +544,7 @@ export default class IssieSavePhoto extends React.Component {
             getIconButton(this.crop, semanticColors.addButton, "crop", 45)
           }
           <Spacer width={10} />
-          {this.state.cropping ? getIconButton(this.cancelCrop, semanticColors.addButton, "cancel", 45) : <View />}
+          {this.state.cropping ? getIconButton(this.cancelCrop, semanticColors.addButton, 'close', 45) : <View />}
           {this.state.cropping ? <Spacer width={10} /> : null}
           {this.state.cropping ? getIconButton(this.acceptCrop, semanticColors.addButton, "check", 45) : <View />}
           {this.state.cropping ? <View /> : getIconButton(this.rotateLeft, semanticColors.addButton, "rotate-left", 45)}

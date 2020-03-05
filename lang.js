@@ -73,7 +73,7 @@ var strings = {
         "CaptionPageName": "שם הדף",
         "CaptionFolderNameList": "תיקיה",
         "CaptionFolderNameInput": "שם התיקיה",
-        "CaptionFolderColor":"צבע התיקיה", //todo translate
+        "CaptionFolderColor": "צבע התיקיה", 
         "NoIcon": "ללא",
         "CaptionIcon": "סמל",
 
@@ -127,6 +127,7 @@ var strings = {
                 "Language": "اللغة",
                 "AllowEditTitle":"todo",
                 "TextInButtons":"todo",
+                "CaptionFolderColor":"todo", 
                 "FolderColors":"ألوان المجلد",
                 "Warning": "تحذير",
                 "BtnContinue": "متابعة",

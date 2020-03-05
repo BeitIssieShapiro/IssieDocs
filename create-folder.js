@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Alert, Text, TouchableOpacity, PanResponder, StyleSheet, Dimensions } from 'react-native';
-import { getHeaderBackButton } from './elements.js'
+import { getHeaderBackButton, AppText } from './elements.js'
 import { Icon } from 'react-native-elements'
 import { translate } from './lang.js'
 
@@ -122,17 +122,17 @@ export default class IssieCreateFolder extends React.Component {
 
 
             {  //Cancel
-                getRoundedButton(() => this.props.navigation.goBack(), 'cancel', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })
+                getRoundedButton(() => this.props.navigation.goBack(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })
             }
             <Spacer width={10} />
             {  //Save
-                getRoundedButton(() => this.Save(), 'check-circle', translate("BtnSave"), 30, 30, { width: 150, height: 40 })
+                getRoundedButton(() => this.Save(), 'check-green', translate("BtnSave"), 30, 30, { width: 150, height: 40 })
             }
         </View>
 
 
         let iconsSelection = <View style={{ flex: 1, alignItems: 'flex-end', width: '100%' }}>
-            <Text style={styles.titleText}>{translate("CaptionIcon")}</Text>
+            <AppText style={styles.titleText}>{translate("CaptionIcon")}</AppText>
 
             <View style={{
                 width: '100%',
@@ -145,7 +145,7 @@ export default class IssieCreateFolder extends React.Component {
                 <TouchableOpacity style={{ padding: 20 }} onPress={() => {
                     this.setState({ icon: "", yOffset: 0 })
                 }}>
-                    <Text style={{ fontSize: 35, color: (this.state.icon === "" ? semanticColors.selectedIconColor : semanticColors.availableIconColor) }} >{translate("NoIcon")}</Text>
+                    <AppText style={{ fontSize: 35, color: (this.state.icon === "" ? semanticColors.selectedIconColor : semanticColors.availableIconColor) }} >{translate("NoIcon")}</AppText>
                 </TouchableOpacity>
                 {
                     availableIcons.map((item, i) => (
@@ -167,7 +167,7 @@ export default class IssieCreateFolder extends React.Component {
             flexWrap: 'wrap'
         }}>
             {availableColorPicker.map((color, i) => (
-                <View key={i} style={[this.isLandscape() && {height: 100, width:'30%', alignItems:'center'}]}>
+                <View key={i} style={[this.isLandscape() && {height: 100, width:'30%', alignItems:'center', marginTop:20}]}>
                     {getColorButton(() => this.setState({ color: color }),
                         color, 50, color == this.state.color, i)}
                 </View>))
@@ -204,8 +204,8 @@ export default class IssieCreateFolder extends React.Component {
                             flex: 1, flexDirection: 'column', width: '100%', alignItems: 'flex-end'
                         }}>
                             <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'flex-start' }}>
-                                <Icon name="folder" size={55} color={'orange'} />
-                                <Text style={styles.titleText}>{translate("CaptionFolderNameInput")}</Text>
+                                <Icon name="folder" size={55} color={this.state.color?this.state.color:'gray'} />
+                                <AppText style={styles.titleText}>{translate("CaptionFolderNameInput")}</AppText>
                                 <View style={{ position: 'absolute', left: 10, top: 21 }}>
                                     {this.state.icon ? <Icon name={this.state.icon} size={30} color='white' /> : null}
                                 </View>
@@ -215,7 +215,7 @@ export default class IssieCreateFolder extends React.Component {
                             <TextInput style={[globalStyles.textInput]} value={this.state.name}
                                 onChangeText={(txt) => this.setState({ name: txt })}
                             />
-                            <Text style={styles.titleText}>{translate("CaptionFolderColor")}</Text>
+                            <AppText style={styles.titleText}>{translate("CaptionFolderColor")}</AppText>
                             {colorSelection}
                         </View>
                         {this.isLandscape() ? <Spacer /> : null}

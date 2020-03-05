@@ -224,11 +224,11 @@ export default function Menu(props) {
 }
 
 function getButtonWithText() {
-    return getRoundedButtonInt(this.OK, 'check-circle', translate("BtnSave"), 30, 30, { width: 150, height: 40 })
+    return getRoundedButtonInt(this.OK, 'check-green', translate("BtnSave"), 30, 30, { width: 150, height: 40 })
 }
 
 function getButtonWithoutText() {
-    return getRoundedButtonInt(this.OK, 'check-circle', "", 50, 50, { width: 60, height: 60 })
+    return getRoundedButtonInt(this.OK, 'check-green', "", 30, 30, { width: 40, height: 40 })
 }
 
 function getGroup(props, name, items) {

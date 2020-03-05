@@ -53,7 +53,7 @@ export default class Folder extends React.Component {
           source={{ uri: this.props.files[0].path }}
         >
           {
-            this.state.selected && <Icon name="check-circle" size={30} color={semanticColors.selectedCheck} />
+            this.state.selected && <Icon name="check-green" size={30} color={semanticColors.selectedCheck} />
           }
         </ImageBackground>
         <View style={[styles.picture, { backgroundColor: 'white', transform: [{ rotate: '6deg' }, { translateY: -10 }], zIndex: 0 }]} />

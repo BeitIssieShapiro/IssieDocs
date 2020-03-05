@@ -58,7 +58,7 @@ export const semanticColors = {
     editPhotoButton: '#1aaeff',
     availableIconColor: '#9a9fa9',
     selectedIconColor: '#1aaeff',
-    selectedEditToolColor: '#a7a7a7',
+    selectedEditToolColor: '#eeeded',
     selectedListItem: '#e0ecf7',
     listBackground: 'white' //'#f1f2f4'
 
@@ -194,17 +194,19 @@ export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, 
     if (getUseTextSetting()) {
         return getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark)
     } else {
-        let newDim = {width:60, height:60};
-        return getRoundedButtonInt(callback, icon, undefined, textSize, 45, newDim, direction, dark)
+        let newDim = {width:dim.height, height:dim.height};
+        return getRoundedButtonInt(callback, icon, undefined, textSize, iconSize, newDim, direction, false)
     }
         
 }
 export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark) {
     let color = semanticColors.titleText;
-    if (icon === 'check-circle') {
+    if (icon === 'check-green') {
         color = 'green';
-    } else if (icon === 'cancel') {
+        icon = 'check';
+    } else if (icon == 'cancel-red') {
         color = 'red';
+        icon = 'close';
     }
 
     let textExist = text && text.length > 0;
@@ -331,12 +333,13 @@ export function getFileNameDialog(fileName,
                 <View style={{
                     flex: 1, flexDirection: 'row-reverse',
                     width: '100%',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    justifyContent:'space-between'
                 }}>
                     <Text style={[styles.titleText, { width: isLandscape ? '40%' : '30%' }]}>{translate("CaptionFolderNameList")}</Text>
                     {getRoundedButton(() => navigation.navigate('CreateFolder',
                         { saveNewFolder: onSaveNewFolder }),
-                        'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 250, height: 40 }, undefined, true)}
+                        'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 250, height: 40 }, 'row-reverse', true)}
                 </View>
                 <Spacer />
                 <View style={{
@@ -481,6 +484,7 @@ export const globalStyles = StyleSheet.create({
         height: 55
     },
     headerTitleStyle: {
+        fontFamily: 'Alef',
         fontSize: 30,
         fontWeight: 'bold'
     },
@@ -527,6 +531,12 @@ export function getHeaderBackButton(nav) {
 export function Spacer(props) {
     return (
         <View style={{ width: props.width || 20, height: props.height || 20 }} />
+    );
+}
+
+export function AppText(props) {
+    return (
+        <Text style={{fontFamily: props.bold? 'Rubik-Bold':'Alef', fontSize: 35}} >{props.children}</Text>
     );
 }
 
