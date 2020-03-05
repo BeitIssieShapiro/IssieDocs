@@ -6,9 +6,9 @@ import { Icon } from 'react-native-elements'
 import LinearGradient from 'react-native-linear-gradient';
 import React, { useState } from 'react';
 import { translate, getLocalizedFoldersAndIcons } from "./lang.js";
-import {getUseTextSetting} from './settings.js'
+import { getUseTextSetting } from './settings.js'
 
-import {getSvgIcon} from './svg-icons.js'
+import { getSvgIcon } from './svg-icons.js'
 export const dimensions = {
     toolbarHeight: 65,
     toolbarMargin: 5,
@@ -69,7 +69,7 @@ export const FolderTextStyle = {
     fontSize: 26,
     fontWeight: 'bold',
     color: semanticColors.titleText,
-    textAlign:'center'
+    textAlign: 'center'
 }
 
 export const availableIcons = [
@@ -166,7 +166,7 @@ export function getSquareButton(func, color, selectedColor, txt, icon, size, sel
         <LinearGradient
             colors={selected ? selectedColor : color}
             style={[styles.squareShapeView, dim, styles.notSelected, iconFirst ? { flexDirection: 'row-reverse' } : {}]}>
-            <Text style={{ fontSize: size, color: 'white', marginLeft: lMargin, marginRight: rMargin }}>{txt ? txt : ''}</Text>
+            <AppText style={{ fontSize: size, color: 'white', marginLeft: lMargin, marginRight: rMargin }}>{txt ? txt : ''}</AppText>
             {icon ? <Icon name={icon} size={iconSize} color='white' /> : null}
         </LinearGradient>
     </TouchableOpacity>
@@ -185,8 +185,8 @@ export function getEmbeddedButton(callback, icon, iconSize, index, iconType) {
 
 export function getEmbeddedSvgButton(callback, icon, iconSize, key, color) {
     return <TouchableOpacity onPress={callback} key={key}>
-            {getSvgIcon(icon, iconSize, color?color:semanticColors.titleText)}
-            </TouchableOpacity>;
+        {getSvgIcon(icon, iconSize, color ? color : semanticColors.titleText)}
+    </TouchableOpacity>;
 }
 
 
@@ -194,10 +194,10 @@ export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, 
     if (getUseTextSetting()) {
         return getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark)
     } else {
-        let newDim = {width:dim.height, height:dim.height};
+        let newDim = { width: dim.height, height: dim.height };
         return getRoundedButtonInt(callback, icon, undefined, textSize, iconSize, newDim, direction, false)
     }
-        
+
 }
 export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark) {
     let color = semanticColors.titleText;
@@ -223,13 +223,13 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
                 borderRadius: 25,
                 alignItems: 'center',
                 alignContent: 'center',
-                justifyContent: textExist ? 'flex-end':'center',
+                justifyContent: textExist ? 'flex-end' : 'center',
                 backgroundColor: dark ? '#a7a7a7' : '#eeeded',
                 flexDirection: direction ? direction : 'row'
             }}>
-            {textExist ? <Text style={{ position: 'absolute', paddingTop: 5, left: 0, width: '80%', fontSize: textSize, color: semanticColors.titleText, textAlign: 'center' }}>{text}</Text>:null}
+            {textExist ? <AppText style={{ position: 'absolute', paddingTop: 5, left: 0, width: '80%', fontSize: textSize, lineHeight: textSize+5, color: semanticColors.titleText, textAlign: 'center' }}>{text}</AppText> : null}
             <Icon name={icon} size={iconSize} color={color} />
-            {textExist ? <Spacer width={5} />:null}
+            {textExist ? <Spacer width={5} /> : null}
         </View>
     </TouchableOpacity>
 }
@@ -253,7 +253,7 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
         }}
     >
         {isText ?
-            <Text style={{ fontSize: iconSize ? iconSize : size, color: color, paddingTop: 6 }}>{icon}</Text> :
+            <AppText style={{ fontSize: iconSize ? iconSize : size, color: color, paddingTop: 6 }}>{icon}</AppText> :
             <Icon name={icon} type={iconType} size={iconSize ? iconSize : size} color={color} />}
 
     </TouchableOpacity>
@@ -262,7 +262,7 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
 
 
 export function getFolderAndIcon(folderName) {
-    let ret = {name:"", icon:"", color:""};
+    let ret = { name: "", icon: "", color: "" };
 
     //options:
     //name
@@ -275,14 +275,14 @@ export function getFolderAndIcon(folderName) {
         let hashSign = folderName.indexOf('#');
         //color
         if (hashSign >= 0) {
-            ret.color = folderName.substr(hashSign+1);
+            ret.color = folderName.substr(hashSign + 1);
         }
 
         //name
         if (dollarSign >= 0) {
             ret.name = folderName.substring(0, dollarSign);
             //icon
-            ret.icon = hashSign >= 0 ? folderName.substring(dollarSign+1, hashSign) :folderName.substr(dollarSign+1)
+            ret.icon = hashSign >= 0 ? folderName.substring(dollarSign + 1, hashSign) : folderName.substr(dollarSign + 1)
         } else if (hashSign >= 0) {
             ret.name = folderName.substring(0, hashSign);
         } else {
@@ -305,7 +305,7 @@ export function getFileNameDialog(fileName,
     currentFolderName, folders,
     onChangeName, onChangeFolder, onSaveNewFolder,
     navigation, isLandscape) {
-    
+
     const defFolderName = translate("DefaultFolder")
 
 
@@ -323,7 +323,7 @@ export function getFileNameDialog(fileName,
     return (
         <View style={[styles.textInputView, isLandscape ? { flexDirection: 'row-reverse' } : {}]} >
             <View style={{ flex: 1, width: '100%' }}>
-                <Text style={styles.titleText}>{translate("CaptionPageName")}</Text>
+                <AppText style={styles.titleText}>{translate("CaptionPageName")}</AppText>
                 <TextInput style={globalStyles.textInput}
                     onChangeText={onChangeName}
                 >{fileName}</TextInput>
@@ -334,9 +334,9 @@ export function getFileNameDialog(fileName,
                     flex: 1, flexDirection: 'row-reverse',
                     width: '100%',
                     alignItems: 'center',
-                    justifyContent:'space-between'
+                    justifyContent: 'space-between'
                 }}>
-                    <Text style={[styles.titleText, { width: isLandscape ? '40%' : '30%' }]}>{translate("CaptionFolderNameList")}</Text>
+                    <AppText style={[styles.titleText, { width: isLandscape ? '40%' : '30%' }]}>{translate("CaptionFolderNameList")}</AppText>
                     {getRoundedButton(() => navigation.navigate('CreateFolder',
                         { saveNewFolder: onSaveNewFolder }),
                         'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 250, height: 40 }, 'row-reverse', true)}
@@ -423,9 +423,9 @@ function pickerRenderRow(rowData, highlighted) {
                     <Icon name={folderAndIcon.icon} size={50} color={folderAndIcon.color != "" ? folderAndIcon.color : semanticColors.folderIcons}></Icon>
                 </View>
                 : <View />}
-            <Text style={{ fontSize: 26, textAlign: 'right', paddingRight: 25 }}>
+            <AppText style={{ fontSize: 26, textAlign: 'right', paddingRight: 25 }}>
                 {folderAndIcon.name}
-            </Text>
+            </AppText>
         </View>
     );
 }
@@ -518,14 +518,14 @@ export const globalStyles = StyleSheet.create({
 export function getHeaderBackButton(nav) {
     return <View >
         <TouchableOpacity onPress={() => { nav.pop() }}
-          activeOpacity={1}
-          style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Icon name='keyboard-arrow-left' color='white' size={35} />
-          <Spacer width={10} />
-          <Icon name={'home'} color='white' size={30} />
+            activeOpacity={1}
+            style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Icon name='keyboard-arrow-left' color='white' size={35} />
+            <Spacer width={10} />
+            <Icon name={'home'} color='white' size={30} />
         </TouchableOpacity>
 
-      </View>
+    </View>
 }
 
 export function Spacer(props) {
@@ -536,31 +536,35 @@ export function Spacer(props) {
 
 export function AppText(props) {
     return (
-        <Text style={{fontFamily: props.bold? 'Rubik-Bold':'Alef', fontSize: 35}} >{props.children}</Text>
+        <Text style={[{
+            fontFamily: 'Alef',
+            fontSize: 24,
+            textAlign: 'right'
+        }, props.style]} >{props.children}</Text>
     );
 }
 
-export function getColorButton (callback, color, size, selected, index) {
+export function getColorButton(callback, color, size, selected, index) {
     return <TouchableOpacity
-      onPress={callback}
-      activeOpacity={0.7}
-      key={"" + index}
+        onPress={callback}
+        activeOpacity={0.7}
+        key={"" + index}
     >
-      <View style={{
-        backgroundColor: color,
-        borderRadius: size / 2,
-        width: size,
-        height: size,
-        alignItems: 'center',
-        justifyContent: 'center'
+        <View style={{
+            backgroundColor: color,
+            borderRadius: size / 2,
+            width: size,
+            height: size,
+            alignItems: 'center',
+            justifyContent: 'center'
 
-      }}
-      >
+        }}
+        >
 
-        {selected ? <Icon color="white" name="check"></Icon> : null}
-      </View>
+            {selected ? <Icon color="white" name="check"></Icon> : null}
+        </View>
     </TouchableOpacity>
-  }
+}
 
 export function getEraserIcon(callback, size, color, selected) {
     return <TouchableOpacity
@@ -573,7 +577,7 @@ export function getEraserIcon(callback, size, color, selected) {
             alignItems: 'center',
             justifyContent: 'flex-end',
             backgroundColor: selected ? semanticColors.selectedEditToolColor : 'transparent'
-        }}>{getSvgIcon('eraser',size-10, color)}
+        }}>{getSvgIcon('eraser', size - 10, color)}
     </TouchableOpacity>
 }
 

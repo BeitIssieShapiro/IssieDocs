@@ -7,7 +7,8 @@ import {
 import {
     semanticColors,
     getIcon, Spacer,
-    getRoundedButtonInt
+    getRoundedButtonInt,
+    AppText
 } from './elements'
 
 
@@ -135,7 +136,7 @@ export default function Menu(props) {
                 <Spacer width={11} />
                 <Icon name={'close'} onPress={props.onClose} size={45} />
                 <Spacer />
-                <Text style={styles.SettingsHeaderText}>{translate("Settings")}</Text>
+                <AppText style={styles.SettingsHeaderText}>{translate("Settings")}</AppText>
             </View>
             <ScrollView style={{
                 flex: 1,
@@ -157,13 +158,13 @@ export default function Menu(props) {
                             callback: () => setLanguage(LANGUAGE.default)
                         },*/
                         {
-                            icon: <Text style={{ fontSize: 25 }}>עברית</Text>,
+                            icon: <AppText style={{ fontSize: 25 }}>עברית</AppText>,
                             //getSvgIcon('lang-he', 45), 
                             selected: langSetting == LANGUAGE.hebrew,
                             callback: () => setLanguage(LANGUAGE.hebrew)
                         },
                         {
-                            icon: <Text style={{ fontSize: 25 }}>عربيه</Text>,
+                            icon: <AppText style={{ fontSize: 25 }}>عربيه</AppText>,
                             //getSvgIcon('lang-ar', 45), 
                             selected: langSetting == LANGUAGE.arabic,
                             callback: () => setLanguage(LANGUAGE.arabic)
@@ -206,7 +207,8 @@ export default function Menu(props) {
                         editTitle == EDIT_TITLE.yes)}
 
                     
-                    {getGroup(props, translate("FolderColors") + ":", [
+                    {
+                    /*getGroup(props, translate("FolderColors") + ":", [
                         {
                             icon: getIcon("folder", 35, 'red'), selected: useColorSetting === USE_COLOR.yes,
                             callback: () => setUseColorHandler(USE_COLOR.yes)
@@ -215,7 +217,8 @@ export default function Menu(props) {
                             icon: getIcon("folder", 35, 'gray'), selected: useColorSetting === USE_COLOR.no,
                             callback: () => setUseColorHandler(USE_COLOR.no)
                         }
-                    ])}
+                    ])*/
+                    }
                 </TouchableOpacity>
             </ScrollView>
 
@@ -233,7 +236,7 @@ function getButtonWithoutText() {
 
 function getGroup(props, name, items) {
     return <View style={{ width: '100%', paddingTop: 25, paddingRight: 25, alignItems: 'flex-end' }}>
-        <Text style={styles.SettingsHeaderText}>{name}</Text>
+        <AppText style={styles.SettingsHeaderText}>{name}</AppText>
 
         {items.map((item, index) =>
             <TouchableOpacity
@@ -263,7 +266,7 @@ function getCheckbox(name, callback, selected) {
             <View style={styles.circle}>
                 {selected && <View style={styles.checkedCircle} />}
             </View>
-            <Text style={styles.SettingsHeaderText}>{name}</Text>
+            <AppText style={styles.SettingsHeaderText}>{name}</AppText>
         </TouchableOpacity>
     </View>
 }

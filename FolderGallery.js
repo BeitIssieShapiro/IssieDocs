@@ -24,6 +24,7 @@ import {
     Spacer, globalStyles, removeFileExt,
     getMaterialCommunityIconButton, dimensions,
     validPathPart, 
+    AppText
 } from './elements'
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
 import ImagePicker from 'react-native-image-picker';
@@ -668,10 +669,10 @@ export default class FolderGallery extends React.Component {
                                 : this.state.currentFolder ?
                                     <View style={{ alignItems: 'center',marginTop:50 }}>
                                         {getSvgIcon('folder')}
-                                        <Text style={{ fontSize: 35 }}> {translate("NoPagesYet")}</Text>
+                                        <AppText style={{ fontSize: 35 }}> {translate("NoPagesYet")}</AppText>
                                     </View> :
                                     <View style={{ alignItems: 'center', marginTop:50 }}>
-                                        <Text style={{ fontSize: 35 }}> {translate("ChooseFolder")}</Text>
+                                        <AppText style={{ fontSize: 35 }}> {translate("ChooseFolder")}</AppText>
                                     </View>}
                         </View>
                     </View>

@@ -19,7 +19,7 @@ import { fTranslate } from './lang.js'
 
 import {
   colors, DEFAULT_FOLDER_NAME, getFolderAndIcon, getImageDimensions,
-  getPageNavigationButtons,
+  AppText,
   semanticColors, getIconButton, dimensions, availableTextSize, availableBrushSize, availableColorPicker
 } from './elements'
 import { translate } from './lang';
@@ -61,7 +61,6 @@ export default class IssieEditPhoto extends React.Component {
             activeOpacity={1}
             style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Icon name='keyboard-arrow-left' color='white' size={35} />
-            {/* <Text style={{ color: 'white', fontSize: 20, top: 2 }}>{isPageOnHome ? 'בית' : folderAndIcon.name}</Text> */}
             <Spacer width={10} />
             <Icon name={isPageOnHome ? 'home' : 'home'} color='white' size={30} />
           </TouchableOpacity>
@@ -716,7 +715,6 @@ export default class IssieEditPhoto extends React.Component {
 
       <View style={styles.mainContainer}
         onLayout={this.onLayout}>
-        {/* <Text style={{ flex: 1, position: 'absolute', top: 0, left: 0, zIndex: 10000, height: 25 }}>{"yOffset:" + this.state.yOffset + ", kbH:" + this.state.keyboardHeight}</Text> */}
         <TouchableOpacity onPress={this.TextModeClick}
           activeOpacity={1}
           style={drawingAreaStyle} >
@@ -795,11 +793,11 @@ export default class IssieEditPhoto extends React.Component {
               alignContent: 'center'
             }}>
               {this.state.textMode ?
-                <Text style={{
+                <AppText style={{
                   fontSize: this.state.fontSize,
                   color: this.state.color,
                   textAlignVertical: 'center'
-                }}>{translate("A B C")}</Text> :
+                }}>{translate("A B C")}</AppText> :
                 // <View style={{
                 //   width: this.state.strokeWidth + 2,
                 //   height: this.state.strokeWidth + 2,
@@ -1025,7 +1023,7 @@ export default class IssieEditPhoto extends React.Component {
         alignItems: 'center'
       }}
       >
-        <Text style={{ fontSize: textSize, color: color }}>{translate("A")}</Text>
+        <AppText style={{ fontSize: textSize, color: color }}>{translate("A")}</AppText>
       </View>
     </TouchableOpacity>
   }
@@ -1056,7 +1054,7 @@ export default class IssieEditPhoto extends React.Component {
     for (let i = 0; i < dist; i++) {
       space += ' ';
     }
-    return <Text>{space}</Text>
+    return <AppText>{space}</AppText>
   }
 
   getTextInput = (x, y) => {

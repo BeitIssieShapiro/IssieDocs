@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
     View, Text
 } from 'react-native';
-import { semanticColors, Spacer, dimensions, getIconButton} from './elements'
+import { semanticColors, Spacer, AppText, getIconButton, AppText} from './elements'
 import { translate } from './lang';
 
 
@@ -63,11 +63,11 @@ export default function EditToolbar(props) {
                     alignContent: 'center'
                 }}>
                     {textModeState ?
-                        <Text style={{
+                        <AppText style={{
                             fontSize: fontSizeState,
                             color: colorState,
                             textAlignVertical: 'center'
-                        }}>{translate("A B C")}</Text> :
+                        }}>{translate("A B C")}</AppText> :
                         // <View style={{
                         //   width: this.state.strokeWidth + 2,
                         //   height: this.state.strokeWidth + 2,

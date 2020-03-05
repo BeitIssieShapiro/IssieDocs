@@ -3,7 +3,7 @@ import { Icon } from 'react-native-elements'
 import { View, Alert, Text, TouchableOpacity } from 'react-native';
 import {
     getFolderAndIcon, normalizeTitle, semanticColors, FolderTextStyle,
-    getEmbeddedButton, getEmbeddedSvgButton, folderColors, Spacer, dimensions
+    getEmbeddedButton, AppText, folderColors, Spacer, dimensions
 } from './elements'
 
 
@@ -14,7 +14,7 @@ export default function FolderNew(props) {
     let folderAndIcon = getFolderAndIcon(props.name);
     let folderColor = folderAndIcon.color.length > 0? folderAndIcon.color : 'gray';
     let caption = normalizeTitle(folderAndIcon.name);
-    let captionLimit = 11;//props.isLandscape ? 20 : 14;
+    let captionLimit = 9;//props.isLandscape ? 20 : 14;
 
     // if (props.editMode) {
     //     captionLimit -= 3;
@@ -80,22 +80,24 @@ export default function FolderNew(props) {
                         </View>
 
                         <Spacer width={8} />
-                        <Text style={[FolderTextStyle, { fontSize: 32 }]}>{caption}</Text>
+                        <AppText style={[FolderTextStyle, { fontSize: 32, lineHeight: 39 }]}>{caption}</AppText>
                     </View> :
                     <View
                         style={{
                             flexDirection: 'column', alignItems: 'flex-end', 
-                            marginRight:25, marginTop:15,
+                            marginRight:45, marginTop:15,
+
                         }}
                     >
-                        <View style={{ alignContent: 'center', paddingRight: 20 }}>
+                        <View style={{ alignContent: 'center' }}>
                             <Icon name="folder" size={72} color={folderColor} />
                             <View style={{ position: 'absolute', left: 23, top: 23 }}>
                                 {folderAndIcon.icon.length > 0 ? <Icon name={folderAndIcon.icon} size={30} color='white' /> : null}
                             </View>
                         </View>
 
-                        <Text style={[FolderTextStyle,  {width:'100%'}] } >{caption}</Text>
+                        <AppText style={[FolderTextStyle,  
+                            {width:'100%', lineHeight:28, textAlign:'right'}] } >{caption}</AppText>
                     </View>}
                 </View>
 

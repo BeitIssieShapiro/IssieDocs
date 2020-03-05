@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import {
     globalStyles,
-    getIconButton,
+    AppText,
     getEmbeddedButton,
     Spacer,
     semanticColors
@@ -34,7 +34,7 @@ export default function TitleEdit(props) {
                     setEditedTitle(txt)
                 }}
             /> :
-            <Text style={titleStyle}>{props.title}</Text>}
+            <AppText style={titleStyle}>{props.title}</AppText>}
 
 
         <View style={{
