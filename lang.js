@@ -104,7 +104,7 @@ var strings = {
 
                 "NoPagesYet": "لا توجد صفحات حتى الآن",
                 "NoFoldersYet": "لا توجد مجلدات حتى الآن",
-                "ChooseFolder": "todo",
+                "ChooseFolder": "حدد مجلد", //validate
                 "SavePageFormTitle": "حفظ الصفحة",
                 "RenameFormTitle": "تغيير العنوان",
                 "DuplicatePageFormTitle": "صفحة مكررة",
@@ -121,13 +121,13 @@ var strings = {
                 "A": "أ",
                 "A B C": "أ ب ج",
 
-                "Settings":"todo",
+                "Settings":"الإعدادات", //validate
                 "Menu": "القائمة",
                 "Display": "العرض",
                 "Language": "اللغة",
-                "AllowEditTitle":"todo",
-                "TextInButtons":"todo",
-                "CaptionFolderColor":"todo", 
+                "AllowEditTitle":"السماح تحرير العنوان", //validate
+                "TextInButtons":"تصميم الأزرار", //validate
+                "CaptionFolderColor":"لون المجلد", //validate
                 "FolderColors":"ألوان المجلد",
                 "Warning": "تحذير",
                 "BtnContinue": "متابعة",

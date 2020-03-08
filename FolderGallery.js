@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-    Image, StyleSheet, View,
+    Image, StyleSheet, View, YellowBox,
     TouchableOpacity, Button, ScrollView, Alert, Text, Dimensions, Linking, Settings,
     TextInput
 } from 'react-native';
@@ -216,8 +216,12 @@ export default class FolderGallery extends React.Component {
     }
 
     newFromCamera = () => {
+        if (this.state.systemModal) return;
+
+        this.setState({systemModal: true})
         getNewPage(SRC_CAMERA,
             (uri) => {
+                this.setState({systemModal: false})
                 this.props.navigation.navigate('SavePhoto', {
                     uri: uri,
                     imageSource: SRC_CAMERA,
@@ -228,7 +232,9 @@ export default class FolderGallery extends React.Component {
                 })
             },
             //cancel
-            () => { }
+            () => { 
+                this.setState({systemModal: false})
+            }
         );
     }
 
@@ -387,7 +393,7 @@ export default class FolderGallery extends React.Component {
         //rename folder
         this.props.navigation.navigate('CreateFolder',
             {
-                saveNewFolder: (newFolder, currFolder) => this.saveNewFolder(newFolder, false, currFolder),
+                saveNewFolder: (newFolder, currFolder) => this.saveNewFolder(newFolder, true, currFolder),
                 isLandscape: this.isLandscape(),
                 currentFolderName: this.state.currentFolder.name,
                 title: translate("RenameFormTitle")
@@ -509,6 +515,7 @@ export default class FolderGallery extends React.Component {
         this.props.navigation.setParams({ isMenuOpened: false });
     }
     render() {
+        YellowBox.ignoreWarnings(['Task orphaned']);
         let curFolderFullName = this.state.currentFolder ? this.state.currentFolder.name : "";
         let fIndex = 0;
         if (this.state.folders && this.state.folders.length) {

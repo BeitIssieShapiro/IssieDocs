@@ -18,7 +18,7 @@ import * as Progress from 'react-native-progress';
 import { fTranslate } from './lang.js'
 
 import {
-  colors, DEFAULT_FOLDER_NAME, getFolderAndIcon, getImageDimensions,
+  colors, DEFAULT_FOLDER_NAME, APP_FONT, getImageDimensions,
   AppText,
   semanticColors, getIconButton, dimensions, availableTextSize, availableBrushSize, availableColorPicker
 } from './elements'
@@ -559,6 +559,7 @@ export default class IssieEditPhoto extends React.Component {
         showTextSizePicker: this.state.showBrushSizePicker,
         eraseMode: false
       });
+      this.onEraserChange(true);
       return;
     }
     this.setState({
@@ -568,6 +569,7 @@ export default class IssieEditPhoto extends React.Component {
       eraseMode: false
 
     });
+    this.onEraserChange(true);
   }
 
   onTextSize = (size) => {
@@ -575,13 +577,20 @@ export default class IssieEditPhoto extends React.Component {
       fontSize: size, showTextSizePicker: false, eraseMode: false
     });
     this.updateInputText();
+    this.onEraserChange(true);
   }
 
-  onEraserButton = () => {
-    this.canvas.setState({ color: (this.state.eraseMode ? this.state.color : '#00000000') })
-    this.setState({ eraseMode: !this.state.eraseMode, showTextInput: false });
-    setTimeout(() => this.onBrushSize(this.state.strokeWidth, true), 100);
+  onEraserChange = (isOff) => {
+    let eraserOn = isOff ? false : !this.state.eraseMode;
+    let newColor = eraserOn ? '#00000000' : this.state.color;
+    let newStrokeWidth = eraserOn ?
+      (this.state.strokeWidth * 3 < 15 ? 15 : this.state.strokeWidth * 3)
+      : this.state.strokeWidth;
+
+    this.setState({ eraseMode: eraserOn });
+    this.updateBrush(newStrokeWidth, newColor);
   }
+
   onBrushButtonPicker = () => {
 
     if (this.state.textMode) {
@@ -591,18 +600,21 @@ export default class IssieEditPhoto extends React.Component {
         textMode: false,
         yOffset: this.state.zoom == 1 ? 0 : this.state.yOffset,
         showBrushSizePicker: this.state.showTextSizePicker,
-        eraseMode: false
       });
+      this.onEraserChange(true);
       return;
     }
     this.setState({
       showBrushSizePicker: !this.state.showBrushSizePicker,
       showColorPicker: false,
       showTextSizePicker: false,
-      eraseMode: false
     })
+    this.onEraserChange(true);
+
+
   }
-  onBrushSize = (size, calledFromEraserHandler) => {
+  onBrushSize = (size) => {
+    
     let newStrokeWidth = size; //this.canvas.state.strokeWidth + inc;
     if (newStrokeWidth < 1) {
       newStrokeWidth = 1;
@@ -610,10 +622,15 @@ export default class IssieEditPhoto extends React.Component {
     if (newStrokeWidth > MAX_STROKE_WIDTH) {
       newStrokeWidth = MAX_STROKE_WIDTH;
     }
-    this.canvas.setState({ strokeWidth: this.state.eraseMode ? (newStrokeWidth * 3 < 15 ? 15 : newStrokeWidth * 3) : newStrokeWidth });
+    
     this.setState({
-      strokeWidth: newStrokeWidth, showBrushSizePicker: false, eraseMode: (calledFromEraserHandler? this.state.eraseMode: false)
+      strokeWidth: newStrokeWidth, showBrushSizePicker:false
     })
+    this.updateBrush(newStrokeWidth, this.state.color);
+  }
+
+  updateBrush = (strokeWidth, color) => {
+    this.canvas.setState({ strokeWidth, color });
   }
 
   movePage = (inc) => {
@@ -773,8 +790,8 @@ export default class IssieEditPhoto extends React.Component {
             }
             {spaceBetweenButtons}
             {
-              getEraserIcon(() => this.onEraserButton(), 55, this.state.eraseMode ? 'black' : semanticColors.editPhotoButton, this.state.eraseMode)
-              // getIconButton(() => this.onEraserButton(),
+              getEraserIcon(() => this.onEraserChange(), 55, this.state.eraseMode ? 'black' : semanticColors.editPhotoButton, this.state.eraseMode)
+              // getIconButton(() => this.onEraserChange(),
               //    semanticColors.editPhotoButton, "panorama-fish-eye", 55, false, 45, this.state.eraseMode)
             }
             { /* text size preview */}
@@ -858,8 +875,8 @@ export default class IssieEditPhoto extends React.Component {
         <FadeInView height={this.state.showColorPicker ? 70 : 0} style={[styles.pickerView, { left: 0, right: 0 }]}>
           <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
             {availableColorPicker.map((color, i) => getColorButton(() => {
-              this.canvas.setState({ color: color })
               this.setState({ color: color, showColorPicker: false, eraseMode: false })
+              this.updateBrush(this.state.strokeWidth, color);
               this.updateInputText();
             }, color, colorButtonSize, color == this.state.color && !this.state.eraseMode, i))
             }
@@ -1094,6 +1111,7 @@ export default class IssieEditPhoto extends React.Component {
             borderWidth: 0,
             fontSize: this.state.fontSize,
             color: this.state.color,
+            fontFamily: APP_FONT,
             zIndex: 21
           }}
 

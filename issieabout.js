@@ -11,9 +11,9 @@ import {
 
 export default function IssieAbout(props) {
 
-    const textStyle = { fontFamily: 'ArialMT', fontSize: 14, color: '#5c5c5c', textAlign: 'left', marginLeft: 20 }
-    const linkStyle = { fontFamily: 'ArialMT', fontSize: 14, color: 'blue', textAlign: 'left' }
-    const titleStyle = { fontFamily: 'ArialMT', fontSize: 14, fontWeight: 'bold', color: '#183d72', textAlign: 'left', marginLeft: 20 }
+    const textStyle = {  fontSize: 14, color: '#5c5c5c', textAlign: 'left', marginLeft: 20 }
+    const linkStyle = { fontSize: 14, color: 'blue', textAlign: 'left' }
+    const titleStyle = { fontSize: 14, fontWeight: 'bold', color: '#183d72', textAlign: 'left', marginLeft: 20 }
     const headerStyle = { fontFamily: 'Bradley Hand', fontSize: 55, fontWeight: 'bold' }
 
     return <ScrollView style={{ backgroundColor: semanticColors.mainAreaBG, height: '100%', width: '100%' }}>
@@ -57,13 +57,12 @@ IssieDocs was developed through the collaboration of The Technology Center of Be
 
         <AppText > </AppText>
         <View style={{ flexDirection: 'row' }}>
-            <AppText style={textStyle}>For more info about us: http://en.beitissie.org.il</AppText>
             <AppText style={textStyle}>For more information:</AppText><AppText style={linkStyle}
                 onPress={() => Linking.openURL('http://en.beitissie.org.il')}
             > http://en.beitissie.org.il</AppText>
         </View>
         <View style={{ flexDirection: 'row' }}>
-            <AppText style={textStyle}>Visit our Blog: Tech it Issie </AppText>
+            <AppText style={textStyle}>Visit our Blog: Tech it Issie. </AppText>
             <AppText style={textStyle}>For more information:</AppText><AppText style={linkStyle}
                 onPress={() => Linking.openURL('http://en.beitissie.org.il/tech/')}
             > http://en.beitissie.org.il/tech/</AppText>

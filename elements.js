@@ -21,6 +21,8 @@ export const dimensions = {
 
 }
 
+export const APP_FONT = 'Alef';
+
 export const colors = {
     gray: '#5B748A',
     orange: '#FFA264',
@@ -239,7 +241,7 @@ export function getMaterialCommunityIconButton(callback, color, icon, size, isTe
 }
 export function getIconButton(callback, color, icon, size, isText, iconSize, selected, iconType) {
     iconType = iconType || "material";
-
+    const sizeToUse = iconSize ? iconSize : size;
     return <TouchableOpacity
         activeOpacity={0.7}
         onPress={callback}
@@ -253,8 +255,8 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
         }}
     >
         {isText ?
-            <AppText style={{ fontSize: iconSize ? iconSize : size, color: color, paddingTop: 6 }}>{icon}</AppText> :
-            <Icon name={icon} type={iconType} size={iconSize ? iconSize : size} color={color} />}
+            <AppText style={{ fontSize: sizeToUse, lineHeight: sizeToUse+5, color: color, paddingTop: 6 }}>{icon}</AppText> :
+            <Icon name={icon} type={iconType} size={sizeToUse} color={color} />}
 
     </TouchableOpacity>
 }
@@ -323,7 +325,7 @@ export function getFileNameDialog(fileName,
     return (
         <View style={[styles.textInputView, isLandscape ? { flexDirection: 'row-reverse' } : {}]} >
             <View style={{ flex: 1, width: '100%' }}>
-                <AppText style={styles.titleText}>{translate("CaptionPageName")}</AppText>
+                <AppText style={[styles.titleText,{marginVertical:7}]}>{translate("CaptionPageName")}</AppText>
                 <TextInput style={globalStyles.textInput}
                     onChangeText={onChangeName}
                 >{fileName}</TextInput>
@@ -484,7 +486,7 @@ export const globalStyles = StyleSheet.create({
         height: 55
     },
     headerTitleStyle: {
-        fontFamily: 'Alef',
+        fontFamily: APP_FONT,
         fontSize: 30,
         fontWeight: 'bold'
     },
@@ -497,7 +499,8 @@ export const globalStyles = StyleSheet.create({
         width: '100%',
         backgroundColor: 'white',
         borderColor: semanticColors.inputBorder,
-        borderWidth: 1
+        borderWidth: 1,
+        fontFamily: APP_FONT
     },
     okCancelView: {
         position: 'absolute',
@@ -537,7 +540,7 @@ export function Spacer(props) {
 export function AppText(props) {
     return (
         <Text style={[{
-            fontFamily: 'Alef',
+            fontFamily: APP_FONT,
             fontSize: 24,
             textAlign: 'right'
         }, props.style]} >{props.children}</Text>
@@ -613,7 +616,8 @@ const styles = StyleSheet.create({
         color: 'black',
         backgroundColor: 'white',
         justifyContent: 'flex-end',
-        alignItems: 'center'
+        alignItems: 'center',
+        fontFamily: APP_FONT
     },
     selected: {
         marginVertical: 0
