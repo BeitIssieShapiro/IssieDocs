@@ -9,7 +9,6 @@ import { Icon } from 'react-native-elements'
 import RNSketchCanvas from './modified_canvas/index';
 import LinearGradient from 'react-native-linear-gradient';
 import * as RNFS from 'react-native-fs';
-//import RNReadWriteExif from 'react-native-read-write-exif';
 import Share from 'react-native-share';
 import DoQueue from './do-queue';
 import FadeInView from './FadeInView'
@@ -24,9 +23,6 @@ import {
 } from './elements'
 import { translate } from './lang';
 import { getSvgIcon } from './svg-icons';
-//import rnTextSize from 'react-native-text-size'
-//import MeasureText from 'react-native-measure-text';
-//import ReactNativeComponentTree from 'react-native/Libraries/Renderer/shims/ReactNativeComponentTree';
 
 const topLayer = dimensions.toolbarHeight + dimensions.toolbarMargin; //51 + 8 + 8 + 35;
 const shareTimeMs = 2000;
@@ -52,12 +48,15 @@ export default class IssieEditPhoto extends React.Component {
 
     return {
       title: fileName + multiPageTitleAddition,
-      headerStyle: globalStyles.headerStyle,
+      headerStyle: globalStyles.headerThinStyle,
       headerTintColor: 'white',
-      headerTitleStyle: globalStyles.headerTitleStyle,
+      headerTitleStyle: globalStyles.headerThinTitleStyle,
       headerLeft:
         <View >
-          <TouchableOpacity onPress={() => { navigation.pop() }}
+          <TouchableOpacity onPress={() => { 
+            this._mounted = false;
+            navigation.pop();
+          }}
             activeOpacity={1}
             style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Icon name='keyboard-arrow-left' color='white' size={35} />
@@ -198,7 +197,7 @@ export default class IssieEditPhoto extends React.Component {
 
     // if keyboard hides the textInput, scroll the window
     if (this.state.showTextInput && this.state.yText + 20 >= kbTop) {
-      yOffset -= this.state.yText - kbTop + 20;
+      yOffset -= this.state.yText - kbTop + 35;
     }
 
     this.setState({
@@ -213,6 +212,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   componentDidMount = async () => {
+    this._mounted = true;
     const page = this.props.navigation.getParam('page', '');
     const currentFile = page.pages.length == 0 ? page.path : page.pages[0];
 
@@ -226,6 +226,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   componentWillUnmount = () => {
+    this._mounted = false;
     if (this.state.showTextInput) {
       this.SaveText(true, false);
     }
@@ -501,6 +502,8 @@ export default class IssieEditPhoto extends React.Component {
 
   UpdateCanvas = (canvas) => {
     if (!canvas) return;
+    if (!this._mounted) 
+      return;
 
     if (!this.state.needCanvasUpdateTextOnly) {
       canvas.clear();
@@ -580,14 +583,21 @@ export default class IssieEditPhoto extends React.Component {
     this.onEraserChange(true);
   }
 
+  onEraserButton = () => {
+    if (!this.state.eraseMode && this.state.textMode) {
+      this.onBrushButtonPicker();
+    } 
+    this.onEraserChange();
+  }
+
   onEraserChange = (isOff) => {
     let eraserOn = isOff ? false : !this.state.eraseMode;
     let newColor = eraserOn ? '#00000000' : this.state.color;
     let newStrokeWidth = eraserOn ?
       (this.state.strokeWidth * 3 < 15 ? 15 : this.state.strokeWidth * 3)
       : this.state.strokeWidth;
-
-    this.setState({ eraseMode: eraserOn });
+   
+    this.setState({ eraseMode: eraserOn});
     this.updateBrush(newStrokeWidth, newColor);
   }
 
@@ -665,10 +675,14 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   onLayout = async (e) => {
+    if (!this._mounted)
+      return;
+
     let windowSize = e.nativeEvent.layout;
     const measure = this.topView.measure.bind(this.topView);
     setTimeout(measure, 50, (fx, fy, width, height, px, py) => {
-      this.setState({ topView: py, windowSize })
+      if (this._mounted)
+        this.setState({ topView: py, windowSize })
     });
 
     let sideMargin = Math.floor(windowSize.width * .05)
@@ -790,7 +804,7 @@ export default class IssieEditPhoto extends React.Component {
             }
             {spaceBetweenButtons}
             {
-              getEraserIcon(() => this.onEraserChange(), 55, this.state.eraseMode ? 'black' : semanticColors.editPhotoButton, this.state.eraseMode)
+              getEraserIcon(() => this.onEraserButton(), 55, this.state.eraseMode ? 'black' : semanticColors.editPhotoButton, this.state.eraseMode)
               // getIconButton(() => this.onEraserChange(),
               //    semanticColors.editPhotoButton, "panorama-fish-eye", 55, false, 45, this.state.eraseMode)
             }

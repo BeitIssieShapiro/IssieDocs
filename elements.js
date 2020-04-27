@@ -1,6 +1,6 @@
 import {
     TouchableOpacity, Text, StyleSheet, Image, View
-    , Alert, TextInput
+    , Alert, TextInput, ShadowPropTypesIOS
 } from 'react-native';
 import { Icon } from 'react-native-elements'
 import LinearGradient from 'react-native-linear-gradient';
@@ -9,13 +9,14 @@ import { translate, getLocalizedFoldersAndIcons } from "./lang.js";
 import { getUseTextSetting } from './settings.js'
 
 import { getSvgIcon } from './svg-icons.js'
+
 export const dimensions = {
     toolbarHeight: 65,
     toolbarMargin: 5,
     topView: 70,
     folderHeight: 130,
     folderAsTitleHeight: 56,
-    tileWidth: 143,
+    tileWidth: 190,
     lineHeight: 70,
     tileHeight: 197
 
@@ -239,8 +240,14 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
 export function getMaterialCommunityIconButton(callback, color, icon, size, isText, iconSize, selected) {
     return getIconButton(callback, color, icon, size, isText, iconSize, selected, "material-community")
 }
+
+export function getSvgIconButton(callback, color, icon, size, isText, iconSize, selected) {
+    return getIconButton(callback, color, icon, size, isText, iconSize, selected, "svg")
+}
 export function getIconButton(callback, color, icon, size, isText, iconSize, selected, iconType) {
     iconType = iconType || "material";
+    let isSvg = iconType === "svg";
+
     const sizeToUse = iconSize ? iconSize : size;
     return <TouchableOpacity
         activeOpacity={0.7}
@@ -256,7 +263,9 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
     >
         {isText ?
             <AppText style={{ fontSize: sizeToUse, lineHeight: sizeToUse+5, color: color, paddingTop: 6 }}>{icon}</AppText> :
-            <Icon name={icon} type={iconType} size={sizeToUse} color={color} />}
+            isSvg?
+                getSvgIcon(icon, sizeToUse, color) : 
+                <Icon name={icon} type={iconType} size={sizeToUse} color={color} />}
 
     </TouchableOpacity>
 }
@@ -422,7 +431,7 @@ function pickerRenderRow(rowData, highlighted) {
             {folderAndIcon.icon != '' ?
                 <View style={{ flexDirection: 'row' }}>
                     <Spacer />
-                    <Icon name={folderAndIcon.icon} size={50} color={folderAndIcon.color != "" ? folderAndIcon.color : semanticColors.folderIcons}></Icon>
+                    <FolderIcon name={folderAndIcon.icon} size={50} color={folderAndIcon.color != "" ? folderAndIcon.color : semanticColors.folderIcons}/>
                 </View>
                 : <View />}
             <AppText style={{ fontSize: 26, textAlign: 'right', paddingRight: 25 }}>
@@ -485,9 +494,19 @@ export const globalStyles = StyleSheet.create({
         backgroundColor: semanticColors.header,
         height: 55
     },
+    headerThinStyle: {
+        backgroundColor: semanticColors.header,
+        height: 28
+    },
     headerTitleStyle: {
         fontFamily: APP_FONT,
         fontSize: 30,
+        fontWeight: 'bold'
+    },
+    headerThinTitleStyle: {
+        fontFamily: APP_FONT,
+        fontSize: 25,
+        alignItems: 'center',
         fontWeight: 'bold'
     },
     textInput: {
@@ -537,6 +556,13 @@ export function Spacer(props) {
     );
 }
 
+export function FolderIcon(props) {
+    if (props.name.startsWith("svg:")) {
+        return getSvgIcon(props.name.substr(4), props.size, props.color);
+    }
+    return <Icon name={props.name} size={props.size} color={props.color}/>
+}
+
 export function AppText(props) {
     return (
         <Text style={[{
@@ -564,7 +590,7 @@ export function getColorButton(callback, color, size, selected, index) {
         }}
         >
 
-            {selected ? <Icon color="white" name="check"></Icon> : null}
+            {selected ? <Icon color="white" size={40} name="check"></Icon> : null}
         </View>
     </TouchableOpacity>
 }
@@ -580,7 +606,7 @@ export function getEraserIcon(callback, size, color, selected) {
             alignItems: 'center',
             justifyContent: 'flex-end',
             backgroundColor: selected ? semanticColors.selectedEditToolColor : 'transparent'
-        }}>{getSvgIcon('eraser', size - 10, color)}
+        }}>{getSvgIcon('eraser-new', size+15, color)}
     </TouchableOpacity>
 }
 

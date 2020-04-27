@@ -3,7 +3,7 @@ import { Icon } from 'react-native-elements'
 import { View, Alert, Text, TouchableOpacity } from 'react-native';
 import {
     getFolderAndIcon, normalizeTitle, semanticColors, FolderTextStyle,
-    getEmbeddedButton, AppText, folderColors, Spacer, dimensions
+    getEmbeddedButton, AppText, folderColors, Spacer, dimensions, FolderIcon
 } from './elements'
 
 
@@ -14,7 +14,7 @@ export default function FolderNew(props) {
     let folderAndIcon = getFolderAndIcon(props.name);
     let folderColor = folderAndIcon.color.length > 0? folderAndIcon.color : 'gray';
     let caption = normalizeTitle(folderAndIcon.name);
-    let captionLimit = 9;//props.isLandscape ? 20 : 14;
+    let captionLimit = props.isLandscape ? 12 : 9;
 
     // if (props.editMode) {
     //     captionLimit -= 3;
@@ -75,7 +75,7 @@ export default function FolderNew(props) {
                         <View style={{ alignContent: 'center', paddingRight: 20 }}>
                             <Icon name="folder" size={38} color={folderColor} />
                             <View style={{ position: 'absolute', left: 10, top: 11 }}>
-                                {folderAndIcon.icon.length > 0 ? <Icon name={folderAndIcon.icon} size={20} color='white' /> : null}
+                                {folderAndIcon.icon.length > 0 ? <FolderIcon name={folderAndIcon.icon} size={20} color={'white'} /> : null}
                             </View>
                         </View>
 
@@ -92,7 +92,7 @@ export default function FolderNew(props) {
                         <View style={{ alignContent: 'center' }}>
                             <Icon name="folder" size={72} color={folderColor} />
                             <View style={{ position: 'absolute', left: 23, top: 23 }}>
-                                {folderAndIcon.icon.length > 0 ? <Icon name={folderAndIcon.icon} size={30} color='white' /> : null}
+                                {folderAndIcon.icon.length > 0 ? <FolderIcon name={folderAndIcon.icon} size={30} color='white' /> : null}
                             </View>
                         </View>
 

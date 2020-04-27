@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Alert, Text, TouchableOpacity, PanResponder, StyleSheet, Dimensions } from 'react-native';
-import { getHeaderBackButton, AppText } from './elements.js'
+import { getHeaderBackButton, AppText, FolderIcon } from './elements.js'
 import { Icon } from 'react-native-elements'
 import { translate } from './lang.js'
 
@@ -207,7 +207,7 @@ export default class IssieCreateFolder extends React.Component {
                                 <Icon name="folder" size={55} color={this.state.color?this.state.color:'gray'} />
                                 <AppText style={styles.titleText}>{translate("CaptionFolderNameInput")}</AppText>
                                 <View style={{ position: 'absolute', left: 10, top: 21 }}>
-                                    {this.state.icon ? <Icon name={this.state.icon} size={30} color='white' /> : null}
+                                    {this.state.icon ? <FolderIcon name={this.state.icon} size={30} color='white' /> : null}
                                 </View>
                             </View>
 

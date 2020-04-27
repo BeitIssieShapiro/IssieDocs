@@ -23,8 +23,9 @@ import {
     semanticColors,
     Spacer, globalStyles, removeFileExt,
     getMaterialCommunityIconButton, dimensions,
-    validPathPart, 
-    AppText
+    validPathPart,
+    AppText,
+    getSvgIconButton
 } from './elements'
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
 import ImagePicker from 'react-native-image-picker';
@@ -58,13 +59,13 @@ export default class FolderGallery extends React.Component {
         let title = titleSetting;
 
         return {
-            headerTitle: editMode && editTitleSetting == EDIT_TITLE.yes ? (() => 
-            <TitleEdit 
-                title={title}
-                onSave={(newTitle) => {
-                Settings.set({ appTitle: newTitle });
-                navigation.setParams({saveTitle:true})//to cause refresh
-            }}/>) : undefined,
+            headerTitle: editMode && editTitleSetting == EDIT_TITLE.yes ? (() =>
+                <TitleEdit
+                    title={title}
+                    onSave={(newTitle) => {
+                        Settings.set({ appTitle: newTitle });
+                        navigation.setParams({ saveTitle: true })//to cause refresh
+                    }} />) : undefined,
             title,
             headerStyle: globalStyles.headerStyle,
             headerTintColor: 'white',
@@ -92,7 +93,8 @@ export default class FolderGallery extends React.Component {
         super(props);
         this.state = {
             windowSize: { width: 500, height: 1024 },
-            folderColor: (getUseColorSetting() === USE_COLOR.yes)
+            folderColor: (getUseColorSetting() === USE_COLOR.yes),
+            loading: true
         }
 
         // this._panResponder = PanResponder.create({
@@ -136,6 +138,7 @@ export default class FolderGallery extends React.Component {
 
 
             await this.refresh();
+
         } finally {
             setTimeout(() => SplashScreen.hide(), 1000);
         }
@@ -209,7 +212,7 @@ export default class FolderGallery extends React.Component {
             }
 
 
-            this.setState({ folders: await sortFolders(foldersState), currentFolder, returnFolderName: undefined });
+            this.setState({ folders: await sortFolders(foldersState), currentFolder, returnFolderName: undefined , loading:false} );
 
         })
 
@@ -218,10 +221,10 @@ export default class FolderGallery extends React.Component {
     newFromCamera = () => {
         if (this.state.systemModal) return;
 
-        this.setState({systemModal: true})
+        this.setState({ systemModal: true })
         getNewPage(SRC_CAMERA,
             (uri) => {
-                this.setState({systemModal: false})
+                this.setState({ systemModal: false })
                 this.props.navigation.navigate('SavePhoto', {
                     uri: uri,
                     imageSource: SRC_CAMERA,
@@ -232,8 +235,8 @@ export default class FolderGallery extends React.Component {
                 })
             },
             //cancel
-            () => { 
-                this.setState({systemModal: false})
+            () => {
+                this.setState({ systemModal: false })
             }
         );
     }
@@ -523,7 +526,7 @@ export default class FolderGallery extends React.Component {
         }
         let viewStyle = Settings.get('viewStyle');
         let asTiles = viewStyle === 2;
-        let treeWidth = 180;//.36 * this.state.windowSize.width;
+        let treeWidth = this.isLandscape() ? 220: 180;//.36 * this.state.windowSize.width;
         let pagesContainerWidth = this.state.windowSize.width - treeWidth;
         let numColumnsForTiles = Math.floor(pagesContainerWidth / dimensions.tileWidth);
         let foldersCount = this.state.folders ? this.state.folders.length : 1;
@@ -536,6 +539,8 @@ export default class FolderGallery extends React.Component {
         let pagesAreaWindowHeight = 0.9 * (this.state.windowSize.height - dimensions.topView + dimensions.toolbarHeight);
         let pagesHeightSize = pagesLines * pageHeight * 1.2;
         let needPagesScroll = pagesHeightSize > pagesAreaWindowHeight;
+
+        let isEmptyApp = true || !this.state.folders || this.state.folders.length == 0;
         return (
             <View style={styles.container}
                 onLayout={this.onLayout}>
@@ -570,31 +575,31 @@ export default class FolderGallery extends React.Component {
                     {/*Left buttons*/}
                     <Spacer />
                     {
-                        getMaterialCommunityIconButton(() => {
+                        getSvgIconButton(() => {
                             this.newFromCamera();
-                        }, semanticColors.addButton, "camera-outline", 45)
+                        }, semanticColors.addButton, "new-camera", 40)
                     }
                     <Spacer />
                     {
-                        getMaterialCommunityIconButton(() => {
+                        getSvgIconButton(() => {
                             this.newFromMediaLib();
-                        }, semanticColors.addButton, "image-outline", 45)
+                        }, semanticColors.addButton, "new-image", 40)
                     }
                     <Spacer />
                     {
-                        getMaterialCommunityIconButton(() => {
+                        getSvgIconButton(() => {
                             this.newFromFileExplorer();
-                        }, semanticColors.addButton, "file-pdf-outline", 45)
+                        }, semanticColors.addButton, "new-pdf", 40)
                     }
                     <Spacer />
                     {
-                        getMaterialCommunityIconButton(() => {
+                        getSvgIconButton(() => {
                             this.props.navigation.navigate('CreateFolder',
                                 {
                                     saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, true),
                                     isLandscape: this.isLandscape()
                                 });
-                        }, semanticColors.addButton, "folder-plus-outline", 45)
+                        }, semanticColors.addButton, "new-folder", 45)
                     }
 
                     {/*right buttons */}
@@ -609,117 +614,157 @@ export default class FolderGallery extends React.Component {
                 </View>
 
                 <View style={{
-                    flex: 1, flexDirection: "row", backgroundColor: semanticColors.mainAreaBG, position: 'absolute', width: "100%", top: dimensions.toolbarHeight, left: 0, height: this.state.windowSize.height - dimensions.toolbarHeight, zIndex: 4,
+                    flex: 1, flexDirection: "row", backgroundColor: semanticColors.mainAreaBG, 
+                    position: 'absolute', width: "100%", 
+                    top: dimensions.toolbarHeight, left: 0, 
+                    height: this.state.windowSize.height - dimensions.toolbarHeight, zIndex: 4,
                 }} >
                     {/* MainExplorer*/}
-                    <View style={{
-                        flex: 1, flexDirection: "column", position: 'absolute', top: 0, width: pagesContainerWidth, left: 0, height: "100%",
-                    }}>
-                        {/* pagesTitle */}
-                        <View style={{
-                            flex: 1, flexDirection: "row-reverse", height: "5%", position: 'absolute',
-                            width: "100%", top: 0, height: '10%', alignItems: 'center', justifyContent: 'flex-start',
-                            paddingRight: '5%', borderBottomWidth: this.state.currentFolder ? 1 : 0, borderBottomColor: 'gray'
-                        }}>
-                            {this.state.currentFolder ? <FolderNew
-                                index={fIndex}
-                                id="1"
-                                useColors={this.state.folderColor}
-                                name={curFolderFullName}
-                                asTitle={true}
-                                isLandscape={this.isLandscape()}
-                                editMode={this.state.editMode}
-                                onDelete={() => this.DeleteFolder()}
-                                onRename={() => this.RenameFolder()}
-                                fixedFolder={curFolderFullName === DEFAULT_FOLDER_NAME}
-                            /> : null}
+                    {isEmptyApp ?
+                    this.state.loading?
+                    <View>
+                        <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
+                    </View> :
+                    <View style={{width:"100%"}}>
+                        <View style={{ position: 'absolute', left: 80, top: 30, alignItems: "center" }}>
+                            {getSvgIcon('start-icon', 150, semanticColors.addButton)}
+                            <Spacer />
+                            <AppText style={{ fontSize: 35, color:'#797a7c' }}>{translate("StartHere")}</AppText>
                         </View>
-                        {/* pages */}
-                        <View style={{
-                            flex: 1,
-                            backgroundColor: semanticColors.mainAreaBG,
-                            position: 'absolute', top: "10%", width: "100%",
-                            height: '90%'
-                        }}>
-                            {this.state.currentFolder && this.state.currentFolder.files && this.state.currentFolder.files.length > 0 ?
-                                <FlatList
-                                    style={{
-                                    }}
-                                    contentContainerStyle={{
-                                        width: '100%', alignItems: 'flex-end',
-                                        height: needPagesScroll ? pagesHeightSize : '100%'
-                                    }}
-                                    bounces={needPagesScroll}
-                                    key={asTiles ? numColumnsForTiles.toString() : "list"}
-                                    data={this.state.currentFolder.files}
-                                    renderItem={({ item }) => FileNew({
-                                        page: item,
-                                        asTile: asTiles,
-                                        name: removeFileExt(item.name),
-                                        rowWidth: pagesContainerWidth,
-                                        editMode: this.state.editMode,
-                                        selected: this.state.editMode ? this.isSelected(item) : false,
-                                        onPress: () => this.props.navigation.navigate('EditPhoto', { page: item, share: false }),
-                                        onSelect: () => this.toggleSelection(item, 'file'),
-                                        onDelete: () => this.DeletePage(),
-                                        onRename: () => this.RenamePage(true),
-                                        onMove: () => this.RenamePage(false),
-                                        onShare: () => this.Share(),
-                                        onDuplicate: () => this.DuplicatePage(),
-                                        count: item.pages.length
-                                    })}
-                                    numColumns={asTiles ? numColumnsForTiles : 1}
-                                    keyExtractor={(item, index) => index.toString()}
-                                />
+                        <View style={{position:"absolute", width:"100%", height:'20%', top:"25%" ,alignItems:"center"}}>
+                        {getSvgIcon('empty-folder', 150, semanticColors.addButton)}
+                        <AppText style={{ fontSize: 35, color:'#797a7c' }}>{translate("DesktopEmpty")}</AppText>
 
+                        </View>
+                        <View style={{position:'absolute', width:'100%', bottom: '20%', flexDirection:'row', justifyContent:'center'}}>
+                        {getSvgIcon('welcome-image', 100, semanticColors.addButton)}
+                        <Spacer width={50}/>
+                        {getSvgIcon('welcome-doc', 100, semanticColors.addButton)}
+                        <Spacer width={50}/>
+                        {getSvgIcon('welcome-pdf', 100, semanticColors.addButton)}
+                        <Spacer width={50}/>
+                        {getSvgIcon('welcome-folder', 100, semanticColors.addButton)}
 
-                                : this.state.currentFolder ?
-                                    <View style={{ alignItems: 'center',marginTop:50 }}>
-                                        {getSvgIcon('folder')}
-                                        <AppText style={{ fontSize: 35 }}> {translate("NoPagesYet")}</AppText>
-                                    </View> :
-                                    <View style={{ alignItems: 'center', marginTop:50 }}>
-                                        <AppText style={{ fontSize: 35 }}> {translate("ChooseFolder")}</AppText>
-                                    </View>}
                         </View>
                     </View>
-                    {/* tree */}
-                    <ScrollView
-                        style={{
-                            flex: 1,
-                            flexDirection: "column",
-                            position: 'absolute',
-                            top: 0, width: treeWidth, right: 0,
-                            height: this.state.windowSize.height - dimensions.topView - dimensions.toolbarHeight,
-                            backgroundColor: 'white'
-                        }}
-                        bounces={needFoldersScroll}
-
-                        contentContainerStyle={{
-
-                            alignItems: "flex-end",
-                            justifyContent: "flex-start",
-
+                        :
+                        <View style={{
+                            flex: 1, flexDirection: "column", position: 'absolute', top: 0, width: pagesContainerWidth, left: 0, height: "100%",
                         }}>
+                            {/* pagesTitle */}
+                            <View style={{
+                                flex: 1, flexDirection: "row-reverse", height: "5%", position: 'absolute',
+                                width: "100%", top: 0, height: '10%', alignItems: 'center', justifyContent: 'flex-start',
+                                paddingRight: '5%', borderBottomWidth: this.state.currentFolder ? 1 : 0, borderBottomColor: 'gray'
+                            }}>
+                                {this.state.currentFolder ? <FolderNew
+                                    index={fIndex}
+                                    id="1"
+                                    useColors={this.state.folderColor}
+                                    name={curFolderFullName}
+                                    asTitle={true}
+                                    isLandscape={this.isLandscape()}
+                                    editMode={this.state.editMode}
+                                    onDelete={() => this.DeleteFolder()}
+                                    onRename={() => this.RenameFolder()}
+                                    fixedFolder={curFolderFullName === DEFAULT_FOLDER_NAME}
+                                /> : null}
+                            </View>
+                            {/* pages */}
+                            <View style={{
+                                flex: 1,
+                                backgroundColor: semanticColors.mainAreaBG,
+                                position: 'absolute', top: "10%", width: "100%",
+                                height: '90%'
+                            }}>
+                                {this.state.currentFolder && this.state.currentFolder.files && this.state.currentFolder.files.length > 0 ?
+                                    <FlatList
+                                        style={{
+                                        }}
+                                        contentContainerStyle={{
+                                            width: '100%', alignItems: 'flex-end',
+                                            height: needPagesScroll ? pagesHeightSize : '100%',
+                                            alignItems: "center"
+                                        }}
+                                        bounces={needPagesScroll}
+                                        key={asTiles ? numColumnsForTiles.toString() : "list"}
+                                        data={this.state.currentFolder.files}
+                                        renderItem={({ item }) => FileNew({
+                                            page: item,
+                                            asTile: asTiles,
+                                            name: removeFileExt(item.name),
+                                            rowWidth: pagesContainerWidth,
+                                            editMode: this.state.editMode,
+                                            selected: this.isSelected(item),
+                                            onPress: () => this.props.navigation.navigate('EditPhoto', { page: item, share: false }),
+                                            onSelect: () => this.toggleSelection(item, 'file'),
+                                            onDelete: () => this.DeletePage(),
+                                            onRename: () => this.RenamePage(true),
+                                            onMove: () => this.RenamePage(false),
+                                            onShare: () => this.Share(),
+                                            onDuplicate: () => this.DuplicatePage(),
+                                            count: item.pages.length
+                                        })}
+                                        numColumns={asTiles ? numColumnsForTiles : 1}
+                                        keyExtractor={(item, index) => index.toString()}
+                                    />
 
-                        {this.state.folders && this.state.folders.length ?
-                            this.state.folders.map((f, i, arr) => FolderNew({
-                                index: i,
-                                isLast: i + 1 == arr.length,
-                                useColors: this.state.folderColor,
-                                id: f.name,
-                                name: f.name,
-                                editMode: this.state.editMode,
-                                fixedFolder: f.name === DEFAULT_FOLDER_NAME,
-                                //dragPanResponder: this._panResponder.panHandlers, 
-                                current: (this.state.currentFolder && f.name == this.state.currentFolder.name),
-                                onPress: () => this.onFolderPressed(f),
-                                onMoveUp: () => this.moveFolderUp(f),
-                                onMoveDown: () => this.moveFolderDown(f),
-                                isLandscape: this.isLandscape()
-                            })) : <Text style={{ fontSize: 25 }}>{translate("NoFoldersYet")}</Text>}
-                    </ScrollView>
 
+                                    : this.state.currentFolder ?
+                                        <View style={{ alignItems: 'center', marginTop: 50 }}>
+                                            {getSvgIcon('folder')}
+                                            <AppText style={{ fontSize: 35 }}>{translate("NoPagesYet")}</AppText>
+                                        </View> :
+                                        <View style={{ alignItems: 'center', marginTop: 50 }}>
+                                            <AppText style={{ fontSize: 35 }}> {translate("ChooseFolder")}</AppText>
+                                        </View>}
+                            </View>
+                        </View>
+
+                    }
+                    {/* tree */}
+                    {isEmptyApp ?
+                        null
+                        :
+                        <ScrollView
+                            style={{
+                                flex: 1,
+                                flexDirection: "column",
+                                position: 'absolute',
+                                top: 0, width: treeWidth, 
+                                right: 0,
+                                height: this.state.windowSize.height - dimensions.topView - dimensions.toolbarHeight,
+                                backgroundColor: 'white'
+                            }}
+                            bounces={needFoldersScroll}
+
+                            contentContainerStyle={{
+
+                               
+
+                            }}>
+
+                            {
+                                this.state.folders && this.state.folders.length ?
+                                    this.state.folders.map((f, i, arr) => FolderNew({
+                                        index: i,
+                                        isLast: i + 1 == arr.length,
+                                        useColors: this.state.folderColor,
+                                        id: f.name,
+                                        name: f.name,
+                                        editMode: this.state.editMode,
+                                        fixedFolder: f.name === DEFAULT_FOLDER_NAME,
+                                        //dragPanResponder: this._panResponder.panHandlers, 
+                                        current: (this.state.currentFolder && f.name == this.state.currentFolder.name),
+                                        onPress: () => this.onFolderPressed(f),
+                                        onMoveUp: () => this.moveFolderUp(f),
+                                        onMoveDown: () => this.moveFolderDown(f),
+                                        isLandscape: this.isLandscape()
+                                    })) : null
+
+                            }
+                        </ScrollView>
+                    }
                 </View>
             </View>
         );

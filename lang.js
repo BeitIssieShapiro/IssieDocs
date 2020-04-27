@@ -9,6 +9,9 @@ let gPrefix = "";
 
 var strings = {
     "he": {
+        "StartHere": "הוספת דפים",
+        "DesktopEmpty":"שולחן העבודה ריק",
+        "Loading":"טוען...",
         "DefaultAppTitle": "{1} - שולחן העבודה שלי",
         "MissingFolderName": "חובה להזין שם תיקיה",
         "SaveFolderWithEmptyNameQuestion": "שמירת תיקייה ללא שם?",
@@ -20,7 +23,7 @@ var strings = {
         "ShareSuccessful": "שיתוף הסתיים בהצלחה",
         "ActionCancelled": "הפעולה בוטלה",
         "PDFLoadFailed": "טעינת PDF נכשלה",
-        "DefaultFolder": "ללא נושא",
+        "DefaultFolder": "כללי",
 
         "DeletePageTitle": "מחיקת דף",
         "DeleteFolderTitle": "מחיקת תיקייה",
@@ -29,8 +32,7 @@ var strings = {
         "BeforeDeleteFolderQuestion": "מחיקת תיקייה תגרום למחיקת כל הדפים בתוכה, האם למחוק?",
         "BeforeDeleteFoldersAndPagesQuestion": "נבחרה מחיקת דפים ותיקיות. מחיקת התיקיות תמחק את כל הדפים בתוכן. האם להמשיך?",
 
-        "NoPagesYet": "אין עדיין דפים",
-        "NoFoldersYet": "אין עדיין תיקיות",
+        "NoPagesYet": "התיקיה ריקה",
         "ChooseFolder": "בחר תיקיה",
 
         "SavePageFormTitle": "שמור דף",
@@ -51,12 +53,12 @@ var strings = {
         "A B C": "א ב ג",
 
         "Menu": "תפריט",
-        "Settings":"הגדרות",
+        "Settings": "הגדרות",
         "Display": "תצוגה",
         "Language": "שפה",
         "AllowEditTitle": "עריכת כותרת",
-        "TextInButtons":"עיצוב כפתורים",
-        "FolderColors":"צבעי תיקיות",
+        "TextInButtons": "עיצוב כפתורים",
+        "FolderColors": "צבעי תיקיות",
         "Warning": "אזהרה",
         "BtnContinue": "המשך",
         "BtnCancel": "בטל",
@@ -73,7 +75,7 @@ var strings = {
         "CaptionPageName": "שם הדף",
         "CaptionFolderNameList": "תיקיה",
         "CaptionFolderNameInput": "שם התיקיה",
-        "CaptionFolderColor": "צבע התיקיה", 
+        "CaptionFolderColor": "צבע התיקיה",
         "NoIcon": "ללא",
         "CaptionIcon": "סמל",
 
@@ -82,110 +84,112 @@ var strings = {
 
     },
     "ar": {
-                "DefaultAppTitle": "{1} - للتطبيق الرئيسي",
-                "MissingFolderName": "يجب إدخال اسم مجلد",
-                "SaveFolderWithEmptyNameQuestion": "حفظ مجلد بدون اسم؟",
-                "MissingPageName": "يجب إدخال اسم الصفحة",
-                "IllegalCharacterInFolderName": "يحتوي اسم المجلد على أحرف غير صالحة",
-                "IllegalCharacterInPageName": "يحتوي اسم الملف على أحرف غير صالحة",
-                "FolderAlreadyExists": "يوجد مجلد بهذا الاسم",
-                "PageAlreadyExists": "ملف بهذا الاسم موجود",
-                "ShareSuccessful": "انتهت المشاركة بنجاح",
-                "ActionCancelled": "تم إلغاء الإجراء",
-                "PDFLoadFailed": "فشل في تحميل ملف PDF",
-                "DefaultFolder": "الغة الرئيسيه للمجلد",
+        "StartHere": "todo",
+        "DesktopEmpty":"todo",
+        "Loading":"todo",
+        "DefaultAppTitle": "{1} - للتطبيق الرئيسي",
+        "MissingFolderName": "يجب إدخال اسم مجلد",
+        "SaveFolderWithEmptyNameQuestion": "حفظ مجلد بدون اسم؟",
+        "MissingPageName": "يجب إدخال اسم الصفحة",
+        "IllegalCharacterInFolderName": "يحتوي اسم المجلد على أحرف غير صالحة",
+        "IllegalCharacterInPageName": "يحتوي اسم الملف على أحرف غير صالحة",
+        "FolderAlreadyExists": "يوجد مجلد بهذا الاسم",
+        "PageAlreadyExists": "ملف بهذا الاسم موجود",
+        "ShareSuccessful": "انتهت المشاركة بنجاح",
+        "ActionCancelled": "تم إلغاء الإجراء",
+        "PDFLoadFailed": "فشل في تحميل ملف PDF",
+        "DefaultFolder": "todo",
 
-                "DeletePageTitle": "حذف الصفحة",
-                "DeleteFolderTitle": "حذف المجلد",
-                "BeforeDeletePageQuestion": "حذف الصفحة؟",
-                "DeleteFoldersAndPagesTitle": "حذف المجلدات والعناوين",
-                "BeforeDeleteFolderQuestion": "حذف المجلد سيؤدي إلى مسح جميع الصفحات داخله, وحذفه",
-                "BeforeDeleteFoldersAndPagesQuestion": "اختير حذف الصفحات والمجلدات. حذف المجلدات سيؤدي إلى حذف جميع الصفحات والمحتويات. هل تريد المتابعة؟",
+        "DeletePageTitle": "حذف الصفحة",
+        "DeleteFolderTitle": "حذف المجلد",
+        "BeforeDeletePageQuestion": "حذف الصفحة؟",
+        "DeleteFoldersAndPagesTitle": "حذف المجلدات والعناوين",
+        "BeforeDeleteFolderQuestion": "حذف المجلد سيؤدي إلى مسح جميع الصفحات داخله, وحذفه",
+        "BeforeDeleteFoldersAndPagesQuestion": "اختير حذف الصفحات والمجلدات. حذف المجلدات سيؤدي إلى حذف جميع الصفحات والمحتويات. هل تريد المتابعة؟",
 
-                "NoPagesYet": "لا توجد صفحات حتى الآن",
-                "NoFoldersYet": "لا توجد مجلدات حتى الآن",
-                "ChooseFolder": "حدد مجلد", //validate
-                "SavePageFormTitle": "حفظ الصفحة",
-                "RenameFormTitle": "تغيير العنوان",
-                "DuplicatePageFormTitle": "صفحة مكررة",
-                "MovePageFormTitle": "نقل الصفحة",
+        "NoPagesYet": "todo",
+        "ChooseFolder": "حدد مجلد", //validate
+        "SavePageFormTitle": "حفظ الصفحة",
+        "RenameFormTitle": "تغيير العنوان",
+        "DuplicatePageFormTitle": "صفحة مكررة",
+        "MovePageFormTitle": "نقل الصفحة",
 
-                "EditFolderFormTitle": "تحرير المجلد",
-                "NewFolderFormTitle": "إنشاء مجلد جديد",
-                "ShareWithTitle": "المشاركة مع ...",
-                "ShareEmailSubject": "مشاركة البريد الإلكتروني",
+        "EditFolderFormTitle": "تحرير المجلد",
+        "NewFolderFormTitle": "إنشاء مجلد جديد",
+        "ShareWithTitle": "المشاركة مع ...",
+        "ShareEmailSubject": "مشاركة البريد الإلكتروني",
 
-                "CameraTitle": "تصوير ورقة العمل",
-                "MediaPickerTitle": "تحديد الصورة",
+        "CameraTitle": "تصوير ورقة العمل",
+        "MediaPickerTitle": "تحديد الصورة",
 
-                "A": "أ",
-                "A B C": "أ ب ج",
+        "A": "أ",
+        "A B C": "أ ب ج",
 
-                "Settings":"الإعدادات", //validate
-                "Menu": "القائمة",
-                "Display": "العرض",
-                "Language": "اللغة",
-                "AllowEditTitle":"السماح تحرير العنوان", //validate
-                "TextInButtons":"تصميم الأزرار", //validate
-                "CaptionFolderColor":"لون المجلد", //validate
-                "FolderColors":"ألوان المجلد",
-                "Warning": "تحذير",
-                "BtnContinue": "متابعة",
-                "BtnCancel": "إلغاء",
-                "BtnNextPage": "الصفحة التالية",
-                "Btn PreviousPage": "الصفحة السابقة",
-                "BtnNewFolder": "مجلد جديد",
-                "BtnAddPage": "صفحة أخرى",
-                "BtnSave": "حفظ",
-                "BtnShare": "مشاركة",
-                "BtnChangeName": "إعادة تسمية",
-                "BtnDelete": "حذف",
-                "BtnDuplicate": "تكرير",
+        "Settings": "الإعدادات", //validate
+        "Menu": "القائمة",
+        "Display": "العرض",
+        "Language": "اللغة",
+        "AllowEditTitle": "السماح تحرير العنوان", //validate
+        "TextInButtons": "تصميم الأزرار", //validate
+        "CaptionFolderColor": "لون المجلد", //validate
+        "FolderColors": "ألوان المجلد",
+        "Warning": "تحذير",
+        "BtnContinue": "متابعة",
+        "BtnCancel": "إلغاء",
+        "BtnNextPage": "الصفحة التالية",
+        "Btn PreviousPage": "الصفحة السابقة",
+        "BtnNewFolder": "مجلد جديد",
+        "BtnAddPage": "صفحة أخرى",
+        "BtnSave": "حفظ",
+        "BtnShare": "مشاركة",
+        "BtnChangeName": "إعادة تسمية",
+        "BtnDelete": "حذف",
+        "BtnDuplicate": "تكرير",
 
-                "CaptionPageName": "اسم الصفحة",
-                "CaptionFolderNameList": "مجلد",
-                "CaptionFolderNameInput": "اسم المجلد",
-                "NoIcon": "بلا",
-                "CaptionIcon": "رمز",
+        "CaptionPageName": "اسم الصفحة",
+        "CaptionFolderNameList": "مجلد",
+        "CaptionFolderNameInput": "اسم المجلد",
+        "NoIcon": "بلا",
+        "CaptionIcon": "رمز",
 
-                "ImportProgress": "استيراد الصفحة {1} من {2}",
-                "ExportProgress": "تصدير الصفحة {1} من {2}"
-            }
+        "ImportProgress": "استيراد الصفحة {1} من {2}",
+        "ExportProgress": "تصدير الصفحة {1} من {2}"
+    }
 }
 
 const foldersAndIcons = {
     "he": [
-        { icon: 'exposure-plus-1', text: 'חשבון' },
-        { icon: 'speaker-notes', text: 'עברית' },
-        { icon: 'language', text: 'אנגלית' },
-        { icon: 'wb-incandescent', text: 'מדעים' },
-        { icon: 'book', text: 'תורה' },
-        { icon: 'watch-later', text: 'היסטוריה' },
+        { icon: 'svg:math-course', text: 'חשבון' },
+        { icon: 'svg:heb-course', text: 'עברית' },
+        { icon: 'svg:eng-course', text: 'אנגלית' },
+        { icon: 'svg:science-course', text: 'מדעים' },
+        { icon: 'svg:torah-course', text: 'תורה' },
+        { icon: 'svg:history-course', text: 'היסטוריה' },
         { icon: 'public', text: 'גיאוגרפיה' },
         { icon: 'music-note', text: 'מוזיקה' },
-        { icon: 'local-library', text: 'ספרות' }
+        { icon: 'svg:literature-course', text: 'ספרות' }
     ],
     "en": [
-        { icon: 'language', text: 'אנגלית' },
-        { icon: 'music-note', text: 'מוזיקה' },
+        { icon: 'svg:math-course', text: 'חשבון' },
+        { icon: 'svg:eng-course', text: 'אנגלית' },
+        { icon: 'svg:science-course', text: 'מדעים' },
         { icon: 'pets', text: 'בעלי חיים' },
-        { icon: 'exposure-plus-1', text: 'חשבון' },
-        { icon: 'wb-incandescent', text: 'מדעים' },
         { icon: 'watch-later', text: 'היסטוריה' },
         { icon: 'book', text: 'תורה' },
         { icon: 'speaker-notes', text: 'לשון' },
-        { icon: 'local-bar', text: 'חגים' }
+        { icon: 'local-bar', text: 'חגים' },
+        { icon: 'music-note', text: 'מוזיקה' }
     ],
     "ar": [
-        { icon: 'language', text: 'english' },
-        { icon: 'music-note', text: 'music' },
-        { icon: 'pets', text: 'animals' },
-        { icon: 'exposure-plus-1', text: 'الحساب' },
-        { icon: 'wb-incandescent', text: 'العلوم' },
-        { icon: 'watch-later', text: 'history' },
-        { icon: 'book', text: 'Torah' },
-        { icon: 'speaker-notes', text: 'tongue' },
-        { icon: 'local-bar', text: 'holiday' }
+        { icon: 'svg:math-course', text: 'חשבון' },
+        { icon: 'svg:arabic-course', text: 'ערבית' },
+        { icon: 'svg:eng-course', text: 'אנגלית' },
+        { icon: 'svg:science-course', text: 'מדעים' },
+        { icon: 'svg:islam-course', text: 'דת' },
+        { icon: 'svg:history-course', text: 'היסטוריה' },
+        { icon: 'public', text: 'גיאוגרפיה' },
+        { icon: 'music-note', text: 'מוזיקה' },
+        { icon: 'svg:literature-course', text: 'ספרות' }
     ]
 
 }
@@ -208,6 +212,10 @@ export function loadLanguage() {
     let langSetting = Settings.get('language');
     if (langSetting === undefined || langSetting === LANGUAGE.default) {
         gCurrentLang = RNLocalize.findBestAvailableLanguage(["he", "ar", "en-US", "en"])
+        //Alert.alert(JSON.stringify(gCurrentLang))
+        if (gCurrentLang.languageTag.startsWith("en")) {
+            gCurrentLang = { languageTag: "he", isRTL: true }
+        }
     } else {
         switch (langSetting) {
             case LANGUAGE.hebrew:
@@ -217,8 +225,12 @@ export function loadLanguage() {
                 gCurrentLang = { languageTag: "ar", isRTL: true }
                 break;
             case LANGUAGE.english:
-                gCurrentLang = { languageTag: "en", isRTL: false }
+                gCurrentLang = { languageTag: "he", isRTL: true }
                 break;
+            default:
+                gCurrentLang = { languageTag: "he", isRTL: true }
+                break;
+
         }
     }
     currStrings = strings[gCurrentLang.languageTag];
@@ -268,6 +280,7 @@ export function getLocalizedFoldersAndIcons() {
     let currFoldersAndIcon = foldersAndIcons[gCurrentLang.languageTag];
     if (!currFoldersAndIcon) {
         //remove the specifics
+        //Alert.alert(gCurrentLang.languageTag)
         let tag = gCurrentLang.languageTag.split("-");
         if (tag.length == 2) {
             currFoldersAndIcon = foldersAndIcons[tag[0]];
