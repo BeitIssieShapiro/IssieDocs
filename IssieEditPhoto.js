@@ -197,7 +197,7 @@ export default class IssieEditPhoto extends React.Component {
 
     // if keyboard hides the textInput, scroll the window
     if (this.state.showTextInput && this.state.yText + 20 >= kbTop) {
-      yOffset -= this.state.yText - kbTop + 35;
+      yOffset -= this.state.yText - kbTop + 2*this.state.fontSize - 10;
     }
 
     this.setState({
@@ -273,7 +273,7 @@ export default class IssieEditPhoto extends React.Component {
       Share.open(shareOptions).then(() => {
         Alert.alert(translate("ShareSuccessful"));
       }).catch(err => {
-        Alert.alert(translate("ActionCancelled"));
+        //Alert.alert(translate("ActionCancelled"));
       });
 
     }
@@ -444,6 +444,11 @@ export default class IssieEditPhoto extends React.Component {
         origElem.normPosition.y == newElem.normPosition.y &&
         origElem.fontSize == newElem.fontSize &&
         origElem.color == newElem.color) {
+          //need to set the current text back to canvas
+          this.setState({
+            needCanvasUpdate: true,
+            needCanvasUpdateTextOnly: true
+          });
         return false;
       }
     }

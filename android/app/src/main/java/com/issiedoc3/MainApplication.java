@@ -3,6 +3,7 @@ package com.issiedoc3;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import cl.json.RNSharePackage;
 import com.reactcommunity.rnlocalize.RNLocalizePackage;
 import com.horcrux.svg.SvgPackage;
 import org.devio.rn.splashscreen.SplashScreenReactPackage;
@@ -12,7 +13,6 @@ import io.github.elyx0.reactnativedocumentpicker.DocumentPickerPackage;
 import com.filepicker.FilePickerPackage;
 import org.wonday.pdf.RCTPdfView;
 import com.RNFetchBlob.RNFetchBlobPackage;
-import cl.json.RNSharePackage;
 import com.imagepicker.ImagePickerPackage;
 import io.codebakery.imagerotate.ImageRotatePackage;
 import com.reactnativecommunity.imageeditor.ImageEditorPackage;
@@ -45,6 +45,7 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new RNSharePackage(),
             new RNLocalizePackage(),
             new SvgPackage(),
             new SplashScreenReactPackage(),
@@ -54,7 +55,6 @@ public class MainApplication extends Application implements ReactApplication {
             new FilePickerPackage(),
             new RCTPdfView(),
             new RNFetchBlobPackage(),
-            new RNSharePackage(),
             new ImagePickerPackage(),
             new ImageRotatePackage(),
             new ImageEditorPackage(),

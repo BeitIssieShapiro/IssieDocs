@@ -54,6 +54,7 @@ var strings = {
 
         "Menu": "תפריט",
         "Settings": "הגדרות",
+        "About": "עלינו",
         "Display": "תצוגה",
         "Language": "שפה",
         "AllowEditTitle": "עריכת כותרת",
@@ -84,10 +85,10 @@ var strings = {
 
     },
     "ar": {
-        "StartHere": "todo",
-        "DesktopEmpty":"todo",
-        "Loading":"todo",
-        "DefaultAppTitle": "{1} - للتطبيق الرئيسي",
+        "StartHere": "إضافة صفحات",
+        "DesktopEmpty":"التطبيق الرئيسي فارغ",
+        "Loading":"جار التحميل...",
+        "DefaultAppTitle": "{1} - التطبيق الرئيسي",
         "MissingFolderName": "يجب إدخال اسم مجلد",
         "SaveFolderWithEmptyNameQuestion": "حفظ مجلد بدون اسم؟",
         "MissingPageName": "يجب إدخال اسم الصفحة",
@@ -98,7 +99,7 @@ var strings = {
         "ShareSuccessful": "انتهت المشاركة بنجاح",
         "ActionCancelled": "تم إلغاء الإجراء",
         "PDFLoadFailed": "فشل في تحميل ملف PDF",
-        "DefaultFolder": "todo",
+        "DefaultFolder": "عام",
 
         "DeletePageTitle": "حذف الصفحة",
         "DeleteFolderTitle": "حذف المجلد",
@@ -107,8 +108,8 @@ var strings = {
         "BeforeDeleteFolderQuestion": "حذف المجلد سيؤدي إلى مسح جميع الصفحات داخله, وحذفه",
         "BeforeDeleteFoldersAndPagesQuestion": "اختير حذف الصفحات والمجلدات. حذف المجلدات سيؤدي إلى حذف جميع الصفحات والمحتويات. هل تريد المتابعة؟",
 
-        "NoPagesYet": "todo",
-        "ChooseFolder": "حدد مجلد", //validate
+        "NoPagesYet": "المجلد فارغ",
+        "ChooseFolder": "اختار مجلد", 
         "SavePageFormTitle": "حفظ الصفحة",
         "RenameFormTitle": "تغيير العنوان",
         "DuplicatePageFormTitle": "صفحة مكررة",
@@ -125,13 +126,14 @@ var strings = {
         "A": "أ",
         "A B C": "أ ب ج",
 
-        "Settings": "الإعدادات", //validate
+        "Settings": "الإعدادات",
         "Menu": "القائمة",
         "Display": "العرض",
+        "About": "عنا",
         "Language": "اللغة",
-        "AllowEditTitle": "السماح تحرير العنوان", //validate
-        "TextInButtons": "تصميم الأزرار", //validate
-        "CaptionFolderColor": "لون المجلد", //validate
+        "AllowEditTitle": "تحرير العنوان",
+        "TextInButtons": "تصميم الأزرار",
+        "CaptionFolderColor": "لون المجلد", 
         "FolderColors": "ألوان المجلد",
         "Warning": "تحذير",
         "BtnContinue": "متابعة",
@@ -159,37 +161,26 @@ var strings = {
 
 const foldersAndIcons = {
     "he": [
-        { icon: 'svg:math-course', text: 'חשבון' },
-        { icon: 'svg:heb-course', text: 'עברית' },
-        { icon: 'svg:eng-course', text: 'אנגלית' },
-        { icon: 'svg:science-course', text: 'מדעים' },
-        { icon: 'svg:torah-course', text: 'תורה' },
-        { icon: 'svg:history-course', text: 'היסטוריה' },
+        { icon: 'svg-math-course', text: 'חשבון' },
+        { icon: 'svg-heb-course', text: 'עברית' },
+        { icon: 'svg-eng-course', text: 'אנגלית' },
+        { icon: 'svg-science-course', text: 'מדעים' },
+        { icon: 'svg-torah-course', text: 'תורה' },
+        { icon: 'svg-history-course', text: 'היסטוריה' },
         { icon: 'public', text: 'גיאוגרפיה' },
         { icon: 'music-note', text: 'מוזיקה' },
-        { icon: 'svg:literature-course', text: 'ספרות' }
-    ],
-    "en": [
-        { icon: 'svg:math-course', text: 'חשבון' },
-        { icon: 'svg:eng-course', text: 'אנגלית' },
-        { icon: 'svg:science-course', text: 'מדעים' },
-        { icon: 'pets', text: 'בעלי חיים' },
-        { icon: 'watch-later', text: 'היסטוריה' },
-        { icon: 'book', text: 'תורה' },
-        { icon: 'speaker-notes', text: 'לשון' },
-        { icon: 'local-bar', text: 'חגים' },
-        { icon: 'music-note', text: 'מוזיקה' }
+        { icon: 'svg-literature-course', text: 'ספרות' }
     ],
     "ar": [
-        { icon: 'svg:math-course', text: 'חשבון' },
-        { icon: 'svg:arabic-course', text: 'ערבית' },
-        { icon: 'svg:eng-course', text: 'אנגלית' },
-        { icon: 'svg:science-course', text: 'מדעים' },
-        { icon: 'svg:islam-course', text: 'דת' },
-        { icon: 'svg:history-course', text: 'היסטוריה' },
-        { icon: 'public', text: 'גיאוגרפיה' },
-        { icon: 'music-note', text: 'מוזיקה' },
-        { icon: 'svg:literature-course', text: 'ספרות' }
+        { icon: 'svg-math-course', text: 'حساب' },
+        { icon: 'svg-arabic-course', text: 'عربي' },
+        { icon: 'svg-eng-course', text: 'انجليزي' },
+        { icon: 'svg-science-course', text: 'علوم' },
+        { icon: 'svg-islam-course', text: 'دين' },
+        { icon: 'svg-history-course', text: 'تاريخ' },
+        { icon: 'public', text: 'جغرافيا' },
+        { icon: 'music-note', text: 'موسيقى' },
+        { icon: 'svg-literature-course', text: 'أدب' }
     ]
 
 }

@@ -557,7 +557,7 @@ export function Spacer(props) {
 }
 
 export function FolderIcon(props) {
-    if (props.name.startsWith("svg:")) {
+    if (props.name.startsWith("svg-")) {
         return getSvgIcon(props.name.substr(4), props.size, props.color);
     }
     return <Icon name={props.name} size={props.size} color={props.color}/>

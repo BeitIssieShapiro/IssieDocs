@@ -540,7 +540,7 @@ export default class FolderGallery extends React.Component {
         let pagesHeightSize = pagesLines * pageHeight * 1.2;
         let needPagesScroll = pagesHeightSize > pagesAreaWindowHeight;
 
-        let isEmptyApp = true || !this.state.folders || this.state.folders.length == 0;
+        let isEmptyApp = !this.state.folders || this.state.folders.length == 0;
         return (
             <View style={styles.container}
                 onLayout={this.onLayout}>
@@ -626,13 +626,13 @@ export default class FolderGallery extends React.Component {
                         <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
                     </View> :
                     <View style={{width:"100%"}}>
-                        <View style={{ position: 'absolute', left: 80, top: 30, alignItems: "center" }}>
+                        <View style={{ position: 'absolute', left: 80, top: 30, alignItems: 'flex-end', flexDirection:'row' }}>
                             {getSvgIcon('start-icon', 150, semanticColors.addButton)}
                             <Spacer />
                             <AppText style={{ fontSize: 35, color:'#797a7c' }}>{translate("StartHere")}</AppText>
                         </View>
                         <View style={{position:"absolute", width:"100%", height:'20%', top:"25%" ,alignItems:"center"}}>
-                        {getSvgIcon('empty-folder', 150, semanticColors.addButton)}
+                        {getSvgIcon('folder', 150, semanticColors.addButton)}
                         <AppText style={{ fontSize: 35, color:'#797a7c' }}>{translate("DesktopEmpty")}</AppText>
 
                         </View>

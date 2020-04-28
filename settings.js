@@ -149,6 +149,7 @@ export default function Menu(props) {
 
                     <TouchableOpacity onPress={props.onAbout} style={{ flexDirection: 'row', paddingRight: 25 }}>
 
+                        <AppText style={{ fontSize: 25 }}>{translate("About")}</AppText>
                         <Spacer />
                         <Icon name={'info'} size={35} color={semanticColors.titleText} />
                     </TouchableOpacity>
