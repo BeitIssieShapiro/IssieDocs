@@ -325,10 +325,11 @@ export function getFileNameDialog(fileName,
     }
 
     let fullListFolder = [defFolderName, ...folders];
-    getLocalizedFoldersAndIcons().forEach((itm) => {
-        let fni = itm.text + '$' + itm.icon;
-        if (fullListFolder.findIndex(f => f === fni) == -1) {
-            fullListFolder.push(fni);
+    getLocalizedFoldersAndIcons().forEach((itm, index) => {
+        if (fullListFolder.findIndex(f => 
+            f === itm.text ||
+            f.startsWith(itm.text + '$')) == -1) {
+            fullListFolder.push(itm.text + '$' + itm.icon + '#' + (availableColorPicker[index % availableColorPicker.length]));
         }
     })
     return (
