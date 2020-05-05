@@ -1,8 +1,7 @@
 
 import * as RNFS from 'react-native-fs';
 import { Alert } from 'react-native'
-import { FOLDERS_DIR } from './FolderGallery'
-import { DEFAULT_FOLDER_NAME } from './elements';
+import { FOLDERS_DIR, DEFAULT_FOLDER_NAME } from './elements';
 const ORDER_FILE_NAME = 'order.json'
 export async function saveFolderOrder(folders) {
     return new Promise((resolve) => {

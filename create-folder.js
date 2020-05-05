@@ -14,17 +14,7 @@ import {
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
 
 export default class IssieCreateFolder extends React.Component {
-    static navigationOptions = ({ navigation }) => {
-        let curFolder = navigation.getParam('currentFolderName', undefined);
-        let title = curFolder ? translate("EditFolderFormTitle") : translate("NewFolderFormTitle");
-        return {
-            title,
-            headerStyle: globalStyles.headerStyle,
-            headerTintColor: 'white',
-            headerTitleStyle: globalStyles.headerTitleStyle,
-            headerLeft: getHeaderBackButton(navigation)
-        }
-    };
+    
 
     constructor(props) {
         super();
@@ -60,7 +50,7 @@ export default class IssieCreateFolder extends React.Component {
         });
 
         let name = '', icon = '', color = '';
-        let currentFolderName = props.navigation.getParam('currentFolderName', undefined);
+        let currentFolderName = props.route.params.currentFolderName;
         if (currentFolderName) {
             let curFolder = getFolderAndIcon(currentFolderName);
             name = curFolder.name;
@@ -93,7 +83,7 @@ export default class IssieCreateFolder extends React.Component {
 
     Save = async () => {
         let success = true;
-        let saveNewFolder = this.props.navigation.getParam('saveNewFolder', undefined);
+        let saveNewFolder = this.props.route.params.saveNewFolder;
         if (saveNewFolder) {
             let folderName = this.state.name;
             if (this.state.icon.length > 0) {

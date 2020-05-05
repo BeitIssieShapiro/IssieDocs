@@ -1,7 +1,7 @@
 import * as RNLocalize from "react-native-localize";
 import { Alert, Settings } from "react-native";
-import DeviceInfo from 'react-native-device-info';
 import { LANGUAGE } from "./settings";
+import { isSimulator } from "./utils";
 
 export var gCurrentLang = { languageTag: "he", isRTL: true }
 const DEFAULT_LANG = "he";
@@ -238,7 +238,7 @@ export function loadLanguage() {
         }
     }
 
-    if (DeviceInfo.isEmulator()) {
+    if (isSimulator) {
         gPrefix = "."
     }
 

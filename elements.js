@@ -9,6 +9,8 @@ import { translate, getLocalizedFoldersAndIcons } from "./lang.js";
 import { getUseTextSetting } from './settings.js'
 
 import { getSvgIcon } from './svg-icons.js'
+import * as RNFS from 'react-native-fs';
+
 
 export const dimensions = {
     toolbarHeight: 65,
@@ -21,6 +23,8 @@ export const dimensions = {
     tileHeight: 197
 
 }
+
+export const FOLDERS_DIR = RNFS.DocumentDirectoryPath + '/folders/';
 
 export const APP_FONT = 'Alef';
 
@@ -493,11 +497,11 @@ export function removeFileExt(filePath) {
 export const globalStyles = StyleSheet.create({
     headerStyle: {
         backgroundColor: semanticColors.header,
-        height: 55
+        height: 75
     },
     headerThinStyle: {
         backgroundColor: semanticColors.header,
-        height: 28
+        height: 52
     },
     headerTitleStyle: {
         fontFamily: APP_FONT,

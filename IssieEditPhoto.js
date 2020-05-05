@@ -13,8 +13,10 @@ import Share from 'react-native-share';
 import DoQueue from './do-queue';
 import FadeInView from './FadeInView'
 import { Spacer, globalStyles, getRoundedButton, getEraserIcon, getColorButton } from './elements'
-import * as Progress from 'react-native-progress';
+//import {ProgressView} from '@react-native-community/progress-view';
+import ProgressCircle from 'react-native-progress-circle'
 import { fTranslate } from './lang.js'
+
 
 import {
   colors, DEFAULT_FOLDER_NAME, APP_FONT, getImageDimensions,
@@ -23,6 +25,7 @@ import {
 } from './elements'
 import { translate } from './lang';
 import { getSvgIcon } from './svg-icons';
+import { setNavParam } from './utils';
 
 const topLayer = dimensions.toolbarHeight + dimensions.toolbarMargin; //51 + 8 + 8 + 35;
 const shareTimeMs = 2000;
@@ -35,39 +38,6 @@ const MAX_STROKE_WIDTH = 12;
 const DRAG_ICON_SIZE = 45;
 
 export default class IssieEditPhoto extends React.Component {
-  static navigationOptions = ({ navigation }) => {
-    const page = navigation.getParam('page', '');
-    let pathParts = page.path.split('/');
-
-    let fileName = page.path.replace(/^.*[\\\/]/, '');
-    if (fileName.endsWith('.jpg')) {
-      fileName = fileName.substr(0, fileName.length - 4);
-    }
-    let isPageOnHome = pathParts[pathParts.length - 2] == DEFAULT_FOLDER_NAME;
-    let multiPageTitleAddition = navigation.getParam('pageTitleAddition', '');
-
-    return {
-      title: fileName + multiPageTitleAddition,
-      headerStyle: globalStyles.headerThinStyle,
-      headerTintColor: 'white',
-      headerTitleStyle: globalStyles.headerThinTitleStyle,
-      headerLeft:
-        <View >
-          <TouchableOpacity onPress={() => { 
-            this._mounted = false;
-            navigation.pop();
-          }}
-            activeOpacity={1}
-            style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Icon name='keyboard-arrow-left' color='white' size={35} />
-            <Spacer width={10} />
-            <Icon name={isPageOnHome ? 'home' : 'home'} color='white' size={30} />
-          </TouchableOpacity>
-
-        </View>
-      ,
-    };
-  }
 
   constructor() {
     super();
@@ -180,9 +150,6 @@ export default class IssieEditPhoto extends React.Component {
 
   _shouldMove = (evt, gestureState) => {
     let shouldMove = this.state.keyboardHeight > 0 || this.state.textMode && this.state.yOffset > 0;
-    if (shouldMove) {
-      //Alert.alert("should move")
-    }
     return shouldMove;
   }
 
@@ -197,7 +164,7 @@ export default class IssieEditPhoto extends React.Component {
 
     // if keyboard hides the textInput, scroll the window
     if (this.state.showTextInput && this.state.yText + 20 >= kbTop) {
-      yOffset -= this.state.yText - kbTop + 2*this.state.fontSize - 10;
+      yOffset -= this.state.yText - kbTop + 2 * this.state.fontSize - 10;
     }
 
     this.setState({
@@ -213,11 +180,11 @@ export default class IssieEditPhoto extends React.Component {
 
   componentDidMount = async () => {
     this._mounted = true;
-    const page = this.props.navigation.getParam('page', '');
+    const page = this.props.route.params.page;
     const currentFile = page.pages.length == 0 ? page.path : page.pages[0];
 
     if (page.pages.length > 0) {
-      this.props.navigation.setParams({ pageTitleAddition: this.pageTitleAddition(page.pages, 0) })
+      setNavParam(this.props.navigation, 'pageTitleAddition', this.pageTitleAddition(page.pages, 0));
     }
 
     const metaDataUri = currentFile + ".json";
@@ -236,16 +203,17 @@ export default class IssieEditPhoto extends React.Component {
 
 
   Load = async () => {
-    this.loadFile(this.state.metaDataUri);
+    if (this.state.metaDataUri && this.state.metaDataUri.length > 0)
+      this.loadFile(this.state.metaDataUri);
 
-    if (this.props.navigation.getParam('share', false)) {
+    if (this.props.route.params && this.props.route.params['share']) {
       //iterates over all files and exports them
       this.setState({ sharing: true, shareProgress: 0, shareProgressPage: 1 });
       let dataUrls = [];
 
       let interval = this.state.page.pages.length * shareTimeMs / 11;
 
-      let intervalObj = setInterval(() => this.setState({ shareProgress: this.state.shareProgress + .1 }), interval);
+      let intervalObj = setInterval(() => this.setState({ shareProgress: this.state.shareProgress + 10 }), interval);
 
       let data = await this.exportToBase64();
       dataUrls.push(data);
@@ -262,7 +230,7 @@ export default class IssieEditPhoto extends React.Component {
       clearInterval(intervalObj);
       this.setState({ sharing: false });
       //avoid reshare again
-      this.props.navigation.setParams({ share: false });
+      setNavParam(this.props.navigation, 'share', false);
 
       const shareOptions = {
         title: translate("ShareWithTitle"),
@@ -444,11 +412,11 @@ export default class IssieEditPhoto extends React.Component {
         origElem.normPosition.y == newElem.normPosition.y &&
         origElem.fontSize == newElem.fontSize &&
         origElem.color == newElem.color) {
-          //need to set the current text back to canvas
-          this.setState({
-            needCanvasUpdate: true,
-            needCanvasUpdateTextOnly: true
-          });
+        //need to set the current text back to canvas
+        this.setState({
+          needCanvasUpdate: true,
+          needCanvasUpdateTextOnly: true
+        });
         return false;
       }
     }
@@ -507,7 +475,7 @@ export default class IssieEditPhoto extends React.Component {
 
   UpdateCanvas = (canvas) => {
     if (!canvas) return;
-    if (!this._mounted) 
+    if (!this._mounted)
       return;
 
     if (!this.state.needCanvasUpdateTextOnly) {
@@ -591,7 +559,7 @@ export default class IssieEditPhoto extends React.Component {
   onEraserButton = () => {
     if (!this.state.eraseMode && this.state.textMode) {
       this.onBrushButtonPicker();
-    } 
+    }
     this.onEraserChange();
   }
 
@@ -601,8 +569,8 @@ export default class IssieEditPhoto extends React.Component {
     let newStrokeWidth = eraserOn ?
       (this.state.strokeWidth * 3 < 15 ? 15 : this.state.strokeWidth * 3)
       : this.state.strokeWidth;
-   
-    this.setState({ eraseMode: eraserOn});
+
+    this.setState({ eraseMode: eraserOn });
     this.updateBrush(newStrokeWidth, newColor);
   }
 
@@ -629,7 +597,7 @@ export default class IssieEditPhoto extends React.Component {
 
   }
   onBrushSize = (size) => {
-    
+
     let newStrokeWidth = size; //this.canvas.state.strokeWidth + inc;
     if (newStrokeWidth < 1) {
       newStrokeWidth = 1;
@@ -637,9 +605,9 @@ export default class IssieEditPhoto extends React.Component {
     if (newStrokeWidth > MAX_STROKE_WIDTH) {
       newStrokeWidth = MAX_STROKE_WIDTH;
     }
-    
+
     this.setState({
-      strokeWidth: newStrokeWidth, showBrushSizePicker:false
+      strokeWidth: newStrokeWidth, showBrushSizePicker: false
     })
     this.updateBrush(newStrokeWidth, this.state.color);
   }
@@ -665,7 +633,7 @@ export default class IssieEditPhoto extends React.Component {
     if (currentIndex < 0 || currentIndex >= this.state.page.pages.length) return;
 
 
-    this.props.navigation.setParams({ pageTitleAddition: this.pageTitleAddition(this.state.page.pages, currentIndex) })
+    setNavParam(this.props.navigation, 'pageTitleAddition', this.pageTitleAddition(this.state.page.pages, currentIndex));
 
     const currentFile = this.state.page.pages[currentIndex];
     const metaDataUri = currentFile + ".json";
@@ -765,13 +733,20 @@ export default class IssieEditPhoto extends React.Component {
               zoomScale={this.state.zoom}
               style={{ position: 'absolute', top: 0, height: this.state.canvasH, left: this.state.sideMargin, width: this.state.canvasW }}
               contentContainerStyle={{ flex: 1 }}
+              scrollEnabled={this.state.textMode}
             >
               {this.state.sharing ?
                 <View style={{ position: 'absolute', top: '25%', left: 0, width: this.state.canvasW, zIndex: 1000, backgroundColor: 'white', alignItems: 'center' }}>
 
-                  <Progress.Circle size={200} progress={this.state.shareProgress} showsText={true} textStyle={{ zIndex: 100, fontSize: 25 }} formatText={(prog) =>
-                    fTranslate("ExportProgress", this.state.shareProgressPage, (this.state.page.pages.length > 0 ? this.state.page.pages.length : 1))}
-                    thickness={5} />
+                  <ProgressCircle
+                    radius={150}
+                    color="#3399FF"
+                    shadowColor="#999"
+                    bgColor="white"
+                    percent={this.state.shareProgress}
+                    borderWidth={5} >
+                    <Text style={{ zIndex: 100, fontSize: 25 }}>{fTranslate("ExportProgress", this.state.shareProgressPage, (this.state.page.pages.length > 0 ? this.state.page.pages.length : 1))}</Text>
+                  </ProgressCircle>
                 </View> : null}
               {this.getCanvas()}
             </ScrollView>

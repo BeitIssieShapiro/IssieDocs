@@ -4,11 +4,11 @@ import {
   ImageBackground, TouchableOpacity, StyleSheet, View, Text,
   Alert, Dimensions, PanResponder, ImageEditor
 } from 'react-native';
-import { FOLDERS_DIR } from './FolderGallery';
+import { FOLDERS_DIR } from './elements';
 import * as RNFS from 'react-native-fs';
 import Pdf from 'react-native-pdf';
 import ViewShot from "react-native-view-shot";
-import { StackActions } from 'react-navigation';
+import { StackActions } from '@react-navigation/native';
 import { Icon } from 'react-native-elements'
 import { translate } from './lang.js'
 
@@ -22,7 +22,7 @@ import {
 import ImageRotate from 'react-native-image-rotate';
 import { getNewPage, saveFile, cloneToTemp, SRC_RENAME, SRC_DUPLICATE } from './newPage'
 import { pushFolderOrder } from './sort'
-import * as Progress from 'react-native-progress';
+import ProgressCircle from 'react-native-progress-circle'
 import { fTranslate } from './lang';
 
 const OK_Cancel = 1;
@@ -33,16 +33,6 @@ const headerHeight = 60;
 const panBroderDistance = 80;
 
 export default class IssieSavePhoto extends React.Component {
-  static navigationOptions = ({ navigation }) => {
-    let title = navigation.getParam('title', translate("SavePageFormTitle"));
-    return {
-      title: title,
-      headerStyle: globalStyles.headerStyle,
-      headerTintColor: 'white',
-      headerTitleStyle: globalStyles.headerTitleStyle,
-      headerLeft: getHeaderBackButton(navigation)
-    }
-  };
 
   constructor() {
     super();
@@ -151,28 +141,29 @@ export default class IssieSavePhoto extends React.Component {
   }
 
   componentDidMount = async () => {
-    let uri = this.props.navigation.getParam('uri', '');
+    let uri = this.props.route.params.uri;
     uri = decodeURI(uri);
-    //Alert.alert(uri)
-    let folder = this.props.navigation.getParam('folder', '')
-    let pageName = this.props.navigation.getParam('name', '')
+    //alert(uri);
+    let folder = this.props.route.params.folder;
+    let pageName = this.props.route.params.name;
     let pdf = false;
     if (uri.endsWith('.pdf')) {
       pdf = true;
     }
     await this.initFolderList()
-    this.setState({ uri, pdf, pdfPage: 1, folder, pageName });
-    if (!pdf) {
-      this.updateImageDimension();
-    }
+    this.setState({ uri, pdf, pdfPage: 1, folder, pageName }, () => {
+      if (!pdf) {
+        this.updateImageDimension();
+      }
+    });
     if (this.isRename() || this.isDuplicate()) {
       setTimeout(() => this.setState({ phase: PickName }), 50);
     }
     this.onLayout();
   }
 
-  isRename = () => this.props.navigation.getParam('imageSource', '') === SRC_RENAME;
-  isDuplicate = () => this.props.navigation.getParam('imageSource', '') === SRC_DUPLICATE;
+  isRename = () => this.props.route.params.imageSource === SRC_RENAME;
+  isDuplicate = () => this.props.route.params.imageSource === SRC_DUPLICATE;
 
   updateImageDimension = async () => {
     setTimeout(async () => {
@@ -345,7 +336,7 @@ export default class IssieSavePhoto extends React.Component {
             //ignore, as maybe json is missing
           }
         }
-        let returnFolderCallback = this.props.navigation.getParam('returnFolderCallback', undefined);
+        let returnFolderCallback = this.props.route.params.returnFolderCallback;
         if (returnFolderCallback) {
           returnFolderCallback(folderName);
         }
@@ -390,7 +381,7 @@ export default class IssieSavePhoto extends React.Component {
   }
 
   AddPage = () => {
-    let imageSource = this.props.navigation.getParam('imageSource');
+    let imageSource = this.props.route.params.imageSource;
     getNewPage(imageSource,
       (uri) => {
         //Alert.alert("add page: " + uri)
@@ -477,7 +468,7 @@ export default class IssieSavePhoto extends React.Component {
   }
 
   saveNewFolder = async (newFolder) => {
-    let saveNewFolder = this.props.navigation.getParam('saveNewFolder', undefined);
+    let saveNewFolder = this.props.route.params.saveNewFolder;
     if (!saveNewFolder) {
       return false;
     }
@@ -625,13 +616,15 @@ export default class IssieSavePhoto extends React.Component {
           <View style={styles.bgImage}>
             {this.state.pdfInProcess ?
               <View style={{ position: 'absolute', top: '25%', left: 0, width: '100%', zIndex: 1000, alignItems: 'center' }}>
-
-                <Progress.Circle size={200}
-                  progress={this.state.pdfInProcess / this.state.pdfPageCount}
-                  showsText={true}
-                  textStyle={{ zIndex: 100, fontSize: 25 }}
-                  formatText={(prog) => fTranslate("ImportProgress", this.state.pdfInProcess, this.state.pdfPageCount)}
-                  thickness={5} />
+                <ProgressCircle
+                  radius={150}
+                  color="#3399FF"
+                  shadowColor="#999"
+                  bgColor="white"
+                  percent={this.state.pdfInProcess * 100/ this.state.pdfPageCount}
+                  borderWidth={5} >
+                  <Text style={{ zIndex: 100, fontSize: 25 }}>{fTranslate("ImportProgress", this.state.pdfInProcess, this.state.pdfPageCount)}</Text>
+                </ProgressCircle>
               </View> : null}
             <ViewShot ref="viewShot" options={{ format: "jpg", quality: 0.9 }}
               style={{
@@ -661,27 +654,28 @@ export default class IssieSavePhoto extends React.Component {
             alignItems: 'center',
             top: dimensions.toolbarHeight
           },
-          this.state.phase == OK_Cancel ? 
-          
+          this.state.phase == OK_Cancel ?
+
             {
               width: '100%',
               height: (this.state.imgSize.h * this.state.scale)
-            }:
+            } :
             {
               width: this.state.windowSize.width,
               height: this.state.windowSize.height,
-            } 
+            }
           ]}>
-            {this.state.phase == OK_Cancel ? <ImageBackground
-              style={{
-                width: '100%',
-                height: '100%'
-              }}
+            {this.state.phase == OK_Cancel ?
+              <ImageBackground
+                style={{
+                  width: '100%',
+                  height: '100%'
+                }}
 
-              imageStyle={{ resizeMode: 'contain' }}
-              blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
-              source={{ uri }}
-            /> : null}
+                imageStyle={{ resizeMode: 'contain' }}
+                blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
+                source={{ uri }}
+              /> : null}
 
 
             {cropFrame}

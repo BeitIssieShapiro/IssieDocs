@@ -5,8 +5,7 @@ import {
     TextInput
 } from 'react-native';
 import { Icon } from 'react-native-elements'
-import Menu, { EDIT_TITLE } from './settings'
-import TitleEdit from './title-edit.js'
+import Menu from './settings-ui'
 
 import * as RNFS from 'react-native-fs';
 import FolderNew from './FolderNew';
@@ -16,7 +15,7 @@ import {
     registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage,
 } from "./lang.js"
 import { USE_COLOR, getUseColorSetting } from './settings.js'
-
+import {setNavParam} from './utils'
 import {
     getFolderAndIcon,
     DEFAULT_FOLDER_NAME,
@@ -25,7 +24,8 @@ import {
     getMaterialCommunityIconButton, dimensions,
     validPathPart,
     AppText,
-    getSvgIconButton
+    getSvgIconButton,
+    FOLDERS_DIR
 } from './elements'
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
 import ImagePicker from 'react-native-image-picker';
@@ -35,60 +35,9 @@ import { FlatList } from 'react-native-gesture-handler';
 import SplashScreen from 'react-native-splash-screen';
 import { getSvgIcon } from './svg-icons';
 
-export const FOLDERS_DIR = RNFS.DocumentDirectoryPath + '/folders/';
 
 export default class FolderGallery extends React.Component {
-    static navigationOptions = ({ navigation }) => {
-        let menuIcon = 'settings';
 
-        let isMenuOpened = navigation.getParam('isMenuOpened')
-        if (isMenuOpened) {
-            //menuIcon = 'close';
-        }
-        let editMode = navigation.getParam('editMode', false)
-        let titleSetting = Settings.get('appTitle');
-        if (titleSetting === undefined) {
-            titleSetting = fTranslate("DefaultAppTitle", "IssieDocs");
-        }
-
-        let editTitleSetting = Settings.get(EDIT_TITLE.name);
-        if (editTitleSetting === undefined) {
-            editTitleSetting = EDIT_TITLE.no;
-        }
-
-        let title = titleSetting;
-
-        return {
-            headerTitle: editMode && editTitleSetting == EDIT_TITLE.yes ? (() =>
-                <TitleEdit
-                    title={title}
-                    onSave={(newTitle) => {
-                        Settings.set({ appTitle: newTitle });
-                        navigation.setParams({ saveTitle: true })//to cause refresh
-                    }} />) : undefined,
-            title,
-            headerStyle: globalStyles.headerStyle,
-            headerTintColor: 'white',
-            headerTitleStyle: globalStyles.headerTitleStyle,
-            //headerLeft: 
-            headerRight: (
-                <View style={{ flexDirection: 'row-reverse' }}>
-                    <Spacer />
-                    <TouchableOpacity
-                        activeOpacity={0.7}
-                        onPress={() => {
-                            let menuHandler = navigation.getParam('menuHandler')
-                            if (menuHandler) {
-                                menuHandler();
-                            }
-                        }
-                        }
-                    >
-                        <Icon name={menuIcon} color='white' size={35} />
-                    </TouchableOpacity>
-                </View>)
-        };
-    }
     constructor(props) {
         super(props);
         this.state = {
@@ -130,12 +79,9 @@ export default class FolderGallery extends React.Component {
             this.props.navigation.addListener("didFocus", async () => {
                 this.refresh();
             })
-
-            this.props.navigation.setParams({ menuHandler: () => this._menuHandler() });
+            setNavParam(this.props.navigation, 'menuHandler', () => this._menuHandler());
 
             Linking.addEventListener("url", this._handleOpenURL);
-
-
 
             await this.refresh();
 
@@ -153,7 +99,8 @@ export default class FolderGallery extends React.Component {
 
     _menuHandler = () => {
         this.setState({ showMenu: !this.state.showMenu })
-        this.props.navigation.setParams({ isMenuOpened: !this.state.showMenu });
+        setNavParam(this.props.navigation, 'isMenuOpened', !this.state.showMenu);
+
     }
 
     _handleOpenURL = (event) => {
@@ -166,7 +113,8 @@ export default class FolderGallery extends React.Component {
         })
     }
 
-    refresh = async () => {
+    refresh = async (folderName) => {
+        //todo optimize if folderName is given
         RNFS.readDir(FOLDERS_DIR).then(async (folders) => {
             let foldersState = [];
 
@@ -385,7 +333,7 @@ export default class FolderGallery extends React.Component {
     toggleEditMode(force) {
         let changeTo = force !== undefined ? force : !this.state.editMode;
         this.setState({ editMode: changeTo });
-        this.props.navigation.setParams({ editMode: changeTo });
+        setNavParam(this.props.navigation, 'editMode', changeTo);
     }
 
 
@@ -421,7 +369,8 @@ export default class FolderGallery extends React.Component {
 
 
     setReturnFolder = (folderName) => {
-        this.setState({ returnFolderName: folderName });
+        //Alert.alert("return to " + folderName)
+        this.setState({ returnFolderName: folderName }, () => this.refresh(folderName));
     }
 
 
@@ -515,7 +464,8 @@ export default class FolderGallery extends React.Component {
 
     closeMenu = () => {
         this.setState({ showMenu: false });
-        this.props.navigation.setParams({ isMenuOpened: false });
+        setNavParam(this.props.navigation, 'isMenuOpened', false);
+
     }
     render() {
         YellowBox.ignoreWarnings(['Task orphaned']);

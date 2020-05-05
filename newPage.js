@@ -3,7 +3,6 @@ import {
     Image,
     Alert
 } from 'react-native';
-import DeviceInfo from 'react-native-device-info';
 import ImagePicker from 'react-native-image-picker';
 import * as RNFS from 'react-native-fs';
 export const SRC_CAMERA = 'camera';
@@ -15,12 +14,13 @@ export const SRC_DUPLICATE = 'duplicate'
 import mock from './mock.jpg'
 import { translate } from './lang';
 import { usesAutoTimeZone } from 'react-native-localize';
+import { isSimulator } from './utils';
 let mockFileName;
 
 
 export async function getNewPage(src, okEvent, cancelEvent) {
     if (src == SRC_CAMERA) {
-        if (DeviceInfo.isEmulator()) {
+        if (isSimulator) {
             if (!mockFileName) {
                 mockFileName = genTempFile("jpg")
                 let mockImg = Image.resolveAssetSource(mock);

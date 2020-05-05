@@ -10,7 +10,8 @@ import ReactNative, {
   PixelRatio,
   Platform,
   ViewPropTypes,
-  processColor
+  processColor,
+  Alert
 } from 'react-native'
 import { requestPermissions } from '@terrylinla/react-native-sketch-canvas/src/handlePermissions';
 
@@ -66,7 +67,6 @@ class SketchCanvas extends React.Component {
     onSketchSaved: () => { },
     user: null,
     scale: 1,
-
     touchEnabled: true,
 
     text: null,
@@ -91,16 +91,20 @@ class SketchCanvas extends React.Component {
     this._size = { width: 0, height: 0 }
     this._initialized = false
 
-    this.state.text = this._processText(props.text ? props.text.map(t => Object.assign({}, t)) : null)
+    this.state.text = SketchCanvas._processText(props.text ? props.text.map(t => Object.assign({}, t)) : null)
+    this.was_componentWillMount();
   }
-
-  componentWillReceiveProps(nextProps) {
-    this.setState({
-      text: this._processText(nextProps.text ? nextProps.text.map(t => Object.assign({}, t)) : null)
-    })
+  static getDerivedStateFromProps (props, state) {
+    state.text =  SketchCanvas._processText(props.text ? props.text.map(t => Object.assign({}, t)) : null)
+    return state;
   }
+  // componentWillReceiveProps(nextProps) {
+  //   this.setState({
+  //     text: this._processText(nextProps.text ? nextProps.text.map(t => Object.assign({}, t)) : null)
+  //   })
+  // }
 
-  _processText(text) {
+  static _processText(text) {
     text && text.forEach(t => t.fontColor = processColor(t.fontColor))
     return text
   }
@@ -154,7 +158,7 @@ class SketchCanvas extends React.Component {
     }
   }
 
-  componentWillMount() {
+  was_componentWillMount() {
     this.panResponder = PanResponder.create({
       // Ask to be the responder:
       onStartShouldSetPanResponder: (evt, gestureState) => true,
@@ -164,6 +168,8 @@ class SketchCanvas extends React.Component {
 
       onPanResponderGrant: (evt, gestureState) => {
         if (!this.props.touchEnabled) return
+        if (gestureState.numberActiveTouches > 1) return
+
         const e = evt.nativeEvent
         this._offset = { x: e.pageX - e.locationX, y: e.pageY - e.locationY }
         this._path = {
@@ -194,6 +200,7 @@ class SketchCanvas extends React.Component {
       },
       onPanResponderMove: (evt, gestureState) => {
         if (!this.props.touchEnabled) return
+
         if (this._path) {
           const x = parseFloat((gestureState.x0 + gestureState.dx / this.props.scale - this._offset.x).toFixed(2)),
                 y = parseFloat((gestureState.y0 + gestureState.dy / this.props.scale - this._offset.y).toFixed(2))
@@ -209,10 +216,20 @@ class SketchCanvas extends React.Component {
       onPanResponderRelease: (evt, gestureState) => {
         if (!this.props.touchEnabled) return
         if (this._path) {
-          this.props.onStrokeEnd({ path: this._path, size: this._size, drawer: this.props.user })
           this._paths.push({ path: this._path, size: this._size, drawer: this.props.user })
+          this.props.onStrokeEnd({ path: this._path, size: this._size, drawer: this.props.user })
         }
         UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.endPath, [])
+      },
+
+      onPanResponderTerminate: (evt, gestureState) => {
+        // Another component has become the responder, so this gesture should be cancelled
+        if (!this.props.touchEnabled) return;
+        if (this._path) {
+          this.props.onStrokeEnd({ path: this._path, size: this._size, drawer: this.props.user });
+          this._paths.push({ path: this._path, size: this._size, drawer: this.props.user });
+        }
+        UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.endPath, []);
       },
 
       onShouldBlockNativeResponder: (evt, gestureState) => {
@@ -222,6 +239,7 @@ class SketchCanvas extends React.Component {
   }
 
   async componentDidMount() {
+
     const isStoragePermissionAuthorized = await requestPermissions(
       this.props.permissionDialogTitle,
       this.props.permissionDialogMessage,

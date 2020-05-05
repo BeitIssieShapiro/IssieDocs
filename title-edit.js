@@ -39,8 +39,8 @@ export default function TitleEdit(props) {
 
         <View style={{
             position: 'absolute', height: 45, width: 100,
-            left: 30, flexDirection: 'row', justifyContent: 'flex-end',
-            justifyContent: 'center', width: 150
+            left: 0, flexDirection: 'row', justifyContent: 'flex-start',
+             width: 150
         }}>
             {!editMode ?
                 <Icon name={'edit'} size={40} color={'white'}
@@ -51,7 +51,7 @@ export default function TitleEdit(props) {
             {editMode ? 
                 <Icon name={'check'} size={40} color={'white'}
                     onPress={() => {
-                setEditMode(true);
+                setEditMode(false);
                 props.onSave(editedTitle);
             }} /> : null}
 
