@@ -678,6 +678,16 @@ export default class IssieEditPhoto extends React.Component {
 
       if (wDiff <= 0 && hDiff <= 0) {
         //image fit w/o scale
+        if (wDiff < 0 && hDiff < 0) {
+        if (wDiff < hDiff) {
+          ratio = windowH / imageHeight
+        } else {
+          ratio = windowW / imageWidth
+        }
+      }
+
+
+
       } else if (wDiff > hDiff) {
         //scale to fit width
         ratio = windowW / imageWidth;

@@ -20,7 +20,7 @@ let mockFileName;
 
 export async function getNewPage(src, okEvent, cancelEvent) {
     if (src == SRC_CAMERA) {
-        if (isSimulator) {
+        if (isSimulator()) {
             if (!mockFileName) {
                 mockFileName = genTempFile("jpg")
                 let mockImg = Image.resolveAssetSource(mock);

@@ -118,7 +118,7 @@ function App() {
             if (fileName.endsWith('.jpg')) {
               fileName = fileName.substr(0, fileName.length - 4);
             }
-            let multiPageTitleAddition = props.route.params.pageTitleAddition;
+            let multiPageTitleAddition = props.route.params.pageTitleAddition || "";
 
 
             return {
@@ -132,7 +132,7 @@ function App() {
                     props.navigation.goBack();
                   }}
                     activeOpacity={1}
-                    style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    style={{flexDirection: 'row', alignItems: 'center' }}>
                     <Icon name='keyboard-arrow-left' color='white' size={35} />
                     <Spacer width={10} />
                     <Icon name={'home'} color='white' size={30} />

@@ -234,7 +234,7 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
                 backgroundColor: dark ? '#a7a7a7' : '#eeeded',
                 flexDirection: direction ? direction : 'row'
             }}>
-            {textExist ? <AppText style={{ position: 'absolute', paddingTop: 5, left: 0, width: '80%', fontSize: textSize, lineHeight: textSize+5, color: semanticColors.titleText, textAlign: 'center' }}>{text}</AppText> : null}
+            {textExist ? <AppText style={{ position: 'absolute', paddingTop: 5, left: 0, width: '80%', fontSize: textSize, lineHeight: textSize + 5, color: semanticColors.titleText, textAlign: 'center' }}>{text}</AppText> : null}
             <Icon name={icon} size={iconSize} color={color} />
             {textExist ? <Spacer width={5} /> : null}
         </View>
@@ -253,11 +253,11 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
     let isSvg = iconType === "svg";
 
     const sizeToUse = iconSize ? iconSize : size;
-    return <TouchableOpacity
+    return <View><TouchableOpacity
         activeOpacity={0.7}
         onPress={callback}
         style={{
-            backgroundColor: selected ? semanticColors.selectedEditToolColor : 'transparent',
+            //backgroundColor: selected ? semanticColors.selectedEditToolColor : 'transparent',
             width: size, height: size,
             alignContent: 'center',
             alignItems: 'center',
@@ -266,12 +266,19 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
         }}
     >
         {isText ?
-            <AppText style={{ fontSize: sizeToUse, lineHeight: sizeToUse+5, color: color, paddingTop: 6 }}>{icon}</AppText> :
-            isSvg?
-                getSvgIcon(icon, sizeToUse, color) : 
+            <AppText style={{ fontSize: sizeToUse, lineHeight: sizeToUse + 5, color: color, paddingTop: 6 }}>{icon}</AppText> :
+            isSvg ?
+                getSvgIcon(icon, sizeToUse, color) :
                 <Icon name={icon} type={iconType} size={sizeToUse} color={color} />}
 
     </TouchableOpacity>
+        {selected ? <View
+            style={{
+                borderBottomColor: 'black',
+                borderBottomWidth: 6,
+            }}
+        /> : null}
+    </View>
 }
 
 
@@ -330,7 +337,7 @@ export function getFileNameDialog(fileName,
 
     let fullListFolder = [defFolderName, ...folders];
     getLocalizedFoldersAndIcons().forEach((itm, index) => {
-        if (fullListFolder.findIndex(f => 
+        if (fullListFolder.findIndex(f =>
             f === itm.text ||
             f.startsWith(itm.text + '$')) == -1) {
             fullListFolder.push(itm.text + '$' + itm.icon + '#' + (availableColorPicker[index % availableColorPicker.length]));
@@ -339,7 +346,7 @@ export function getFileNameDialog(fileName,
     return (
         <View style={[styles.textInputView, isLandscape ? { flexDirection: 'row-reverse' } : {}]} >
             <View style={{ flex: 1, width: '100%' }}>
-                <AppText style={[styles.titleText,{marginVertical:7}]}>{translate("CaptionPageName")}</AppText>
+                <AppText style={[styles.titleText, { marginVertical: 7 }]}>{translate("CaptionPageName")}</AppText>
                 <TextInput style={globalStyles.textInput}
                     onChangeText={onChangeName}
                 >{fileName}</TextInput>
@@ -436,7 +443,7 @@ function pickerRenderRow(rowData, highlighted) {
             {folderAndIcon.icon != '' ?
                 <View style={{ flexDirection: 'row' }}>
                     <Spacer />
-                    <FolderIcon name={folderAndIcon.icon} size={50} color={folderAndIcon.color != "" ? folderAndIcon.color : semanticColors.folderIcons}/>
+                    <FolderIcon name={folderAndIcon.icon} size={50} color={folderAndIcon.color != "" ? folderAndIcon.color : semanticColors.folderIcons} />
                 </View>
                 : <View />}
             <AppText style={{ fontSize: 26, textAlign: 'right', paddingRight: 25 }}>
@@ -565,7 +572,7 @@ export function FolderIcon(props) {
     if (props.name.startsWith("svg-")) {
         return getSvgIcon(props.name.substr(4), props.size, props.color);
     }
-    return <Icon name={props.name} size={props.size} color={props.color}/>
+    return <Icon name={props.name} size={props.size} color={props.color} />
 }
 
 export function AppText(props) {
@@ -601,18 +608,25 @@ export function getColorButton(callback, color, size, selected, index) {
 }
 
 export function getEraserIcon(callback, size, color, selected) {
-    return <TouchableOpacity
+    return <View><TouchableOpacity
         activeOpacity={0.7}
         onPress={callback}
         style={{
             borderRadius: 25,
-            height: size,
+            height: size-10,
             width: size,
             alignItems: 'center',
             justifyContent: 'flex-end',
-            backgroundColor: selected ? semanticColors.selectedEditToolColor : 'transparent'
-        }}>{getSvgIcon('eraser-new', size+15, color)}
+            //backgroundColor: selected ? semanticColors.selectedEditToolColor : 'transparent'
+        }}>{getSvgIcon('eraser-new', size - 10, color)}
     </TouchableOpacity>
+    {selected ? <View
+            style={{
+                borderBottomColor: 'black',
+                borderBottomWidth: 6,
+            }}
+        /> : null}
+    </View>
 }
 
 const styles = StyleSheet.create({
