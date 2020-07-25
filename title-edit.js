@@ -9,7 +9,8 @@ import {
     AppText,
     getEmbeddedButton,
     Spacer,
-    semanticColors
+    semanticColors,
+    getMaterialCommunityIconButton
 } from './elements'
 
 
@@ -42,12 +43,18 @@ export default function TitleEdit(props) {
             left: 0, flexDirection: 'row', justifyContent: 'flex-start',
              width: 150
         }}>
-            {!editMode ?
+
+            {
+            getMaterialCommunityIconButton(() => setEditMode(!editMode),
+                                'white', editMode ? "close-outline" : "pencil-outline", 40)
+            }
+
+            {/* {!editMode ?
                 <Icon name={'edit'} size={40} color={'white'}
                     onPress={() => setEditMode(true)} /> : null}
             {editMode ?
                 <Icon name={'close'} size={40} color={'white'}
-                    onPress={() => setEditMode(false)} /> : null}
+                    onPress={() => setEditMode(false)} /> : null} */}
             {editMode ? 
                 <Icon name={'check'} size={40} color={'white'}
                     onPress={() => {

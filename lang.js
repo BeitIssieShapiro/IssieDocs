@@ -160,7 +160,7 @@ var strings = {
 }
 
 const foldersAndIcons = {
-    "he": [
+    "he_gib": [
         { icon: 'svg-math-course', text: 'חשבון' },
         { icon: 'svg-heb-course', text: 'עברית' },
         { icon: 'svg-eng-course', text: 'אנגלית' },
@@ -170,6 +170,17 @@ const foldersAndIcons = {
         { icon: 'public', text: 'גיאוגרפיה' },
         { icon: 'music-note', text: 'מוזיקה' },
         { icon: 'svg-literature-course', text: 'ספרות' }
+    ],
+    "he": [
+        { icon: 'svg-math-course', text: 'חשבון' },
+        { icon: 'svg-heb-course', text: 'עברית' },
+        { icon: 'svg-eng-course', text: 'אנגלית' },
+        { icon: 'science', text: 'מדעים' },
+        { icon: 'svg-torah-course', text: 'תורה' },
+        { icon: 'account-balance', text: 'היסטוריה' },
+        { icon: 'public', text: 'גיאוגרפיה' },
+        { icon: 'music-note', text: 'מוזיקה' },
+        { icon: 'svg-history-course', text: 'ספרות' }
     ],
     "ar": [
         { icon: 'svg-math-course', text: 'حساب' },

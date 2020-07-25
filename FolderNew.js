@@ -53,6 +53,7 @@ export default function FolderNew(props) {
             <TouchableOpacity
                 activeOpacity={props.asTitle ? 1 : 0.7}
                 onPress={props.onPress ? (e) => props.onPress(e, folderColor) : undefined}
+                onLongPress={props.onLongPress ? (e) => props.onLongPress(e) : undefined}
 
                 style={{
                     flexDirection: 'row-reverse', justifyContent: 'space-between',

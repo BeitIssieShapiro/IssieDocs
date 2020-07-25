@@ -80,11 +80,11 @@ export const FolderTextStyle = {
 }
 
 export const availableIcons = [
-    "account-balance",
+//    "account-balance",
     "alarm",
     "cake",
     "exposure-plus-2",
-    "build",
+//    "build",
     "location-city",
     "grade",
     "flight-takeoff",
@@ -94,7 +94,7 @@ export const availableIcons = [
     "room",
     "shopping-cart",
     "today",
-    "cloud",
+//    "cloud",
     "headset",
     "computer",
     "toys",
@@ -105,7 +105,7 @@ export const availableIcons = [
     "local-pizza",
     "traffic",
     "beach-access",
-    "child-friendly",
+//    "child-friendly",
     "pool"
 ]
 
@@ -326,7 +326,7 @@ export function normalizeTitle(title) {
 export function getFileNameDialog(fileName,
     currentFolderName, folders,
     onChangeName, onChangeFolder, onSaveNewFolder,
-    navigation, isLandscape) {
+    navigation, isLandscape, onLayout) {
 
     const defFolderName = translate("DefaultFolder")
 
@@ -344,7 +344,7 @@ export function getFileNameDialog(fileName,
         }
     })
     return (
-        <View style={[styles.textInputView, isLandscape ? { flexDirection: 'row-reverse' } : {}]} >
+        <View style={[styles.textInputView, isLandscape ? { flexDirection: 'row-reverse' } : {}]} onLayout={onLayout}>
             <View style={{ flex: 1, width: '100%' }}>
                 <AppText style={[styles.titleText, { marginVertical: 7 }]}>{translate("CaptionPageName")}</AppText>
                 <TextInput style={globalStyles.textInput}

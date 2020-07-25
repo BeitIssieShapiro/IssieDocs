@@ -15,7 +15,7 @@ import {
     registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage,
 } from "./lang.js"
 import { USE_COLOR, getUseColorSetting } from './settings.js'
-import {setNavParam} from './utils'
+import { setNavParam } from './utils'
 import {
     getFolderAndIcon,
     DEFAULT_FOLDER_NAME,
@@ -25,6 +25,7 @@ import {
     validPathPart,
     AppText,
     getSvgIconButton,
+    getIcon,
     FOLDERS_DIR
 } from './elements'
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
@@ -160,7 +161,7 @@ export default class FolderGallery extends React.Component {
             }
 
 
-            this.setState({ folders: await sortFolders(foldersState), currentFolder, returnFolderName: undefined , loading:false} );
+            this.setState({ folders: await sortFolders(foldersState), currentFolder, returnFolderName: undefined, loading: false });
 
         })
 
@@ -236,6 +237,7 @@ export default class FolderGallery extends React.Component {
     onFolderPressed = (folder) => {
         this.setState({ currentFolder: folder })
     }
+
 
     isSelected = (page) => {
         if (this.state.selected && page) {
@@ -476,7 +478,7 @@ export default class FolderGallery extends React.Component {
         }
         let viewStyle = Settings.get('viewStyle');
         let asTiles = viewStyle === 2;
-        let treeWidth = this.isLandscape() ? 220: 180;//.36 * this.state.windowSize.width;
+        let treeWidth = this.isLandscape() ? 220 : 180;//.36 * this.state.windowSize.width;
         let pagesContainerWidth = this.state.windowSize.width - treeWidth;
         let numColumnsForTiles = Math.floor(pagesContainerWidth / dimensions.tileWidth);
         let foldersCount = this.state.folders ? this.state.folders.length : 1;
@@ -564,39 +566,39 @@ export default class FolderGallery extends React.Component {
                 </View>
 
                 <View style={{
-                    flex: 1, flexDirection: "row", backgroundColor: semanticColors.mainAreaBG, 
-                    position: 'absolute', width: "100%", 
-                    top: dimensions.toolbarHeight, left: 0, 
+                    flex: 1, flexDirection: "row", backgroundColor: semanticColors.mainAreaBG,
+                    position: 'absolute', width: "100%",
+                    top: dimensions.toolbarHeight, left: 0,
                     height: this.state.windowSize.height - dimensions.toolbarHeight, zIndex: 4,
                 }} >
                     {/* MainExplorer*/}
                     {isEmptyApp ?
-                    this.state.loading?
-                    <View>
-                        <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
-                    </View> :
-                    <View style={{width:"100%"}}>
-                        <View style={{ position: 'absolute', left: 80, top: 30, alignItems: 'flex-end', flexDirection:'row' }}>
-                            {getSvgIcon('start-icon', 150, semanticColors.addButton)}
-                            <Spacer />
-                            <AppText style={{ fontSize: 35, color:'#797a7c' }}>{translate("StartHere")}</AppText>
-                        </View>
-                        <View style={{position:"absolute", width:"100%", height:'20%', top:"25%" ,alignItems:"center"}}>
-                        {getSvgIcon('folder', 150, semanticColors.addButton)}
-                        <AppText style={{ fontSize: 35, color:'#797a7c' }}>{translate("DesktopEmpty")}</AppText>
+                        this.state.loading ?
+                            <View>
+                                <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
+                            </View> :
+                            <View style={{ width: "100%" }}>
+                                <View style={{ position: 'absolute', left: 80, top: 30, alignItems: 'flex-end', flexDirection: 'row' }}>
+                                    {getSvgIcon('start-icon', 150, semanticColors.addButton)}
+                                    <Spacer />
+                                    <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("StartHere")}</AppText>
+                                </View>
+                                <View style={{ position: "absolute", width: "100%", height: '20%', top: "25%", alignItems: "center" }}>
+                                    {getSvgIcon('folder', 150, semanticColors.addButton)}
+                                    <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("DesktopEmpty")}</AppText>
 
-                        </View>
-                        <View style={{position:'absolute', width:'100%', bottom: '20%', flexDirection:'row', justifyContent:'center'}}>
-                        {getSvgIcon('welcome-image', 100, semanticColors.addButton)}
-                        <Spacer width={50}/>
-                        {getSvgIcon('welcome-doc', 100, semanticColors.addButton)}
-                        <Spacer width={50}/>
-                        {getSvgIcon('welcome-pdf', 100, semanticColors.addButton)}
-                        <Spacer width={50}/>
-                        {getSvgIcon('welcome-folder', 100, semanticColors.addButton)}
+                                </View>
+                                <View style={{ position: 'absolute', width: '100%', bottom: '20%', flexDirection: 'row', justifyContent: 'center' }}>
+                                    {getSvgIcon('welcome-image', 100, semanticColors.addButton)}
+                                    <Spacer width={50} />
+                                    {getSvgIcon('welcome-doc', 100, semanticColors.addButton)}
+                                    <Spacer width={50} />
+                                    {getSvgIcon('welcome-pdf', 100, semanticColors.addButton)}
+                                    <Spacer width={50} />
+                                    {getSvgIcon('welcome-folder', 100, semanticColors.addButton)}
 
-                        </View>
-                    </View>
+                                </View>
+                            </View>
                         :
                         <View style={{
                             flex: 1, flexDirection: "column", position: 'absolute', top: 0, width: pagesContainerWidth, left: 0, height: "100%",
@@ -661,13 +663,14 @@ export default class FolderGallery extends React.Component {
 
 
                                     : this.state.currentFolder ?
-                                        <View style={{ alignItems: 'center', marginTop: 50 }}>
-                                            {getSvgIcon('folder')}
-                                            <AppText style={{ fontSize: 35 }}>{translate("NoPagesYet")}</AppText>
-                                        </View> :
-                                        <View style={{ alignItems: 'center', marginTop: 50 }}>
-                                            <AppText style={{ fontSize: 35 }}> {translate("ChooseFolder")}</AppText>
-                                        </View>}
+                                        <View style={{alignItems:'center'}}>
+                                            {getDesktopHint(1)}
+                                            <Spacer height={100}/>
+                                            <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("NoPagesYet")}</AppText>
+                                        </View>
+                                        :
+                                        getDesktopHint(2)
+                                }
                             </View>
                         </View>
 
@@ -681,7 +684,7 @@ export default class FolderGallery extends React.Component {
                                 flex: 1,
                                 flexDirection: "column",
                                 position: 'absolute',
-                                top: 0, width: treeWidth, 
+                                top: 0, width: treeWidth,
                                 right: 0,
                                 height: this.state.windowSize.height - dimensions.topView - dimensions.toolbarHeight,
                                 backgroundColor: 'white'
@@ -690,7 +693,7 @@ export default class FolderGallery extends React.Component {
 
                             contentContainerStyle={{
 
-                               
+
 
                             }}>
 
@@ -707,6 +710,10 @@ export default class FolderGallery extends React.Component {
                                         //dragPanResponder: this._panResponder.panHandlers, 
                                         current: (this.state.currentFolder && f.name == this.state.currentFolder.name),
                                         onPress: () => this.onFolderPressed(f),
+                                        onLongPress: () => {
+                                            if (this.state.currentFolder && f.name == this.state.currentFolder.name)
+                                                this.setState({ currentFolder: undefined })
+                                        },
                                         onMoveUp: () => this.moveFolderUp(f),
                                         onMoveDown: () => this.moveFolderDown(f),
                                         isLandscape: this.isLandscape()
@@ -719,6 +726,26 @@ export default class FolderGallery extends React.Component {
             </View>
         );
     }
+}
+//1=create-pages, 2=create-pages+select-folder
+function getDesktopHint(amount) {
+    return <View style={{ flexDirection: 'row', width: '100%', marginTop: 25 }}>
+        <View style={{ width: '50%', alignItems: 'center' }}>
+            {getSvgIcon('start-icon', 150, semanticColors.addButton)}
+            <Spacer />
+            <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("StartHere")}</AppText>
+        </View>
+        <Spacer />
+        <Spacer />
+        {amount == 2 ? <View style={{ width: '50%', alignItems: 'center' }}>
+
+            <AppText style={{ fontSize: 35, color: '#797a7c' }}> {translate("ChooseFolder")}</AppText>
+            <Spacer />
+            {getSvgIcon('arrow-to-folders')}
+        </View> :
+            <View style={{ width: '50%' }} />}
+
+    </View>
 }
 
 const styles = StyleSheet.create({

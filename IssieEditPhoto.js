@@ -1123,8 +1123,8 @@ export default class IssieEditPhoto extends React.Component {
           value={this.state.inputTextValue}
         />
         <View style={{
-          position: 'absolute', left: DRAG_ICON_SIZE + 3, top: 0,
-          width: this.state.inputTextWidth + 5, height: this.state.inputTextHeight,
+          position: 'absolute', left: DRAG_ICON_SIZE - 2, top: 0,
+          width: this.state.inputTextWidth + 10, height: this.state.inputTextHeight,
           zIndex: 20
         }}
           backgroundColor={this.state.color === '#fee100' ? 'gray' : 'yellow'}

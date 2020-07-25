@@ -2,8 +2,9 @@
 import React from 'react';
 import {
   ImageBackground, TouchableOpacity, StyleSheet, View, Text,
-  Alert, Dimensions, PanResponder, ImageEditor
+  Alert, Dimensions, PanResponder
 } from 'react-native';
+import ImageEditor from "@react-native-community/image-editor";
 import { FOLDERS_DIR } from './elements';
 import * as RNFS from 'react-native-fs';
 import Pdf from 'react-native-pdf';
@@ -11,6 +12,7 @@ import ViewShot from "react-native-view-shot";
 import { StackActions } from '@react-navigation/native';
 import { Icon } from 'react-native-elements'
 import { translate } from './lang.js'
+import Animated from 'react-native-reanimated'
 
 import {
   getIconButton,
@@ -24,6 +26,7 @@ import { getNewPage, saveFile, cloneToTemp, SRC_RENAME, SRC_DUPLICATE } from './
 import { pushFolderOrder } from './sort'
 import ProgressCircle from 'react-native-progress-circle'
 import { fTranslate } from './lang';
+import Scroller from './scroller';
 
 const OK_Cancel = 1;
 const PickName = 2;
@@ -31,6 +34,8 @@ const PickFolder = 3;
 
 const headerHeight = 60;
 const panBroderDistance = 80;
+
+
 
 export default class IssieSavePhoto extends React.Component {
 
@@ -43,7 +48,6 @@ export default class IssieSavePhoto extends React.Component {
       onMoveShouldSetPanResponder: (evt, gestureState) => Math.abs(gestureState.dy) > 5,
       onMoveShouldSetPanResponderCapture: (evt, gestureState) => Math.abs(gestureState.dy) > 5,
       onPanResponderMove: (evt, gestureState) => {
-
         let yOffsetBegin = this.state.yOffsetBegin;
         if (!yOffsetBegin) {
           yOffsetBegin = this.state.yOffset;
@@ -433,15 +437,17 @@ export default class IssieSavePhoto extends React.Component {
       },
       resizeMode: 'stretch'
     };
-    ImageEditor.cropImage(this.state.uri, cropData,
+    Alert.alert("About to crop:"+this.state.uri)
+    ImageEditor.cropImage(this.state.uri, cropData).then(
       //success: 
       (newUri) => {
+        Alert.alert("Cropped")
         this.setState({ uri: newUri, cropping: false });
         this.updateImageDimension()
       },
       //failure: 
-      (error) => { }
-    );
+      (error) => { Alert.alert("Failed to crop:"+ error)}
+    )
   }
 
   rotate = (deg) => {
@@ -543,15 +549,20 @@ export default class IssieSavePhoto extends React.Component {
           {this.state.cropping ? <View /> : getIconButton(this.rotateRight, semanticColors.addButton, "rotate-right", 45)}
         </View> : null}
       </View>
+    // let transformY = { translateY: this.state.yOffset }
 
-
+    // if (this.state.yOffset != 0) {
+    //   // if (!isNumber(this.state.yOffset)) {
+    //   //   Alert.alert("not number")
+    //   // }
+    //   //Alert.alert("trans:"+JSON.stringify(transformY))
+    // }
+    const onLayoutHost = {}
     if (this.state.phase == PickName) {
       PageNameInput =
-        <View style={{
-          width: '100%', height: '100%',
-          transform: [{ translateY: this.state.yOffset }]
-        }}
-          {...this._panResponderMove.panHandlers}>
+        <Scroller height={this.state.windowSize.height}
+        onLayout= {onLayoutHost}>
+
           {getFileNameDialog(
             this.state.pageName,
             this.state.folder,
@@ -560,9 +571,12 @@ export default class IssieSavePhoto extends React.Component {
             (text) => this.setState({ folder: text }),
             (folder) => this.saveNewFolder(folder),
             this.props.navigation,
-            this.state.windowSize.width > this.state.windowSize.height //isLandscape
+            this.state.windowSize.width > this.state.windowSize.height, //isLandscape,
+            (e) => onLayoutHost.onLayout?onLayoutHost.onLayout(e):{}
           )}
-        </View>
+
+
+        </Scroller>
     }
 
     let cropFrame = <View />;
@@ -621,7 +635,7 @@ export default class IssieSavePhoto extends React.Component {
                   color="#3399FF"
                   shadowColor="#999"
                   bgColor="white"
-                  percent={this.state.pdfInProcess * 100/ this.state.pdfPageCount}
+                  percent={this.state.pdfInProcess * 100 / this.state.pdfPageCount}
                   borderWidth={5} >
                   <Text style={{ zIndex: 100, fontSize: 25 }}>{fTranslate("ImportProgress", this.state.pdfInProcess, this.state.pdfPageCount)}</Text>
                 </ProgressCircle>

@@ -1,3 +1,20 @@
+Call with Dana 16-July:
+V - Crop crash the app
+V - The BG of yellow behind text being written needs to be extended to the right just a bit
+V - from suggested icons to new folder - remove 4 so no scrolling:
+  - cloud
+  - עגלה
+  - מפתח
+  - בית
+- 3 situations of empty desktop:
+  - new app : there we show like now
+  - no selected folder: we show 2 arrows - create and selected
+  - empty folder: we show create and icon that looks the same as the folder on the right
+- Unselect folder - wait for answer from Dana
+
+
+
+
 V * cancel share
 V * default color for courses
 
@@ -92,3 +109,5 @@ Design:
 - icon colors
 V- rename background
 - Add scale for brush and text
+
+
