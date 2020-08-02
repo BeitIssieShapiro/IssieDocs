@@ -24,6 +24,7 @@ var strings = {
         "ActionCancelled": "הפעולה בוטלה",
         "PDFLoadFailed": "טעינת PDF נכשלה",
         "DefaultFolder": "כללי",
+        "Search":"חפש",
 
         "DeletePageTitle": "מחיקת דף",
         "DeleteFolderTitle": "מחיקת תיקייה",
@@ -100,6 +101,7 @@ var strings = {
         "ActionCancelled": "تم إلغاء الإجراء",
         "PDFLoadFailed": "فشل في تحميل ملف PDF",
         "DefaultFolder": "عام",
+        "Search":"بحث", //check
 
         "DeletePageTitle": "حذف الصفحة",
         "DeleteFolderTitle": "حذف المجلد",
@@ -175,7 +177,7 @@ const foldersAndIcons = {
         { icon: 'svg-math-course', text: 'חשבון' },
         { icon: 'svg-heb-course', text: 'עברית' },
         { icon: 'svg-eng-course', text: 'אנגלית' },
-        { icon: 'science', text: 'מדעים' },
+        { icon: 'svg-science-course', text: 'מדעים' },
         { icon: 'svg-torah-course', text: 'תורה' },
         { icon: 'account-balance', text: 'היסטוריה' },
         { icon: 'public', text: 'גיאוגרפיה' },

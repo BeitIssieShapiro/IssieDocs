@@ -1,5 +1,5 @@
 export function isSimulator() {
-    return true;
+    return false;
 }
 
 export function setNavParam(nav, name, val) {

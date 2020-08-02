@@ -564,7 +564,7 @@ export function getHeaderBackButton(nav) {
 
 export function Spacer(props) {
     return (
-        <View style={{ width: props.width || 20, height: props.height || 20 }} />
+        <View style={{ width: props.width || 20, height: props.height || 20}} />
     );
 }
 
@@ -580,7 +580,7 @@ export function AppText(props) {
         <Text style={[{
             fontFamily: APP_FONT,
             fontSize: 24,
-            textAlign: 'right'
+            textAlign: 'right',
         }, props.style]} >{props.children}</Text>
     );
 }

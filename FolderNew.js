@@ -12,7 +12,7 @@ import {
 export default function FolderNew(props) {
     //let folderColor = props.useColors?folderColors[props.index % folderColors.length]: 'gray';
     let folderAndIcon = getFolderAndIcon(props.name);
-    let folderColor = folderAndIcon.color.length > 0? folderAndIcon.color : 'gray';
+    let folderColor = folderAndIcon.color.length > 0 ? folderAndIcon.color : 'gray';
     let caption = normalizeTitle(folderAndIcon.name);
     let captionLimit = props.isLandscape ? 12 : 9;
 
@@ -29,7 +29,7 @@ export default function FolderNew(props) {
             key={props.id}
             style={{
                 alignContent: 'center',
-                width: '100%', height: props.asTitle?dimensions.folderAsTitleHeight:dimensions.folderHeight,
+                width: props.width || '100%', height: props.asTitle ? dimensions.folderAsTitleHeight : dimensions.folderHeight,
                 paddingTop: 10, paddingBottom: 10
             }}>
 
@@ -38,11 +38,11 @@ export default function FolderNew(props) {
                     position: 'absolute', flexDirection: 'row-reverse',
                     left: 0,
                     top: 10,
-                    height: '100%', width: '50%', 
+                    height: '100%', width: '50%',
                     backgroundColor: 'transparent',
                     justifyContent: 'flex-end',
                     alignItems: 'center',
-                    zIndex:100
+                    zIndex: 100
                 }}>
                     {getEmbeddedButton(props.onDelete, 'delete-forever', 40)}
                     <Spacer width={7} />
@@ -67,45 +67,55 @@ export default function FolderNew(props) {
                     flexDirection: 'row-reverse', alignItems: 'center'
 
                 }}>
-                    {props.asTitle? 
-                    <View
-                        style={{
-                            flexDirection: 'row-reverse', alignItems: 'center'
-                        }}
-                    >
-                        <View style={{ alignContent: 'center', paddingRight: 20 }}>
-                            <Icon name="folder" size={38} color={folderColor} />
-                            <View style={{ position: 'absolute', left: 10, top: 11 }}>
-                                {folderAndIcon.icon.length > 0 ? <FolderIcon name={folderAndIcon.icon} size={20} color={'white'} /> : null}
+                    {props.asTitle ?
+                        <View
+                            style={{
+                                flexDirection: 'row-reverse', alignItems: 'center'
+                            }}
+                        >
+                            <View style={{ alignContent: 'center', paddingRight: 20 }}>
+                                <Icon name="folder" size={38} color={folderColor} />
+                                <View style={{ position: 'absolute', left: 10, top: 11 }}>
+                                    {folderAndIcon.icon.length > 0 ? <FolderIcon name={folderAndIcon.icon} size={20} color={'white'} /> : null}
+                                </View>
                             </View>
-                        </View>
 
-                        <Spacer width={8} />
-                        <AppText style={[FolderTextStyle, { fontSize: 32, lineHeight: 39 }]}>{caption}</AppText>
-                    </View> :
-                    <View
-                        style={{
-                            flexDirection: 'column', alignItems: 'flex-end', 
-                            marginRight:45, marginTop:15,
+                            <Spacer width={8} />
+                            <AppText style={[FolderTextStyle, { fontSize: 32, lineHeight: 39 }]}>{caption}</AppText>
+                        </View> :
+                        <View
+                            style={
+                                !props.isOverview ?
+                                    {
+                                        flexDirection: 'column', alignItems: 'flex-end',
+                                        width: '100%'
+                                    } :
+                                    { width: '100%', flexDirection: 'column', justifyContent: 'center' }
+                            }
+                        >
+                            <View style={{ flexDirection: 'row-reverse', justifyContent: props.isOverview ? 'center' : 'flex-start', width: '100%' }}>
+                                <Spacer width={20} />
+                                <Icon name="folder" size={72} color={folderColor} />
 
-                        }}
-                    >
-                        <View style={{ alignContent: 'center' }}>
-                            <Icon name="folder" size={72} color={folderColor} />
-                            <View style={{ position: 'absolute', left: 23, top: 23 }}>
-                                {folderAndIcon.icon.length > 0 ? <FolderIcon name={folderAndIcon.icon} size={30} color='white' /> : null}
+                                <View style={{ position: 'absolute', left: 0, top: 23, width: '100%', height: '100%' }}>
+                                    <View style={{ width: '100%', justifyContent: props.isOverview ? 'center' : 'flex-start', flexDirection: 'row-reverse' }}>
+                                        <Spacer width={props.isOverview ? undefined : 15 + 31} />
+                                        {folderAndIcon.icon.length > 0 ? <FolderIcon name={folderAndIcon.icon} size={30} color='white' /> : null}
+                                    </View>
+                                </View>
                             </View>
-                        </View>
-
-                        <AppText style={[FolderTextStyle,  
-                            {width:'100%', lineHeight:28, textAlign:'right'}] } >{caption}</AppText>
-                    </View>}
+                            <View style={{ flexDirection: 'row', width: '100%' }}>
+                                <AppText style={[FolderTextStyle,
+                                    { width: '90%', lineHeight: 28, textAlign: props.isOverview ? 'center' : 'right' }]} >{caption}</AppText>
+                                {props.isOverview ? null : <Spacer />}
+                            </View>
+                        </View>}
                 </View>
 
             </TouchableOpacity>
             {
-                props.editMode && !props.fixedFolder && !props.asTitle ?
-                    <View style={{ position: 'absolute', left: 0, top: 10, flexDirection: 'column', alignItems: 'center', marginTop:15 }}>
+                props.editMode && !props.fixedFolder && !props.asTitle && !props.isOverview ?
+                    <View style={{ position: 'absolute', left: 0, top: 10, flexDirection: 'column', alignItems: 'center', marginTop: 15 }}>
                         <Icon name={"expand-less"} size={55} color={props.index == 1 ? 'gray' : 'black'} onPress={props.index > 1 ? props.onMoveUp : undefined} />
                         <Icon name={"expand-more"} size={55} color={props.isLast ? 'gray' : 'black'} onPress={props.isLast ? undefined : props.onMoveDown} />
                     </View> :

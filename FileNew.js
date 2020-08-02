@@ -24,7 +24,7 @@ export default function FileNew(props) {
 
                         <View style={{
                             position: 'absolute', top: 0,
-                            right: 0, width: '100%', height: '100%',
+                            right: 35, width: '100%', height: '100%',
                             zIndex: 100, alignItems: 'flex-start'
 
                         }}>
@@ -33,7 +33,9 @@ export default function FileNew(props) {
                                 <Icon name={'more-vert'} size={35} />
                             </TouchableOpacity>
                             {props.selected ?
-                                getActionButtons(props)
+                            <View style={{position: 'absolute', top: 0,left: 35}}>
+                                {getActionButtons(props)}
+                                </View>
                                 : null}
                         </View>
 

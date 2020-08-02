@@ -437,11 +437,9 @@ export default class IssieSavePhoto extends React.Component {
       },
       resizeMode: 'stretch'
     };
-    Alert.alert("About to crop:"+this.state.uri)
     ImageEditor.cropImage(this.state.uri, cropData).then(
       //success: 
       (newUri) => {
-        Alert.alert("Cropped")
         this.setState({ uri: newUri, cropping: false });
         this.updateImageDimension()
       },
