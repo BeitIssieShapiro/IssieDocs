@@ -102,7 +102,7 @@ export default class FolderGallery extends React.Component {
             await this.refresh();
 
         } finally {
-            setTimeout(() => SplashScreen.hide(), 1000);
+            setTimeout(() => SplashScreen.hide(), 2000);
         }
     };
 
