@@ -20,6 +20,7 @@ import { EDIT_TITLE } from './settings'
 import TitleEdit from './title-edit.js'
 
 import { Icon } from 'react-native-elements'
+import { setIsSimulator } from './utils';
 
 // const MainNavigator = createStackNavigator({
 //   Home: {screen: FolderGallery},
@@ -38,8 +39,10 @@ YellowBox.ignoreWarnings([
 ]);
 
 
-function App() {
-
+function App(props) {
+  if (props.isSimulator) {
+    setIsSimulator(true)
+  }
   return (
     <NavigationContainer>
       <Stack.Navigator>
@@ -103,7 +106,7 @@ function App() {
               headerStyle: globalStyles.headerStyle,
               headerTintColor: 'white',
               headerTitleStyle: globalStyles.headerTitleStyle,
-              headerLeft: ()=>getHeaderBackButton(props.navigation)
+              headerLeft: null //()=>getHeaderBackButton(props.navigation)
             }
           }
         }
@@ -129,17 +132,15 @@ function App() {
               headerLeft:
                 () => <View >
                   <TouchableOpacity onPress={() => {
-                    props.navigation.goBack();
+                    props.route.params.goHome ? props.route.params.goHome() : {} 
                   }}
                     activeOpacity={1}
                     style={{flexDirection: 'row', alignItems: 'center' }}>
-                    <Icon name='keyboard-arrow-left' color='white' size={35} />
-                    <Spacer width={10} />
-                    <Icon name={'home'} color='white' size={30} />
+                    {/* <Icon name='keyboard-arrow-left' color='white' size={35} /> */}
+                    {/* <Spacer width={10} />*/}
+                    <Icon name={'home'} color='white' size={30} /> 
                   </TouchableOpacity>
-
                 </View>
-
             }
           }
           }
@@ -165,7 +166,7 @@ function App() {
                 headerStyle: globalStyles.headerStyle,
                 headerTintColor: 'white',
                 headerTitleStyle: globalStyles.headerTitleStyle,
-                headerLeft: ()=>getHeaderBackButton(props.navigation)
+                headerLeft: null
             }
         }
         }/>

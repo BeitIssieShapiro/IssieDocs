@@ -14,7 +14,7 @@ import { pushFolderOrder, renameFolder } from './sort'
 import {
     registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage,
 } from "./lang.js"
-import { USE_COLOR, getUseColorSetting } from './settings.js'
+import { USE_COLOR, getUseColorSetting, EDIT_TITLE, VIEW } from './settings.js'
 import { setNavParam } from './utils'
 import {
     getFolderAndIcon,
@@ -40,7 +40,7 @@ import { getSvgIcon } from './svg-icons';
 function checkFilter(filter, name) {
     if (filter === undefined || filter.length == 0)
         return true;
-        
+
     if (name.indexOf(filter) >= 0)
         return true;
 
@@ -491,8 +491,14 @@ export default class FolderGallery extends React.Component {
         if (this.state.folders && this.state.folders.length) {
             fIndex = this.state.folders.findIndex(f => f.name == curFolderFullName);
         }
-        let viewStyle = Settings.get('viewStyle');
-        let asTiles = viewStyle === 2;
+        let viewStyle = Settings.get(VIEW.name);
+        let asTiles = viewStyle === VIEW.tiles;
+
+        let editTitleSetting = Settings.get(EDIT_TITLE.name);
+        if (editTitleSetting === undefined) {
+            editTitleSetting = EDIT_TITLE.no;
+        }
+
         let treeWidth = this.state.currentFolder ? (this.isLandscape() ? 220 : 180) : 0;//.36 * this.state.windowSize.width;
         let pagesContainerWidth = this.state.windowSize.width - treeWidth;
         let numColumnsForTiles = Math.floor(pagesContainerWidth / dimensions.tileWidth);
@@ -508,6 +514,8 @@ export default class FolderGallery extends React.Component {
         let needPagesScroll = pagesHeightSize > pagesAreaWindowHeight;
 
         let isEmptyApp = !this.state.folders || this.state.folders.length == 0;
+        let enableEdit = editTitleSetting === EDIT_TITLE.yes ||
+            this.state.currentFolder && (this.state.foldersCount > 1 || this.state.currentFolder.name !== DEFAULT_FOLDER_NAME);
 
         return (
             <View style={styles.container}
@@ -573,10 +581,10 @@ export default class FolderGallery extends React.Component {
                     {/*right buttons */}
                     <View style={{ position: 'absolute', right: 17, flexDirection: 'row-reverse', alignItems: 'center' }}>
                         {
-                            getMaterialCommunityIconButton(() => {
-                                let selected = this.state.editMode ? undefined : this.state.selected;
-                                this.toggleEditMode()
-                            }, semanticColors.addButton, this.state.editMode ? "close-outline" : "pencil-outline", 35)
+                                getMaterialCommunityIconButton(enableEdit? () => {
+                                    this.toggleEditMode()
+                                }:undefined, enableEdit?semanticColors.addButton:semanticColors.disabledButton, this.state.editMode ? "close-outline" : "pencil-outline", 35)
+                                
                         }
                         <Spacer width={20} />
                         {
@@ -678,7 +686,16 @@ export default class FolderGallery extends React.Component {
                                             rowWidth: pagesContainerWidth,
                                             editMode: this.state.editMode,
                                             selected: this.isSelected(item),
-                                            onPress: () => this.props.navigation.navigate('EditPhoto', { page: item, share: false }),
+                                            onPress: () => this.props.navigation.navigate('EditPhoto', 
+                                                { 
+                                                    page: item,
+                                                    folderName: this.state.currentFolder.name, 
+                                                    share: false,
+                                                    goHome: () => {
+                                                        this.setState({currentFolder:undefined})
+                                                        this.props.navigation.goBack();
+                                                    }
+                                                }),
                                             onSelect: () => this.toggleSelection(item, 'file'),
                                             onDelete: () => this.DeletePage(),
                                             onRename: () => this.RenamePage(true),
@@ -698,34 +715,6 @@ export default class FolderGallery extends React.Component {
                                             <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("NoPagesYet")}</AppText>
                                         </View>
                                         :
-                                        // <FlatList
-                                        //     style={{
-                                        //     }}
-                                        //     contentContainerStyle={{
-                                        //         width: '100%', alignItems: 'flex-end',
-                                        //         height: '100%',
-                                        //         alignItems: "center"
-                                        //     }}
-                                        //     bounces={false}
-
-                                        //     data={this.state.folders}
-                                        //     renderItem={({item, index}) => 
-                                        //     {
-                                        //         //Alert.alert(JSON.stringify(item.name))
-                                        //     return <FolderNew 
-                                        //         index={index}
-                                        //         id= {item.name}
-                                        //         name= {item.name}
-                                        //         editMode={this.state.editMode}
-                                        //         fixedFolder={ false }//item.name === DEFAULT_FOLDER_NAME}
-                                        //         current={false}
-                                        //         onPress= {() => this.onFolderPressed(item)}
-
-                                        //         isLandscape={ this.isLandscape()}
-                                        //     />}}
-                                        //     numColumns={2}
-                                        //     keyExtractor={(item, index) => index.toString()}
-                                        // />
                                         <View
                                             style={{
                                                 flexWrap: 'wrap', flexDirection: 'row-reverse',
@@ -734,7 +723,7 @@ export default class FolderGallery extends React.Component {
                                                 alignItems: 'center'
                                             }}
                                         >
-                                            {this.state.folders.filter((item)=>checkFilter(this.state.filterFolders, item.name)).map((item, index) => <FolderNew
+                                            {this.state.folders.filter((item) => checkFilter(this.state.filterFolders, item.name)).map((item, index) => <FolderNew
                                                 key={index.toString()}
                                                 id={item.name}
                                                 isOverview={true}

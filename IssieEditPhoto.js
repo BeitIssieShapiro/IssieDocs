@@ -26,6 +26,7 @@ import {
 import { translate } from './lang';
 import { getSvgIcon } from './svg-icons';
 import { setNavParam } from './utils';
+import FolderNew from './FolderNew';
 
 const topLayer = dimensions.toolbarHeight + dimensions.toolbarMargin; //51 + 8 + 8 + 35;
 const shareTimeMs = 2000;
@@ -411,7 +412,7 @@ export default class IssieEditPhoto extends React.Component {
         origElem.normPosition.x == newElem.normPosition.x &&
         origElem.normPosition.y == newElem.normPosition.y &&
         origElem.fontSize == newElem.fontSize &&
-        origElem.color == newElem.color) {
+        origElem.fontColor == newElem.fontColor) {
         //need to set the current text back to canvas
         this.setState({
           needCanvasUpdate: true,
@@ -679,12 +680,12 @@ export default class IssieEditPhoto extends React.Component {
       if (wDiff <= 0 && hDiff <= 0) {
         //image fit w/o scale
         if (wDiff < 0 && hDiff < 0) {
-        if (wDiff < hDiff) {
-          ratio = windowH / imageHeight
-        } else {
-          ratio = windowW / imageWidth
+          if (wDiff < hDiff) {
+            ratio = windowH / imageHeight
+          } else {
+            ratio = windowW / imageWidth
+          }
         }
-      }
 
 
 
@@ -769,16 +770,28 @@ export default class IssieEditPhoto extends React.Component {
           height: dimensions.toolbarHeight, backgroundColor: semanticColors.subTitle,
           zIndex: 30
         }} >
+          <View style={{position: 'absolute', top: 0, left:0, height:'100%', justifyContent:'center'}}>
+            {
+              getIconButton(() => {
+                this.props.navigation.goBack();
+              }, semanticColors.editPhotoButton, "folder", 45)
+              // <FolderNew name={this.props.route.params.folderName} 
+              //     asTitle={true} 
+              //     hideTitle={true}
+              //     onPress={() => {
+              //          this.props.navigation.goBack();
+              //     }}/>
+            }
+          </View>
           <View style={{
             position: 'absolute',
             height: '100%',
-            left: toolbarSideMargin,
+            left: Math.max(toolbarSideMargin, 100),
             right: toolbarSideMargin,
             flexDirection: 'row',
             alignItems: 'center'
 
           }}>
-
             {
               getIconButton(() => {
                 this.state.queue.undo();
@@ -802,7 +815,7 @@ export default class IssieEditPhoto extends React.Component {
 
             <View style={{
               position: 'absolute',
-              left: this.state.windowW / 2 - toolbarSideMargin - 50,
+              left: this.state.windowW / 2 - toolbarSideMargin - 55,
               width: 100,
               height: '100%',
               backgroundColor: 'transparent',//'#eef4fa',

@@ -26,6 +26,13 @@ static void InitializeFlipper(UIApplication *application) {
 #endif
  */
 
+  
+#if TARGET_OS_SIMULATOR
+  BOOL isSimulator = YES;
+#else
+  BOOL isSimulator = NO;
+#endif
+
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -39,7 +46,7 @@ static void InitializeFlipper(UIApplication *application) {
   RCTBridge *bridge = [[RCTBridge alloc] initWithDelegate:self launchOptions:launchOptions];
   RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge
                                                    moduleName:@"IssieDocs4"
-                                            initialProperties:nil];
+                                            initialProperties:@{@"isSimulator": @(isSimulator)}];
 
   rootView.backgroundColor = [[UIColor alloc] initWithRed:1.0f green:1.0f blue:1.0f alpha:1];
 

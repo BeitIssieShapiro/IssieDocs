@@ -254,9 +254,6 @@ export function loadLanguage() {
     if (isSimulator()) {
         gPrefix = "."
     }
-
-    //Alert.alert(JSON.stringify(currStrings));
-
 }
 
 function isRTL() {

@@ -74,6 +74,8 @@
 	<string>Loading and save Images as pages</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Capturing new pages</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Save pages as images</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Loading images as pages</string>
 	<key>UIAppFonts</key>

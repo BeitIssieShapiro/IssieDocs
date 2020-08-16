@@ -1,5 +1,12 @@
+let gIsSimulator = false;
+
+export function setIsSimulator(val) {
+    gIsSimulator = val;
+}
+
+
 export function isSimulator() {
-    return false;
+    return gIsSimulator;
 }
 
 export function setNavParam(nav, name, val) {
