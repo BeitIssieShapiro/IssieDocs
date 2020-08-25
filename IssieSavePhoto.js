@@ -19,7 +19,7 @@ import {
   getImageDimensions,
   globalStyles, NEW_FOLDER_NAME, DEFAULT_FOLDER_NAME,
   getPageNavigationButtons, getFileNameDialog, semanticColors, getFolderAndIcon,
-  Spacer, getRoundedButton, dimensions, validPathPart, getHeaderBackButton
+  Spacer, getRoundedButton, dimensions, validPathPart
 } from './elements'
 import ImageRotate from 'react-native-image-rotate';
 import { getNewPage, saveFile, cloneToTemp, SRC_RENAME, SRC_DUPLICATE } from './newPage'

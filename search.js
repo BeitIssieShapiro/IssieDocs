@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
     View, Alert, TextInput
 } from 'react-native';
+import { Icon } from 'react-native-elements'
 
 import {
      translate
@@ -26,5 +27,8 @@ export default function Search(props) {
             }}
             value={props.value}
         />
+        <View style={{position:'absolute', left:'6%', top:0}}>
+            <Icon name={"search"} size={30} color={"#010101"}/>
+        </View>
     </View>
 }

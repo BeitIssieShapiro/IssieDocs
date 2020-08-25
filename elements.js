@@ -17,7 +17,7 @@ export const dimensions = {
     toolbarMargin: 5,
     topView: 70,
     folderHeight: 130,
-    folderAsTitleHeight: 56,
+    folderAsTitleHeight: 62,
     tileWidth: 190,
     lineHeight: 70,
     tileHeight: 197
@@ -349,6 +349,7 @@ export function getFileNameDialog(fileName,
                 <AppText style={[styles.titleText, { marginVertical: 7 }]}>{translate("CaptionPageName")}</AppText>
                 <TextInput style={globalStyles.textInput}
                     onChangeText={onChangeName}
+                    
                 >{fileName}</TextInput>
             </View>
             <Spacer />
@@ -549,12 +550,12 @@ export const globalStyles = StyleSheet.create({
 
 })
 
-export function getHeaderBackButton(nav) {
+export function getHeaderBackButton(callback) {
     return <View >
-        <TouchableOpacity onPress={() => { nav.pop() }}
+        <TouchableOpacity onPress={callback}
             activeOpacity={1}
             style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Icon name='keyboard-arrow-left' color='white' size={35} />
+            {/* <Icon name='keyboard-arrow-left' color='white' size={35} /> */}
             <Spacer width={10} />
             <Icon name={'home'} color='white' size={30} />
         </TouchableOpacity>

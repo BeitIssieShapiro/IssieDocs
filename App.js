@@ -75,7 +75,7 @@ function App(props) {
                 headerStyle: globalStyles.headerStyle,
                 headerTintColor: 'white',
                 headerTitleStyle: globalStyles.headerTitleStyle,
-                //headerLeft: 
+                headerLeft: props.route.params && props.route.params.showHome ? ()=>getHeaderBackButton(props.route.params.showHome):undefined,
                 headerRight: (() =>
                   <View style={{ flexDirection: 'row-reverse' }}>
                     <Spacer />
@@ -153,7 +153,7 @@ function App(props) {
             headerStyle: globalStyles.headerStyle,
             headerTintColor: 'white',
             headerTitleStyle: globalStyles.headerTitleStyle,
-            headerLeft: ()=>getHeaderBackButton(props.navigation)
+            headerLeft: ()=>getHeaderBackButton(()=>props.navigation.pop())
           }
         }
       }/>

@@ -31,7 +31,7 @@ export default function FolderNew(props) {
                 alignContent: 'center',
                 width: props.width || '100%',
                 height: props.asTitle ? dimensions.folderAsTitleHeight : dimensions.folderHeight,
-                paddingTop: 10, paddingBottom: 10
+                //paddingTop: 10, paddingBottom: 10
             }}>
 
             {props.editMode && props.asTitle && !props.fixedFolder && props.name && props.name.length > 0 ?
@@ -40,7 +40,7 @@ export default function FolderNew(props) {
                  */
                 <View style={{
                     position: 'absolute', flexDirection: 'row-reverse',
-                    left: 0,
+                    left: 18,
                     top: 10,
                     height: '100%', width: '50%',
                     backgroundColor: 'transparent',
@@ -49,7 +49,7 @@ export default function FolderNew(props) {
                     zIndex: 100
                 }}>
                     {getEmbeddedButton(props.onDelete, 'delete-forever', 40)}
-                    <Spacer width={7} />
+                    <Spacer width={17} />
                     {getEmbeddedButton(props.onRename, 'edit', 40)}
                 </View> : null
             }
@@ -78,15 +78,17 @@ export default function FolderNew(props) {
                                 flexDirection: 'row-reverse'
                             }}
                         >
-                            <View style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', paddingRight: 20 }}>
+                            <View style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', paddingRight: '20%', paddingBottom:'5%', height: '100%'}}>
                                 <Icon name="folder" size={45} color={folderColor} />
-                                <View style={{ position: 'absolute', left: 10, top: 12 }}>
-                                    {folderAndIcon.icon.length > 0 ? <FolderIcon name={folderAndIcon.icon} size={20} color={'white'} /> : null}
+                                <View style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
+                                    <View style={{ width: '100%', height:'100%', justifyContent: 'center',alignItems: 'center', paddingTop:'7%', flexDirection: 'row-reverse' }}>
+                                        {folderAndIcon.icon.length > 0 ? <FolderIcon name={folderAndIcon.icon} size={20} color={'white'} /> : null}
+                                    </View>
                                 </View>
                             </View>
 
                             <Spacer width={8} />
-                            {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: 32, lineHeight: 39 }]}>{caption}</AppText>}
+                            {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: 32, lineHeight: 44 }]}>{caption}</AppText>}
                         </View> :
                         /**
                          * Side Panel View or overview

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Alert, Text, TouchableOpacity, PanResponder, StyleSheet, Dimensions } from 'react-native';
-import { getHeaderBackButton, AppText, FolderIcon } from './elements.js'
+import { AppText, FolderIcon } from './elements.js'
 import { Icon } from 'react-native-elements'
 import { translate } from './lang.js'
 import Scroller from './scroller';

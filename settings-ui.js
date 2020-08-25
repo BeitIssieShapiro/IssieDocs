@@ -88,9 +88,10 @@ export default function Menu(props) {
 
                 backgroundColor: 'white', borderColor: 'gray', borderWidth: 1
             }}>
+            <Spacer />
             <View style={{ flexDirection: 'row-reverse', justifyContent: 'flex-start', alignItems: 'center' }}>
                 <Spacer width={11} />
-                <Icon name={'close'} onPress={props.onClose} size={45} />
+                <Icon name={'close'} onPress={props.onClose} size={30} />
                 <Spacer />
                 <AppText style={styles.SettingsHeaderText}>{translate("Settings")}</AppText>
             </View>

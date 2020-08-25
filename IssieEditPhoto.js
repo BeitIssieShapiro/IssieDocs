@@ -1,10 +1,9 @@
 
 import React from 'react';
 import {
-  AppRegistry, Image, ScrollView, StyleSheet, TextInput, View,
+  AppRegistry, ScrollView, StyleSheet, TextInput, View,
   TouchableOpacity, Text, Alert, PanResponder, Dimensions, Keyboard
 } from 'react-native';
-import { Svg, Path } from 'react-native-svg'
 import { Icon } from 'react-native-elements'
 import RNSketchCanvas from './modified_canvas/index';
 import LinearGradient from 'react-native-linear-gradient';
@@ -12,21 +11,20 @@ import * as RNFS from 'react-native-fs';
 import Share from 'react-native-share';
 import DoQueue from './do-queue';
 import FadeInView from './FadeInView'
-import { Spacer, globalStyles, getRoundedButton, getEraserIcon, getColorButton } from './elements'
+import { Spacer, getRoundedButton, getEraserIcon, getColorButton } from './elements'
 //import {ProgressView} from '@react-native-community/progress-view';
 import ProgressCircle from 'react-native-progress-circle'
 import { fTranslate } from './lang.js'
 
 
 import {
-  colors, DEFAULT_FOLDER_NAME, APP_FONT, getImageDimensions,
+  colors, APP_FONT, getImageDimensions,
   AppText,
   semanticColors, getIconButton, dimensions, availableTextSize, availableBrushSize, availableColorPicker
 } from './elements'
 import { translate } from './lang';
 import { getSvgIcon } from './svg-icons';
 import { setNavParam } from './utils';
-import FolderNew from './FolderNew';
 
 const topLayer = dimensions.toolbarHeight + dimensions.toolbarMargin; //51 + 8 + 8 + 35;
 const shareTimeMs = 2000;
@@ -336,7 +334,9 @@ export default class IssieEditPhoto extends React.Component {
 
     //check that the click is in the canvas area:
     if (ev.nativeEvent.pageX < this.state.sideMargin ||
-      ev.nativeEvent.pageX > this.state.sideMargin + this.state.canvasW) {
+      ev.nativeEvent.pageX > this.state.sideMargin + this.state.canvasW ||
+      ev.nativeEvent.pageY < topLayer ||
+      ev.nativeEvent.pageY > this.state.canvasH+topLayer) {
       return;
     }
     let needCanvasUpdate = false;

@@ -174,9 +174,13 @@ export default class FolderGallery extends React.Component {
                 //Alert.alert(JSON.stringify(foldersState))
                 //currentFolder = foldersState.find(f => f.name == DEFAULT_FOLDER_NAME);
             }
+            if (currentFolder) {
+                this.selectFolder(currentFolder)
+            } else {
+                this.unselectFolder(currentFolder)
+            }
 
-
-            this.setState({ folders: await sortFolders(foldersState), currentFolder, returnFolderName: undefined, loading: false });
+            this.setState({ folders: await sortFolders(foldersState), returnFolderName: undefined, loading: false });
 
         })
 
@@ -249,10 +253,16 @@ export default class FolderGallery extends React.Component {
         this.setState({ windowSize });
     }
 
-    onFolderPressed = (folder) => {
+    selectFolder = (folder) => {
         this.setState({ currentFolder: folder })
+        setNavParam(this.props.navigation, 'showHome', () => this.unselectFolder());
+
     }
 
+    unselectFolder = () => {
+        this.setState({ currentFolder: undefined })
+        setNavParam(this.props.navigation, 'showHome', undefined);
+    }
 
     isSelected = (page) => {
         if (this.state.selected && page) {
@@ -290,7 +300,7 @@ export default class FolderGallery extends React.Component {
                 {
                     text: translate("BtnDelete"), onPress: () => {
                         RNFS.unlink(this.state.currentFolder.path);
-                        this.setState({ currentFolder: undefined });
+                        this.unselectFolder()
                         this.refresh();
                     },
                     style: 'destructive'
@@ -581,17 +591,17 @@ export default class FolderGallery extends React.Component {
                     {/*right buttons */}
                     <View style={{ position: 'absolute', right: 17, flexDirection: 'row-reverse', alignItems: 'center' }}>
                         {
-                                getMaterialCommunityIconButton(enableEdit? () => {
-                                    this.toggleEditMode()
-                                }:undefined, enableEdit?semanticColors.addButton:semanticColors.disabledButton, this.state.editMode ? "close-outline" : "pencil-outline", 35)
-                                
+                            getMaterialCommunityIconButton(enableEdit ? () => {
+                                this.toggleEditMode()
+                            } : undefined, enableEdit ? semanticColors.addButton : semanticColors.disabledButton, this.state.editMode ? "close" : "pencil-outline", 35)
+
                         }
-                        <Spacer width={20} />
+                        {/* <Spacer width={20} />
                         {
                             this.state.currentFolder ?
                                 getIconButton(() => this.setState({ currentFolder: undefined }), semanticColors.addButton, "home", 45)
                                 : null
-                        }
+                        } */}
                     </View>
                 </View>
 
@@ -619,13 +629,13 @@ export default class FolderGallery extends React.Component {
 
                                 </View>
                                 <View style={{ position: 'absolute', width: '100%', bottom: '20%', flexDirection: 'row', justifyContent: 'center' }}>
-                                    {getSvgIcon('welcome-image', 100, semanticColors.addButton)}
+                                    {getSvgIcon('welcome-image', 80, semanticColors.addButton)}
                                     <Spacer width={50} />
-                                    {getSvgIcon('welcome-doc', 100, semanticColors.addButton)}
+                                    {getSvgIcon('welcome-doc', 80, semanticColors.addButton)}
                                     <Spacer width={50} />
-                                    {getSvgIcon('welcome-pdf', 100, semanticColors.addButton)}
+                                    {getSvgIcon('welcome-pdf', 80, semanticColors.addButton)}
                                     <Spacer width={50} />
-                                    {getSvgIcon('welcome-folder', 100, semanticColors.addButton)}
+                                    {getSvgIcon('welcome-folder', 80, semanticColors.addButton)}
 
                                 </View>
                             </View>
@@ -637,7 +647,7 @@ export default class FolderGallery extends React.Component {
                             <View style={{
                                 flex: 1, flexDirection: "row", height: "5%", position: 'absolute',
                                 width: "100%", top: 0, height: '10%', alignItems: 'center', justifyContent: 'flex-start',
-                                paddingRight: '5%', borderBottomWidth: this.state.currentFolder ? 1 : 0, borderBottomColor: 'gray'
+                                borderBottomWidth: this.state.currentFolder ? 1 : 0, borderBottomColor: 'gray'
                             }}>
                                 {this.state.currentFolder ? <FolderNew
                                     index={fIndex}
@@ -674,7 +684,7 @@ export default class FolderGallery extends React.Component {
                                         contentContainerStyle={{
                                             width: '100%', alignItems: 'flex-start',
                                             height: needPagesScroll ? pagesHeightSize : '100%',
-                                            alignItems: "center"
+                                            alignItems: 'flex-end'
                                         }}
                                         bounces={needPagesScroll}
                                         key={asTiles ? numColumnsForTiles.toString() : "list"}
@@ -686,13 +696,13 @@ export default class FolderGallery extends React.Component {
                                             rowWidth: pagesContainerWidth,
                                             editMode: this.state.editMode,
                                             selected: this.isSelected(item),
-                                            onPress: () => this.props.navigation.navigate('EditPhoto', 
-                                                { 
+                                            onPress: () => this.props.navigation.navigate('EditPhoto',
+                                                {
                                                     page: item,
-                                                    folderName: this.state.currentFolder.name, 
+                                                    folderName: this.state.currentFolder.name,
                                                     share: false,
                                                     goHome: () => {
-                                                        this.setState({currentFolder:undefined})
+                                                        this.unselectFolder();
                                                         this.props.navigation.goBack();
                                                     }
                                                 }),
@@ -710,17 +720,18 @@ export default class FolderGallery extends React.Component {
 
 
                                     : this.state.currentFolder ?
-                                        <View style={{ alignItems: 'center' }}>
+                                        <View style={{ alignItems: 'center', height: '100%' }}>
+                                            <Spacer height='20%' />
                                             {getSvgIcon('folder')}
                                             <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("NoPagesYet")}</AppText>
                                         </View>
                                         :
+
                                         <View
                                             style={{
                                                 flexWrap: 'wrap', flexDirection: 'row-reverse',
-                                                width: '100%', justifyContent: 'flex-start',
-                                                height: '100%',
-                                                alignItems: 'center'
+                                                width: '90%', justifyContent: 'flex-start', alignItems: 'center',
+                                                height: '100%'
                                             }}
                                         >
                                             {this.state.folders.filter((item) => checkFilter(this.state.filterFolders, item.name)).map((item, index) => <FolderNew
@@ -732,11 +743,12 @@ export default class FolderGallery extends React.Component {
                                                 editMode={this.state.editMode}
                                                 fixedFolder={false}//item.name === DEFAULT_FOLDER_NAME}
                                                 current={false}
-                                                onPress={() => this.onFolderPressed(item)}
+                                                onPress={() => this.selectFolder(item)}
 
                                                 isLandscape={this.isLandscape()}
                                             />)}
                                         </View>
+
                                 }
                             </View>
                         </View>
@@ -773,10 +785,10 @@ export default class FolderGallery extends React.Component {
                                         fixedFolder: f.name === DEFAULT_FOLDER_NAME,
                                         //dragPanResponder: this._panResponder.panHandlers, 
                                         current: (this.state.currentFolder && f.name == this.state.currentFolder.name),
-                                        onPress: () => this.onFolderPressed(f),
+                                        onPress: () => this.selectFolder(f),
                                         onLongPress: () => {
                                             if (this.state.currentFolder && f.name == this.state.currentFolder.name)
-                                                this.setState({ currentFolder: undefined })
+                                                this.unselectFolder()
                                         },
                                         onMoveUp: () => this.moveFolderUp(f),
                                         onMoveDown: () => this.moveFolderDown(f),
