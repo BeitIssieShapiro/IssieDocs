@@ -10,7 +10,8 @@ import {
     getEmbeddedButton,
     Spacer,
     semanticColors,
-    getMaterialCommunityIconButton
+    getMaterialCommunityIconButton,
+    getIconButton
 } from './elements'
 
 
@@ -45,8 +46,8 @@ export default function TitleEdit(props) {
         }}>
 
             {
-            getMaterialCommunityIconButton(() => setEditMode(!editMode),
-                                'white', editMode ? "close-outline" : "pencil-outline", 40)
+            getIconButton(() => setEditMode(!editMode),
+                                'white', editMode ? "close" : "edit", 40)
             }
 
             {/* {!editMode ?

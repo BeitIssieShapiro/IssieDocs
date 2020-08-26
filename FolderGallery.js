@@ -80,6 +80,8 @@ export default class FolderGallery extends React.Component {
     }
 
     componentDidMount = async () => {
+        let startTime = new Date();
+
         try {
             Linking.getInitialURL().then((url) => {
                 if (url) {
@@ -102,7 +104,15 @@ export default class FolderGallery extends React.Component {
             await this.refresh();
 
         } finally {
-            setTimeout(() => SplashScreen.hide(), 2000);
+            //calculate min of 3 second from start:
+            let ellapsed = new Date() - startTime;
+            ellapsed /= 1000;
+            var ellapsedSeconds = Math.round(ellapsed);
+            if (ellapsedSeconds >= 3) {
+                SplashScreen.hide();
+            } else {
+                setTimeout(() => SplashScreen.hide(), 3000-ellapsed*1000);
+            }
         }
     };
 
@@ -591,9 +601,9 @@ export default class FolderGallery extends React.Component {
                     {/*right buttons */}
                     <View style={{ position: 'absolute', right: 17, flexDirection: 'row-reverse', alignItems: 'center' }}>
                         {
-                            getMaterialCommunityIconButton(enableEdit ? () => {
+                            getIconButton(enableEdit ? () => {
                                 this.toggleEditMode()
-                            } : undefined, enableEdit ? semanticColors.addButton : semanticColors.disabledButton, this.state.editMode ? "close" : "pencil-outline", 35)
+                            } : undefined, enableEdit ? semanticColors.addButton : semanticColors.disabledButton, this.state.editMode ? "close" : "edit", 35)
 
                         }
                         {/* <Spacer width={20} />
