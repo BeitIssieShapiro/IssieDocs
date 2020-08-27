@@ -1,0 +1,119 @@
+Bugs:
+- in pen mode, click out of the picture
+- rename page - image not found
+- 
+
+
+Call with Dana 16-July:
+V - Crop crash the app
+V - The BG of yellow behind text being written needs to be extended to the right just a bit
+V - from suggested icons to new folder - remove 4 so no scrolling:
+  - cloud
+  - עגלה
+  - מפתח
+  - בית
+V - 3 situations of empty desktop:
+  - new app : there we show like now
+  - no selected folder: we show 2 arrows - create and selected
+  - empty folder: we show create and icon that looks the same as the folder on the right
+V - Unselect folder - wait for answer from Dana
+
+
+
+
+V * cancel share
+V * default color for courses
+
+
+V * in text editing, switching to drawing - text is lost
+V * location with kb, when text size is large
+V * doodle is not wide enough
+
+
+V * multi page header 1/3
+V * nav buttons of multi page design
+V* tiles option
+V * about text
+V* splash screen
+V* hour glass when share
+
+V* rename page name throws error and succeed
+V* import/share pdf in landscape - progress not in the middle
+XX* swipe in text mode, only get swipe on the canvas, not on the margins (landscape)
+V* checkbox of page in tile/edit should not be transparent, fix the white background
+
+
+
+
+Features
+--------
+V* click deselect
+V* rename file
+V* rename folder
+V* save camera does not show whole page
+V* cancel new
+V* main page title: IssieDoc, שולחן העבודה שלי
+V* crop data - remove
+*12.3
+V* new folder gets covered by keyboard
+V* multiline text
+V* + for all pages
+V* share for folder - remove
+* back arrow with icons
+* main page with home icon
+* icon for all pgaes/folder
+* icons for selected folder
+V* Move page to another folder
+* brush size cosmetics
+X* multiple pages header 1of2 etc.
+V* PDF - allow seeing all pages
+V* Photo - show (n) instead of +
+* optimize loading list of folders any times
+
+V* Import from albom
+V* export to albom (via share)
+V* Send to mail
+V* Multiple photos in one pages
+V* Support import pdf
+X* Scroll edited page when keyboard opened  
+X* In zoom - move arround with swipe
+V* new from within folder, goes to folder
+V* enlarge frame of folder picker
+V* headers' color (where navigation happens)
+V * Delete button - style
+V * Ask before Delete
+V * In editPhoto, when changing text size, the text does not change
+X* Add app-configuration
+  * Navigate with buttons and not swipe
+
+V* Image for folders:
+  V* when creating new folder
+  V* when picking
+  V* in galery
+V * cancel button in camera screen
+V * zoom in camera
+
+
+Bugs:
+-----
+V* no shelf for pages - only in iPad?
+V * input Text positioning - fine tune
+V* Unselect folder crash
+V* import pdf - extra page
+V* cosmetics of new folder
+V* share - missing paths
+V* when clicking a text, and after that save text, if same text and same posyion - do nothing
+* save-all-pages is not wide enough
+V* PDF - viewshot is not the size of the pdf
+V* PDF - 1st page is saved twice
+V* when scrolling down, can't position text below
+V* PDF - even if one page, says save-all-pages
+V* add new page and then cancel?
+* enlarge navigation back
+
+Design:
+- icon colors
+V- rename background
+- Add scale for brush and text
+
+

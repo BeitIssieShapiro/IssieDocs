@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="16097.2" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="ipad9_7" orientation="portrait" layout="fullscreen" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="16087"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="iN0-l3-epB">
+            <rect key="frame" x="0.0" y="0.0" width="715" height="730"/>
+            <subviews>
+                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" insetsLayoutMarginsFromSafeArea="NO" image="IssieDocsTitle" highlightedImage="IssieDocsTitle" translatesAutoresizingMaskIntoConstraints="NO" id="FCp-jA-6w8">
+                    <rect key="frame" x="164" y="301" width="386" height="128"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
+                    <preferredSymbolConfiguration key="preferredSymbolConfiguration" scale="default"/>
+                </imageView>
+                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="9" translatesAutoresizingMaskIntoConstraints="NO" id="6iJ-th-ZUz">
+                    <rect key="frame" x="188.5" y="688.5" width="334.5" height="21.5"/>
+                    <string key="text">All rights reserved. Used with permission.  
+</string>
+                    <fontDescription key="fontDescription" type="system" pointSize="18"/>
+                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" image="SplashIcons" translatesAutoresizingMaskIntoConstraints="NO" id="SwI-m8-lk3">
+                    <rect key="frame" x="76" y="39" width="563" height="254"/>
+                </imageView>
+            </subviews>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstAttribute="bottom" secondItem="6iJ-th-ZUz" secondAttribute="bottom" constant="20" id="CM6-4I-FC9"/>
+                <constraint firstItem="6iJ-th-ZUz" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="188.5" id="DGS-ka-ZEh"/>
+                <constraint firstAttribute="trailing" secondItem="SwI-m8-lk3" secondAttribute="trailing" constant="185" id="OPi-pu-7hY"/>
+                <constraint firstItem="SwI-m8-lk3" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="183" id="ZlV-qj-Rzm"/>
+                <constraint firstAttribute="trailing" secondItem="6iJ-th-ZUz" secondAttribute="trailing" constant="192" id="xsf-sG-v6i"/>
+            </constraints>
+            <nil key="simulatedStatusBarMetrics"/>
+            <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+            <point key="canvasLocation" x="608.203125" y="528.515625"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="IssieDocsTitle" width="230" height="77"/>
+        <image name="SplashIcons" width="714" height="253.5"/>
+    </resources>
+</document>
