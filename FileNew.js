@@ -138,6 +138,7 @@ function getActionButtons(props) {
                 flexDirection: 'row',
                 backgroundColor: semanticColors.mainAreaBG,
                 alignItems: 'center',
+                justifyContent:'center',
                 height: (dimensions.tileHeight - TILE_PADDING) *.4- TILE_BORDER_WIDTH,
                 width: dimensions.tileWidth - 2*TILE_PADDING - TILE_BORDER_WIDTH*2
             }}>

@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
         width: 14,
         height: 14,
         borderRadius: 7,
-        backgroundColor: '#794F9B',
+        backgroundColor: '#979797',
     },
     SettingsHeaderText: {
         fontSize: 27,

@@ -59,7 +59,8 @@ export default class FolderGallery extends React.Component {
         this.state = {
             windowSize: { width: 500, height: 1024 },
             folderColor: (getUseColorSetting() === USE_COLOR.yes),
-            loading: true
+            loading: true,
+            startTime: new Date()
         }
 
         // this._panResponder = PanResponder.create({
@@ -80,7 +81,7 @@ export default class FolderGallery extends React.Component {
     }
 
     componentDidMount = async () => {
-        let startTime = new Date();
+        
 
         try {
             Linking.getInitialURL().then((url) => {
@@ -104,8 +105,9 @@ export default class FolderGallery extends React.Component {
             await this.refresh();
 
         } finally {
+            
             //calculate min of 3 second from start:
-            let ellapsed = new Date() - startTime;
+            let ellapsed = new Date() - this.state.startTime;
             ellapsed /= 1000;
             var ellapsedSeconds = Math.round(ellapsed);
             if (ellapsedSeconds >= 3) {
