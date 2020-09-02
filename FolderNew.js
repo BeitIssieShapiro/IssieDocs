@@ -41,9 +41,9 @@ export default function FolderNew(props) {
                 <View style={{
                     position: 'absolute', flexDirection: 'row-reverse',
                     left: 18,
-                    top: 10,
-                    height: '100%', width: '50%',
-                    backgroundColor: 'transparent',
+                        top: 0,
+                    height: '100%', width: '20%',
+                    backgroundColor: semanticColors.mainAreaBG,
                     justifyContent: 'flex-end',
                     alignItems: 'center',
                     zIndex: 100
@@ -78,7 +78,7 @@ export default function FolderNew(props) {
                                 flexDirection: 'row-reverse'
                             }}
                         >
-                            <View style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', paddingRight: '20%', paddingBottom:'5%', height: '100%'}}>
+                            <View style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', paddingRight: 30, paddingBottom:'5%', height: '100%'}}>
                                 <Icon name="folder" size={45} color={folderColor} />
                                 <View style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
                                     <View style={{ width: '100%', height:'100%', justifyContent: 'center',alignItems: 'center', paddingTop:'7%', flexDirection: 'row-reverse' }}>
@@ -119,7 +119,7 @@ export default function FolderNew(props) {
             </TouchableOpacity>
             {
                 props.editMode && !props.fixedFolder && !props.asTitle && !props.isOverview ?
-                    <View style={{ position: 'absolute', left: 0, top: 0, flexDirection: 'column', alignItems: 'center', marginTop: 15, }}>
+                    <View style={{ position: 'absolute', left: 0, top: 0, flexDirection: 'column', alignItems: 'center', marginTop: 0, }}>
                         <Icon name={"expand-less"} size={55} color={props.index == 1 ? 'gray' : 'black'} onPress={props.index > 1 ? props.onMoveUp : undefined} />
                         <Icon name={"expand-more"} size={55} color={props.isLast ? 'gray' : 'black'} onPress={props.isLast ? undefined : props.onMoveDown} />
                     </View> :

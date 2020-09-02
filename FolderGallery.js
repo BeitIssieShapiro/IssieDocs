@@ -81,7 +81,7 @@ export default class FolderGallery extends React.Component {
     }
 
     componentDidMount = async () => {
-        
+
 
         try {
             Linking.getInitialURL().then((url) => {
@@ -99,21 +99,30 @@ export default class FolderGallery extends React.Component {
                 this.refresh();
             })
             setNavParam(this.props.navigation, 'menuHandler', () => this._menuHandler());
+            setNavParam(this.props.navigation, 'editHandler', () => this.toggleEditMode());
+            setNavParam(this.props.navigation, 'isEditEnabled', () => {
+                let editTitleSetting = Settings.get(EDIT_TITLE.name);
+                if (editTitleSetting === undefined) {
+                    editTitleSetting = EDIT_TITLE.no;
+                }
+                return editTitleSetting === EDIT_TITLE.yes ||
+                    this.state.currentFolder && (this.state.foldersCount > 1 || this.state.currentFolder.name !== DEFAULT_FOLDER_NAME);
+            });
 
             Linking.addEventListener("url", this._handleOpenURL);
 
             await this.refresh();
 
         } finally {
-            
-            //calculate min of 3 second from start:
+
+            //calculate min of 2 second from start:
             let ellapsed = new Date() - this.state.startTime;
             ellapsed /= 1000;
             var ellapsedSeconds = Math.round(ellapsed);
-            if (ellapsedSeconds >= 3) {
+            if (ellapsedSeconds >= 2) {
                 SplashScreen.hide();
             } else {
-                setTimeout(() => SplashScreen.hide(), 3000-ellapsed*1000);
+                setTimeout(() => SplashScreen.hide(), 2000 - ellapsed * 1000);
             }
         }
     };
@@ -536,9 +545,7 @@ export default class FolderGallery extends React.Component {
         let needPagesScroll = pagesHeightSize > pagesAreaWindowHeight;
 
         let isEmptyApp = !this.state.folders || this.state.folders.length == 0;
-        let enableEdit = editTitleSetting === EDIT_TITLE.yes ||
-            this.state.currentFolder && (this.state.foldersCount > 1 || this.state.currentFolder.name !== DEFAULT_FOLDER_NAME);
-
+        
         return (
             <View style={styles.container}
                 onLayout={this.onLayout}>
@@ -602,12 +609,12 @@ export default class FolderGallery extends React.Component {
 
                     {/*right buttons */}
                     <View style={{ position: 'absolute', right: 17, flexDirection: 'row-reverse', alignItems: 'center' }}>
-                        {
+                        {/* {
                             getIconButton(enableEdit ? () => {
                                 this.toggleEditMode()
                             } : undefined, enableEdit ? semanticColors.addButton : semanticColors.disabledButton, this.state.editMode ? "close" : "edit", 35)
 
-                        }
+                        } */}
                         {/* <Spacer width={20} />
                         {
                             this.state.currentFolder ?

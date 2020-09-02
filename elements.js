@@ -512,6 +512,7 @@ export const globalStyles = StyleSheet.create({
         height: 52
     },
     headerTitleStyle: {
+        width:'100%',
         fontFamily: APP_FONT,
         fontSize: 30,
         fontWeight: 'bold'
@@ -557,7 +558,7 @@ export function getHeaderBackButton(callback) {
             style={{ flexDirection: 'row', alignItems: 'center' }}>
             {/* <Icon name='keyboard-arrow-left' color='white' size={35} /> */}
             <Spacer width={10} />
-            <Icon name={'home'} color='white' size={30} />
+            <Icon name={'home'} color='white' size={40} />
         </TouchableOpacity>
 
     </View>
