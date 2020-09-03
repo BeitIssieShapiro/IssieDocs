@@ -9,7 +9,7 @@ import {
     getIconButton, folderIcons, availableIcons,
     getImageDimensions, availableColorPicker,
     globalStyles,
-    getPageNavigationButtons, getFileNameDialog, semanticColors, getFolderAndIcon,
+    getPageNavigationButtons, getFileNameDialog, semanticColors,
     Spacer, getRoundedButton, dimensions, getColorButton
 } from './elements'
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
@@ -52,12 +52,9 @@ export default class IssieCreateFolder extends React.Component {
 
         let name = '', icon = '', color = '';
         let currentFolderName = props.route.params.currentFolderName;
-        if (currentFolderName) {
-            let curFolder = getFolderAndIcon(currentFolderName);
-            name = curFolder.name;
-            icon = curFolder.icon;
-            color = curFolder.color;
-        }
+        name = currentFolderName;
+        icon = props.route.params.currentFolderIcon;
+        color = props.route.params.currentFolderColor;
 
         this.state = {
             yOffset: 0,
@@ -87,15 +84,7 @@ export default class IssieCreateFolder extends React.Component {
         let success = true;
         let saveNewFolder = this.props.route.params.saveNewFolder;
         if (saveNewFolder) {
-            let folderName = this.state.name;
-            if (this.state.icon.length > 0) {
-                folderName += '$' + this.state.icon;
-            }
-            if (this.state.color.length > 0) {
-                folderName += '#' + this.state.color;
-            }
-
-            success = await saveNewFolder(folderName, this.state.currentFolderName);
+            success = await saveNewFolder(this.state.name, this.state.color, this.state.icon, this.state.currentFolderName);
         }
         if (success) {
             this.props.navigation.goBack();

@@ -14,7 +14,7 @@ export const SRC_DUPLICATE = 'duplicate'
 import mock from './mock.jpg'
 import { translate } from './lang';
 import { usesAutoTimeZone } from 'react-native-localize';
-import { isSimulator } from './utils';
+import { isSimulator } from './device';
 let mockFileName;
 
 

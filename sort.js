@@ -1,14 +1,14 @@
 
 import * as RNFS from 'react-native-fs';
 import { Alert } from 'react-native'
-import { FOLDERS_DIR, DEFAULT_FOLDER_NAME } from './elements';
+import { FOLDERS_DIR, DEFAULT_FOLDER } from './elements';
 const ORDER_FILE_NAME = 'order.json'
 export async function saveFolderOrder(folders) {
     return new Promise((resolve) => {
         let order = []
         if (folders) {
             for (let i = 0; i < folders.length; i++) {
-                if (folders[i].name !== DEFAULT_FOLDER_NAME) {
+                if (folders[i].name !== DEFAULT_FOLDER.name) {
                     order.push(folders[i].name);
                 }
             }
@@ -32,7 +32,7 @@ export async function sortFolders(folders) {
         return folders;
     }
     let nextPlace = 0;
-    let defIndex = folders.findIndex(f => f.name == DEFAULT_FOLDER_NAME);
+    let defIndex = folders.findIndex(f => f.name == DEFAULT_FOLDER.name);
     if (defIndex < 0) {
         //Add a default empty - todo
     } else {

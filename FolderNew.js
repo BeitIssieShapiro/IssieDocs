@@ -10,10 +10,8 @@ import {
 
 
 export default function FolderNew(props) {
-    //let folderColor = props.useColors?folderColors[props.index % folderColors.length]: 'gray';
-    let folderAndIcon = getFolderAndIcon(props.name);
-    let folderColor = folderAndIcon.color.length > 0 ? folderAndIcon.color : 'gray';
-    let caption = normalizeTitle(folderAndIcon.name);
+    
+    let caption = normalizeTitle(props.name);
     let captionLimit = props.isLandscape ? 12 : 9;
 
     // if (props.editMode) {
@@ -56,7 +54,7 @@ export default function FolderNew(props) {
 
             <TouchableOpacity
                 activeOpacity={props.asTitle ? 1 : 0.7}
-                onPress={props.onPress ? (e) => props.onPress(e, folderColor) : undefined}
+                onPress={props.onPress ? (e) => props.onPress(e) : undefined}
                 onLongPress={props.onLongPress ? (e) => props.onLongPress(e) : undefined}
 
                 style={{
@@ -79,10 +77,10 @@ export default function FolderNew(props) {
                             }}
                         >
                             <View style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', paddingRight: 30, paddingBottom:'5%', height: '100%'}}>
-                                <Icon name="folder" size={45} color={folderColor} />
+                                <Icon name="folder" size={45} color={props.color} />
                                 <View style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
                                     <View style={{ width: '100%', height:'100%', justifyContent: 'center',alignItems: 'center', paddingTop:'7%', flexDirection: 'row-reverse' }}>
-                                        {folderAndIcon.icon.length > 0 ? <FolderIcon name={folderAndIcon.icon} size={20} color={'white'} /> : null}
+                                        {props.icon && props.icon.length > 0 ? <FolderIcon name={props.icon} size={20} color={'white'} /> : null}
                                     </View>
                                 </View>
                             </View>
@@ -100,11 +98,11 @@ export default function FolderNew(props) {
                             }}
                         >
                             <View style={{ flexDirection: 'row', justifyContent: 'center', width: '100%' }}>
-                                <Icon name="folder" size={72} color={folderColor} />
+                                <Icon name="folder" size={72} color={props.color} />
 
                                 <View style={{ position: 'absolute', left: 0, top: 25, width: '100%', height: '100%' }}>
                                     <View style={{ width: '100%', justifyContent: 'center', flexDirection: 'row-reverse' }}>
-                                        {folderAndIcon.icon.length > 0 ? <FolderIcon name={folderAndIcon.icon} size={30} color='white' /> : null}
+                                        {props.icon && props.icon.length ? <FolderIcon name={props.icon} size={30} color='white' /> : null}
                                     </View>
                                 </View>
 

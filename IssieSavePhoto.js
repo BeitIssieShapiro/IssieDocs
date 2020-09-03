@@ -12,12 +12,12 @@ import ViewShot from "react-native-view-shot";
 import { StackActions } from '@react-navigation/native';
 import { Icon } from 'react-native-elements'
 import { translate } from './lang.js'
-import Animated from 'react-native-reanimated'
+import { writeFolderMetaData, readFolderMetaData, DEFAULT_FOLDER_METADATA } from './utils'
 
 import {
   getIconButton,
   getImageDimensions,
-  globalStyles, NEW_FOLDER_NAME, DEFAULT_FOLDER_NAME,
+  globalStyles, DEFAULT_FOLDER,
   getPageNavigationButtons, getFileNameDialog, semanticColors, getFolderAndIcon,
   Spacer, getRoundedButton, dimensions, validPathPart
 } from './elements'
@@ -149,6 +149,9 @@ export default class IssieSavePhoto extends React.Component {
     uri = decodeURI(uri);
     //alert(uri);
     let folder = this.props.route.params.folder;
+    if (!folder) {
+      folder = DEFAULT_FOLDER;
+    }
     let pageName = this.props.route.params.name;
     let pdf = false;
     if (uri.endsWith('.pdf')) {
@@ -243,37 +246,42 @@ export default class IssieSavePhoto extends React.Component {
         Alert.alert(translate("MissingPageName"));
         return;
       }
-      if (this.state.folder === NEW_FOLDER_NAME) {
-        let fAndI = getFolderAndIcon(this.state.newFolderName);
-        if (!this.state.newFolderName || this.state.newFolderName.length == 0) {
-          Alert.alert(translate("MissingFolderName"));
-          return;
-        } else if (fAndI.name === "" && fAndI.icon !== "") {
-          Alert.alert(title, translate("SaveFolderWithEmptyNameQuestion"),
-            [
-              {
-                text: translate("BtnContinue"), onPress: () => {
-                  this.save();
-                },
-                style: 'default'
-              },
-              {
-                text: translate("BtnCancel"), onPress: () => {
-                  //do nothing
-                },
-                style: 'cancel'
-              }
-            ]
-          );
-          return;
-        }
-      }
+      // if (this.state.folder.name === NEW_FOLDER_NAME) {
+
+      //   if (!this.state.newFolderName || this.state.newFolderName.length == 0) {
+      //     Alert.alert(translate("MissingFolderName"));
+      //     return;
+      //   }
+      //   else if (fAndI.name === "" && fAndI.icon !== "") {
+      //     Alert.alert(title, translate("SaveFolderWithEmptyNameQuestion"),
+      //       [
+      //         {
+      //           text: translate("BtnContinue"), onPress: () => {
+      //             this.save();
+      //           },
+      //           style: 'default'
+      //         },
+      //         {
+      //           text: translate("BtnCancel"), onPress: () => {
+      //             //do nothing
+      //           },
+      //           style: 'cancel'
+      //         }
+      //       ]
+      //     );
+      //     return;
+      //   }
+      // }
       this.save();
     }
   }
 
   save = async () => {
-    let folderName = this.state.folder;
+    let folder = this.state.folder;
+    if (!folder) {
+      folder = DEFAULT_FOLDER
+    }
+    let folderName = folder.name;
     let fileName = this.state.pageName;
 
     if (!fileName || fileName.length == 0) {
@@ -286,9 +294,7 @@ export default class IssieSavePhoto extends React.Component {
       return;
     }
     if (!folderName || folderName === translate("DefaultFolder")) {
-      folderName = DEFAULT_FOLDER_NAME;
-    } else if (folderName == NEW_FOLDER_NAME) {
-      folderName = this.state.newFolderName;
+      folderName = DEFAULT_FOLDER.name;
     }
 
     let targetFolder = FOLDERS_DIR + folderName;
@@ -309,7 +315,8 @@ export default class IssieSavePhoto extends React.Component {
       let stat = await RNFS.stat(targetFolder);
     } catch (e) {
       await RNFS.mkdir(targetFolder);
-      if (folderName !== DEFAULT_FOLDER_NAME) {
+      await writeFolderMetaData(targetFolder + "/" + ".metadata", folder.color, folder.icon);
+      if (folderName !== DEFAULT_FOLDER.name) {
         await pushFolderOrder(folderName)
       }
     }
@@ -340,9 +347,11 @@ export default class IssieSavePhoto extends React.Component {
             //ignore, as maybe json is missing
           }
         }
+
+        
         let returnFolderCallback = this.props.route.params.returnFolderCallback;
-        if (returnFolderCallback) {
-          returnFolderCallback(folderName);
+        if (returnFolderCallback && this.state.folder) {
+          returnFolderCallback(this.state.folder.name);
         }
         this.props.navigation.dispatch(StackActions.popToTop());
         // if (folderName !== DEFAULT_FOLDER_NAME) {
@@ -444,7 +453,7 @@ export default class IssieSavePhoto extends React.Component {
         this.updateImageDimension()
       },
       //failure: 
-      (error) => { Alert.alert("Failed to crop:"+ error)}
+      (error) => { Alert.alert("Failed to crop:" + error) }
     )
   }
 
@@ -462,8 +471,18 @@ export default class IssieSavePhoto extends React.Component {
   initFolderList = async () => {
     if (this.state.folders) return this.state.folders;
 
-    RNFS.readDir(FOLDERS_DIR).then(folders => {
-      this.setState({ folders: folders.filter(f => f.isDirectory() && f.name !== DEFAULT_FOLDER_NAME).map(f => f.name) });
+    RNFS.readDir(FOLDERS_DIR).then(async (folders) => {
+      this.setState({
+        folders:  await Promise.all(folders.filter(f => f.isDirectory() && f.name !== DEFAULT_FOLDER.name).map(async (f) => {
+          let metadata = DEFAULT_FOLDER_METADATA;
+          try {
+            metadata = await readFolderMetaData(f.path + "/" + ".metadata")
+          } catch (e) {
+            //ignore if missing
+          }
+          return { name: f.name, ...metadata }
+        }))
+      });
     });
   }
 
@@ -471,13 +490,14 @@ export default class IssieSavePhoto extends React.Component {
     this.setState({ pdfPage: this.state.pdfPage + inc });
   }
 
-  saveNewFolder = async (newFolder) => {
+  saveNewFolder = async (newFolder, color, icon) => {
     let saveNewFolder = this.props.route.params.saveNewFolder;
     if (!saveNewFolder) {
       return false;
     }
-    if (await saveNewFolder(newFolder)) {
-      this.setState({ folders: [newFolder, ...this.state.folders], folder: newFolder });
+    if (await saveNewFolder(newFolder, color, icon)) {
+      let newFolderObj = { name: newFolder, color, icon }
+      this.setState({ folders: [newFolderObj, ...this.state.folders], folder: newFolderObj });
       return true;
     }
     return false
@@ -559,18 +579,18 @@ export default class IssieSavePhoto extends React.Component {
     if (this.state.phase == PickName) {
       PageNameInput =
         <Scroller height={this.state.windowSize.height}
-        onLayout= {onLayoutHost}>
+          onLayout={onLayoutHost}>
 
           {getFileNameDialog(
             this.state.pageName,
             this.state.folder,
             this.state.folders,
             (text) => this.setState({ pageName: text }),
-            (text) => this.setState({ folder: text }),
-            (folder) => this.saveNewFolder(folder),
+            (folder) => this.setState({ folder: folder }),
+            (name, color, icon) => this.saveNewFolder(name, color, icon),
             this.props.navigation,
             this.state.windowSize.width > this.state.windowSize.height, //isLandscape,
-            (e) => onLayoutHost.onLayout?onLayoutHost.onLayout(e):{}
+            (e) => onLayoutHost.onLayout ? onLayoutHost.onLayout(e) : {}
           )}
 
 

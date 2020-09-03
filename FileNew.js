@@ -4,7 +4,7 @@ import { View, Alert, Image, Text, TouchableOpacity, CheckBox } from 'react-nati
 import { Icon } from 'react-native-elements'
 
 import {
-    AppText, colors, semanticColors, getEmbeddedButton, Spacer, dimensions, getEmbeddedSvgButton, getIconButton, getFileNameDialog
+    AppText, colors, semanticColors, getEmbeddedButton, Spacer, dimensions
 } from './elements'
 
 const TILE_PADDING=12

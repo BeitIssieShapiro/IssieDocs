@@ -80,11 +80,11 @@ export const FolderTextStyle = {
 }
 
 export const availableIcons = [
-//    "account-balance",
+    //    "account-balance",
     "alarm",
     "cake",
     "exposure-plus-2",
-//    "build",
+    //    "build",
     "location-city",
     "grade",
     "flight-takeoff",
@@ -94,7 +94,7 @@ export const availableIcons = [
     "room",
     "shopping-cart",
     "today",
-//    "cloud",
+    //    "cloud",
     "headset",
     "computer",
     "toys",
@@ -105,7 +105,7 @@ export const availableIcons = [
     "local-pizza",
     "traffic",
     "beach-access",
-//    "child-friendly",
+    //    "child-friendly",
     "pool"
 ]
 
@@ -126,8 +126,8 @@ export const folderColors = [
     '#f5771c', '#da3242', '#65309c', '#2958af', '#5db7dd', '#20ad57'
 ]
 
-export const NEW_FOLDER_NAME = 'NewFolder'; //todo lang
-export const DEFAULT_FOLDER_NAME = 'Default';
+
+export const DEFAULT_FOLDER = {name:'Default', color:'gray', icon:''};
 
 export function validPathPart(PathPart) {
     if (!PathPart || PathPart.length == 0) {
@@ -315,7 +315,7 @@ export function getFolderAndIcon(folderName) {
 }
 
 export function normalizeTitle(title) {
-    if (title == DEFAULT_FOLDER_NAME) {
+    if (title == DEFAULT_FOLDER.name) {
         return translate("DefaultFolder");
     }
     return title;
@@ -324,23 +324,23 @@ export function normalizeTitle(title) {
 
 
 export function getFileNameDialog(fileName,
-    currentFolderName, folders,
+    currentFolder, folders,
     onChangeName, onChangeFolder, onSaveNewFolder,
     navigation, isLandscape, onLayout) {
 
-    const defFolderName = translate("DefaultFolder")
+    const defFolderName = { name: translate("DefaultFolder") };
 
 
-    if (currentFolderName === DEFAULT_FOLDER_NAME || currentFolderName === '') {
-        currentFolderName = defFolderName;
+    if (!currentFolder || currentFolder.name  === DEFAULT_FOLDER.name || currentFolder.name === '') {
+        currentFolder = defFolderName;
     }
 
     let fullListFolder = [defFolderName, ...folders];
     getLocalizedFoldersAndIcons().forEach((itm, index) => {
         if (fullListFolder.findIndex(f =>
-            f === itm.text ||
-            f.startsWith(itm.text + '$')) == -1) {
-            fullListFolder.push(itm.text + '$' + itm.icon + '#' + (availableColorPicker[index % availableColorPicker.length]));
+            f.name === itm.text) == -1)  {
+                //only add those folders that do not exist already
+            fullListFolder.push({ name: itm.text, icon: itm.icon, color: (availableColorPicker[index % availableColorPicker.length]) });
         }
     })
     return (
@@ -349,7 +349,7 @@ export function getFileNameDialog(fileName,
                 <AppText style={[styles.titleText, { marginVertical: 7 }]}>{translate("CaptionPageName")}</AppText>
                 <TextInput style={globalStyles.textInput}
                     onChangeText={onChangeName}
-                    
+
                 >{fileName}</TextInput>
             </View>
             <Spacer />
@@ -375,7 +375,7 @@ export function getFileNameDialog(fileName,
                             <TouchableOpacity key={index} style={{ height: 65, width: '100%', justifyContent: 'flex-end' }}
                                 onPress={() => onChangeFolder(item)}>
 
-                                {pickerRenderRow(item, currentFolderName === item)}
+                                {pickerRenderRow(item, currentFolder.name == item.name)}
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -432,7 +432,6 @@ export function Picker(props) {
 
 
 function pickerRenderRow(rowData, highlighted) {
-    let folderAndIcon = getFolderAndIcon(rowData);
 
     return (
         <View style={[globalStyles.textInput, {
@@ -441,14 +440,14 @@ function pickerRenderRow(rowData, highlighted) {
             alignItems: 'center',
             flexDirection: 'row'
         }]}>
-            {folderAndIcon.icon != '' ?
+            {rowData.icon && rowData.icon != '' ?
                 <View style={{ flexDirection: 'row' }}>
                     <Spacer />
-                    <FolderIcon name={folderAndIcon.icon} size={50} color={folderAndIcon.color != "" ? folderAndIcon.color : semanticColors.folderIcons} />
+                    <FolderIcon name={rowData.icon} size={50} color={rowData.color ? rowData.color : semanticColors.folderIcons} />
                 </View>
                 : <View />}
             <AppText style={{ fontSize: 26, textAlign: 'right', paddingRight: 25 }}>
-                {folderAndIcon.name}
+                {rowData.name}
             </AppText>
         </View>
     );
@@ -512,7 +511,7 @@ export const globalStyles = StyleSheet.create({
         height: 52
     },
     headerTitleStyle: {
-        width:'100%',
+        width: '100%',
         fontFamily: APP_FONT,
         fontSize: 30,
         fontWeight: 'bold'
@@ -566,7 +565,7 @@ export function getHeaderBackButton(callback) {
 
 export function Spacer(props) {
     return (
-        <View style={{ width: props.width || 20, height: props.height || 20}} />
+        <View style={{ width: props.width || 20, height: props.height || 20 }} />
     );
 }
 
@@ -615,14 +614,14 @@ export function getEraserIcon(callback, size, color, selected) {
         onPress={callback}
         style={{
             borderRadius: 25,
-            height: size-10,
+            height: size - 10,
             width: size,
             alignItems: 'center',
             justifyContent: 'flex-end',
             //backgroundColor: selected ? semanticColors.selectedEditToolColor : 'transparent'
         }}>{getSvgIcon('eraser-new', size - 10, color)}
     </TouchableOpacity>
-    {selected ? <View
+        {selected ? <View
             style={{
                 borderBottomColor: 'black',
                 borderBottomWidth: 6,

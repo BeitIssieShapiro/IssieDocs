@@ -1,7 +1,7 @@
 import * as RNLocalize from "react-native-localize";
 import { Alert, Settings } from "react-native";
 import { LANGUAGE } from "./settings";
-import { isSimulator } from "./utils";
+import { isSimulator } from "./device";
 
 export var gCurrentLang = { languageTag: "he", isRTL: true }
 const DEFAULT_LANG = "he";

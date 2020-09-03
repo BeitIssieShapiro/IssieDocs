@@ -20,7 +20,7 @@ import { EDIT_TITLE } from './settings'
 import TitleEdit from './title-edit.js'
 
 import { Icon } from 'react-native-elements'
-import { setIsSimulator } from './utils';
+import { setIsSimulator } from './device';
 
 // const MainNavigator = createStackNavigator({
 //   Home: {screen: FolderGallery},

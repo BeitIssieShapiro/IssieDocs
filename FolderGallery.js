@@ -15,19 +15,20 @@ import {
     registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage,
 } from "./lang.js"
 import { USE_COLOR, getUseColorSetting, EDIT_TITLE, VIEW } from './settings.js'
-import { setNavParam } from './utils'
+import { setNavParam, DEFAULT_FOLDER_METADATA, writeFolderMetaData, readFolderMetaData } from './utils'
 import {
-    getFolderAndIcon,
-    DEFAULT_FOLDER_NAME,
+    DEFAULT_FOLDER,
     semanticColors,
-    Spacer, globalStyles, removeFileExt,
-    getMaterialCommunityIconButton, dimensions,
+    Spacer, removeFileExt,
+    dimensions,
     validPathPart,
     AppText,
     getSvgIconButton,
-    FOLDERS_DIR,
-    getIconButton
+    FOLDERS_DIR
 } from './elements'
+
+
+
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
 import ImagePicker from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
@@ -44,7 +45,7 @@ function checkFilter(filter, name) {
     if (name.indexOf(filter) >= 0)
         return true;
 
-    if (name == DEFAULT_FOLDER_NAME) {
+    if (name == DEFAULT_FOLDER.name) {
         return translate("DefaultFolder").indexOf(filter) >= 0;
     }
 
@@ -106,7 +107,7 @@ export default class FolderGallery extends React.Component {
                     editTitleSetting = EDIT_TITLE.no;
                 }
                 return editTitleSetting === EDIT_TITLE.yes ||
-                    this.state.currentFolder && (this.state.foldersCount > 1 || this.state.currentFolder.name !== DEFAULT_FOLDER_NAME);
+                    this.state.currentFolder && (this.state.foldersCount > 1 || this.state.currentFolder.name !== DEFAULT_FOLDER.name);
             });
 
             Linking.addEventListener("url", this._handleOpenURL);
@@ -144,9 +145,9 @@ export default class FolderGallery extends React.Component {
         this.props.navigation.navigate('SavePhoto', {
             uri: decodeURI(event.url),
             imageSource: SRC_FILE,
-            folder: this.state.currentFolder ? this.state.currentFolder.name : undefined,
+            folder: this.state.currentFolder,
             returnFolderCallback: (f) => this.setReturnFolder(f),
-            saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false)
+            saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
         })
     }
 
@@ -160,26 +161,34 @@ export default class FolderGallery extends React.Component {
                 const items = await RNFS.readDir(folder.path);
                 const filesItems = items.filter(f => !f.name.endsWith(".json"));
                 let files = [];
+                let metadata = DEFAULT_FOLDER_METADATA;
                 for (let fi of filesItems) {
-                    let lastUpdate = Number(fi.mtime);
-                    //finds the .json file if exists
-                    let dotJsonFile = items.find(f => f.name === fi.name + ".json");
-                    if (dotJsonFile) {
-                        lastUpdate = Number(dotJsonFile.mtime);
-                    }
 
-                    let pages = []
-                    if (fi.isDirectory()) {
-                        //read all pages
-                        const innerPages = await RNFS.readDir(fi.path);
+                    if (fi.name.endsWith('.metadata')) {
+                        //read file for color and icon of the folder
+                        metadata = await readFolderMetaData(fi.path)
+                        //Alert.alert(JSON.stringify(metadata))
+                    } else {
+                        let lastUpdate = Number(fi.mtime);
+                        //finds the .json file if exists
+                        let dotJsonFile = items.find(f => f.name === fi.name + ".json");
+                        if (dotJsonFile) {
+                            lastUpdate = Number(dotJsonFile.mtime);
+                        }
 
-                        pages = innerPages.filter(f => !f.name.endsWith(".json")).map(p => p.path);
-                        pages = pages.sort();
+                        let pages = []
+                        if (fi.isDirectory()) {
+                            //read all pages
+                            const innerPages = await RNFS.readDir(fi.path);
+
+                            pages = innerPages.filter(f => !f.name.endsWith(".json")).map(p => p.path);
+                            pages = pages.sort();
+                        }
+                        files.push({ name: fi.name, lastUpdate, path: fi.path, isFolder: fi.isDirectory(), pages: pages });
                     }
-                    files.push({ name: fi.name, lastUpdate, path: fi.path, isFolder: fi.isDirectory(), pages: pages });
                 }
 
-                foldersState.push({ name: folder.name, lastUpdate: Number(folder.mtime), path: folder.path, files: files });
+                foldersState.push({ name: folder.name, ...metadata, lastUpdate: Number(folder.mtime), path: folder.path, files: files });
             }
 
             //update current folder:
@@ -217,9 +226,9 @@ export default class FolderGallery extends React.Component {
                 this.props.navigation.navigate('SavePhoto', {
                     uri: uri,
                     imageSource: SRC_CAMERA,
-                    folder: this.state.currentFolder ? this.state.currentFolder.name : undefined,
+                    folder: this.state.currentFolder,
                     returnFolderCallback: (f) => this.setReturnFolder(f),
-                    saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false)
+                    saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
 
                 })
             },
@@ -240,10 +249,10 @@ export default class FolderGallery extends React.Component {
             if (!response.didCancel) {
                 this.props.navigation.navigate('SavePhoto', {
                     uri: response.uri,
-                    folder: this.state.currentFolder ? this.state.currentFolder.name : undefined,
+                    folder: this.state.currentFolder,
                     imageSource: SRC_GALLERY,
                     returnFolderCallback: (f) => this.setReturnFolder(f),
-                    saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false)
+                    saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
 
                 });
             }
@@ -258,9 +267,9 @@ export default class FolderGallery extends React.Component {
         }).then(res => {
             this.props.navigation.navigate('SavePhoto', {
                 uri: res.uri,
-                folder: this.state.currentFolder ? this.state.currentFolder.name : undefined,
+                folder: this.state.currentFolder,
                 returnFolderCallback: (f) => this.setReturnFolder(f),
-                saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false)
+                saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
 
             });
         }).catch(err => {
@@ -367,10 +376,11 @@ export default class FolderGallery extends React.Component {
         this.props.navigation.navigate('SavePhoto', {
             uri: this.state.selected.path,
             imageSource: SRC_RENAME,
-            folder: this.state.currentFolder ? this.state.currentFolder.name : '',
+            folder: this.state.currentFolder,
+
             name: removeFileExt(this.state.selected.name),
             returnFolderCallback: (f) => this.setReturnFolder(f),
-            saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false),
+            saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false),
             title: isRename ? translate("RenameFormTitle") : translate("MovePageFormTitle")
 
         });
@@ -392,9 +402,11 @@ export default class FolderGallery extends React.Component {
         //rename folder
         this.props.navigation.navigate('CreateFolder',
             {
-                saveNewFolder: (newFolder, currFolder) => this.saveNewFolder(newFolder, true, currFolder),
+                saveNewFolder: (name, color, icon, currFolder) => this.saveNewFolder(name, color, icon, true, currFolder),
                 isLandscape: this.isLandscape(),
                 currentFolderName: this.state.currentFolder.name,
+                currentFolderColor: this.state.currentFolder.color,
+                currentFolderIcon: this.state.currentFolder.icon,
                 title: translate("RenameFormTitle")
             });
         this.toggleEditMode(false);
@@ -407,9 +419,9 @@ export default class FolderGallery extends React.Component {
         this.props.navigation.navigate('SavePhoto', {
             uri: this.state.selected.path,
             imageSource: SRC_DUPLICATE,
-            folder: this.state.currentFolder ? this.state.currentFolder.name : undefined,
+            folder: this.state.currentFolder,
             returnFolderCallback: (f) => this.setReturnFolder(f),
-            saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, false),
+            saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false),
             title: translate("DuplicatePageFormTitle")
 
         })
@@ -422,61 +434,69 @@ export default class FolderGallery extends React.Component {
     }
 
 
-    saveNewFolder = async (newFolderName, setReturnFolder, originalFolderName) => {
+    saveNewFolder = async (newFolderName, newFolderColor, newFolderIcon,
+        setReturnFolder, originalFolderName) => {
 
         if (!newFolderName || newFolderName.length == 0) {
             Alert.alert(translate("MissingFolderName"));
             return false;
         }
-        let fAndi = getFolderAndIcon(newFolderName);
-        if (fAndi.name.length == 0 && fAndi.icon !== "") {
-            let proceed = await new Promise((resolve) =>
-                Alert.alert(translate("Warning"), translate("SaveFolderWithEmptyNameQuestion"),
-                    [
-                        {
-                            text: translate("BtnContinue"), onPress: () => {
-                                resolve(true);
-                            },
-                            style: 'default'
-                        },
-                        {
-                            text: translate("BtnCancel"), onPress: () => {
-                                resolve(false);
-                            },
-                            style: 'cancel'
-                        }
-                    ]
-                ));
-            if (!proceed)
-                return;
-        }
+        // let fAndi = getFolderAndIcon(newFolderName);
+        // if (fAndi.name.length == 0 && fAndi.icon !== "") {
+        //     let proceed = await new Promise((resolve) =>
+        //         Alert.alert(translate("Warning"), translate("SaveFolderWithEmptyNameQuestion"),
+        //             [
+        //                 {
+        //                     text: translate("BtnContinue"), onPress: () => {
+        //                         resolve(true);
+        //                     },
+        //                     style: 'default'
+        //                 },
+        //                 {
+        //                     text: translate("BtnCancel"), onPress: () => {
+        //                         resolve(false);
+        //                     },
+        //                     style: 'cancel'
+        //                 }
+        //             ]
+        //         ));
+        //     if (!proceed)
+        //         return;
+        // }
 
         if (!validPathPart(newFolderName)) {
             Alert.alert(translate("IllegalCharacterInFolderName"));
             return false;
         }
         let targetFolder = FOLDERS_DIR + newFolderName;
-        try {
-            await RNFS.stat(targetFolder);
-            //folder exists:
-            Alert.alert(translate("FolderAlreadyExists"));
-            return false;
-        } catch (e) {
-            await RNFS.mkdir(targetFolder);
-            if (!originalFolderName) {
-                await pushFolderOrder(newFolderName)
-            } else {
-                //rename existing
-                //move all files and delete old folder
-                await RNFS.readDir(FOLDERS_DIR + originalFolderName).then(async (files) => {
-                    for (let f of files) {
-                        await RNFS.moveFile(f.path, FOLDERS_DIR + newFolderName + "/" + f.name);
-                    }
-                });
-                await RNFS.unlink(FOLDERS_DIR + originalFolderName);
-                await renameFolder(originalFolderName, newFolderName);
+        if (newFolderName != originalFolderName) {
+
+            try {
+                await RNFS.stat(targetFolder);
+                //folder exists:
+                Alert.alert(translate("FolderAlreadyExists"));
+                return false;
+            } catch (e) {
+                await RNFS.mkdir(targetFolder);
+                if (!originalFolderName) {
+                    await pushFolderOrder(newFolderName)
+                } else {
+                    //rename existing
+                    //move all files and delete old folder
+                    await RNFS.readDir(FOLDERS_DIR + originalFolderName).then(async (files) => {
+                        for (let f of files) {
+                            await RNFS.moveFile(f.path, FOLDERS_DIR + newFolderName + "/" + f.name);
+                        }
+                    });
+                    await RNFS.unlink(FOLDERS_DIR + originalFolderName);
+                    await renameFolder(originalFolderName, newFolderName);
+                }
             }
         }
+
+        //save folder and icon
+        await writeFolderMetaData(targetFolder + "/" + ".metadata", newFolderColor, newFolderIcon);
+
         if (setReturnFolder) {
             this.setState({ returnFolderName: newFolderName }, () => this.refresh());
         } else {
@@ -517,7 +537,13 @@ export default class FolderGallery extends React.Component {
     }
     render() {
         YellowBox.ignoreWarnings(['Task orphaned']);
-        let curFolderFullName = this.state.currentFolder ? this.state.currentFolder.name : "";
+        let curFolderFullName = "", curFolderColor = "", curFolderIcon = "";
+        if (this.state.currentFolder) {
+            curFolderFullName = this.state.currentFolder.name;
+            curFolderColor = this.state.currentFolder.color;
+            curFolderIcon = this.state.currentFolder.icon;
+        }
+
         let fIndex = 0;
         if (this.state.folders && this.state.folders.length) {
             fIndex = this.state.folders.findIndex(f => f.name == curFolderFullName);
@@ -545,7 +571,7 @@ export default class FolderGallery extends React.Component {
         let needPagesScroll = pagesHeightSize > pagesAreaWindowHeight;
 
         let isEmptyApp = !this.state.folders || this.state.folders.length == 0;
-        
+
         return (
             <View style={styles.container}
                 onLayout={this.onLayout}>
@@ -601,7 +627,7 @@ export default class FolderGallery extends React.Component {
                         getSvgIconButton(() => {
                             this.props.navigation.navigate('CreateFolder',
                                 {
-                                    saveNewFolder: (newFolder) => this.saveNewFolder(newFolder, true),
+                                    saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, true),
                                     isLandscape: this.isLandscape()
                                 });
                         }, semanticColors.addButton, "new-folder", 45)
@@ -673,12 +699,14 @@ export default class FolderGallery extends React.Component {
                                     id="1"
                                     useColors={this.state.folderColor}
                                     name={curFolderFullName}
+                                    color={curFolderColor}
+                                    icon={curFolderIcon}
                                     asTitle={true}
                                     isLandscape={this.isLandscape()}
                                     editMode={this.state.editMode}
                                     onDelete={() => this.DeleteFolder()}
                                     onRename={() => this.RenameFolder()}
-                                    fixedFolder={curFolderFullName === DEFAULT_FOLDER_NAME}
+                                    fixedFolder={curFolderFullName === DEFAULT_FOLDER.name}
                                 /> :
                                     <Search
                                         value={this.state.filterFolders}
@@ -758,6 +786,8 @@ export default class FolderGallery extends React.Component {
                                                 id={item.name}
                                                 isOverview={true}
                                                 name={item.name}
+                                                color={item.color}
+                                                icon={item.icon}
                                                 width={'30%'}
                                                 editMode={this.state.editMode}
                                                 fixedFolder={false}//item.name === DEFAULT_FOLDER_NAME}
@@ -800,8 +830,10 @@ export default class FolderGallery extends React.Component {
                                         useColors: this.state.folderColor,
                                         id: f.name,
                                         name: f.name,
+                                        color: f.color,
+                                        icon: f.icon,
                                         editMode: this.state.editMode,
-                                        fixedFolder: f.name === DEFAULT_FOLDER_NAME,
+                                        fixedFolder: f.name === DEFAULT_FOLDER.name,
                                         //dragPanResponder: this._panResponder.panHandlers, 
                                         current: (this.state.currentFolder && f.name == this.state.currentFolder.name),
                                         onPress: () => this.selectFolder(f),
