@@ -12,7 +12,7 @@ import { Spacer, globalStyles, getHeaderBackButton, getIconButton } from './elem
 
 import { fTranslate, translate } from './lang.js';
 import {
-  View, YellowBox, Alert,
+  View, LogBox, Alert,
   TouchableOpacity, Settings
 } from 'react-native';
 import { EDIT_TITLE } from './settings'
@@ -31,7 +31,7 @@ import { setIsSimulator } from './device';
 // });
 
 const Stack = createStackNavigator();
-YellowBox.ignoreWarnings([
+LogBox.ignoreLogs([
   'Require cycle: node_modules/rn-fetch-blob/index.js',
   'Non-serializable values were found in the navigation state',
   'Can\'t perform a React state update',

@@ -536,7 +536,7 @@ export default class FolderGallery extends React.Component {
 
     }
     render() {
-        YellowBox.ignoreWarnings(['Task orphaned']);
+        //YellowBox.ignoreWarnings(['Task orphaned']);
         let curFolderFullName = "", curFolderColor = "", curFolderIcon = "";
         if (this.state.currentFolder) {
             curFolderFullName = this.state.currentFolder.name;

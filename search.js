@@ -23,9 +23,9 @@ let updateInputText = (iText, fontSize) => {
 
 
 export default function Search(props) {
-    const inputEl = useRef(null);
+    //const inputEl = useRef(null);
 
-    setTimeout(() => updateInputText(inputEl.current, 25), 25);
+    //setTimeout(() => updateInputText(inputEl.current, 25), 25);
     return <View
         style={{ width: '100%', alignItems: 'center' }}
     >
@@ -38,7 +38,7 @@ export default function Search(props) {
             <TextInput
                 placeholder={'  ' + translate("Search")}
                 onChangeText={props.onChangeText}
-                ref={inputEl}
+                //ref={inputEl}
                 style={{
                     fontSize: 25,
                     color: 'black',
