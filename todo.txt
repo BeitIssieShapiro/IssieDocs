@@ -1,7 +1,6 @@
 Bugs:
-- in pen mode, click out of the picture
-- rename page - image not found
-- 
+V- rotate and save fails
+V- use small button in mobile
 
 
 Call with Dana 16-July:

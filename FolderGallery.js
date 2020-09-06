@@ -281,7 +281,13 @@ export default class FolderGallery extends React.Component {
     onLayout = () => {
         let windowSize = Dimensions.get("window");
         this.setState({ windowSize });
+        //Alert.alert(JSON.stringify(windowSize));
     }
+
+    isScreenNarrow = () => this.state.windowSize.width < 500;
+    isScreenLow = () => this.state.windowSize.height < 700;
+    isMobile = () => this.isScreenNarrow() || this.isScreenLow();
+    
 
     selectFolder = (folder) => {
         this.setState({ currentFolder: folder })
@@ -572,6 +578,7 @@ export default class FolderGallery extends React.Component {
 
         let isEmptyApp = !this.state.folders || this.state.folders.length == 0;
 
+
         return (
             <View style={styles.container}
                 onLayout={this.onLayout}>
@@ -663,24 +670,24 @@ export default class FolderGallery extends React.Component {
                                 <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
                             </View> :
                             <View style={{ width: "100%" }}>
-                                <View style={{ position: 'absolute', left: 80, top: 80, alignItems: 'flex-end', flexDirection: 'row' }}>
-                                    {getSvgIcon('start-icon', 150, semanticColors.addButton)}
+                                <View style={{ position: 'absolute', left: 80, top: (this.isMobile()?'5%':'10%'), alignItems: 'flex-end', flexDirection: 'row' }}>
+                                    {getSvgIcon('start-icon', this.isMobile()?70:150, semanticColors.addButton)}
                                     <Spacer />
-                                    <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("StartHere")}</AppText>
+                                    <AppText style={{ fontSize: this.isMobile()?20:35, color: '#797a7c' }}>{translate("StartHere")}</AppText>
                                 </View>
-                                <View style={{ position: "absolute", width: "100%", height: '20%', top: "25%", alignItems: "center" }}>
-                                    {getSvgIcon('folder', 150, semanticColors.addButton)}
+                                <View style={{ position: "absolute", width: "100%", height: '20%', top: this.isMobile()?'20%':'30%', alignItems: "center" }}>
+                                    {getSvgIcon('folder', this.isMobile()?85:150, semanticColors.addButton)}
                                     <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("DesktopEmpty")}</AppText>
 
                                 </View>
                                 <View style={{ position: 'absolute', width: '100%', bottom: '20%', flexDirection: 'row', justifyContent: 'center' }}>
-                                    {getSvgIcon('welcome-image', 80, semanticColors.addButton)}
+                                    {getSvgIcon('welcome-image', this.isMobile()?50:80, semanticColors.addButton)}
                                     <Spacer width={50} />
-                                    {getSvgIcon('welcome-doc', 80, semanticColors.addButton)}
+                                    {getSvgIcon('welcome-doc', this.isMobile()?50:80, semanticColors.addButton)}
                                     <Spacer width={50} />
-                                    {getSvgIcon('welcome-pdf', 80, semanticColors.addButton)}
+                                    {getSvgIcon('welcome-pdf', this.isMobile()?50:80, semanticColors.addButton)}
                                     <Spacer width={50} />
-                                    {getSvgIcon('welcome-folder', 80, semanticColors.addButton)}
+                                    {getSvgIcon('welcome-folder', this.isMobile()?50:80, semanticColors.addButton)}
 
                                 </View>
                             </View>
@@ -691,7 +698,7 @@ export default class FolderGallery extends React.Component {
                             {/* pagesTitle */}
                             <View style={{
                                 flex: 1, flexDirection: "row", height: "5%", position: 'absolute',
-                                width: "100%", top: 0, height: '10%', alignItems: 'center', justifyContent: 'flex-start',
+                                width: "100%", top: 0, height: this.isScreenLow()?'17%':'10%', alignItems: 'center', justifyContent: 'flex-start',
                                 borderBottomWidth: this.state.currentFolder ? 1 : 0, borderBottomColor: 'gray'
                             }}>
                                 {this.state.currentFolder ? <FolderNew
@@ -721,8 +728,8 @@ export default class FolderGallery extends React.Component {
                             <View style={{
                                 flex: 1,
                                 backgroundColor: semanticColors.mainAreaBG,
-                                position: 'absolute', top: "10%", width: "100%",
-                                height: '90%'
+                                position: 'absolute', top: this.isScreenLow()?'17%':'10%', width: "100%",
+                                height: this.isScreenLow()?'83%':'90%'
                             }}>
                                 {this.state.currentFolder && this.state.currentFolder.files && this.state.currentFolder.files.length > 0 ?
                                     <FlatList
@@ -769,7 +776,7 @@ export default class FolderGallery extends React.Component {
                                     : this.state.currentFolder ?
                                         <View style={{ alignItems: 'center', height: '100%' }}>
                                             <Spacer height='20%' />
-                                            {getSvgIcon('folder')}
+                                            {getSvgIcon('folder', this.isMobile()?85:150)}
                                             <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("NoPagesYet")}</AppText>
                                         </View>
                                         :

@@ -197,8 +197,12 @@ export function getEmbeddedSvgButton(callback, icon, iconSize, key, color) {
 }
 
 
-export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction, dark) {
-    if (getUseTextSetting()) {
+export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction, dark, isMobile) {
+    isMobileLocal = false;
+    if (isMobile) {
+        isMobileLocal = true;
+    }
+    if (getUseTextSetting() && !isMobile) {
         return getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark)
     } else {
         let newDim = { width: dim.height, height: dim.height };

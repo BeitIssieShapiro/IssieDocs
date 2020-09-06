@@ -119,7 +119,7 @@ export function getSvgIcon(name, size, color, strokeWidth) {
                 </G>
             </Svg>
         case 'folder':
-            return <Svg width="140px" height="184px" viewBox="0 0 140 184" preserveAspectRatio="xMidYMid meet">
+            return <Svg {...props} viewBox="0 0 140 184" preserveAspectRatio="xMidYMid meet">
                 <Rect stroke="darkgray" x="5.998932px" height="48.032841px" y="43.004684px" strokeWidth="1px" width="69.5px" id="rect2" fill="#ffffff" transform="rotate(-13.375336 51.75 63)"></Rect>
                 <Rect stroke="darkgray" x="49.627937px" height="48.032841px" y="41.230129px" strokeWidth="1px" id="rect3" width="69.5px" fill="#ffffff" transform="rotate(35.407425 90.457466 76.271042) rotate(-13.375336 51.75 63)"></Rect>
                 <Rect stroke="darkgray" x="37.5px" height="50px" y="30px" id="rect1" strokeWidth="1px" width="69.5px" fill="#ffffff" transform=""></Rect>
@@ -137,7 +137,7 @@ export function getSvgIcon(name, size, color, strokeWidth) {
             // return <Svg {...props} viewBox="0 0 232.395 232.395" >
             //     <Path fill={color} d="M177.121,83.258c-5.921,0-11.324,2.26-15.393,5.962c-4.068-3.702-9.472-5.962-15.393-5.962 c-5.925,0-11.333,2.261-15.404,5.963c-1.672-1.522-3.579-2.783-5.645-3.76c7.467-9.163,11.828-20.792,11.828-33.095 C137.115,23.491,113.627,0,84.756,0C55.878,0,32.383,23.491,32.383,52.366c0,20.105,11.649,38.4,29.469,47.085v63.871 c0,38.086,30.988,69.072,69.077,69.072c38.092,0,69.083-30.986,69.083-69.072V106.15C200.012,93.527,189.743,83.258,177.121,83.258z M47.383,52.366C47.383,31.762,64.148,15,84.756,15c20.6,0,37.359,16.762,37.359,37.366c0,11.702-5.529,22.549-14.467,29.515V52.366 c0-12.628-10.27-22.902-22.893-22.902c-12.629,0-22.904,10.274-22.904,22.902v29.513C52.912,74.915,47.383,64.068,47.383,52.366z M185.012,163.322c0,29.815-24.262,54.072-54.083,54.072c-29.818,0-54.077-24.257-54.077-54.072V94.887 c0.013-0.251,0.013-0.502,0-0.751v-41.77c0-4.357,3.546-7.902,7.904-7.902c4.352,0,7.893,3.545,7.893,7.902v53.784v16.451 c0,4.142,3.358,7.5,7.5,7.5c4.142,0,7.5-3.358,7.5-7.5V106.15c0-4.352,3.54-7.893,7.891-7.893c4.351,0,7.89,3.541,7.89,7.893v16.451 c0,4.142,3.358,7.5,7.5,7.5c4.142,0,7.5-3.358,7.5-7.5V106.15c0-4.352,3.547-7.893,7.907-7.893c4.352,0,7.893,3.541,7.893,7.893 v16.451c0,4.142,3.358,7.5,7.5,7.5c4.142,0,7.5-3.358,7.5-7.5V106.15c0-4.352,3.541-7.893,7.893-7.893 c4.351,0,7.891,3.541,7.891,7.893V163.322z" />
             // </Svg>
-            return <Svg width="100px" height="137px" viewBox="0 0 100 157">
+            return <Svg {...props} viewBox="0 0 100 157">
                 <G id="Page-1" stroke="none" strokeWidth="1" fill="none" fillRule="evenodd" strokeLinecap="round" strokeLinejoin="round">
                     <G transform="translate(-111.000000, -206.000000)" stroke="#27A7E0" strokeWidth="4">
                         <G id="Group" transform="translate(166.699876, 267.060354) scale(-1, 1) rotate(-115.000000) translate(-166.699876, -267.060354) translate(115.199876, 196.060354)">

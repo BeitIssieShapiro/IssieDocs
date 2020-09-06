@@ -13,7 +13,7 @@ import { Spacer, globalStyles, getHeaderBackButton, getIconButton } from './elem
 import { fTranslate, translate } from './lang.js';
 import {
   View, LogBox, Alert,
-  TouchableOpacity, Settings
+  TouchableOpacity, Settings, useWindowDimensions
 } from 'react-native';
 import { EDIT_TITLE } from './settings'
 
@@ -52,7 +52,21 @@ function getNavParam(nav, name, def) {
   return def;
 }
 
+const isScreenNarrow = () => useWindowDimensions().width < 500;
+const isScreenLow = () => useWindowDimensions().height < 700;
+const isMobile = () => this.isScreenNarrow() || this.isScreenLow();
+
+
 function App(props) {
+
+  const windowWidth = useWindowDimensions().width;
+  //const windowHeight = useWindowDimensions().height;
+  
+  const isScreenNarrow = () => windowWidth < 500;
+  //const isScreenLow = () => useWindowDimensions().height < 700;
+  //const isMobile = () => this.isScreenNarrow() || this.isScreenLow();
+
+
   if (props.isSimulator) {
     setIsSimulator(true)
   }
@@ -90,7 +104,7 @@ function App(props) {
                 headerLeft: props.route.params && props.route.params.showHome ? () => getHeaderBackButton(props.route.params.showHome) : undefined,
                 headerRight: (() =>
                   <View style={{ flexDirection: 'row-reverse' }}>
-                    <Spacer />
+                    {isScreenNarrow() ? null : <Spacer />}
                     <TouchableOpacity
                       activeOpacity={0.7}
                       onPress={() => {
@@ -111,10 +125,10 @@ function App(props) {
                                 }
                                 execNavParam(props.route, "editHandler", "");
                               }
-                              
-                            }, execNavParam(props.route, "isEditEnabled", false) ? 'white' : 'gray', getNavParam(props.route, "editMode", false) ? "check" : "edit", 35):null
+
+                            }, execNavParam(props.route, "isEditEnabled", false) ? 'white' : 'gray', getNavParam(props.route, "editMode", false) ? "check" : "edit", 35) : null
                         }
-                        <Spacer />
+                        {isScreenNarrow() ? null : <Spacer />}
                         <Icon name={menuIcon} color='white' size={35} />
 
                       </View>

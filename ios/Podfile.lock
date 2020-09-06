@@ -238,16 +238,18 @@ PODS:
     - React-cxxreact (= 0.63.2)
     - React-jsi (= 0.63.2)
   - React-jsinspector (0.63.2)
-  - react-native-document-picker (3.5.4):
+  - react-native-document-picker (3.3.3):
     - React
   - react-native-image-editor (2.3.0):
     - React
     - React-RCTImage
-  - react-native-image-picker (2.3.3):
+  - react-native-image-picker (2.3.1):
     - React
-  - react-native-pdf (6.2.0):
+  - react-native-image-resizer (1.2.6):
     - React
-  - react-native-progress-view (1.1.1):
+  - react-native-pdf (6.1.2):
+    - React
+  - react-native-progress-view (1.0.2):
     - React
   - react-native-safe-area-context (0.7.3):
     - React
@@ -323,23 +325,23 @@ PODS:
     - React
   - RNFS (2.16.6):
     - React
-  - RNGestureHandler (1.8.0):
+  - RNGestureHandler (1.6.1):
     - React
   - RNImageRotate (2.1.0):
     - React
-  - RNLocalize (1.4.1):
+  - RNLocalize (1.4.0):
     - React
-  - RNReanimated (1.13.0):
+  - RNReanimated (1.9.0):
     - React
-  - RNScreens (2.10.1):
+  - RNScreens (2.7.0):
     - React
-  - RNShare (3.7.1):
+  - RNShare (3.3.0):
     - React
   - RNSketchCanvas (0.8.0):
     - React
   - RNSVG (12.1.0):
     - React
-  - RNVectorIcons (6.7.0):
+  - RNVectorIcons (6.6.0):
     - React
   - Yoga (1.14.0)
   - YogaKit (1.18.1):
@@ -386,6 +388,7 @@ DEPENDENCIES:
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - "react-native-image-editor (from `../node_modules/@react-native-community/image-editor`)"
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
+  - react-native-image-resizer (from `../node_modules/react-native-image-resizer`)
   - react-native-pdf (from `../node_modules/react-native-pdf`)
   - "react-native-progress-view (from `../node_modules/@react-native-community/progress-view`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
@@ -470,6 +473,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/image-editor"
   react-native-image-picker:
     :path: "../node_modules/react-native-image-picker"
+  react-native-image-resizer:
+    :path: "../node_modules/react-native-image-resizer"
   react-native-pdf:
     :path: "../node_modules/react-native-pdf"
   react-native-progress-view:
@@ -557,14 +562,15 @@ SPEC CHECKSUMS:
   React-jsi: 54245e1d5f4b690dec614a73a3795964eeef13a8
   React-jsiexecutor: 8ca588cc921e70590820ce72b8789b02c67cce38
   React-jsinspector: b14e62ebe7a66e9231e9581279909f2fc3db6606
-  react-native-document-picker: 4921045c5c6c78243010f784eae0a3f4b2af7799
-  react-native-image-editor: 9361a215c3991cafbe5e7f28cbbad6e72c9c2705
-  react-native-image-picker: 3d3f85baabca60a00b75fb8facc1376db7bbdafa
-  react-native-pdf: 909cd849e6a806731b2135263189fea39494b55e
-  react-native-progress-view: 8529425acbb93f918f3675bbece48f6b551b1384
-  react-native-safe-area-context: e200d4433aba6b7e60b52da5f37af11f7a0b0392
+  react-native-document-picker: dd96ce05bf1453b110d7a3912097bf6d298d2cb6
+  react-native-image-editor: bd67912f38a8e7a895bf6eb8f445acdcefd8fd0c
+  react-native-image-picker: 668e72d0277dc8c12ae90e835507c1eddd2e4f85
+  react-native-image-resizer: f9fd7a61ffb3683987a6528e15e32bc32eb9dee3
+  react-native-pdf: 7d76a6619f76a6ebfb2f82a4f2feeb17826ba8b4
+  react-native-progress-view: 1efac84cef4f7e72e584227203076204e9752193
+  react-native-safe-area-context: 8260e5157617df4b72865f44006797f895b2ada7
   react-native-splash-screen: 200d11d188e2e78cea3ad319964f6142b6384865
-  react-native-view-shot: 4475fde003fe8a210053d1f98fb9e06c1d834e1c
+  react-native-view-shot: 08c46c9e8e92f6681e8f2ffa55ac3d06e7e99070
   React-RCTActionSheet: 910163b6b09685a35c4ebbc52b66d1bfbbe39fc5
   React-RCTAnimation: 9a883bbe1e9d2e158d4fb53765ed64c8dc2200c6
   React-RCTBlob: 39cf0ece1927996c4466510e25d2105f67010e13
@@ -575,19 +581,19 @@ SPEC CHECKSUMS:
   React-RCTText: 1b6773e776e4b33f90468c20fe3b16ca3e224bb8
   React-RCTVibration: 4d2e726957f4087449739b595f107c0d4b6c2d2d
   ReactCommon: a0a1edbebcac5e91338371b72ffc66aa822792ce
-  ReactNativeART: 78edc68dd4a1e675338cd0cd113319cf3a65f2ab
+  ReactNativeART: f003b07dfa7098aa419ed95b69560923440b1eee
   rn-fetch-blob: f065bb7ab7fb48dd002629f8bdcb0336602d3cba
-  RNCMaskedView: 5a8ec07677aa885546a0d98da336457e2bea557f
+  RNCMaskedView: f5c7d14d6847b7b44853f7acb6284c1da30a3459
   RNFS: 2bd9eb49dc82fa9676382f0585b992c424cd59df
-  RNGestureHandler: 7a5833d0f788dbd107fbb913e09aa0c1ff333c39
+  RNGestureHandler: 8f09cd560f8d533eb36da5a6c5a843af9f056b38
   RNImageRotate: 61c62c5a907405821e28dc8c0e04e4fdc909b1fa
-  RNLocalize: 49634a6a605dcdeb319e9c42a5c2f1aec508694b
-  RNReanimated: 89f5e0a04d1dd52fbf27e7e7030d8f80a646a3fc
-  RNScreens: b748efec66e095134c7166ca333b628cd7e6f3e2
-  RNShare: ea0393515826ea8d27a0e17cd3d6f3cc210630d9
-  RNSketchCanvas: 9c28adb5381543ed55cc98ce6de46479cb3cb12c
+  RNLocalize: fc27ee5878ce5a3af73873fb2d8e866e0d1e6d84
+  RNReanimated: b5ccb50650ba06f6e749c7c329a1bc3ae0c88b43
+  RNScreens: cf198f915f8a2bf163de94ca9f5bfc8d326c3706
+  RNShare: fea1801315aa8875d6db73a4010b14afcd568765
+  RNSketchCanvas: 6939b18677cd1794151cc3d8eb5a0a2158a4a05b
   RNSVG: ce9d996113475209013317e48b05c21ee988d42e
-  RNVectorIcons: 368d6d8b8301224e5ffb6254191f4f8876c2be0d
+  RNVectorIcons: 0bb4def82230be1333ddaeee9fcba45f0b288ed4
   Yoga: 7740b94929bbacbddda59bf115b5317e9a161598
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 

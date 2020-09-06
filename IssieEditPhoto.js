@@ -26,7 +26,7 @@ import { translate } from './lang';
 import { getSvgIcon } from './svg-icons';
 import { setNavParam } from './utils';
 
-const topLayer = dimensions.toolbarHeight + dimensions.toolbarMargin; //51 + 8 + 8 + 35;
+//const this.topLayer() = dimensions.toolbarHeight + dimensions.toolbarMargin; //51 + 8 + 8 + 35;
 const shareTimeMs = 2000;
 
 const maxZoom = 3;
@@ -159,7 +159,7 @@ export default class IssieEditPhoto extends React.Component {
     //Alert.alert("kbTop:"+kbTop+", wH:"+this.state.windowH+",cH:"+this.state.canvasH)
 
     //ignore the part of keyboard that is below the canvas
-    let kbHeight = e.endCoordinates.height - (this.state.windowH - topLayer - this.state.canvasH);
+    let kbHeight = e.endCoordinates.height - (this.state.windowH - this.topLayer() - this.state.canvasH);
 
     // if keyboard hides the textInput, scroll the window
     if (this.state.showTextInput && this.state.yText + 20 >= kbTop) {
@@ -319,7 +319,7 @@ export default class IssieEditPhoto extends React.Component {
   s2aW = (w) => { return (w - this.state.sideMargin) / this.state.zoom - this.state.xOffset }
   s2aH = (h) => { return (h - this.state.topView) / this.state.zoom - this.state.yOffset }// - this.state.inputTextHeight/2}
   a2cW = (w) => { return (w + this.state.xOffset) * this.state.zoom + this.state.sideMargin }
-  a2cH = (h) => { return (h + this.state.yOffset) * this.state.zoom + topLayer } // + this.state.inputTextHeight / 2 }
+  a2cH = (h) => { return (h + this.state.yOffset) * this.state.zoom + this.topLayer() } // + this.state.inputTextHeight / 2 }
 
   findColor = (fc) => {
     let color = availableColorPicker.find(c => c == fc)
@@ -331,12 +331,12 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   TextModeClick = (ev) => {
-
+    console.log("TextMode click. x:" + ev.nativeEvent.pageX + ",y:" +ev.nativeEvent.pageY)
     //check that the click is in the canvas area:
     if (ev.nativeEvent.pageX < this.state.sideMargin ||
       ev.nativeEvent.pageX > this.state.sideMargin + this.state.canvasW ||
-      ev.nativeEvent.pageY < topLayer ||
-      ev.nativeEvent.pageY > this.state.canvasH+topLayer) {
+      ev.nativeEvent.pageY < this.topLayer() ||
+      ev.nativeEvent.pageY > this.state.canvasH+this.topLayer()) {
       return;
     }
     let needCanvasUpdate = false;
@@ -529,6 +529,7 @@ export default class IssieEditPhoto extends React.Component {
 
 
   onTextButtonPicker = () => {
+    console.log("Text clicked. textMode before: " + (this.state.textMode?'y':'n'))
     if (!this.state.textMode) {
       this.setState({
         showTextInput: false,
@@ -576,7 +577,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   onBrushButtonPicker = () => {
-
+    console.log("Brush clicked. textMode before: " + (this.state.textMode?'y':'n'))
     if (this.state.textMode) {
       this.SaveText();
       this.setState({
@@ -647,7 +648,11 @@ export default class IssieEditPhoto extends React.Component {
       this.Load();
     }, 200)
   }
+  isScreenNarrow = () => this.state.windowSize && this.state.windowSize.width < 500;
 
+  topLayer = () => (this.isScreenNarrow()?
+    dimensions.toolbarHeight * 2: dimensions.toolbarHeight) + dimensions.toolbarMargin;
+  
   onLayout = async (e) => {
     if (!this._mounted)
       return;
@@ -662,7 +667,7 @@ export default class IssieEditPhoto extends React.Component {
     let sideMargin = Math.floor(windowSize.width * .05)
 
     windowW = windowSize.width - sideMargin * 2;
-    windowH = windowSize.height - topLayer - dimensions.toolbarMargin;// * .88;// - topLayer * 1.1;
+    windowH = windowSize.height - this.topLayer() - dimensions.toolbarMargin;// * .88;// - this.topLayer() * 1.1;
     this.CalcImageSize(this.state.currentFile, windowW, windowH);
   }
 
@@ -711,14 +716,14 @@ export default class IssieEditPhoto extends React.Component {
     let drawingAreaStyle = {
       flex: 1,
       position: 'absolute',
-      top: topLayer,
+      top: this.topLayer(),
       left: 0,
       width: '100%',
       height: '100%',
       zIndex: 5,
     };
-    let toolbarSideMargin = this.state.sideMargin > 150 ? 150 : this.state.sideMargin;
-
+    let toolbarSideMargin = this.state.sideMargin > 70 ? 70 : this.state.sideMargin;
+    let toolbarHeight = this.isScreenNarrow() ? 2*dimensions.toolbarHeight: dimensions.toolbarHeight;
     if (this.state.windowSize && this.state.windowSize.width - 2 * toolbarSideMargin < 300) {
       toolbarSideMargin = 100;
     }
@@ -767,10 +772,10 @@ export default class IssieEditPhoto extends React.Component {
         {/* Toolbar */}
         <View style={{
           flex: 1, position: 'absolute', top: 0, width: '100%',
-          height: dimensions.toolbarHeight, backgroundColor: semanticColors.subTitle,
+          height: toolbarHeight, backgroundColor: semanticColors.subTitle,
           zIndex: 30
         }} >
-          <View style={{position: 'absolute', top: 0, left:0, height:'100%', justifyContent:'center'}}>
+          <View style={{position: 'absolute', top: 0, left:0, height:dimensions.toolbarHeight, justifyContent:'center'}}>
             {
               getIconButton(() => {
                 this.props.navigation.goBack();
@@ -785,8 +790,8 @@ export default class IssieEditPhoto extends React.Component {
           </View>
           <View style={{
             position: 'absolute',
-            height: '100%',
-            left: Math.max(toolbarSideMargin, 100),
+            height:dimensions.toolbarHeight,
+            left: Math.max(toolbarSideMargin, this.isScreenNarrow()?70:100),
             right: toolbarSideMargin,
             flexDirection: 'row',
             alignItems: 'center'
@@ -815,9 +820,11 @@ export default class IssieEditPhoto extends React.Component {
 
             <View style={{
               position: 'absolute',
-              left: this.state.windowW / 2 - toolbarSideMargin - 55,
+              top: this.isScreenNarrow()?dimensions.toolbarHeight:0,
+              left: this.isScreenNarrow() ? 0
+                : this.state.windowW / 2 - toolbarSideMargin - 55,
               width: 100,
-              height: '100%',
+              height:dimensions.toolbarHeight,
               backgroundColor: 'transparent',//'#eef4fa',
               //borderWidth:3,
               //borderColor: 'rgba(238,244,250, .7)',
@@ -854,7 +861,10 @@ export default class IssieEditPhoto extends React.Component {
             </View>
 
             <View style={{
-              position: 'absolute', top: 0, right: 0, height: '100%',
+              position: 'absolute', 
+              top: this.isScreenNarrow()?dimensions.toolbarHeight:0,
+              right: 0, 
+              height:dimensions.toolbarHeight,
               flexDirection: 'row', alignItems: 'center'
             }} >
 
@@ -889,7 +899,7 @@ export default class IssieEditPhoto extends React.Component {
         </View>
         {/** */}
         {/*View for selecting color*/}
-        <FadeInView height={this.state.showColorPicker ? 70 : 0} style={[styles.pickerView, { left: 0, right: 0 }]}>
+        <FadeInView height={this.state.showColorPicker ? 70 : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
           <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
             {availableColorPicker.map((color, i) => getColorButton(() => {
               this.setState({ color: color, showColorPicker: false, eraseMode: false })
@@ -901,14 +911,14 @@ export default class IssieEditPhoto extends React.Component {
         </FadeInView>
 
         {/*View for selecting text size*/}
-        <FadeInView height={this.state.showTextSizePicker && this.state.textMode ? 70 : 0} style={[styles.pickerView, { left: 0, right: 0 }]}>
+        <FadeInView height={this.state.showTextSizePicker && this.state.textMode ? 70 : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
           <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-evenly', alignContent: 'center', alignItems: 'center' }}>
             {availableTextSize.map((size, i) => this.getTextSizePicker(this.state.color, colorButtonSize, size, i))}
           </View>
         </FadeInView>
 
         {/*View for selecting brush size*/}
-        <FadeInView height={this.state.showBrushSizePicker && !this.state.textMode ? 70 : 0} style={[styles.pickerView, { left: 0, right: 0 }]}>
+        <FadeInView height={this.state.showBrushSizePicker && !this.state.textMode ? 70 : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
           <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
             {availableBrushSize.map((size, i) => this.getBrushSizePicker(this.state.color, colorButtonSize, size, i))}
 
@@ -953,16 +963,16 @@ export default class IssieEditPhoto extends React.Component {
     let style = { flex: 1, position: 'absolute', zIndex: 10000 }
     let deg = 0;
     if (location == TOP && this.state.zoom > 1 && this.state.yOffset < 0) {
-      style.top = topLayer, style.left = 100, deg = -90;
+      style.top = this.topLayer(), style.left = 100, deg = -90;
       style.left = this.state.sideMargin + this.state.canvasW / 2
     } else if (location == RIGHT && this.state.zoom > 1) {
-      style.top = topLayer + this.state.canvasH / 2;
+      style.top = this.topLayer() + this.state.canvasH / 2;
       style.right = 5, deg = 0;
     } else if (location == BOTTOM && this.state.zoom > 1) {
-      style.top = topLayer + this.state.canvasH - 60 - this.state.keyboardHeight, deg = 90;
+      style.top = this.topLayer() + this.state.canvasH - 60 - this.state.keyboardHeight, deg = 90;
       style.left = this.state.sideMargin + this.state.canvasW / 2
     } else if (location == LEFT && this.state.xOffset < 0) {
-      style.top = topLayer + this.state.canvasH / 2;
+      style.top = this.topLayer() + this.state.canvasH / 2;
       style.left = 5, deg = 180;
     } else {
       return;
@@ -1181,7 +1191,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     position: 'absolute',
     backgroundColor: 'white',
-    top: dimensions.toolbarHeight,
     zIndex: 99999,
     left: 0,
     borderColor: 'gray',

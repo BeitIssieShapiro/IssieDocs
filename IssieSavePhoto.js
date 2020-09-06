@@ -21,7 +21,9 @@ import {
   getPageNavigationButtons, getFileNameDialog, semanticColors, getFolderAndIcon,
   Spacer, getRoundedButton, dimensions, validPathPart
 } from './elements'
-import ImageRotate from 'react-native-image-rotate';
+//import ImageRotate from 'react-native-image-rotate';
+import ImageResizer from 'react-native-image-resizer';
+
 import { getNewPage, saveFile, cloneToTemp, SRC_RENAME, SRC_DUPLICATE } from './newPage'
 import { pushFolderOrder } from './sort'
 import ProgressCircle from 'react-native-progress-circle'
@@ -202,8 +204,12 @@ export default class IssieSavePhoto extends React.Component {
     const measure = this.topView.measure.bind(this.topView);
 
     setTimeout(measure, 50, (fx, fy, width, height, px, py) => {
-      this.setState({ topView: py }, this.updateImageDimension);
+      this.setState({ topView: py, windowWidth: width}, this.updateImageDimension);
     });
+  }
+
+  isScreenNarrow = () => {
+    this.state.windowWidth < 500;
   }
 
   OK = async () => {
@@ -348,7 +354,7 @@ export default class IssieSavePhoto extends React.Component {
           }
         }
 
-        
+
         let returnFolderCallback = this.props.route.params.returnFolderCallback;
         if (returnFolderCallback && this.state.folder) {
           returnFolderCallback(this.state.folder.name);
@@ -458,14 +464,20 @@ export default class IssieSavePhoto extends React.Component {
   }
 
   rotate = (deg) => {
-    ImageRotate.rotateImage(this.state.uri, deg,
-      //success: 
-      (newUri) => {
-        this.setState({ uri: newUri });
+    //width and height are echanged as we rotate by 90 deg
+    ImageResizer.createResizedImage(this.state.uri, this.state.imgSize.h, this.state.imgSize.w, "JPEG", 100, deg, null).then(
+      (response) => {
+        this.setState({ uri: response.path });
         this.updateImageDimension()
-      },
-      //failure: 
-      (error) => { });
+        //Alert.alert(JSON.stringify(response.size))
+        // response.uri is the URI of the new image that can now be displayed, uploaded...
+        // response.path is the path of the new image
+        // response.name is the name of the new image with the extension
+        // response.size is the size of the new image
+      })
+      .catch(err => {
+        Alert.alert("Rotate failed: " + error)
+      });
   }
 
   initFolderList = async () => {
@@ -473,7 +485,7 @@ export default class IssieSavePhoto extends React.Component {
 
     RNFS.readDir(FOLDERS_DIR).then(async (folders) => {
       this.setState({
-        folders:  await Promise.all(folders.filter(f => f.isDirectory() && f.name !== DEFAULT_FOLDER.name).map(async (f) => {
+        folders: await Promise.all(folders.filter(f => f.isDirectory() && f.name !== DEFAULT_FOLDER.name).map(async (f) => {
           let metadata = DEFAULT_FOLDER_METADATA;
           try {
             metadata = await readFolderMetaData(f.path + "/" + ".metadata")
@@ -526,18 +538,18 @@ export default class IssieSavePhoto extends React.Component {
 
 
           {  //Cancel
-            getRoundedButton(this.Cancel, 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })
+            getRoundedButton(this.Cancel, 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isScreenNarrow())
           }
           <Spacer width={10} />
           {  //Save
-            getRoundedButton(this.OK, 'check-green', translate("BtnSave") + saveMoreThanOne, 30, 30, { width: 150, height: 40 })
+            getRoundedButton(this.OK, 'check-green', translate("BtnSave") + saveMoreThanOne, 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isScreenNarrow())
           }
 
           { //Add page
             this.state.phase == OK_Cancel && !this.state.pdf ?
               <Spacer width={10} /> : null}
           {this.state.phase == OK_Cancel && !this.state.pdf ?
-            getRoundedButton(this.AddPage, 'add', translate("BtnAddPage"), 30, 30, { width: 150, height: 40 }) :
+            getRoundedButton(this.AddPage, 'add', translate("BtnAddPage"), 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isScreenNarrow()) :
             null
           }
 
