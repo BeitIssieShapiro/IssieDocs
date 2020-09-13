@@ -155,12 +155,13 @@ export default class IssieSavePhoto extends React.Component {
       folder = DEFAULT_FOLDER;
     }
     let pageName = this.props.route.params.name;
+    let addToExistingPage = this.props.route.params.addToExistingPage;
     let pdf = false;
     if (uri.endsWith('.pdf')) {
       pdf = true;
     }
     await this.initFolderList()
-    this.setState({ uri, pdf, pdfPage: 1, folder, pageName }, () => {
+    this.setState({ uri, pdf, pdfPage: 1, folder, pageName, addToExistingPage }, () => {
       if (!pdf) {
         this.updateImageDimension();
       }
@@ -243,8 +244,34 @@ export default class IssieSavePhoto extends React.Component {
           pdf: false
         });
 
-      }
+      } 
 
+      if (this.state.addToExistingPage) {
+        //In a mode of adding another page to existing set-of-pages
+        //Current assumptions: only one page added (no pdf, no add page)
+        let page = this.state.addToExistingPage;
+
+        if (this.state.addToExistingPage.pages.length > 0) {
+          let newFileName = page.path + '/'+ page.pages.length + '.jpg';
+          await saveFile(this.state.uri, newFileName, false);
+        } else {
+          let basePath = page.path.substring(0, page.path.length-4); //remove .jpg 
+          
+          await RNFS.mkdir(basePath);
+          await RNFS.moveFile(page.path, basePath + '/0.jpg');
+          try {
+            await RNFS.moveFile(page.path + ".json", basePath + '/0.jpg.json');
+          } catch {
+            //ignore
+          }
+          
+          saveFile(this.state.uri, basePath + '/1.jpg', false);
+        }
+
+        this.props.route.params.returnFolderCallback(this.state.folder.name);
+        this.props.navigation.dispatch(StackActions.popToTop());
+        return;
+      }
       this.setState({ phase: PickName });
     } else if (this.state.phase == PickName) {
       if (!this.state.pageName || this.state.pageName.length == 0) {
@@ -546,9 +573,9 @@ export default class IssieSavePhoto extends React.Component {
           }
 
           { //Add page
-            this.state.phase == OK_Cancel && !this.state.pdf ?
+            this.state.phase == OK_Cancel && !this.state.pdf && !this.state.addToExistingPage ?
               <Spacer width={10} /> : null}
-          {this.state.phase == OK_Cancel && !this.state.pdf ?
+          {this.state.phase == OK_Cancel && !this.state.pdf && !this.state.addToExistingPage ?
             getRoundedButton(this.AddPage, 'add', translate("BtnAddPage"), 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isScreenNarrow()) :
             null
           }

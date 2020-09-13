@@ -216,7 +216,7 @@ export default class FolderGallery extends React.Component {
 
     }
 
-    newFromCamera = () => {
+    newFromCamera = (addToExistingPage) => {
         if (this.state.systemModal) return;
 
         this.setState({ systemModal: true })
@@ -226,6 +226,7 @@ export default class FolderGallery extends React.Component {
                 this.props.navigation.navigate('SavePhoto', {
                     uri: uri,
                     imageSource: SRC_CAMERA,
+                    addToExistingPage,
                     folder: this.state.currentFolder,
                     returnFolderCallback: (f) => this.setReturnFolder(f),
                     saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
@@ -329,6 +330,11 @@ export default class FolderGallery extends React.Component {
                 share: true
             })
     }
+
+    AddToPage = (page) => {
+        this.newFromCamera(page)
+    }
+
     DeleteFolder = () => {
         if (!this.state.currentFolder) return;
         Alert.alert(translate("DeleteFolderTitle"), translate("BeforeDeleteFolderQuestion"),
@@ -765,6 +771,7 @@ export default class FolderGallery extends React.Component {
                                             onRename: () => this.RenamePage(true),
                                             onMove: () => this.RenamePage(false),
                                             onShare: () => this.Share(),
+                                            onAdd: () => this.AddToPage(item), 
                                             onDuplicate: () => this.DuplicatePage(),
                                             count: item.pages.length
                                         })}

@@ -1,4 +1,11 @@
 Bugs:
+- In edit page, when text size is large, location in edit is not as without edit
+- when folder name is long sometimes it falls to second line
+
+
+
+
+
 V- rotate and save fails
 V- use small button in mobile
 

@@ -55,9 +55,9 @@ export default function TitleEdit(props) {
             onFocus={conditionalBlur}
         />
         <View style={{ position: 'absolute', left: '2%', flexDirection: 'row', alignItems: 'center' }}>
-            {props.editMode && props.title != editedTitle ? getIconButton(() => {
-                setEditedTitle(props.title)
-                props.onSaveCallback.getTitleToSave = () => props.title
+            {props.editMode ? getIconButton(() => {
+                setEditedTitle("")
+                props.onSaveCallback.getTitleToSave = () => ""
             }, "#010101", "close", 20) : null}
         </View>
         

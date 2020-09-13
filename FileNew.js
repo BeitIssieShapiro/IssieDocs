@@ -111,6 +111,7 @@ function getButton(index, props) {
         case 2: return getEmbeddedButton(props.onMove, 'folder-move', 40, 3, 'material-community');
         case 3: return getEmbeddedButton(props.onDuplicate, 'file-multiple', 30, 4, 'material-community');
         case 4: return getEmbeddedButton(props.onShare, 'share', 35, 5);
+        case 5: return getEmbeddedButton(props.onAdd, 'add', 35, 5);
     }
 }
 
@@ -145,6 +146,7 @@ function getActionButtons(props) {
                 {getButton(0, props)}
                 <Spacer width={15} key={10} />
                 {getButton(1, props)}
+                {getButton(2, props)}
             </View>
             <View style={{
                 flexDirection: 'row',
@@ -153,11 +155,11 @@ function getActionButtons(props) {
                 width: dimensions.tileWidth - 2*TILE_PADDING - 2*TILE_BORDER_WIDTH,
                 justifyContent: 'space-between'
             }}>
-                {getButton(2, props)}
-                <Spacer width={9} key={12} />
                 {getButton(3, props)}
-                <Spacer width={9} key={13} />
+                <Spacer width={9} key={12} />
                 {getButton(4, props)}
+                <Spacer width={9} key={13} />
+                {getButton(5, props)}
             </View>
         </View>
     } else {
@@ -167,7 +169,7 @@ function getActionButtons(props) {
             alignItems: 'center',
             alignContent:'center'
         }}>
-            {[0, 1, 2, 3, 4].map((item, i) =>
+            {[0, 1, 2, 3, 4, 5].map((item, i) =>
                 [getButton(item, props),
                 <Spacer width={i == 2? 19: 15} key={i + 10} />]
             )}

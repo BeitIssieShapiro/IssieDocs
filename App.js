@@ -13,7 +13,7 @@ import { Spacer, globalStyles, getHeaderBackButton, getIconButton } from './elem
 import { fTranslate, translate } from './lang.js';
 import {
   View, LogBox, Alert,
-  TouchableOpacity, Settings, useWindowDimensions
+  TouchableOpacity, Settings, useWindowDimensions, Text
 } from 'react-native';
 import { EDIT_TITLE } from './settings'
 
@@ -21,6 +21,8 @@ import TitleEdit from './title-edit.js'
 
 import { Icon } from 'react-native-elements'
 import { setIsSimulator } from './device';
+import { TextInput } from 'react-native-gesture-handler';
+
 
 // const MainNavigator = createStackNavigator({
 //   Home: {screen: FolderGallery},
@@ -55,6 +57,12 @@ function getNavParam(nav, name, def) {
 const isScreenNarrow = () => useWindowDimensions().width < 500;
 const isScreenLow = () => useWindowDimensions().height < 700;
 const isMobile = () => this.isScreenNarrow() || this.isScreenLow();
+
+Text.defaultProps = {};
+Text.defaultProps.maxFontSizeMultiplier = 1;
+
+TextInput.defaultProps = {};
+TextInput.defaultProps.maxFontSizeMultiplier = 1;
 
 
 function App(props) {
