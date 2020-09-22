@@ -327,8 +327,6 @@ PODS:
     - React
   - RNGestureHandler (1.6.1):
     - React
-  - RNImageRotate (2.1.0):
-    - React
   - RNLocalize (1.4.0):
     - React
   - RNReanimated (1.9.0):
@@ -409,7 +407,6 @@ DEPENDENCIES:
   - "RNCMaskedView (from `../node_modules/@react-native-community/masked-view`)"
   - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
-  - RNImageRotate (from `../node_modules/react-native-image-rotate`)
   - RNLocalize (from `../node_modules/react-native-localize`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
@@ -515,8 +512,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-fs"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
-  RNImageRotate:
-    :path: "../node_modules/react-native-image-rotate"
   RNLocalize:
     :path: "../node_modules/react-native-localize"
   RNReanimated:
@@ -586,7 +581,6 @@ SPEC CHECKSUMS:
   RNCMaskedView: f5c7d14d6847b7b44853f7acb6284c1da30a3459
   RNFS: 2bd9eb49dc82fa9676382f0585b992c424cd59df
   RNGestureHandler: 8f09cd560f8d533eb36da5a6c5a843af9f056b38
-  RNImageRotate: 61c62c5a907405821e28dc8c0e04e4fdc909b1fa
   RNLocalize: fc27ee5878ce5a3af73873fb2d8e866e0d1e6d84
   RNReanimated: b5ccb50650ba06f6e749c7c329a1bc3ae0c88b43
   RNScreens: cf198f915f8a2bf163de94ca9f5bfc8d326c3706

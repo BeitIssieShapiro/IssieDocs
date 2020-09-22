@@ -187,7 +187,7 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     const metaDataUri = currentFile + ".json";
-    this.setState({ page: page, currentFile: currentFile, metaDataUri: metaDataUri },
+    this.setState({ page: page, currentFile: currentFile, currentIndex: 0, metaDataUri: metaDataUri },
       this.Load);
   }
 
@@ -198,7 +198,7 @@ export default class IssieEditPhoto extends React.Component {
     }
   }
 
-  pageTitleAddition = (pages, index) => " - " + (index + 1) + "/" + pages.length
+  pageTitleAddition = (pages, index) => pages.length > 1 ? " - " + (index + 1) + "/" + pages.length : ""
 
 
   Load = async () => {
@@ -220,8 +220,9 @@ export default class IssieEditPhoto extends React.Component {
         this.setState({ shareProgressPage: i + 1 });
 
         const currentFile = this.state.page.pages[i];
+        const currentIndex = i;
         const metaDataUri = currentFile + ".json";
-        this.setState({ currentFile, metaDataUri })
+        this.setState({ currentFile, currentIndex, metaDataUri })
         this.loadFile(metaDataUri);
         dataUrls.push(await this.exportToBase64());
       }
@@ -331,12 +332,12 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   TextModeClick = (ev) => {
-    console.log("TextMode click. x:" + ev.nativeEvent.pageX + ",y:" +ev.nativeEvent.pageY)
+    console.log("TextMode click. x:" + ev.nativeEvent.pageX + ",y:" + ev.nativeEvent.pageY)
     //check that the click is in the canvas area:
     if (ev.nativeEvent.pageX < this.state.sideMargin ||
       ev.nativeEvent.pageX > this.state.sideMargin + this.state.canvasW ||
       ev.nativeEvent.pageY < this.topLayer() ||
-      ev.nativeEvent.pageY > this.state.canvasH+this.topLayer()) {
+      ev.nativeEvent.pageY > this.state.canvasH + this.topLayer()) {
       return;
     }
     let needCanvasUpdate = false;
@@ -529,7 +530,7 @@ export default class IssieEditPhoto extends React.Component {
 
 
   onTextButtonPicker = () => {
-    console.log("Text clicked. textMode before: " + (this.state.textMode?'y':'n'))
+    console.log("Text clicked. textMode before: " + (this.state.textMode ? 'y' : 'n'))
     if (!this.state.textMode) {
       this.setState({
         showTextInput: false,
@@ -577,7 +578,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   onBrushButtonPicker = () => {
-    console.log("Brush clicked. textMode before: " + (this.state.textMode?'y':'n'))
+    console.log("Brush clicked. textMode before: " + (this.state.textMode ? 'y' : 'n'))
     if (this.state.textMode) {
       this.SaveText();
       this.setState({
@@ -618,6 +619,51 @@ export default class IssieEditPhoto extends React.Component {
     this.canvas.setState({ strokeWidth, color });
   }
 
+  deletePage = async () => {
+    Alert.alert(translate("DeleteSubPageTitle"),
+      fTranslate("BeforeDeleteSubPageQuestion", this.state.currentIndex + 1, this.state.page.pages.length),
+      [
+        {
+          text: translate("BtnDelete"), onPress: async () => {
+            //delete file
+            await RNFS.unlink(this.state.currentFile)
+            try {
+              await RNFS.unlink(this.state.currentFile + ".json");
+            } catch {
+              //ignore as maybe no json file
+            }
+            // //fix file names
+            // let basePathEnd = this.state.currentFile.lastIndexOf('/');
+            // let basePath = this.state.currentFile.substring(0, basePathEnd+1);
+            // for (let i = this.state.currentIndex + 1; i < this.state.page.pages.length;i++) {
+            //   await RNFS.moveFile(basePath + i + ".jpg", basePath + (i-1) + ".jpg")
+            //   try {
+            //     await RNFS.moveFile(basePath + i + ".jpg.json", basePath + (i-1) + ".jpg.json")
+            //   } catch {
+            //     //ignore as json may be missing
+            //   }
+            // }
+
+            for (let i = this.state.currentIndex; i < this.state.page.pages.length-1;i++) {
+              this.state.page.pages[i] = this.state.page.pages[i+1];
+            }
+            this.state.page.pages.length --;
+
+            //move current file to previous or 0
+            this.movePage(-1);
+          },
+          style: 'destructive'
+        },
+        {
+          text: translate("BtnCancel"), onPress: () => {
+            //do nothing
+          },
+          style: 'cancel'
+        }
+      ]
+    );
+  }
+
   movePage = (inc) => {
 
     if (this.state.showTextInput) {
@@ -632,7 +678,10 @@ export default class IssieEditPhoto extends React.Component {
       }
     }
     currentIndex += inc;
-    if (currentIndex < 0 || currentIndex >= this.state.page.pages.length) return;
+    if (currentIndex < 0)
+      currentIndex = 0;
+
+    if (currentIndex >= this.state.page.pages.length) return;
 
 
     setNavParam(this.props.navigation, 'pageTitleAddition', this.pageTitleAddition(this.state.page.pages, currentIndex));
@@ -640,7 +689,7 @@ export default class IssieEditPhoto extends React.Component {
     const currentFile = this.state.page.pages[currentIndex];
     const metaDataUri = currentFile + ".json";
     this.setState({
-      currentFile: currentFile, metaDataUri: metaDataUri,
+      currentFile, currentIndex, metaDataUri: metaDataUri,
       zoom: 1, xOffset: 0, yOffset: 0, showTextInput: false, inputTextValue: ''
     });
     this.CalcImageSize(currentFile, this.state.origWindowW, this.state.windowH);
@@ -650,9 +699,9 @@ export default class IssieEditPhoto extends React.Component {
   }
   isScreenNarrow = () => this.state.windowSize && this.state.windowSize.width < 500;
 
-  topLayer = () => (this.isScreenNarrow()?
-    dimensions.toolbarHeight * 2: dimensions.toolbarHeight) + dimensions.toolbarMargin;
-  
+  topLayer = () => (this.isScreenNarrow() ?
+    dimensions.toolbarHeight * 2 : dimensions.toolbarHeight) + dimensions.toolbarMargin;
+
   onLayout = async (e) => {
     if (!this._mounted)
       return;
@@ -723,7 +772,7 @@ export default class IssieEditPhoto extends React.Component {
       zIndex: 5,
     };
     let toolbarSideMargin = this.state.sideMargin > 70 ? 70 : this.state.sideMargin;
-    let toolbarHeight = this.isScreenNarrow() ? 2*dimensions.toolbarHeight: dimensions.toolbarHeight;
+    let toolbarHeight = this.isScreenNarrow() ? 2 * dimensions.toolbarHeight : dimensions.toolbarHeight;
     if (this.state.windowSize && this.state.windowSize.width - 2 * toolbarSideMargin < 300) {
       toolbarSideMargin = 100;
     }
@@ -775,7 +824,7 @@ export default class IssieEditPhoto extends React.Component {
           height: toolbarHeight, backgroundColor: semanticColors.subTitle,
           zIndex: 30
         }} >
-          <View style={{position: 'absolute', top: 0, left:0, height:dimensions.toolbarHeight, justifyContent:'center'}}>
+          <View style={{ position: 'absolute', top: 0, left: 0, height: dimensions.toolbarHeight, justifyContent: 'center' }}>
             {
               getIconButton(() => {
                 this.props.navigation.goBack();
@@ -790,8 +839,8 @@ export default class IssieEditPhoto extends React.Component {
           </View>
           <View style={{
             position: 'absolute',
-            height:dimensions.toolbarHeight,
-            left: Math.max(toolbarSideMargin, this.isScreenNarrow()?70:100),
+            height: dimensions.toolbarHeight,
+            left: Math.max(toolbarSideMargin, this.isScreenNarrow() ? 70 : 100),
             right: toolbarSideMargin,
             flexDirection: 'row',
             alignItems: 'center'
@@ -820,11 +869,11 @@ export default class IssieEditPhoto extends React.Component {
 
             <View style={{
               position: 'absolute',
-              top: this.isScreenNarrow()?dimensions.toolbarHeight:0,
+              top: this.isScreenNarrow() ? dimensions.toolbarHeight : 0,
               left: this.isScreenNarrow() ? 0
                 : this.state.windowW / 2 - toolbarSideMargin - 55,
               width: 100,
-              height:dimensions.toolbarHeight,
+              height: dimensions.toolbarHeight,
               backgroundColor: 'transparent',//'#eef4fa',
               //borderWidth:3,
               //borderColor: 'rgba(238,244,250, .7)',
@@ -861,10 +910,10 @@ export default class IssieEditPhoto extends React.Component {
             </View>
 
             <View style={{
-              position: 'absolute', 
-              top: this.isScreenNarrow()?dimensions.toolbarHeight:0,
-              right: 0, 
-              height:dimensions.toolbarHeight,
+              position: 'absolute',
+              top: this.isScreenNarrow() ? dimensions.toolbarHeight : 0,
+              right: 0,
+              height: dimensions.toolbarHeight,
               flexDirection: 'row', alignItems: 'center'
             }} >
 
@@ -943,6 +992,14 @@ export default class IssieEditPhoto extends React.Component {
           this.state.page && this.state.page.pages.length > 0 && this.state.currentFile !== this.state.page.pages[0] ?
             <View style={{ position: 'absolute', bottom: 50, left: 10, width: 155, height: 40, zIndex: 100 }}>
               {getRoundedButton(() => this.movePage(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 155, height: 40 }, 'row-reverse', true)}
+            </View> :
+            null
+        }
+        {/** delete page button */}
+        {
+          this.state.page && this.state.page.pages.length > 1 ?
+            <View style={{ position: 'absolute', bottom: 50, left: '40%', height: 40, zIndex: 100 }}>
+              {getRoundedButton(() => this.deletePage(), 'delete-forever', translate("BtnDelete"), 30, 30, { width: 115, height: 40 }, 'row', true)}
             </View> :
             null
         }

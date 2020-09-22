@@ -29,6 +29,9 @@ var strings = {
         "DeletePageTitle": "מחיקת דף",
         "DeleteFolderTitle": "מחיקת תיקייה",
         "BeforeDeletePageQuestion": "האם למחוק את הדף?",
+        "DeleteSubPageTitle":"מחיקת עמוד", 
+        "BeforeDeleteSubPageQuestion":"האם למחוק עמוד נוכחי {1} מתוך {2}", //todo
+
         "DeleteFoldersAndPagesTitle": "מחיקת תיקיות ודפים",
         "BeforeDeleteFolderQuestion": "מחיקת תיקייה תגרום למחיקת כל הדפים בתוכה, האם למחוק?",
         "BeforeDeleteFoldersAndPagesQuestion": "נבחרה מחיקת דפים ותיקיות. מחיקת התיקיות תמחק את כל הדפים בתוכן. האם להמשיך?",
@@ -73,6 +76,8 @@ var strings = {
         "BtnChangeName": "שנה שם",
         "BtnDelete": "מחק",
         "BtnDuplicate": "הכפל",
+        "MenuFromCamera": "מצלמה",
+        "MenuFromMediaLib": "ספריית התמונות",
 
         "CaptionPageName": "שם הדף",
         "CaptionFolderNameList": "תיקיה",
@@ -106,6 +111,9 @@ var strings = {
         "DeletePageTitle": "حذف الصفحة",
         "DeleteFolderTitle": "حذف المجلد",
         "BeforeDeletePageQuestion": "حذف الصفحة؟",
+        "DeleteSubPageTitle":"Delete Page", //todo
+        "BeforeDeleteSubPageQuestion":"Are you sure you want to delete page {1} of {2}", //todo
+
         "DeleteFoldersAndPagesTitle": "حذف المجلدات والعناوين",
         "BeforeDeleteFolderQuestion": "حذف المجلد سيؤدي إلى مسح جميع الصفحات داخله, وحذفه",
         "BeforeDeleteFoldersAndPagesQuestion": "اختير حذف الصفحات والمجلدات. حذف المجلدات سيؤدي إلى حذف جميع الصفحات والمحتويات. هل تريد المتابعة؟",
@@ -149,6 +157,9 @@ var strings = {
         "BtnChangeName": "إعادة تسمية",
         "BtnDelete": "حذف",
         "BtnDuplicate": "تكرير",
+
+        "MenuFromCamera": "الة تصوير", //check
+        "MenuFromMediaLib": "مكتبة الوسائط", //check
 
         "CaptionPageName": "اسم الصفحة",
         "CaptionFolderNameList": "مجلد",

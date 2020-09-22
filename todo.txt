@@ -5,7 +5,6 @@ Bugs:
 
 
 
-
 V- rotate and save fails
 V- use small button in mobile
 

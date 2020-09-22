@@ -33,12 +33,17 @@ export default function TitleEdit(props) {
             flexDirection: 'row', width: '70%',
             marginLeft: '15%',
             marginRight: '15%',
+            marginBottom: 5,
             alignItems: 'center', justifyContent: 'center',
-            alignContent: 'center'
+            alignContent: 'center',
+            borderBottomWidth:5,
+            borderBottomColor:'transparent'
         },
         props.editMode ? {
-            backgroundColor: '#225BAB',
-            borderRadius: 25
+            //backgroundColor: '#6C89AF',
+            borderBottomColor: '#A1C7FC',
+
+            //borderRadius: 25
         } : {}]}
     >
 
@@ -58,7 +63,7 @@ export default function TitleEdit(props) {
             {props.editMode ? getIconButton(() => {
                 setEditedTitle("")
                 props.onSaveCallback.getTitleToSave = () => ""
-            }, "#010101", "close", 20) : null}
+            }, "white", "close", 30) : null}
         </View>
         
     </View>

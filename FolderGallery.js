@@ -153,6 +153,7 @@ export default class FolderGallery extends React.Component {
 
     refresh = async (folderName) => {
         //todo optimize if folderName is given
+        console.log("Folder: " + FOLDERS_DIR);
         RNFS.readDir(FOLDERS_DIR).then(async (folders) => {
             let foldersState = [];
 
@@ -240,7 +241,7 @@ export default class FolderGallery extends React.Component {
         );
     }
 
-    newFromMediaLib = () => {
+    newFromMediaLib = (addToExistingPage) => {
         this.setState({ isNewPageMode: false });
         ImagePicker.launchImageLibrary({
             title: translate("MediaPickerTitle"),
@@ -252,6 +253,7 @@ export default class FolderGallery extends React.Component {
                     uri: response.uri,
                     folder: this.state.currentFolder,
                     imageSource: SRC_GALLERY,
+                    addToExistingPage,
                     returnFolderCallback: (f) => this.setReturnFolder(f),
                     saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
 
@@ -331,8 +333,12 @@ export default class FolderGallery extends React.Component {
             })
     }
 
-    AddToPage = (page) => {
+    AddToPageFromCamera = (page) => {
         this.newFromCamera(page)
+    }
+
+    AddToPageFromMediaLib = (page) => {
+        this.newFromMediaLib(page)
     }
 
     DeleteFolder = () => {
@@ -771,7 +777,8 @@ export default class FolderGallery extends React.Component {
                                             onRename: () => this.RenamePage(true),
                                             onMove: () => this.RenamePage(false),
                                             onShare: () => this.Share(),
-                                            onAdd: () => this.AddToPage(item), 
+                                            onAddFromCamera: () => this.AddToPageFromCamera(item), 
+                                            onAddFromMediaLib: () => this.AddToPageFromMediaLib(item), 
                                             onDuplicate: () => this.DuplicatePage(),
                                             count: item.pages.length
                                         })}

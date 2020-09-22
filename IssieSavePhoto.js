@@ -251,8 +251,15 @@ export default class IssieSavePhoto extends React.Component {
         //Current assumptions: only one page added (no pdf, no add page)
         let page = this.state.addToExistingPage;
 
-        if (this.state.addToExistingPage.pages.length > 0) {
-          let newFileName = page.path + '/'+ page.pages.length + '.jpg';
+        if (page.pages.length > 0) {
+          //need to find the next file name available
+          let lastPagePath = page.pages[page.pages.length-1];
+          let basePathEnd = lastPagePath.lastIndexOf('/');
+          let fileNameEnd = lastPagePath.lastIndexOf('.');
+          let basePath = lastPagePath.substring(0, basePathEnd+1);
+          let lastFileName = lastPagePath.substring(basePathEnd+1, fileNameEnd);
+          let newFileName = basePath + (parseInt(lastFileName)+1) + '.jpg'
+          console.log("add page: " + newFileName)
           await saveFile(this.state.uri, newFileName, false);
         } else {
           let basePath = page.path.substring(0, page.path.length-4); //remove .jpg 

@@ -4,12 +4,20 @@ import { View, Alert, Image, Text, TouchableOpacity, CheckBox } from 'react-nati
 import { Icon } from 'react-native-elements'
 
 import {
-    AppText, colors, semanticColors, getEmbeddedButton, Spacer, dimensions
+    AppText, colors, semanticColors, getEmbeddedButton, Spacer, dimensions, getRoundedButton, getSvgIconButton
 } from './elements'
+import { translate } from './lang.js'
 
-const TILE_PADDING=12
-const TILE_TEXT_HEIGHT=22
-const TILE_BORDER_WIDTH=1.5
+import {
+    Menu,
+    MenuOptions,
+    MenuOption,
+    MenuTrigger,
+} from 'react-native-popup-menu';
+
+const TILE_PADDING = 12
+const TILE_TEXT_HEIGHT = 22
+const TILE_BORDER_WIDTH = 1.5
 
 export default function FileNew(props) {
     let imageSrc = props.page.pages.length == 0 ? props.page.path : props.page.pages[0];
@@ -19,11 +27,11 @@ export default function FileNew(props) {
             key={props.name}
             onPress={props.onPress}
             activeOpacity={0.8}
-            style={{ width: props.asTile ? dimensions.tileWidth : props.rowWidth, height: props.asTile ? dimensions.tileHeight : dimensions.lineHeight}}
+            style={{ width: props.asTile ? dimensions.tileWidth : props.rowWidth, height: props.asTile ? dimensions.tileHeight : dimensions.lineHeight }}
         >
             {props.asTile ?
                 <View style={{ alignContent: 'center', padding: TILE_PADDING, height: '100%', width: '100%' }}>
-                    <View style={{ borderWidth:TILE_BORDER_WIDTH, borderColor: "#D1CFCF", height: '100%', width: '100%' }}>
+                    <View style={{ borderWidth: TILE_BORDER_WIDTH, borderColor: "#D1CFCF", height: '100%', width: '100%' }}>
 
                         <View style={{
                             position: 'absolute', top: 0,
@@ -36,8 +44,8 @@ export default function FileNew(props) {
                                 <Icon name={'more-vert'} size={35} />
                             </TouchableOpacity>
                             {props.selected ?
-                            <View style={{position: 'absolute', top: 0,left: 35}}>
-                                {getActionButtons(props)}
+                                <View style={{ position: 'absolute', top: 0, left: 35 }}>
+                                    {getActionButtons(props)}
                                 </View>
                                 : null}
                         </View>
@@ -45,11 +53,11 @@ export default function FileNew(props) {
                         <View style={{ flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
 
 
-                            <Image source={{ uri: imageSrc }} style={{ height:'85%', width: '100%' }} />
-                            <View style={{ height:'15%', backgroundColor: '#a7a7a7', alignItems: 'flex-end', width: '100%' }} >
+                            <Image source={{ uri: imageSrc }} style={{ height: '85%', width: '100%' }} />
+                            <View style={{ height: '15%', backgroundColor: '#a7a7a7', alignItems: 'flex-end', width: '100%' }} >
                                 <AppText style={{ fontSize: TILE_TEXT_HEIGHT, textAlign: 'right', color: 'white', paddingRight: 15 }}>
                                     {getFileName(props)}
-                                    
+
                                 </AppText>
                             </View>
                         </View>
@@ -111,18 +119,52 @@ function getButton(index, props) {
         case 2: return getEmbeddedButton(props.onMove, 'folder-move', 40, 3, 'material-community');
         case 3: return getEmbeddedButton(props.onDuplicate, 'file-multiple', 30, 4, 'material-community');
         case 4: return getEmbeddedButton(props.onShare, 'share', 35, 5);
-        case 5: return getEmbeddedButton(props.onAdd, 'add', 35, 5);
-    }
+        case 5: return (
+            <Menu ref={(ref) => this.menu = ref} key="6">
+                <MenuTrigger >
+                    {getEmbeddedButton(() => {
+                        //   
+                        this.menu.open()
+
+                    }, 'add', 35)}
+                </MenuTrigger>
+                <MenuOptions
+                    optionsContainerStyle={{ backgroundColor: 'white', width: 250, borderRadius: 10, 
+                        alignItems:'center', justifyContent:'center', alignContent:'center' }}                    >
+                    <MenuOption onSelect={props.onAddFromCamera} >
+                        {renderMenuOption(translate("MenuFromCamera"), "new-camera")}
+                    </MenuOption>
+                    <MenuOption onSelect={props.onAddFromMediaLib} >
+                        {renderMenuOption(translate("MenuFromMediaLib"), "new-image")}
+                    </MenuOption>
+                    <Spacer />
+                    {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
+                    <Spacer width={5}/>
+                </MenuOptions>
+
+            </Menu>)
+
+    };
+
 }
 
+function renderMenuOption(title, icon) {
+    return <View style={{ width:'100%', flexDirection: 'row-reverse',  justifyContent:'flex-start', alignItems:'center'}}>
+        {getSvgIconButton(undefined, semanticColors.addButton, icon, 40)}
+        <Spacer width={5} />
+        <AppText>{title}</AppText>
+    </View>
+}
+
+
 function getFileName(props) {
-    let limit = props.asTile? 12:35;
-    let suffix = props.count > 0 ? ' (' + props.count + ')' : '';
+    let limit = props.asTile ? 12 : 35;
+    let suffix = props.count > 1 ? ' (' + props.count + ')' : '';
     if (props.count > 1) {
         limit -= 4;
     }
     if (props.name.length > limit) {
-        return props.name.substring(0,limit) + '...' + suffix;
+        return props.name.substring(0, limit) + '...' + suffix;
     }
     return props.name + suffix;
 }
@@ -139,20 +181,21 @@ function getActionButtons(props) {
                 flexDirection: 'row',
                 backgroundColor: semanticColors.mainAreaBG,
                 alignItems: 'center',
-                justifyContent:'center',
-                height: (dimensions.tileHeight - TILE_PADDING) *.4- TILE_BORDER_WIDTH,
-                width: dimensions.tileWidth - 2*TILE_PADDING - TILE_BORDER_WIDTH*2
+                justifyContent: 'center',
+                height: (dimensions.tileHeight - TILE_PADDING) * .4 - TILE_BORDER_WIDTH,
+                width: dimensions.tileWidth - 2 * TILE_PADDING - TILE_BORDER_WIDTH * 2
             }}>
                 {getButton(0, props)}
                 <Spacer width={15} key={10} />
                 {getButton(1, props)}
+                <Spacer width={15} key={11} />
                 {getButton(2, props)}
             </View>
             <View style={{
                 flexDirection: 'row',
                 backgroundColor: semanticColors.mainAreaBG,
-                height:(dimensions.tileHeight - TILE_PADDING) *.4 - TILE_BORDER_WIDTH,
-                width: dimensions.tileWidth - 2*TILE_PADDING - 2*TILE_BORDER_WIDTH,
+                height: (dimensions.tileHeight - TILE_PADDING) * .4 - TILE_BORDER_WIDTH,
+                width: dimensions.tileWidth - 2 * TILE_PADDING - 2 * TILE_BORDER_WIDTH,
                 justifyContent: 'space-between'
             }}>
                 {getButton(3, props)}
@@ -167,11 +210,11 @@ function getActionButtons(props) {
             flexDirection: 'row',
             backgroundColor: semanticColors.mainAreaBG,
             alignItems: 'center',
-            alignContent:'center'
+            alignContent: 'center'
         }}>
             {[0, 1, 2, 3, 4, 5].map((item, i) =>
                 [getButton(item, props),
-                <Spacer width={i == 2? 19: 15} key={i + 10} />]
+                <Spacer width={i == 2 ? 19 : 15} key={i + 10} />]
             )}
         </View>
     }
