@@ -473,6 +473,14 @@ export async function getImageDimensions(uri) {
     );
 }
 
+export function renderMenuOption(title, icon, iconType) {
+    return <View style={{ width:'100%', flexDirection: 'row-reverse',  justifyContent:'flex-start', alignItems:'center'}}>
+        {getIconButton(undefined, semanticColors.addButton, icon, 40, undefined, undefined, undefined, iconType)}
+        <Spacer width={5} />
+        <AppText>{title}</AppText>
+    </View>
+}
+
 export function getPageNavigationButtons(left, width, isFirst, isLast, callback) {
 
     return <View

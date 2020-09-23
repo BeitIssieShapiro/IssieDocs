@@ -30,7 +30,7 @@ var strings = {
         "DeleteFolderTitle": "מחיקת תיקייה",
         "BeforeDeletePageQuestion": "האם למחוק את הדף?",
         "DeleteSubPageTitle":"מחיקת עמוד", 
-        "BeforeDeleteSubPageQuestion":"האם למחוק עמוד נוכחי {1} מתוך {2}", //todo
+        "BeforeDeleteSubPageQuestion":"מחק עמוד {1} מתוך {2}", 
 
         "DeleteFoldersAndPagesTitle": "מחיקת תיקיות ודפים",
         "BeforeDeleteFolderQuestion": "מחיקת תיקייה תגרום למחיקת כל הדפים בתוכה, האם למחוק?",
@@ -67,8 +67,8 @@ var strings = {
         "Warning": "אזהרה",
         "BtnContinue": "המשך",
         "BtnCancel": "בטל",
-        "BtnNextPage": "דף הבא",
-        "BtnPreviousPage": "דף קודם",
+        "BtnNextPage": "הבא",
+        "BtnPreviousPage": "הקודם",
         "BtnNewFolder": "תיקיה חדשה",
         "BtnAddPage": "דף נוסף",
         "BtnSave": "שמור",
@@ -111,9 +111,8 @@ var strings = {
         "DeletePageTitle": "حذف الصفحة",
         "DeleteFolderTitle": "حذف المجلد",
         "BeforeDeletePageQuestion": "حذف الصفحة؟",
-        "DeleteSubPageTitle":"Delete Page", //todo
-        "BeforeDeleteSubPageQuestion":"Are you sure you want to delete page {1} of {2}", //todo
-
+        "DeleteSubPageTitle":"حذف الصفحة Page", //check
+        "BeforeDeleteSubPageQuestion":"احذف الصفحة {1} من {2}",
         "DeleteFoldersAndPagesTitle": "حذف المجلدات والعناوين",
         "BeforeDeleteFolderQuestion": "حذف المجلد سيؤدي إلى مسح جميع الصفحات داخله, وحذفه",
         "BeforeDeleteFoldersAndPagesQuestion": "اختير حذف الصفحات والمجلدات. حذف المجلدات سيؤدي إلى حذف جميع الصفحات والمحتويات. هل تريد المتابعة؟",
@@ -148,8 +147,8 @@ var strings = {
         "Warning": "تحذير",
         "BtnContinue": "متابعة",
         "BtnCancel": "إلغاء",
-        "BtnNextPage": "الصفحة التالية",
-        "Btn PreviousPage": "الصفحة السابقة",
+        "BtnNextPage": "التالى", //check
+        "BtnPreviousPage": "السابق", //check
         "BtnNewFolder": "مجلد جديد",
         "BtnAddPage": "صفحة أخرى",
         "BtnSave": "حفظ",

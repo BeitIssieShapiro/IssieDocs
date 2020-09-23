@@ -11,11 +11,20 @@ import * as RNFS from 'react-native-fs';
 import Share from 'react-native-share';
 import DoQueue from './do-queue';
 import FadeInView from './FadeInView'
-import { Spacer, getRoundedButton, getEraserIcon, getColorButton } from './elements'
+import {
+  Spacer, getRoundedButton, getEraserIcon, getColorButton,
+  renderMenuOption
+} from './elements'
 //import {ProgressView} from '@react-native-community/progress-view';
 import ProgressCircle from 'react-native-progress-circle'
 import { fTranslate } from './lang.js'
 
+import {
+  Menu,
+  MenuOptions,
+  MenuOption,
+  MenuTrigger,
+} from 'react-native-popup-menu';
 
 import {
   colors, APP_FONT, getImageDimensions,
@@ -620,48 +629,33 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   deletePage = async () => {
-    Alert.alert(translate("DeleteSubPageTitle"),
-      fTranslate("BeforeDeleteSubPageQuestion", this.state.currentIndex + 1, this.state.page.pages.length),
-      [
-        {
-          text: translate("BtnDelete"), onPress: async () => {
-            //delete file
-            await RNFS.unlink(this.state.currentFile)
-            try {
-              await RNFS.unlink(this.state.currentFile + ".json");
-            } catch {
-              //ignore as maybe no json file
-            }
-            // //fix file names
-            // let basePathEnd = this.state.currentFile.lastIndexOf('/');
-            // let basePath = this.state.currentFile.substring(0, basePathEnd+1);
-            // for (let i = this.state.currentIndex + 1; i < this.state.page.pages.length;i++) {
-            //   await RNFS.moveFile(basePath + i + ".jpg", basePath + (i-1) + ".jpg")
-            //   try {
-            //     await RNFS.moveFile(basePath + i + ".jpg.json", basePath + (i-1) + ".jpg.json")
-            //   } catch {
-            //     //ignore as json may be missing
-            //   }
-            // }
+    //delete file
+    await RNFS.unlink(this.state.currentFile)
+    try {
+      await RNFS.unlink(this.state.currentFile + ".json");
+    } catch {
+      //ignore as maybe no json file
+    }
+    // //fix file names
+    // let basePathEnd = this.state.currentFile.lastIndexOf('/');
+    // let basePath = this.state.currentFile.substring(0, basePathEnd+1);
+    // for (let i = this.state.currentIndex + 1; i < this.state.page.pages.length;i++) {
+    //   await RNFS.moveFile(basePath + i + ".jpg", basePath + (i-1) + ".jpg")
+    //   try {
+    //     await RNFS.moveFile(basePath + i + ".jpg.json", basePath + (i-1) + ".jpg.json")
+    //   } catch {
+    //     //ignore as json may be missing
+    //   }
+    // }
 
-            for (let i = this.state.currentIndex; i < this.state.page.pages.length-1;i++) {
-              this.state.page.pages[i] = this.state.page.pages[i+1];
-            }
-            this.state.page.pages.length --;
+    for (let i = this.state.currentIndex; i < this.state.page.pages.length - 1; i++) {
+      this.state.page.pages[i] = this.state.page.pages[i + 1];
+    }
+    this.state.page.pages.length--;
 
-            //move current file to previous or 0
-            this.movePage(-1);
-          },
-          style: 'destructive'
-        },
-        {
-          text: translate("BtnCancel"), onPress: () => {
-            //do nothing
-          },
-          style: 'cancel'
-        }
-      ]
-    );
+    //move current file to previous or 0
+    this.movePage(-1);
+
   }
 
   movePage = (inc) => {
@@ -779,11 +773,15 @@ export default class IssieEditPhoto extends React.Component {
 
     let spaceBetweenButtons = <Spacer width={23} />
     let colorButtonSize = (this.state.windowW - 2 * toolbarSideMargin) / (availableColorPicker.length * 1.4);
-
+    let backToFolderWidth = 45;
     return (
 
       <View style={styles.mainContainer}
         onLayout={this.onLayout}>
+        {/* page menu 3 dots */}
+        <View style={{ position: 'absolute', left: -5, top: 100, height: 100, width: this.state.sideMargin, zIndex: 1000 }}>
+          {this.getMoreMenu()}
+        </View>
         <TouchableOpacity onPress={this.TextModeClick}
           activeOpacity={1}
           style={drawingAreaStyle} >
@@ -792,6 +790,7 @@ export default class IssieEditPhoto extends React.Component {
             pointerEvents={this.state.textMode ? 'box-only' : 'auto'}
             {...this._panResponderMove.panHandlers}
           >
+
             <ScrollView
               minimumZoomScale={1}
               maximumZoomScale={maxZoom}
@@ -828,7 +827,7 @@ export default class IssieEditPhoto extends React.Component {
             {
               getIconButton(() => {
                 this.props.navigation.goBack();
-              }, semanticColors.editPhotoButton, "folder", 45)
+              }, semanticColors.editPhotoButton, "folder", backToFolderWidth)
               // <FolderNew name={this.props.route.params.folderName} 
               //     asTitle={true} 
               //     hideTitle={true}
@@ -865,18 +864,24 @@ export default class IssieEditPhoto extends React.Component {
               // getIconButton(() => this.onEraserChange(),
               //    semanticColors.editPhotoButton, "panorama-fish-eye", 55, false, 45, this.state.eraseMode)
             }
+            {/* {spaceBetweenButtons}
+            {/* delete page button */}
+            {/*
+              this.state.page && this.state.page.pages.length > 1 ?
+                getIconButton(() => this.deletePage(), semanticColors.editPhotoButton, 'delete-forever', 55)
+                :
+                null
+            */}
             { /* text size preview */}
 
             <View style={{
               position: 'absolute',
               top: this.isScreenNarrow() ? dimensions.toolbarHeight : 0,
               left: this.isScreenNarrow() ? 0
-                : this.state.windowW / 2 - toolbarSideMargin - 55,
+                : this.state.windowW / 2 - toolbarSideMargin - 55 - backToFolderWidth,
               width: 100,
               height: dimensions.toolbarHeight,
               backgroundColor: 'transparent',//'#eef4fa',
-              //borderWidth:3,
-              //borderColor: 'rgba(238,244,250, .7)',
               borderRadius: 24.5,
               justifyContent: 'center',
               alignItems: 'center',
@@ -888,26 +893,11 @@ export default class IssieEditPhoto extends React.Component {
                   color: this.state.color,
                   textAlignVertical: 'center'
                 }}>{translate("A B C")}</AppText> :
-                // <View style={{
-                //   width: this.state.strokeWidth + 2,
-                //   height: this.state.strokeWidth + 2,
-                //   borderRadius: (this.state.strokeWidth + 2) / 2,
-                //   backgroundColor: this.state.color
-                // }} />
-                //d="M160,303 C305,258 285,196 285,196 C285,196 243,70 176,146 C109,222 525,312 482,221 C439,130 347,191 347,191 C347,191 180,328 347,292 C514,256 433,110 381,124 C329,138 294,162 294,162 "
 
-                // <Svg height="100%" width="100%" preserveAspectRatio="xMidYMid meet" viewBox="-30 -30 150 200">
-                //   <Path
-                //     stroke={this.state.color}
-                //     strokeLinecap="round"
-                //     strokeWidth={(this.state.strokeWidth + 2) * 2}
-                //     d="M93.25 143.84C60.55 100.51 87.43 56.85 80.24 51.37C73.05 45.89 9.35 83.22 1.47 68.49C-6.4 53.77 19.28 8.22 31.61 0"
-                //     fill="none"
-                //   />
-                // </Svg>
                 getSvgIcon('doodle', 55, this.state.color, this.state.strokeWidth * .8)
               }
             </View>
+
 
             <View style={{
               position: 'absolute',
@@ -991,15 +981,7 @@ export default class IssieEditPhoto extends React.Component {
         {
           this.state.page && this.state.page.pages.length > 0 && this.state.currentFile !== this.state.page.pages[0] ?
             <View style={{ position: 'absolute', bottom: 50, left: 10, width: 155, height: 40, zIndex: 100 }}>
-              {getRoundedButton(() => this.movePage(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 155, height: 40 }, 'row-reverse', true)}
-            </View> :
-            null
-        }
-        {/** delete page button */}
-        {
-          this.state.page && this.state.page.pages.length > 1 ?
-            <View style={{ position: 'absolute', bottom: 50, left: '40%', height: 40, zIndex: 100 }}>
-              {getRoundedButton(() => this.deletePage(), 'delete-forever', translate("BtnDelete"), 30, 30, { width: 115, height: 40 }, 'row', true)}
+              {getRoundedButton(() => this.movePage(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 125, height: 40 }, 'row-reverse', true)}
             </View> :
             null
         }
@@ -1008,12 +990,40 @@ export default class IssieEditPhoto extends React.Component {
           this.state.page && this.state.page.pages.length > 0 &&
             this.state.currentFile !== this.state.page.pages[this.state.page.pages.length - 1] ?
             <View style={{ position: 'absolute', bottom: 50, right: 10, height: 40, zIndex: 100 }}>
-              {getRoundedButton(() => this.movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 155, height: 40 }, 'row', true)}
+              {getRoundedButton(() => this.movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 125, height: 40 }, 'row', true)}
             </View> :
             null
         }
       </View >
     );
+  }
+
+  getMoreMenu = () => {
+    return this.state.page && this.state.page.pages.length > 0 ? <Menu ref={(ref) => this.menu = ref}>
+      <MenuTrigger >
+        {getIconButton(() => {
+          //   
+          this.menu.open()
+
+        }, semanticColors.editPhotoButton, 'more-vert', 55)}
+      </MenuTrigger>
+      <MenuOptions
+        optionsContainerStyle={{
+          backgroundColor: 'white', width: 250, borderRadius: 10,
+          alignItems: 'center', justifyContent: 'center', alignContent: 'center'
+        }}                    >
+        <MenuOption onSelect={() => this.deletePage()} >
+          {renderMenuOption(fTranslate("BeforeDeleteSubPageQuestion", this.state.currentIndex + 1, this.state.page.pages.length),
+            "delete-forever")}
+        </MenuOption>
+
+        <Spacer />
+        {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
+        <Spacer width={5} />
+      </MenuOptions>
+
+    </Menu> :
+      null;
   }
 
   getArrow = (location, func) => {

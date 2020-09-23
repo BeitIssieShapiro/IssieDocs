@@ -20,12 +20,20 @@ export default function TitleEdit(props) {
     const titleStyle = [globalStyles.headerTitleStyle, { color: 'white', textAlign: 'center' }];
 
     const [editedTitle, setEditedTitle] = useState(props.title);
+    const [previousEditMode, setPreviousEditMode] = useState(false);
     const conditionalBlur = () => {
         if (inputEl && inputEl.current && !props.editMode && inputEl.current.isFocused()) {
             inputEl.current.blur();
         }
     }
     conditionalBlur();
+
+    if (previousEditMode != props.editMode) {
+        setPreviousEditMode(props.editMode);
+        if (props.editMode && inputEl && inputEl.current) {
+            inputEl.current.focus();
+        }
+    }
 
     return <View
         style={[{
@@ -36,14 +44,14 @@ export default function TitleEdit(props) {
             marginBottom: 5,
             alignItems: 'center', justifyContent: 'center',
             alignContent: 'center',
-            borderBottomWidth:5,
-            borderBottomColor:'transparent'
+            borderWidth:2,
+            borderColor:'transparent'
         },
         props.editMode ? {
             //backgroundColor: '#6C89AF',
-            borderBottomColor: '#A1C7FC',
-
-            //borderRadius: 25
+            //borderBottomColor: '#A1C7FC',
+            borderColor:'#A1C7FC', 
+            borderRadius: 3
         } : {}]}
     >
 

@@ -4,7 +4,8 @@ import { View, Alert, Image, Text, TouchableOpacity, CheckBox } from 'react-nati
 import { Icon } from 'react-native-elements'
 
 import {
-    AppText, colors, semanticColors, getEmbeddedButton, Spacer, dimensions, getRoundedButton, getSvgIconButton
+    AppText, colors, semanticColors, getEmbeddedButton, Spacer, dimensions, getRoundedButton, getSvgIconButton,
+    renderMenuOption
 } from './elements'
 import { translate } from './lang.js'
 
@@ -132,10 +133,10 @@ function getButton(index, props) {
                     optionsContainerStyle={{ backgroundColor: 'white', width: 250, borderRadius: 10, 
                         alignItems:'center', justifyContent:'center', alignContent:'center' }}                    >
                     <MenuOption onSelect={props.onAddFromCamera} >
-                        {renderMenuOption(translate("MenuFromCamera"), "new-camera")}
+                        {renderMenuOption(translate("MenuFromCamera"), "new-camera", "svg")}
                     </MenuOption>
                     <MenuOption onSelect={props.onAddFromMediaLib} >
-                        {renderMenuOption(translate("MenuFromMediaLib"), "new-image")}
+                        {renderMenuOption(translate("MenuFromMediaLib"), "new-image", "svg")}
                     </MenuOption>
                     <Spacer />
                     {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
@@ -146,14 +147,6 @@ function getButton(index, props) {
 
     };
 
-}
-
-function renderMenuOption(title, icon) {
-    return <View style={{ width:'100%', flexDirection: 'row-reverse',  justifyContent:'flex-start', alignItems:'center'}}>
-        {getSvgIconButton(undefined, semanticColors.addButton, icon, 40)}
-        <Spacer width={5} />
-        <AppText>{title}</AppText>
-    </View>
 }
 
 
