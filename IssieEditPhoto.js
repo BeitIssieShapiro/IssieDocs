@@ -999,7 +999,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getMoreMenu = () => {
-    return this.state.page && this.state.page.pages.length > 0 ? <Menu ref={(ref) => this.menu = ref}>
+    return this.state.page && this.state.page.pages.length > 1 ? <Menu ref={(ref) => this.menu = ref}>
       <MenuTrigger >
         {getIconButton(() => {
           //   
