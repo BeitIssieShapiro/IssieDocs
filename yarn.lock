@@ -4550,9 +4550,9 @@ lodash.throttle@^4.1.1:
   integrity sha1-wj6RtxAkKscMN/HhzaknTMOb8vQ=
 
 lodash@^4.17.10, lodash@^4.17.13, lodash@^4.17.14, lodash@^4.17.15, lodash@^4.3.0:
-  version "4.17.15"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.15.tgz#b447f6670a0455bbfeedd11392eff330ea097548"
-  integrity sha512-8xOcRHvCjnocdS5cpwXQXVzmmh5e5+saE2QGoeQmbKmRS6J3VQppPOIt0MnmE+4xlZoumy0GPG0D0MVIQbNA1A==
+  version "4.17.21"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
+  integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
 
 log-symbols@^2.2.0:
   version "2.2.0"
@@ -5774,10 +5774,10 @@ react-native-image-picker@^2.3.1:
   resolved "https://registry.yarnpkg.com/react-native-image-picker/-/react-native-image-picker-2.3.3.tgz#eaacd4a1ed9e9887613be31f0765478ca2f18a51"
   integrity sha512-i/7JDnxKkUGSbFY2i7YqFNn3ncJm1YlcrPKXrXmJ/YUElz8tHkuwknuqBd9QCJivMfHX41cmq4XvdBDwIOtO+A==
 
-react-native-image-rotate@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/react-native-image-rotate/-/react-native-image-rotate-2.1.0.tgz#6275a294d9fafb86f7c82f43b26f04d95ede4b1f"
-  integrity sha512-TN0nk4xF/UmwCO2mcq7cA2kLki7Q9MLhCqamF/PvoLnLwvdgmkeh59o2B+YkvpJ6pADa4qjOxXZ5eFEYjLkJZA==
+react-native-image-resizer@^1.2.6:
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/react-native-image-resizer/-/react-native-image-resizer-1.4.4.tgz#75eee65580de509ada674669d13e4d236caea2d5"
+  integrity sha512-cPb2R3ZF/9+gBVYx2QyubqILICJpxElIxgRwLSnBSNRFl8eeaAxzWPHa6QNjtki55dkGsgoq5l5EjEu6XjlUng==
 
 react-native-iphone-x-helper@^1.2.1:
   version "1.2.1"
@@ -5803,6 +5803,11 @@ react-native-pdf@^6.1.2:
     "@react-native-community/progress-view" "^1.0.3"
     crypto-js "^3.2.0"
     prop-types "^15.7.2"
+
+react-native-popup-menu@^0.15.9:
+  version "0.15.10"
+  resolved "https://registry.yarnpkg.com/react-native-popup-menu/-/react-native-popup-menu-0.15.10.tgz#49f2a67c8d1ea329f44e56288eca4a5c04835828"
+  integrity sha512-w7MaicsfpclK7g/omjMchNaXwhMi0apt/DC734AbHuJTWCfv5mF3JgL1UzRW19ncFMBRfQeYapPy/zUyJCGgEQ==
 
 react-native-progress-circle@^2.1.0:
   version "2.1.0"
