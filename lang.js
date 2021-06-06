@@ -78,6 +78,10 @@ var strings = {
         "BtnDuplicate": "הכפל",
         "MenuFromCamera": "מצלמה",
         "MenuFromMediaLib": "ספריית התמונות",
+        "MenuNewPageEmpty": "דף חלק חדש",
+        "MenuNewPageLines": "דף שורות חדש",
+        "MenuNewPageMath": "דף משבצות חדש",
+        "EmptyPageName":"דף חדש",
 
         "CaptionPageName": "שם הדף",
         "CaptionFolderNameList": "תיקיה",
@@ -159,6 +163,10 @@ var strings = {
 
         "MenuFromCamera": "الة تصوير", //check
         "MenuFromMediaLib": "مكتبة الوسائط", //check
+        "MenuNewPageEmpty": "صفحة فارغة جديدة", //check
+        "MenuNewPageLines": "صفحة مسطرة جديدة", //check
+        "MenuNewPageMath": "صفحة الشبكة الجديدة", //check
+        "EmptyPageName":"صفحة جديدة", //check
 
         "CaptionPageName": "اسم الصفحة",
         "CaptionFolderNameList": "مجلد",

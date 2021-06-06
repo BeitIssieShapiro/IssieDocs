@@ -5,7 +5,7 @@ import {
     TextInput
 } from 'react-native';
 import Search from './search.js'
-import Menu from './settings-ui'
+import SettingsMenu from './settings-ui'
 
 import * as RNFS from 'react-native-fs';
 import FolderNew from './FolderNew';
@@ -24,9 +24,18 @@ import {
     validPathPart,
     AppText,
     getSvgIconButton,
-    FOLDERS_DIR
+    FOLDERS_DIR,
+    renderMenuOption,
+    getRoundedButton
 } from './elements'
+import {
+    Menu,
+    MenuOptions,
+    MenuOption,
+    MenuTrigger,
+} from 'react-native-popup-menu';
 
+import { saveNewPage, getTempEmptyPage, NEW_PAGE_TYPE } from "./empty-page.js"
 
 
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
@@ -151,13 +160,17 @@ export default class FolderGallery extends React.Component {
         })
     }
 
-    refresh = async (folderName) => {
+    refresh = async (folderName, callback) => {
         //todo optimize if folderName is given
-        console.log("Folder: " + FOLDERS_DIR);
+        console.log("Refresh Folder: " + FOLDERS_DIR);
+        if (folderName) {
+            console.log("only one folder: " + folderName);
+        }
         RNFS.readDir(FOLDERS_DIR).then(async (folders) => {
             let foldersState = [];
 
             for (let folder of folders) {
+                console.log("read now: " + folder.name);
                 if (!folder.isDirectory()) continue;
                 const items = await RNFS.readDir(folder.path);
                 const filesItems = items.filter(f => !f.name.endsWith(".json"));
@@ -211,7 +224,11 @@ export default class FolderGallery extends React.Component {
                 this.unselectFolder(currentFolder)
             }
 
-            this.setState({ folders: await sortFolders(foldersState), returnFolderName: undefined, loading: false });
+            let newFolders = await sortFolders(foldersState);
+            this.setState({ folders: newFolders, returnFolderName: undefined, loading: false }, () => {
+                if (callback)
+                    callback()
+            });
 
         })
 
@@ -290,7 +307,7 @@ export default class FolderGallery extends React.Component {
     isScreenNarrow = () => this.state.windowSize.width < 500;
     isScreenLow = () => this.state.windowSize.height < 700;
     isMobile = () => this.isScreenNarrow() || this.isScreenLow();
-    
+
 
     selectFolder = (folder) => {
         this.setState({ currentFolder: folder })
@@ -553,6 +570,89 @@ export default class FolderGallery extends React.Component {
         setNavParam(this.props.navigation, 'isMenuOpened', false);
 
     }
+
+
+    addEmptyPage = async (type) => {
+        let folder = this.state.currentFolder ? this.state.currentFolder : DEFAULT_FOLDER;
+        let fileName = await saveNewPage(folder, type);
+        this.refresh(folder.name, () => {
+
+            //find the file in the folder
+            let item = this.findFile(folder.name, fileName)
+            if (item) {
+                this.props.navigation.navigate('EditPhoto',
+                    {
+                        page: item,
+                        folderName: folder.name,
+                        share: false,
+                        goHome: () => {
+                            this.unselectFolder();
+                            this.props.navigation.goBack();
+                        }
+                    })
+            } else {
+                Alert.alert('error with file: ' + fileName)
+            }
+
+        });
+    }
+
+    addEmptyPageToPage = async (addToExistingPage, pageType) => {
+        let tempFileName = await getTempEmptyPage(pageType);
+        this.props.navigation.navigate('SavePhoto', {
+            uri: tempFileName,
+            imageSource: SRC_FILE,
+            addToExistingPage,
+            folder: this.state.currentFolder,
+            returnFolderCallback: (f) => this.setReturnFolder(f),
+            saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
+        })
+    }
+
+
+    findFile = (folderName, fileName) => {
+        console.log("findFile folders" + this.state.folders.length)
+        for (let i = 0; i < this.state.folders.length; i++) {
+            console.log("findFile files" + this.state.folders[i].files.length)
+            for (let j = 0; j < this.state.folders[i].files.length; j++) {
+                console.log("compare ", this.state.folders[i].files[j].name, fileName)
+                if (this.state.folders[i].files[j].name == fileName) {
+                    return this.state.folders[i].files[j]
+                }
+            }
+        }
+        return undefined;
+    }
+
+
+    newPageButton = () => {
+        return (
+            <Menu ref={(ref) => this.menu = ref} key="6">
+                <MenuTrigger >
+                    {getSvgIconButton(() => this.menu.open(), semanticColors.addButton, "menu-new-empty-page", 40)}
+                </MenuTrigger>
+                <MenuOptions
+                    optionsContainerStyle={{
+                        backgroundColor: 'white', width: 250, borderRadius: 10,
+                        alignItems: 'center', justifyContent: 'center', alignContent: 'center'
+                    }}                    >
+                    <MenuOption onSelect={() => this.addEmptyPage(NEW_PAGE_TYPE.Blank)}>
+                        {renderMenuOption(translate("MenuNewPageEmpty"), "page-empty", "svg")}
+                    </MenuOption>
+                    <MenuOption onSelect={() => this.addEmptyPage(NEW_PAGE_TYPE.Lines)}>
+                        {renderMenuOption(translate("MenuNewPageLines"), "page-lines", "svg")}
+                    </MenuOption>
+                    <MenuOption onSelect={() => this.addEmptyPage(NEW_PAGE_TYPE.Math)}>
+                        {renderMenuOption(translate("MenuNewPageMath"), "page-math", "svg")}
+                    </MenuOption>
+                    <Spacer />
+                    {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
+                    <Spacer width={5} />
+                </MenuOptions>
+            </Menu>);
+    }
+
+
     render() {
         //YellowBox.ignoreWarnings(['Task orphaned']);
         let curFolderFullName = "", curFolderColor = "", curFolderIcon = "";
@@ -596,7 +696,7 @@ export default class FolderGallery extends React.Component {
                 onLayout={this.onLayout}>
 
                 {this.state.showMenu ?
-                    <Menu
+                    <SettingsMenu
                         onAbout={() => this.gotoAbout()}
                         onClose={() => this.closeMenu()}
                         onViewChange={(style) => this.setState({ viewStyle: style })}
@@ -651,6 +751,10 @@ export default class FolderGallery extends React.Component {
                                 });
                         }, semanticColors.addButton, "new-folder", 45)
                     }
+                    <Spacer />
+                    {
+                        this.newPageButton()
+                    }
 
                     {/*right buttons */}
                     <View style={{ position: 'absolute', right: 17, flexDirection: 'row-reverse', alignItems: 'center' }}>
@@ -682,24 +786,24 @@ export default class FolderGallery extends React.Component {
                                 <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
                             </View> :
                             <View style={{ width: "100%" }}>
-                                <View style={{ position: 'absolute', left: 80, top: (this.isMobile()?'5%':'10%'), alignItems: 'flex-end', flexDirection: 'row' }}>
-                                    {getSvgIcon('start-icon', this.isMobile()?70:150, semanticColors.addButton)}
+                                <View style={{ position: 'absolute', left: 80, top: (this.isMobile() ? '5%' : '10%'), alignItems: 'flex-end', flexDirection: 'row' }}>
+                                    {getSvgIcon('start-icon', this.isMobile() ? 70 : 150, semanticColors.addButton)}
                                     <Spacer />
-                                    <AppText style={{ fontSize: this.isMobile()?20:35, color: '#797a7c' }}>{translate("StartHere")}</AppText>
+                                    <AppText style={{ fontSize: this.isMobile() ? 20 : 35, color: '#797a7c' }}>{translate("StartHere")}</AppText>
                                 </View>
-                                <View style={{ position: "absolute", width: "100%", height: '20%', top: this.isMobile()?'20%':'30%', alignItems: "center" }}>
-                                    {getSvgIcon('folder', this.isMobile()?85:150, semanticColors.addButton)}
+                                <View style={{ position: "absolute", width: "100%", height: '20%', top: this.isMobile() ? '20%' : '30%', alignItems: "center" }}>
+                                    {getSvgIcon('folder', this.isMobile() ? 85 : 150, semanticColors.addButton)}
                                     <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("DesktopEmpty")}</AppText>
 
                                 </View>
                                 <View style={{ position: 'absolute', width: '100%', bottom: '20%', flexDirection: 'row', justifyContent: 'center' }}>
-                                    {getSvgIcon('welcome-image', this.isMobile()?50:80, semanticColors.addButton)}
+                                    {getSvgIcon('welcome-image', this.isMobile() ? 50 : 80, semanticColors.addButton)}
                                     <Spacer width={50} />
-                                    {getSvgIcon('welcome-doc', this.isMobile()?50:80, semanticColors.addButton)}
+                                    {getSvgIcon('welcome-doc', this.isMobile() ? 50 : 80, semanticColors.addButton)}
                                     <Spacer width={50} />
-                                    {getSvgIcon('welcome-pdf', this.isMobile()?50:80, semanticColors.addButton)}
+                                    {getSvgIcon('welcome-pdf', this.isMobile() ? 50 : 80, semanticColors.addButton)}
                                     <Spacer width={50} />
-                                    {getSvgIcon('welcome-folder', this.isMobile()?50:80, semanticColors.addButton)}
+                                    {getSvgIcon('welcome-folder', this.isMobile() ? 50 : 80, semanticColors.addButton)}
 
                                 </View>
                             </View>
@@ -710,7 +814,7 @@ export default class FolderGallery extends React.Component {
                             {/* pagesTitle */}
                             <View style={{
                                 flex: 1, flexDirection: "row", height: "5%", position: 'absolute',
-                                width: "100%", top: 0, height: this.isScreenLow()?'17%':'10%', alignItems: 'center', justifyContent: 'flex-start',
+                                width: "100%", top: 0, height: this.isScreenLow() ? '17%' : '10%', alignItems: 'center', justifyContent: 'flex-start',
                                 borderBottomWidth: this.state.currentFolder ? 1 : 0, borderBottomColor: 'gray'
                             }}>
                                 {this.state.currentFolder ? <FolderNew
@@ -740,8 +844,8 @@ export default class FolderGallery extends React.Component {
                             <View style={{
                                 flex: 1,
                                 backgroundColor: semanticColors.mainAreaBG,
-                                position: 'absolute', top: this.isScreenLow()?'17%':'10%', width: "100%",
-                                height: this.isScreenLow()?'83%':'90%'
+                                position: 'absolute', top: this.isScreenLow() ? '17%' : '10%', width: "100%",
+                                height: this.isScreenLow() ? '83%' : '90%'
                             }}>
                                 {this.state.currentFolder && this.state.currentFolder.files && this.state.currentFolder.files.length > 0 ?
                                     <FlatList
@@ -777,8 +881,11 @@ export default class FolderGallery extends React.Component {
                                             onRename: () => this.RenamePage(true),
                                             onMove: () => this.RenamePage(false),
                                             onShare: () => this.Share(),
-                                            onAddFromCamera: () => this.AddToPageFromCamera(item), 
-                                            onAddFromMediaLib: () => this.AddToPageFromMediaLib(item), 
+                                            onAddFromCamera: () => this.AddToPageFromCamera(item),
+                                            onAddFromMediaLib: () => this.AddToPageFromMediaLib(item),
+                                            onBlankPage: () => this.addEmptyPageToPage(item, NEW_PAGE_TYPE.Blank),
+                                            onLinesPage: () => this.addEmptyPageToPage(item, NEW_PAGE_TYPE.Lines),
+                                            onMathPage: () => this.addEmptyPageToPage(item, NEW_PAGE_TYPE.Math),
                                             onDuplicate: () => this.DuplicatePage(),
                                             count: item.pages.length
                                         })}
@@ -790,7 +897,7 @@ export default class FolderGallery extends React.Component {
                                     : this.state.currentFolder ?
                                         <View style={{ alignItems: 'center', height: '100%' }}>
                                             <Spacer height='20%' />
-                                            {getSvgIcon('folder', this.isMobile()?85:150)}
+                                            {getSvgIcon('folder', this.isMobile() ? 85 : 150)}
                                             <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("NoPagesYet")}</AppText>
                                         </View>
                                         :

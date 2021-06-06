@@ -138,6 +138,15 @@ function getButton(index, props) {
                     <MenuOption onSelect={props.onAddFromMediaLib} >
                         {renderMenuOption(translate("MenuFromMediaLib"), "new-image", "svg")}
                     </MenuOption>
+                    <MenuOption onSelect={props.onBlankPage} >
+                        {renderMenuOption(translate("MenuNewPageEmpty"), "page-empty", "svg")}
+                    </MenuOption>
+                    <MenuOption onSelect={props.onLinesPage} >
+                        {renderMenuOption(translate("MenuNewPageLines"), "page-lines", "svg")}
+                    </MenuOption>
+                    <MenuOption onSelect={props.onMathPage} >
+                        {renderMenuOption(translate("MenuNewPageMath"), "page-math", "svg")}
+                    </MenuOption>
                     <Spacer />
                     {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
                     <Spacer width={5}/>

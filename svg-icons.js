@@ -8,6 +8,67 @@ export function getSvgIcon(name, size, color, strokeWidth) {
     let props = { width: size, height: size }
 
     switch (name) {
+        case 'menu-new-empty-page':
+            return (<Svg viewBox="-0.5 -0.5 85 94" {...props} stroke={color}>
+                    <G strokeWidth="7">
+                        <Path d="M 72 90 L 72 35" />
+                        <Path d="M 31 15 L 52 15" />
+                        <Path d="M 2 45 L 2 90" />
+                        <Path d="M 73 89 L 1 89" />
+                        <Path d="M 2 46 L 32 15" />
+                        <Path d="M 3 45 L 33 45" />
+                        <Path d="M 32 15 L 32 45" />
+                        <Path d="M 72 28 L 72 2"  strokeWidth="9"/>
+                        <Path d="M 60 15 L 84 15"  strokeWidth="9"/>
+                    </G></Svg>);
+        case 'page-empty':
+            return (<Svg viewBox="-0.5 -0.5 83 103">
+                <G>
+                    <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" stroke={color} strokeWidth="3"/>
+                    <Path d="M 51 1 L 51 31 L 81 31 Z" />
+                    <Path d="M 51 1 L 51 31 L 81 31"  stroke={color}  strokeWidth="3" />
+                </G>
+            </Svg>);
+        case 'page-lines':
+            return (<Svg viewBox="-0.5 -0.5 83 103">
+            <G>
+            <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" stroke={color} strokeWidth="3"/>
+            <Path d="M 51 1 L 51 31 L 81 31 Z" />
+            <Path d="M 51 1 L 51 31 L 81 31" fill="none" stroke={color}  strokeWidth="3" />
+            <Path d="M 11 31 L 41 31" fill="none" stroke={color} strokeWidth="2" />
+            <Path d="M 11 41 L 71 41" fill="none" stroke={color} strokeWidth="2" />
+            <Path d="M 11 51 L 31 51 Q 41 51 51 51 L 71 51" fill="none" stroke={color} strokeWidth="2" />
+            <Path d="M 11 61 L 31 61 Q 41 61 51 61 L 71 61" fill="none" stroke={color} strokeWidth="2" />
+            <Path d="M 11 71 L 31 71 Q 41 71 51 71 L 71 71" fill="none" stroke={color} strokeWidth="2" />
+            <Path d="M 11 81 L 31 81 Q 41 81 51 81 L 71 81" fill="none" stroke={color} strokeWidth="2" />
+            <Path d="M 11 91 L 31 91 Q 41 91 51 91 L 71 91" fill="none" stroke={color} strokeWidth="2" />
+            <Path d="M 11 21 L 41 21" fill="none" stroke={color} strokeWidth="2" />
+            </G></Svg>);
+        case 'page-math':
+            return (<Svg viewBox="-0.5 -0.5 83 104">
+            <G stroke={color} strokeWidth="2">
+            <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" strokeWidth="3" />
+            <Path d="M 51 1 L 51 31 L 81 31 Z" strokeWidth="3" />
+            <Path d="M 51 1 L 51 31 L 81 31" strokeWidth="3" />
+            <Path d="M 11 91 L 31 91 Q 41 91 51 91 L 71 91" />
+            <Path d="M 3 91 L 79 91" />
+            <Path d="M 3 81 L 79 81" />
+            <Path d="M 3 71 L 79 71" />
+            <Path d="M 3 61 L 79 61" />
+            <Path d="M 3 50.9 L 79 50.9" />
+            <Path d="M 3 41 L 79 41" />
+            <Path d="M 3 31 L 49 31" />
+            <Path d="M 3 21 L 49 21" />
+            <Path d="M 3 11 L 49 11" />
+            <Path d="M 11 100 L 11 3" />
+            <Path d="M 21 100 L 21 3" />
+            <Path d="M 31 100 L 31 3" />
+            <Path d="M 41 100 L 41 3" />
+            <Path d="M 51 100 L 51 33" />
+            <Path d="M 61 100 L 61 33" />
+            <Path d="M 71 100 L 71 33" />
+            </G>
+            </Svg>);
         case 'lang-system':
             return <Svg viewBox="0 0 64 64" {...props}>
                 <Path d="M33,59.974V33H59.974a28.2,28.2,0,0,1-.58,4.824l1.957.413A29.968,29.968,0,1,0,38.2,61.358L37.79,59.4A28.181,28.181,0,0,1,33,59.974ZM20.987,49.256A27.963,27.963,0,0,1,31,47.023v12.9C26.942,59.344,23.359,55.3,20.987,49.256ZM31,45.023a29.975,29.975,0,0,0-10.693,2.35A49.18,49.18,0,0,1,18.013,33H31ZM33,4.079c4.058.577,7.641,4.623,10.013,10.665A27.963,27.963,0,0,1,33,16.977Zm-2,0v12.9a27.963,27.963,0,0,1-10.013-2.233C23.359,8.7,26.942,4.656,31,4.079Zm0,14.9V31H18.013a49.18,49.18,0,0,1,2.294-14.373A29.975,29.975,0,0,0,31,18.977Zm2,0a29.975,29.975,0,0,0,10.693-2.35A49.18,49.18,0,0,1,45.987,31H33ZM59.975,31H47.987a50.754,50.754,0,0,0-2.459-15.221,30.029,30.029,0,0,0,5.9-3.918A27.914,27.914,0,0,1,59.975,31ZM49.927,10.512a28,28,0,0,1-5.09,3.371,23.581,23.581,0,0,0-5.892-9.01A27.929,27.929,0,0,1,49.927,10.512ZM19.163,13.883a28,28,0,0,1-5.09-3.371A27.929,27.929,0,0,1,25.055,4.873,23.581,23.581,0,0,0,19.163,13.883Zm-6.586-2.022a30.029,30.029,0,0,0,5.9,3.918A50.754,50.754,0,0,0,16.013,31H4.025A27.914,27.914,0,0,1,12.577,11.861ZM4.025,33H16.013a50.754,50.754,0,0,0,2.459,15.221,30.029,30.029,0,0,0-5.9,3.918A27.914,27.914,0,0,1,4.025,33ZM14.073,53.488a28,28,0,0,1,5.09-3.371,23.581,23.581,0,0,0,5.892,9.01A27.929,27.929,0,0,1,14.073,53.488Z" />

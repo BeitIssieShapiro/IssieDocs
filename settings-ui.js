@@ -19,7 +19,7 @@ import {VIEW, EDIT_TITLE, LANGUAGE, TEXT_BUTTON,
     getSetting, getUseColorSetting} from './settings'
 
 
-export default function Menu(props) {
+export default function SettingsMenu(props) {
 
     let viewStyleSetting = getSetting(VIEW.name, VIEW.list);
     const [viewStyle, setViewStyle] = useState(viewStyleSetting);
