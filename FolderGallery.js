@@ -580,6 +580,11 @@ export default class FolderGallery extends React.Component {
             //find the file in the folder
             let item = this.findFile(folder.name, fileName)
             if (item) {
+                if (this.state.currentFolder == undefined) {
+                    let f = this.state.folders.find(f => f.name == folder.name);
+                    this.selectFolder(f);
+                }
+                
                 this.props.navigation.navigate('EditPhoto',
                     {
                         page: item,
@@ -589,7 +594,7 @@ export default class FolderGallery extends React.Component {
                             this.unselectFolder();
                             this.props.navigation.goBack();
                         }
-                    })
+                    });
             } else {
                 Alert.alert('error with file: ' + fileName)
             }
@@ -611,13 +616,15 @@ export default class FolderGallery extends React.Component {
 
 
     findFile = (folderName, fileName) => {
-        console.log("findFile folders" + this.state.folders.length)
+        //console.log("findFile folders" + this.state.folders.length)
         for (let i = 0; i < this.state.folders.length; i++) {
-            console.log("findFile files" + this.state.folders[i].files.length)
-            for (let j = 0; j < this.state.folders[i].files.length; j++) {
-                console.log("compare ", this.state.folders[i].files[j].name, fileName)
-                if (this.state.folders[i].files[j].name == fileName) {
-                    return this.state.folders[i].files[j]
+            //console.log("findFile files" + this.state.folders[i].files.length)
+            if (this.state.folders[i].name == folderName && this.state.folders[i].files) {
+                for (let j = 0; j < this.state.folders[i].files.length; j++) {
+                    //console.log("compare ", this.state.folders[i].files[j].name, fileName)
+                    if (this.state.folders[i].files[j].name == fileName) {
+                        return this.state.folders[i].files[j]
+                    }
                 }
             }
         }
@@ -681,7 +688,7 @@ export default class FolderGallery extends React.Component {
         let foldersHeightSize = dimensions.topView + dimensions.toolbarHeight + foldersCount * dimensions.folderHeight;
         let needFoldersScroll = foldersHeightSize > this.state.windowSize.height;
 
-        let pagesCount = this.state.currentFolder ? this.state.currentFolder.files.length : 1;
+        let pagesCount = this.state.currentFolder && this.state.currentFolder.files ? this.state.currentFolder.files.length : 1;
         let pagesLines = asTiles ? Math.ceil(pagesCount / numColumnsForTiles) : pagesCount;
         let pageHeight = asTiles ? dimensions.tileHeight : dimensions.lineHeight;
         let pagesAreaWindowHeight = 0.9 * (this.state.windowSize.height - dimensions.topView + dimensions.toolbarHeight);
