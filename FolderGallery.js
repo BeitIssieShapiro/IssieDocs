@@ -603,6 +603,16 @@ export default class FolderGallery extends React.Component {
         });
     }
 
+    setItemStarred = (item) => {
+        item.starred = true;
+        console.log("item is starred: "+ item.path)
+        //turn off starred in 20 sec
+        setTimeout(()=>{
+            item.starred=false;
+            this.forceUpdate();
+        }, 20000);
+    }
+
 
     addEmptyPage = async (type) => {
         let folder = this.state.currentFolder ? this.state.currentFolder : DEFAULT_FOLDER;
@@ -616,6 +626,7 @@ export default class FolderGallery extends React.Component {
                     let f = this.state.folders.find(f => f.name == folder.name);
                     this.selectFolder(f);
                 }
+                this.setItemStarred(item);
 
                 this.goEdit(item, folder, false);
 
@@ -906,6 +917,7 @@ export default class FolderGallery extends React.Component {
                                         renderItem={({ item }) => FileNew({
                                             page: item,
                                             asTile: asTiles,
+                                            starred: item.starred,
                                             name: removeFileExt(item.name),
                                             rowWidth: pagesContainerWidth,
                                             editMode: this.state.editMode,

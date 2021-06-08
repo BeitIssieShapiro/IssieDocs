@@ -32,7 +32,7 @@ export async function getTempEmptyPage(pageType) {
 export async function saveNewPage(targetFolder, pageType) {
     let newFileName = await getFileName(targetFolder);
     let basePath = FOLDERS_DIR + targetFolder.name
-
+    await RNFS.mkdir(basePath);
     console.log("saving: " + basePath + "/" + newFileName);
     let page = getPageRef(pageType);
 

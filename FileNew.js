@@ -16,9 +16,25 @@ import {
     MenuTrigger,
 } from 'react-native-popup-menu';
 
+const starGif = require('./star.gif');
+
 const TILE_PADDING = 12
 const TILE_TEXT_HEIGHT = 22
 const TILE_BORDER_WIDTH = 1.5
+
+function getStarred(props) {
+    if (props.starred)
+        console.log("starred item: " +props.name);
+
+    return props.starred?[
+       
+    <Spacer width={5} key="0"/>,
+    <Image 
+        key="1"
+        source={starGif}  
+        style={{width: 25, height: 25 }}
+    />]:null;
+}  
 
 export default function FileNew(props) {
     let imageSrc = props.page.pages.length == 0 ? props.page.path : props.page.pages[0];
@@ -58,8 +74,8 @@ export default function FileNew(props) {
                             <View style={{ height: '15%', backgroundColor: '#a7a7a7', alignItems: 'flex-end', width: '100%' }} >
                                 <AppText style={{ fontSize: TILE_TEXT_HEIGHT, textAlign: 'right', color: 'white', paddingRight: 15 }}>
                                     {getFileName(props)}
-
                                 </AppText>
+                                {getStarred(props)}
                             </View>
                         </View>
                     </View>
@@ -73,6 +89,7 @@ export default function FileNew(props) {
                         <AppText style={{ paddingRight: 20, fontSize: 25, color: semanticColors.titleText }}>
                             {getFileName(props)}
                         </AppText>
+                        {getStarred(props)}
                         <View style={{
                             position: 'absolute', flexDirection: 'row-reverse',
                             right: 0,
