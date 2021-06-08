@@ -15,6 +15,8 @@ import {
   Spacer, getRoundedButton, getEraserIcon, getColorButton,
   renderMenuOption
 } from './elements'
+import { SRC_RENAME } from './newPage';
+
 //import {ProgressView} from '@react-native-community/progress-view';
 import ProgressCircle from 'react-native-progress-circle'
 import { fTranslate } from './lang.js'
@@ -33,7 +35,7 @@ import {
 } from './elements'
 import { translate } from './lang';
 import { getSvgIcon } from './svg-icons';
-import { setNavParam } from './utils';
+import { setNavParam , getFileNameFromPath} from './utils';
 
 //const this.topLayer() = dimensions.toolbarHeight + dimensions.toolbarMargin; //51 + 8 + 8 + 35;
 const shareTimeMs = 2000;
@@ -628,6 +630,22 @@ export default class IssieEditPhoto extends React.Component {
     this.canvas.setState({ strokeWidth, color });
   }
 
+  rename = async (isRename) => {
+    const page = this.props.route.params.page;
+    this.props.navigation.navigate('SavePhoto', {
+      uri: page.path,
+      imageSource: SRC_RENAME,
+      folder: this.state.currentFolder,
+
+      name: getFileNameFromPath(page.path, true),
+      returnFolderCallback: this.props.route.params.returnFolderCallback,
+      saveNewFolder: this.props.route.params.saveNewFolder,
+      title: isRename ? translate("RenameFormTitle") : translate("MovePageFormTitle"),
+      goHomeAndThenToEdit: this.props.route.params.goHomeAndThenToEdit
+    });
+
+  }
+
   deletePage = async () => {
     //delete file
     await RNFS.unlink(this.state.currentFile)
@@ -999,7 +1017,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getMoreMenu = () => {
-    return this.state.page && this.state.page.pages.length > 1 ? <Menu ref={(ref) => this.menu = ref}>
+    return <Menu ref={(ref) => this.menu = ref}>
       <MenuTrigger >
         {getIconButton(() => {
           //   
@@ -1011,19 +1029,25 @@ export default class IssieEditPhoto extends React.Component {
         optionsContainerStyle={{
           backgroundColor: 'white', width: 250, borderRadius: 10,
           alignItems: 'center', justifyContent: 'center', alignContent: 'center'
-        }}                    >
-        <MenuOption onSelect={() => this.deletePage()} >
-          {renderMenuOption(fTranslate("BeforeDeleteSubPageQuestion", this.state.currentIndex + 1, this.state.page.pages.length),
-            "delete-forever")}
+        }}
+      >
+        <MenuOption onSelect={() => this.rename(true)} >
+          {renderMenuOption(translate("BtnChangeName"),
+            "edit")}
         </MenuOption>
-
-        <Spacer />
+        <Spacer width={5} />
+        {this.state.page && this.state.page.pages.length > 1 ?
+          <MenuOption onSelect={() => this.deletePage()} >
+            {renderMenuOption(fTranslate("BeforeDeleteSubPageQuestion", this.state.currentIndex + 1, this.state.page.pages.length),
+              "delete-forever")}
+          </MenuOption>
+          : null}
+        {this.state.page && this.state.page.pages.length > 1 ? <Spacer /> : null}
         {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
         <Spacer width={5} />
       </MenuOptions>
 
-    </Menu> :
-      null;
+    </Menu>
   }
 
   getArrow = (location, func) => {

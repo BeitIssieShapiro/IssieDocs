@@ -1,6 +1,12 @@
 import * as RNFS from 'react-native-fs';
 
-
+export function getFileNameFromPath(path, withoutExt) {
+    let fileName = path.replace(/^.*[\\\/]/, '');
+    if (withoutExt && fileName.endsWith('.jpg')) {
+        fileName = fileName.substr(0, fileName.length - 4);
+    }
+    return fileName;
+}
 
 export function setNavParam(nav, name, val) {
     if (!nav) return;
@@ -17,7 +23,7 @@ export async function readFolderMetaData(path) {
         let metadataString = await RNFS.readFile(path, 'utf8');
 
         let metadata = JSON.parse(metadataString.toString('utf8'));
-        
+
         return metadata;
     } catch (e) {
         return DEFAULT_FOLDER_METADATA;
@@ -26,7 +32,7 @@ export async function readFolderMetaData(path) {
 
 export async function writeFolderMetaData(path, color, icon) {
     //Alert.alert("color: " + color + ", icon: " + icon);
-    let metadata = { color:color?color:DEFAULT_FOLDER_METADATA.color, icon };
+    let metadata = { color: color ? color : DEFAULT_FOLDER_METADATA.color, icon };
     RNFS.writeFile(path, JSON.stringify(metadata), 'utf8').then(
         //Success
         undefined,

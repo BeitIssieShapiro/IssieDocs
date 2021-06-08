@@ -23,6 +23,7 @@ import { Icon } from 'react-native-elements'
 import { setIsSimulator } from './device';
 import { TextInput } from 'react-native-gesture-handler';
 import { MenuProvider } from 'react-native-popup-menu';
+import {getFileNameFromPath} from './utils'
 
 // const MainNavigator = createStackNavigator({
 //   Home: {screen: FolderGallery},
@@ -168,10 +169,8 @@ function App(props) {
               //let pathParts = page.path.split('/');
               //let isPageOnHome = pathParts[pathParts.length - 2] == DEFAULT_FOLDER_NAME;
 
-              let fileName = page.path.replace(/^.*[\\\/]/, '');
-              if (fileName.endsWith('.jpg')) {
-                fileName = fileName.substr(0, fileName.length - 4);
-              }
+              let fileName = getFileNameFromPath(page.path, true);
+              
               let multiPageTitleAddition = props.route.params.pageTitleAddition || "";
 
 

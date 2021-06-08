@@ -45,6 +45,8 @@ import { sortFolders, swapFolders, saveFolderOrder } from './sort'
 import { FlatList } from 'react-native-gesture-handler';
 import SplashScreen from 'react-native-splash-screen';
 import { getSvgIcon } from './svg-icons';
+import { getFileNameFromPath } from './utils'
+import { StackActions } from '@react-navigation/native';
 
 
 function checkFilter(filter, name) {
@@ -343,9 +345,11 @@ export default class FolderGallery extends React.Component {
 
     Share = () => {
         if (!this.state.selected) return;
+
         this.props.navigation.navigate('EditPhoto',
             {
                 page: this.state.selected,
+                folder: this.state.currentFolder,
                 share: true
             })
     }
@@ -570,31 +574,51 @@ export default class FolderGallery extends React.Component {
         setNavParam(this.props.navigation, 'isMenuOpened', false);
 
     }
+    goEdit = (page, folder, share) => {
+
+        this.props.navigation.navigate('EditPhoto', {
+            page,
+            folder,
+            share,
+            goHome: () => {
+                this.unselectFolder();
+                this.props.navigation.goBack();
+            },
+            returnFolderCallback: (f) => this.setReturnFolder(f),
+            saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false),
+            goHomeAndThenToEdit: (path) => {
+                setTimeout(async () => {
+                    this.props.navigation.dispatch(StackActions.popToTop());
+                    //find the page for the path
+                    let fileName = getFileNameFromPath(path, false);
+                    //console.log ("goHomeAndThenToEdit, FileName: "+ fileName)
+                    let p = await this.findFile(this.state.currentFolder.name, fileName);
+                    if (p) {
+                        this.goEdit(p, this.state.currentFolder, false);
+                    } else {
+                        console.log("goHomeAndThenToEdit - no page " + fileName + " in folder " + this.state.currentFolder.name)
+                    }
+                }, 10);
+            }
+        });
+    }
 
 
     addEmptyPage = async (type) => {
         let folder = this.state.currentFolder ? this.state.currentFolder : DEFAULT_FOLDER;
         let fileName = await saveNewPage(folder, type);
-        this.refresh(folder.name, () => {
+        this.refresh(folder.name, async () => {
 
             //find the file in the folder
-            let item = this.findFile(folder.name, fileName)
+            let item = await this.findFile(folder.name, fileName)
             if (item) {
                 if (this.state.currentFolder == undefined) {
                     let f = this.state.folders.find(f => f.name == folder.name);
                     this.selectFolder(f);
                 }
-                
-                this.props.navigation.navigate('EditPhoto',
-                    {
-                        page: item,
-                        folderName: folder.name,
-                        share: false,
-                        goHome: () => {
-                            this.unselectFolder();
-                            this.props.navigation.goBack();
-                        }
-                    });
+
+                this.goEdit(item, folder, false);
+
             } else {
                 Alert.alert('error with file: ' + fileName)
             }
@@ -615,8 +639,22 @@ export default class FolderGallery extends React.Component {
     }
 
 
-    findFile = (folderName, fileName) => {
-        //console.log("findFile folders" + this.state.folders.length)
+    findFile = (folderName, fileName, count) => {
+        if (count === undefined) {
+            count = 1
+        }
+        console.log("search page attempt #" + count)
+        return new Promise(resolve => {
+            let file = this.searchFile(folderName, fileName);
+            if (!file && count < 4) {
+                setTimeout(()=>this.findFile(folderName, fileName, count+1), 500);
+                return
+            }
+            resolve(file);
+        });
+    }
+
+    searchFile = (folderName, fileName) => {
         for (let i = 0; i < this.state.folders.length; i++) {
             //console.log("findFile files" + this.state.folders[i].files.length)
             if (this.state.folders[i].name == folderName && this.state.folders[i].files) {
@@ -628,7 +666,6 @@ export default class FolderGallery extends React.Component {
                 }
             }
         }
-        return undefined;
     }
 
 
@@ -873,16 +910,7 @@ export default class FolderGallery extends React.Component {
                                             rowWidth: pagesContainerWidth,
                                             editMode: this.state.editMode,
                                             selected: this.isSelected(item),
-                                            onPress: () => this.props.navigation.navigate('EditPhoto',
-                                                {
-                                                    page: item,
-                                                    folderName: this.state.currentFolder.name,
-                                                    share: false,
-                                                    goHome: () => {
-                                                        this.unselectFolder();
-                                                        this.props.navigation.goBack();
-                                                    }
-                                                }),
+                                            onPress: () => this.goEdit(item, this.state.currentFolder, false),
                                             onSelect: () => this.toggleSelection(item, 'file'),
                                             onDelete: () => this.DeletePage(),
                                             onRename: () => this.RenamePage(true),

@@ -393,12 +393,12 @@ export default class IssieSavePhoto extends React.Component {
         if (returnFolderCallback && this.state.folder) {
           returnFolderCallback(this.state.folder.name);
         }
-        this.props.navigation.dispatch(StackActions.popToTop());
-        // if (folderName !== DEFAULT_FOLDER_NAME) {
-        //   this.props.navigation.push('Home', { folder: folderName });
-        // } else {
-        //   this.props.navigation.pop();
-        // }
+        
+        if (this.props.route.params.goHomeAndThenToEdit) {
+          this.props.route.params.goHomeAndThenToEdit(filePath);
+        } else {
+          this.props.navigation.dispatch(StackActions.popToTop());
+        }
       },
       (err) => Alert.alert(err)
     ).catch(err => {
