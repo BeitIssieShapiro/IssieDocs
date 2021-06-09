@@ -27,7 +27,7 @@ export default function Search(props) {
 
     //setTimeout(() => updateInputText(inputEl.current, 25), 25);
     return <View
-        style={{ width: '100%', alignItems: 'center' }}
+        style={{ width: props.width || '100%', alignItems: 'center' }}
     >
         <View style={{
             width: '90%',

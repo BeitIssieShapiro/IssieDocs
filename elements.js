@@ -278,7 +278,7 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
     </TouchableOpacity>
         {selected ? <View
             style={{
-                borderBottomColor: 'black',
+                borderBottomColor: color,
                 borderBottomWidth: 6,
             }}
         /> : null}

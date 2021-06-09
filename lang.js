@@ -56,6 +56,8 @@ var strings = {
         "A": "א",
         "A B C": "א ב ג",
 
+        "SortA": "א",
+        "SortZ": "ת",
         "Menu": "תפריט",
         "Settings": "הגדרות",
         "About": "עלינו",
@@ -138,6 +140,9 @@ var strings = {
 
         "A": "أ",
         "A B C": "أ ب ج",
+
+        "SortA": "أ",
+        "SortZ": "و",
 
         "Settings": "الإعدادات",
         "Menu": "القائمة",

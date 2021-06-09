@@ -47,6 +47,8 @@ import SplashScreen from 'react-native-splash-screen';
 import { getSvgIcon } from './svg-icons';
 import { getFileNameFromPath } from './utils'
 import { StackActions } from '@react-navigation/native';
+const SORT_BY_NAME = 0;
+const SORT_BY_DATE = 1;
 
 
 function checkFilter(filter, name) {
@@ -72,7 +74,8 @@ export default class FolderGallery extends React.Component {
             windowSize: { width: 500, height: 1024 },
             folderColor: (getUseColorSetting() === USE_COLOR.yes),
             loading: true,
-            startTime: new Date()
+            startTime: new Date(),
+            sortBy: SORT_BY_NAME
         }
 
         // this._panResponder = PanResponder.create({
@@ -179,17 +182,19 @@ export default class FolderGallery extends React.Component {
                 let files = [];
                 let metadata = DEFAULT_FOLDER_METADATA;
                 for (let fi of filesItems) {
-
                     if (fi.name.endsWith('.metadata')) {
                         //read file for color and icon of the folder
                         metadata = await readFolderMetaData(fi.path)
                         //Alert.alert(JSON.stringify(metadata))
                     } else {
-                        let lastUpdate = Number(fi.mtime);
+                        console.log(fi.name + " ,timestamp: c: " + fi.ctime.valueOf() + " m: "+ fi.mtime.valueOf());
+
+                        let lastUpdate = Math.max(fi.mtime.valueOf(),fi.ctime.valueOf()) ;
                         //finds the .json file if exists
                         let dotJsonFile = items.find(f => f.name === fi.name + ".json");
-                        if (dotJsonFile) {
-                            lastUpdate = Number(dotJsonFile.mtime);
+                        if (dotJsonFile ) {
+                            console.log(dotJsonFile.name + " ,timestamp: c: " + dotJsonFile.ctime.valueOf() + " m: "+ dotJsonFile.mtime.valueOf());
+                            lastUpdate = Math.max(dotJsonFile.mtime.valueOf(), dotJsonFile.ctime.valueOf(), lastUpdate);
                         }
 
                         let pages = []
@@ -605,10 +610,10 @@ export default class FolderGallery extends React.Component {
 
     setItemStarred = (item) => {
         item.starred = true;
-        console.log("item is starred: "+ item.path)
+        console.log("item is starred: " + item.path)
         //turn off starred in 20 sec
-        setTimeout(()=>{
-            item.starred=false;
+        setTimeout(() => {
+            item.starred = false;
             this.forceUpdate();
         }, 20000);
     }
@@ -658,7 +663,7 @@ export default class FolderGallery extends React.Component {
         return new Promise(resolve => {
             let file = this.searchFile(folderName, fileName);
             if (!file && count < 4) {
-                setTimeout(()=>this.findFile(folderName, fileName, count+1), 500);
+                setTimeout(() => this.findFile(folderName, fileName, count + 1), 500);
                 return
             }
             resolve(file);
@@ -677,6 +682,12 @@ export default class FolderGallery extends React.Component {
                 }
             }
         }
+    }
+
+    getSortFunction = ()=> {
+        return this.state.sortBy == SORT_BY_DATE?
+          (a,b)=>a.lastUpdate<b.lastUpdate :
+          (a,b)=>a.name>b.name ;
     }
 
 
@@ -872,7 +883,13 @@ export default class FolderGallery extends React.Component {
                                 width: "100%", top: 0, height: this.isScreenLow() ? '17%' : '10%', alignItems: 'center', justifyContent: 'flex-start',
                                 borderBottomWidth: this.state.currentFolder ? 1 : 0, borderBottomColor: 'gray'
                             }}>
+                                {this.state.currentFolder?<Spacer width={3}/>:null}
+                                {this.state.currentFolder?getSvgIconButton(() => this.setState({sortBy:SORT_BY_DATE}) , semanticColors.addButton, "sort-by-date", 45, undefined, undefined, (this.state.sortBy == SORT_BY_DATE)):null}
+                                {this.state.currentFolder?<Spacer width={3}/>:null}
+                                {this.state.currentFolder?getSvgIconButton(() => this.setState({sortBy:SORT_BY_NAME}) , semanticColors.addButton, "sort-by-name", 45, undefined, undefined, (this.state.sortBy == SORT_BY_NAME)):null}
+
                                 {this.state.currentFolder ? <FolderNew
+                                    width="85%"
                                     index={fIndex}
                                     id="1"
                                     useColors={this.state.folderColor}
@@ -894,6 +911,7 @@ export default class FolderGallery extends React.Component {
                                         }
                                         }
                                     />}
+
                             </View>
                             {/* pages */}
                             <View style={{
@@ -913,12 +931,12 @@ export default class FolderGallery extends React.Component {
                                         }}
                                         bounces={needPagesScroll}
                                         key={asTiles ? numColumnsForTiles.toString() : "list"}
-                                        data={this.state.currentFolder.files}
+                                        data={[...this.state.currentFolder.files].sort(this.getSortFunction())}
                                         renderItem={({ item }) => FileNew({
                                             page: item,
                                             asTile: asTiles,
                                             starred: item.starred,
-                                            name: removeFileExt(item.name),
+                                            name: item.lastUpdate + "-" + removeFileExt(item.name),
                                             rowWidth: pagesContainerWidth,
                                             editMode: this.state.editMode,
                                             selected: this.isSelected(item),

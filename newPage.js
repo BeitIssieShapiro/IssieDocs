@@ -109,7 +109,8 @@ export async function saveFile(uri, filePath, isCopy) {
             if (isCopy) {
                 ret = copyDeep(uri, filePath);
             } else {
-                ret = RNFS.moveFile(uri, filePath)
+                //touch is used to update the modified date
+                ret = RNFS.moveFile(uri, filePath).then(()=>RNFS.touch(filePath));
             }
 
             ret.then(
@@ -134,10 +135,10 @@ async function copyDeep(src, dst) {
         let items = await RNFS.readDir(src);
         for (index in items) {
             const item = items[index];
-            await RNFS.copyFile(item.path, dst + '/' + item.name);
+            await RNFS.copyFile(item.path, dst + '/' + item.name).touch(dst + '/' + item.name);
         }
     } else {
-        return RNFS.copyFile(src, dst); 
+        return RNFS.copyFile(src, dst).then(()=>RNFS.touch(dst)); 
     }
 }
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Alert } from 'react-native'
 import { Svg, Path, Line, Rect, Polygon, G, Text, Ellipse } from 'react-native-svg'
-
+import { translate } from "./lang.js"
 
 export function getSvgIcon(name, size, color, strokeWidth) {
 
@@ -10,64 +10,83 @@ export function getSvgIcon(name, size, color, strokeWidth) {
     switch (name) {
         case 'menu-new-empty-page':
             return (<Svg viewBox="-0.5 -0.5 85 94" {...props} stroke={color}>
-                    <G strokeWidth="7">
-                        <Path d="M 72 90 L 72 35" />
-                        <Path d="M 31 15 L 52 15" />
-                        <Path d="M 2 45 L 2 90" />
-                        <Path d="M 73 89 L 1 89" />
-                        <Path d="M 2 46 L 32 15" />
-                        <Path d="M 3 45 L 33 45" />
-                        <Path d="M 32 15 L 32 45" />
-                        <Path d="M 72 28 L 72 2"  strokeWidth="9"/>
-                        <Path d="M 60 15 L 84 15"  strokeWidth="9"/>
-                    </G></Svg>);
+                <G strokeWidth="7">
+                    <Path d="M 72 90 L 72 35" />
+                    <Path d="M 31 15 L 52 15" />
+                    <Path d="M 2 45 L 2 90" />
+                    <Path d="M 73 89 L 1 89" />
+                    <Path d="M 2 46 L 32 15" />
+                    <Path d="M 3 45 L 33 45" />
+                    <Path d="M 32 15 L 32 45" />
+                    <Path d="M 72 28 L 72 2" strokeWidth="9" />
+                    <Path d="M 60 15 L 84 15" strokeWidth="9" />
+                </G></Svg>);
         case 'page-empty':
             return (<Svg viewBox="-0.5 -0.5 83 103">
                 <G>
-                    <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" stroke={color} strokeWidth="3"/>
+                    <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" stroke={color} strokeWidth="3" />
                     <Path d="M 51 1 L 51 31 L 81 31 Z" />
-                    <Path d="M 51 1 L 51 31 L 81 31"  stroke={color}  strokeWidth="3" />
+                    <Path d="M 51 1 L 51 31 L 81 31" stroke={color} strokeWidth="3" />
                 </G>
             </Svg>);
         case 'page-lines':
             return (<Svg viewBox="-0.5 -0.5 83 103">
-            <G>
-            <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" stroke={color} strokeWidth="3"/>
-            <Path d="M 51 1 L 51 31 L 81 31 Z" />
-            <Path d="M 51 1 L 51 31 L 81 31" fill="none" stroke={color}  strokeWidth="3" />
-            <Path d="M 11 31 L 41 31" fill="none" stroke={color} strokeWidth="2" />
-            <Path d="M 11 41 L 71 41" fill="none" stroke={color} strokeWidth="2" />
-            <Path d="M 11 51 L 31 51 Q 41 51 51 51 L 71 51" fill="none" stroke={color} strokeWidth="2" />
-            <Path d="M 11 61 L 31 61 Q 41 61 51 61 L 71 61" fill="none" stroke={color} strokeWidth="2" />
-            <Path d="M 11 71 L 31 71 Q 41 71 51 71 L 71 71" fill="none" stroke={color} strokeWidth="2" />
-            <Path d="M 11 81 L 31 81 Q 41 81 51 81 L 71 81" fill="none" stroke={color} strokeWidth="2" />
-            <Path d="M 11 91 L 31 91 Q 41 91 51 91 L 71 91" fill="none" stroke={color} strokeWidth="2" />
-            <Path d="M 11 21 L 41 21" fill="none" stroke={color} strokeWidth="2" />
-            </G></Svg>);
+                <G>
+                    <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" stroke={color} strokeWidth="3" />
+                    <Path d="M 51 1 L 51 31 L 81 31 Z" />
+                    <Path d="M 51 1 L 51 31 L 81 31" fill="none" stroke={color} strokeWidth="3" />
+                    <Path d="M 11 31 L 41 31" fill="none" stroke={color} strokeWidth="2" />
+                    <Path d="M 11 41 L 71 41" fill="none" stroke={color} strokeWidth="2" />
+                    <Path d="M 11 51 L 31 51 Q 41 51 51 51 L 71 51" fill="none" stroke={color} strokeWidth="2" />
+                    <Path d="M 11 61 L 31 61 Q 41 61 51 61 L 71 61" fill="none" stroke={color} strokeWidth="2" />
+                    <Path d="M 11 71 L 31 71 Q 41 71 51 71 L 71 71" fill="none" stroke={color} strokeWidth="2" />
+                    <Path d="M 11 81 L 31 81 Q 41 81 51 81 L 71 81" fill="none" stroke={color} strokeWidth="2" />
+                    <Path d="M 11 91 L 31 91 Q 41 91 51 91 L 71 91" fill="none" stroke={color} strokeWidth="2" />
+                    <Path d="M 11 21 L 41 21" fill="none" stroke={color} strokeWidth="2" />
+                </G></Svg>);
         case 'page-math':
             return (<Svg viewBox="-0.5 -0.5 83 104">
-            <G stroke={color} strokeWidth="2">
-            <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" strokeWidth="3" />
-            <Path d="M 51 1 L 51 31 L 81 31 Z" strokeWidth="3" />
-            <Path d="M 51 1 L 51 31 L 81 31" strokeWidth="3" />
-            <Path d="M 11 91 L 31 91 Q 41 91 51 91 L 71 91" />
-            <Path d="M 3 91 L 79 91" />
-            <Path d="M 3 81 L 79 81" />
-            <Path d="M 3 71 L 79 71" />
-            <Path d="M 3 61 L 79 61" />
-            <Path d="M 3 50.9 L 79 50.9" />
-            <Path d="M 3 41 L 79 41" />
-            <Path d="M 3 31 L 49 31" />
-            <Path d="M 3 21 L 49 21" />
-            <Path d="M 3 11 L 49 11" />
-            <Path d="M 11 100 L 11 3" />
-            <Path d="M 21 100 L 21 3" />
-            <Path d="M 31 100 L 31 3" />
-            <Path d="M 41 100 L 41 3" />
-            <Path d="M 51 100 L 51 33" />
-            <Path d="M 61 100 L 61 33" />
-            <Path d="M 71 100 L 71 33" />
-            </G>
+                <G stroke={color} strokeWidth="2">
+                    <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" strokeWidth="3" />
+                    <Path d="M 51 1 L 51 31 L 81 31 Z" strokeWidth="3" />
+                    <Path d="M 51 1 L 51 31 L 81 31" strokeWidth="3" />
+                    <Path d="M 11 91 L 31 91 Q 41 91 51 91 L 71 91" />
+                    <Path d="M 3 91 L 79 91" />
+                    <Path d="M 3 81 L 79 81" />
+                    <Path d="M 3 71 L 79 71" />
+                    <Path d="M 3 61 L 79 61" />
+                    <Path d="M 3 50.9 L 79 50.9" />
+                    <Path d="M 3 41 L 79 41" />
+                    <Path d="M 3 31 L 49 31" />
+                    <Path d="M 3 21 L 49 21" />
+                    <Path d="M 3 11 L 49 11" />
+                    <Path d="M 11 100 L 11 3" />
+                    <Path d="M 21 100 L 21 3" />
+                    <Path d="M 31 100 L 31 3" />
+                    <Path d="M 41 100 L 41 3" />
+                    <Path d="M 51 100 L 51 33" />
+                    <Path d="M 61 100 L 61 33" />
+                    <Path d="M 71 100 L 71 33" />
+                </G>
+            </Svg>);
+        case 'sort-by-date':
+            return (<Svg {...props} viewBox="-0.5 -0.5 40 58" >
+                <G stroke={color}>
+                    <Path d="M 8 8 L 8 37.9" strokeWidth="3" />
+                    <Path d="M 8 44.65 L 3.5 35.65 L 8 37.9 L 12.5 35.65 Z" strokeWidth="3" fill={color}/>
+                    <Ellipse cx="28" cy="28" rx="10" ry="10" strokeWidth="3" />
+                    <Path d="M 28 29 L 28 20" strokeWidth="2" />
+                    <Path d="M 20 28 L 29 28" strokeWidth="2" />
+                </G>
+            </Svg>);
+        case 'sort-by-name':
+            return (<Svg {...props} viewBox="-0.5 -0.5 54 58" >
+                <G stroke={color}>
+                    <Path d="M 8 8 L 8 37.9" strokeWidth="3" />
+                    <Path d="M 8 44.65 L 3.5 35.65 L 8 37.9 L 12.5 35.65 Z" fill={color}/>
+                    <Text x="25" y="21" fontSize="20" fill={color}>{translate("SortA")}</Text>
+                    <Text x="25" y="45" fontSize="20" fill={color}>{translate("SortZ")}</Text>
+                </G>
             </Svg>);
         case 'lang-system':
             return <Svg viewBox="0 0 64 64" {...props}>
