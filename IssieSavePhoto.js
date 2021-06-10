@@ -5,30 +5,28 @@ import {
   Alert, Dimensions, PanResponder
 } from 'react-native';
 import ImageEditor from "@react-native-community/image-editor";
-import { FOLDERS_DIR } from './elements';
 import * as RNFS from 'react-native-fs';
 import Pdf from 'react-native-pdf';
 import ViewShot from "react-native-view-shot";
 import { StackActions } from '@react-navigation/native';
 import { Icon } from 'react-native-elements'
 import { translate } from './lang.js'
-import { writeFolderMetaData, readFolderMetaData, DEFAULT_FOLDER_METADATA } from './utils'
 
 import {
   getIconButton,
   getImageDimensions,
-  globalStyles, DEFAULT_FOLDER,
   getPageNavigationButtons, getFileNameDialog, semanticColors, getFolderAndIcon,
   Spacer, getRoundedButton, dimensions, validPathPart
 } from './elements'
-//import ImageRotate from 'react-native-image-rotate';
 import ImageResizer from 'react-native-image-resizer';
 
-import { getNewPage, saveFile, cloneToTemp, SRC_RENAME, SRC_DUPLICATE } from './newPage'
-import { pushFolderOrder } from './sort'
+import { getNewPage, SRC_RENAME, SRC_DUPLICATE } from './newPage'
+
 import ProgressCircle from 'react-native-progress-circle'
 import { fTranslate } from './lang';
 import Scroller from './scroller';
+
+import { FileSystem } from './filesystem';
 
 const OK_Cancel = 1;
 const PickName = 2;
@@ -152,7 +150,7 @@ export default class IssieSavePhoto extends React.Component {
     //alert(uri);
     let folder = this.props.route.params.folder;
     if (!folder) {
-      folder = DEFAULT_FOLDER;
+      folder = FileSystem.DEFAULT_FOLDER;
     }
     let pageName = this.props.route.params.name;
     let addToExistingPage = this.props.route.params.addToExistingPage;
@@ -160,8 +158,12 @@ export default class IssieSavePhoto extends React.Component {
     if (uri.endsWith('.pdf')) {
       pdf = true;
     }
-    await this.initFolderList()
-    this.setState({ uri, pdf, pdfPage: 1, folder, pageName, addToExistingPage }, () => {
+
+    let folders = await FileSystem.main.getFolders();
+    folders = folders.filter(f=>f.name !== FileSystem.DEFAULT_FOLDER.name);
+
+    console.log(" folders count"+folders.length);
+    this.setState({ uri, pdf, pdfPage: 1, folders, folder, pageName, addToExistingPage }, () => {
       if (!pdf) {
         this.updateImageDimension();
       }
@@ -205,7 +207,7 @@ export default class IssieSavePhoto extends React.Component {
     const measure = this.topView.measure.bind(this.topView);
 
     setTimeout(measure, 50, (fx, fy, width, height, px, py) => {
-      this.setState({ topView: py, windowWidth: width}, this.updateImageDimension);
+      this.setState({ topView: py, windowWidth: width }, this.updateImageDimension);
     });
   }
 
@@ -244,7 +246,7 @@ export default class IssieSavePhoto extends React.Component {
           pdf: false
         });
 
-      } 
+      }
 
       if (this.state.addToExistingPage) {
         //In a mode of adding another page to existing set-of-pages
@@ -253,17 +255,17 @@ export default class IssieSavePhoto extends React.Component {
 
         if (page.pages.length > 0) {
           //need to find the next file name available
-          let lastPagePath = page.pages[page.pages.length-1];
+          let lastPagePath = page.pages[page.pages.length - 1];
           let basePathEnd = lastPagePath.lastIndexOf('/');
           let fileNameEnd = lastPagePath.lastIndexOf('.');
-          let basePath = lastPagePath.substring(0, basePathEnd+1);
-          let lastFileName = lastPagePath.substring(basePathEnd+1, fileNameEnd);
-          let newFileName = basePath + (parseInt(lastFileName)+1) + '.jpg'
+          let basePath = lastPagePath.substring(0, basePathEnd + 1);
+          let lastFileName = lastPagePath.substring(basePathEnd + 1, fileNameEnd);
+          let newFileName = basePath + (parseInt(lastFileName) + 1) + '.jpg'
           console.log("add page: " + newFileName)
-          await saveFile(this.state.uri, newFileName, false);
+          await FileSystem.main.saveFile(this.state.uri, newFileName, false);
         } else {
-          let basePath = page.path.substring(0, page.path.length-4); //remove .jpg 
-          
+          let basePath = page.path.substring(0, page.path.length - 4); //remove .jpg 
+
           await RNFS.mkdir(basePath);
           await RNFS.moveFile(page.path, basePath + '/0.jpg');
           try {
@@ -271,8 +273,8 @@ export default class IssieSavePhoto extends React.Component {
           } catch {
             //ignore
           }
-          
-          saveFile(this.state.uri, basePath + '/1.jpg', false);
+
+          FileSystem.main.saveFile(this.state.uri, basePath + '/1.jpg', false);
         }
 
         this.props.route.params.returnFolderCallback(this.state.folder.name);
@@ -319,91 +321,73 @@ export default class IssieSavePhoto extends React.Component {
   save = async () => {
     let folder = this.state.folder;
     if (!folder) {
-      folder = DEFAULT_FOLDER
+      folder = FileSystem.DEFAULT_FOLDER
     }
     let folderName = folder.name;
     let fileName = this.state.pageName;
 
-    if (!fileName || fileName.length == 0) {
-      Alert.alert(translate("MissingPageName"));
-      return;
-    }
-
-    if (!validPathPart(fileName)) {
-      Alert.alert(translate("IllegalCharacterInPageName"));
-      return;
-    }
     if (!folderName || folderName === translate("DefaultFolder")) {
-      folderName = DEFAULT_FOLDER.name;
+      folderName = FileSystem.DEFAULT_FOLDER.name;
     }
+    try {
+      await FileSystem.main.addFolder(folderName, folder.icon, folder.color);
 
-    let targetFolder = FOLDERS_DIR + folderName;
-    let filePath = targetFolder + "/" + fileName;
+      let targetFolder = FileSystem.main.basePath + folderName;
+      let filePath = targetFolder + "/" + fileName;
 
-    //add .jpg only if not rename or dup
-    if (this.isDuplicate() || this.isRename()) {
-      if (this.state.uri.endsWith(".jpg")) {
+      //add .jpg only if not rename or dup
+      if (this.isDuplicate() || this.isRename()) {
+        if (this.state.uri.endsWith(".jpg")) {
+          filePath += ".jpg";
+        }
+      } else {
         filePath += ".jpg";
       }
-    } else {
-      filePath += ".jpg";
-    }
 
-    //Alert.alert(filePath);
-    //first check if folder exists - if not create it and make it first in order
-    try {
-      let stat = await RNFS.stat(targetFolder);
-    } catch (e) {
-      await RNFS.mkdir(targetFolder);
-      await writeFolderMetaData(targetFolder + "/" + ".metadata", folder.color, folder.icon);
-      if (folderName !== DEFAULT_FOLDER.name) {
-        await pushFolderOrder(folderName)
+
+      if (this.state.multiPageState.pages.length > 0 && !this.isRename()) {
+        //create a folder with the name fo the file
+        targetFolder = targetFolder + "/" + fileName;
+        let i = 0;
+        for (; i < this.state.multiPageState.pages.length; i++) {
+          let page = this.state.multiPageState.pages[i];
+          await FileSystem.main.saveFile(page.uri, targetFolder + "/" + i + ".jpg");
+        }
+        filePath = targetFolder + "/" + i + ".jpg";
       }
-    }
 
 
-    if (this.state.multiPageState.pages.length > 0 && !this.isRename()) {
-      //create a folder with the name fo the file
-      targetFolder = targetFolder + "/" + fileName;
-      //todo check existing
-      await RNFS.mkdir(targetFolder);
-      let i = 0;
-      for (; i < this.state.multiPageState.pages.length; i++) {
-        let page = this.state.multiPageState.pages[i];
-        await saveFile(page.uri, targetFolder + "/" + i + ".jpg");
-      }
-      filePath = targetFolder + "/" + i + ".jpg";
-    }
-
-
-
-    saveFile(this.state.uri, filePath, this.isDuplicate()).then(
-      async () => {
-        //        Alert.alert("Save to file: " + filePath)
-        if ((this.isRename() || this.isDuplicate()) && this.state.uri.endsWith('.jpg')) {
-          try {
-            await saveFile(this.state.uri + ".json", filePath + ".json", this.isDuplicate());
-          } catch (e) {
-            //ignore, as maybe json is missing
+      FileSystem.main.saveFile(this.state.uri, filePath, this.isDuplicate()).then(
+        async () => {
+          //        Alert.alert("Save to file: " + filePath)
+          if ((this.isRename() || this.isDuplicate()) && this.state.uri.endsWith('.jpg')) {
+            try {
+              await FileSystem.main.saveFile(this.state.uri + ".json", filePath + ".json", this.isDuplicate());
+            } catch (e) {
+              //ignore, as maybe json is missing
+            }
           }
-        }
 
 
-        let returnFolderCallback = this.props.route.params.returnFolderCallback;
-        if (returnFolderCallback && this.state.folder) {
-          returnFolderCallback(this.state.folder.name);
-        }
-        
-        if (this.props.route.params.goHomeAndThenToEdit) {
-          this.props.route.params.goHomeAndThenToEdit(filePath);
-        } else {
-          this.props.navigation.dispatch(StackActions.popToTop());
-        }
-      },
-      (err) => Alert.alert(err)
-    ).catch(err => {
+          let returnFolderCallback = this.props.route.params.returnFolderCallback;
+          if (returnFolderCallback && this.state.folder) {
+            console.log("return to folder"+ this.state.folder.name)
+            returnFolderCallback(this.state.folder.name);
+          }
+
+          if (this.props.route.params.goHomeAndThenToEdit) {
+            this.props.route.params.goHomeAndThenToEdit(filePath);
+          } else {
+            this.props.navigation.dispatch(StackActions.popToTop());
+          }
+        },
+        (err) => Alert.alert(err)
+      ).catch(err => {
+        Alert.alert(err)
+      });
+    } catch (e) {
       Alert.alert(err)
-    });
+    }
   }
 
   exportPdfPage = async (page) => {
@@ -413,7 +397,7 @@ export default class IssieSavePhoto extends React.Component {
         () => {
           let viewShot = this.refs.viewShot;
           viewShot.capture().then(
-            uri => cloneToTemp(uri).then(newUri => resolve(newUri)),
+            uri => FileSystem.main.cloneToTemp(uri).then(newUri => resolve(newUri)),
             err => {
               reject(err)
             }
@@ -514,24 +498,6 @@ export default class IssieSavePhoto extends React.Component {
       });
   }
 
-  initFolderList = async () => {
-    if (this.state.folders) return this.state.folders;
-
-    RNFS.readDir(FOLDERS_DIR).then(async (folders) => {
-      this.setState({
-        folders: await Promise.all(folders.filter(f => f.isDirectory() && f.name !== DEFAULT_FOLDER.name).map(async (f) => {
-          let metadata = DEFAULT_FOLDER_METADATA;
-          try {
-            metadata = await readFolderMetaData(f.path + "/" + ".metadata")
-          } catch (e) {
-            //ignore if missing
-          }
-          return { name: f.name, ...metadata }
-        }))
-      });
-    });
-  }
-
   movePage = (inc) => {
     this.setState({ pdfPage: this.state.pdfPage + inc });
   }
@@ -543,7 +509,7 @@ export default class IssieSavePhoto extends React.Component {
     }
     if (await saveNewFolder(newFolder, color, icon)) {
       let newFolderObj = { name: newFolder, color, icon }
-      this.setState({ folders: [newFolderObj, ...this.state.folders], folder: newFolderObj });
+      this.setState({ folder: newFolderObj, folders: [newFolderObj, ...this.state.folders] });
       return true;
     }
     return false

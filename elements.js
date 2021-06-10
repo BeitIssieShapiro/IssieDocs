@@ -9,7 +9,7 @@ import { translate, getLocalizedFoldersAndIcons } from "./lang.js";
 import { getUseTextSetting } from './settings.js'
 
 import { getSvgIcon } from './svg-icons.js'
-import * as RNFS from 'react-native-fs';
+import { FileSystem } from './filesystem.js';
 
 
 export const dimensions = {
@@ -23,8 +23,6 @@ export const dimensions = {
     tileHeight: 197
 
 }
-
-export const FOLDERS_DIR = RNFS.DocumentDirectoryPath + '/folders/';
 
 export const APP_FONT = 'Alef';
 
@@ -127,20 +125,7 @@ export const folderColors = [
 ]
 
 
-export const DEFAULT_FOLDER = {name:'Default', color:'gray', icon:''};
 
-export function validPathPart(PathPart) {
-    if (!PathPart || PathPart.length == 0) {
-        return false;
-    }
-    if (PathPart.includes('/')) {
-        return false
-    }
-    if (PathPart.includes("\\")) {
-        return false
-    }
-    return true;
-}
 
 export function getIcon(name, size, color) {
     return <Icon name={name} size={size} color={color} />
@@ -319,7 +304,7 @@ export function getFolderAndIcon(folderName) {
 }
 
 export function normalizeTitle(title) {
-    if (title == DEFAULT_FOLDER.name) {
+    if (title == FileSystem.DEFAULT_FOLDER.name) {
         return translate("DefaultFolder");
     }
     return title;
@@ -327,7 +312,7 @@ export function normalizeTitle(title) {
 
 
 
-export function getFileNameDialog(fileName,
+ export function getFileNameDialog(fileName,
     currentFolder, folders,
     onChangeName, onChangeFolder, onSaveNewFolder,
     navigation, isLandscape, onLayout) {
@@ -335,10 +320,10 @@ export function getFileNameDialog(fileName,
     const defFolderName = { name: translate("DefaultFolder") };
 
 
-    if (!currentFolder || currentFolder.name  === DEFAULT_FOLDER.name || currentFolder.name === '') {
+    if (!currentFolder || currentFolder.name  === FileSystem.DEFAULT_FOLDER.name || currentFolder.name === '') {
         currentFolder = defFolderName;
     }
-
+    
     let fullListFolder = [defFolderName, ...folders];
     getLocalizedFoldersAndIcons().forEach((itm, index) => {
         if (fullListFolder.findIndex(f =>

@@ -168,7 +168,7 @@ function App(props) {
               const page = props.route.params.page;
               //let pathParts = page.path.split('/');
               //let isPageOnHome = pathParts[pathParts.length - 2] == DEFAULT_FOLDER_NAME;
-
+              
               let fileName = getFileNameFromPath(page.path, true);
               
               let multiPageTitleAddition = props.route.params.pageTitleAddition || "";

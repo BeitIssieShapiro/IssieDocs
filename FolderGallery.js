@@ -7,24 +7,20 @@ import {
 import Search from './search.js'
 import SettingsMenu from './settings-ui'
 
-import * as RNFS from 'react-native-fs';
 import FolderNew from './FolderNew';
 import FileNew from './FileNew'
-import { pushFolderOrder, renameFolder } from './sort'
 import {
     registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage,
 } from "./lang.js"
 import { USE_COLOR, getUseColorSetting, EDIT_TITLE, VIEW } from './settings.js'
-import { setNavParam, DEFAULT_FOLDER_METADATA, writeFolderMetaData, readFolderMetaData } from './utils'
+import { setNavParam } from './utils'
 import {
-    DEFAULT_FOLDER,
     semanticColors,
     Spacer, removeFileExt,
     dimensions,
-    validPathPart,
+    
     AppText,
     getSvgIconButton,
-    FOLDERS_DIR,
     renderMenuOption,
     getRoundedButton
 } from './elements'
@@ -35,18 +31,17 @@ import {
     MenuTrigger,
 } from 'react-native-popup-menu';
 
-import { saveNewPage, getTempEmptyPage, NEW_PAGE_TYPE } from "./empty-page.js"
 
 
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
 import ImagePicker from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
-import { sortFolders, swapFolders, saveFolderOrder } from './sort'
 import { FlatList } from 'react-native-gesture-handler';
 import SplashScreen from 'react-native-splash-screen';
 import { getSvgIcon } from './svg-icons';
 import { getFileNameFromPath } from './utils'
 import { StackActions } from '@react-navigation/native';
+import { FileSystem, swapFolders, saveFolderOrder } from './filesystem.js';
 const SORT_BY_NAME = 0;
 const SORT_BY_DATE = 1;
 
@@ -58,7 +53,7 @@ function checkFilter(filter, name) {
     if (name.indexOf(filter) >= 0)
         return true;
 
-    if (name == DEFAULT_FOLDER.name) {
+    if (name == FileSystem.DEFAULT_FOLDER.name) {
         return translate("DefaultFolder").indexOf(filter) >= 0;
     }
 
@@ -96,8 +91,6 @@ export default class FolderGallery extends React.Component {
     }
 
     componentDidMount = async () => {
-
-
         try {
             Linking.getInitialURL().then((url) => {
                 if (url) {
@@ -107,11 +100,8 @@ export default class FolderGallery extends React.Component {
 
             registerLangEvent()
 
-            //verify exists:
-            RNFS.mkdir(FOLDERS_DIR).catch(() => { });
-
             this.props.navigation.addListener("didFocus", async () => {
-                this.refresh();
+                //this.refresh();
             })
             setNavParam(this.props.navigation, 'menuHandler', () => this._menuHandler());
             setNavParam(this.props.navigation, 'editHandler', () => this.toggleEditMode());
@@ -121,12 +111,18 @@ export default class FolderGallery extends React.Component {
                     editTitleSetting = EDIT_TITLE.no;
                 }
                 return editTitleSetting === EDIT_TITLE.yes ||
-                    this.state.currentFolder && (this.state.foldersCount > 1 || this.state.currentFolder.name !== DEFAULT_FOLDER.name);
+                    this.state.currentFolder && (this.state.foldersCount > 1 || this.state.currentFolder.name !== FileSystem.DEFAULT_FOLDER.name);
             });
 
             Linking.addEventListener("url", this._handleOpenURL);
 
-            await this.refresh();
+            //load only the folders
+            let folders = await FileSystem.main.getFolders();
+            FileSystem.main.registerListener(() => {
+                FileSystem.main.getFolders().then(folder=> this.setState({ folders }));
+            });
+
+            this.setState({ folders, loading:false });
 
         } finally {
 
@@ -165,81 +161,36 @@ export default class FolderGallery extends React.Component {
         })
     }
 
-    refresh = async (folderName, callback) => {
-        //todo optimize if folderName is given
-        console.log("Refresh Folder: " + FOLDERS_DIR);
-        if (folderName) {
-            console.log("only one folder: " + folderName);
-        }
-        RNFS.readDir(FOLDERS_DIR).then(async (folders) => {
-            let foldersState = [];
+    // refresh = async (folderName, callback) => {
 
-            for (let folder of folders) {
-                console.log("read now: " + folder.name);
-                if (!folder.isDirectory()) continue;
-                const items = await RNFS.readDir(folder.path);
-                const filesItems = items.filter(f => !f.name.endsWith(".json"));
-                let files = [];
-                let metadata = DEFAULT_FOLDER_METADATA;
-                for (let fi of filesItems) {
-                    if (fi.name.endsWith('.metadata')) {
-                        //read file for color and icon of the folder
-                        metadata = await readFolderMetaData(fi.path)
-                        //Alert.alert(JSON.stringify(metadata))
-                    } else {
-                        console.log(fi.name + " ,timestamp: c: " + fi.ctime.valueOf() + " m: "+ fi.mtime.valueOf());
+    //         //update current folder:
+    //         let currentFolder;
+    //         if (this.state.returnFolderName) {
+    //             currentFolder = foldersState.find(f => f.name == this.state.returnFolderName);
+    //         }
+    //         if (!currentFolder && this.state.currentFolder) {
+    //             //try to restore to the same:
+    //             currentFolder = foldersState.find(f => f.name == this.state.currentFolder.name);
+    //         }
+    //         if (!currentFolder) {
+    //             //Alert.alert(JSON.stringify(foldersState))
+    //             //currentFolder = foldersState.find(f => f.name == DEFAULT_FOLDER_NAME);
+    //         }
+    //         if (currentFolder) {
+    //             this.selectFolder(currentFolder)
+    //         } else {
+    //             this.unselectFolder(currentFolder)
+    //         }
 
-                        let lastUpdate = Math.max(fi.mtime.valueOf(),fi.ctime.valueOf()) ;
-                        //finds the .json file if exists
-                        let dotJsonFile = items.find(f => f.name === fi.name + ".json");
-                        if (dotJsonFile ) {
-                            console.log(dotJsonFile.name + " ,timestamp: c: " + dotJsonFile.ctime.valueOf() + " m: "+ dotJsonFile.mtime.valueOf());
-                            lastUpdate = Math.max(dotJsonFile.mtime.valueOf(), dotJsonFile.ctime.valueOf(), lastUpdate);
-                        }
+    //         let newFolders = await sortFolders(foldersState);
+    //         this.setState({ folders: newFolders, returnFolderName: undefined, loading: false }, () => {
+    //             if (callback)
+    //                 callback()
+    //         });
 
-                        let pages = []
-                        if (fi.isDirectory()) {
-                            //read all pages
-                            const innerPages = await RNFS.readDir(fi.path);
+    //     })
 
-                            pages = innerPages.filter(f => !f.name.endsWith(".json")).map(p => p.path);
-                            pages = pages.sort();
-                        }
-                        files.push({ name: fi.name, lastUpdate, path: fi.path, isFolder: fi.isDirectory(), pages: pages });
-                    }
-                }
-
-                foldersState.push({ name: folder.name, ...metadata, lastUpdate: Number(folder.mtime), path: folder.path, files: files });
-            }
-
-            //update current folder:
-            let currentFolder;
-            if (this.state.returnFolderName) {
-                currentFolder = foldersState.find(f => f.name == this.state.returnFolderName);
-            }
-            if (!currentFolder && this.state.currentFolder) {
-                //try to restore to the same:
-                currentFolder = foldersState.find(f => f.name == this.state.currentFolder.name);
-            }
-            if (!currentFolder) {
-                //Alert.alert(JSON.stringify(foldersState))
-                //currentFolder = foldersState.find(f => f.name == DEFAULT_FOLDER_NAME);
-            }
-            if (currentFolder) {
-                this.selectFolder(currentFolder)
-            } else {
-                this.unselectFolder(currentFolder)
-            }
-
-            let newFolders = await sortFolders(foldersState);
-            this.setState({ folders: newFolders, returnFolderName: undefined, loading: false }, () => {
-                if (callback)
-                    callback()
-            });
-
-        })
-
-    }
+    // }
 
     newFromCamera = (addToExistingPage) => {
         if (this.state.systemModal) return;
@@ -373,9 +324,8 @@ export default class FolderGallery extends React.Component {
             [
                 {
                     text: translate("BtnDelete"), onPress: () => {
-                        RNFS.unlink(this.state.currentFolder.path);
+                        FileSystem.main.deleteFolder(this.state.currentFolder.name)
                         this.unselectFolder()
-                        this.refresh();
                     },
                     style: 'destructive'
                 },
@@ -397,11 +347,10 @@ export default class FolderGallery extends React.Component {
                 {
                     text: translate("BtnDelete"), onPress: () => {
                         let selectedPath = this.state.selected.path;
-                        RNFS.unlink(selectedPath).then(() => {
-                            RNFS.unlink(selectedPath + ".json").catch((e) => {/*do nothing*/ });
-                        });
+                        FileSystem.main.deleteFile(selectedPath);
+
                         this.setState({ selected: undefined });
-                        this.refresh();
+
                     },
                     style: 'destructive'
                 },
@@ -471,81 +420,33 @@ export default class FolderGallery extends React.Component {
         })
     }
 
-
     setReturnFolder = (folderName) => {
-        //Alert.alert("return to " + folderName)
-        this.setState({ returnFolderName: folderName }, () => this.refresh(folderName));
+        FileSystem.main.getFolders().then( (folders) => {
+            let folder = folders.find(f=>f.name == folderName);
+            if (folder) {
+                this.setState({ currentFolder: folder });
+            }
+        });
     }
-
 
     saveNewFolder = async (newFolderName, newFolderColor, newFolderIcon,
         setReturnFolder, originalFolderName) => {
 
-        if (!newFolderName || newFolderName.length == 0) {
-            Alert.alert(translate("MissingFolderName"));
-            return false;
-        }
-        // let fAndi = getFolderAndIcon(newFolderName);
-        // if (fAndi.name.length == 0 && fAndi.icon !== "") {
-        //     let proceed = await new Promise((resolve) =>
-        //         Alert.alert(translate("Warning"), translate("SaveFolderWithEmptyNameQuestion"),
-        //             [
-        //                 {
-        //                     text: translate("BtnContinue"), onPress: () => {
-        //                         resolve(true);
-        //                     },
-        //                     style: 'default'
-        //                 },
-        //                 {
-        //                     text: translate("BtnCancel"), onPress: () => {
-        //                         resolve(false);
-        //                     },
-        //                     style: 'cancel'
-        //                 }
-        //             ]
-        //         ));
-        //     if (!proceed)
-        //         return;
-        // }
+        try {
+            if (newFolderName != originalFolderName) {
+                await FileSystem.main.addFolder(newFolderName, newFolderColor, newFolderIcon, true);
+            } else {
+                await FileSystem.main.renameFolder(originalFolderName, newFolderName, newFolderColor, newFolderIcon, true);
 
-        if (!validPathPart(newFolderName)) {
-            Alert.alert(translate("IllegalCharacterInFolderName"));
-            return false;
-        }
-        let targetFolder = FOLDERS_DIR + newFolderName;
-        if (newFolderName != originalFolderName) {
-
-            try {
-                await RNFS.stat(targetFolder);
-                //folder exists:
-                Alert.alert(translate("FolderAlreadyExists"));
-                return false;
-            } catch (e) {
-                await RNFS.mkdir(targetFolder);
-                if (!originalFolderName) {
-                    await pushFolderOrder(newFolderName)
-                } else {
-                    //rename existing
-                    //move all files and delete old folder
-                    await RNFS.readDir(FOLDERS_DIR + originalFolderName).then(async (files) => {
-                        for (let f of files) {
-                            await RNFS.moveFile(f.path, FOLDERS_DIR + newFolderName + "/" + f.name);
-                        }
-                    });
-                    await RNFS.unlink(FOLDERS_DIR + originalFolderName);
-                    await renameFolder(originalFolderName, newFolderName);
-                }
             }
+        } catch (e) {
+            Alert.alert(e);
+            return false;
         }
 
-        //save folder and icon
-        await writeFolderMetaData(targetFolder + "/" + ".metadata", newFolderColor, newFolderIcon);
 
         if (setReturnFolder) {
-            this.setState({ returnFolderName: newFolderName }, () => this.refresh());
-        } else {
-            //add the folder to the list:
-            this.refresh();
+            this.setReturnFolder(newFolderName);
         }
         return true;
     }
@@ -596,10 +497,9 @@ export default class FolderGallery extends React.Component {
                     this.props.navigation.dispatch(StackActions.popToTop());
                     //find the page for the path
                     let fileName = getFileNameFromPath(path, false);
-                    //console.log ("goHomeAndThenToEdit, FileName: "+ fileName)
-                    let p = await this.findFile(this.state.currentFolder.name, fileName);
-                    if (p) {
-                        this.goEdit(p, this.state.currentFolder, false);
+                    let item = await folder.getItem(fileName);
+                    if (item) {
+                        this.goEdit(item, this.state.currentFolder, false);
                     } else {
                         console.log("goHomeAndThenToEdit - no page " + fileName + " in folder " + this.state.currentFolder.name)
                     }
@@ -608,42 +508,27 @@ export default class FolderGallery extends React.Component {
         });
     }
 
-    setItemStarred = (item) => {
-        item.starred = true;
-        console.log("item is starred: " + item.path)
-        //turn off starred in 20 sec
-        setTimeout(() => {
-            item.starred = false;
-            this.forceUpdate();
-        }, 20000);
-    }
-
 
     addEmptyPage = async (type) => {
-        let folder = this.state.currentFolder ? this.state.currentFolder : DEFAULT_FOLDER;
-        let fileName = await saveNewPage(folder, type);
-        this.refresh(folder.name, async () => {
+        let folderName = this.state.currentFolder ? this.state.currentFolder.name : FileSystem.DEFAULT_FOLDER.name;
+        let fileName = await FileSystem.main.getStaticPage(folderName, type);
 
-            //find the file in the folder
-            let item = await this.findFile(folder.name, fileName)
-            if (item) {
-                if (this.state.currentFolder == undefined) {
-                    let f = this.state.folders.find(f => f.name == folder.name);
-                    this.selectFolder(f);
-                }
-                this.setItemStarred(item);
+        let folder = this.state.currentFolder
+        if (this.state.currentFolder == undefined) {
+            folder = this.state.folders.find(f => f.name == folderName);
+            this.selectFolder(folder);
+        }
 
-                this.goEdit(item, folder, false);
-
-            } else {
-                Alert.alert('error with file: ' + fileName)
-            }
-
-        });
+        let item = await folder.getItem(fileName);
+        if (item) {
+            this.goEdit(item, folder, false);
+        } else {
+            Alert.alert("error finding newly created file")
+        }
     }
 
     addEmptyPageToPage = async (addToExistingPage, pageType) => {
-        let tempFileName = await getTempEmptyPage(pageType);
+        let tempFileName = await FileSystem.main.getStaticPageTempFile(pageType);
         this.props.navigation.navigate('SavePhoto', {
             uri: tempFileName,
             imageSource: SRC_FILE,
@@ -655,39 +540,12 @@ export default class FolderGallery extends React.Component {
     }
 
 
-    findFile = (folderName, fileName, count) => {
-        if (count === undefined) {
-            count = 1
-        }
-        console.log("search page attempt #" + count)
-        return new Promise(resolve => {
-            let file = this.searchFile(folderName, fileName);
-            if (!file && count < 4) {
-                setTimeout(() => this.findFile(folderName, fileName, count + 1), 500);
-                return
-            }
-            resolve(file);
-        });
-    }
+    
 
-    searchFile = (folderName, fileName) => {
-        for (let i = 0; i < this.state.folders.length; i++) {
-            //console.log("findFile files" + this.state.folders[i].files.length)
-            if (this.state.folders[i].name == folderName && this.state.folders[i].files) {
-                for (let j = 0; j < this.state.folders[i].files.length; j++) {
-                    //console.log("compare ", this.state.folders[i].files[j].name, fileName)
-                    if (this.state.folders[i].files[j].name == fileName) {
-                        return this.state.folders[i].files[j]
-                    }
-                }
-            }
-        }
-    }
-
-    getSortFunction = ()=> {
-        return this.state.sortBy == SORT_BY_DATE?
-          (a,b)=>a.lastUpdate<b.lastUpdate :
-          (a,b)=>a.name>b.name ;
+    getSortFunction = () => {
+        return this.state.sortBy == SORT_BY_DATE ?
+            (a, b) => a.lastUpdate < b.lastUpdate :
+            (a, b) => a.name > b.name;
     }
 
 
@@ -702,13 +560,13 @@ export default class FolderGallery extends React.Component {
                         backgroundColor: 'white', width: 250, borderRadius: 10,
                         alignItems: 'center', justifyContent: 'center', alignContent: 'center'
                     }}                    >
-                    <MenuOption onSelect={() => this.addEmptyPage(NEW_PAGE_TYPE.Blank)}>
+                    <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Blank)}>
                         {renderMenuOption(translate("MenuNewPageEmpty"), "page-empty", "svg")}
                     </MenuOption>
-                    <MenuOption onSelect={() => this.addEmptyPage(NEW_PAGE_TYPE.Lines)}>
+                    <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Lines)}>
                         {renderMenuOption(translate("MenuNewPageLines"), "page-lines", "svg")}
                     </MenuOption>
-                    <MenuOption onSelect={() => this.addEmptyPage(NEW_PAGE_TYPE.Math)}>
+                    <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Math)}>
                         {renderMenuOption(translate("MenuNewPageMath"), "page-math", "svg")}
                     </MenuOption>
                     <Spacer />
@@ -729,6 +587,12 @@ export default class FolderGallery extends React.Component {
         }
 
         let fIndex = 0;
+        let items = []
+        if (this.state.currentFolder){
+            //console.log(this.state.currentFolder);
+            items = this.state.currentFolder.items;
+        }
+
         if (this.state.folders && this.state.folders.length) {
             fIndex = this.state.folders.findIndex(f => f.name == curFolderFullName);
         }
@@ -747,7 +611,7 @@ export default class FolderGallery extends React.Component {
         let foldersHeightSize = dimensions.topView + dimensions.toolbarHeight + foldersCount * dimensions.folderHeight;
         let needFoldersScroll = foldersHeightSize > this.state.windowSize.height;
 
-        let pagesCount = this.state.currentFolder && this.state.currentFolder.files ? this.state.currentFolder.files.length : 1;
+        let pagesCount = items.length;
         let pagesLines = asTiles ? Math.ceil(pagesCount / numColumnsForTiles) : pagesCount;
         let pageHeight = asTiles ? dimensions.tileHeight : dimensions.lineHeight;
         let pagesAreaWindowHeight = 0.9 * (this.state.windowSize.height - dimensions.topView + dimensions.toolbarHeight);
@@ -755,7 +619,9 @@ export default class FolderGallery extends React.Component {
         let needPagesScroll = pagesHeightSize > pagesAreaWindowHeight;
 
         let isEmptyApp = !this.state.folders || this.state.folders.length == 0;
-
+        if (isEmptyApp)
+            console.log("empty app")
+        
 
         return (
             <View style={styles.container}
@@ -883,10 +749,10 @@ export default class FolderGallery extends React.Component {
                                 width: "100%", top: 0, height: this.isScreenLow() ? '17%' : '10%', alignItems: 'center', justifyContent: 'flex-start',
                                 borderBottomWidth: this.state.currentFolder ? 1 : 0, borderBottomColor: 'gray'
                             }}>
-                                {this.state.currentFolder?<Spacer width={3}/>:null}
-                                {this.state.currentFolder?getSvgIconButton(() => this.setState({sortBy:SORT_BY_DATE}) , semanticColors.addButton, "sort-by-date", 45, undefined, undefined, (this.state.sortBy == SORT_BY_DATE)):null}
-                                {this.state.currentFolder?<Spacer width={3}/>:null}
-                                {this.state.currentFolder?getSvgIconButton(() => this.setState({sortBy:SORT_BY_NAME}) , semanticColors.addButton, "sort-by-name", 45, undefined, undefined, (this.state.sortBy == SORT_BY_NAME)):null}
+                                {this.state.currentFolder ? <Spacer width={3} /> : null}
+                                {this.state.currentFolder ? getSvgIconButton(() => this.setState({ sortBy: SORT_BY_DATE }), semanticColors.addButton, "sort-by-date", 45, undefined, undefined, (this.state.sortBy == SORT_BY_DATE)) : null}
+                                {this.state.currentFolder ? <Spacer width={3} /> : null}
+                                {this.state.currentFolder ? getSvgIconButton(() => this.setState({ sortBy: SORT_BY_NAME }), semanticColors.addButton, "sort-by-name", 45, undefined, undefined, (this.state.sortBy == SORT_BY_NAME)) : null}
 
                                 {this.state.currentFolder ? <FolderNew
                                     width="85%"
@@ -901,7 +767,7 @@ export default class FolderGallery extends React.Component {
                                     editMode={this.state.editMode}
                                     onDelete={() => this.DeleteFolder()}
                                     onRename={() => this.RenameFolder()}
-                                    fixedFolder={curFolderFullName === DEFAULT_FOLDER.name}
+                                    fixedFolder={curFolderFullName === FileSystem.DEFAULT_FOLDER.name}
                                 /> :
                                     <Search
                                         value={this.state.filterFolders}
@@ -920,7 +786,7 @@ export default class FolderGallery extends React.Component {
                                 position: 'absolute', top: this.isScreenLow() ? '17%' : '10%', width: "100%",
                                 height: this.isScreenLow() ? '83%' : '90%'
                             }}>
-                                {this.state.currentFolder && this.state.currentFolder.files && this.state.currentFolder.files.length > 0 ?
+                                {items.length > 0 ?
                                     <FlatList
                                         style={{
                                         }}
@@ -931,12 +797,12 @@ export default class FolderGallery extends React.Component {
                                         }}
                                         bounces={needPagesScroll}
                                         key={asTiles ? numColumnsForTiles.toString() : "list"}
-                                        data={[...this.state.currentFolder.files].sort(this.getSortFunction())}
+                                        data={[...items].sort(this.getSortFunction())}
                                         renderItem={({ item }) => FileNew({
                                             page: item,
                                             asTile: asTiles,
                                             starred: item.starred,
-                                            name: item.lastUpdate + "-" + removeFileExt(item.name),
+                                            name: removeFileExt(item.name),
                                             rowWidth: pagesContainerWidth,
                                             editMode: this.state.editMode,
                                             selected: this.isSelected(item),
@@ -948,9 +814,9 @@ export default class FolderGallery extends React.Component {
                                             onShare: () => this.Share(),
                                             onAddFromCamera: () => this.AddToPageFromCamera(item),
                                             onAddFromMediaLib: () => this.AddToPageFromMediaLib(item),
-                                            onBlankPage: () => this.addEmptyPageToPage(item, NEW_PAGE_TYPE.Blank),
-                                            onLinesPage: () => this.addEmptyPageToPage(item, NEW_PAGE_TYPE.Lines),
-                                            onMathPage: () => this.addEmptyPageToPage(item, NEW_PAGE_TYPE.Math),
+                                            onBlankPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Blank),
+                                            onLinesPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Lines),
+                                            onMathPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Math),
                                             onDuplicate: () => this.DuplicatePage(),
                                             count: item.pages.length
                                         })}
@@ -1026,7 +892,7 @@ export default class FolderGallery extends React.Component {
                                         color: f.color,
                                         icon: f.icon,
                                         editMode: this.state.editMode,
-                                        fixedFolder: f.name === DEFAULT_FOLDER.name,
+                                        fixedFolder: f.name === FileSystem.DEFAULT_FOLDER.name,
                                         //dragPanResponder: this._panResponder.panHandlers, 
                                         current: (this.state.currentFolder && f.name == this.state.currentFolder.name),
                                         onPress: () => this.selectFolder(f),
@@ -1048,25 +914,25 @@ export default class FolderGallery extends React.Component {
     }
 }
 //1=create-pages, 2=create-pages+select-folder
-function getDesktopHint(amount) {
-    return <View style={{ flexDirection: 'row', width: '100%', marginTop: 25 }}>
-        <View style={{ width: '50%', alignItems: 'center' }}>
-            {getSvgIcon('start-icon', 150, semanticColors.addButton)}
-            <Spacer />
-            <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("StartHere")}</AppText>
-        </View>
-        <Spacer />
-        <Spacer />
-        {amount == 2 ? <View style={{ width: '50%', alignItems: 'center' }}>
+// function getDesktopHint(amount) {
+//     return <View style={{ flexDirection: 'row', width: '100%', marginTop: 25 }}>
+//         <View style={{ width: '50%', alignItems: 'center' }}>
+//             {getSvgIcon('start-icon', 150, semanticColors.addButton)}
+//             <Spacer />
+//             <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("StartHere")}</AppText>
+//         </View>
+//         <Spacer />
+//         <Spacer />
+//         {amount == 2 ? <View style={{ width: '50%', alignItems: 'center' }}>
 
-            <AppText style={{ fontSize: 35, color: '#797a7c' }}> {translate("ChooseFolder")}</AppText>
-            <Spacer />
-            {getSvgIcon('arrow-to-folders')}
-        </View> :
-            <View style={{ width: '50%' }} />}
+//             <AppText style={{ fontSize: 35, color: '#797a7c' }}> {translate("ChooseFolder")}</AppText>
+//             <Spacer />
+//             {getSvgIcon('arrow-to-folders')}
+//         </View> :
+//             <View style={{ width: '50%' }} />}
 
-    </View>
-}
+//     </View>
+// }
 
 const styles = StyleSheet.create({
     container: {
