@@ -18,7 +18,7 @@ import {
     semanticColors,
     Spacer, removeFileExt,
     dimensions,
-    
+
     AppText,
     getSvgIconButton,
     renderMenuOption,
@@ -118,11 +118,13 @@ export default class FolderGallery extends React.Component {
 
             //load only the folders
             let folders = await FileSystem.main.getFolders();
-            FileSystem.main.registerListener(() => {
-                FileSystem.main.getFolders().then(folder=> this.setState({ folders }));
+            FileSystem.main.registerListener(async () => {
+                let folders = await FileSystem.main.getFolders();
+
+                FileSystem.main.getFolders().then(folder => this.setState({ folders }));
             });
 
-            this.setState({ folders, loading:false });
+            this.setState({ folders, loading: false });
 
         } finally {
 
@@ -421,8 +423,8 @@ export default class FolderGallery extends React.Component {
     }
 
     setReturnFolder = (folderName) => {
-        FileSystem.main.getFolders().then( (folders) => {
-            let folder = folders.find(f=>f.name == folderName);
+        FileSystem.main.getFolders().then((folders) => {
+            let folder = folders.find(f => f.name == folderName);
             if (folder) {
                 this.setState({ currentFolder: folder });
             }
@@ -434,9 +436,9 @@ export default class FolderGallery extends React.Component {
 
         try {
             if (newFolderName != originalFolderName) {
-                await FileSystem.main.addFolder(newFolderName, newFolderColor, newFolderIcon, true);
+                await FileSystem.main.addFolder(newFolderName, newFolderIcon, newFolderColor, true);
             } else {
-                await FileSystem.main.renameFolder(originalFolderName, newFolderName, newFolderColor, newFolderIcon, true);
+                await FileSystem.main.renameFolder(originalFolderName, newFolderName, newFolderIcon, newFolderColor);
 
             }
         } catch (e) {
@@ -540,7 +542,7 @@ export default class FolderGallery extends React.Component {
     }
 
 
-    
+
 
     getSortFunction = () => {
         return this.state.sortBy == SORT_BY_DATE ?
@@ -587,10 +589,12 @@ export default class FolderGallery extends React.Component {
         }
 
         let fIndex = 0;
-        let items = []
-        if (this.state.currentFolder){
+        let items = [];
+        let folderIsLoading = false;
+        if (this.state.currentFolder) {
             //console.log(this.state.currentFolder);
             items = this.state.currentFolder.items;
+            folderIsLoading = this.state.currentFolder.loading;
         }
 
         if (this.state.folders && this.state.folders.length) {
@@ -621,7 +625,7 @@ export default class FolderGallery extends React.Component {
         let isEmptyApp = !this.state.folders || this.state.folders.length == 0;
         if (isEmptyApp)
             console.log("empty app")
-        
+
 
         return (
             <View style={styles.container}
@@ -826,11 +830,16 @@ export default class FolderGallery extends React.Component {
 
 
                                     : this.state.currentFolder ?
-                                        <View style={{ alignItems: 'center', height: '100%' }}>
-                                            <Spacer height='20%' />
-                                            {getSvgIcon('folder', this.isMobile() ? 85 : 150)}
-                                            <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("NoPagesYet")}</AppText>
-                                        </View>
+                                        folderIsLoading ?
+                                            <View>
+                                                <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
+                                            </View>
+                                            :
+                                            <View style={{ alignItems: 'center', height: '100%' }}>
+                                                <Spacer height='20%' />
+                                                {getSvgIcon('folder', this.isMobile() ? 85 : 150)}
+                                                <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("NoPagesYet")}</AppText>
+                                            </View>
                                         :
 
                                         <View

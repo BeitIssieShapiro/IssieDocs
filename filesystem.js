@@ -80,12 +80,11 @@ export class FileSystem {
         let folderPath = this._basePath + name;
         await RNFS.unlink(folderPath)
         this._folders = this._folders.filter(f => f.name != name);
-        this._reloadFolder(name)
         this._notify();
     }
 
     async addFolder(name, icon, color, strictChecks) {
-
+        console.log("add folder: "+name+", color:"+color+", icon="+icon)
         if (!name || name.length == 0) {
             throw translate("MissingFolderName");
         }
@@ -278,7 +277,7 @@ export class FileSystem {
                 await RNFS.stat(currPath);
             } catch (e) {
                 if (i == 0) { //root level folder
-                    this.addFolder(pathObj.folders[i], FileSystem.DEFAULT_FOLDER_METADATA.icon,)
+                    this.addFolder(pathObj.folders[i], FileSystem.DEFAULT_FOLDER_METADATA.icon,FileSystem.DEFAULT_FOLDER_METADATA.color)
                 } else {
                     await RNFS.mkdir(currPath);
                 }
@@ -410,6 +409,8 @@ export class FileSystem {
 
 export class FileSystemFolder {
     _files = undefined;
+    _loading = true;
+
     constructor(name, fs, metadata) {
         this._metadata = metadata
         this._name = name;
@@ -427,8 +428,13 @@ export class FileSystemFolder {
         return this._metadata.color;
     }
 
+    get loading() {
+        return this._loading;
+    }
+
     get items() {
         if (!this._files) {
+            this._loading = true;
             this._files = [];
             this.reload().then(() => this._fs._notify(this._name));
         }
@@ -448,7 +454,7 @@ export class FileSystemFolder {
         console.log("read files of folder: " + this._name);
         const items = await RNFS.readDir(this._fs.basePath + this._name);
         const filesItems = items.filter(f => !f.name.endsWith(".json") && f.name !== ORDER_FILE_NAME && f.name !== ".metadata");
-
+        this._loading = true;
         this._files = [];
         for (let fi of filesItems) {
 
@@ -469,6 +475,7 @@ export class FileSystemFolder {
             this._files.push({ name: fi.name, lastUpdate, path: fi.path, isFolder: fi.isDirectory(), pages: pages });
 
         }
+        this._loading = false;
         this._fs._notify();
     }
 }
