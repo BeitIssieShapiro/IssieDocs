@@ -314,14 +314,6 @@ export default class IssieEditPhoto extends React.Component {
 
   }
 
-  async replaceFile(src, dest) {
-    //generate temp name for dest:
-    const tempName = dest + Date.now().toString();
-    return RNFS.moveFile(dest, tempName).then(() =>
-      RNFS.moveFile(src, dest)).then(() =>
-        RNFS.unlink(tempName));
-  }
-
   SketchEnd = (p) => {
     this.state.queue.pushPath(p);
     this.Save()

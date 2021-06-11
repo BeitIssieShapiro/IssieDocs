@@ -1,4 +1,3 @@
-import * as RNFS from 'react-native-fs';
 
 export function getFileNameFromPath(path, withoutExt) {
     let fileName = path.replace(/^.*[\\\/]/, '');

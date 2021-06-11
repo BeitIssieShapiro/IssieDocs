@@ -1,7 +1,7 @@
 import {
     Alert
 } from 'react-native';
-import ImagePicker from 'react-native-image-picker';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 export const SRC_CAMERA = 'camera';
 export const SRC_GALLERY = 'gallery';
 export const SRC_FILE = 'file';
@@ -31,28 +31,28 @@ export async function getNewPage(src, okEvent, cancelEvent) {
             return;
         }
 
-        ImagePicker.launchCamera({
+        launchCamera({
             title: translate("CameraTitle"),
             mediaType: 'photo',
             noData: true,
             cancelButtonTitle: translate("BtnCancel"),
+            takePhotoButtonTitle: "בחר",
             showsCameraControls: false
         }, (response) => {
-            if (!response.didCancel) {
-                okEvent(response.uri);
+            if (!response.didCancel && response.assets.length > 0) {
+                okEvent(response.assets[0].uri);
             } else {
                 cancelEvent();
             }
         });
     } else if (src == SRC_GALLERY) {
-
-        ImagePicker.launchImageLibrary({
+        launchImageLibrary({
             title: translate("MediaPickerTitle"),
             mediaType: 'photo',
             noData: true
         }, (response) => {
-            if (!response.didCancel) {
-                okEvent(response.uri);
+            if (!response.didCancel && response.assets.length > 0) {
+                okEvent(response.assets[0].uri);
             } else {
                 cancelEvent();
             }

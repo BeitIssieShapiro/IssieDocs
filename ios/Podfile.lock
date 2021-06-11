@@ -192,8 +192,8 @@ PODS:
   - react-native-image-editor (2.3.0):
     - React
     - React-RCTImage
-  - react-native-image-picker (2.3.1):
-    - React
+  - react-native-image-picker (4.0.3):
+    - React-Core
   - react-native-image-resizer (1.2.6):
     - React
   - react-native-pdf (6.1.2):
@@ -466,7 +466,7 @@ SPEC CHECKSUMS:
   React-jsinspector: b14e62ebe7a66e9231e9581279909f2fc3db6606
   react-native-document-picker: dd96ce05bf1453b110d7a3912097bf6d298d2cb6
   react-native-image-editor: 9361a215c3991cafbe5e7f28cbbad6e72c9c2705
-  react-native-image-picker: 6a850c41f57f0848d918c2a77aedd7aa272ffa30
+  react-native-image-picker: 474cf2c33c2b6671da53d293a16c97995f0aec15
   react-native-image-resizer: cbfc171bad1c33a5b146281873f9e88c54439d79
   react-native-pdf: 7d76a6619f76a6ebfb2f82a4f2feeb17826ba8b4
   react-native-progress-view: c9d957c208bb1f07385eb33d1b660ba259ab2520

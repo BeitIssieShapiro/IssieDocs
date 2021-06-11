@@ -219,24 +219,26 @@ export default class FolderGallery extends React.Component {
     }
 
     newFromMediaLib = (addToExistingPage) => {
-        this.setState({ isNewPageMode: false });
-        ImagePicker.launchImageLibrary({
-            title: translate("MediaPickerTitle"),
-            mediaType: 'photo',
-            noData: true
-        }, (response) => {
-            if (!response.didCancel) {
+        this.setState({ systemModal: true })
+        getNewPage(SRC_GALLERY,
+            (uri) => {
+                this.setState({ systemModal: false })
                 this.props.navigation.navigate('SavePhoto', {
-                    uri: response.uri,
-                    folder: this.state.currentFolder,
+                    uri: uri,
                     imageSource: SRC_GALLERY,
                     addToExistingPage,
+                    folder: this.state.currentFolder,
                     returnFolderCallback: (f) => this.setReturnFolder(f),
                     saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
 
-                });
+                })
+            },
+            //cancel
+            () => {
+                this.setState({ systemModal: false })
             }
-        });
+        );
+
     }
 
     newFromFileExplorer = () => {
