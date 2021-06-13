@@ -6,7 +6,9 @@ import mathPage from './math-page.jpg'
 import linesPage from './lines-page.jpg'
 import mockPage from './mock.jpg'
 
+
 export class FileSystem {
+    static SimulatorMockPage = mockPage;
     static main = new FileSystem();
     static StaticPages = {
         Blank: 1,

@@ -162,7 +162,7 @@ export default class IssieSavePhoto extends React.Component {
     let folders = await FileSystem.main.getFolders();
     folders = folders.filter(f=>f.name !== FileSystem.DEFAULT_FOLDER.name);
 
-    console.log(" folders count"+folders.length);
+    console.log("SavePhoto folders count: "+folders.length);
     this.setState({ uri, pdf, pdfPage: 1, folders, folder, pageName, addToExistingPage }, () => {
       if (!pdf) {
         this.updateImageDimension();
@@ -429,7 +429,8 @@ export default class IssieSavePhoto extends React.Component {
         this.setState({ uri: uri, state: OK_Cancel, multiPageState: multiPageState })
       },
       //cancel
-      () => { });
+      () => { }, 
+      this.props.navigation);
   }
 
   rotateLeft = () => this.rotate(-90);

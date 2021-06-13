@@ -34,7 +34,6 @@ import {
 
 
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
-import ImagePicker from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
 import { FlatList } from 'react-native-gesture-handler';
 import SplashScreen from 'react-native-splash-screen';
@@ -198,8 +197,9 @@ export default class FolderGallery extends React.Component {
         if (this.state.systemModal) return;
 
         this.setState({ systemModal: true })
-        getNewPage(SRC_CAMERA,
+        getNewPage(SRC_CAMERA, 
             (uri) => {
+                console.log("Camera returned: " + uri)
                 this.setState({ systemModal: false })
                 this.props.navigation.navigate('SavePhoto', {
                     uri: uri,
@@ -214,7 +214,8 @@ export default class FolderGallery extends React.Component {
             //cancel
             () => {
                 this.setState({ systemModal: false })
-            }
+            },
+            this.props.navigation
         );
     }
 
@@ -236,7 +237,8 @@ export default class FolderGallery extends React.Component {
             //cancel
             () => {
                 this.setState({ systemModal: false })
-            }
+            },
+            this.props.navigation
         );
 
     }

@@ -73,7 +73,7 @@ export function getSvgIcon(name, size, color, strokeWidth) {
             return (<Svg {...props} viewBox="-0.5 -0.5 40 58" >
                 <G stroke={color}>
                     <Path d="M 8 8 L 8 37.9" strokeWidth="3" />
-                    <Path d="M 8 44.65 L 3.5 35.65 L 8 37.9 L 12.5 35.65 Z" strokeWidth="3" fill={color}/>
+                    <Path d="M 8 44.65 L 3.5 35.65 L 8 37.9 L 12.5 35.65 Z" strokeWidth="3" fill={color} />
                     <Ellipse cx="28" cy="28" rx="10" ry="10" strokeWidth="3" />
                     <Path d="M 28 29 L 28 20" strokeWidth="2" />
                     <Path d="M 20 28 L 29 28" strokeWidth="2" />
@@ -83,10 +83,15 @@ export function getSvgIcon(name, size, color, strokeWidth) {
             return (<Svg {...props} viewBox="-0.5 -0.5 54 58" >
                 <G stroke={color}>
                     <Path d="M 8 8 L 8 37.9" strokeWidth="3" />
-                    <Path d="M 8 44.65 L 3.5 35.65 L 8 37.9 L 12.5 35.65 Z" fill={color}/>
+                    <Path d="M 8 44.65 L 3.5 35.65 L 8 37.9 L 12.5 35.65 Z" fill={color} />
                     <Text x="25" y="21" fontSize="20" fill={color}>{translate("SortA")}</Text>
                     <Text x="25" y="45" fontSize="20" fill={color}>{translate("SortZ")}</Text>
                 </G>
+            </Svg>);
+        case 'camera-take-photo':
+            return (<Svg {...props} viewBox="-0.5 -0.5 108 108" >
+                <Ellipse cx="53.5" cy="53.5" rx="53.5" ry="53.5" fill="#ffffff" stroke="#000000" />
+                <Ellipse cx="54" cy="54" rx="40" ry="40" fill="#ffffff" stroke="#000000" strokeWidth="4" />
             </Svg>);
         case 'lang-system':
             return <Svg viewBox="0 0 64 64" {...props}>

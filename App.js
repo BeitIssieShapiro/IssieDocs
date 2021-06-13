@@ -24,6 +24,7 @@ import { setIsSimulator } from './device';
 import { TextInput } from 'react-native-gesture-handler';
 import { MenuProvider } from 'react-native-popup-menu';
 import {getFileNameFromPath} from './utils'
+import CameraModal from './CameraOverlay';
 
 // const MainNavigator = createStackNavigator({
 //   Home: {screen: FolderGallery},
@@ -168,7 +169,7 @@ function App(props) {
               const page = props.route.params.page;
               //let pathParts = page.path.split('/');
               //let isPageOnHome = pathParts[pathParts.length - 2] == DEFAULT_FOLDER_NAME;
-              
+
               let fileName = getFileNameFromPath(page.path, true);
               
               let multiPageTitleAddition = props.route.params.pageTitleAddition || "";
@@ -220,6 +221,20 @@ function App(props) {
               }
             }
             } />
+            <Stack.Screen name="OpenCamera" component={CameraModal}
+            options={(props) => {
+              
+              return {
+                
+                title: "Camera",
+                headerStyle: globalStyles.headerStyle,
+                headerTintColor: 'white',
+                headerTitleStyle: globalStyles.headerTitleStyle,
+                headerLeft: null
+              }
+            }
+            } />
+            
         </Stack.Navigator>
       </NavigationContainer>
     </MenuProvider>
@@ -227,3 +242,4 @@ function App(props) {
 }
 
 export default App;
+
