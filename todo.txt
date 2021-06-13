@@ -1,6 +1,5 @@
 Bugs:
 High:
-- Rename folder leaves the old name as a folder
 - when renaming page from 'edit', and changing folder - cannot find page
 - Import pdf - the pages are not in order
 - In Multi page rename - error & warning
@@ -13,7 +12,6 @@ Medium:
 Low:
 - page menu in folder stays even after navigation and going home
 - After folder delete - remove edit mode
-- Camera language is not Hebrew
 
 
 Features:

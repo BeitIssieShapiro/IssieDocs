@@ -1,7 +1,4 @@
-import {
-    Alert
-} from 'react-native';
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import { launchImageLibrary} from 'react-native-image-picker';
 export const SRC_CAMERA = 'camera';
 export const SRC_GALLERY = 'gallery';
 export const SRC_FILE = 'file';
@@ -9,9 +6,6 @@ export const SRC_RENAME = 'rename'
 export const SRC_DUPLICATE = 'duplicate'
 
 import { translate } from './lang';
-import { isSimulator } from './device';
-import { FileSystem } from './filesystem';
-
 
 
 export async function getNewPage(src, okEvent, cancelEvent, navigation) {

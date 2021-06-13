@@ -439,9 +439,11 @@ export default class FolderGallery extends React.Component {
         setReturnFolder, originalFolderName) => {
 
         try {
-            if (newFolderName != originalFolderName) {
+            if (newFolderName == originalFolderName) {
+                console.log("add folder")
                 await FileSystem.main.addFolder(newFolderName, newFolderIcon, newFolderColor, true);
             } else {
+                console.log("rename folder")
                 await FileSystem.main.renameFolder(originalFolderName, newFolderName, newFolderIcon, newFolderColor);
 
             }

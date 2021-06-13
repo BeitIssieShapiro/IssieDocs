@@ -23,6 +23,7 @@ export class FileSystem {
     _listeners = [];
     constructor() {
         this._basePath = RNFS.DocumentDirectoryPath + '/folders/';
+        console.log("base path: "+ this._basePath);
         this._loaded = false;
         RNFS.mkdir(this._basePath).catch((e) => {
             console.log("FATAL: cannot find filesystem root " + e);
@@ -49,13 +50,13 @@ export class FileSystem {
             for (let folder of folders) {
                 if (folder.isDirectory()) {
                     metadata = await this._readFolderMetaData(folder.name)
-                    console.log("folder color :"+metadata.color)
+                    console.log("folder color :" + metadata.color)
                     let fsf = new FileSystemFolder(folder.name, this, metadata);
                     this._folders.push(fsf);
                 }
             }
 
-            sortFolders(this._folders);
+            _sortFolders(this._folders);
         });
         this._notify();
     }
@@ -85,8 +86,8 @@ export class FileSystem {
         this._notify();
     }
 
-    async addFolder(name, icon, color, strictChecks) {
-        console.log("add folder: "+name+", color:"+color+", icon="+icon)
+    async addFolder(name, icon, color, strictChecks, skipCreateMetadata) {
+        console.log("add folder: " + name + ", color:" + color + ", icon=" + icon)
         if (!name || name.length == 0) {
             throw translate("MissingFolderName");
         }
@@ -109,10 +110,13 @@ export class FileSystem {
             let fsf = new FileSystemFolder(name, this, { color, icon });
             this._folders.push(fsf);
 
-            await this._writeFolderMetaData(name, color, icon);
-            if (name !== FileSystem.DEFAULT_FOLDER.name) {
-                await pushFolderOrder(name)
-                await sortFolders(this._folders)
+            if (!skipCreateMetadata) {
+                await this._writeFolderMetaData(name, color, icon);
+
+                if (name !== FileSystem.DEFAULT_FOLDER.name) {
+                    await pushFolderOrder(name)
+                    await _sortFolders(this._folders)
+                }
             }
             this._notify(name);
         }
@@ -120,7 +124,7 @@ export class FileSystem {
     }
 
     async renameFolder(name, newName, icon, color) {
-        await this.addFolder(name, icon, color, true);
+        await this.addFolder(newName, icon, color, true, true);
 
         //move all files and delete old folder
         await RNFS.readDir(this._basePath + name).then(async (files) => {
@@ -129,8 +133,9 @@ export class FileSystem {
             }
         });
         await this.deleteFolder(name);
-        await addFolder(originalFolderName, newFolderName);
-        await this._reloadFolder(newFolderName);
+        await _renameFolderOrders(name, newName);
+        await _sortFolders(this._folders);
+        await this._reloadFolder(newName);
         this._notify();
     }
 
@@ -201,7 +206,7 @@ export class FileSystem {
                         if (!isCopy && uri.startsWith(this._basePath)) {
                             parseObjFrom = this._parsePath(uri);
                             parseObjTo = this._parsePath(filePath);
-                            if (parseObjFrom.folders[0] != parseObjTo.folders[0] ) {
+                            if (parseObjFrom.folders[0] != parseObjTo.folders[0]) {
                                 let srcFolder = this._getFolder(parseObjFrom.folders[0]);
                                 await srcFolder.reload();
                             }
@@ -245,7 +250,7 @@ export class FileSystem {
 
     async _readFolderMetaData(folderName) {
         try {
-            let metaDataFilePath = this._basePath + folderName+ "/.metadata";
+            let metaDataFilePath = this._basePath + folderName + "/.metadata";
             let metadataString = await RNFS.readFile(metaDataFilePath, 'utf8');
 
             let metadata = JSON.parse(metadataString.toString('utf8'));
@@ -257,7 +262,7 @@ export class FileSystem {
     }
 
     async _writeFolderMetaData(folderName, color, icon) {
-        let metaDataFilePath = this._basePath + folderName+ "/.metadata";
+        let metaDataFilePath = this._basePath + folderName + "/.metadata";
 
         let metadata = { color: color ? color : FileSystem.DEFAULT_FOLDER_METADATA.color, icon };
         RNFS.writeFile(metaDataFilePath, JSON.stringify(metadata), 'utf8').then(
@@ -279,7 +284,7 @@ export class FileSystem {
                 await RNFS.stat(currPath);
             } catch (e) {
                 if (i == 0) { //root level folder
-                    this.addFolder(pathObj.folders[i], FileSystem.DEFAULT_FOLDER_METADATA.icon,FileSystem.DEFAULT_FOLDER_METADATA.color)
+                    this.addFolder(pathObj.folders[i], FileSystem.DEFAULT_FOLDER_METADATA.icon, FileSystem.DEFAULT_FOLDER_METADATA.color)
                 } else {
                     await RNFS.mkdir(currPath);
                 }
@@ -453,7 +458,7 @@ export class FileSystemFolder {
     }
 
     async reload() {
-        console.log("read files of folder: " + this._name);
+        console.log("reload folder: " + this._name);
         const items = await RNFS.readDir(this._fs.basePath + this._name);
         const filesItems = items.filter(f => !f.name.endsWith(".json") && f.name !== ORDER_FILE_NAME && f.name !== ".metadata");
         this._loading = true;
@@ -510,7 +515,7 @@ export async function saveFolderOrder(folders) {
  * @param {*} folders 
  * @return array of folders in the correct order
  */
-export async function sortFolders(folders) {
+async function _sortFolders(folders) {
     if (!folders) {
         return folders;
     }
@@ -584,7 +589,7 @@ async function pushFolderOrder(folderName) {
 
 }
 
-export async function renameFolder(fromFolder, toFolder) {
+async function _renameFolderOrders(fromFolder, toFolder) {
     let orderStr = '[]';
     try {
         orderStr = await RNFS.readFile(FileSystem.main.basePath + ORDER_FILE_NAME, 'utf8');
