@@ -5,7 +5,6 @@ import {
   Alert, Dimensions, PanResponder
 } from 'react-native';
 import ImageEditor from "@react-native-community/image-editor";
-import * as RNFS from 'react-native-fs';
 import Pdf from 'react-native-pdf';
 import ViewShot from "react-native-view-shot";
 import { StackActions } from '@react-navigation/native';
@@ -252,30 +251,8 @@ export default class IssieSavePhoto extends React.Component {
         //In a mode of adding another page to existing set-of-pages
         //Current assumptions: only one page added (no pdf, no add page)
         let page = this.state.addToExistingPage;
-
-        if (page.pages.length > 0) {
-          //need to find the next file name available
-          let lastPagePath = page.pages[page.pages.length - 1];
-          let basePathEnd = lastPagePath.lastIndexOf('/');
-          let fileNameEnd = lastPagePath.lastIndexOf('.');
-          let basePath = lastPagePath.substring(0, basePathEnd + 1);
-          let lastFileName = lastPagePath.substring(basePathEnd + 1, fileNameEnd);
-          let newFileName = basePath + (parseInt(lastFileName) + 1) + '.jpg'
-          console.log("add page: " + newFileName)
-          await FileSystem.main.saveFile(this.state.uri, newFileName, false);
-        } else {
-          let basePath = page.path.substring(0, page.path.length - 4); //remove .jpg 
-
-          await RNFS.mkdir(basePath);
-          await RNFS.moveFile(page.path, basePath + '/0.jpg');
-          try {
-            await RNFS.moveFile(page.path + ".json", basePath + '/0.jpg.json');
-          } catch {
-            //ignore
-          }
-
-          FileSystem.main.saveFile(this.state.uri, basePath + '/1.jpg', false);
-        }
+        console.log("addPageToSheet: "+this.state.uri)
+        await FileSystem.main.addPageToSheet(page, this.state.uri);
 
         this.props.route.params.returnFolderCallback(this.state.folder.name);
         this.props.navigation.dispatch(StackActions.popToTop());

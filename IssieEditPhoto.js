@@ -7,7 +7,6 @@ import {
 import { Icon } from 'react-native-elements'
 import RNSketchCanvas from './modified_canvas/index';
 import LinearGradient from 'react-native-linear-gradient';
-import * as RNFS from 'react-native-fs';
 import Share from 'react-native-share';
 import DoQueue from './do-queue';
 import FadeInView from './FadeInView'
@@ -35,7 +34,8 @@ import {
 } from './elements'
 import { translate } from './lang';
 import { getSvgIcon } from './svg-icons';
-import { setNavParam , getFileNameFromPath} from './utils';
+import { setNavParam } from './utils';
+import { FileSystem } from './filesystem';
 
 //const this.topLayer() = dimensions.toolbarHeight + dimensions.toolbarMargin; //51 + 8 + 8 + 35;
 const shareTimeMs = 2000;
@@ -191,10 +191,10 @@ export default class IssieEditPhoto extends React.Component {
   componentDidMount = async () => {
     this._mounted = true;
     const page = this.props.route.params.page;
-    const currentFile = page.pages.length == 0 ? page.path : page.pages[0];
-
-    if (page.pages.length > 0) {
-      setNavParam(this.props.navigation, 'pageTitleAddition', this.pageTitleAddition(page.pages, 0));
+    const currentFile = page.defaultSrc;
+    console.log("EditPhoto CurrentFile: "+currentFile);
+    if (page.count > 0) {
+      setNavParam(this.props.navigation, 'pageTitleAddition', this.pageTitleAddition(page.count, 0));
     }
 
     const metaDataUri = currentFile + ".json";
@@ -209,7 +209,7 @@ export default class IssieEditPhoto extends React.Component {
     }
   }
 
-  pageTitleAddition = (pages, index) => pages.length > 1 ? " - " + (index + 1) + "/" + pages.length : ""
+  pageTitleAddition = (count, index) => count > 1 ? " - " + (index + 1) + "/" + count : ""
 
 
   Load = async () => {
@@ -221,16 +221,16 @@ export default class IssieEditPhoto extends React.Component {
       this.setState({ sharing: true, shareProgress: 0, shareProgressPage: 1 });
       let dataUrls = [];
 
-      let interval = this.state.page.pages.length * shareTimeMs / 11;
+      let interval = this.state.page.count * shareTimeMs / 11;
 
       let intervalObj = setInterval(() => this.setState({ shareProgress: this.state.shareProgress + 10 }), interval);
 
       let data = await this.exportToBase64();
       dataUrls.push(data);
-      for (let i = 1; i < this.state.page.pages.length; i++) {
+      for (let i = 1; i < this.state.page.count; i++) {
         this.setState({ shareProgressPage: i + 1 });
 
-        const currentFile = this.state.page.pages[i];
+        const currentFile = this.state.page.getPage(i);
         const currentIndex = i;
         const metaDataUri = currentFile + ".json";
         this.setState({ currentFile, currentIndex, metaDataUri })
@@ -285,7 +285,7 @@ export default class IssieEditPhoto extends React.Component {
 
   loadFile = (metaDataUri) => {
     this.state.queue.clear();
-    RNFS.readFile(metaDataUri).then((value) => {
+    FileSystem.main.loadFile(metaDataUri).then((value) => {
       let sketchState = JSON.parse(value);
       //Alert.alert("Load: "+sketchState.length)
       for (let i = 0; i < sketchState.length; i++) {
@@ -304,7 +304,7 @@ export default class IssieEditPhoto extends React.Component {
   Save = () => {
     let sketchState = this.state.queue.getAll();
     const content = JSON.stringify(sketchState);
-    RNFS.writeFile(
+    FileSystem.main.writeFile(
       this.state.metaDataUri,
       content).then(
         //success
@@ -623,13 +623,14 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   rename = async (isRename) => {
-    const page = this.props.route.params.page;
+    const page = this.state.page;
+    console.log("rename: "+page.path);
     this.props.navigation.navigate('SavePhoto', {
       uri: page.path,
       imageSource: SRC_RENAME,
       folder: this.state.currentFolder,
 
-      name: getFileNameFromPath(page.path, true),
+      name: page.name,
       returnFolderCallback: this.props.route.params.returnFolderCallback,
       saveNewFolder: this.props.route.params.saveNewFolder,
       title: isRename ? translate("RenameFormTitle") : translate("MovePageFormTitle"),
@@ -639,33 +640,13 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   deletePage = async () => {
-    //delete file
-    await RNFS.unlink(this.state.currentFile)
-    try {
-      await RNFS.unlink(this.state.currentFile + ".json");
-    } catch {
-      //ignore as maybe no json file
+    let updatedPage = await FileSystem.main.deletePageInSheet(this.state.page, this.state.currentIndex);
+    let index = this.state.currentIndex;
+    if (index > 0) {
+      index --;
     }
-    // //fix file names
-    // let basePathEnd = this.state.currentFile.lastIndexOf('/');
-    // let basePath = this.state.currentFile.substring(0, basePathEnd+1);
-    // for (let i = this.state.currentIndex + 1; i < this.state.page.pages.length;i++) {
-    //   await RNFS.moveFile(basePath + i + ".jpg", basePath + (i-1) + ".jpg")
-    //   try {
-    //     await RNFS.moveFile(basePath + i + ".jpg.json", basePath + (i-1) + ".jpg.json")
-    //   } catch {
-    //     //ignore as json may be missing
-    //   }
-    // }
-
-    for (let i = this.state.currentIndex; i < this.state.page.pages.length - 1; i++) {
-      this.state.page.pages[i] = this.state.page.pages[i + 1];
-    }
-    this.state.page.pages.length--;
-
-    //move current file to previous or 0
+    this.setState({page:updatedPage});
     this.movePage(-1);
-
   }
 
   movePage = (inc) => {
@@ -675,8 +656,8 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     let currentIndex = -1;
-    for (let i = 0; i < this.state.page.pages.length; i++) {
-      if (this.state.page.pages[i] == this.state.currentFile) {
+    for (let i = 0; i < this.state.page.count; i++) {
+      if (this.state.page.getPage(i) == this.state.currentFile) {
         currentIndex = i;
         break;
       }
@@ -685,12 +666,12 @@ export default class IssieEditPhoto extends React.Component {
     if (currentIndex < 0)
       currentIndex = 0;
 
-    if (currentIndex >= this.state.page.pages.length) return;
+    if (currentIndex >= this.state.page.count) return;
 
 
-    setNavParam(this.props.navigation, 'pageTitleAddition', this.pageTitleAddition(this.state.page.pages, currentIndex));
+    setNavParam(this.props.navigation, 'pageTitleAddition', this.pageTitleAddition(this.state.page.count, currentIndex));
 
-    const currentFile = this.state.page.pages[currentIndex];
+    const currentFile = this.state.page.getPage(currentIndex);
     const metaDataUri = currentFile + ".json";
     this.setState({
       currentFile, currentIndex, metaDataUri: metaDataUri,
@@ -819,7 +800,7 @@ export default class IssieEditPhoto extends React.Component {
                     bgColor="white"
                     percent={this.state.shareProgress}
                     borderWidth={5} >
-                    <Text style={{ zIndex: 100, fontSize: 25 }}>{fTranslate("ExportProgress", this.state.shareProgressPage, (this.state.page.pages.length > 0 ? this.state.page.pages.length : 1))}</Text>
+                    <Text style={{ zIndex: 100, fontSize: 25 }}>{fTranslate("ExportProgress", this.state.shareProgressPage, (this.state.page.count > 0 ? this.state.page.count : 1))}</Text>
                   </ProgressCircle>
                 </View> : null}
               {this.getCanvas()}
@@ -877,7 +858,7 @@ export default class IssieEditPhoto extends React.Component {
             {/* {spaceBetweenButtons}
             {/* delete page button */}
             {/*
-              this.state.page && this.state.page.pages.length > 1 ?
+              this.state.page && this.state.page.count > 1 ?
                 getIconButton(() => this.deletePage(), semanticColors.editPhotoButton, 'delete-forever', 55)
                 :
                 null
@@ -989,7 +970,7 @@ export default class IssieEditPhoto extends React.Component {
 
         {/** previous page button */}
         {
-          this.state.page && this.state.page.pages.length > 0 && this.state.currentFile !== this.state.page.pages[0] ?
+          this.state.page && this.state.page.count > 0 && this.state.currentFile !== this.state.page.getPage(0) ?
             <View style={{ position: 'absolute', bottom: 50, left: 10, width: 155, height: 40, zIndex: 100 }}>
               {getRoundedButton(() => this.movePage(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 125, height: 40 }, 'row-reverse', true)}
             </View> :
@@ -997,8 +978,8 @@ export default class IssieEditPhoto extends React.Component {
         }
         {/** next page button */}
         {
-          this.state.page && this.state.page.pages.length > 0 &&
-            this.state.currentFile !== this.state.page.pages[this.state.page.pages.length - 1] ?
+          this.state.page && this.state.page.count > 1 &&
+            this.state.currentFile !== this.state.page.getPage[this.state.page.count - 1] ?
             <View style={{ position: 'absolute', bottom: 50, right: 10, height: 40, zIndex: 100 }}>
               {getRoundedButton(() => this.movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 125, height: 40 }, 'row', true)}
             </View> :
@@ -1028,13 +1009,13 @@ export default class IssieEditPhoto extends React.Component {
             "edit")}
         </MenuOption>
         <Spacer width={5} />
-        {this.state.page && this.state.page.pages.length > 1 ?
+        {this.state.page && this.state.page.count > 1 ?
           <MenuOption onSelect={() => this.deletePage()} >
-            {renderMenuOption(fTranslate("BeforeDeleteSubPageQuestion", this.state.currentIndex + 1, this.state.page.pages.length),
+            {renderMenuOption(fTranslate("BeforeDeleteSubPageQuestion", this.state.currentIndex + 1, this.state.page.count),
               "delete-forever")}
           </MenuOption>
           : null}
-        {this.state.page && this.state.page.pages.length > 1 ? <Spacer /> : null}
+        {this.state.page && this.state.page.count > 1 ? <Spacer /> : null}
         {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
         <Spacer width={5} />
       </MenuOptions>
@@ -1074,6 +1055,7 @@ export default class IssieEditPhoto extends React.Component {
 
 
   getCanvas = () => {
+    console.log("get canvas. backgroud: "+this.state.currentFile)
     return <RNSketchCanvas
       ref={component => {
         this.canvas = component;

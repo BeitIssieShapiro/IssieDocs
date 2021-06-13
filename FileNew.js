@@ -37,7 +37,7 @@ function getStarred(props) {
 }  
 
 export default function FileNew(props) {
-    let imageSrc = props.page.pages.length == 0 ? props.page.path : props.page.pages[0];
+    let imageSrc = props.page.defaultSrc;
 
     return (
         <TouchableOpacity
@@ -109,26 +109,7 @@ export default function FileNew(props) {
         </TouchableOpacity>
     );
 }
-/*
-function getActionButtons(props) {
-    return <View style={{
-        flexDirection: 'row',
-        backgroundColor: semanticColors.mainAreaBG,
-        alignItems: 'center'
-    }}>
-        {getEmbeddedButton(props.onRename, 'edit', 40, 3)}
-        <Spacer width={7} key={4} />
-        {getEmbeddedButton(props.onDelete, 'delete-forever', 40, 1)}
-        <Spacer width={7} key={2} />
-        {getEmbeddedButton(props.onMove, 'folder-move', 40, 5, 'material-community')}
-        <Spacer width={7} key={6} />
-        {getEmbeddedButton(props.onDuplicate, 'file-multiple', 40, 7, 'material-community')}
-        <Spacer width={7} key={8} />
-        {getEmbeddedButton(props.onShare, 'share', 40, 9)}
-        <Spacer width={7} key={10} />
-    </View>
-}
-*/
+
 
 function getButton(index, props) {
     switch (index) {

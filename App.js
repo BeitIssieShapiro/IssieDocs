@@ -23,7 +23,6 @@ import { Icon } from 'react-native-elements'
 import { setIsSimulator } from './device';
 import { TextInput } from 'react-native-gesture-handler';
 import { MenuProvider } from 'react-native-popup-menu';
-import {getFileNameFromPath} from './utils'
 import CameraModal from './CameraOverlay';
 
 // const MainNavigator = createStackNavigator({
@@ -170,7 +169,7 @@ function App(props) {
               //let pathParts = page.path.split('/');
               //let isPageOnHome = pathParts[pathParts.length - 2] == DEFAULT_FOLDER_NAME;
 
-              let fileName = getFileNameFromPath(page.path, true);
+              let fileName = page.name;
               
               let multiPageTitleAddition = props.route.params.pageTitleAddition || "";
 

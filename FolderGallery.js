@@ -38,7 +38,6 @@ import DocumentPicker from 'react-native-document-picker';
 import { FlatList } from 'react-native-gesture-handler';
 import SplashScreen from 'react-native-splash-screen';
 import { getSvgIcon } from './svg-icons';
-import { getFileNameFromPath } from './utils'
 import { StackActions } from '@react-navigation/native';
 import { FileSystem, swapFolders, saveFolderOrder } from './filesystem.js';
 const SORT_BY_NAME = 0;
@@ -289,7 +288,7 @@ export default class FolderGallery extends React.Component {
             //alert(JSON.stringify(this.state.selected))
             //alert(JSON.stringify(page))
             //return (this.state.selected.find(sel => sel.item.path == page.path) != undefined)
-            return (this.state.selected.path === page.path)
+            return (this.state.selected.name === page.name)
         }
         return false
     }
@@ -489,7 +488,7 @@ export default class FolderGallery extends React.Component {
 
     }
     goEdit = (page, folder, share) => {
-
+        console.log(JSON.stringify(page))
         this.props.navigation.navigate('EditPhoto', {
             page,
             folder,
@@ -504,7 +503,8 @@ export default class FolderGallery extends React.Component {
                 setTimeout(async () => {
                     this.props.navigation.dispatch(StackActions.popToTop());
                     //find the page for the path
-                    let fileName = getFileNameFromPath(path, false);
+                    //todo
+                    let fileName = FileSystem.getFileNameFromPath(path, false);
                     let item = await folder.getItem(fileName);
                     if (item) {
                         this.goEdit(item, this.state.currentFolder, false);
@@ -828,7 +828,7 @@ export default class FolderGallery extends React.Component {
                                             onLinesPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Lines),
                                             onMathPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Math),
                                             onDuplicate: () => this.DuplicatePage(),
-                                            count: item.pages.length
+                                            count: item.count
                                         })}
                                         numColumns={asTiles ? numColumnsForTiles : 1}
                                         keyExtractor={(item, index) => index.toString()}

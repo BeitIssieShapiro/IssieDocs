@@ -5,6 +5,7 @@ import blankPage from './blank-page.jpg'
 import mathPage from './math-page.jpg'
 import linesPage from './lines-page.jpg'
 import mockPage from './mock.jpg'
+import { WorkSheet } from './work-sheet';
 
 
 export class FileSystem {
@@ -23,7 +24,7 @@ export class FileSystem {
     _listeners = [];
     constructor() {
         this._basePath = RNFS.DocumentDirectoryPath + '/folders/';
-        console.log("base path: "+ this._basePath);
+        console.log("base path: " + this._basePath);
         this._loaded = false;
         RNFS.mkdir(this._basePath).catch((e) => {
             console.log("FATAL: cannot find filesystem root " + e);
@@ -143,6 +144,13 @@ export class FileSystem {
         return this._folders.find(f => f.name == name);
     }
 
+    loadFile(path) {
+        return RNFS.readFile(path, 'utf8');
+    }
+
+    writeFile(path, content) {
+        return RNFS.writeFile(path, content);
+    }
     async saveFile(uri, filePath, isCopy) {
         //asserts that the filePath is in this filesystem:
         if (filePath.indexOf(this._basePath) != 0) {
@@ -222,8 +230,85 @@ export class FileSystem {
 
             }
         });
+    }
 
+    async addPageToSheet(sheet, newPath) {
+        //check if the path is already a folder:
+        try {
+            let pathInfo = RNFS.stat(sheet.path);
+            if (pathInfo.isDirectory) {
+                //add file by page's Index
+                let lastPagePath = sheet.getPage(sheet.count - 1)
+                let basePathEnd = lastPagePath.lastIndexOf('/');
+                let fileNameEnd = lastPagePath.lastIndexOf('.');
+                let basePath = lastPagePath.substring(0, basePathEnd + 1);
+                let lastFileName = lastPagePath.substring(basePathEnd + 1, fileNameEnd);
+                let newFileName = basePath + (parseInt(lastFileName) + 1) + '.jpg'
+                console.log("add page: " + newFileName)
+                await FileSystem.main.saveFile(newPath, newFileName, false);
 
+            } else {
+                //change to folder
+                let basePath = sheet.path.substring(0, sheet.path.length - 4); //remove .jpg 
+
+                await RNFS.mkdir(basePath);
+                await RNFS.moveFile(sheet.path, basePath + '/0.jpg');
+                try {
+                    await RNFS.moveFile(sheet.path + ".json", basePath + '/0.jpg.json');
+                } catch {
+                    //ignore missing json
+                }
+                FileSystem.main.saveFile(newPath, basePath + '/1.jpg', false);
+
+            }
+
+            return await this._reloadBySheet(sheet);
+
+        } catch (e) {
+            console.log("error adding page to sheet: " + e);
+        }
+    }
+
+    //reload the folder of the sheet and notify and return new updated sheet
+    async _reloadBySheet(sheet) {
+        let pathObj = this._parsePath(sheet.path);
+        let folder = this._getFolder(pathObj[0]);
+        await folder.reload();
+        this._notify(pathObj[0]);
+        return await folder.getItem(sheet.name);
+    }
+
+    //return an updated sheet
+    async deletePageInSheet(sheet, deleteIndex) {
+        if (sheet.count < 2) {
+            console.warn("cannot delete last page of sheet");
+            return;
+        }
+
+        let pagePath = sheet.getPage(deleteIndex);
+        //delete file
+        await RNFS.unlink(pagePath)
+        try {
+            await RNFS.unlink(pagePath + ".json");
+        } catch {
+            //ignore as maybe no json file
+        }
+
+        //fix file names
+        // let basePathEnd = pagePath.lastIndexOf('/');
+        // let basePath = pagePath.substring(0, basePathEnd+1);
+        let basePath = sheet.path;
+        for (let i = deleteIndex + 1; i < sheet.count; i++) {
+
+            await RNFS.moveFile(basePath + i + ".jpg", basePath + (i - 1) + ".jpg")
+            try {
+                await RNFS.moveFile(basePath + i + ".jpg.json", basePath + (i - 1) + ".jpg.json")
+            } catch {
+                //ignore as json may be missing
+            }
+        }
+
+        return await this._reloadBySheet(sheet);
     }
 
     _parsePath(filePath) {
@@ -357,6 +442,14 @@ export class FileSystem {
         return RNFS.TemporaryDirectoryPath + fn + "." + ext
     }
 
+    static getFileNameFromPath(path, withoutExt) {
+        let fileName = path.replace(/^.*[\\\/]/, '');
+        if (withoutExt && fileName.endsWith('.jpg')) {
+            fileName = fileName.substr(0, fileName.length - 4);
+        }
+        return fileName;
+    }
+
     async getStaticPage(intoFolderName, pageType) {
         let newFileName = await this._getEmptyFileName(intoFolderName);
         await this._getStaticPage(this._basePath + intoFolderName + '/' + newFileName, pageType);
@@ -449,6 +542,7 @@ export class FileSystemFolder {
     }
 
     async getItem(name) {
+        name = FileSystem.getFileNameFromPath(name, true);
         if (!this._files) {
             console.log("get.item: reloading...");
             await this.reload();
@@ -464,23 +558,37 @@ export class FileSystemFolder {
         this._loading = true;
         this._files = [];
         for (let fi of filesItems) {
-
+            let sheet = new WorkSheet(fi.path, FileSystem.getFileNameFromPath(fi.name, true));
             let lastUpdate = Math.max(fi.mtime.valueOf(), fi.ctime.valueOf());
-            //finds the .json file if exists
-            let dotJsonFile = items.find(f => f.name === fi.name + ".json");
-            if (dotJsonFile) {
-                lastUpdate = Math.max(dotJsonFile.mtime.valueOf(), dotJsonFile.ctime.valueOf(), lastUpdate);
-            }
 
-            let pages = []
             if (fi.isDirectory()) {
                 //read all pages
-                const innerPages = await RNFS.readDir(fi.path);
+                const pages = await RNFS.readDir(fi.path);
 
-                pages = innerPages.filter(f => !f.name.endsWith(".json")).map(p => p.path);
+                for (let i = 0; i < pages.length; i++) {
+                    lastUpdate = Math.max(lastUpdate, pages[i].mtime.valueOf(), pages[i].ctime.valueOf());
+
+                    if (!pages[i].name.endsWith(".json")) {
+
+                        sheet.addPage(pages[i].path);
+                    }
+
+
+                }
+                
+            } else if (!fi.name.endsWith(".json")) {
+                lastUpdate = Math.max(lastUpdate, fi.mtime.valueOf(), fi.ctime.valueOf());
+                sheet.addPage(fi.path);
+                //finds the .json file if exists
+                let dotJsonFile = items.find(f => f.name === fi.name + ".json");
+                if (dotJsonFile) {
+                    lastUpdate = Math.max(lastUpdate, dotJsonFile.mtime.valueOf(), dotJsonFile.ctime.valueOf());
+                }
             }
-            this._files.push({ name: fi.name, lastUpdate, path: fi.path, isFolder: fi.isDirectory(), pages: pages });
 
+            sheet.lastUpdate = lastUpdate;
+
+            this._files.push(sheet);
         }
         this._loading = false;
         this._fs._notify();
@@ -551,8 +659,6 @@ async function _sortFolders(folders) {
         //left blank intentionally
     }
 
-    //todo sort the rest by modified time
-    // alert.alert(JSON.stringify(folders))
     return folders;
 }
 
