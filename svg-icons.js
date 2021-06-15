@@ -80,12 +80,12 @@ export function getSvgIcon(name, size, color, strokeWidth) {
                 </G>
             </Svg>);
         case 'sort-by-name':
-            return (<Svg {...props} viewBox="-0.5 -0.5 54 58" >
+            return (<Svg {...props} viewBox="-0.5 -0.5 50 58" >
                 <G stroke={color}>
                     <Path d="M 8 8 L 8 37.9" strokeWidth="3" />
-                    <Path d="M 8 44.65 L 3.5 35.65 L 8 37.9 L 12.5 35.65 Z" fill={color} />
-                    <Text x="25" y="21" fontSize="20" fill={color}>{translate("SortA")}</Text>
-                    <Text x="25" y="45" fontSize="20" fill={color}>{translate("SortZ")}</Text>
+                    <Path d="M 8 44.65 L 3.5 35.65 L 8 37.9 L 12.5 35.65 Z" strokeWidth="3" fill={color} />
+                    <Text x="28" y="21" fontSize="20" fill={color}>{translate("SortA")}</Text>
+                    <Text x="28" y="45" fontSize="20" fill={color}>{translate("SortZ")}</Text>
                 </G>
             </Svg>);
         case 'camera-take-photo':

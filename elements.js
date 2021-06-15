@@ -494,9 +494,7 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
 
     </View>
 }
-export function removeFileExt(filePath) {
-    return (filePath.split('\\').pop().split('/').pop().split('.'))[0];
-}
+
 
 export const globalStyles = StyleSheet.create({
     headerStyle: {

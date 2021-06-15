@@ -12,6 +12,7 @@ import { isSimulator } from './device';
 import { CameraType, Camera } from 'react-native-camera-kit';
 import { ImageBackground } from 'react-native';
 import { FileSystem } from './filesystem';
+import { trace } from './log';
 
 
 export default function CameraOverlay(props) {
@@ -19,11 +20,12 @@ export default function CameraOverlay(props) {
     const takePicture = async () => {
         let image;
         if (isSimulator()) {
-            image = await FileSystem.main.getStaticPageTempFile(FileSystem.StaticPages.SimulatorMock);
+            let tempFile = await FileSystem.main.getStaticPageTempFile(FileSystem.StaticPages.SimulatorMock);
+            image = {uri:tempFile}
         } else {
             image = await camera.current.capture();
-            console.log(JSON.stringify(image.uri))
         }
+        trace("Picture taken: ", JSON.stringify(image.uri));
         let okEvent = props.route.params.okEvent;
 
         props.navigation.goBack();

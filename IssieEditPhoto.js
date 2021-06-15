@@ -626,7 +626,7 @@ export default class IssieEditPhoto extends React.Component {
     const page = this.state.page;
     console.log("rename: "+page.path);
     this.props.navigation.navigate('SavePhoto', {
-      uri: page.path,
+      sheet: page.path,
       imageSource: SRC_RENAME,
       folder: this.state.currentFolder,
 
@@ -646,6 +646,7 @@ export default class IssieEditPhoto extends React.Component {
       index --;
     }
     this.setState({page:updatedPage});
+    this.forceUpdate();
     this.movePage(-1);
   }
 
@@ -1055,7 +1056,6 @@ export default class IssieEditPhoto extends React.Component {
 
 
   getCanvas = () => {
-    console.log("get canvas. backgroud: "+this.state.currentFile)
     return <RNSketchCanvas
       ref={component => {
         this.canvas = component;

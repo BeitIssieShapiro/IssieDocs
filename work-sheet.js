@@ -21,10 +21,6 @@ export class WorkSheet {
     }
 
     get path() {
-        if (this._pages.length > 1) {
-            return this._pages[0];
-        } 
-        
         return this._path;
     }
 
@@ -46,6 +42,14 @@ export class WorkSheet {
         this._pages.push(path);
 
         //sort
-        this._pages.sort((p1,p2)=>p1>p2);
+        this._pages.sort((a,b)=> {
+            getNumber = (elem)=>{
+                let ls = elem.lastIndexOf('/');
+                ls = elem.substring(ls+1, elem.length - 4)
+                console.log(ls)
+                return parseInt(ls);
+            }
+            return getNumber(a) - getNumber(b);
+        });
     }
 }

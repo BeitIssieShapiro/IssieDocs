@@ -1,13 +1,8 @@
 Bugs:
 High:
-- when renaming page from 'edit', and changing folder - cannot find page
-- Import pdf - the pages are not in order
-- In Multi page rename - error & warning
-- Add new page to multi page - not inserted at end 
 
 Medium:
-- When delete 1 page out of few, and return to folder, the count is still the old - need reload
-- SVG icon for sort-by-name should move 2-3 pixels to the right
+- Move file to folder default, not return to default
 
 Low:
 - page menu in folder stays even after navigation and going home

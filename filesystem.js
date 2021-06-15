@@ -6,7 +6,7 @@ import mathPage from './math-page.jpg'
 import linesPage from './lines-page.jpg'
 import mockPage from './mock.jpg'
 import { WorkSheet } from './work-sheet';
-
+import { trace, assert } from './log'
 
 export class FileSystem {
     static SimulatorMockPage = mockPage;
@@ -201,8 +201,10 @@ export class FileSystem {
 
                 let ret
                 if (isCopy) {
+                    trace("copy: ", uri, " to: ", filePath);
                     ret = this._copyDeep(uri, filePath);
                 } else {
+                    trace("rename: ", uri, " to: ", filePath);
                     //touch is used to update the modified date
                     ret = RNFS.moveFile(uri, filePath).then(() => RNFS.touch(filePath, new Date));
                 }
@@ -232,11 +234,13 @@ export class FileSystem {
         });
     }
 
-    async addPageToSheet(sheet, newPath) {
+    async addPageToSheet(sheet, newPagePath) {
+        trace("add page to sheet: ", sheet.path, " - ", newPagePath);
         //check if the path is already a folder:
+
         try {
-            let pathInfo = RNFS.stat(sheet.path);
-            if (pathInfo.isDirectory) {
+            let pathInfo = await RNFS.stat(sheet.path);
+            if (pathInfo.isDirectory()) {
                 //add file by page's Index
                 let lastPagePath = sheet.getPage(sheet.count - 1)
                 let basePathEnd = lastPagePath.lastIndexOf('/');
@@ -245,10 +249,11 @@ export class FileSystem {
                 let lastFileName = lastPagePath.substring(basePathEnd + 1, fileNameEnd);
                 let newFileName = basePath + (parseInt(lastFileName) + 1) + '.jpg'
                 console.log("add page: " + newFileName)
-                await FileSystem.main.saveFile(newPath, newFileName, false);
+                await FileSystem.main.saveFile(newPagePath, newFileName, false);
 
             } else {
                 //change to folder
+                assert(sheet.path.endsWith(".jpg"), "change to folder");
                 let basePath = sheet.path.substring(0, sheet.path.length - 4); //remove .jpg 
 
                 await RNFS.mkdir(basePath);
@@ -258,7 +263,7 @@ export class FileSystem {
                 } catch {
                     //ignore missing json
                 }
-                FileSystem.main.saveFile(newPath, basePath + '/1.jpg', false);
+                FileSystem.main.saveFile(newPagePath, basePath + '/1.jpg', false);
 
             }
 
@@ -272,9 +277,10 @@ export class FileSystem {
     //reload the folder of the sheet and notify and return new updated sheet
     async _reloadBySheet(sheet) {
         let pathObj = this._parsePath(sheet.path);
-        let folder = this._getFolder(pathObj[0]);
+        trace("reload by sheet: ", sheet.path, JSON.stringify(pathObj))
+        let folder = this._getFolder(pathObj.folders[0]);
         await folder.reload();
-        this._notify(pathObj[0]);
+        this._notify(pathObj.folders[0]);
         return await folder.getItem(sheet.name);
     }
 
@@ -284,8 +290,9 @@ export class FileSystem {
             console.warn("cannot delete last page of sheet");
             return;
         }
-
         let pagePath = sheet.getPage(deleteIndex);
+        trace("Delete page in Sheet: ", sheet.name, "[", deleteIndex, "] ", pagePath)
+
         //delete file
         await RNFS.unlink(pagePath)
         try {
@@ -300,9 +307,9 @@ export class FileSystem {
         let basePath = sheet.path;
         for (let i = deleteIndex + 1; i < sheet.count; i++) {
 
-            await RNFS.moveFile(basePath + i + ".jpg", basePath + (i - 1) + ".jpg")
+            await RNFS.moveFile(basePath + '/' + i + ".jpg", basePath + '/' + (i - 1) + ".jpg")
             try {
-                await RNFS.moveFile(basePath + i + ".jpg.json", basePath + (i - 1) + ".jpg.json")
+                await RNFS.moveFile(basePath + '/' + i + ".jpg.json", basePath + '/' + (i - 1) + ".jpg.json")
             } catch {
                 //ignore as json may be missing
             }
@@ -369,7 +376,7 @@ export class FileSystem {
                 await RNFS.stat(currPath);
             } catch (e) {
                 if (i == 0) { //root level folder
-                    this.addFolder(pathObj.folders[i], FileSystem.DEFAULT_FOLDER_METADATA.icon, FileSystem.DEFAULT_FOLDER_METADATA.color)
+                    await this.addFolder(pathObj.folders[i], FileSystem.DEFAULT_FOLDER_METADATA.icon, FileSystem.DEFAULT_FOLDER_METADATA.color)
                 } else {
                     await RNFS.mkdir(currPath);
                 }
@@ -390,7 +397,7 @@ export class FileSystem {
             let items = await RNFS.readDir(src);
             for (index in items) {
                 const item = items[index];
-                await RNFS.copyFile(item.path, dst + '/' + item.name).touch(dst + '/' + item.name, new Date);
+                await RNFS.copyFile(item.path, dst + '/' + item.name).then(() => RNFS.touch(dst + '/' + item.name, new Date));
             }
         } else {
             return RNFS.copyFile(src, dst).then(() => RNFS.touch(dst, new Date));
@@ -399,13 +406,15 @@ export class FileSystem {
 
     _handleSaveFileError(uri, err, reject) {
         let errorStr = ""
-        for (let key in err) {
-            errorStr += JSON.stringify(err[key]).substr(15) + "\n";
-        }
-        //Alert.alert("Error: " + errorStr);
-        if (err.toString().includes("already exists")) {
-            reject(translate("PageAlreadyExists"));
-            return;
+        if (err) {
+            for (let key in err) {
+                errorStr += JSON.stringify(err[key]).substr(15) + "\n";
+            }
+            //Alert.alert("Error: " + errorStr);
+            if (err && err.toString().includes("already exists")) {
+                reject(translate("PageAlreadyExists"));
+                return;
+            }
         }
         reject('Error saving file: ' + (uri.length > 15 ? uri.substr(uri.length - 15) : uri) + ', err: ' + err);
     }
@@ -482,6 +491,16 @@ export class FileSystem {
         await downloadInfo.promise;
     }
 
+    async _fileExists(path) {
+        try {
+            await RNFS.stat(path);
+            //file exists, try increment index:
+            return true
+        } catch (e) {
+            return false;
+        }
+    }
+
     async _getEmptyFileName(intoFolderName) {
         let basePath = this._basePath + intoFolderName + "/";
         await RNFS.mkdir(basePath);
@@ -494,14 +513,11 @@ export class FileSystem {
         let fileName
         let index = ""
         while (true) {
-            fileName = basePath + baseFileName + index + ".jpg";
-            try {
-                await RNFS.stat(fileName);
-                //file exists, try increment index:
+            fileName = basePath + baseFileName + index;
+            if (await this._fileExists(fileName) || await this._fileExists(fileName + ".jpg"))
                 index = index == "" ? " 1" : " " + (parseInt(index) + 1);
-            } catch (e) {
+            else
                 return baseFileName + index + ".jpg";
-            }
         }
     }
 
@@ -575,7 +591,7 @@ export class FileSystemFolder {
 
 
                 }
-                
+
             } else if (!fi.name.endsWith(".json")) {
                 lastUpdate = Math.max(lastUpdate, fi.mtime.valueOf(), fi.ctime.valueOf());
                 sheet.addPage(fi.path);

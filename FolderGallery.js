@@ -16,7 +16,7 @@ import { USE_COLOR, getUseColorSetting, EDIT_TITLE, VIEW } from './settings.js'
 import { setNavParam } from './utils'
 import {
     semanticColors,
-    Spacer, removeFileExt,
+    Spacer,
     dimensions,
 
     AppText,
@@ -372,11 +372,11 @@ export default class FolderGallery extends React.Component {
     RenamePage = (isRename) => {
         if (!this.state.selected) return;
         this.props.navigation.navigate('SavePhoto', {
-            uri: this.state.selected.path,
+            sheet: this.state.selected,
             imageSource: SRC_RENAME,
             folder: this.state.currentFolder,
 
-            name: removeFileExt(this.state.selected.name),
+            name: this.state.selected.name,
             returnFolderCallback: (f) => this.setReturnFolder(f),
             saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false),
             title: isRename ? translate("RenameFormTitle") : translate("MovePageFormTitle")
@@ -415,7 +415,7 @@ export default class FolderGallery extends React.Component {
         if (!this.state.selected) return;
 
         this.props.navigation.navigate('SavePhoto', {
-            uri: this.state.selected.path,
+            sheet: this.state.selected,
             imageSource: SRC_DUPLICATE,
             folder: this.state.currentFolder,
             returnFolderCallback: (f) => this.setReturnFolder(f),
@@ -488,7 +488,6 @@ export default class FolderGallery extends React.Component {
 
     }
     goEdit = (page, folder, share) => {
-        console.log(JSON.stringify(page))
         this.props.navigation.navigate('EditPhoto', {
             page,
             folder,
@@ -812,7 +811,7 @@ export default class FolderGallery extends React.Component {
                                             page: item,
                                             asTile: asTiles,
                                             starred: item.starred,
-                                            name: removeFileExt(item.name),
+                                            name: item.name,
                                             rowWidth: pagesContainerWidth,
                                             editMode: this.state.editMode,
                                             selected: this.isSelected(item),
