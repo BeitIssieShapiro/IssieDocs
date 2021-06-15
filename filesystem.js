@@ -81,6 +81,7 @@ export class FileSystem {
     }
 
     async deleteFolder(name) {
+        trace("Delete folder: ", name);
         let folderPath = this._basePath + name;
         await RNFS.unlink(folderPath)
         this._folders = this._folders.filter(f => f.name != name);
@@ -99,15 +100,15 @@ export class FileSystem {
 
 
         let folderPath = this._basePath + name;
-
-        try {
-            await RNFS.stat(folderPath);
+        if (await this._fileExists(folderPath)) {
             if (strictChecks) {
                 //folder exists:
                 throw translate("FolderAlreadyExists");
             }
-        } catch (e) {
+        } else {
+            trace("Folder ", name, " is about to be created" )
             await RNFS.mkdir(folderPath);
+            trace("Folder ", folderPath, " has been created" )
             let fsf = new FileSystemFolder(name, this, { color, icon });
             this._folders.push(fsf);
 
@@ -119,6 +120,7 @@ export class FileSystem {
                     await _sortFolders(this._folders)
                 }
             }
+            trace("Folder ", name, " has been notified" )
             this._notify(name);
         }
 

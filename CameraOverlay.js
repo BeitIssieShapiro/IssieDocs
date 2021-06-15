@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { View } from 'react-native';
 import {
     semanticColors,
@@ -16,21 +16,30 @@ import { trace } from './log';
 
 
 export default function CameraOverlay(props) {
+    const [captureInProgress, setCaptureInProgress] = useState(false);
 
     const takePicture = async () => {
-        let image;
-        if (isSimulator()) {
-            let tempFile = await FileSystem.main.getStaticPageTempFile(FileSystem.StaticPages.SimulatorMock);
-            image = {uri:tempFile}
-        } else {
-            image = await camera.current.capture();
-        }
-        trace("Picture taken: ", JSON.stringify(image.uri));
-        let okEvent = props.route.params.okEvent;
+        if (captureInProgress)
+            return;
 
-        props.navigation.goBack();
-        if (image && okEvent) {
-            okEvent(image.uri);
+        try {
+            setCaptureInProgress(true);
+            let image;
+            if (isSimulator()) {
+                let tempFile = await FileSystem.main.getStaticPageTempFile(FileSystem.StaticPages.SimulatorMock);
+                image = { uri: tempFile }
+            } else {
+                image = await camera.current.capture();
+            }
+            trace("Picture taken: ", JSON.stringify(image.uri));
+            let okEvent = props.route.params.okEvent;
+
+            props.navigation.goBack();
+            if (image && okEvent) {
+                okEvent(image.uri);
+            }
+        } finally {
+            setCaptureInProgress(false);
         }
     }
 
@@ -62,13 +71,13 @@ export default function CameraOverlay(props) {
         />
         {/* } */}
         <View style={{
-            position: 'absolute', alignItems:'center',
+            position: 'absolute', alignItems: 'center',
             top: '2%', width: '100%', backgroundColor: 'transparent'
         }}>
             {getRoundedButton(cancel, 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
         </View>
         <View style={{
-            position: 'absolute', alignItems:'center',
+            position: 'absolute', alignItems: 'center',
             bottom: '2%', width: '100%', backgroundColor: 'transparent'
         }}>
             {getSvgIconButton(takePicture, semanticColors.addButton, "camera-take-photo", 80

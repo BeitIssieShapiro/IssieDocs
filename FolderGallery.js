@@ -40,6 +40,7 @@ import SplashScreen from 'react-native-splash-screen';
 import { getSvgIcon } from './svg-icons';
 import { StackActions } from '@react-navigation/native';
 import { FileSystem, swapFolders, saveFolderOrder } from './filesystem.js';
+import { trace } from './log.js';
 const SORT_BY_NAME = 0;
 const SORT_BY_DATE = 1;
 
@@ -249,6 +250,8 @@ export default class FolderGallery extends React.Component {
             type: [DocumentPicker.types.images, DocumentPicker.types.pdf]
         }).then(res => {
             this.props.navigation.navigate('SavePhoto', {
+                imageSource: SRC_FILE,
+
                 uri: res.uri,
                 folder: this.state.currentFolder,
                 returnFolderCallback: (f) => this.setReturnFolder(f),
@@ -438,7 +441,7 @@ export default class FolderGallery extends React.Component {
         setReturnFolder, originalFolderName) => {
 
         try {
-            if (newFolderName == originalFolderName) {
+            if (!originalFolderName) {
                 console.log("add folder")
                 await FileSystem.main.addFolder(newFolderName, newFolderIcon, newFolderColor, true);
             } else {
@@ -450,7 +453,7 @@ export default class FolderGallery extends React.Component {
             Alert.alert(e);
             return false;
         }
-
+        trace("save new folder ", newFolderName, "completed")
 
         if (setReturnFolder) {
             this.setReturnFolder(newFolderName);
@@ -810,7 +813,6 @@ export default class FolderGallery extends React.Component {
                                         renderItem={({ item }) => FileNew({
                                             page: item,
                                             asTile: asTiles,
-                                            starred: item.starred,
                                             name: item.name,
                                             rowWidth: pagesContainerWidth,
                                             editMode: this.state.editMode,

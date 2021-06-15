@@ -980,7 +980,7 @@ export default class IssieEditPhoto extends React.Component {
         {/** next page button */}
         {
           this.state.page && this.state.page.count > 1 &&
-            this.state.currentFile !== this.state.page.getPage[this.state.page.count - 1] ?
+            this.state.currentFile !== this.state.page.getPage(this.state.page.count - 1) ?
             <View style={{ position: 'absolute', bottom: 50, right: 10, height: 40, zIndex: 100 }}>
               {getRoundedButton(() => this.movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 125, height: 40 }, 'row', true)}
             </View> :

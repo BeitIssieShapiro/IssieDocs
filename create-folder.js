@@ -81,13 +81,21 @@ export default class IssieCreateFolder extends React.Component {
 
 
     Save = async () => {
-        let success = true;
-        let saveNewFolder = this.props.route.params.saveNewFolder;
-        if (saveNewFolder) {
-            success = await saveNewFolder(this.state.name, this.state.color, this.state.icon, this.state.currentFolderName);
-        }
-        if (success) {
-            this.props.navigation.goBack();
+        if (this.saveInProgress)
+                return;
+        try {
+            this.saveInProgress = true;
+
+            let success = true;
+            let saveNewFolder = this.props.route.params.saveNewFolder;
+            if (saveNewFolder) {
+                success = await saveNewFolder(this.state.name, this.state.color, this.state.icon, this.state.currentFolderName);
+            }
+            if (success) {
+                this.props.navigation.goBack();
+            }
+        } finally {
+            this.saveInProgress = false;
         }
     }
 
@@ -114,7 +122,7 @@ export default class IssieCreateFolder extends React.Component {
 
 
         let iconsSelection = <View style={{ flex: 1, alignItems: 'flex-end', width: '100%' }}
-            
+
         >
             <AppText style={styles.titleText}>{translate("CaptionIcon")}</AppText>
 
@@ -174,10 +182,10 @@ export default class IssieCreateFolder extends React.Component {
 
                 {/*Main view */}
                 <View style={{
-                    flexDirection: 'column',height:'100%',
+                    flexDirection: 'column', height: '100%',
                     left: '5%', width: '90%'
                 }}
-                    >
+                >
                     <View style={[{ flexDirection: 'row-reverse' },
                     this.isLandscape() ? { height: '100%' } : {}]}>
                         <View style={{
