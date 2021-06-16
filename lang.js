@@ -29,7 +29,6 @@ var strings = {
         "DeletePageTitle": "מחיקת דף",
         "DeleteFolderTitle": "מחיקת תיקייה",
         "BeforeDeletePageQuestion": "האם למחוק את הדף?",
-        "DeleteSubPageTitle":"מחיקת עמוד", 
         "BeforeDeleteSubPageQuestion":"מחק עמוד {1} מתוך {2}", 
 
         "DeleteFoldersAndPagesTitle": "מחיקת תיקיות ודפים",
@@ -117,7 +116,6 @@ var strings = {
         "DeletePageTitle": "حذف الصفحة",
         "DeleteFolderTitle": "حذف المجلد",
         "BeforeDeletePageQuestion": "حذف الصفحة؟",
-        "DeleteSubPageTitle":"حذف الصفحة Page", //check
         "BeforeDeleteSubPageQuestion":"احذف الصفحة {1} من {2}",
         "DeleteFoldersAndPagesTitle": "حذف المجلدات والعناوين",
         "BeforeDeleteFolderQuestion": "حذف المجلد سيؤدي إلى مسح جميع الصفحات داخله, وحذفه",

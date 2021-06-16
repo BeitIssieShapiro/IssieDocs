@@ -197,7 +197,7 @@ export default class FolderGallery extends React.Component {
         if (this.state.systemModal) return;
 
         this.setState({ systemModal: true })
-        getNewPage(SRC_CAMERA, 
+        getNewPage(SRC_CAMERA,
             (uri) => {
                 console.log("Camera returned: " + uri)
                 this.setState({ systemModal: false })
@@ -276,8 +276,8 @@ export default class FolderGallery extends React.Component {
 
 
     selectFolder = (folder) => {
-        this.setState({ currentFolder: folder })
-        setNavParam(this.props.navigation, 'showHome', () => this.unselectFolder());
+        this.setState({ currentFolder: folder }, () =>
+            setNavParam(this.props.navigation, 'showHome', () => this.unselectFolder()));
 
     }
 

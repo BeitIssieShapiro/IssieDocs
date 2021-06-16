@@ -2,7 +2,6 @@ Bugs:
 High:
 
 Medium:
-- Move file to folder default, not return to default
 
 Low:
 - page menu in folder stays even after navigation and going home

@@ -327,9 +327,9 @@ export default class IssieSavePhoto extends React.Component {
 
 
         let returnFolderCallback = this.props.route.params.returnFolderCallback;
-        if (returnFolderCallback && this.state.folder) {
-          console.log("return to folder" + this.state.folder.name)
-          returnFolderCallback(this.state.folder.name);
+        if (returnFolderCallback && folderName) {
+          trace("return to folder" + folderName)
+          returnFolderCallback(folderName);
         }
 
         if (this.props.route.params.goHomeAndThenToEdit) {
