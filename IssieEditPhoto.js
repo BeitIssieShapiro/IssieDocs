@@ -36,6 +36,7 @@ import { translate } from './lang';
 import { getSvgIcon } from './svg-icons';
 import { setNavParam } from './utils';
 import { FileSystem } from './filesystem';
+import { trace } from './log';
 
 //const this.topLayer() = dimensions.toolbarHeight + dimensions.toolbarMargin; //51 + 8 + 8 + 35;
 const shareTimeMs = 2000;
@@ -184,6 +185,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   _keyboardDidHide = (e) => {
+    trace("keyboard did hide")
     this.SaveText()
     this.setState({ keyboardHeight: 0, yOffset: 0, showTextInput: false });
   }
@@ -335,7 +337,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   TextModeClick = (ev) => {
-    console.log("TextMode click. x:" + ev.nativeEvent.pageX + ",y:" + ev.nativeEvent.pageY)
+    trace("TextMode click. x: ", ev.nativeEvent.pageX , ",y: " ,ev.nativeEvent.pageY)
     //check that the click is in the canvas area:
     if (ev.nativeEvent.pageX < this.state.sideMargin ||
       ev.nativeEvent.pageX > this.state.sideMargin + this.state.canvasW ||
@@ -376,7 +378,6 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     inputTextWidth = this.limitTextWidth(inputTextWidth, x, y)
-
     needCanvasUpdate = needCanvasUpdate || this.state.currentTextElem !== undefined || textElem !== undefined;
     this.setState({
       needCanvasUpdate: needCanvasUpdate,
@@ -405,7 +406,7 @@ export default class IssieEditPhoto extends React.Component {
     let text = this.state.inputTextValue;
     let origElem = this.state.currentTextElem;
     if (afterDrag && !this.state.currentTextElem) return false;
-
+    trace("SaveText: ", this.state.inputTextValue, " elem: ", (this.state.currentTextElem?"exist":"none"))
     if ((!text || text.length == 0) && origElem === undefined) return false;
 
     let txtWidth = this.state.inputTextWidth;
@@ -691,8 +692,19 @@ export default class IssieEditPhoto extends React.Component {
   onLayout = async (e) => {
     if (!this._mounted)
       return;
-
+    trace("onLayout")
     let windowSize = e.nativeEvent.layout;
+
+    if (this.state.showTextInput) {
+      trace("Saving text due to Layout event")
+      this.SaveText()
+      this.setState({
+        showTextInput: false,
+        currentTextElem: undefined,
+        inputTextValue:""
+      });
+    }
+
     const measure = this.topView.measure.bind(this.topView);
     setTimeout(measure, 50, (fx, fy, width, height, px, py) => {
       if (this._mounted)
