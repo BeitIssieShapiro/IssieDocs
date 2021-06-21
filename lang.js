@@ -111,7 +111,7 @@ var strings = {
         "ActionCancelled": "تم إلغاء الإجراء",
         "PDFLoadFailed": "فشل في تحميل ملف PDF",
         "DefaultFolder": "عام",
-        "Search":"بحث", //check
+        "Search":"بحث",
 
         "DeletePageTitle": "حذف الصفحة",
         "DeleteFolderTitle": "حذف المجلد",
@@ -140,8 +140,7 @@ var strings = {
         "A B C": "أ ب ج",
 
         "SortA": "أ",
-        "SortZ": "و",
-
+        "SortZ":"ي",
         "Settings": "الإعدادات",
         "Menu": "القائمة",
         "Display": "العرض",
@@ -154,8 +153,8 @@ var strings = {
         "Warning": "تحذير",
         "BtnContinue": "متابعة",
         "BtnCancel": "إلغاء",
-        "BtnNextPage": "التالى", //check
-        "BtnPreviousPage": "السابق", //check
+        "BtnNextPage": "التالى",
+        "BtnPreviousPage": "السابق",
         "BtnNewFolder": "مجلد جديد",
         "BtnAddPage": "صفحة أخرى",
         "BtnSave": "حفظ",
@@ -164,12 +163,12 @@ var strings = {
         "BtnDelete": "حذف",
         "BtnDuplicate": "تكرير",
 
-        "MenuFromCamera": "الة تصوير", //check
-        "MenuFromMediaLib": "مكتبة الوسائط", //check
-        "MenuNewPageEmpty": "صفحة فارغة جديدة", //check
-        "MenuNewPageLines": "صفحة مسطرة جديدة", //check
-        "MenuNewPageMath": "صفحة الشبكة الجديدة", //check
-        "EmptyPageName":"صفحة جديدة", //check
+        "MenuFromCamera": "الة تصوير",
+        "MenuFromMediaLib": "مكتبة الصور",
+        "MenuNewPageEmpty": "صفحة فارغة جديدة",
+        "MenuNewPageLines": "صفحة مسطرة جديدة",
+        "MenuNewPageMath": "صفحة مشبكة جديدة",
+        "EmptyPageName":"صفحة جديدة",
 
         "CaptionPageName": "اسم الصفحة",
         "CaptionFolderNameList": "مجلد",

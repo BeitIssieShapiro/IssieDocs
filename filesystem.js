@@ -462,10 +462,12 @@ export class FileSystem {
     }
 
     async getStaticPage(intoFolderName, pageType) {
+        await this._verifyFolderExists(intoFolderName)
         let newFileName = await this._getEmptyFileName(intoFolderName);
         await this._getStaticPage(this._basePath + intoFolderName + '/' + newFileName, pageType);
         await this._reloadFolder(intoFolderName);
         this._notify(intoFolderName);
+        trace("getStaticPage", intoFolderName)
         return newFileName;
     }
 
@@ -505,7 +507,6 @@ export class FileSystem {
 
     async _getEmptyFileName(intoFolderName) {
         let basePath = this._basePath + intoFolderName + "/";
-        await RNFS.mkdir(basePath);
         let baseFileName = translate("EmptyPageName");
 
         //only relevant for Simulator

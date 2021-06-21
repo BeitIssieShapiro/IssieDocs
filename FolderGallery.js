@@ -120,7 +120,7 @@ export default class FolderGallery extends React.Component {
             FileSystem.main.registerListener(async () => {
                 let folders = await FileSystem.main.getFolders();
 
-                FileSystem.main.getFolders().then(folder => this.setState({ folders }));
+                this.setState({ folders });
             });
 
             this.setState({ folders, loading: false });
@@ -525,7 +525,8 @@ export default class FolderGallery extends React.Component {
 
         let folder = this.state.currentFolder
         if (this.state.currentFolder == undefined) {
-            folder = this.state.folders.find(f => f.name == folderName);
+            let folders = await FileSystem.main.getFolders();
+            folder = folders.find(f => f.name == folderName);
             this.selectFolder(folder);
         }
 

@@ -267,6 +267,7 @@ export default class RNSketchCanvas extends React.Component {
           localSourceImage={this.props.localSourceImage}
           permissionDialogTitle={this.props.permissionDialogTitle}
           permissionDialogMessage={this.props.permissionDialogMessage}
+          touchEnabled={this.props.touchEnabled}
         />
         <View style={{ flexDirection: 'row' }}>
           <FlatList

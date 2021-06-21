@@ -15,6 +15,7 @@ import ReactNative, {
 } from 'react-native'
 import { requestPermissions } from '@terrylinla/react-native-sketch-canvas/src/handlePermissions';
 
+
 const RNSketchCanvas = requireNativeComponent('RNSketchCanvas', SketchCanvas, {
   nativeOnly: {
     nativeID: true,
@@ -94,8 +95,8 @@ class SketchCanvas extends React.Component {
     this.state.text = SketchCanvas._processText(props.text ? props.text.map(t => Object.assign({}, t)) : null)
     this.was_componentWillMount();
   }
-  static getDerivedStateFromProps (props, state) {
-    state.text =  SketchCanvas._processText(props.text ? props.text.map(t => Object.assign({}, t)) : null)
+  static getDerivedStateFromProps(props, state) {
+    state.text = SketchCanvas._processText(props.text ? props.text.map(t => Object.assign({}, t)) : null)
     return state;
   }
   // componentWillReceiveProps(nextProps) {
@@ -161,10 +162,10 @@ class SketchCanvas extends React.Component {
   was_componentWillMount() {
     this.panResponder = PanResponder.create({
       // Ask to be the responder:
-      onStartShouldSetPanResponder: (evt, gestureState) => true,
-      onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
-      onMoveShouldSetPanResponder: (evt, gestureState) => true,
-      onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
+      onStartShouldSetPanResponder: (evt) => this.props.touchEnabled && evt.nativeEvent.touches.length == 1,
+      onStartShouldSetPanResponderCapture: (evt) => this.props.touchEnabled && evt.nativeEvent.touches.length == 1,
+      onMoveShouldSetPanResponder: (evt) => this.props.touchEnabled && evt.nativeEvent.touches.length == 1,
+      onMoveShouldSetPanResponderCapture: (evt) => this.props.touchEnabled && evt.nativeEvent.touches.length == 1,
 
       onPanResponderGrant: (evt, gestureState) => {
         if (!this.props.touchEnabled) return
@@ -176,7 +177,7 @@ class SketchCanvas extends React.Component {
           id: parseInt(Math.random() * 100000000), color: this.props.strokeColor,
           width: this.props.strokeWidth, data: []
         }
-        
+
         UIManager.dispatchViewManagerCommand(
           this._handle,
           UIManager.RNSketchCanvas.Commands.newPath,
@@ -203,8 +204,8 @@ class SketchCanvas extends React.Component {
 
         if (this._path) {
           const x = parseFloat((gestureState.x0 + gestureState.dx / this.props.scale - this._offset.x).toFixed(2)),
-                y = parseFloat((gestureState.y0 + gestureState.dy / this.props.scale - this._offset.y).toFixed(2))
- 
+            y = parseFloat((gestureState.y0 + gestureState.dy / this.props.scale - this._offset.y).toFixed(2))
+
           UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.addPoint, [
             parseFloat(x * this._screenScale),
             parseFloat(y * this._screenScale)
@@ -222,19 +223,18 @@ class SketchCanvas extends React.Component {
         UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.endPath, [])
       },
 
+      onPanResponderTerminationRequest: (evt) => evt.nativeEvent.touches && evt.nativeEvent.touches.length != 1,
       onPanResponderTerminate: (evt, gestureState) => {
         // Another component has become the responder, so this gesture should be cancelled
         if (!this.props.touchEnabled) return;
         if (this._path) {
-          this.props.onStrokeEnd({ path: this._path, size: this._size, drawer: this.props.user });
-          this._paths.push({ path: this._path, size: this._size, drawer: this.props.user });
+          //this.props.onStrokeEnd({ path: this._path, size: this._size, drawer: this.props.user });
+          //this._paths.push({ path: this._path, size: this._size, drawer: this.props.user });
+          UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.deletePath, [this._path.id]);
         }
-        UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.endPath, []);
-      },
+      }
 
-      onShouldBlockNativeResponder: (evt, gestureState) => {
-        return true;
-      },
+
     });
   }
 
