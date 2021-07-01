@@ -63,6 +63,7 @@ export default class IssieEditPhoto extends React.Component {
       onMoveShouldSetPanResponder: (evt, gestureState) => this._shouldDragText(evt, gestureState) && (Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3),
       onMoveShouldSetPanResponderCapture: (evt, gestureState) => false && this._shouldDragText(evt, gestureState) && (Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3),
       onPanResponderMove: (evt, gestureState) => {
+        trace("move text width:" ,this.state.inputTextWidth)
         let xText = this.s2aW(gestureState.moveX - DRAG_ICON_SIZE / 2);
         if (xText < 25) {
           xText = 25;
@@ -79,10 +80,10 @@ export default class IssieEditPhoto extends React.Component {
           yText = this.state.canvasH - this.state.keyboardHeight - this.state.yOffset - 10;
         }
 
-        let inputTextWidth = this.limitTextWidth(this.state.inputTextWidth, xText, yText);
+        
         if (this.state.textMode) {
           this.setState({
-            xText, yText, inputTextWidth
+            xText, yText
           });
         }
       },
@@ -376,10 +377,10 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   //a = absolute, s=screen, c=canvas
-  s2aW = (w) => { return (w - this.state.sideMargin) / this.state.zoom - this.state.xOffset }
-  s2aH = (h) => { return (h - this.state.topView) / this.state.zoom - this.state.yOffset }// - this.state.inputTextHeight/2}
-  a2cW = (w) => { return (w + this.state.xOffset) * this.state.zoom + this.state.sideMargin }
-  a2cH = (h) => { return (h + this.state.yOffset) * this.state.zoom + this.topLayer() } // + this.state.inputTextHeight / 2 }
+  s2aW = (w) => (w - this.state.sideMargin) / this.state.zoom - this.state.xOffset + this.getXOffsetFactor(this.state.inputTextWidth) 
+  s2aH = (h) => (h - this.state.topView) / this.state.zoom - this.state.yOffset + this.getYOffsetFactor(this.state.inputTextWidth)
+  a2cW = (w) =>  (w + this.state.xOffset) * this.state.zoom + this.state.sideMargin - this.getXOffsetFactor(this.state.inputTextWidth) 
+  a2cH = (h) =>  (h + this.state.yOffset) * this.state.zoom + this.topLayer() - this.getYOffsetFactor(this.state.inputTextWidth)
 
   findColor = (fc) => {
     let color = availableColorPicker.find(c => c == fc)
@@ -429,11 +430,12 @@ export default class IssieEditPhoto extends React.Component {
       fontColor = this.findColor(textElem.fontColor);
       inputTextWidth = textElem.width;
       inputTextHeight = textElem.height;
-      x = textElem.normPosition.x * this.state.scaleRatio;
-      y = textElem.normPosition.y * this.state.scaleRatio;
+      x = Math.round(textElem.normPosition.x * this.state.scaleRatio);
+      y = Math.round(textElem.normPosition.y * this.state.scaleRatio);
+      trace("text x,y:",x,y )
     }
 
-    inputTextWidth = this.limitTextWidth(inputTextWidth, x, y)
+    trace("text width:", inputTextWidth)
     needCanvasUpdate = needCanvasUpdate || this.state.currentTextElem !== undefined || textElem !== undefined;
     this.setState({
       needCanvasUpdate: needCanvasUpdate,
@@ -454,10 +456,6 @@ export default class IssieEditPhoto extends React.Component {
     });
   }
 
-  limitTextWidth = (width, x, y) => {
-    return width;
-  }
-
   SaveText = (beforeExit, afterDrag) => {
     let text = this.state.inputTextValue;
     let origElem = this.state.currentTextElem;
@@ -470,8 +468,8 @@ export default class IssieEditPhoto extends React.Component {
     let newElem = this.getTextElement(text, txtWidth, txtHeight);
     if (origElem) {
       if (origElem.text == newElem.text &&
-        origElem.normPosition.x == newElem.normPosition.x &&
-        origElem.normPosition.y == newElem.normPosition.y &&
+        Math.abs(origElem.normPosition.x - newElem.normPosition.x) <= 5 &&
+        Math.abs(origElem.normPosition.y - newElem.normPosition.y) <= 5 &&
         origElem.fontSize == newElem.fontSize &&
         origElem.fontColor == newElem.fontColor) {
         //need to set the current text back to canvas
@@ -482,6 +480,7 @@ export default class IssieEditPhoto extends React.Component {
         return false;
       }
     }
+    //trace("text coordinates updated", origElem.normPosition.x - newElem.normPosition.x);
     this.state.queue.pushText(newElem);
     if (beforeExit) {
       this.Save();
@@ -525,16 +524,21 @@ export default class IssieEditPhoto extends React.Component {
 
     newTextElem.anchor = { x: 0, y: 0 };
     newTextElem.normPosition = {
-      x: this.state.xText / this.state.scaleRatio,
-      y: this.state.yText / this.state.scaleRatio
+      x: this.state.xText / this.state.scaleRatio ,
+      y: this.state.yText / this.state.scaleRatio + this.getYOffsetFactor(height),
     };
-    trace("getTextElement:", this.state.xText, this.state.yText, "offset:", this.state.xOffset, ",", this.state.yOffset)
+    trace("getTextElement:",width, this.state.xText, this.state.yText, "offset:", this.state.xOffset, ",", this.state.yOffset)
     newTextElem.position = { x: 0, y: 0 };
-    newTextElem.alignment = 'Right';
+    newTextElem.alignment = 'Left';
     newTextElem.fontColor = this.state.color;
     newTextElem.fontSize = this.state.fontSize;
+    newTextElem.font = APP_FONT;
     return newTextElem;
   }
+
+  getXOffsetFactor = (width) => width< 100?0:
+  width<300?-Math.floor(width/120):-Math.floor(width/130);
+  getYOffsetFactor = (height) => 0;//Math.floor(height/20);
 
   UpdateCanvas = (canvas) => {
     if (!canvas) return;
@@ -684,7 +688,7 @@ export default class IssieEditPhoto extends React.Component {
     const page = this.state.page;
     console.log("rename: " + page.path);
     this.props.navigation.navigate('SavePhoto', {
-      sheet: page.path,
+      sheet: page,
       imageSource: SRC_RENAME,
       folder: this.state.currentFolder,
 
@@ -848,7 +852,7 @@ export default class IssieEditPhoto extends React.Component {
     let spaceBetweenButtons = <Spacer width={23} />
     let colorButtonSize = (this.state.windowW - 2 * toolbarSideMargin) / (availableColorPicker.length * 1.4);
     let backToFolderWidth = 45;
-    trace("dims:", this.state.canvasW, this.state.canvasH)
+    //trace("dims:", this.state.canvasW, this.state.canvasH)
     return (
 
 
@@ -1260,6 +1264,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getTextInput = (x, y) => {
+    trace("getTextInput width:", this.getTextWidth()) 
     return (
       <View style={{
         flex: 1, flexDirection: 'row-reverse', position: 'absolute',
@@ -1279,7 +1284,7 @@ export default class IssieEditPhoto extends React.Component {
             console.log("onContentSizeChange:" + JSON.stringify(dim) + ", text:" + this.state.inputTextValue)
             setTimeout(() =>
               this.setState({
-                inputTextWidth: dim.width,
+                inputTextWidth: dim.width > 0? dim.width:this.state.inputTextWidth,
                 inputTextHeight: dim.height
               }), 10);
           }}
@@ -1305,7 +1310,7 @@ export default class IssieEditPhoto extends React.Component {
         />
         <View style={{
           position: 'absolute', left: DRAG_ICON_SIZE - 2, top: 0,
-          width: this.state.inputTextWidth + 10, height: (this.state.inputTextHeight),
+          width: Math.max(this.state.inputTextWidth + 10, 10), height: Math.max(this.state.inputTextHeight, this.normalizeTextSize(this.state.fontSize)),
           zIndex: 20
         }}
           backgroundColor={this.state.color === '#fee100' ? 'gray' : 'yellow'}
@@ -1322,7 +1327,7 @@ export default class IssieEditPhoto extends React.Component {
     }
   }
 
-  getTextWidth = () => 2000;//Math.max(this.state.inputTextWidth + 40, 40); //< INITIAL_TEXT_SIZE - 20 ? INITIAL_TEXT_SIZE : this.state.inputTextWidth + this.state.fontSize * 2;
+  getTextWidth = () => 2000;//Math.max(this.state.inputTextWidth + 100, 40) * this.state.zoom; //< INITIAL_TEXT_SIZE - 20 ? INITIAL_TEXT_SIZE : this.state.inputTextWidth + this.state.fontSize * 2;
   getTextHeight = () => Math.max(this.state.inputTextHeight, this.state.fontSize + 1.2);
 }
 

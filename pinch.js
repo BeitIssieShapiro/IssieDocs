@@ -27,16 +27,10 @@ export function processPinch(obj, x1, y1, x2, y2) {
         let zoom = touchZoom * pinchState.initialZoom > obj.state.minZoom
             ? touchZoom * pinchState.initialZoom : obj.state.minZoom;
 
-        let deltaZoom = zoom - pinchState.initialZoom;
-        let offset = calcOffsetByZoom(center, obj.state.canvasW, obj.state.canvasH, deltaZoom);
-        trace("deltaZoom:", deltaZoom, "distance", distance, "center", center, "offset", offset)
-
         trace("pinch: 1:", x1, ",", y1, " 2:", x2, ",", y2)
 
-        let dx = center.x - pinchState.initialX;
-        let dy = center.y - pinchState.initialY;
-        let xOffset = zoom == 1 ? 0 : pinchState.initialLeft + dx - offset.dx / 2;
-        let yOffset = zoom == 1 ? 0 : pinchState.initialTop + dy - offset.dy / 2;
+        let xOffset = zoom == 1 ? 0 : pinchState.initialLeft - (pinchState.initialX - center.x);
+        let yOffset = zoom == 1 ? 0 : pinchState.initialTop - (pinchState.initialY - center.y);
         if (xOffset > 0) {
             xOffset = 0;
         }
@@ -81,13 +75,3 @@ function maxOffset(offset, windowDimension, imageDimension) {
     return offset < max ? max : offset;
 }
 
-function calcOffsetByZoom(center, windowWidth, windowHeight, deltaZoom) {
-
-    let xDiff = windowWidth - center.x;
-    let yDiff = windowHeight - center.y;
-
-    return {
-        dx: xDiff * (deltaZoom),
-        dy: yDiff * (deltaZoom),
-    }
-}
