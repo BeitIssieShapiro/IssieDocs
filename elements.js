@@ -10,7 +10,11 @@ import { getUseTextSetting } from './settings.js'
 
 import { getSvgIcon } from './svg-icons.js'
 import { FileSystem } from './filesystem.js';
+import {
 
+    MenuOptions
+
+} from 'react-native-popup-menu';
 
 export const dimensions = {
     toolbarHeight: 65,
@@ -312,7 +316,7 @@ export function normalizeTitle(title) {
 
 
 
- export function getFileNameDialog(fileName,
+export function getFileNameDialog(fileName,
     currentFolder, folders,
     onChangeName, onChangeFolder, onSaveNewFolder,
     navigation, isLandscape, onLayout) {
@@ -320,15 +324,15 @@ export function normalizeTitle(title) {
     const defFolderName = { name: translate("DefaultFolder") };
 
 
-    if (!currentFolder || currentFolder.name  === FileSystem.DEFAULT_FOLDER.name || currentFolder.name === '') {
+    if (!currentFolder || currentFolder.name === FileSystem.DEFAULT_FOLDER.name || currentFolder.name === '') {
         currentFolder = defFolderName;
     }
-    
+
     let fullListFolder = [defFolderName, ...folders];
     getLocalizedFoldersAndIcons().forEach((itm, index) => {
         if (fullListFolder.findIndex(f =>
-            f.name === itm.text) == -1)  {
-                //only add those folders that do not exist already
+            f.name === itm.text) == -1) {
+            //only add those folders that do not exist already
             fullListFolder.push({ name: itm.text, icon: itm.icon, color: (availableColorPicker[index % availableColorPicker.length]) });
         }
     })
@@ -458,8 +462,28 @@ export async function getImageDimensions(uri) {
     );
 }
 
+export function IDMenuOptionsStyle(props) {
+    return {
+        optionsContainerStyle: {
+            backgroundColor: 'white', width: props.width || 200, borderRadius: 10,
+            alignItems: 'center', justifyContent: 'center', alignContent: 'center'
+        },
+        customStyles: {
+            optionsWrapper: {
+                position: 'absolute', left: 0, top: props.top || 0,
+                width: '100%', backgroundColor: 'white', borderRadius: 10,
+                shadowColor: 'black',
+                shadowOpacity: 0.26,
+                shadowOffset: { width: 0, height: 2 },
+                elevation: 3
+            }
+        }
+    }
+
+}
+
 export function renderMenuOption(title, icon, iconType) {
-    return <View style={{ width:'100%', flexDirection: 'row-reverse',  justifyContent:'flex-start', alignItems:'center'}}>
+    return <View style={{ width: '100%', flexDirection: 'row-reverse', justifyContent: 'flex-start', alignItems: 'center' }}>
         {getIconButton(undefined, semanticColors.addButton, icon, 40, undefined, undefined, undefined, iconType)}
         <Spacer width={5} />
         <AppText>{title}</AppText>
@@ -514,8 +538,9 @@ export const globalStyles = StyleSheet.create({
     headerThinTitleStyle: {
         fontFamily: APP_FONT,
         fontSize: 25,
-        alignItems: 'center',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        marginRight: 30,
+        color: 'white'
     },
     textInput: {
         fontSize: 40,

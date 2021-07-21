@@ -175,12 +175,14 @@ function App(props) {
 
 
               return {
-                title: fileName + multiPageTitleAddition,
+                title: "",//fileName + multiPageTitleAddition,
+                headerLayoutPreset:'right',
                 headerStyle: globalStyles.headerThinStyle,
                 headerTintColor: 'white',
                 headerTitleStyle: globalStyles.headerThinTitleStyle,
+                headerRight: ()=> <Text style={globalStyles.headerThinTitleStyle}>{fileName + multiPageTitleAddition}</Text>,
                 headerLeft:
-                  () => <View >
+                  () => <View style={{flex:1, flexDirection:'row'}}>
                     <TouchableOpacity onPress={() => {
                       props.route.params.goHome ? props.route.params.goHome() : {}
                     }}
@@ -189,6 +191,16 @@ function App(props) {
                       {/* <Icon name='keyboard-arrow-left' color='white' size={35} /> */}
                       {/* <Spacer width={10} />*/}
                       <Icon name={'home'} color='white' size={30} />
+                    </TouchableOpacity>
+                    <Spacer />
+                    <TouchableOpacity onPress={() => {
+                      props.route.params.onMoreMenu ? props.route.params.onMoreMenu() : {}
+                    }}
+                      activeOpacity={1}
+                      style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      {/* <Icon name='keyboard-arrow-left' color='white' size={35} /> */}
+                      {/* <Spacer width={10} />*/}
+                      <Icon name={'menu'} color='white' size={30} />
                     </TouchableOpacity>
                   </View>
               }

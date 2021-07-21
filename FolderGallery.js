@@ -22,7 +22,8 @@ import {
     AppText,
     getSvgIconButton,
     renderMenuOption,
-    getRoundedButton
+    getRoundedButton,
+    IDMenuOptionsStyle
 } from './elements'
 import {
     Menu,
@@ -562,15 +563,12 @@ export default class FolderGallery extends React.Component {
 
     newPageButton = () => {
         return (
+
             <Menu ref={(ref) => this.menu = ref} key="6">
                 <MenuTrigger >
                     {getSvgIconButton(() => this.menu.open(), semanticColors.addButton, "menu-new-empty-page", 40)}
                 </MenuTrigger>
-                <MenuOptions
-                    optionsContainerStyle={{
-                        backgroundColor: 'white', width: 250, borderRadius: 10,
-                        alignItems: 'center', justifyContent: 'center', alignContent: 'center'
-                    }}                    >
+                <MenuOptions {...IDMenuOptionsStyle({top:dimensions.toolbarHeight - 12, width:200})}>
                     <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Blank)}>
                         {renderMenuOption(translate("MenuNewPageEmpty"), "page-empty", "svg")}
                     </MenuOption>
@@ -581,9 +579,12 @@ export default class FolderGallery extends React.Component {
                         {renderMenuOption(translate("MenuNewPageMath"), "page-math", "svg")}
                     </MenuOption>
                     <Spacer />
-                    {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
+                    <View style={{ flex: 1, width: '100%', flexDirection: 'column', alignItems: 'center' }}>
+                        {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
+                    </View>
                     <Spacer width={5} />
                 </MenuOptions>
+
             </Menu>);
     }
 
@@ -620,6 +621,7 @@ export default class FolderGallery extends React.Component {
         let treeWidth = this.state.currentFolder ? (this.isLandscape() ? 220 : 180) : 0;//.36 * this.state.windowSize.width;
         let pagesContainerWidth = this.state.windowSize.width - treeWidth;
         let numColumnsForTiles = Math.floor(pagesContainerWidth / dimensions.tileWidth);
+        trace("numOfColumns:", numColumnsForTiles)
         let foldersCount = this.state.folders ? this.state.folders.length : 1;
         let foldersHeightSize = dimensions.topView + dimensions.toolbarHeight + foldersCount * dimensions.folderHeight;
         let needFoldersScroll = foldersHeightSize > this.state.windowSize.height;
@@ -804,10 +806,11 @@ export default class FolderGallery extends React.Component {
                                         style={{
                                         }}
                                         contentContainerStyle={{
-                                            width: '100%', alignItems: 'flex-start',
-                                            height: needPagesScroll ? pagesHeightSize : '100%',
-                                            alignItems: 'flex-end'
+                                            width: '100%', alignItems: 'flex-end',
+                                            height: needPagesScroll ? pagesHeightSize : '100%'
+
                                         }}
+                                        columnWrapperStyle={asTiles ? { flexDirection: 'row-reverse' } : undefined}
                                         bounces={needPagesScroll}
                                         key={asTiles ? numColumnsForTiles.toString() : "list"}
                                         data={[...items].sort(this.getSortFunction())}

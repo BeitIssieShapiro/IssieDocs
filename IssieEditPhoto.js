@@ -13,7 +13,7 @@ import DoQueue from './do-queue';
 import FadeInView from './FadeInView'
 import {
   Spacer, getRoundedButton, getEraserIcon, getColorButton,
-  renderMenuOption
+  renderMenuOption, IDMenuOptionsStyle
 } from './elements'
 import { SRC_RENAME } from './newPage';
 const USE_NATIVE_DRIVER = true;
@@ -247,6 +247,7 @@ export default class IssieEditPhoto extends React.Component {
     if (page.count > 0) {
       setNavParam(this.props.navigation, 'pageTitleAddition', this.pageTitleAddition(page.count, 0));
     }
+    setNavParam(this.props.navigation, 'onMoreMenu', () => this.menu.open())
 
     const metaDataUri = currentFile + ".json";
     this.setState({ page: page, currentFile: currentFile, currentIndex: 0, metaDataUri: metaDataUri },
@@ -549,7 +550,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getXOffsetFactor = (width) => 0;//width < 100 ? 0 :
-    // width < 300 ? -Math.floor(width / 120) : -Math.floor(width / 130);
+  // width < 300 ? -Math.floor(width / 120) : -Math.floor(width / 130);
   getYOffsetFactor = (height) => 0;//Math.floor(height/20);
 
   UpdateCanvas = (canvas) => {
@@ -622,6 +623,7 @@ export default class IssieEditPhoto extends React.Component {
       showTextSizePicker: !this.state.showTextSizePicker,
       showColorPicker: false,
       showBrushSizePicker: false,
+      showZoomPicker: false,
       eraseMode: false
 
     });
@@ -671,6 +673,7 @@ export default class IssieEditPhoto extends React.Component {
       showBrushSizePicker: !this.state.showBrushSizePicker,
       showColorPicker: false,
       showTextSizePicker: false,
+      showZoomPicker: false
     })
     this.onEraserChange(true);
 
@@ -871,9 +874,10 @@ export default class IssieEditPhoto extends React.Component {
       <View style={styles.mainContainer}
         onLayout={this.onLayout}>
         {/* page menu 3 dots */}
-        <View style={{ position: 'absolute', left: -5, top: 100, height: 100, width: this.state.sideMargin, zIndex: 1000 }}>
-          {this.getMoreMenu()}
+        <View style={{ position: 'absolute', top: 0, left: 0 }}>
+          {this.getMoreMenu(toolbarHeight+dimensions.toolbarMargin)}
         </View>
+
         <TouchableOpacity
           //onPress={this.TextModeClick}
           activeOpacity={1}
@@ -972,7 +976,7 @@ export default class IssieEditPhoto extends React.Component {
               position: 'absolute',
               top: this.isScreenNarrow() ? dimensions.toolbarHeight : 0,
               left: this.isScreenNarrow() ? 0
-                : this.state.windowW / 2 - toolbarSideMargin - 55 - backToFolderWidth,
+                : this.state.windowW / 2 - toolbarSideMargin - 50 - backToFolderWidth,
               width: 100,
               height: dimensions.toolbarHeight,
               backgroundColor: 'transparent',//'#eef4fa',
@@ -996,16 +1000,26 @@ export default class IssieEditPhoto extends React.Component {
             <View style={{
               position: 'absolute',
               top: this.isScreenNarrow() ? dimensions.toolbarHeight : 0,
-              right: 0,
+              right: -20,
               height: dimensions.toolbarHeight,
               flexDirection: 'row', alignItems: 'center'
             }} >
-
+              {
+                getIconButton(() => this.setState({
+                  showZoomPicker: !this.state.showZoomPicker,
+                  showColorPicker: false,
+                  showTextSizePicker: false,
+                  showBrushSizePicker: false
+                }),
+                  semanticColors.editPhotoButton , "zoom-in", 55, false, 45)
+              }
+              {spaceBetweenButtons}
               {
                 getIconButton(() => this.setState({
                   showColorPicker: !this.state.showColorPicker,
                   showTextSizePicker: false,
-                  showBrushSizePicker: false
+                  showBrushSizePicker: false,
+                  showZoomPicker: false
                 }), semanticColors.editPhotoButton, "color-lens", 55)
               }
               {spaceBetweenButtons}
@@ -1057,7 +1071,20 @@ export default class IssieEditPhoto extends React.Component {
 
           </View>
         </FadeInView>
+        {/*View for zoom*/}
+        <FadeInView height={this.state.showZoomPicker ? 70 : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
+          <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
 
+            {
+              getIconButton(() => this.setState({ zoom: this.state.zoom - .5 < 1 ? 1 : this.state.zoom - .5 }),
+                semanticColors.editPhotoButton , "zoom-out", 55, false, 45)
+            }
+            {
+              getIconButton(() => this.setState({ zoom: this.state.zoom + .5 > 3 ? 3 : this.state.zoom + .5 }),
+                semanticColors.editPhotoButton , "zoom-in", 55, false, 45)
+            }
+          </View>
+        </FadeInView>
 
 
         {
@@ -1094,21 +1121,19 @@ export default class IssieEditPhoto extends React.Component {
     );
   }
 
-  getMoreMenu = () => {
-    return <Menu ref={(ref) => this.menu = ref}>
+
+  getMoreMenu = (toolbarHeight) => {
+    return <Menu ref={(ref) => this.menu = ref} >
+
+
       <MenuTrigger >
-        {getIconButton(() => {
+        {/* {getIconButton(() => {
           //   
           this.menu.open()
 
-        }, semanticColors.editPhotoButton, 'more-vert', 55)}
+        }, semanticColors.editPhotoButton, 'more-vert', 55)} */}
       </MenuTrigger>
-      <MenuOptions
-        optionsContainerStyle={{
-          backgroundColor: 'white', width: 250, borderRadius: 10,
-          alignItems: 'center', justifyContent: 'center', alignContent: 'center'
-        }}
-      >
+      <MenuOptions {...IDMenuOptionsStyle({ top: toolbarHeight, width: 300 })}      >
         <MenuOption onSelect={() => this.rename(true)} >
           {renderMenuOption(translate("BtnChangeName"),
             "edit")}
@@ -1121,11 +1146,14 @@ export default class IssieEditPhoto extends React.Component {
           </MenuOption>
           : null}
         {this.state.page && this.state.page.count > 1 ? <Spacer /> : null}
-        {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
+        <View style={{ flex: 1, width: '100%', flexDirection: 'column', alignItems: 'center' }}>
+          {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
+        </View>
         <Spacer width={5} />
       </MenuOptions>
 
     </Menu>
+
   }
 
   getArrow = (location, func) => {
@@ -1200,7 +1228,8 @@ export default class IssieEditPhoto extends React.Component {
       this.setState({
         showColorPicker: !this.state.showColorPicker,
         showTextSizePicker: false,
-        showBrushSizePicker: false
+        showBrushSizePicker: false,
+        showZoomPicker: false
       });
     }
 

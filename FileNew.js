@@ -17,8 +17,8 @@ import {
 } from 'react-native-popup-menu';
 
 
-const TILE_PADDING = 12
-const TILE_TEXT_HEIGHT = 22
+const TILE_PADDING = 30
+const TILE_TEXT_HEIGHT = 25
 const TILE_BORDER_WIDTH = 1.5
 
 export default function FileNew(props) {
@@ -32,32 +32,32 @@ export default function FileNew(props) {
             style={{ width: props.asTile ? dimensions.tileWidth : props.rowWidth, height: props.asTile ? dimensions.tileHeight : dimensions.lineHeight }}
         >
             {props.asTile ?
-                <View style={{ alignContent: 'center', padding: TILE_PADDING, height: '100%', width: '100%' }}>
+                <View style={{ alignContent: 'center', paddingRight: TILE_PADDING, height: '100%', width: '100%',  }}>
                     <View style={{ borderWidth: TILE_BORDER_WIDTH, borderColor: "#D1CFCF", height: '100%', width: '100%' }}>
 
                         <View style={{
                             position: 'absolute', top: 0,
-                            right: 35, width: '100%', height: '100%',
-                            zIndex: 100, alignItems: 'flex-start'
+                            right: -30, width: '100%', height: '100%',
+                            zIndex: 100, alignItems: 'flex-end'
 
                         }}>
                             <TouchableOpacity
                                 onPress={props.onSelect} >
                                 <Icon name={'more-vert'} size={35} />
                             </TouchableOpacity>
-                            {props.selected ?
-                                <View style={{ position: 'absolute', top: 0, left: 35 }}>
+                            
+                        </View>
+                        {props.selected ?
+                                <View style={{ position: 'absolute', top: 0, right: '2%', width:'96%', zIndex: 100, height:'85%' }}>
                                     {getActionButtons(props)}
                                 </View>
                                 : null}
-                        </View>
-
                         <View style={{ flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
 
 
                             <Image source={{ uri: imageSrc }} style={{ height: '85%', width: '100%' }} />
                             <View style={{ height: '15%', backgroundColor: '#a7a7a7', alignItems: 'flex-end', width: '100%' }} >
-                                <AppText style={{ fontSize: TILE_TEXT_HEIGHT, textAlign: 'right', color: 'white', paddingRight: 15 }}>
+                                <AppText style={{ fontSize: TILE_TEXT_HEIGHT, color: 'white', paddingRight: 15, lineHeight:TILE_TEXT_HEIGHT+2 }}>
                                     {getFileName(props)}
                                 </AppText>
                             </View>
@@ -165,8 +165,9 @@ function getActionButtons(props) {
                 backgroundColor: semanticColors.mainAreaBG,
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: (dimensions.tileHeight - TILE_PADDING) * .4 - TILE_BORDER_WIDTH,
-                width: dimensions.tileWidth - 2 * TILE_PADDING - TILE_BORDER_WIDTH * 2
+                height:'60%'
+                // height: (dimensions.tileHeight - TILE_PADDING) * .4 - TILE_BORDER_WIDTH,
+                // width: dimensions.tileWidth - 2 * TILE_PADDING - TILE_BORDER_WIDTH * 2
             }}>
                 {getButton(0, props)}
                 <Spacer width={15} key={10} />
@@ -177,8 +178,9 @@ function getActionButtons(props) {
             <View style={{
                 flexDirection: 'row',
                 backgroundColor: semanticColors.mainAreaBG,
-                height: (dimensions.tileHeight - TILE_PADDING) * .4 - TILE_BORDER_WIDTH,
-                width: dimensions.tileWidth - 2 * TILE_PADDING - 2 * TILE_BORDER_WIDTH,
+                // height: (dimensions.tileHeight - TILE_PADDING) * .4 - TILE_BORDER_WIDTH,
+                // width: dimensions.tileWidth - 2 * TILE_PADDING - 2 * TILE_BORDER_WIDTH,
+                height:'40%',
                 justifyContent: 'space-between'
             }}>
                 {getButton(3, props)}
