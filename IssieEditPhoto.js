@@ -11,6 +11,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Share from 'react-native-share';
 import DoQueue from './do-queue';
 import FadeInView from './FadeInView'
+
 import {
   Spacer, getRoundedButton, getEraserIcon, getColorButton,
   renderMenuOption, IDMenuOptionsStyle
@@ -360,7 +361,28 @@ export default class IssieEditPhoto extends React.Component {
       this.state.metaDataUri,
       content).then(
         //success
-        undefined, //() =>  Alert.alert("File Saved"),
+        ()=>{
+          // Save thumbnail
+          if (this.canvas && this.state.page.count === 1 || this.state.currentIndex === 0) {
+            let filePath = FileSystem.getTempFileName("jpg");
+            let fileName = FileSystem.getFileNameFromPath(filePath, true);
+            let lastSlashPos = filePath.lastIndexOf('/');
+            let folder = filePath.substring(0, lastSlashPos);
+            console.log("save thumbnail to folder", folder)
+            this.canvas.export("jpg", {width:80, height:120}, (err, path)=>{
+              console.log("save thumbnail", path)
+              FileSystem.main.saveThumbnail(path, this.props.route.params.page);  
+            });
+            //.then(res=>{
+            
+            //});
+          }
+          // if (this.viewShot && this.state.page.count === 1 || this.state.currentIndex === 0) {
+          //   this.viewShot.capture().then(url=>{
+          //     FileSystem.main.saveThumbnail(url, this.props.route.params.page);
+          //   })
+          // }
+        },
         //fail
         (e) => Alert.alert("File Save Failed" + e));
 
@@ -599,7 +621,7 @@ export default class IssieEditPhoto extends React.Component {
     //Alert.alert(JSON.stringify(canvasTexts))
 
     if (this.state.needCanavaDataSave) {
-      this.Save()
+      setTimeout(()=>this.Save(), 100);
     }
 
     this.setState({ canvasTexts: canvasTexts, needCanvasUpdate: false, needCanavaDataSave: false, needCanvasUpdateTextOnly: false });
@@ -875,7 +897,7 @@ export default class IssieEditPhoto extends React.Component {
         onLayout={this.onLayout}>
         {/* page menu 3 dots */}
         <View style={{ position: 'absolute', top: 0, left: 0 }}>
-          {this.getMoreMenu(toolbarHeight+dimensions.toolbarMargin)}
+          {this.getMoreMenu(toolbarHeight + dimensions.toolbarMargin)}
         </View>
 
         <TouchableOpacity
@@ -1011,7 +1033,7 @@ export default class IssieEditPhoto extends React.Component {
                   showTextSizePicker: false,
                   showBrushSizePicker: false
                 }),
-                  semanticColors.editPhotoButton , "zoom-in", 55, false, 45)
+                  semanticColors.editPhotoButton, "zoom-in", 55, false, 45)
               }
               {spaceBetweenButtons}
               {
@@ -1077,11 +1099,11 @@ export default class IssieEditPhoto extends React.Component {
 
             {
               getIconButton(() => this.setState({ zoom: this.state.zoom - .5 < 1 ? 1 : this.state.zoom - .5 }),
-                semanticColors.editPhotoButton , "zoom-out", 55, false, 45)
+                semanticColors.editPhotoButton, "zoom-out", 55, false, 45)
             }
             {
               getIconButton(() => this.setState({ zoom: this.state.zoom + .5 > 3 ? 3 : this.state.zoom + .5 }),
-                semanticColors.editPhotoButton , "zoom-in", 55, false, 45)
+                semanticColors.editPhotoButton, "zoom-in", 55, false, 45)
             }
           </View>
         </FadeInView>
@@ -1188,37 +1210,39 @@ export default class IssieEditPhoto extends React.Component {
 
 
   getCanvas = () => {
+    // let w = this.state.windowW;
+    // let h = this.state.windowW;
     return (
-      <RNSketchCanvas
-        ref={component => {
-          this.canvas = component;
-          if (this.state.needCanvasUpdate) {
-            setTimeout(() => {
-              if (component) {
-                this.UpdateCanvas(component);
-              }
-            }, 100);
-          } else if (this.state.needExport) {
-            let promise = this.state.needExport;
-            this.setState({ needExport: undefined })
-            setTimeout(() => {
-              this.doExport(component, promise.resolve, promise.reject);
-            }, shareTimeMs);
+        <RNSketchCanvas
+          ref={component => {
+            this.canvas = component;
+            if (this.state.needCanvasUpdate) {
+              setTimeout(() => {
+                if (component) {
+                  this.UpdateCanvas(component);
+                }
+              }, 100);
+            } else if (this.state.needExport) {
+              let promise = this.state.needExport;
+              this.setState({ needExport: undefined })
+              setTimeout(() => {
+                this.doExport(component, promise.resolve, promise.reject);
+              }, shareTimeMs);
+            }
           }
-        }
-        }
-        scale={this.state.zoom}
-        touchEnabled={!this.state.textMode}
-        text={this.state.canvasTexts}
-        containerStyle={styles.container}
-        canvasStyle={[styles.canvas, { transform: [{ translateX: this.state.xOffset }, { translateY: this.state.yOffset }] }]}
-        localSourceImage={{ filename: this.state.currentFile, mode: 'AspectFit' }}
-        onStrokeEnd={this.SketchEnd}
-        onSketchStart={this.SketchStart}
-        strokeColors={[{ color: colors.black }]}
-        defaultStrokeIndex={0}
-        defaultStrokeWidth={DEFAULT_STROKE_WIDTH}
-      />
+          }
+          scale={this.state.zoom}
+          touchEnabled={!this.state.textMode}
+          text={this.state.canvasTexts}
+          containerStyle={styles.container}
+          canvasStyle={[styles.canvas, { transform: [{ translateX: this.state.xOffset }, { translateY: this.state.yOffset }] }]}
+          localSourceImage={{ filename: this.state.currentFile, mode: 'AspectFit' }}
+          onStrokeEnd={this.SketchEnd}
+          onSketchStart={this.SketchStart}
+          strokeColors={[{ color: colors.black }]}
+          defaultStrokeIndex={0}
+          defaultStrokeWidth={DEFAULT_STROKE_WIDTH}
+        />
 
     );
   }

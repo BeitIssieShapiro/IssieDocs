@@ -241,30 +241,38 @@ export function getMaterialCommunityIconButton(callback, color, icon, size, isTe
 export function getSvgIconButton(callback, color, icon, size, isText, iconSize, selected) {
     return getIconButton(callback, color, icon, size, isText, iconSize, selected, "svg")
 }
-export function getIconButton(callback, color, icon, size, isText, iconSize, selected, iconType) {
+export function getIconButton(callback, color, icon, size, isText, iconSize, selected, iconType, notPressable) {
     iconType = iconType || "material";
     let isSvg = iconType === "svg";
 
+    let viewStyle = {
+        width: size, height: size,
+        alignContent: 'center',
+        alignItems: 'center',
+        borderRadius: size / 2,
+        justifyContent: 'center'
+    }
     const sizeToUse = iconSize ? iconSize : size;
-    return <View><TouchableOpacity
-        activeOpacity={0.7}
-        onPress={callback}
-        style={{
-            //backgroundColor: selected ? semanticColors.selectedEditToolColor : 'transparent',
-            width: size, height: size,
-            alignContent: 'center',
-            alignItems: 'center',
-            borderRadius: size / 2,
-            justifyContent: 'center'
-        }}
-    >
-        {isText ?
-            <AppText style={{ fontSize: sizeToUse, lineHeight: sizeToUse + 5, color: color, paddingTop: 6 }}>{icon}</AppText> :
-            isSvg ?
-                getSvgIcon(icon, sizeToUse, color) :
-                <Icon name={icon} type={iconType} size={sizeToUse} color={color} />}
 
-    </TouchableOpacity>
+    let viewContent = isText ?
+        <AppText style={{ fontSize: sizeToUse, lineHeight: sizeToUse + 5, color: color, paddingTop: 6 }}>{icon}</AppText> :
+        isSvg ?
+            getSvgIcon(icon, sizeToUse, color) :
+            <Icon name={icon} type={iconType} size={sizeToUse} color={color} />
+
+    return <View>
+        {notPressable ?
+            <View style={viewStyle}>
+                {viewContent}
+            </View>
+            :
+            <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={callback}
+                style={viewStyle}
+            >
+                {viewContent}
+            </TouchableOpacity>}
         {selected ? <View
             style={{
                 borderBottomColor: color,
@@ -484,7 +492,7 @@ export function IDMenuOptionsStyle(props) {
 
 export function renderMenuOption(title, icon, iconType) {
     return <View style={{ width: '100%', flexDirection: 'row-reverse', justifyContent: 'flex-start', alignItems: 'center' }}>
-        {getIconButton(undefined, semanticColors.addButton, icon, 40, undefined, undefined, undefined, iconType)}
+        {getIconButton(undefined, semanticColors.addButton, icon, 40, undefined, undefined, undefined, iconType, true)}
         <Spacer width={5} />
         <AppText>{title}</AppText>
     </View>

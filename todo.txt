@@ -1,4 +1,6 @@
 Bugs:
+- when zoom all the way out move to 0.0
+- 
 High:
 
 Medium:

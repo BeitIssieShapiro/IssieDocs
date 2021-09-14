@@ -22,8 +22,7 @@ const TILE_TEXT_HEIGHT = 25
 const TILE_BORDER_WIDTH = 1.5
 
 export default function FileNew(props) {
-    let imageSrc = props.page.defaultSrc;
-
+    let imageSrc = props.page.thumbnail;
     return (
         <TouchableOpacity
             key={props.name}

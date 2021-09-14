@@ -8,6 +8,8 @@ import mockPage from './mock.jpg'
 import { WorkSheet } from './work-sheet';
 import { trace, assert } from './log'
 
+const THUMBNAIL_SUFFIX = ".thumbnail.jpg";
+
 export class FileSystem {
     static SimulatorMockPage = mockPage;
     static main = new FileSystem();
@@ -106,9 +108,9 @@ export class FileSystem {
                 throw translate("FolderAlreadyExists");
             }
         } else {
-            trace("Folder ", name, " is about to be created" )
+            trace("Folder ", name, " is about to be created")
             await RNFS.mkdir(folderPath);
-            trace("Folder ", folderPath, " has been created" )
+            trace("Folder ", folderPath, " has been created")
             let fsf = new FileSystemFolder(name, this, { color, icon });
             this._folders.push(fsf);
 
@@ -120,7 +122,7 @@ export class FileSystem {
                     await _sortFolders(this._folders)
                 }
             }
-            trace("Folder ", name, " has been notified" )
+            trace("Folder ", name, " has been notified")
             this._notify(name);
         }
 
@@ -153,6 +155,34 @@ export class FileSystem {
     writeFile(path, content) {
         return RNFS.writeFile(path, content);
     }
+
+    async saveThumbnail(uri, page) {
+        let pathObj = this._parsePath(page.defaultSrc);
+        if (pathObj.folders.length < 1)
+            return;
+
+        let thumbnailPath = this._basePath + pathObj.folders[0] + '/' +
+            (pathObj.folders.length == 2 ? pathObj.folders[1] : pathObj.fileName);
+
+        if (thumbnailPath.endsWith(".jpg")) {
+            thumbnailPath = thumbnailPath.substring(0, thumbnailPath.length - 4);
+        }
+        let cacheBuster = Math.floor(Math.random() * 100000);
+        let thumbnailPathPattern = thumbnailPath + ".*" + THUMBNAIL_SUFFIX;
+        thumbnailPath += "." + cacheBuster + THUMBNAIL_SUFFIX;
+
+        // delete existing thumbnail
+        try {
+            if (page.thumbnail.endsWith(THUMBNAIL_SUFFIX))
+                await RNFS.unlink(page.thumbnail);
+        } catch (e) { }
+        console.log("mv", uri, thumbnailPath);
+        return RNFS.moveFile(uri, thumbnailPath).then(() => {
+            page.setThumbnail(thumbnailPath);
+            this._notify(pathObj.folders[0]);
+        });
+    };
+
     async saveFile(uri, filePath, isCopy) {
         //asserts that the filePath is in this filesystem:
         if (filePath.indexOf(this._basePath) != 0) {
@@ -573,11 +603,14 @@ export class FileSystemFolder {
     async reload() {
         console.log("reload folder: " + this._name);
         const items = await RNFS.readDir(this._fs.basePath + this._name);
-        const filesItems = items.filter(f => !f.name.endsWith(".json") && f.name !== ORDER_FILE_NAME && f.name !== ".metadata");
+        const filesItems = items.filter(f => !f.name.endsWith(".json") && f.name !== ORDER_FILE_NAME &&
+            f.name !== ".metadata" && !f.name.endsWith("thumbnail.jpg"));
+
         this._loading = true;
         this._files = [];
         for (let fi of filesItems) {
-            let sheet = new WorkSheet(fi.path, FileSystem.getFileNameFromPath(fi.name, true));
+            const name = FileSystem.getFileNameFromPath(fi.name, true);
+            let sheet = new WorkSheet(fi.path, name);
             let lastUpdate = Math.max(fi.mtime.valueOf(), fi.ctime.valueOf());
 
             if (fi.isDirectory()) {
@@ -591,11 +624,8 @@ export class FileSystemFolder {
 
                         sheet.addPage(pages[i].path);
                     }
-
-
                 }
-
-            } else if (!fi.name.endsWith(".json")) {
+            } else {
                 lastUpdate = Math.max(lastUpdate, fi.mtime.valueOf(), fi.ctime.valueOf());
                 sheet.addPage(fi.path);
                 //finds the .json file if exists
@@ -605,6 +635,13 @@ export class FileSystemFolder {
                 }
             }
 
+            //find thumbnail
+            let thumbnail = items.find(f => f.name.startsWith(name + ".") && f.name.endsWith(THUMBNAIL_SUFFIX));
+            
+            if (thumbnail) {
+                sheet.setThumbnail(thumbnail.path);
+                //console.log("found tn", thumbnail.path)
+            }
             sheet.lastUpdate = lastUpdate;
 
             this._files.push(sheet);

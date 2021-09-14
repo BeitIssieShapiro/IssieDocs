@@ -5,6 +5,7 @@ export class WorkSheet {
     _pages = [];
     _name;
     _path;
+    _thumbnail;
     lastUpdated;
 
     constructor(path, name) {
@@ -18,6 +19,10 @@ export class WorkSheet {
 
     get name() {
         return this._name;
+    }
+
+    get thumbnail() {
+        return this._thumbnail?this._thumbnail: this.defaultSrc;
     }
 
     get path() {
@@ -36,6 +41,10 @@ export class WorkSheet {
             return this._pages[index];
         }
         return undefined;
+    }
+
+    setThumbnail(path) {
+        this._thumbnail = path;
     }
 
     addPage(path) {

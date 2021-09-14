@@ -152,15 +152,19 @@ export default class RNSketchCanvas extends React.Component {
     this._sketchCanvas.deletePath(id)
   }
 
+  export(type, scaleToSize, callback) {
+    this._sketchCanvas.export(type, scaleToSize, callback);
+  }
+
   save() {
     if (this.props.savePreference) {
       const p = this.props.savePreference()
-      this._sketchCanvas.save(p.imageType, p.transparent, p.folder ? p.folder : '', p.filename, p.includeImage !== false, p.includeText !== false, p.cropToImageSize || false)
+      this._sketchCanvas.save(p.imageType, p.transparent, p.folder ? p.folder : '', p.filename, p.includeImage !== false, p.includeText !== false, p.cropToImageSize || false, p.scaleToSize || {width:0, height:0})
     } else {
       const date = new Date()
       this._sketchCanvas.save('png', false, '', 
         date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + ' ' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2),
-        true, true, false)
+        true, true, false, {width:0, height:0})
     }
   }
 

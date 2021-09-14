@@ -143,8 +143,16 @@ class SketchCanvas extends React.Component {
     UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.deletePath, [id])
   }
 
-  save(imageType, transparent, folder, filename, includeImage, includeText, cropToImageSize) {
-    UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.save, [imageType, folder, filename, transparent, includeImage, includeText, cropToImageSize])
+  export(imageType, scaleToSize, callback) {
+    if (Platform.OS === 'ios') {
+      SketchCanvasManager.export(this._handle, imageType, scaleToSize, callback)
+    } else {
+      NativeModules.SketchCanvasModule.transferToBase64(this._handle, imageType, scaleToSize, callback)
+    }
+  }
+
+  save(imageType, transparent, folder, filename, includeImage, includeText, cropToImageSize, scaleToSize) {
+    UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.save, [imageType, folder, filename, transparent, includeImage, includeText, cropToImageSize, scaleToSize])
   }
 
   getPaths() {
