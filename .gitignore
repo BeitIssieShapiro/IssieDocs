@@ -29,10 +29,10 @@ build/
 local.properties
 *.iml
 
-# node.js
-#
-node_modules/
-npm-debug.log
+
+node_modules
+
+npm-debug.log 
 yarn-error.log
 
 # include canvas
@@ -60,3 +60,6 @@ buck-out/
 
 # CocoaPods
 /ios/Pods/
+
+#exclude the Tesla camera. see https://github.com/teslamotors/react-native-camera-kit/issues/425
+!node_modules/react-native-camera-kit/ios/ReactNativeCameraKit/CKCamera.m

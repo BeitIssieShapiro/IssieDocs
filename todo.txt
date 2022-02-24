@@ -1,6 +1,9 @@
 Bugs:
-- when zoom all the way out move to 0.0
-- 
+V- when closing keyboard, move back
+V- when in zoom and open keyboard, sometimes loose location - move not considering zoom - 
+V- camera not in right orientation sometimes 
+
+ 
 High:
 
 Medium:

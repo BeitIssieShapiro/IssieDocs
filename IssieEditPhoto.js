@@ -222,10 +222,11 @@ export default class IssieEditPhoto extends React.Component {
 
     // if keyboard hides the textInput, scroll the window
     if (this.state.showTextInput) {
-      trace("keyboardShow", "topLayer", this.topLayer(), "topView", this.state.topView, "kbH", kbHeight, "yOffset", yOffset, "y", this.state.yText)
-      let diff = this.state.yText * this.state.zoom + yOffset - kbTop;
+      let diff = this.state.yText * this.state.zoom + yOffset * this.state.zoom - kbTop;
+      trace("keyboardShow", "zoom", this.state.zoom, "topView", this.state.topView, "kbT", kbTop, "kbH", kbHeight, "yOffset", yOffset, "y", this.state.yText, "diff", diff)
       if (diff > -20) {
-        yOffset -= diff + 2 * this.state.fontSize - 10;
+        //yOffset -= diff + 2 * this.state.fontSize - 10;
+        yOffset -= diff / this.state.zoom + 2 * this.state.fontSize - 10;
       }
     }
 
@@ -237,7 +238,7 @@ export default class IssieEditPhoto extends React.Component {
   _keyboardDidHide = (e) => {
     trace("keyboard did hide")
     this.SaveText()
-    this.setState({ keyboardHeight: 0, showTextInput: false });
+    this.setState({ keyboardHeight: 0, showTextInput: false, yOffset:this.state.zoom === 1?0:this.state.yOffset });
   }
 
   componentDidMount = async () => {
@@ -361,7 +362,7 @@ export default class IssieEditPhoto extends React.Component {
       this.state.metaDataUri,
       content).then(
         //success
-        ()=>{
+        () => {
           // Save thumbnail
           if (this.canvas && this.state.page.count === 1 || this.state.currentIndex === 0) {
             let filePath = FileSystem.getTempFileName("jpg");
@@ -369,12 +370,12 @@ export default class IssieEditPhoto extends React.Component {
             let lastSlashPos = filePath.lastIndexOf('/');
             let folder = filePath.substring(0, lastSlashPos);
             console.log("save thumbnail to folder", folder)
-            this.canvas.export("jpg", {width:80, height:120}, (err, path)=>{
+            this.canvas.export("jpg", { width: 80, height: 120 }, (err, path) => {
               console.log("save thumbnail", path)
-              FileSystem.main.saveThumbnail(path, this.props.route.params.page);  
+              FileSystem.main.saveThumbnail(path, this.props.route.params.page);
             });
             //.then(res=>{
-            
+
             //});
           }
           // if (this.viewShot && this.state.page.count === 1 || this.state.currentIndex === 0) {
@@ -621,7 +622,7 @@ export default class IssieEditPhoto extends React.Component {
     //Alert.alert(JSON.stringify(canvasTexts))
 
     if (this.state.needCanavaDataSave) {
-      setTimeout(()=>this.Save(), 100);
+      setTimeout(() => this.Save(), 100);
     }
 
     this.setState({ canvasTexts: canvasTexts, needCanvasUpdate: false, needCanavaDataSave: false, needCanvasUpdateTextOnly: false });
@@ -1213,36 +1214,36 @@ export default class IssieEditPhoto extends React.Component {
     // let w = this.state.windowW;
     // let h = this.state.windowW;
     return (
-        <RNSketchCanvas
-          ref={component => {
-            this.canvas = component;
-            if (this.state.needCanvasUpdate) {
-              setTimeout(() => {
-                if (component) {
-                  this.UpdateCanvas(component);
-                }
-              }, 100);
-            } else if (this.state.needExport) {
-              let promise = this.state.needExport;
-              this.setState({ needExport: undefined })
-              setTimeout(() => {
-                this.doExport(component, promise.resolve, promise.reject);
-              }, shareTimeMs);
-            }
+      <RNSketchCanvas
+        ref={component => {
+          this.canvas = component;
+          if (this.state.needCanvasUpdate) {
+            setTimeout(() => {
+              if (component) {
+                this.UpdateCanvas(component);
+              }
+            }, 100);
+          } else if (this.state.needExport) {
+            let promise = this.state.needExport;
+            this.setState({ needExport: undefined })
+            setTimeout(() => {
+              this.doExport(component, promise.resolve, promise.reject);
+            }, shareTimeMs);
           }
-          }
-          scale={this.state.zoom}
-          touchEnabled={!this.state.textMode}
-          text={this.state.canvasTexts}
-          containerStyle={styles.container}
-          canvasStyle={[styles.canvas, { transform: [{ translateX: this.state.xOffset }, { translateY: this.state.yOffset }] }]}
-          localSourceImage={{ filename: this.state.currentFile, mode: 'AspectFit' }}
-          onStrokeEnd={this.SketchEnd}
-          onSketchStart={this.SketchStart}
-          strokeColors={[{ color: colors.black }]}
-          defaultStrokeIndex={0}
-          defaultStrokeWidth={DEFAULT_STROKE_WIDTH}
-        />
+        }
+        }
+        scale={this.state.zoom}
+        touchEnabled={!this.state.textMode}
+        text={this.state.canvasTexts}
+        containerStyle={styles.container}
+        canvasStyle={[styles.canvas, { transform: [{ translateX: this.state.xOffset }, { translateY: this.state.yOffset }] }]}
+        localSourceImage={{ filename: this.state.currentFile, mode: 'AspectFit' }}
+        onStrokeEnd={this.SketchEnd}
+        onSketchStart={this.SketchStart}
+        strokeColors={[{ color: colors.black }]}
+        defaultStrokeIndex={0}
+        defaultStrokeWidth={DEFAULT_STROKE_WIDTH}
+      />
 
     );
   }
