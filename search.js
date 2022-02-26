@@ -33,7 +33,9 @@ export default function Search(props) {
             width: '90%',
             backgroundColor: 'white',
             borderRadius: 15,
-            alignItems: 'center'
+            alignItems: 'center',
+            alignContent: 'center',
+            justifyContent:'center'
         }}>
             <TextInput
                 placeholder={'  ' + translate("Search")}
@@ -48,7 +50,7 @@ export default function Search(props) {
                 }}
                 value={props.value}
             />
-            <View style={{ position: 'absolute', left: '1%', flexDirection:'row', alignItems:'center' }}>
+            <View style={{ position: 'absolute', left: '1%', flexDirection:'row', alignItems:'center', justifyContent:'center', alignContent:'center' }}>
                 <Icon name={"search"} size={30} color={"#010101"} />
                 <Spacer />
                 {props.value && props.value.length > 0?getIconButton(()=>props.onChangeText(""), "#010101", "close", 20):null}
