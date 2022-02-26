@@ -112,8 +112,6 @@ export default class IssieEditPhoto extends React.Component {
 
         let touches = evt.nativeEvent.touches;
         if (touches.length == 2) {
-          let touch1 = touches[0];
-          let touch2 = touches[1];
           this._pinch = true;
           processPinch(this,
             touches[0].pageX - this.state.sideMargin, touches[0].pageY - this.topLayer(),
@@ -728,7 +726,7 @@ export default class IssieEditPhoto extends React.Component {
     this.props.navigation.navigate('SavePhoto', {
       sheet: page,
       imageSource: SRC_RENAME,
-      folder: this.state.currentFolder,
+      folder: this.props.route.params['folder'],
 
       name: page.name,
       returnFolderCallback: this.props.route.params.returnFolderCallback,
