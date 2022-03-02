@@ -500,7 +500,8 @@ export default class IssieEditPhoto extends React.Component {
         Math.abs(origElem.normPosition.x - newElem.normPosition.x) <= 5 &&
         Math.abs(origElem.normPosition.y - newElem.normPosition.y) <= 5 &&
         origElem.fontSize == newElem.fontSize &&
-        origElem.fontColor == newElem.fontColor) {
+        origElem.fontColor == newElem.fontColor &&
+        origElem.width == newElem.width) {
         //need to set the current text back to canvas
         this.setState({
           needCanvasUpdate: true,
@@ -566,6 +567,7 @@ export default class IssieEditPhoto extends React.Component {
     newTextElem.rtl = true;
     newTextElem.fontColor = this.state.color;
     newTextElem.fontSize = this.state.fontSize;
+    newTextElem.width = this.getTextWidth();
     newTextElem.font = APP_FONT;
     return newTextElem;
   }
@@ -1391,7 +1393,7 @@ export default class IssieEditPhoto extends React.Component {
     }
   }
 
-  getTextWidth = () => 2000;//Math.max(this.state.inputTextWidth + 100, 40) * this.state.zoom; //< INITIAL_TEXT_SIZE - 20 ? INITIAL_TEXT_SIZE : this.state.inputTextWidth + this.state.fontSize * 2;
+  getTextWidth = () => Math.max(30,this.state.xText); //2000;//Math.max(this.state.inputTextWidth + 100, 40) * this.state.zoom; //< INITIAL_TEXT_SIZE - 20 ? INITIAL_TEXT_SIZE : this.state.inputTextWidth + this.state.fontSize * 2;
   getTextHeight = () => Math.max(this.state.inputTextHeight, this.state.fontSize + 1.2);
 }
 
