@@ -38,6 +38,9 @@ var strings = {
         "NoPagesYet": "התיקיה ריקה",
         "ChooseFolder": "בחר תיקיה",
 
+        "SearchResults": "תוצאות חיפוש",
+        "NoSearchResults": "לא נמצאו תיקיות או דפי עבודה המתאימים לחיפוש",
+
         "SavePageFormTitle": "שמירת דף",
         "RenameFormTitle": "שנה שם",
         "DuplicatePageFormTitle": "שכפל דף",
@@ -112,6 +115,9 @@ var strings = {
         "PDFLoadFailed": "فشل في تحميل ملف PDF",
         "DefaultFolder": "عام",
         "Search":"بحث",
+        "SearchResults": "نتائج البحث",
+        
+        "NoSearchResults": "لم يتم العثور على مجلدات أو أوراق عمل بحسب عملية البحث",
 
         "DeletePageTitle": "حذف الصفحة",
         "DeleteFolderTitle": "حذف المجلد",

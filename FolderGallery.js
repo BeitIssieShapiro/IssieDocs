@@ -568,7 +568,7 @@ export default class FolderGallery extends React.Component {
                 <MenuTrigger >
                     {getSvgIconButton(() => this.menu.open(), semanticColors.addButton, "menu-new-empty-page", 40)}
                 </MenuTrigger>
-                <MenuOptions {...IDMenuOptionsStyle({top:dimensions.toolbarHeight - 12, width:200})}>
+                <MenuOptions {...IDMenuOptionsStyle({ top: dimensions.toolbarHeight - 12, width: 200 })}>
                     <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Blank)}>
                         {renderMenuOption(translate("MenuNewPageEmpty"), "page-empty", "svg")}
                     </MenuOption>
@@ -600,16 +600,29 @@ export default class FolderGallery extends React.Component {
 
         let fIndex = 0;
         let items = [];
+        let folders = [];
         let folderIsLoading = false;
         if (this.state.currentFolder) {
-            //console.log(this.state.currentFolder);
             items = this.state.currentFolder.items;
             folderIsLoading = this.state.currentFolder.loading;
+        } else if (this.state.folders) {
+            folders = this.state.folders;
+            if (this.state.filterFolders?.length > 0) {
+
+                //aggregates all files matching the filter
+                folders.forEach(folder => {
+                    items = items.concat(folder.items.filter(file => {
+                        //trace("file.name", file.name, file.name.indexOf(this.state.filterFolders))
+                        return file.name.indexOf(this.state.filterFolders) >= 0
+                    }));
+                })
+
+                folders = folders.filter((item) => checkFilter(this.state.filterFolders, item.name))
+            }
         }
 
-        if (this.state.folders && this.state.folders.length) {
-            fIndex = this.state.folders.findIndex(f => f.name == curFolderFullName);
-        }
+        fIndex = folders.findIndex(f => f.name == curFolderFullName);
+
         let viewStyle = Settings.get(VIEW.name);
         let asTiles = viewStyle === VIEW.tiles;
 
@@ -622,7 +635,7 @@ export default class FolderGallery extends React.Component {
         let pagesContainerWidth = this.state.windowSize.width - treeWidth;
         let numColumnsForTiles = Math.floor(pagesContainerWidth / dimensions.tileWidth);
         trace("numOfColumns:", numColumnsForTiles)
-        let foldersCount = this.state.folders ? this.state.folders.length : 1;
+        let foldersCount = folders.length;
         let foldersHeightSize = dimensions.topView + dimensions.toolbarHeight + foldersCount * dimensions.folderHeight;
         let needFoldersScroll = foldersHeightSize > this.state.windowSize.height;
 
@@ -636,7 +649,6 @@ export default class FolderGallery extends React.Component {
         let isEmptyApp = !this.state.folders || this.state.folders.length == 0;
         if (isEmptyApp)
             console.log("empty app")
-
 
         return (
             <View style={styles.container}
@@ -794,6 +806,7 @@ export default class FolderGallery extends React.Component {
                                     />}
 
                             </View>
+
                             {/* pages */}
                             <View style={{
                                 flex: 1,
@@ -801,6 +814,41 @@ export default class FolderGallery extends React.Component {
                                 position: 'absolute', top: this.isScreenLow() ? '17%' : '10%', width: "100%",
                                 height: this.isScreenLow() ? '83%' : '90%'
                             }}>
+                                {this.state.filterFolders?.length > 0 &&
+                                    <AppText style={{ fontSize: 25, paddingRight: 15, lineHeight: 25 + 2 }}>
+                                        {translate("SearchResults") + ":   " + (folders.length === 0 && items.length === 0 ? translate("NoSearchResults") : "")}
+                                    </AppText>
+                                }
+
+
+
+
+                                {!this.state.currentFolder && <View
+                                    style={{
+                                        flexWrap: 'wrap', flexDirection: 'row-reverse',
+                                        width: '100%', justifyContent: this.state.filterFolders?.length > 0 ? 'flex-start' : 'center', alignItems: 'center',
+                                        //height: '100%'
+                                    }}
+                                >
+                                    {folders.map((item, index) => <FolderNew
+                                        key={index.toString()}
+                                        id={item.name}
+                                        isOverview={true}
+                                        name={item.name}
+                                        color={item.color}
+                                        icon={item.icon}
+                                        width={'30%'}
+                                        editMode={this.state.editMode}
+                                        fixedFolder={false}//item.name === DEFAULT_FOLDER_NAME}
+                                        current={false}
+                                        onPress={() => this.selectFolder(item)}
+
+                                        isLandscape={this.isLandscape()}
+                                    />)}
+
+                                </View>}
+
+
                                 {items.length > 0 ?
                                     <FlatList
                                         style={{
@@ -840,42 +888,17 @@ export default class FolderGallery extends React.Component {
                                     />
 
 
-                                    : this.state.currentFolder ?
-                                        folderIsLoading ?
-                                            <View>
-                                                <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
-                                            </View>
-                                            :
-                                            <View style={{ alignItems: 'center', height: '100%' }}>
-                                                <Spacer height='20%' />
-                                                {getSvgIcon('folder', this.isMobile() ? 85 : 150)}
-                                                <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("NoPagesYet")}</AppText>
-                                            </View>
-                                        :
-
-                                        <View
-                                            style={{
-                                                flexWrap: 'wrap', flexDirection: 'row-reverse',
-                                                width: '90%', justifyContent: 'flex-start', alignItems: 'center',
-                                                height: '100%'
-                                            }}
-                                        >
-                                            {this.state.folders.filter((item) => checkFilter(this.state.filterFolders, item.name)).map((item, index) => <FolderNew
-                                                key={index.toString()}
-                                                id={item.name}
-                                                isOverview={true}
-                                                name={item.name}
-                                                color={item.color}
-                                                icon={item.icon}
-                                                width={'30%'}
-                                                editMode={this.state.editMode}
-                                                fixedFolder={false}//item.name === DEFAULT_FOLDER_NAME}
-                                                current={false}
-                                                onPress={() => this.selectFolder(item)}
-
-                                                isLandscape={this.isLandscape()}
-                                            />)}
+                                    : this.state.currentFolder && (folderIsLoading ?
+                                        <View>
+                                            <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
                                         </View>
+                                        :
+                                        <View style={{ alignItems: 'center', height: '100%' }}>
+                                            <Spacer height='20%' />
+                                            {getSvgIcon('folder', this.isMobile() ? 85 : 150)}
+                                            <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("NoPagesYet")}</AppText>
+                                        </View>
+                                    )
 
                                 }
                             </View>
