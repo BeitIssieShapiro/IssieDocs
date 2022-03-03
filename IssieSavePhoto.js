@@ -381,7 +381,7 @@ export default class IssieSavePhoto extends React.Component {
         this.setState({
           imageUri: uri, state: OK_Cancel,
           pages: [...this.state.pages, uri], multiPage: true,
-        });
+        }, this.updateImageDimension);
       },
       //cancel
       () => { },
@@ -430,29 +430,32 @@ export default class IssieSavePhoto extends React.Component {
       //success: 
       (newImageUri) => {
         //assumes that only last page is cropped
-        let pages = this.state.pages;
-        if (this.state.multiPage) {
-          pages.pop();
-          pages.push(newImageUri);
-        }
-        this.setState({ pathToSave: newImageUri, imageUri: newImageUri, cropping: false, pages }, this.updateImageDimension)
+        this.replaceLast(newImageUri);
       },
       //failure: 
       (error) => Alert.alert("Failed to crop:" + error)
     )
   }
 
+  replaceLast = (uri) => {
+    const pages = this.state.pages;
+    let pathToSave = this.state.pathToSave;
+    if (!this.state.multiPage) {
+      pathToSave = uri;
+    }
+    pages.pop();
+    pages.push(uri);
+    //console.log("replaceLast", this.state.pathToSave, pathToSave, JSON.stringify(pages))
+
+    this.setState({ pathToSave, imageUri: uri, pages, cropping: false }, this.updateImageDimension);
+
+  }
+
   rotate = (deg) => {
     //width and height are echanged as we rotate by 90 deg
     ImageResizer.createResizedImage(this.state.imageUri, this.state.imgSize.h, this.state.imgSize.w, "JPEG", 100, deg, null).then(
       (response) => {
-        let pages = this.state.pages;
-        if (this.state.multiPage) {
-          pages.pop();
-          pages.push(response.path);
-        }
-
-        this.setState({ pathToSave: response.path, imageUri: response.path, pages }, this.updateImageDimension);
+        this.replaceLast(response.path);
         // response.uri is the URI of the new image that can now be displayed, uploaded...
         // response.path is the path of the new image
         // response.name is the name of the new image with the extension
