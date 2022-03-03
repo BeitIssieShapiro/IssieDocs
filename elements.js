@@ -112,7 +112,8 @@ export const availableIcons = [
 ]
 
 export const availableColorPicker = [
-    '#000000', '#fee100', '#20ad57', '#5db7dd', '#2958af', '#d62796', '#65309c', '#da3242', '#f5771c'
+    '#000000', '#fee100', '#20ad57', '#5db7dd', '#2958af', '#d62796', '#65309c', '#da3242'
+    //, '#f5771c'
 ]
 
 export const availableTextSize = [
@@ -615,6 +616,10 @@ export function AppText(props) {
 }
 
 export function getColorButton(callback, color, size, selected, index) {
+    return getColorButtonInt(callback, color, size, selected?"check":undefined, index)
+}
+
+export function getColorButtonInt(callback, color, size, icon, index) {
     return <TouchableOpacity
         onPress={callback}
         activeOpacity={0.7}
@@ -631,7 +636,7 @@ export function getColorButton(callback, color, size, selected, index) {
         }}
         >
 
-            {selected ? <Icon color="white" size={40} name="check"></Icon> : null}
+            {icon && <Icon color="white" size={40} name={icon}></Icon>}
         </View>
     </TouchableOpacity>
 }

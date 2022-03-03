@@ -13,7 +13,7 @@ import DoQueue from './do-queue';
 import FadeInView from './FadeInView'
 
 import {
-  Spacer, getRoundedButton, getEraserIcon, getColorButton,
+  Spacer, getRoundedButton, getEraserIcon,
   renderMenuOption, IDMenuOptionsStyle
 } from './elements'
 import { SRC_RENAME } from './newPage';
@@ -40,6 +40,7 @@ import { setNavParam } from './utils';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { pinchEnd, processPinch } from './pinch';
+import { MyColorPicker } from './pickers';
 
 //const this.topLayer() = dimensions.toolbarHeight + dimensions.toolbarMargin; //51 + 8 + 8 + 35;
 const shareTimeMs = 2000;
@@ -212,31 +213,43 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   _keyboardDidShow = (e) => {
-    let yOffset = this.state.yOffset;
     let kbTop = this.state.windowH - e.endCoordinates.height;
 
     //ignore the part of keyboard that is below the canvas
     let kbHeight = e.endCoordinates.height - (this.state.windowH - this.topLayer() - this.state.canvasH);
 
+    this.setState({
+      keyboardHeight: kbHeight, keyboardTop: kbTop,
+    });
+
+    this._handleInputTextLocationMovingPage(kbHeight, kbTop);
+  }
+
+  _handleInputTextLocationMovingPage = (kbHeight, kbTop) => {
+    if (!kbHeight || !kbTop)
+      return;
+
+    let yOffset = this.state.yOffset;
+
     // if keyboard hides the textInput, scroll the window
     if (this.state.showTextInput) {
-      let diff = this.state.yText * this.state.zoom + yOffset * this.state.zoom - kbTop;
-      trace("keyboardShow", "zoom", this.state.zoom, "topView", this.state.topView, "kbT", kbTop, "kbH", kbHeight, "yOffset", yOffset, "y", this.state.yText, "diff", diff)
-      if (diff > -20) {
-        //yOffset -= diff + 2 * this.state.fontSize - 10;
-        yOffset -= diff / this.state.zoom + 2 * this.state.fontSize - 10;
+      let diff = (this.state.yText + this.state.inputTextHeight) * this.state.zoom + yOffset * this.state.zoom - kbTop;
+      if (diff > 0) {
+        yOffset -= diff / this.state.zoom;
       }
     }
+    if (yOffset !== this.state.yOffset) {
+      this.setState({
+        yOffset
+      });
 
-    this.setState({
-      yOffset, keyboardHeight: kbHeight
-    });
+    }
   }
 
   _keyboardDidHide = (e) => {
     trace("keyboard did hide")
     this.SaveText()
-    this.setState({ keyboardHeight: 0, showTextInput: false, yOffset:this.state.zoom === 1?0:this.state.yOffset });
+    this.setState({ keyboardHeight: 0, showTextInput: false, yOffset: this.state.zoom === 1 ? 0 : this.state.yOffset });
   }
 
   componentDidMount = async () => {
@@ -566,6 +579,7 @@ export default class IssieEditPhoto extends React.Component {
     newTextElem.alignment = 'Right';
     newTextElem.rtl = true;
     newTextElem.fontColor = this.state.color;
+    console.log("getTextElem, fontSize", this.state.fontSize);
     newTextElem.fontSize = this.state.fontSize;
     newTextElem.width = this.getTextWidth();
     newTextElem.font = APP_FONT;
@@ -888,6 +902,7 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     let spaceBetweenButtons = <Spacer width={23} />
+    const availablePickerWidth = this.state.windowW - 2 * toolbarSideMargin;
     let colorButtonSize = (this.state.windowW - 2 * toolbarSideMargin) / (availableColorPicker.length * 1.4);
     let backToFolderWidth = 45;
     //trace("dims:", this.state.canvasW, this.state.canvasH)
@@ -1069,16 +1084,27 @@ export default class IssieEditPhoto extends React.Component {
         </View>
         {/** */}
         {/*View for selecting color*/}
-        <FadeInView height={this.state.showColorPicker ? 70 : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
-          <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
+        {/*<FadeInView height={this.state.showColorPicker ? 70 : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
+           <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
             {availableColorPicker.map((color, i) => getColorButton(() => {
               this.setState({ color: color, showColorPicker: false, eraseMode: false })
               this.updateBrush(this.state.strokeWidth, color);
               this.updateInputText();
             }, color, colorButtonSize, color == this.state.color && !this.state.eraseMode, i))
             }
-          </View>
-        </FadeInView>
+          </View> 
+        </FadeInView>*/}
+        <MyColorPicker
+          open={this.state.showColorPicker}
+          top={toolbarHeight}
+          width={availablePickerWidth} 
+          color={this.state.eraseMode ? undefined : this.state.color}
+          onSelect={(color) => {
+            trace("set-color", color)
+            this.setState({ color, showColorPicker: false, eraseMode: false })
+            this.updateBrush(this.state.strokeWidth, color);
+            this.updateInputText();
+          }} />
 
         {/*View for selecting text size*/}
         <FadeInView height={this.state.showTextSizePicker && this.state.textMode ? 70 : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
@@ -1330,7 +1356,8 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getTextInput = (x, y) => {
-    trace("getTextInput width:", this.getTextWidth())
+    trace("getTextInput width:", this.getTextWidth(), "fontSize", this.normalizeTextSize(this.state.fontSize))
+    this._handleInputTextLocationMovingPage(this.state.keyboardHeight, this.state.keyboardTop);
     return (
       <View style={{
         flex: 1, flexDirection: 'row-reverse', position: 'absolute',
@@ -1358,13 +1385,14 @@ export default class IssieEditPhoto extends React.Component {
           autoCorrect={false}
           multiline={true}
           autoFocus
-
+          allowFontScaling={false}
           style={{
             backgroundColor: 'transparent',
             textAlign: 'right',
             width: this.getTextWidth(),
-            height: this.getTextHeight(),
+            height: this.state.inputTextHeight,//this.getTextHeight(),
             borderWidth: 0,
+            margin: 0,
             fontSize: this.normalizeTextSize(this.state.fontSize),
             color: this.state.color,
             fontFamily: APP_FONT,
@@ -1393,8 +1421,8 @@ export default class IssieEditPhoto extends React.Component {
     }
   }
 
-  getTextWidth = () => Math.max(30,this.state.xText); //2000;//Math.max(this.state.inputTextWidth + 100, 40) * this.state.zoom; //< INITIAL_TEXT_SIZE - 20 ? INITIAL_TEXT_SIZE : this.state.inputTextWidth + this.state.fontSize * 2;
-  getTextHeight = () => Math.max(this.state.inputTextHeight, this.state.fontSize + 1.2);
+  getTextWidth = () => Math.max(30, this.state.xText); //2000;//Math.max(this.state.inputTextWidth + 100, 40) * this.state.zoom; //< INITIAL_TEXT_SIZE - 20 ? INITIAL_TEXT_SIZE : this.state.inputTextWidth + this.state.fontSize * 2;
+  getTextHeight = () => this.state.inputTextHeight // Math.max(this.state.inputTextHeight, this.state.fontSize + 1.2);
 }
 
 AppRegistry.registerComponent('IssieEditPhoto', () => IssieEditPhoto);
