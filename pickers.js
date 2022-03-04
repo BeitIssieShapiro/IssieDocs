@@ -5,11 +5,14 @@ import {
 } from 'react-native';
 
 import {
-    availableColorPicker, getColorButton, getColorButtonInt, getRoundedButton
+    AppText,
+    availableColorPicker, availableTextSize, extendedTextSizes, getColorButton, getColorButtonInt, getRoundedButton, textSizes
 } from './elements'
 import FadeInView from './FadeInView';
 import ColorPicker from 'react-native-wheel-color-picker'
 import { trace } from './log';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { translate } from './lang';
 
 
 const styles = StyleSheet.create({
@@ -21,6 +24,7 @@ const styles = StyleSheet.create({
         left: 0,
         borderColor: 'gray',
         borderWidth: 1,
+        padding: 5,
         alignItems: 'center'
     }
 });
@@ -40,7 +44,7 @@ export function MyColorPicker(props) {
         <View
             style={{
                 flexDirection: 'row',
-                width: '100%', top: 0, height: colorButtonSize + 10,
+                width: '100%', height: colorButtonSize ,
                 justifyContent: 'space-evenly', alignItems: 'center'
             }}>
             {availableColorPicker.map((color, i) => getColorButton(
@@ -92,3 +96,64 @@ export function MyColorPicker(props) {
     </FadeInView>
 }
 
+
+export function TextSizePicker(props) {
+    const [openMore, setOpenMore] = useState(false);
+
+    let buttonSize = (props.width) / ((textSizes.length + 1) * 1.4);
+
+    return <FadeInView height={props.open ? buttonSize + 10 + (openMore ? buttonSize + 10 : 0) : 0}
+        style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
+        <View
+            style={{
+                flexDirection: 'row', width: '100%', height: buttonSize + 5,
+                justifyContent: 'space-evenly', alignContent: 'center'
+            }}>
+            {textSizes.map((size, i) => getTextSizePicker(props.color, buttonSize, size, size === props.size, i,
+                (size) => {
+                    setOpenMore(false)
+                    props.onSelect(size)
+                }))}
+
+            {/* More button */}
+            {getColorButtonInt(() => setOpenMore(val => !val),
+                "white",
+                buttonSize,
+                "more-vert",
+                "",
+                "black"
+            )}
+        </View>
+        <View
+            style={{
+                flexDirection: 'row', width: '100%', height: buttonSize + 5,
+                justifyContent: 'space-evenly'
+            }}>
+            {extendedTextSizes.map((size, i) => getTextSizePicker(props.color, buttonSize, size, size === props.size, i, (size) => props.onSelect(size)))}
+
+
+        </View>
+    </FadeInView>
+}
+
+function getTextSizePicker(color, size, textSize, selected, index, callback) {
+    return <TouchableOpacity
+        onPress={() => callback(textSize)}
+        activeOpacity={0.7}
+        key={"" + index}
+    >
+        <View style={{
+            backgroundColor: selected ? '#eeeded' : 'transparent',
+            borderRadius: size / 2,
+            width: size,
+            height: size,
+            justifyContent: 'center',
+            alignItems: 'center',
+            alignContent: 'center',
+        }}
+        >
+            <AppText style={{ fontSize: textSize, color: color, 
+        textAlignVertical:'center',  lineHeight:textSize+12}}>{translate("A")}</AppText>
+        </View>
+    </TouchableOpacity>
+}

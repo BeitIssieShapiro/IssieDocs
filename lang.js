@@ -278,7 +278,7 @@ export function loadLanguage() {
     }
 
     if (isSimulator()) {
-        gPrefix = "."
+        //gPrefix = "."
     }
 }
 

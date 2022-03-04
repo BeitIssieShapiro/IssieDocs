@@ -40,7 +40,7 @@ import { setNavParam } from './utils';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { pinchEnd, processPinch } from './pinch';
-import { MyColorPicker } from './pickers';
+import { MyColorPicker, TextSizePicker, TextSizePicket } from './pickers';
 
 //const this.topLayer() = dimensions.toolbarHeight + dimensions.toolbarMargin; //51 + 8 + 8 + 35;
 const shareTimeMs = 2000;
@@ -1026,6 +1026,7 @@ export default class IssieEditPhoto extends React.Component {
               {this.state.textMode ?
                 <AppText style={{
                   fontSize: this.state.fontSize,
+                  lineHeight: this.state.fontSize + 8,
                   color: this.state.color,
                   textAlignVertical: 'center'
                 }}>{translate("A B C")}</AppText> :
@@ -1097,7 +1098,7 @@ export default class IssieEditPhoto extends React.Component {
         <MyColorPicker
           open={this.state.showColorPicker}
           top={toolbarHeight}
-          width={availablePickerWidth} 
+          width={availablePickerWidth}
           color={this.state.eraseMode ? undefined : this.state.color}
           onSelect={(color) => {
             trace("set-color", color)
@@ -1107,11 +1108,20 @@ export default class IssieEditPhoto extends React.Component {
           }} />
 
         {/*View for selecting text size*/}
-        <FadeInView height={this.state.showTextSizePicker && this.state.textMode ? 70 : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
+        {/* <FadeInView height={this.state.showTextSizePicker && this.state.textMode ? 70 : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
           <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-evenly', alignContent: 'center', alignItems: 'center' }}>
             {availableTextSize.map((size, i) => this.getTextSizePicker(this.state.color, colorButtonSize, size, i))}
           </View>
-        </FadeInView>
+        </FadeInView> */}
+        <TextSizePicker
+          open={this.state.showTextSizePicker && this.state.textMode}
+          top={toolbarHeight}
+          width={availablePickerWidth}
+          size={this.state.fontSize}
+          color={this.state.color}
+          onSelect={(size) => this.onTextSize(size)}
+        />
+
 
         {/*View for selecting brush size*/}
         <FadeInView height={this.state.showBrushSizePicker && !this.state.textMode ? 70 : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
@@ -1120,6 +1130,7 @@ export default class IssieEditPhoto extends React.Component {
 
           </View>
         </FadeInView>
+
         {/*View for zoom*/}
         <FadeInView height={this.state.showZoomPicker ? 70 : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
           <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
@@ -1306,25 +1317,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
 
-  getTextSizePicker = (color, size, textSize, index) => {
-    return <TouchableOpacity
-      onPress={() => this.onTextSize(textSize)}
-      activeOpacity={0.7}
-      key={"" + index}
-    >
-      <View style={{
-        backgroundColor: textSize === this.state.fontSize ? '#eeeded' : 'transparent',
-        borderRadius: size / 2,
-        width: size,
-        height: size,
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}
-      >
-        <AppText style={{ fontSize: textSize, color: color }}>{translate("A")}</AppText>
-      </View>
-    </TouchableOpacity>
-  }
+
 
   getBrushSizePicker = (color, size, brushSize, index) => {
     return <TouchableOpacity

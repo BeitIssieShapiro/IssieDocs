@@ -3,7 +3,13 @@ V- when closing keyboard, move back
 V- when in zoom and open keyboard, sometimes loose location - move not considering zoom - 
 V- camera not in right orientation sometimes 
 
- 
+V - when you crop in 2 pages - save - first page's crop is lost and second is zoomed?
+V - in landscape mode, the color selection's circles are growing and are cut
+V - when typing:
+    V - long text, do not let the text go over the page - wrap it
+    V - while typing if the text goes below the keyboard - move page
+V - when editing large font size, when exiting text mode the size changes (or is it just the yellow?)
+
 High:
 
 Medium:
@@ -14,4 +20,22 @@ Low:
 
 
 Features:
-- zoom
+Large: 
+- Add photo to existing page
+- translate to english ?
+- Android ?
+- folder in folder?
+
+Medium:
+- remove default folder all together. render pages on desktop
+- in save page, do not show template folders, but "more.." will hide them
+- in new folder, add option to select a photo from lib
+V - in letter sizes, add "more" and add even bigger options
+  V - fix preview size
+V - in color selection, add "more" (instead of orange) and add pallette? 
+    what about remembering the selected colors?
+
+Low:
+- (low) when using arrows to move in zoom, should the view port moves or page moves?
+- date of page?
+
