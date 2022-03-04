@@ -23,7 +23,7 @@ var strings = {
         "ShareSuccessful": "שיתוף הסתיים בהצלחה",
         "ActionCancelled": "הפעולה בוטלה",
         "PDFLoadFailed": "טעינת PDF נכשלה",
-        "DefaultFolder": "כללי",
+        "DefaultFolder": "ראשי", // modified
         "Search":"חפש",
 
         "DeletePageTitle": "מחיקת דף",

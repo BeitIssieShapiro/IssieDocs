@@ -32,7 +32,15 @@ export default function FileNew(props) {
         >
             {props.asTile ?
                 <View style={{ alignContent: 'center', paddingRight: TILE_PADDING, height: '100%', width: '100%',  }}>
-                    <View style={{ borderWidth: TILE_BORDER_WIDTH, borderColor: "#D1CFCF", height: '100%', width: '100%' }}>
+                    <View 
+                        style={{ 
+                            borderWidth: TILE_BORDER_WIDTH, 
+                            borderColor: "#D1CFCF", 
+                            height: '100%', 
+                            width: '100%' ,
+                            margin: 10
+
+                        }}>
 
                         <View style={{
                             position: 'absolute', top: 0,

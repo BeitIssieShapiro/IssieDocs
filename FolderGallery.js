@@ -23,7 +23,8 @@ import {
     getSvgIconButton,
     renderMenuOption,
     getRoundedButton,
-    IDMenuOptionsStyle
+    IDMenuOptionsStyle,
+    FolderIcon
 } from './elements'
 import {
     Menu,
@@ -31,6 +32,7 @@ import {
     MenuOption,
     MenuTrigger,
 } from 'react-native-popup-menu';
+import { Icon } from 'react-native-elements'
 
 
 
@@ -592,21 +594,23 @@ export default class FolderGallery extends React.Component {
     render() {
         //YellowBox.ignoreWarnings(['Task orphaned']);
         let curFolderFullName = "", curFolderColor = "", curFolderIcon = "";
+        let currentParent = undefined;
         if (this.state.currentFolder) {
             curFolderFullName = this.state.currentFolder.name;
             curFolderColor = this.state.currentFolder.color;
             curFolderIcon = this.state.currentFolder.icon;
+            currentParent = this.state.folders.find(f => f.name === "Default");
         }
+
 
         let fIndex = 0;
         let items = [];
-        let folders = [];
+        let folders = this.state.folders?.filter(f => f.name !== "Default") || [];
         let folderIsLoading = false;
         if (this.state.currentFolder) {
             items = this.state.currentFolder.items;
             folderIsLoading = this.state.currentFolder.loading;
         } else if (this.state.folders) {
-            folders = this.state.folders;
             if (this.state.filterFolders?.length > 0) {
 
                 //aggregates all files matching the filter
@@ -618,6 +622,12 @@ export default class FolderGallery extends React.Component {
                 })
 
                 folders = folders.filter((item) => checkFilter(this.state.filterFolders, item.name))
+            } else {
+                //renders the default folder
+                const defFolder = this.state.folders.find(f => f.name === "Default");
+                if (defFolder) {
+                    items = defFolder.items;
+                }
             }
         }
 
@@ -772,7 +782,7 @@ export default class FolderGallery extends React.Component {
                         }}>
                             {/* pagesTitle */}
                             <View style={{
-                                flex: 1, flexDirection: "row", height: "5%", position: 'absolute',
+                                flex: 1, flexDirection: "row", position: 'absolute',
                                 width: "100%", top: 0, height: this.isScreenLow() ? '17%' : '10%', alignItems: 'center', justifyContent: 'flex-start',
                                 borderBottomWidth: this.state.currentFolder ? 1 : 0, borderBottomColor: 'gray'
                             }}>
@@ -826,7 +836,7 @@ export default class FolderGallery extends React.Component {
                                 {!this.state.currentFolder && <View
                                     style={{
                                         flexWrap: 'wrap', flexDirection: 'row-reverse',
-                                        width: '100%', justifyContent: this.state.filterFolders?.length > 0 ? 'flex-start' : 'center', alignItems: 'center',
+                                        width: '100%', justifyContent: 'flex-start', alignItems: 'center',
                                         //height: '100%'
                                     }}
                                 >
@@ -837,7 +847,7 @@ export default class FolderGallery extends React.Component {
                                         name={item.name}
                                         color={item.color}
                                         icon={item.icon}
-                                        width={'30%'}
+                                        width={this.isLandscape()?'20%':'25%'}
                                         editMode={this.state.editMode}
                                         fixedFolder={false}//item.name === DEFAULT_FOLDER_NAME}
                                         current={false}
@@ -851,8 +861,6 @@ export default class FolderGallery extends React.Component {
 
                                 {items.length > 0 ?
                                     <FlatList
-                                        style={{
-                                        }}
                                         contentContainerStyle={{
                                             width: '100%', alignItems: 'flex-end',
                                             height: needPagesScroll ? pagesHeightSize : '100%'
@@ -906,27 +914,46 @@ export default class FolderGallery extends React.Component {
 
                     }
                     {/* tree */}
-                    {isEmptyApp || !this.state.currentFolder ?
-                        null
-                        :
-                        <ScrollView
-                            style={{
-                                flex: 1,
-                                flexDirection: "column",
-                                position: 'absolute',
-                                top: 0, width: treeWidth,
-                                right: 0,
-                                height: this.state.windowSize.height - dimensions.topView - dimensions.toolbarHeight,
-                                backgroundColor: 'white'
-                            }}
-                            bounces={needFoldersScroll}
 
-                            contentContainerStyle={{
-                            }}>
 
-                            {
-                                this.state.folders && this.state.folders.length ?
-                                    this.state.folders.map((f, i, arr) => FolderNew({
+                    {!isEmptyApp && this.state.currentFolder &&
+                        <View style={{
+                            flex: 1,
+                            flexDirection: "column",
+                            position: 'absolute',
+                            top: 0,
+                            width: treeWidth,
+                            right: 0,
+                            height: "100%",
+                            backgroundColor: 'white'
+                        }}>
+                            {currentParent &&
+                                // <View style={{ flex: 1, top:0, height: "1%", backgroundColor: 'green' }}>
+                                    <FolderNew
+                                        name={currentParent.name}
+                                        fixedFolder={true}
+                                        asTitle={true}
+                                        color={currentParent.color}
+                                        icon={currentParent.icon}
+                                        isLandscape={this.isLandscape()}
+                                        onPress={() => this.unselectFolder()}
+                                    />
+                                // </View>
+                                }
+                            <ScrollView
+                                style={{
+                                    flex: 1,
+                                    flexDirection: "column",
+                                    height: (this.state.windowSize.height - dimensions.topView - dimensions.toolbarHeight),
+                                    backgroundColor: 'white'
+                                }}
+                                bounces={needFoldersScroll}
+
+                                contentContainerStyle={{
+                                }}>
+
+                                {
+                                    folders.map((f, i, arr) => FolderNew({
                                         index: i,
                                         isLast: i + 1 == arr.length,
                                         useColors: this.state.folderColor,
@@ -946,10 +973,11 @@ export default class FolderGallery extends React.Component {
                                         onMoveUp: () => this.moveFolderUp(f),
                                         onMoveDown: () => this.moveFolderDown(f),
                                         isLandscape: this.isLandscape()
-                                    })) : null
+                                    }))
 
-                            }
-                        </ScrollView>
+                                }
+                            </ScrollView>
+                        </View>
                     }
                 </View>
             </View>
