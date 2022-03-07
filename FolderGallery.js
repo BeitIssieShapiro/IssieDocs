@@ -928,7 +928,7 @@ export default class FolderGallery extends React.Component {
                             backgroundColor: 'white'
                         }}>
                             {currentParent &&
-                                // <View style={{ flex: 1, top:0, height: "1%", backgroundColor: 'green' }}>
+                                 <View style={{ height:this.isScreenLow() ? '17%' : '10%', justifyContent:'center'}}>
                                     <FolderNew
                                         name={currentParent.name}
                                         fixedFolder={true}
@@ -938,7 +938,7 @@ export default class FolderGallery extends React.Component {
                                         isLandscape={this.isLandscape()}
                                         onPress={() => this.unselectFolder()}
                                     />
-                                // </View>
+                                 </View>
                                 }
                             <ScrollView
                                 style={{

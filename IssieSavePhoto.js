@@ -14,7 +14,7 @@ import { translate } from './lang.js'
 import {
   getIconButton,
   getImageDimensions,
-  getPageNavigationButtons, getFileNameDialog, semanticColors, getFolderAndIcon,
+  getPageNavigationButtons, FileNameDialog, semanticColors, getFolderAndIcon,
   Spacer, getRoundedButton, dimensions, validPathPart
 } from './elements'
 import ImageResizer from 'react-native-image-resizer';
@@ -169,13 +169,14 @@ export default class IssieSavePhoto extends React.Component {
     }
     let pageName = this.props.route.params.name;
     let addToExistingPage = this.props.route.params.addToExistingPage;
+    let onConfirm = this.props.route.params.onConfirm;
 
     let folders = await FileSystem.main.getFolders();
     folders = folders.filter(f => f.name !== FileSystem.DEFAULT_FOLDER.name);
 
     this.setState({
       imageUri, pathToSave, pdf, pdfPage: 1,
-      folders, folder, pageName, addToExistingPage, multiPage, pages
+      folders, folder, pageName, addToExistingPage, multiPage, pages, onConfirm
     }, () => {
       if (!pdf) {
         this.updateImageDimension();
@@ -232,6 +233,11 @@ export default class IssieSavePhoto extends React.Component {
   OK = async () => {
     if (this.state.phase == OK_Cancel) {
 
+      if (this.state.onConfirm) {
+        this.state.onConfirm(this.state.imageUri);
+        this.props.navigation.goBack();
+        return
+      }
       if (this.state.pdf) {
         if (this.state.pdfPageCount > 0) {
           let pages = [];
@@ -430,6 +436,7 @@ export default class IssieSavePhoto extends React.Component {
       //success: 
       (newImageUri) => {
         //assumes that only last page is cropped
+        trace("crop", newImageUri)
         this.replaceLast(newImageUri);
       },
       //failure: 
@@ -516,7 +523,7 @@ export default class IssieSavePhoto extends React.Component {
           { //Add page
             this.state.phase == OK_Cancel && !this.state.pdf && !this.state.addToExistingPage ?
               <Spacer width={10} /> : null}
-          {this.state.phase == OK_Cancel && !this.state.pdf && !this.state.addToExistingPage ?
+          {this.state.phase == OK_Cancel && !this.state.onConfirm && !this.state.pdf && !this.state.addToExistingPage ?
             getRoundedButton(this.AddPage, 'add', translate("BtnAddPage"), 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isScreenNarrow()) :
             null
           }
@@ -561,17 +568,17 @@ export default class IssieSavePhoto extends React.Component {
         <Scroller height={this.state.windowSize.height}
           onLayout={onLayoutHost}>
 
-          {getFileNameDialog(
-            this.state.pageName,
-            this.state.folder,
-            this.state.folders,
-            (text) => this.setState({ pageName: text }),
-            (folder) => this.setState({ folder: folder }),
-            (name, color, icon) => this.saveNewFolder(name, color, icon),
-            this.props.navigation,
-            this.state.windowSize.width > this.state.windowSize.height, //isLandscape,
-            (e) => onLayoutHost.onLayout ? onLayoutHost.onLayout(e) : {}
-          )}
+          <FileNameDialog
+            name={this.state.pageName}
+            folder={this.state.folder}
+            folders={this.state.folders}
+            onChangeName={(text) => this.setState({ pageName: text })}
+            onChangeFolder={(folder) => this.setState({ folder: folder })}
+            onSaveNewFolder={(name, color, icon) => this.saveNewFolder(name, color, icon)}
+            navigation={this.props.navigation}
+            isLandscape={this.state.windowSize.width > this.state.windowSize.height}
+            onLayout={(e) => onLayoutHost.onLayout ? onLayoutHost.onLayout(e) : {}}
+          />
 
 
         </Scroller>

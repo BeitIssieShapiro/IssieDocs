@@ -15,6 +15,7 @@ import {
     MenuOptions
 
 } from 'react-native-popup-menu';
+import { Button } from 'react-native-share';
 
 export const dimensions = {
     toolbarHeight: 65,
@@ -328,26 +329,28 @@ export function normalizeTitle(title) {
 
 
 
-export function getFileNameDialog(fileName,
-    currentFolder, folders,
+export function FileNameDialog({
+    name,
+    folder, folders,
     onChangeName, onChangeFolder, onSaveNewFolder,
-    navigation, isLandscape, onLayout) {
+    navigation, isLandscape, onLayout }) {
 
+    const [more, setMore] = useState(false);
     const defFolderName = { name: translate("DefaultFolder") };
 
 
-    if (!currentFolder || currentFolder.name === FileSystem.DEFAULT_FOLDER.name || currentFolder.name === '') {
-        currentFolder = defFolderName;
+    if (!folder || folder.name === FileSystem.DEFAULT_FOLDER.name || folder.name === '') {
+        folder = defFolderName;
     }
 
-    let fullListFolder = [defFolderName, ...folders];
-    getLocalizedFoldersAndIcons().forEach((itm, index) => {
-        if (fullListFolder.findIndex(f =>
-            f.name === itm.text) == -1) {
-            //only add those folders that do not exist already
-            fullListFolder.push({ name: itm.text, icon: itm.icon, color: (availableColorPicker[index % availableColorPicker.length]) });
-        }
-    })
+    let foldersWithDesktop = [defFolderName, ...folders];
+    // getLocalizedFoldersAndIcons().forEach((itm, index) => {
+    //     if (fullListFolder.findIndex(f =>
+    //         f.name === itm.text) == -1) {
+    //         //only add those folders that do not exist already
+    //         fullListFolder.push({ name: itm.text, icon: itm.icon, color: (availableColorPicker[index % availableColorPicker.length]) });
+    //     }
+    // })
     return (
         <View style={[styles.textInputView, isLandscape ? { flexDirection: 'row-reverse' } : {}]} onLayout={onLayout}>
             <View style={{ flex: 1, width: '100%' }}>
@@ -355,7 +358,7 @@ export function getFileNameDialog(fileName,
                 <TextInput style={globalStyles.textInput}
                     onChangeText={onChangeName}
 
-                >{fileName}</TextInput>
+                >{name}</TextInput>
             </View>
             <Spacer />
             <View style={{ flex: 1, width: '100%' }}>
@@ -376,13 +379,15 @@ export function getFileNameDialog(fileName,
                     flexDirection: 'column', alignContent: 'flex-end'
                 }}>
                     <View style={{ flex: 1, backgroundColor: semanticColors.listBackground }}>
-                        {fullListFolder.map((item, index) => (
-                            <TouchableOpacity key={index} style={{ height: 65, width: '100%', justifyContent: 'flex-end' }}
-                                onPress={() => onChangeFolder(item)}>
-
-                                {pickerRenderRow(item, currentFolder.name == item.name)}
-                            </TouchableOpacity>
-                        ))}
+                        {foldersWithDesktop.map((item, index) => renderFolderLine(item, index, folder, onChangeFolder))}
+                        {getIconButton(() => setMore(val=>!val), semanticColors.titleText, more?"expand-less":"expand-more", 45)}
+                        {more &&
+                            getLocalizedFoldersAndIcons()
+                                .filter(f => foldersWithDesktop.find(f2 => f2.name === f.text) == undefined)
+                                .map((itm, index) => ({ name: itm.text, icon: itm.icon, color: (availableColorPicker[index % availableColorPicker.length]) }))
+                                .map((item, index) => renderFolderLine(item, index, folder, onChangeFolder))
+                            
+                        }
                     </View>
                 </View>
             </View>
@@ -392,47 +397,55 @@ export function getFileNameDialog(fileName,
         </View>);
 }
 
+function renderFolderLine(item, index, folder, onChangeFolder) {
+    return <TouchableOpacity key={index} style={{ height: 65, width: '100%', justifyContent: 'flex-end' }}
+        onPress={() => onChangeFolder(item)}>
 
-export function Picker(props) {
-    const [expanded, setExpanded] = useState(false);
-
-    return (
-        <View style={{ flex: 1, width: '100%' }}>
-            <TouchableOpacity
-                onPress={() => setExpanded(!expanded)}
-                style={{
-                    flexDirection: 'row', justifyContent: 'space-between',
-                    alignItems: 'center', alignContent: 'center', backgroundColor: 'white'
-                }}>
-
-                <Icon name='arrow-drop-down' size={50} color={semanticColors.folderIcons} />
-                {props.icon != '' ? <Icon name={props.icon} size={50} color={semanticColors.folderIcons} /> : null}
-                <TextInput
-                    editable={props.textEditable}
-                    onChangeText={props.onChangeText}
-                    style={styles.textInputPicker}>{props.name ? props.name : props.emptyValue}
-                </TextInput>
-
-            </TouchableOpacity>
-            {expanded ?
-                <View style={{ borderTopWidth: 1, borderTopColor: 'gray' }}>
-                    {props.items.map((item, index) => (
-                        <TouchableOpacity key={index} onPress={() => {
-                            setExpanded(false);
-                            props.selectCallback(index, item)
-                        }}>
-
-                            {props.renderRow(item, index)}
-                        </TouchableOpacity>
-                    ))}
-
-                </View>
-                :
-                null}
-
-        </View>)
+        {pickerRenderRow(item, folder.name == item.name)}
+    </TouchableOpacity>
 
 }
+
+// export function Picker(props) {
+//     const [expanded, setExpanded] = useState(false);
+
+//     return (
+//         <View style={{ flex: 1, width: '100%' }}>
+//             <TouchableOpacity
+//                 onPress={() => setExpanded(!expanded)}
+//                 style={{
+//                     flexDirection: 'row', justifyContent: 'space-between',
+//                     alignItems: 'center', alignContent: 'center', backgroundColor: 'white'
+//                 }}>
+
+//                 <Icon name='arrow-drop-down' size={50} color={semanticColors.folderIcons} />
+//                 {props.icon != '' ? <Icon name={props.icon} size={50} color={semanticColors.folderIcons} /> : null}
+//                 <TextInput
+//                     editable={props.textEditable}
+//                     onChangeText={props.onChangeText}
+//                     style={styles.textInputPicker}>{props.name ? props.name : props.emptyValue}
+//                 </TextInput>
+
+//             </TouchableOpacity>
+//             {expanded ?
+//                 <View style={{ borderTopWidth: 1, borderTopColor: 'gray' }}>
+//                     {props.items.map((item, index) => (
+//                         <TouchableOpacity key={index} onPress={() => {
+//                             setExpanded(false);
+//                             props.selectCallback(index, item)
+//                         }}>
+
+//                             {props.renderRow(item, index)}
+//                         </TouchableOpacity>
+//                     ))}
+
+//                 </View>
+//                 :
+//                 null}
+
+//         </View>)
+
+// }
 
 
 
@@ -605,6 +618,12 @@ export function FolderIcon(props) {
     if (props.name.startsWith("svg-")) {
         return getSvgIcon(props.name.substr(4), props.size, props.color);
     }
+    if (props.name.startsWith("data:")) {
+        return <Image source={{uri: props.name}} style={{
+            width: props.size,
+            height: props.size
+        }}/>
+    }
     return <Icon name={props.name} size={props.size} color={props.color} />
 }
 
@@ -619,7 +638,7 @@ export function AppText(props) {
 }
 
 export function getColorButton(callback, color, size, selected, index) {
-    return getColorButtonInt(callback, color, size, selected?"check":undefined, index)
+    return getColorButtonInt(callback, color, size, selected ? "check" : undefined, index)
 }
 
 export function getColorButtonInt(callback, color, size, icon, index, iconColor) {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Alert, Text, TouchableOpacity, PanResponder, StyleSheet, Dimensions } from 'react-native';
-import { AppText, FolderIcon } from './elements.js'
+import { AppText, FolderIcon, getSvgIconButton } from './elements.js'
 import { Icon } from 'react-native-elements'
 import { translate } from './lang.js'
 import Scroller from './scroller';
@@ -9,10 +9,13 @@ import {
     getIconButton, folderIcons, availableIcons,
     getImageDimensions, availableColorPicker,
     globalStyles,
-    getPageNavigationButtons, getFileNameDialog, semanticColors,
+    getPageNavigationButtons, semanticColors,
     Spacer, getRoundedButton, dimensions, getColorButton
 } from './elements'
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
+import { getNewPage, SRC_GALLERY } from './newPage.js';
+import { trace } from './log.js';
+import { FileSystem } from './filesystem.js';
 
 export default class IssieCreateFolder extends React.Component {
 
@@ -82,7 +85,7 @@ export default class IssieCreateFolder extends React.Component {
 
     Save = async () => {
         if (this.saveInProgress)
-                return;
+            return;
         try {
             this.saveInProgress = true;
 
@@ -124,8 +127,38 @@ export default class IssieCreateFolder extends React.Component {
         let iconsSelection = <View style={{ flex: 1, alignItems: 'flex-end', width: '100%' }}
 
         >
-            <AppText style={styles.titleText}>{translate("CaptionIcon")}</AppText>
-
+            <View
+                style={{
+                    flexDirection: "row-reverse", width: "100%",
+                    alignItems: "center",
+                }}>
+                <AppText style={styles.titleText}>{translate("CaptionIcon")}</AppText>
+                {getSvgIconButton(() => getNewPage(SRC_GALLERY,
+                    (uri) => {
+                        // trace("image in base64", uri.length)
+                        // this.setState({ icon: uri})
+                        this.props.navigation.navigate('SavePhoto', {
+                            uri: uri,
+                            title: "עריכת תמונה",
+                            imageSource: SRC_GALLERY,
+                            onConfirm:(uri)=>{
+                                FileSystem.main.resizeImage(uri, 100, 100)
+                                    .then(uri2=>FileSystem.main.convertImageToBase64(uri2))
+                                    .then(imgBase64=>this.setState({ icon: imgBase64}))
+                            },
+                            folder: undefined,
+                            returnFolderCallback: (f) => {},
+                            saveNewFolder: (newFolder, color, icon) => {}
+        
+                        })
+                    },
+                    //cancel
+                    () => {
+                    },
+                    this.props.navigation, 
+                    { selectionLimit: 1, quality: 0}),
+                    semanticColors.titleText, "new-image", 40)}
+            </View>
             <View style={{
                 width: '100%',
                 borderRadius: 10,

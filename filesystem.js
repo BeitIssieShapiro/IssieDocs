@@ -7,6 +7,7 @@ import linesPage from './lines-page.jpg'
 import mockPage from './mock.jpg'
 import { WorkSheet } from './work-sheet';
 import { trace, assert } from './log'
+import ImageResizer from 'react-native-image-resizer';
 
 const THUMBNAIL_SUFFIX = ".thumbnail.jpg";
 
@@ -32,6 +33,17 @@ export class FileSystem {
             console.log("FATAL: cannot find filesystem root " + e);
             throw (e);
         });
+    }
+
+    async resizeImage(uri, width, height) {
+        return ImageResizer.createResizedImage(uri, height, width, "JPEG", 100).then(
+            (response) => {
+                return response.path;
+            })
+    }
+
+    async convertImageToBase64(uri) {
+        return RNFS.readFile(uri, 'base64').then(data=>"data:image/jpg;base64,"+data);
     }
 
     get basePath() {
@@ -637,7 +649,7 @@ export class FileSystemFolder {
 
             //find thumbnail
             let thumbnail = items.find(f => f.name.startsWith(name + ".") && f.name.endsWith(THUMBNAIL_SUFFIX));
-            
+
             if (thumbnail) {
                 sheet.setThumbnail(thumbnail.path);
                 //console.log("found tn", thumbnail.path)
