@@ -114,11 +114,13 @@ export class FileSystem {
 
 
         let folderPath = this._basePath + name;
+        let newFolder = true
         if (await this._fileExists(folderPath)) {
             if (strictChecks) {
                 //folder exists:
                 throw translate("FolderAlreadyExists");
             }
+            newFolder = false;
         } else {
             trace("Folder ", name, " is about to be created")
             await RNFS.mkdir(folderPath);
@@ -126,33 +128,42 @@ export class FileSystem {
             let fsf = new FileSystemFolder(name, this, { color, icon });
             this._folders.push(fsf);
 
-            if (!skipCreateMetadata) {
-                await this._writeFolderMetaData(name, color, icon);
 
-                if (name !== FileSystem.DEFAULT_FOLDER.name) {
-                    await pushFolderOrder(name)
-                    await _sortFolders(this._folders)
-                }
-            }
-            trace("Folder ", name, " has been notified")
-            this._notify(name);
         }
+        if (!skipCreateMetadata) {
+            const newMetadata = await this._writeFolderMetaData(name, color, icon);
+
+            if (name !== FileSystem.DEFAULT_FOLDER.name) {
+                await pushFolderOrder(name)
+                await _sortFolders(this._folders)
+            }
+
+            if (!newFolder) {
+                //update existing color/icon
+                const folder = this._getFolder(name)
+                folder.metadata = newMetadata;
+            }
+        }
+        trace("Folder ", name, " has been notified")
+        this._notify(name);
 
     }
 
     async renameFolder(name, newName, icon, color) {
-        await this.addFolder(newName, icon, color, true, true);
+        await this.addFolder(newName, icon, color, name !== newName, false);
 
         //move all files and delete old folder
-        await RNFS.readDir(this._basePath + name).then(async (files) => {
-            for (let f of files) {
-                await RNFS.moveFile(f.path, this._basePath + newName + "/" + f.name);
-            }
-        });
-        await this.deleteFolder(name);
-        await _renameFolderOrders(name, newName);
-        await _sortFolders(this._folders);
-        await this._reloadFolder(newName);
+        if (name !== newName) {
+            await RNFS.readDir(this._basePath + name).then(async (files) => {
+                for (let f of files) {
+                    await RNFS.moveFile(f.path, this._basePath + newName + "/" + f.name);
+                }
+            });
+            await this.deleteFolder(name);
+            await _renameFolderOrders(name, newName);
+            await _sortFolders(this._folders);
+            await this._reloadFolder(newName);
+        }
         this._notify();
     }
 
@@ -207,13 +218,13 @@ export class FileSystem {
                 if (pathObj.folders.length >= 1) {
                     let folder = this._getFolder(pathObj.folders[0]);
                     if (folder) {
-                        let pageName = pathObj.folders.length > 2?pathObj.folders[1]:pathObj.fileName;
+                        let pageName = pathObj.folders.length > 2 ? pathObj.folders[1] : pathObj.fileName;
                         trace("notify thumbnail change 1", pageName)
                         if (pageName.endsWith(".jpg")) {
                             pageName = pageName.substring(0, pageName.length - 4);
                         }
 
-                        const item = await folder.getItem(pageName )
+                        const item = await folder.getItem(pageName)
                         item.setThumbnail(targetThumbnailPath);
                         this._notify(pathObj[0]);
                     }
@@ -460,9 +471,9 @@ export class FileSystem {
         let metaDataFilePath = this._basePath + folderName + "/.metadata";
 
         let metadata = { color: color ? color : FileSystem.DEFAULT_FOLDER_METADATA.color, icon };
-        RNFS.writeFile(metaDataFilePath, JSON.stringify(metadata), 'utf8').then(
+        return RNFS.writeFile(metaDataFilePath, JSON.stringify(metadata), 'utf8').then(
             //Success
-            undefined,
+            ()=>(metadata),
             //on error 
             err => Promise.reject(err)
         )
@@ -635,6 +646,10 @@ export class FileSystemFolder {
         this._metadata = metadata
         this._name = name;
         this._fs = fs;
+    }
+
+    set metadata(md) {
+        this._metadata = md
     }
 
     get name() {

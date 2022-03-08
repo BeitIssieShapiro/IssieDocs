@@ -9,21 +9,21 @@ V - when typing:
     V - long text, do not let the text go over the page - wrap it
     V - while typing if the text goes below the keyboard - move page
 V - when editing large font size, when exiting text mode the size changes (or is it just the yellow?)
-- rename folder to change color - this folder already exists error
-- after rename, thumbnail is lost
+V - rename folder to change color - this folder already exists error
+V- after rename, thumbnail is lost
 - move text in zoom mode - boundaries
 High:
 
 Medium:
 
 Low:
-- page menu in folder stays even after navigation and going home
-- After folder delete - remove edit mode
+V - page menu in folder stays even after navigation and going home
+V - After folder delete - remove edit mode
 
 
 Features:
 Large: 
-- Add photo to existing page
+V - Add photo to existing page
 - translate to english ?
 - Android ?
 - folder in folder?
@@ -31,9 +31,7 @@ Large:
 Medium:
 V - remove default folder all together. render pages on desktop
 V- in save page, do not show template folders, but "more.." will hide them
-
-- in new folder, add option to select a photo from lib
-
+V - in new folder, add option to select a photo from lib
 V - in letter sizes, add "more" and add even bigger options
   V - fix preview size
 V - in color selection, add "more" (instead of orange) and add pallette? 

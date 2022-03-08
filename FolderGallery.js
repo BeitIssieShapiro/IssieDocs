@@ -102,8 +102,9 @@ export default class FolderGallery extends React.Component {
 
             registerLangEvent()
 
-            this.props.navigation.addListener("didFocus", async () => {
+            this.props.navigation.addListener("focus", async () => {
                 //this.refresh();
+                this.setState({ selected: undefined });
             })
             setNavParam(this.props.navigation, 'menuHandler', () => this._menuHandler());
             setNavParam(this.props.navigation, 'editHandler', () => this.toggleEditMode());
@@ -279,7 +280,7 @@ export default class FolderGallery extends React.Component {
 
 
     selectFolder = (folder) => {
-        this.setState({ currentFolder: folder }, () =>
+        this.setState({ currentFolder: folder, selected:undefined }, () =>
             setNavParam(this.props.navigation, 'showHome', () => this.unselectFolder()));
 
     }
@@ -336,7 +337,8 @@ export default class FolderGallery extends React.Component {
                 {
                     text: translate("BtnDelete"), onPress: () => {
                         FileSystem.main.deleteFolder(this.state.currentFolder.name)
-                        this.unselectFolder()
+                        this.unselectFolder();
+                        this.toggleEditMode();
                     },
                     style: 'destructive'
                 },
