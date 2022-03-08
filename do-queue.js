@@ -15,6 +15,12 @@ export default class DoQueue {
       this._undoQueue = [];
     }
 
+    pushDeleteImage(elem) {
+      this.add({ elem: elem, type: 'imageDelete' });
+      this._undoQueue = [];
+
+    }
+
     pushImage(elem) {
       this.add({ elem: elem, type: 'image' });
       //once new item added redo is reset

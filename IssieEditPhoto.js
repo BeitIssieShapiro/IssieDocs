@@ -545,6 +545,20 @@ export default class IssieEditPhoto extends React.Component {
 
       if (imageElemIndex >= 0) {
         imgElem = this.state.canvasImages[imageElemIndex];
+
+        // In Erase mode, remove the img
+        if (this.state.eraseMode) {
+          this.state.queue.pushDeleteImage({ id: imgElem.id })
+          this.setState({
+            currentImageElem: undefined,
+            needCanvasUpdate: true,
+            needCanavaDataSave: true,
+          });
+          return;
+        }
+
+
+
         x = Math.round(imgElem.position.x) + imgElem.width;
         y = Math.round(imgElem.position.y);
       }
@@ -652,22 +666,19 @@ export default class IssieEditPhoto extends React.Component {
 
 
   getImageElement = (imageData, ratio) => {
-    let newImageElem = {}
-    if (this.state.currentImageElem) {
-      newImageElem.id = this.state.currentImageElem.id;
-    } else {
-      newImageElem.id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
-    }
+    let newImageElem = {
+      id: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5)
+    };
 
-    const initialImageSizeScaled = initialImageSize/ this.state.scaleRatio;
+    const initialImageSizeScaled = initialImageSize / this.state.scaleRatio;
     //newImageElem.anchor = { x: 0, y: 0 };
     newImageElem.normPosition = {
-      x: this.state.canvasW / 2 / this.state.scaleRatio - initialImageSizeScaled / 2,
-      y: this.state.canvasH / 2 / this.state.scaleRatio - initialImageSizeScaled / 2, // + this.getYOffsetFactor(height),
+      x: (this.state.canvasW / 2 / this.state.scaleRatio - initialImageSizeScaled / 2 - this.state.xOffset)/ this.state.zoom,
+      y: (this.state.canvasH / 2 / this.state.scaleRatio - initialImageSizeScaled / 2 - this.state.yOffset)/ this.state.zoom, // + this.getYOffsetFactor(height),
     };
     newImageElem.imageData = imageData
     newImageElem.width = Math.round(initialImageSizeScaled * ratio);
-    newImageElem.height = initialImageSizeScaled ;
+    newImageElem.height = initialImageSizeScaled;
     return newImageElem;
   }
 
@@ -713,11 +724,7 @@ export default class IssieEditPhoto extends React.Component {
     this.setState({
       needCanvasUpdate: true,
       needCanavaDataSave: true,
-      needCanvasUpdateImageSizeOnly : true,
-      currentImageElem: {
-        ...this.state.currentImageElem,
-        position: scalePos.position
-      }
+      needCanvasUpdateImageSizeOnly: true,
     });
 
   }
@@ -776,6 +783,8 @@ export default class IssieEditPhoto extends React.Component {
     if (!this._mounted)
       return;
 
+    trace("Updating canvas")
+
     if (!this.state.needCanvasUpdateTextOnly) {
       canvas.clear();
     }
@@ -783,7 +792,6 @@ export default class IssieEditPhoto extends React.Component {
     if (!this.state.needCanvasUpdateImageSizeOnly) {
       canvas.clearImages();
     }
-    //console.log("Updating canvas")
     let q = this.state.queue.getAll();
     //Alert.alert("before\n"+JSON.stringify(q))
     let canvasTexts = [];
@@ -826,12 +834,18 @@ export default class IssieEditPhoto extends React.Component {
           canvasImages[elemIndex] = this.imageNorm2Scale(updatedImage)
         }
 
+      } else if (q[i].type === 'imageDelete') {
+        const elemIndex = canvasImages.findIndex(ci => ci.id === q[i].elem.id);
+        if (elemIndex >= 0) {
+          canvasImages.splice(elemIndex, 1);
+        }
       }
     }
 
     //draw all images
     if (this.state.needCanvasUpdateImageSizeOnly) {
-      canvasImages.map(({imageData, normPosition, ...imgPos })=>imgPos).forEach(ci => {
+      canvasImages.map(({ imageData, normPosition, ...imgPos }) => imgPos).forEach(ci => {
+        //trace("setpos", ci)
         canvas.setCanvasImagePosition(ci)
       });
     } else {
@@ -842,10 +856,11 @@ export default class IssieEditPhoto extends React.Component {
       setTimeout(() => this.Save(), 100);
     }
 
-    this.setState({ canvasTexts, canvasImages, needCanvasUpdate: false, 
+    this.setState({
+      canvasTexts, canvasImages, needCanvasUpdate: false,
       needCanavaDataSave: false, needCanvasUpdateTextOnly: false,
       needCanvasUpdateImageSizeOnly: false
-      });
+    });
 
   }
 
@@ -928,9 +943,10 @@ export default class IssieEditPhoto extends React.Component {
           // this.setState({ icon: uri})
           getImageDimensions(uri).then((imgSize) => {
             const ratio = imgSize.w / imgSize.h;
-            FileSystem.main.resizeImage(uri, Math.round(this.state.canvasW / 8 * ratio), this.state.canvasH / 8 )
+            FileSystem.main.resizeImage(uri, Math.round(this.state.canvasW / 8 * ratio), this.state.canvasH / 8)
               .then(uri2 => FileSystem.main.convertImageToBase64(uri2))
               .then(imgBase64 => {
+                trace("image added", imgBase64.length)
                 const img = this.getImageElement(imgBase64, ratio)
                 this.state.queue.pushImage(img)
                 const scaleImg = this.imageNorm2Scale(img)
@@ -950,7 +966,10 @@ export default class IssieEditPhoto extends React.Component {
       if (this.isTextMode()) {
         this.SaveText()
       }
-      this.setState({ mode: Modes.IMAGE, showTextInput: false })
+      this.setState({
+        mode: Modes.IMAGE, showTextInput: false,
+        showTextSizePicker: false, showBrushSizePicker: false
+      })
     }
   }
 
@@ -974,7 +993,7 @@ export default class IssieEditPhoto extends React.Component {
       showTextInput: false,
       yOffset: this.state.zoom == 1 ? 0 : this.state.yOffset,
       mode: Modes.BRUSH,
-      showBrushSizePicker: this.isBrushMode() ? !this.state.showBrushSizePicker : false,
+      showBrushSizePicker: this.isBrushMode() ? !this.state.showBrushSizePicker : this.state.showTextSizePicker,
       showColorPicker: false,
       showTextSizePicker: false,
       showZoomPicker: false
@@ -1179,7 +1198,8 @@ export default class IssieEditPhoto extends React.Component {
         sideMargin: (windowW - imageWidth * ratio) / 2,
         canvasW, canvasH, scaleRatio: ratio,
         needCanvasUpdate: true, needCanavaDataSave: false,
-        xText, yText, currentImageElem: imgElem
+        xText, yText, currentImageElem: imgElem,
+        showExtMenu: windowW < windowH && this.state.showExtMenu
       });
 
     }).catch(err => {
@@ -1219,9 +1239,9 @@ export default class IssieEditPhoto extends React.Component {
       }),
         semanticColors.editPhotoButton, "zoom-in", 55, false, 45, undefined, undefined, undefined, "3"),
       <Spacer width={23} key="4" />,
-      this.state.page && this.state.page.count > 1 &&
-      getIconButton(() => this.deletePage(), semanticColors.editPhotoButton, 'delete-forever', 55, undefined, undefined, undefined, "5"),
-      < Spacer width={23} key="6" />,
+      // this.state.page && this.state.page.count > 1 &&
+      // getIconButton(() => this.deletePage(), semanticColors.editPhotoButton, 'delete-forever', 55, undefined, undefined, undefined, "5"),
+      // < Spacer width={23} key="6" />,
 
     ];
 
@@ -1335,8 +1355,9 @@ export default class IssieEditPhoto extends React.Component {
                   color: this.state.color,
                   textAlignVertical: 'center'
                 }}>{translate("A B C")}</AppText> :
-
-                getSvgIcon('doodle', 55, this.state.color, this.state.strokeWidth * .8)
+                this.isImageMode() ?
+                  <Icon name={"image"} size={55} color={semanticColors.editPhotoButton} /> :
+                  getSvgIcon('doodle', 55, this.state.color, this.state.strokeWidth * .8)
               }
             </View>
 
@@ -1668,6 +1689,8 @@ export default class IssieEditPhoto extends React.Component {
 
 
   getImageRect = (x, y, w, h) => {
+    w = w * this.state.zoom;
+    h = h * this.state.zoom;
     return <View style={{
       flexDirection: 'row',
       position: 'absolute',
@@ -1677,17 +1700,31 @@ export default class IssieEditPhoto extends React.Component {
       height: h,
       zIndex: 999,
     }}>
-      <View
-      
-        style={{
-          width: w,
-          height: h,
-          borderStyle: "dashed",
-          borderWidth: 3,
-          borderColor: "black",
-          
+      <TouchableOpacity
+        onPress={() => {
+          if (this.state.eraseMode) {
+            this.state.queue.pushDeleteImage({ id: this.state.currentImageElem.id })
+            this.setState({
+              currentImageElem: undefined,
+              needCanvasUpdate: true,
+              needCanavaDataSave: true,
+            });
+            return;
+          }
         }}
-      />
+      >
+        <View
+
+          style={{
+            width: w,
+            height: h,
+            borderStyle: "dashed",
+            borderWidth: 3,
+            borderColor: "black",
+
+          }}
+        />
+      </TouchableOpacity>
       <View {...this._panResponderElementMove.panHandlers} style={{ top: -5 }}>
         <Icon name='open-with' size={DRAG_ICON_SIZE} />
       </View>
@@ -1700,7 +1737,7 @@ export default class IssieEditPhoto extends React.Component {
           width: DRAG_ICON_SIZE,
           height: DRAG_ICON_SIZE
         }}>
-        <Icon name='arrow-forward' size={DRAG_ICON_SIZE} />
+        <Icon name='filter-none' size={DRAG_ICON_SIZE} style={{ transform: [{ rotate: '-90deg' }] }} />
       </View>
 
     </View>
