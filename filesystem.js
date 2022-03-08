@@ -180,7 +180,7 @@ export class FileSystem {
             thumbnailPath = thumbnailPath.substring(0, thumbnailPath.length - 4);
         }
         let cacheBuster = Math.floor(Math.random() * 100000);
-        let thumbnailPathPattern = thumbnailPath + ".*" + THUMBNAIL_SUFFIX;
+        //let thumbnailPathPattern = thumbnailPath + ".*" + THUMBNAIL_SUFFIX;
         thumbnailPath += "." + cacheBuster + THUMBNAIL_SUFFIX;
 
         // delete existing thumbnail

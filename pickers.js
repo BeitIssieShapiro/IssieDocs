@@ -38,7 +38,7 @@ export function MyColorPicker(props) {
     const _handleSelect = useCallback(() => props.onSelect(composedColor), [composedColor]);
 
     let colorButtonSize = (props.width) / ((availableColorPicker.length + 1) * 1.4);
-    trace("color", props.color, "composed", composedColor)
+    //trace("color", props.color, "composed", composedColor)
     return <FadeInView height={props.open ? colorButtonSize + 10 + (openMore ? 350 : 0) : 0}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
         <View

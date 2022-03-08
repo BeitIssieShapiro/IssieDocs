@@ -143,6 +143,18 @@ class SketchCanvas extends React.Component {
     UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.deletePath, [id])
   }
 
+  addOrSetCanvasImage(cImg) {
+    SketchCanvasManager.addOrSetImageOnCanvas(this._handle, cImg);
+  }
+
+  setCanvasImagePosition(cImgPos) {
+    SketchCanvasManager.setCanvasImagePosition(this._handle, cImgPos);
+  }
+
+  clearImages() {
+    SketchCanvasManager.clearImages(this._handle);
+  }
+
   export(imageType, scaleToSize, callback) {
     if (Platform.OS === 'ios') {
       SketchCanvasManager.export(this._handle, imageType, scaleToSize, callback)

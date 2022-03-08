@@ -246,7 +246,7 @@ export function getMaterialCommunityIconButton(callback, color, icon, size, isTe
 export function getSvgIconButton(callback, color, icon, size, isText, iconSize, selected) {
     return getIconButton(callback, color, icon, size, isText, iconSize, selected, "svg")
 }
-export function getIconButton(callback, color, icon, size, isText, iconSize, selected, iconType, notPressable) {
+export function getIconButton(callback, color, icon, size, isText, iconSize, selected, iconType, notPressable, key) {
     iconType = iconType || "material";
     let isSvg = iconType === "svg";
 
@@ -260,12 +260,14 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
     const sizeToUse = iconSize ? iconSize : size;
 
     let viewContent = isText ?
-        <AppText style={{ fontSize: sizeToUse, lineHeight: sizeToUse + 5, color: color, paddingTop: 6 }}>{icon}</AppText> :
+        <AppText 
+        
+        style={{ fontSize: sizeToUse, lineHeight: sizeToUse + 5, color: color, paddingTop: 6 }}>{icon}</AppText> :
         isSvg ?
             getSvgIcon(icon, sizeToUse, color) :
             <Icon name={icon} type={iconType} size={sizeToUse} color={color} />
 
-    return <View>
+    return <View key={key}>
         {notPressable ?
             <View style={viewStyle}>
                 {viewContent}

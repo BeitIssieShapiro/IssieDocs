@@ -4,6 +4,7 @@ let pinchState = {};
 
 export function pinchEnd(obj) {
     pinchState.isZooming = false;
+    pinchState.isResizing = false;
 }
 
 export function processPinch(obj, x1, y1, x2, y2) {
@@ -30,8 +31,8 @@ export function processPinch(obj, x1, y1, x2, y2) {
         //trace("pinch: 1:", x1, ",", y1, " 2:", x2, ",", y2)
         const deltaZoom = pinchState.initialZoom / zoom;
 
-        let xOffset = zoom == 1 ? 0 :  pinchState.initialLeft * deltaZoom - pinchState.initialX * (1 - deltaZoom) - (pinchState.initialX - center.x) * deltaZoom;
-        let yOffset = zoom == 1 ? 0 :  pinchState.initialTop * deltaZoom - pinchState.initialY * (1 - deltaZoom) - (pinchState.initialY - center.y) * deltaZoom;
+        let xOffset = zoom == 1 ? 0 : pinchState.initialLeft * deltaZoom - pinchState.initialX * (1 - deltaZoom) - (pinchState.initialX - center.x) * deltaZoom;
+        let yOffset = zoom == 1 ? 0 : pinchState.initialTop * deltaZoom - pinchState.initialY * (1 - deltaZoom) - (pinchState.initialY - center.y) * deltaZoom;
 
         //trace("Xos", xOffset, "Yos", yOffset, "Ileft", pinchState.initialLeft, "Xcenter", center.x, "dZoom", deltaZoom)
         if (xOffset > 0) {
@@ -50,7 +51,28 @@ export function processPinch(obj, x1, y1, x2, y2) {
     }
 }
 
+export function processResize(obj, x, y) {
+    if (!pinchState.isResizing) {
+        pinchState = {
+            isResizing: true,
+            initialWidth: obj.state.currentImageElem.width,
+            initialHeight: obj.state.currentImageElem.height,
+            initialX: obj.state.xText,
+            initialY: obj.state.yText,
+            aspectRatio: obj.state.currentImageElem.width / obj.state.currentImageElem.height,
+        }
+    }
 
+    // keep same aspect ratio:
+    const delta = Math.max(x, y);
+
+    return {
+        width: pinchState.initialWidth + delta,
+        height: pinchState.initialHeight + delta / pinchState.aspectRatio,
+        x: pinchState.initialX + delta,
+        y: pinchState.initialY,
+    };
+}
 
 function calcDistance(x1, y1, x2, y2) {
     let dx = Math.abs(x1 - x2)

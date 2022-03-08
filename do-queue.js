@@ -9,6 +9,17 @@ export default class DoQueue {
       //once new item added redo is reset
       this._undoQueue = [];
     }
+
+    pushImagePosition(elem) {
+      this.add({ elem: elem, type: 'imagePosition' });
+      this._undoQueue = [];
+    }
+
+    pushImage(elem) {
+      this.add({ elem: elem, type: 'image' });
+      //once new item added redo is reset
+      this._undoQueue = [];
+    }
   
     pushPath(elem) {
       this.add({ elem: elem, type: 'path' });

@@ -22,7 +22,7 @@ export default class RNSketchCanvas extends React.Component {
     onClearPressed: PropTypes.func,
     onPathsChange: PropTypes.func,
     user: PropTypes.string,
-    scale:PropTypes.number,
+    scale: PropTypes.number,
 
     closeComponent: PropTypes.node,
     eraseComponent: PropTypes.node,
@@ -152,6 +152,23 @@ export default class RNSketchCanvas extends React.Component {
     this._sketchCanvas.deletePath(id)
   }
 
+  addOrSetCanvasImage(data) {
+    // todo validate data
+    const prefix = data.imageData.indexOf(";base64,");
+    if (prefix >=0) {
+      data.imageData = data.imageData.substr(prefix+8);
+    }
+
+    this._sketchCanvas.addOrSetCanvasImage(data);
+  }
+
+  setCanvasImagePosition(data) {
+    this._sketchCanvas.setCanvasImagePosition(data);
+  }
+  clearImages() {
+    this._sketchCanvas.clearImages();
+  }
+
   export(type, scaleToSize, callback) {
     this._sketchCanvas.export(type, scaleToSize, callback);
   }
@@ -159,12 +176,12 @@ export default class RNSketchCanvas extends React.Component {
   save() {
     if (this.props.savePreference) {
       const p = this.props.savePreference()
-      this._sketchCanvas.save(p.imageType, p.transparent, p.folder ? p.folder : '', p.filename, p.includeImage !== false, p.includeText !== false, p.cropToImageSize || false, p.scaleToSize || {width:0, height:0})
+      this._sketchCanvas.save(p.imageType, p.transparent, p.folder ? p.folder : '', p.filename, p.includeImage !== false, p.includeText !== false, p.cropToImageSize || false, p.scaleToSize || { width: 0, height: 0 })
     } else {
       const date = new Date()
-      this._sketchCanvas.save('png', false, '', 
+      this._sketchCanvas.save('png', false, '',
         date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + ' ' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2),
-        true, true, false, {width:0, height:0})
+        true, true, false, { width: 0, height: 0 })
     }
   }
 
