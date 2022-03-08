@@ -326,10 +326,17 @@ export default class IssieSavePhoto extends React.Component {
           //single existing file
           try {
             await FileSystem.main.saveFile(this.state.pathToSave + ".json", filePath + ".json", this.isDuplicate());
+            // todo move thumbnail too
           } catch (e) {
             //ignore, as maybe json is missing
           }
+
         }
+
+        if (this.isRename() || this.isDuplicate()) {
+          await FileSystem.main.renameOrDuplicateThumbnail(this.state.pathToSave, filePath, this.isDuplicate());
+        }
+
 
 
         let returnFolderCallback = this.props.route.params.returnFolderCallback;

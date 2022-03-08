@@ -43,7 +43,7 @@ export class FileSystem {
     }
 
     async convertImageToBase64(uri) {
-        return RNFS.readFile(uri, 'base64').then(data=>"data:image/jpg;base64,"+data);
+        return RNFS.readFile(uri, 'base64').then(data => "data:image/jpg;base64," + data);
     }
 
     get basePath() {
@@ -157,7 +157,7 @@ export class FileSystem {
     }
 
     _getFolder(name) {
-        return this._folders.find(f => f.name == name);
+        return this._folders?.find(f => f.name == name);
     }
 
     loadFile(path) {
@@ -166,6 +166,63 @@ export class FileSystem {
 
     writeFile(path, content) {
         return RNFS.writeFile(path, content);
+    }
+
+    async renameOrDuplicateThumbnail(pagePath, targetPage, isDuplicate) {
+        let pathObj = this._parsePath(pagePath);
+        if (pathObj.folders.length < 1)
+            return;
+
+        const thumbnailContainingFolder = this._basePath + pathObj.folders[0];
+        let pageName = pathObj.folders.length > 1 ? pathObj.folders[1] : pathObj.fileName;
+
+        if (pageName.endsWith(".jpg")) {
+            pageName = pageName.substring(0, pageName.length - 4);
+        }
+        let items = await RNFS.readDir(thumbnailContainingFolder);
+
+        let thumbnailFile = items.find(f => f.name.startsWith(pageName + ".") && f.name.endsWith(THUMBNAIL_SUFFIX));
+
+        if (thumbnailFile) {
+            // from name.<cache>.thumbnail.jpg remove name
+            let pageNameSuffix = thumbnailFile.name.substr(pageName.length);
+
+
+            trace("start moveOrDuplicateThumbnail", pagePath, targetPage)
+            const targetThumbnailPath = (targetPage.endsWith(".jpg") ?
+                targetPage.substring(0, targetPage.length - 4) : targetPage) + pageNameSuffix;
+
+
+            trace("moveOrDuplicateThumbnail", "from", thumbnailFile.path, "to", targetThumbnailPath)
+            try {
+                if (isDuplicate) {
+                    await RNFS.copyFile(thumbnailFile.path, targetThumbnailPath);
+                } else {
+                    await RNFS.moveFile(thumbnailFile.path, targetThumbnailPath);
+                }
+
+                // update page's thumbnail
+                let pathObj = this._parsePath(targetPage);
+                trace("notify thumbnail change", pathObj.folders[0])
+                if (pathObj.folders.length >= 1) {
+                    let folder = this._getFolder(pathObj.folders[0]);
+                    if (folder) {
+                        let pageName = pathObj.folders.length > 2?pathObj.folders[1]:pathObj.fileName;
+                        trace("notify thumbnail change 1", pageName)
+                        if (pageName.endsWith(".jpg")) {
+                            pageName = pageName.substring(0, pageName.length - 4);
+                        }
+
+                        const item = await folder.getItem(pageName )
+                        item.setThumbnail(targetThumbnailPath);
+                        this._notify(pathObj[0]);
+                    }
+                }
+
+            } catch (e) {
+                //ignore, as maybe thumbnail is missing
+            }
+        }
     }
 
     async saveThumbnail(uri, page) {
@@ -304,9 +361,11 @@ export class FileSystem {
                 await RNFS.moveFile(sheet.path, basePath + '/0.jpg');
                 try {
                     await RNFS.moveFile(sheet.path + ".json", basePath + '/0.jpg.json');
+
                 } catch {
                     //ignore missing json
                 }
+
                 FileSystem.main.saveFile(newPagePath, basePath + '/1.jpg', false);
 
             }
