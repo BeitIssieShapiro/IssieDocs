@@ -24,6 +24,7 @@ import { setIsSimulator } from './device';
 import { TextInput } from 'react-native-gesture-handler';
 import { MenuProvider } from 'react-native-popup-menu';
 import CameraModal from './CameraOverlay';
+import { SvgIcon } from './svg-icons';
 
 // const MainNavigator = createStackNavigator({
 //   Home: {screen: FolderGallery},
@@ -119,6 +120,7 @@ function App(props) {
                         activeOpacity={0.7}
                         onPress={() => {
                           execNavParam(props.route, "menuHandler", "");
+                          execNavParam(props.route, "betaFeatures", "");
                         }
                         }
                       >
@@ -190,7 +192,8 @@ function App(props) {
                       style={{ flexDirection: 'row', alignItems: 'center' }}>
                       {/* <Icon name='keyboard-arrow-left' color='white' size={35} /> */}
                       {/* <Spacer width={10} />*/}
-                      <Icon name={'home'} color='white' size={30} />
+                      {/* <Icon name={'home'} color='white' size={30} /> */}
+                      <SvgIcon name='home' color='white' size={30} />
                     </TouchableOpacity>
                     <Spacer />
                     <TouchableOpacity onPress={() => {

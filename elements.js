@@ -8,14 +8,9 @@ import React, { useState } from 'react';
 import { translate, getLocalizedFoldersAndIcons } from "./lang.js";
 import { getUseTextSetting } from './settings.js'
 
-import { getSvgIcon } from './svg-icons.js'
+import { getSvgIcon, SvgIcon } from './svg-icons.js'
 import { FileSystem } from './filesystem.js';
-import {
 
-    MenuOptions
-
-} from 'react-native-popup-menu';
-import { Button } from 'react-native-share';
 
 export const dimensions = {
     toolbarHeight: 65,
@@ -118,7 +113,7 @@ export const availableColorPicker = [
 ]
 
 export const textSizes = [
-    25, 30, 35, 40, 45
+    25, 30, 35, 40, 45, 50,
 ]
 export const extendedTextSizes = [
     50, 55, 60, 65, 70, 75
@@ -233,7 +228,9 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
                 flexDirection: direction ? direction : 'row'
             }}>
             {textExist ? <AppText style={{ position: 'absolute', paddingTop: 5, left: 0, width: '80%', fontSize: textSize, lineHeight: textSize + 5, color: semanticColors.titleText, textAlign: 'center' }}>{text}</AppText> : null}
-            <Icon name={icon} size={iconSize} color={color} />
+            {icon.startsWith("svg-") ?
+                <SvgIcon name={icon.substr(4)} size={iconSize} color={color} />
+                : <Icon name={icon} size={iconSize} color={color} />}
             {textExist ? <Spacer width={5} /> : null}
         </View>
     </TouchableOpacity>
@@ -260,9 +257,9 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
     const sizeToUse = iconSize ? iconSize : size;
 
     let viewContent = isText ?
-        <AppText 
-        
-        style={{ fontSize: sizeToUse, lineHeight: sizeToUse + 5, color: color, paddingTop: 6 }}>{icon}</AppText> :
+        <AppText
+
+            style={{ fontSize: sizeToUse, lineHeight: sizeToUse + 5, color: color, paddingTop: 6 }}>{icon}</AppText> :
         isSvg ?
             getSvgIcon(icon, sizeToUse, color) :
             <Icon name={icon} type={iconType} size={sizeToUse} color={color} />
@@ -338,14 +335,14 @@ export function FileNameDialog({
     navigation, isLandscape, onLayout }) {
 
     const [more, setMore] = useState(false);
-    const defFolderName = { name: translate("DefaultFolder") };
+    const defFolder = { name: translate("DefaultFolder"), svgIcon: 'home', color: 'gray', hideName: true };
 
 
     if (!folder || folder.name === FileSystem.DEFAULT_FOLDER.name || folder.name === '') {
-        folder = defFolderName;
+        folder = defFolder;
     }
 
-    let foldersWithDesktop = [defFolderName, ...folders];
+    //let foldersWithDesktop = [defFolderName, ...folders];
     // getLocalizedFoldersAndIcons().forEach((itm, index) => {
     //     if (fullListFolder.findIndex(f =>
     //         f.name === itm.text) == -1) {
@@ -381,14 +378,15 @@ export function FileNameDialog({
                     flexDirection: 'column', alignContent: 'flex-end'
                 }}>
                     <View style={{ flex: 1, backgroundColor: semanticColors.listBackground }}>
-                        {foldersWithDesktop.map((item, index) => renderFolderLine(item, index, folder, onChangeFolder))}
-                        {getIconButton(() => setMore(val=>!val), semanticColors.titleText, more?"expand-less":"expand-more", 45)}
+                        {renderFolderLine(defFolder, -1, folder, onChangeFolder)}
+                        {folders.map((item, index) => renderFolderLine(item, index, folder, onChangeFolder))}
+                        {getIconButton(() => setMore(val => !val), semanticColors.titleText, more ? "expand-less" : "expand-more", 45)}
                         {more &&
                             getLocalizedFoldersAndIcons()
-                                .filter(f => foldersWithDesktop.find(f2 => f2.name === f.text) == undefined)
+                                .filter(f => folders.find(f2 => f2.name === f.text) == undefined)
                                 .map((itm, index) => ({ name: itm.text, icon: itm.icon, color: (availableColorPicker[index % availableColorPicker.length]) }))
                                 .map((item, index) => renderFolderLine(item, index, folder, onChangeFolder))
-                            
+
                         }
                     </View>
                 </View>
@@ -466,9 +464,14 @@ function pickerRenderRow(rowData, highlighted) {
                     <FolderIcon name={rowData.icon} size={50} color={rowData.color ? rowData.color : semanticColors.folderIcons} />
                 </View>
                 : <View />}
-            <AppText style={{ fontSize: 26, textAlign: 'right', paddingRight: 25 }}>
+            {rowData.svgIcon && <View style={{ flex: 1, flexDirection: 'row-reverse' }}>
+                <Spacer />
+                <SvgIcon name={rowData.svgIcon} size={50} color={rowData.color} />
+            </View>
+            }
+            {!rowData.hideName && <AppText style={{ fontSize: 26, textAlign: 'right', paddingRight: 25 }}>
                 {rowData.name}
-            </AppText>
+            </AppText>}
         </View>
     );
 }
@@ -604,7 +607,8 @@ export function getHeaderBackButton(callback) {
             style={{ flexDirection: 'row', alignItems: 'center' }}>
             {/* <Icon name='keyboard-arrow-left' color='white' size={35} /> */}
             <Spacer width={10} />
-            <Icon name={'home'} color='white' size={40} />
+            {/* <Icon name={'home'} color='white' size={40} /> */}
+            <SvgIcon name='home' color='white' size={30} />
         </TouchableOpacity>
 
     </View>
@@ -621,10 +625,10 @@ export function FolderIcon(props) {
         return getSvgIcon(props.name.substr(4), props.size, props.color);
     }
     if (props.name.startsWith("data:")) {
-        return <Image source={{uri: props.name}} style={{
+        return <Image source={{ uri: props.name }} style={{
             width: props.size,
             height: props.size
-        }}/>
+        }} />
     }
     return <Icon name={props.name} size={props.size} color={props.color} />
 }
@@ -634,7 +638,8 @@ export function AppText(props) {
         <Text style={[{
             fontFamily: APP_FONT,
             fontSize: 24,
-            textAlign: 'right'
+            textAlign: 'right',
+            
         }, props.style]} >{props.children}</Text>
     );
 }

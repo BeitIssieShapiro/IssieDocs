@@ -1,3 +1,13 @@
+V- ראשי to home
+V- new icon for home
+V- when return folder is default go to home
+- make spaces
+V- hide more brush, and more color
+V- add images - hide
+V - בחר תמונה  - button
+V- change flow of new page to same as camera
+- drag page into folder
+
 Bugs:
 V- when closing keyboard, move back
 V- when in zoom and open keyboard, sometimes loose location - move not considering zoom - 

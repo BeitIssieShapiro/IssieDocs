@@ -102,6 +102,33 @@ export default class IssieCreateFolder extends React.Component {
         }
     }
 
+    AddPhoto() {
+        getNewPage(SRC_GALLERY).then(uri => {
+            // trace("image in base64", uri.length)
+            // this.setState({ icon: uri})
+            this.props.navigation.navigate('SavePhoto', {
+                uri: uri,
+                title: "עריכת תמונה",
+                imageSource: SRC_GALLERY,
+                onConfirm: (uri) => {
+                    FileSystem.main.resizeImage(uri, 100, 100)
+                        .then(uri2 => FileSystem.main.convertImageToBase64(uri2))
+                        .then(imgBase64 => this.setState({ icon: imgBase64 }))
+                },
+                folder: undefined,
+                returnFolderCallback: (f) => { },
+                saveNewFolder: (newFolder, color, icon) => { }
+
+            })
+        },
+            //cancel
+            () => {
+            },
+            this.props.navigation,
+            { selectionLimit: 1, quality: 0 }
+        );
+    }
+
     render() {
         let actionButtons = <View style={{
             position: 'absolute',
@@ -124,40 +151,20 @@ export default class IssieCreateFolder extends React.Component {
 
 
 
-        let iconsSelection = <View style={{ flex: 1, alignItems: 'flex-end', width: '100%' }}
-
-        >
+        let iconsSelection = <View style={{ flex: 1,  width: '100%' }}>
             <View
                 style={{
-                    flexDirection: "row-reverse", width: "100%",
-                    alignItems: "center",
+                    flexDirection: 'row-reverse',
+                    //width:"80%",
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    //backgroundColor: 'green'
                 }}>
                 <AppText style={styles.titleText}>{translate("CaptionIcon")}</AppText>
-                {getSvgIconButton(() => getNewPage(SRC_GALLERY,
-                    (uri) => {
-                        // trace("image in base64", uri.length)
-                        // this.setState({ icon: uri})
-                        this.props.navigation.navigate('SavePhoto', {
-                            uri: uri,
-                            title: "עריכת תמונה",
-                            imageSource: SRC_GALLERY,
-                            onConfirm:(uri)=>{
-                                FileSystem.main.resizeImage(uri, 100, 100)
-                                    .then(uri2=>FileSystem.main.convertImageToBase64(uri2))
-                                    .then(imgBase64=>this.setState({ icon: imgBase64}))
-                            },
-                            folder: undefined,
-                            returnFolderCallback: (f) => {},
-                            saveNewFolder: (newFolder, color, icon) => {}
-        
-                        })
-                    },
-                    //cancel
-                    () => {
-                    },
-                    this.props.navigation, 
-                    { selectionLimit: 1, quality: 0}),
-                    semanticColors.titleText, "new-image", 40)}
+
+                {getRoundedButton(() => this.AddPhoto(),
+                    'svg-new-image', translate("BtnAddPhoto"), 30, 30, { width: 250, height: 40 }, 'row-reverse', true)
+                }
             </View>
             <View style={{
                 width: '100%',
@@ -274,7 +281,6 @@ const styles = StyleSheet.create({
         height: 70,
         paddingTop: 12,
         textAlign: "right",
-        width: "80%",
         fontWeight: 'bold',
         color: semanticColors.titleText,
         backgroundColor: 'transparent'

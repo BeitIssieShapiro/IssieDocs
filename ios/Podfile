@@ -2,11 +2,17 @@ require_relative '../node_modules/@react-native-community/cli-platform-ios/nativ
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 
 platform :ios, '10.0'
+# permissions_path = '../node_modules/react-native-permissions/ios'
+#   pod 'Permission-Camera', :path => "#{permissions_path}/Camera/Permission-Camera.podspec"
+# pod 'Permission-Camera', :path => "#{permissions_path}/Camera"
+
 
 target 'IssieDocs4' do
+  pod 'Permission-Camera', :path => "../node_modules/react-native-permissions/ios/Camera"
   config = use_native_modules!
   use_react_native!(:path => config["reactNativePath"])
-
+  
+  
   target 'IssieDocs4Tests' do
     inherit! :complete
     # Pods for testing

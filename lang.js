@@ -23,7 +23,7 @@ var strings = {
         "ShareSuccessful": "שיתוף הסתיים בהצלחה",
         "ActionCancelled": "הפעולה בוטלה",
         "PDFLoadFailed": "טעינת PDF נכשלה",
-        "DefaultFolder": "ראשי", // modified
+        "DefaultFolder": "כללי", 
         "Search":"חפש",
 
         "DeletePageTitle": "מחיקת דף",
@@ -74,6 +74,7 @@ var strings = {
         "BtnNextPage": "הבא",
         "BtnPreviousPage": "הקודם",
         "BtnNewFolder": "תיקיה חדשה",
+        "BtnAddPhoto": "בחר תמונה",
         "BtnAddPage": "דף נוסף",
         "BtnSave": "שמירה",
         "BtnShare": "שיתוף",
@@ -95,7 +96,10 @@ var strings = {
         "CaptionIcon": "סמל",
 
         "ImportProgress": "מייבא דף {1} מתוך {2}",
-        "ExportProgress": "מייצא דף {1} מתוך {2}"
+        "ExportProgress": "מייצא דף {1} מתוך {2}",
+
+        "MissingCameraPermission": `לא ניתנה רשות לשימוש במצלמה לאפליקציה
+        למתן רשות יש לגשת להגדרות -> פרטיות -> מצלמה, ולאפשר שימוש עבור IssieDocs`, //todo translate
 
     },
     "ar": {

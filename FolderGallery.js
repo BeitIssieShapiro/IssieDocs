@@ -40,7 +40,7 @@ import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FIL
 import DocumentPicker from 'react-native-document-picker';
 import { FlatList } from 'react-native-gesture-handler';
 import SplashScreen from 'react-native-splash-screen';
-import { getSvgIcon } from './svg-icons';
+import { getSvgIcon, SvgIcon } from './svg-icons';
 import { StackActions } from '@react-navigation/native';
 import { FileSystem, swapFolders, saveFolderOrder } from './filesystem.js';
 import { trace } from './log.js';
@@ -101,12 +101,32 @@ export default class FolderGallery extends React.Component {
             })
 
             registerLangEvent()
+            const betaSettings = Settings.get('beta');
 
             this.props.navigation.addListener("focus", async () => {
                 //this.refresh();
                 this.setState({ selected: undefined });
             })
             setNavParam(this.props.navigation, 'menuHandler', () => this._menuHandler());
+            setNavParam(this.props.navigation, 'betaFeatures', () => {
+                trace
+                if (this.state.betaCounter === 7) {
+                    //toggle beta features
+                    const newMode = { beta: !this.state.beta };
+                    Settings.set(newMode);
+                    this.setState(newMode);
+                    Alert.alert("Beta features", "Beta features has been " + (newMode.beta ? "Enabled" : "Disabled"));
+
+                    return;
+                }
+                if (this.betaTimer) {
+                    clearTimeout(this.betaTimer);
+                }
+                this.betaTimer = setTimeout(() => this.setState({ betaCounter: 0 }), 1000);
+
+                this.setState({ betaCounter: (this.state.betaCounter ? this.state.betaCounter + 1 : 1) });
+                trace("betacounter ", this.state.betaCounter)
+            });
             setNavParam(this.props.navigation, 'editHandler', () => this.toggleEditMode());
             setNavParam(this.props.navigation, 'isEditEnabled', () => {
                 let editTitleSetting = Settings.get(EDIT_TITLE.name);
@@ -127,7 +147,8 @@ export default class FolderGallery extends React.Component {
                 this.setState({ folders });
             });
 
-            this.setState({ folders, loading: false });
+            //trace("beta", betaSettings)
+            this.setState({ folders, loading: false, beta: (betaSettings ? betaSettings.beta : false) });
 
         } finally {
 
@@ -280,7 +301,7 @@ export default class FolderGallery extends React.Component {
 
 
     selectFolder = (folder) => {
-        this.setState({ currentFolder: folder, selected:undefined }, () =>
+        this.setState({ currentFolder: folder, selected: undefined }, () =>
             setNavParam(this.props.navigation, 'showHome', () => this.unselectFolder()));
 
     }
@@ -318,7 +339,8 @@ export default class FolderGallery extends React.Component {
             {
                 page: this.state.selected,
                 folder: this.state.currentFolder,
-                share: true
+                share: true,
+                betaFeatures: this.state.beta === true
             })
     }
 
@@ -434,12 +456,16 @@ export default class FolderGallery extends React.Component {
     }
 
     setReturnFolder = (folderName) => {
-        FileSystem.main.getFolders().then((folders) => {
-            let folder = folders.find(f => f.name == folderName);
-            if (folder) {
-                this.setState({ currentFolder: folder });
-            }
-        });
+        if (folderName === FileSystem.DEFAULT_FOLDER.name) {
+            this.unselectFolder();
+        } else {
+            FileSystem.main.getFolders().then((folders) => {
+                let folder = folders.find(f => f.name == folderName);
+                if (folder) {
+                    this.setState({ currentFolder: folder });
+                }
+            });
+        }
     }
 
     saveNewFolder = async (newFolderName, newFolderColor, newFolderIcon,
@@ -519,28 +545,39 @@ export default class FolderGallery extends React.Component {
                         console.log("goHomeAndThenToEdit - no page " + fileName + " in folder " + this.state.currentFolder.name)
                     }
                 }, 10);
-            }
+            },
+            betaFeatures: this.state.beta === true
         });
     }
 
 
     addEmptyPage = async (type) => {
         let folderName = this.state.currentFolder ? this.state.currentFolder.name : FileSystem.DEFAULT_FOLDER.name;
-        let fileName = await FileSystem.main.getStaticPage(folderName, type);
+        // let fileName = await FileSystem.main.getStaticPage(folderName, type);
 
-        let folder = this.state.currentFolder
-        if (this.state.currentFolder == undefined) {
-            let folders = await FileSystem.main.getFolders();
-            folder = folders.find(f => f.name == folderName);
-            this.selectFolder(folder);
-        }
+        // let folder = this.state.currentFolder
+        // if (this.state.currentFolder == undefined) {
+        //     let folders = await FileSystem.main.getFolders();
+        //     folder = folders.find(f => f.name == folderName);
+        //     this.selectFolder(folder);
+        // }
 
-        let item = await folder.getItem(fileName);
-        if (item) {
-            this.goEdit(item, folder, false);
-        } else {
-            Alert.alert("error finding newly created file")
-        }
+        // let item = await folder.getItem(fileName);
+        // if (item) {
+        //     this.goEdit(item, folder, false);
+        // } else {
+        //     Alert.alert("error finding newly created file")
+        // }
+        let uri = await FileSystem.main.getStaticPageTempFile(type);
+        this.props.navigation.navigate('SavePhoto', {
+            uri,
+            imageSource: SRC_FILE,
+            addToExistingPage: false,
+            skipConfirm: true,
+            folder: this.state.currentFolder,
+            returnFolderCallback: (f) => this.setReturnFolder(f),
+            saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
+        })
     }
 
     addEmptyPageToPage = async (addToExistingPage, pageType) => {
@@ -849,7 +886,7 @@ export default class FolderGallery extends React.Component {
                                         name={item.name}
                                         color={item.color}
                                         icon={item.icon}
-                                        width={this.isLandscape()?'20%':'25%'}
+                                        width={this.isLandscape() ? '20%' : '25%'}
                                         editMode={this.state.editMode}
                                         fixedFolder={false}//item.name === DEFAULT_FOLDER_NAME}
                                         current={false}
@@ -872,7 +909,9 @@ export default class FolderGallery extends React.Component {
                                         bounces={needPagesScroll}
                                         key={asTiles ? numColumnsForTiles.toString() : "list"}
                                         data={[...items].sort(this.getSortFunction())}
-                                        renderItem={({ item }) => FileNew({
+                                        renderItem={({ item }) => (<View>
+                                        <Spacer />
+                                        {FileNew({
                                             page: item,
                                             asTile: asTiles,
                                             name: item.name,
@@ -893,6 +932,9 @@ export default class FolderGallery extends React.Component {
                                             onDuplicate: () => this.DuplicatePage(),
                                             count: item.count
                                         })}
+                                        </View>)
+                                        
+                                        }
                                         numColumns={asTiles ? numColumnsForTiles : 1}
                                         keyExtractor={(item, index) => index.toString()}
                                     />
@@ -930,8 +972,13 @@ export default class FolderGallery extends React.Component {
                             backgroundColor: 'white'
                         }}>
                             {currentParent &&
-                                 <View style={{ height:this.isScreenLow() ? '17%' : '10%', justifyContent:'center'}}>
-                                    <FolderNew
+                                <TouchableOpacity onPress={() => this.unselectFolder()}
+                                    style={{
+                                        height: this.isScreenLow() ? '17%' : '10%',
+                                        justifyContent: 'center',
+                                        alignItems: 'center'
+                                    }}>
+                                    {/* <FolderNew
                                         name={currentParent.name}
                                         fixedFolder={true}
                                         asTitle={true}
@@ -939,9 +986,10 @@ export default class FolderGallery extends React.Component {
                                         icon={currentParent.icon}
                                         isLandscape={this.isLandscape()}
                                         onPress={() => this.unselectFolder()}
-                                    />
-                                 </View>
-                                }
+                                    /> */}
+                                    <SvgIcon name="home" size={40} color={"gray"} />
+                                </TouchableOpacity>
+                            }
                             <ScrollView
                                 style={{
                                     flex: 1,

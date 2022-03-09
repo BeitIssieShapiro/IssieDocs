@@ -55,7 +55,7 @@ export function MyColorPicker(props) {
                 i))
             }
             {/* More color button */}
-            {getColorButtonInt(openMore ? _handleSelect : () => setOpenMore(val => !val),
+            {props.betaFeatures && getColorButtonInt(openMore ? _handleSelect : () => setOpenMore(val => !val),
                 openMore ? composedColor : "gray",
                 colorButtonSize,
                 openMore ? (props.color === composedColor ? "check" : undefined) : "add",
@@ -101,6 +101,7 @@ export function TextSizePicker(props) {
     const [openMore, setOpenMore] = useState(false);
 
     let buttonSize = (props.width) / ((textSizes.length + 1) * 1.4);
+    const textSizesAct = props.betaFeatures?textSizes.filter(v=>v< 50):textSizes
 
     return <FadeInView height={props.open ? buttonSize + 10 + (openMore ? buttonSize + 10 : 0) : 0}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
@@ -109,14 +110,14 @@ export function TextSizePicker(props) {
                 flexDirection: 'row', width: '100%', height: buttonSize + 5,
                 justifyContent: 'space-evenly', alignContent: 'center'
             }}>
-            {textSizes.map((size, i) => getTextSizePicker(props.color, buttonSize, size, size === props.size, i,
+            {textSizesAct.map((size, i) => getTextSizePicker(props.color, buttonSize, size, size === props.size, i,
                 (size) => {
                     setOpenMore(false)
                     props.onSelect(size)
                 }))}
 
             {/* More button */}
-            {getColorButtonInt(() => setOpenMore(val => !val),
+            {props.betaFeatures && getColorButtonInt(() => setOpenMore(val => !val),
                 "white",
                 buttonSize,
                 "more-vert",

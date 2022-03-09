@@ -31,13 +31,13 @@ export default function FileNew(props) {
             style={{ width: props.asTile ? dimensions.tileWidth : props.rowWidth, height: props.asTile ? dimensions.tileHeight : dimensions.lineHeight }}
         >
             {props.asTile ?
-                <View style={{ alignContent: 'center', paddingRight: TILE_PADDING, height: '100%', width: '100%',  }}>
-                    <View 
-                        style={{ 
-                            borderWidth: TILE_BORDER_WIDTH, 
-                            borderColor: "#D1CFCF", 
-                            height: '100%', 
-                            width: '100%' ,
+                <View style={{ alignContent: 'center', paddingRight: TILE_PADDING, height: '100%', width: '100%', }}>
+                    <View
+                        style={{
+                            borderWidth: TILE_BORDER_WIDTH,
+                            borderColor: "#D1CFCF",
+                            height: '100%',
+                            width: '100%',
                             margin: 10
 
                         }}>
@@ -52,19 +52,19 @@ export default function FileNew(props) {
                                 onPress={props.onSelect} >
                                 <Icon name={'more-vert'} size={35} />
                             </TouchableOpacity>
-                            
+
                         </View>
                         {props.selected ?
-                                <View style={{ position: 'absolute', top: 0, right: '2%', width:'96%', zIndex: 100, height:'85%' }}>
-                                    {getActionButtons(props)}
-                                </View>
-                                : null}
+                            <View style={{ position: 'absolute', top: 0, right: '2%', width: '96%', zIndex: 100, height: '85%' }}>
+                                {getActionButtons(props)}
+                            </View>
+                            : null}
                         <View style={{ flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
 
 
-                            <Image source={{ uri: imageSrc }} style={{ height: '85%', width: '100%' }} />
+                            <Image source={{ uri: imageSrc }} style={{ height: '85%', width: '100%', resizeMode: "stretch" }} />
                             <View style={{ height: '15%', backgroundColor: '#a7a7a7', alignItems: 'flex-end', width: '100%' }} >
-                                <AppText style={{ fontSize: TILE_TEXT_HEIGHT, color: 'white', paddingRight: 15, lineHeight:TILE_TEXT_HEIGHT+2 }}>
+                                <AppText style={{ fontSize: TILE_TEXT_HEIGHT, color: 'white', paddingRight: 15, lineHeight: TILE_TEXT_HEIGHT + 2 }}>
                                     {getFileName(props)}
                                 </AppText>
                             </View>
@@ -75,7 +75,7 @@ export default function FileNew(props) {
                 <View style={{ alignContent: 'center', height: dimensions.lineHeight, borderWidth: 1.5, borderColor: "#D1CFCF", width: '100%', paddingRight: 5 }}>
                     <View style={{ flexDirection: 'row-reverse', alignItems: 'center', paddingTop: 3 }}>
                         <View style={{ borderWidth: .5, borderColor: colors.lightBlue }}>
-                            <Image source={{ uri: imageSrc }} style={{ width: 50, height: 60 }} />
+                            <Image source={{ uri: imageSrc }} style={{ width: 40, height: 50, resizeMode: "stretch" }} />
                         </View>
                         <AppText style={{ paddingRight: 20, fontSize: 25, color: semanticColors.titleText }}>
                             {getFileName(props)}
@@ -118,8 +118,10 @@ function getButton(index, props) {
                     }, 'add', 35)}
                 </MenuTrigger>
                 <MenuOptions
-                    optionsContainerStyle={{ backgroundColor: 'white', width: 250, borderRadius: 10, 
-                        alignItems:'center', justifyContent:'center', alignContent:'center' }}                    >
+                    optionsContainerStyle={{
+                        backgroundColor: 'white', width: 250, borderRadius: 10,
+                        alignItems: 'center', justifyContent: 'center', alignContent: 'center'
+                    }}                    >
                     <MenuOption onSelect={props.onAddFromCamera} >
                         {renderMenuOption(translate("MenuFromCamera"), "new-camera", "svg")}
                     </MenuOption>
@@ -137,7 +139,7 @@ function getButton(index, props) {
                     </MenuOption>
                     <Spacer />
                     {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
-                    <Spacer width={5}/>
+                    <Spacer width={5} />
                 </MenuOptions>
 
             </Menu>)
@@ -172,7 +174,7 @@ function getActionButtons(props) {
                 backgroundColor: semanticColors.mainAreaBG,
                 alignItems: 'center',
                 justifyContent: 'center',
-                height:'60%'
+                height: '60%'
                 // height: (dimensions.tileHeight - TILE_PADDING) * .4 - TILE_BORDER_WIDTH,
                 // width: dimensions.tileWidth - 2 * TILE_PADDING - TILE_BORDER_WIDTH * 2
             }}>
@@ -187,7 +189,7 @@ function getActionButtons(props) {
                 backgroundColor: semanticColors.mainAreaBG,
                 // height: (dimensions.tileHeight - TILE_PADDING) * .4 - TILE_BORDER_WIDTH,
                 // width: dimensions.tileWidth - 2 * TILE_PADDING - 2 * TILE_BORDER_WIDTH,
-                height:'40%',
+                height: '40%',
                 justifyContent: 'space-between'
             }}>
                 {getButton(3, props)}

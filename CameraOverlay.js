@@ -1,10 +1,11 @@
 
-import React, { useRef, useState } from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text } from 'react-native';
 import {
     semanticColors,
     getSvgIconButton,
-    getRoundedButton
+    getRoundedButton,
+    AppText
 } from './elements'
 import { translate } from './lang';
 import { isSimulator } from './device';
@@ -12,12 +13,22 @@ import { isSimulator } from './device';
 import { CameraType, Camera } from 'react-native-camera-kit';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
-
+//import * as permissions from 'react-native-permissions';
+import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
 export default function CameraOverlay(props) {
     const [captureInProgress, setCaptureInProgress] = useState(false);
+    const [permission, setPermission] = useState(false);
 
-   const takePicture = async () => {
+    useEffect(() => {
+        request(Platform.OS === 'ios' ? PERMISSIONS.IOS.CAMERA : PERMISSIONS.ANDROID.CAMERA).then((result) => {
+            if (result === RESULTS.GRANTED || result == RESULTS.LIMITED) {
+                setPermission(true);
+            }
+            trace("camera permission", result);
+        });
+    }, [])
+    const takePicture = async () => {
         if (captureInProgress)
             return;
 
@@ -53,30 +64,34 @@ export default function CameraOverlay(props) {
     const camera = useRef()
     // relying on the changes offered here: https://github.com/teslamotors/react-native-camera-kit/issues/425
     return (
-            <View style={{
-                flex: 1, width: '100%',
-                height: '100%'
-            }}>
-                <Camera
-                    ref={camera}
-                    style={{ flex: 1, justifyContent: 'flex-end' }}
-                    cameraType={CameraType.Back}
-                    saveToCameraRoll={false}
-                />
+        <View style={{
+            flex: 1, width: '100%',
+            height: '100%'
+        }}>
+            {permission && <Camera
+                ref={camera}
+                style={{ flex: 1, justifyContent: 'flex-end' }}
+                cameraType={CameraType.Back}
+                saveToCameraRoll={false}
+            />}
 
-                <View style={{
-                    position: 'absolute', alignItems: 'center',
-                    top: '2%', width: '100%', backgroundColor: 'transparent'
-                }}>
-                    {getRoundedButton(cancel, 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
-                </View>
-                <View style={{
-                    position: 'absolute', alignItems: 'center',
-                    bottom: '2%', width: '100%', backgroundColor: 'transparent'
-                }}>
-                    {getSvgIconButton(takePicture, semanticColors.addButton, "camera-take-photo", 80
-                    )}
-                </View>
+            {!permission && <AppText 
+                style={{textAlign:'center', position:"absolute", width:"100%", top:100}}
+                >{translate("MissingCameraPermission")}</AppText>}
+
+            <View style={{
+                position: 'absolute', alignItems: 'center',
+                top: '2%', width: '100%', backgroundColor: 'transparent'
+            }}>
+                {getRoundedButton(cancel, 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
             </View>
-)
+            <View style={{
+                position: 'absolute', alignItems: 'center',
+                bottom: '2%', width: '100%', backgroundColor: 'transparent'
+            }}>
+                {getSvgIconButton(takePicture, semanticColors.addButton, "camera-take-photo", 80
+                )}
+            </View>
+        </View>
+    )
 }

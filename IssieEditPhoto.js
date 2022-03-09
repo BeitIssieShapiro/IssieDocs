@@ -301,7 +301,8 @@ export default class IssieEditPhoto extends React.Component {
     setNavParam(this.props.navigation, 'onMoreMenu', () => this.menu.open())
 
     const metaDataUri = currentFile + ".json";
-    this.setState({ page: page, currentFile: currentFile, currentIndex: 0, metaDataUri: metaDataUri },
+    const betaFeatures = this.props.route.params.betaFeatures;
+    this.setState({ page: page, currentFile: currentFile, currentIndex: 0, metaDataUri: metaDataUri, betaFeatures },
       this.Load);
   }
 
@@ -1227,17 +1228,21 @@ export default class IssieEditPhoto extends React.Component {
     const availablePickerWidth = this.state.windowW - 2 * toolbarSideMargin;
     let colorButtonSize = (this.state.windowW - 2 * toolbarSideMargin) / (availableColorPicker.length * 1.4);
     let backToFolderWidth = 45;
+
+
+    const zoomButton = getIconButton(() => this.setState({
+      showZoomPicker: !this.state.showZoomPicker,
+      showColorPicker: false,
+      showTextSizePicker: false,
+      showBrushSizePicker: false
+    }),
+      semanticColors.editPhotoButton, "zoom-in", 55, false, 45, undefined, undefined, undefined, "3");
+
     const extMenu = [
       getIconButton(() => this.onImagePicker()
         , semanticColors.editPhotoButton, "image", 55, undefined, 40, this.isImageMode(), undefined, undefined, "1"),
       <Spacer width={23} key="2" />,
-      getIconButton(() => this.setState({
-        showZoomPicker: !this.state.showZoomPicker,
-        showColorPicker: false,
-        showTextSizePicker: false,
-        showBrushSizePicker: false
-      }),
-        semanticColors.editPhotoButton, "zoom-in", 55, false, 45, undefined, undefined, undefined, "3"),
+      zoomButton,
       <Spacer width={23} key="4" />,
       // this.state.page && this.state.page.count > 1 &&
       // getIconButton(() => this.deletePage(), semanticColors.editPhotoButton, 'delete-forever', 55, undefined, undefined, undefined, "5"),
@@ -1392,14 +1397,13 @@ export default class IssieEditPhoto extends React.Component {
               }
               {spaceBetweenButtons}
 
-              {this.isLandscape() || this.isScreenNarrow() ?
-                extMenu :
-                getIconButton(() => this.toggleExtMenu(),
-                  semanticColors.editPhotoButton, this.state.showExtMenu ? "expand-less" : "expand-more", 55, false, 45)
-              }
+              {this.isLandscape() && this.state.betaFeatures && extMenu}
+              {(!this.isLandscape() && this.state.betaFeatures) && getIconButton(() => this.toggleExtMenu(),
+                  semanticColors.editPhotoButton, this.state.showExtMenu ? "expand-less" : "expand-more", 55, false, 45)}
+              {!this.isLandscape() && !this.state.betaFeatures && zoomButton}
             </View>
             {/** bottom toolbar */}
-            {(this.isScreenNarrow() || this.state.showExtMenu) && <View style={{
+            {this.state.showExtMenu && this.state.betaFeatures && <View style={{
               position: 'absolute',
               height: dimensions.toolbarHeight,
               flexDirection: 'row', alignItems: 'center',
@@ -1430,6 +1434,7 @@ export default class IssieEditPhoto extends React.Component {
         </FadeInView>*/}
         <MyColorPicker
           open={this.state.showColorPicker}
+          betaFeatures={this.state.betaFeatures}
           top={toolbarHeight}
           width={availablePickerWidth}
           color={this.state.eraseMode ? undefined : this.state.color}
@@ -1448,6 +1453,7 @@ export default class IssieEditPhoto extends React.Component {
         </FadeInView> */}
         <TextSizePicker
           open={this.state.showTextSizePicker && this.isTextMode()}
+          betaFeatures={this.state.betaFeatures}
           top={toolbarHeight}
           width={availablePickerWidth}
           size={this.state.fontSize}

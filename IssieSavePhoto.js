@@ -170,13 +170,14 @@ export default class IssieSavePhoto extends React.Component {
     let pageName = this.props.route.params.name;
     let addToExistingPage = this.props.route.params.addToExistingPage;
     let onConfirm = this.props.route.params.onConfirm;
+    const skipConfirm = this.props.route.params.skipConfirm;
 
     let folders = await FileSystem.main.getFolders();
     folders = folders.filter(f => f.name !== FileSystem.DEFAULT_FOLDER.name);
 
     this.setState({
       imageUri, pathToSave, pdf, pdfPage: 1,
-      folders, folder, pageName, addToExistingPage, multiPage, pages, onConfirm
+      folders, folder, pageName, addToExistingPage, multiPage, pages, onConfirm, phase: skipConfirm?PickName: OK_Cancel,
     }, () => {
       if (!pdf) {
         this.updateImageDimension();
