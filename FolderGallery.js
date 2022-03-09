@@ -32,8 +32,7 @@ import {
     MenuOption,
     MenuTrigger,
 } from 'react-native-popup-menu';
-import { Icon } from 'react-native-elements'
-
+import { DraxList, DraxProvider, DraxView } from 'react-native-drax';
 
 
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
@@ -700,337 +699,353 @@ export default class FolderGallery extends React.Component {
             console.log("empty app")
 
         return (
-            <View style={styles.container}
-                onLayout={this.onLayout}>
+            <DraxProvider>
 
-                {this.state.showMenu ?
-                    <SettingsMenu
-                        onAbout={() => this.gotoAbout()}
-                        onClose={() => this.closeMenu()}
-                        onViewChange={(style) => this.setState({ viewStyle: style })}
-                        onLanguageChange={(lang) => {
-                            loadLanguage();
-                            this.forceUpdate();
-                        }}
-                        onFolderColorChange={(folderColor) => {
-                            this.setState({ folderColor: (folderColor == USE_COLOR.yes) })
-                        }}
-                        onTextBtnChange={(textBtn) => {/* nothing to do for now */ }}
-                    /> : null}
-                {/* header */}
-                <View style={{
-                    position: 'absolute', width: "100%", height: dimensions.toolbarHeight, top: 0, left: 0, backgroundColor: 'white',
-                    shadowColor: "gray",
-                    shadowOpacity: 0.8,
-                    shadowOffset: { width: 0, height: 1 },
-                    elevation: 1,
-                    zIndex: 5,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    backgroundColor: semanticColors.subTitle
+                <View style={styles.container}
+                    onLayout={this.onLayout}>
 
-                }} >
-                    {/*Left buttons*/}
-                    <Spacer />
-                    {
-                        getSvgIconButton(() => {
-                            this.newFromCamera();
-                        }, semanticColors.addButton, "new-camera", 40)
-                    }
-                    <Spacer />
-                    {
-                        getSvgIconButton(() => {
-                            this.newFromMediaLib();
-                        }, semanticColors.addButton, "new-image", 40)
-                    }
-                    <Spacer />
-                    {
-                        getSvgIconButton(() => {
-                            this.newFromFileExplorer();
-                        }, semanticColors.addButton, "new-pdf", 40)
-                    }
-                    <Spacer />
-                    {
-                        getSvgIconButton(() => {
-                            this.props.navigation.navigate('CreateFolder',
-                                {
-                                    saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, true),
-                                    isLandscape: this.isLandscape()
-                                });
-                        }, semanticColors.addButton, "new-folder", 45)
-                    }
-                    <Spacer />
-                    {
-                        this.newPageButton()
-                    }
+                    {this.state.showMenu ?
+                        <SettingsMenu
+                            onAbout={() => this.gotoAbout()}
+                            onClose={() => this.closeMenu()}
+                            onViewChange={(style) => this.setState({ viewStyle: style })}
+                            onLanguageChange={(lang) => {
+                                loadLanguage();
+                                this.forceUpdate();
+                            }}
+                            onFolderColorChange={(folderColor) => {
+                                this.setState({ folderColor: (folderColor == USE_COLOR.yes) })
+                            }}
+                            onTextBtnChange={(textBtn) => {/* nothing to do for now */ }}
+                        /> : null}
+                    {/* header */}
+                    <View style={{
+                        position: 'absolute', width: "100%", height: dimensions.toolbarHeight, top: 0, left: 0, backgroundColor: 'white',
+                        shadowColor: "gray",
+                        shadowOpacity: 0.8,
+                        shadowOffset: { width: 0, height: 1 },
+                        elevation: 1,
+                        zIndex: 5,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        backgroundColor: semanticColors.subTitle
 
-                    {/*right buttons */}
-                    <View style={{ position: 'absolute', right: 17, flexDirection: 'row-reverse', alignItems: 'center' }}>
-                        {/* {
+                    }} >
+                        {/*Left buttons*/}
+                        <Spacer />
+                        {
+                            getSvgIconButton(() => {
+                                this.newFromCamera();
+                            }, semanticColors.addButton, "new-camera", 40)
+                        }
+                        <Spacer />
+                        {
+                            getSvgIconButton(() => {
+                                this.newFromMediaLib();
+                            }, semanticColors.addButton, "new-image", 40)
+                        }
+                        <Spacer />
+                        {
+                            getSvgIconButton(() => {
+                                this.newFromFileExplorer();
+                            }, semanticColors.addButton, "new-pdf", 40)
+                        }
+                        <Spacer />
+                        {
+                            getSvgIconButton(() => {
+                                this.props.navigation.navigate('CreateFolder',
+                                    {
+                                        saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, true),
+                                        isLandscape: this.isLandscape()
+                                    });
+                            }, semanticColors.addButton, "new-folder", 45)
+                        }
+                        <Spacer />
+                        {
+                            this.newPageButton()
+                        }
+
+                        {/*right buttons */}
+                        <View style={{ position: 'absolute', right: 17, flexDirection: 'row-reverse', alignItems: 'center' }}>
+                            {/* {
                             getIconButton(enableEdit ? () => {
                                 this.toggleEditMode()
                             } : undefined, enableEdit ? semanticColors.addButton : semanticColors.disabledButton, this.state.editMode ? "close" : "edit", 35)
 
                         } */}
-                        {/* <Spacer width={20} />
+                            {/* <Spacer width={20} />
                         {
                             this.state.currentFolder ?
                                 getIconButton(() => this.setState({ currentFolder: undefined }), semanticColors.addButton, "home", 45)
                                 : null
                         } */}
+                        </View>
                     </View>
-                </View>
 
-                <View style={{
-                    flex: 1, flexDirection: "row", backgroundColor: semanticColors.mainAreaBG,
-                    position: 'absolute', width: "100%",
-                    top: dimensions.toolbarHeight, left: 0,
-                    height: this.state.windowSize.height - dimensions.toolbarHeight, zIndex: 4,
-                }} >
-                    {/* MainExplorer*/}
-                    {isEmptyApp ?
-                        this.state.loading ?
-                            <View>
-                                <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
-                            </View> :
-                            <View style={{ width: "100%" }}>
-                                <View style={{ position: 'absolute', left: 80, top: (this.isMobile() ? '5%' : '10%'), alignItems: 'flex-end', flexDirection: 'row' }}>
-                                    {getSvgIcon('start-icon', this.isMobile() ? 70 : 150, semanticColors.addButton)}
-                                    <Spacer />
-                                    <AppText style={{ fontSize: this.isMobile() ? 20 : 35, color: '#797a7c' }}>{translate("StartHere")}</AppText>
-                                </View>
-                                <View style={{ position: "absolute", width: "100%", height: '20%', top: this.isMobile() ? '20%' : '30%', alignItems: "center" }}>
-                                    {getSvgIcon('folder', this.isMobile() ? 85 : 150, semanticColors.addButton)}
-                                    <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("DesktopEmpty")}</AppText>
+                    <View style={{
+                        flex: 1, flexDirection: "row", backgroundColor: semanticColors.mainAreaBG,
+                        position: 'absolute', width: "100%",
+                        top: dimensions.toolbarHeight, left: 0,
+                        height: this.state.windowSize.height - dimensions.toolbarHeight, zIndex: 4,
+                    }} >
+                        {/* MainExplorer*/}
+                        {isEmptyApp ?
+                            this.state.loading ?
+                                <View>
+                                    <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
+                                </View> :
+                                <View style={{ width: "100%" }}>
+                                    <View style={{ position: 'absolute', left: 80, top: (this.isMobile() ? '5%' : '10%'), alignItems: 'flex-end', flexDirection: 'row' }}>
+                                        {getSvgIcon('start-icon', this.isMobile() ? 70 : 150, semanticColors.addButton)}
+                                        <Spacer />
+                                        <AppText style={{ fontSize: this.isMobile() ? 20 : 35, color: '#797a7c' }}>{translate("StartHere")}</AppText>
+                                    </View>
+                                    <View style={{ position: "absolute", width: "100%", height: '20%', top: this.isMobile() ? '20%' : '30%', alignItems: "center" }}>
+                                        {getSvgIcon('folder', this.isMobile() ? 85 : 150, semanticColors.addButton)}
+                                        <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("DesktopEmpty")}</AppText>
 
-                                </View>
-                                <View style={{ position: 'absolute', width: '100%', bottom: '20%', flexDirection: 'row', justifyContent: 'center' }}>
-                                    {getSvgIcon('welcome-image', this.isMobile() ? 50 : 80, semanticColors.addButton)}
-                                    <Spacer width={50} />
-                                    {getSvgIcon('welcome-doc', this.isMobile() ? 50 : 80, semanticColors.addButton)}
-                                    <Spacer width={50} />
-                                    {getSvgIcon('welcome-pdf', this.isMobile() ? 50 : 80, semanticColors.addButton)}
-                                    <Spacer width={50} />
-                                    {getSvgIcon('welcome-folder', this.isMobile() ? 50 : 80, semanticColors.addButton)}
+                                    </View>
+                                    <View style={{ position: 'absolute', width: '100%', bottom: '20%', flexDirection: 'row', justifyContent: 'center' }}>
+                                        {getSvgIcon('welcome-image', this.isMobile() ? 50 : 80, semanticColors.addButton)}
+                                        <Spacer width={50} />
+                                        {getSvgIcon('welcome-doc', this.isMobile() ? 50 : 80, semanticColors.addButton)}
+                                        <Spacer width={50} />
+                                        {getSvgIcon('welcome-pdf', this.isMobile() ? 50 : 80, semanticColors.addButton)}
+                                        <Spacer width={50} />
+                                        {getSvgIcon('welcome-folder', this.isMobile() ? 50 : 80, semanticColors.addButton)}
 
+                                    </View>
                                 </View>
-                            </View>
-                        :
-                        <View style={{
-                            flex: 1, flexDirection: "column", position: 'absolute', top: 0, width: pagesContainerWidth, left: 0, height: "100%",
-                        }}>
-                            {/* pagesTitle */}
+                            :
                             <View style={{
-                                flex: 1, flexDirection: "row", position: 'absolute',
-                                width: "100%", top: 0, height: this.isScreenLow() ? '17%' : '10%', alignItems: 'center', justifyContent: 'flex-start',
-                                borderBottomWidth: this.state.currentFolder ? 1 : 0, borderBottomColor: 'gray'
+                                flex: 1, flexDirection: "column", position: 'absolute', top: 0, width: pagesContainerWidth, left: 0, height: "100%",
                             }}>
-                                {this.state.currentFolder ? <Spacer width={3} /> : null}
-                                {this.state.currentFolder ? getSvgIconButton(() => this.setState({ sortBy: SORT_BY_DATE }), semanticColors.addButton, "sort-by-date", 45, undefined, undefined, (this.state.sortBy == SORT_BY_DATE)) : null}
-                                {this.state.currentFolder ? <Spacer width={3} /> : null}
-                                {this.state.currentFolder ? getSvgIconButton(() => this.setState({ sortBy: SORT_BY_NAME }), semanticColors.addButton, "sort-by-name", 45, undefined, undefined, (this.state.sortBy == SORT_BY_NAME)) : null}
+                                {/* pagesTitle */}
+                                <View style={{
+                                    flex: 1, flexDirection: "row", position: 'absolute',
+                                    width: "100%", top: 0, height: this.isScreenLow() ? '17%' : '10%', alignItems: 'center', justifyContent: 'flex-start',
+                                    borderBottomWidth: this.state.currentFolder ? 1 : 0, borderBottomColor: 'gray'
+                                }}>
+                                    {this.state.currentFolder ? <Spacer width={3} /> : null}
+                                    {this.state.currentFolder ? getSvgIconButton(() => this.setState({ sortBy: SORT_BY_DATE }), semanticColors.addButton, "sort-by-date", 45, undefined, undefined, (this.state.sortBy == SORT_BY_DATE)) : null}
+                                    {this.state.currentFolder ? <Spacer width={3} /> : null}
+                                    {this.state.currentFolder ? getSvgIconButton(() => this.setState({ sortBy: SORT_BY_NAME }), semanticColors.addButton, "sort-by-name", 45, undefined, undefined, (this.state.sortBy == SORT_BY_NAME)) : null}
 
-                                {this.state.currentFolder ? <FolderNew
-                                    width="85%"
-                                    index={fIndex}
-                                    id="1"
-                                    useColors={this.state.folderColor}
-                                    name={curFolderFullName}
-                                    color={curFolderColor}
-                                    icon={curFolderIcon}
-                                    asTitle={true}
-                                    isLandscape={this.isLandscape()}
-                                    editMode={this.state.editMode}
-                                    onDelete={() => this.DeleteFolder()}
-                                    onRename={() => this.RenameFolder()}
-                                    fixedFolder={curFolderFullName === FileSystem.DEFAULT_FOLDER.name}
-                                /> :
-                                    <Search
-                                        value={this.state.filterFolders}
-                                        onChangeText={(txt) => {
-                                            //Alert.alert("filter: "+ txt)
-                                            this.setState({ filterFolders: txt })
-                                        }
-                                        }
-                                    />}
+                                    {this.state.currentFolder ? <FolderNew
+                                        width="85%"
+                                        index={fIndex}
+                                        id="1"
+                                        useColors={this.state.folderColor}
+                                        name={curFolderFullName}
+                                        color={curFolderColor}
+                                        icon={curFolderIcon}
+                                        asTitle={true}
+                                        isLandscape={this.isLandscape()}
+                                        editMode={this.state.editMode}
+                                        onDelete={() => this.DeleteFolder()}
+                                        onRename={() => this.RenameFolder()}
+                                        fixedFolder={curFolderFullName === FileSystem.DEFAULT_FOLDER.name}
+                                    /> :
+                                        <Search
+                                            value={this.state.filterFolders}
+                                            onChangeText={(txt) => {
+                                                //Alert.alert("filter: "+ txt)
+                                                this.setState({ filterFolders: txt })
+                                            }
+                                            }
+                                        />}
 
+                                </View>
+
+                                {/* pages */}
+                                <View style={{
+                                    flex: 1,
+                                    backgroundColor: semanticColors.mainAreaBG,
+                                    position: 'absolute', top: this.isScreenLow() ? '17%' : '10%', width: "100%",
+                                    height: this.isScreenLow() ? '83%' : '90%'
+                                }}>
+                                    {this.state.filterFolders?.length > 0 &&
+                                        <AppText style={{ fontSize: 25, paddingRight: 15, lineHeight: 25 + 2 }}>
+                                            {translate("SearchResults") + ":   " + (folders.length === 0 && items.length === 0 ? translate("NoSearchResults") : "")}
+                                        </AppText>
+                                    }
+
+
+
+
+                                    {!this.state.currentFolder && <View
+                                        style={{
+                                            flexWrap: 'wrap', flexDirection: 'row-reverse',
+                                            width: '100%', justifyContent: 'flex-start', alignItems: 'center',
+                                            //height: '100%'
+                                        }}
+                                    >
+                                        {folders.map((item, index) => <FolderNew
+                                            key={index.toString()}
+                                            id={item.name}
+                                            isOverview={true}
+                                            name={item.name}
+                                            color={item.color}
+                                            icon={item.icon}
+                                            width={this.isLandscape() ? '20%' : '25%'}
+                                            editMode={this.state.editMode}
+                                            fixedFolder={false}//item.name === DEFAULT_FOLDER_NAME}
+                                            current={false}
+                                            onPress={() => this.selectFolder(item)}
+
+                                            isLandscape={this.isLandscape()}
+                                        />)}
+
+                                    </View>}
+
+
+                                    {items.length > 0 ?
+                                        <DraxList
+                                            viewPropsExtractor={(item) => ({
+                                                payload:
+                                                    { item, folder: this.state.currentFolder?.name }
+                                            })
+                                            }
+                                            longPressDelay={500}
+                                            contentContainerStyle={{
+                                                width: '100%', alignItems: 'flex-end',
+                                                height: needPagesScroll ? pagesHeightSize : '100%'
+
+                                            }}
+                                            columnWrapperStyle={asTiles ? { flexDirection: 'row-reverse' } : undefined}
+                                            bounces={needPagesScroll}
+                                            key={asTiles ? numColumnsForTiles.toString() : "list"}
+                                            data={[...items].sort(this.getSortFunction())}
+                                            renderItemContent={({ item }) => (<View>
+                                                <Spacer />
+                                                {FileNew({
+                                                    page: item,
+                                                    asTile: asTiles,
+                                                    name: item.name,
+                                                    rowWidth: pagesContainerWidth,
+                                                    editMode: this.state.editMode,
+                                                    selected: this.isSelected(item),
+                                                    onPress: () => this.goEdit(item, this.state.currentFolder, false),
+                                                    onSelect: () => this.toggleSelection(item, 'file'),
+                                                    onDelete: () => this.DeletePage(),
+                                                    onRename: () => this.RenamePage(true),
+                                                    onMove: () => this.RenamePage(false),
+                                                    onShare: () => this.Share(),
+                                                    onAddFromCamera: () => this.AddToPageFromCamera(item),
+                                                    onAddFromMediaLib: () => this.AddToPageFromMediaLib(item),
+                                                    onBlankPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Blank),
+                                                    onLinesPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Lines),
+                                                    onMathPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Math),
+                                                    onDuplicate: () => this.DuplicatePage(),
+                                                    count: item.count
+                                                })}
+                                            </View>)
+
+                                            }
+                                            numColumns={asTiles ? numColumnsForTiles : 1}
+                                            keyExtractor={(item, index) => index.toString()}
+                                        />
+
+
+                                        : this.state.currentFolder && (folderIsLoading ?
+                                            <View>
+                                                <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
+                                            </View>
+                                            :
+                                            <View style={{ alignItems: 'center', height: '100%' }}>
+                                                <Spacer height='20%' />
+                                                {getSvgIcon('folder', this.isMobile() ? 85 : 150)}
+                                                <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("NoPagesYet")}</AppText>
+                                            </View>
+                                        )
+
+                                    }
+                                </View>
                             </View>
 
-                            {/* pages */}
+                        }
+                        {/* tree */}
+
+
+                        {!isEmptyApp && this.state.currentFolder &&
                             <View style={{
                                 flex: 1,
-                                backgroundColor: semanticColors.mainAreaBG,
-                                position: 'absolute', top: this.isScreenLow() ? '17%' : '10%', width: "100%",
-                                height: this.isScreenLow() ? '83%' : '90%'
+                                flexDirection: "column",
+                                position: 'absolute',
+                                top: 0,
+                                width: treeWidth,
+                                right: 0,
+                                height: "100%",
+                                backgroundColor: 'white'
                             }}>
-                                {this.state.filterFolders?.length > 0 &&
-                                    <AppText style={{ fontSize: 25, paddingRight: 15, lineHeight: 25 + 2 }}>
-                                        {translate("SearchResults") + ":   " + (folders.length === 0 && items.length === 0 ? translate("NoSearchResults") : "")}
-                                    </AppText>
-                                }
+                                {currentParent &&
+                                    <DraxView
+                                        onReceiveDragDrop={({ dragged: { payload } }) => {
 
-
-
-
-                                {!this.state.currentFolder && <View
-                                    style={{
-                                        flexWrap: 'wrap', flexDirection: 'row-reverse',
-                                        width: '100%', justifyContent: 'flex-start', alignItems: 'center',
-                                        //height: '100%'
-                                    }}
-                                >
-                                    {folders.map((item, index) => <FolderNew
-                                        key={index.toString()}
-                                        id={item.name}
-                                        isOverview={true}
-                                        name={item.name}
-                                        color={item.color}
-                                        icon={item.icon}
-                                        width={this.isLandscape() ? '20%' : '25%'}
-                                        editMode={this.state.editMode}
-                                        fixedFolder={false}//item.name === DEFAULT_FOLDER_NAME}
-                                        current={false}
-                                        onPress={() => this.selectFolder(item)}
-
-                                        isLandscape={this.isLandscape()}
-                                    />)}
-
-                                </View>}
-
-
-                                {items.length > 0 ?
-                                    <FlatList
-                                        contentContainerStyle={{
-                                            width: '100%', alignItems: 'flex-end',
-                                            height: needPagesScroll ? pagesHeightSize : '100%'
-
+                                            //trace(`received ${JSON.stringify(payload)}`);
+                                            trace("Drop on Folder", "from", payload.folder, "to", FileSystem.DEFAULT_FOLDER.name)
+                                            if (payload.folder === FileSystem.DEFAULT_FOLDER.name) {
+                                                trace("drop on same folder")
+                                                return;
+                                            }
+                                            FileSystem.main.movePage(payload.item, FileSystem.DEFAULT_FOLDER.name)
                                         }}
-                                        columnWrapperStyle={asTiles ? { flexDirection: 'row-reverse' } : undefined}
-                                        bounces={needPagesScroll}
-                                        key={asTiles ? numColumnsForTiles.toString() : "list"}
-                                        data={[...items].sort(this.getSortFunction())}
-                                        renderItem={({ item }) => (<View>
-                                        <Spacer />
-                                        {FileNew({
-                                            page: item,
-                                            asTile: asTiles,
-                                            name: item.name,
-                                            rowWidth: pagesContainerWidth,
-                                            editMode: this.state.editMode,
-                                            selected: this.isSelected(item),
-                                            onPress: () => this.goEdit(item, this.state.currentFolder, false),
-                                            onSelect: () => this.toggleSelection(item, 'file'),
-                                            onDelete: () => this.DeletePage(),
-                                            onRename: () => this.RenamePage(true),
-                                            onMove: () => this.RenamePage(false),
-                                            onShare: () => this.Share(),
-                                            onAddFromCamera: () => this.AddToPageFromCamera(item),
-                                            onAddFromMediaLib: () => this.AddToPageFromMediaLib(item),
-                                            onBlankPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Blank),
-                                            onLinesPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Lines),
-                                            onMathPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Math),
-                                            onDuplicate: () => this.DuplicatePage(),
-                                            count: item.count
-                                        })}
-                                        </View>)
-                                        
-                                        }
-                                        numColumns={asTiles ? numColumnsForTiles : 1}
-                                        keyExtractor={(item, index) => index.toString()}
-                                    />
+                                        style={{
+                                            height: this.isScreenLow() ? '17%' : '10%',
+                                            justifyContent: 'center',
+                                            alignItems: 'center'
+                                        }}>
+                                        <TouchableOpacity onPress={() => this.unselectFolder()}>
 
 
-                                    : this.state.currentFolder && (folderIsLoading ?
-                                        <View>
-                                            <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
-                                        </View>
-                                        :
-                                        <View style={{ alignItems: 'center', height: '100%' }}>
-                                            <Spacer height='20%' />
-                                            {getSvgIcon('folder', this.isMobile() ? 85 : 150)}
-                                            <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("NoPagesYet")}</AppText>
-                                        </View>
-                                    )
-
+                                            <SvgIcon name="home" size={40} color={"gray"} />
+                                        </TouchableOpacity>
+                                    </DraxView>
                                 }
-                            </View>
-                        </View>
 
-                    }
-                    {/* tree */}
-
-
-                    {!isEmptyApp && this.state.currentFolder &&
-                        <View style={{
-                            flex: 1,
-                            flexDirection: "column",
-                            position: 'absolute',
-                            top: 0,
-                            width: treeWidth,
-                            right: 0,
-                            height: "100%",
-                            backgroundColor: 'white'
-                        }}>
-                            {currentParent &&
-                                <TouchableOpacity onPress={() => this.unselectFolder()}
+                                <ScrollView
                                     style={{
-                                        height: this.isScreenLow() ? '17%' : '10%',
-                                        justifyContent: 'center',
-                                        alignItems: 'center'
+                                        flex: 1,
+                                        flexDirection: "column",
+                                        height: (this.state.windowSize.height - dimensions.topView - dimensions.toolbarHeight),
+                                        backgroundColor: 'white',
+                                        zIndex: 99999
+                                    }}
+                                    bounces={needFoldersScroll}
+
+                                    contentContainerStyle={{
                                     }}>
-                                    {/* <FolderNew
-                                        name={currentParent.name}
-                                        fixedFolder={true}
-                                        asTitle={true}
-                                        color={currentParent.color}
-                                        icon={currentParent.icon}
-                                        isLandscape={this.isLandscape()}
-                                        onPress={() => this.unselectFolder()}
-                                    /> */}
-                                    <SvgIcon name="home" size={40} color={"gray"} />
-                                </TouchableOpacity>
-                            }
-                            <ScrollView
-                                style={{
-                                    flex: 1,
-                                    flexDirection: "column",
-                                    height: (this.state.windowSize.height - dimensions.topView - dimensions.toolbarHeight),
-                                    backgroundColor: 'white'
-                                }}
-                                bounces={needFoldersScroll}
 
-                                contentContainerStyle={{
-                                }}>
+                                    {
+                                        folders.map((f, i, arr) => FolderNew({
+                                            index: i,
+                                            isLast: i + 1 == arr.length,
+                                            useColors: this.state.folderColor,
+                                            id: f.name,
+                                            name: f.name,
+                                            color: f.color,
+                                            icon: f.icon,
+                                            editMode: this.state.editMode,
+                                            fixedFolder: f.name === FileSystem.DEFAULT_FOLDER.name,
+                                            //dragPanResponder: this._panResponder.panHandlers, 
+                                            current: (this.state.currentFolder && f.name == this.state.currentFolder.name),
+                                            onPress: () => this.selectFolder(f),
+                                            onLongPress: () => {
+                                                if (this.state.currentFolder && f.name == this.state.currentFolder.name)
+                                                    this.unselectFolder()
+                                            },
+                                            onMoveUp: () => this.moveFolderUp(f),
+                                            onMoveDown: () => this.moveFolderDown(f),
+                                            isLandscape: this.isLandscape()
+                                        }))
 
-                                {
-                                    folders.map((f, i, arr) => FolderNew({
-                                        index: i,
-                                        isLast: i + 1 == arr.length,
-                                        useColors: this.state.folderColor,
-                                        id: f.name,
-                                        name: f.name,
-                                        color: f.color,
-                                        icon: f.icon,
-                                        editMode: this.state.editMode,
-                                        fixedFolder: f.name === FileSystem.DEFAULT_FOLDER.name,
-                                        //dragPanResponder: this._panResponder.panHandlers, 
-                                        current: (this.state.currentFolder && f.name == this.state.currentFolder.name),
-                                        onPress: () => this.selectFolder(f),
-                                        onLongPress: () => {
-                                            if (this.state.currentFolder && f.name == this.state.currentFolder.name)
-                                                this.unselectFolder()
-                                        },
-                                        onMoveUp: () => this.moveFolderUp(f),
-                                        onMoveDown: () => this.moveFolderDown(f),
-                                        isLandscape: this.isLandscape()
-                                    }))
-
-                                }
-                            </ScrollView>
-                        </View>
-                    }
+                                    }
+                                </ScrollView>
+                            </View>
+                        }
+                    </View>
                 </View>
-            </View>
+            </DraxProvider>
         );
     }
 }

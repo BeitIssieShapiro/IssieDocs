@@ -5,6 +5,9 @@ import {
     getFolderAndIcon, normalizeTitle, semanticColors, FolderTextStyle,
     getEmbeddedButton, AppText, folderColors, Spacer, dimensions, FolderIcon
 } from './elements'
+import { DraxView } from 'react-native-drax';
+import { trace } from './log';
+import { FileSystem } from './filesystem';
 
 
 
@@ -23,8 +26,18 @@ export default function FolderNew(props) {
     }
 
     return (
-        <View
+        <DraxView
             key={props.id}
+            onReceiveDragDrop={({ dragged: { payload } }) => {
+
+                //trace(`received ${JSON.stringify(payload)}`);
+                trace("Drop on Folder", "from", payload.folder,"to" ,props.name)
+                if (payload.folder === props.name) {
+                    trace("drop on same folder")
+                    return;
+                }
+                FileSystem.main.movePage(payload.item, props.name)
+            }}
             style={{
                 alignContent: 'center',
                 width: props.width || '100%',
@@ -123,6 +136,6 @@ export default function FolderNew(props) {
                     </View> :
                     <View />
             }
-        </View>
+        </DraxView>
     );
 }

@@ -345,6 +345,27 @@ export class FileSystem {
             }
         });
     }
+    async movePage(sheet, newFolder) {
+        trace("move page", sheet.path, newFolder);
+
+        const isSourceIsFolder = sheet.path.endsWith(".jpg");
+        // Constract target path:
+        const targetPath = this._basePath + newFolder;
+        let targetFileName = targetPath + '/' + sheet.name;
+        if (isSourceIsFolder) {
+            targetFileName += ".jpg";
+        }
+
+        await FileSystem.main.saveFile(sheet.path, targetFileName, false);
+        if (isSourceIsFolder)
+        try {
+            await FileSystem.main.saveFile(sheet.path + ".json", targetFileName + ".json", false);
+        } catch (e) {
+            //ignore, as maybe json is missing
+        }
+        
+        return FileSystem.main.renameOrDuplicateThumbnail(sheet.path, targetFileName, false);
+    }
 
     async addPageToSheet(sheet, newPagePath) {
         trace("add page to sheet: ", sheet.path, " - ", newPagePath);
@@ -473,7 +494,7 @@ export class FileSystem {
         let metadata = { color: color ? color : FileSystem.DEFAULT_FOLDER_METADATA.color, icon };
         return RNFS.writeFile(metaDataFilePath, JSON.stringify(metadata), 'utf8').then(
             //Success
-            ()=>(metadata),
+            () => (metadata),
             //on error 
             err => Promise.reject(err)
         )
