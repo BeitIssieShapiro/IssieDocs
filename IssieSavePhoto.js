@@ -26,7 +26,6 @@ import { fTranslate } from './lang';
 import Scroller from './scroller';
 
 import { FileSystem } from './filesystem';
-import IssieCreateFolder from './create-folder.js';
 import { assert, trace } from './log.js';
 
 const OK_Cancel = 1;
@@ -228,7 +227,8 @@ export default class IssieSavePhoto extends React.Component {
   }
 
   isScreenNarrow = () => {
-    this.state.windowWidth < 500;
+    trace("isScreenNarrow", this.state.windowWidth)
+    return this.state.windowWidth < 500;
   }
 
   OK = async () => {
@@ -585,6 +585,7 @@ export default class IssieSavePhoto extends React.Component {
             onSaveNewFolder={(name, color, icon) => this.saveNewFolder(name, color, icon)}
             navigation={this.props.navigation}
             isLandscape={this.state.windowSize.width > this.state.windowSize.height}
+            isMobile={this.isScreenNarrow()}
             onLayout={(e) => onLayoutHost.onLayout ? onLayoutHost.onLayout(e) : {}}
           />
 

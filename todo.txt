@@ -7,8 +7,35 @@ V- add images - hide
 V - בחר תמונה  - button
 V- change flow of new page to same as camera
 V- drag page into folder
+V* Text on the very bottom of page cannot be selected
+V highlight folder of drop
+V in non tile - no spacer
+V  create folder - missing texts in buttons only from main
+missing progress in adding photo
+V no drag and drop in search mode
+missing sort in home
+V* when moving text under keyboard - stop when all picture is above keyboard. also work in non zoom
+when zoom with button, keep center
+put text on zoom - scrolls too much
+add photo quality is too low
+when ext menu is opened, :
+- the drag image is not below finger
+V - text stops too high above keyboard
+- remember last 3 colors
+- 
+
+
 
 Bugs:
+V- rotate device while zoom - not good
+V- zoom all the way out - offset to 0?
+V- scroll main page
+
+Mobile bugs:
+- selecting icon to folder - no scroll
+
+
+
 V- when closing keyboard, move back
 V- when in zoom and open keyboard, sometimes loose location - move not considering zoom - 
 V- camera not in right orientation sometimes 

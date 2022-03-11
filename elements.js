@@ -10,6 +10,7 @@ import { getUseTextSetting } from './settings.js'
 
 import { getSvgIcon, SvgIcon } from './svg-icons.js'
 import { FileSystem } from './filesystem.js';
+import { trace } from './log.js';
 
 
 export const dimensions = {
@@ -187,15 +188,13 @@ export function getEmbeddedSvgButton(callback, icon, iconSize, key, color) {
 
 
 export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction, dark, isMobile) {
-    isMobileLocal = false;
-    if (isMobile) {
-        isMobileLocal = true;
-    }
+    trace("getRoundedButton", isMobile)
+
     if (getUseTextSetting() && !isMobile) {
         return getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark)
     } else {
         let newDim = { width: dim.height, height: dim.height };
-        return getRoundedButtonInt(callback, icon, undefined, textSize, iconSize, newDim, direction, false)
+        return getRoundedButtonInt(callback, icon, "", textSize, iconSize, newDim, direction, false)
     }
 
 }
@@ -227,11 +226,16 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
                 backgroundColor: dark ? '#a7a7a7' : '#eeeded',
                 flexDirection: direction ? direction : 'row'
             }}>
-            {textExist ? <AppText style={{ position: 'absolute', paddingTop: 5, left: 0, width: '80%', fontSize: textSize, lineHeight: textSize + 5, color: semanticColors.titleText, textAlign: 'center' }}>{text}</AppText> : null}
+            {textExist ?
+                <AppText style={{ position: 'absolute', paddingTop: 5, left: 0, width: '80%', fontSize: textSize, lineHeight: textSize + 5, color: semanticColors.titleText, textAlign: 'center' }}>{text}</AppText> : null
+            }
             {icon.startsWith("svg-") ?
                 <SvgIcon name={icon.substr(4)} size={iconSize} color={color} />
-                : <Icon name={icon} size={iconSize} color={color} />}
-            {textExist ? <Spacer width={5} /> : null}
+                : <Icon name={icon} size={iconSize} color={color} />
+            }
+            {textExist ?
+                <Spacer width={5} />:null
+            }
         </View>
     </TouchableOpacity>
 }
@@ -332,7 +336,7 @@ export function FileNameDialog({
     name,
     folder, folders,
     onChangeName, onChangeFolder, onSaveNewFolder,
-    navigation, isLandscape, onLayout }) {
+    navigation, isLandscape, isMobile, onLayout }) {
 
     const [more, setMore] = useState(false);
     const defFolder = { name: translate("DefaultFolder"), svgIcon: 'home', color: 'gray', hideName: true };
@@ -369,7 +373,7 @@ export function FileNameDialog({
                 }}>
                     <AppText style={[styles.titleText, { width: isLandscape ? '40%' : '30%' }]}>{translate("CaptionFolderNameList")}</AppText>
                     {getRoundedButton(() => navigation.navigate('CreateFolder',
-                        { saveNewFolder: onSaveNewFolder }),
+                        { saveNewFolder: onSaveNewFolder, isMobile }),
                         'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 250, height: 40 }, 'row-reverse', true)}
                 </View>
                 <Spacer />
@@ -639,7 +643,7 @@ export function AppText(props) {
             fontFamily: APP_FONT,
             fontSize: 24,
             textAlign: 'right',
-            
+
         }, props.style]} >{props.children}</Text>
     );
 }

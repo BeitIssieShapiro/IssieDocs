@@ -37,7 +37,7 @@ export function MyColorPicker(props) {
 
     const _handleSelect = useCallback(() => props.onSelect(composedColor), [composedColor]);
 
-    let colorButtonSize = (props.width) / ((availableColorPicker.length + 1) * 1.4);
+    let colorButtonSize = (props.width) / ((availableColorPicker.length + 1) * (props.isScreenNarrow?1.2:1.4));
     //trace("color", props.color, "composed", composedColor)
     return <FadeInView height={props.open ? colorButtonSize + 10 + (openMore ? 350 : 0) : 0}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
@@ -100,8 +100,8 @@ export function MyColorPicker(props) {
 export function TextSizePicker(props) {
     const [openMore, setOpenMore] = useState(false);
 
-    let buttonSize = (props.width) / ((textSizes.length + 1) * 1.4);
     const textSizesAct = props.betaFeatures?textSizes.filter(v=>v< 50):textSizes
+    let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow?1.2:1.4));
 
     return <FadeInView height={props.open ? buttonSize + 10 + (openMore ? buttonSize + 10 : 0) : 0}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>

@@ -35,7 +35,7 @@ export function processPinch(obj, x1, y1, x2, y2) {
         let yOffset = zoom == 1 ? 0 : pinchState.initialTop * deltaZoom - pinchState.initialY * (1 - deltaZoom) - (pinchState.initialY - center.y) * deltaZoom;
 
         //trace("Xos", xOffset, "Yos", yOffset, "Ileft", pinchState.initialLeft, "Xcenter", center.x, "dZoom", deltaZoom)
-        if (xOffset > 0) {
+        if (xOffset > 0 || zoom === 1) {
             xOffset = 0;
         }
 

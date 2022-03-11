@@ -8,7 +8,7 @@ import FolderGallery from './FolderGallery';
 import IssieEditPhoto from './IssieEditPhoto';
 import IssieAbout from './issieabout'
 import IssieCreateFolder from './create-folder';
-import { Spacer, globalStyles, getHeaderBackButton, getIconButton } from './elements';
+import { Spacer, globalStyles, getHeaderBackButton, getIconButton, APP_FONT } from './elements';
 
 import { fTranslate, translate } from './lang.js';
 import {
@@ -25,6 +25,8 @@ import { TextInput } from 'react-native-gesture-handler';
 import { MenuProvider } from 'react-native-popup-menu';
 import CameraModal from './CameraOverlay';
 import { SvgIcon } from './svg-icons';
+import FlashMessage from "react-native-flash-message";
+
 
 // const MainNavigator = createStackNavigator({
 //   Home: {screen: FolderGallery},
@@ -56,9 +58,6 @@ function getNavParam(nav, name, def) {
   return def;
 }
 
-const isScreenNarrow = () => useWindowDimensions().width < 500;
-const isScreenLow = () => useWindowDimensions().height < 700;
-const isMobile = () => this.isScreenNarrow() || this.isScreenLow();
 
 Text.defaultProps = {};
 Text.defaultProps.maxFontSizeMultiplier = 1;
@@ -70,11 +69,12 @@ TextInput.defaultProps.maxFontSizeMultiplier = 1;
 function App(props) {
 
   const windowWidth = useWindowDimensions().width;
+  const windowHeight = useWindowDimensions().height;
   //const windowHeight = useWindowDimensions().height;
 
   const isScreenNarrow = () => windowWidth < 500;
-  //const isScreenLow = () => useWindowDimensions().height < 700;
-  //const isMobile = () => this.isScreenNarrow() || this.isScreenLow();
+  const isScreenLow = () => windowHeight < 700;
+  const isMobile = () => isScreenNarrow() || isScreenLow();
 
 
   if (props.isSimulator) {
@@ -83,7 +83,7 @@ function App(props) {
   return (
     <MenuProvider>
       <NavigationContainer>
-        <Stack.Navigator>
+        <Stack.Navigator screenOptions={{gestureEnabled: false}}>
           <Stack.Screen name="Home" component={FolderGallery}
             options={
               (props) => {
@@ -179,7 +179,7 @@ function App(props) {
               return {
                 title: "",//fileName + multiPageTitleAddition,
                 headerLayoutPreset:'right',
-                headerStyle: globalStyles.headerThinStyle,
+                headerStyle: isMobile() ?  globalStyles.headerStyle : globalStyles.headerThinStyle,
                 headerTintColor: 'white',
                 headerTitleStyle: globalStyles.headerThinTitleStyle,
                 headerRight: ()=> <Text style={globalStyles.headerThinTitleStyle}>{fileName + multiPageTitleAddition}</Text>,
@@ -251,6 +251,17 @@ function App(props) {
             
         </Stack.Navigator>
       </NavigationContainer>
+      <FlashMessage position="bottom" style={{
+        alignItems:'center',
+        justifyContent:'center',
+        textAlign: 'center',
+      }} 
+      titleStyle={ {
+        fontFamily: APP_FONT,
+        fontSize: 18,
+        textAlign: 'center',
+      }}/>
+      
     </MenuProvider>
   );
 }

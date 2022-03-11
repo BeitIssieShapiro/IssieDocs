@@ -82,6 +82,7 @@ export default class IssieCreateFolder extends React.Component {
         return dim.width > dim.height;
     }
 
+    isMobile=() => this.props.route.params.isMobile
 
     Save = async () => {
         if (this.saveInProgress)
@@ -103,27 +104,28 @@ export default class IssieCreateFolder extends React.Component {
     }
 
     AddPhoto() {
-        getNewPage(SRC_GALLERY).then(uri => {
-            // trace("image in base64", uri.length)
-            // this.setState({ icon: uri})
-            this.props.navigation.navigate('SavePhoto', {
-                uri: uri,
-                title: "עריכת תמונה",
-                imageSource: SRC_GALLERY,
-                onConfirm: (uri) => {
-                    FileSystem.main.resizeImage(uri, 100, 100)
-                        .then(uri2 => FileSystem.main.convertImageToBase64(uri2))
-                        .then(imgBase64 => this.setState({ icon: imgBase64 }))
-                },
-                folder: undefined,
-                returnFolderCallback: (f) => { },
-                saveNewFolder: (newFolder, color, icon) => { }
+        getNewPage(SRC_GALLERY,
+            //okEvent
+            uri => {
+                // trace("image in base64", uri.length)
+                // this.setState({ icon: uri})
+                this.props.navigation.navigate('SavePhoto', {
+                    uri: uri,
+                    title: "עריכת תמונה",
+                    imageSource: SRC_GALLERY,
+                    onConfirm: (uri) => {
+                        FileSystem.main.resizeImage(uri, 100, 100)
+                            .then(uri2 => FileSystem.main.convertImageToBase64(uri2))
+                            .then(imgBase64 => this.setState({ icon: imgBase64 }))
+                    },
+                    folder: undefined,
+                    returnFolderCallback: (f) => { },
+                    saveNewFolder: (newFolder, color, icon) => { }
 
-            })
-        },
-            //cancel
-            () => {
+                })
             },
+            //cancelEvent
+            () => {},
             this.props.navigation,
             { selectionLimit: 1, quality: 0 }
         );
@@ -141,17 +143,17 @@ export default class IssieCreateFolder extends React.Component {
 
 
             {  //Cancel
-                getRoundedButton(() => this.props.navigation.goBack(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })
+                getRoundedButton(() => this.props.navigation.goBack(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 },undefined, undefined, this.isMobile())
             }
             <Spacer width={10} />
             {  //Save
-                getRoundedButton(() => this.Save(), 'check-green', translate("BtnSave"), 30, 30, { width: 150, height: 40 })
+                getRoundedButton(() => this.Save(), 'check-green', translate("BtnSave"), 30, 30, { width: 150, height: 40 },undefined, undefined, this.isMobile())
             }
         </View>
 
 
 
-        let iconsSelection = <View style={{ flex: 1,  width: '100%' }}>
+        let iconsSelection = <View style={{ flex: 1, width: '100%' }}>
             <View
                 style={{
                     flexDirection: 'row-reverse',

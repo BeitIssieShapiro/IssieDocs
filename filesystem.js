@@ -102,7 +102,7 @@ export class FileSystem {
         this._notify();
     }
 
-    async addFolder(name, icon, color, strictChecks, skipCreateMetadata) {
+    async addFolder(name, icon, color, strictChecks, skipCreateMetadata, rename) {
         console.log("add folder: " + name + ", color:" + color + ", icon=" + icon)
         if (!name || name.length == 0) {
             throw translate("MissingFolderName");
@@ -127,13 +127,11 @@ export class FileSystem {
             trace("Folder ", folderPath, " has been created")
             let fsf = new FileSystemFolder(name, this, { color, icon });
             this._folders.push(fsf);
-
-
         }
         if (!skipCreateMetadata) {
             const newMetadata = await this._writeFolderMetaData(name, color, icon);
 
-            if (name !== FileSystem.DEFAULT_FOLDER.name) {
+            if (name !== FileSystem.DEFAULT_FOLDER.name && !rename) {
                 await pushFolderOrder(name)
                 await _sortFolders(this._folders)
             }
@@ -150,18 +148,26 @@ export class FileSystem {
     }
 
     async renameFolder(name, newName, icon, color) {
-        await this.addFolder(newName, icon, color, name !== newName, false);
-
+        await this.addFolder(newName, icon, color, name !== newName, false, true);
+        trace("0")
         //move all files and delete old folder
         if (name !== newName) {
+            trace("1")
             await RNFS.readDir(this._basePath + name).then(async (files) => {
                 for (let f of files) {
-                    await RNFS.moveFile(f.path, this._basePath + newName + "/" + f.name);
+                    trace("iterate files", f)
+                    if (f.name !== ".metadata") {
+                        // skip meta data as it was created already
+                        await RNFS.moveFile(f.path, this._basePath + newName + "/" + f.name);
+                    }
                 }
             });
+            trace("2")
             await this.deleteFolder(name);
+            trace("3")
             await _renameFolderOrders(name, newName);
             await _sortFolders(this._folders);
+            trace("4")
             await this._reloadFolder(newName);
         }
         this._notify();
@@ -356,15 +362,16 @@ export class FileSystem {
             targetFileName += ".jpg";
         }
 
-        await FileSystem.main.saveFile(sheet.path, targetFileName, false);
+        const srcPath = decodeURI(sheet.path);
+        await FileSystem.main.saveFile(srcPath, targetFileName, false);
         if (isSourceIsFolder)
-        try {
-            await FileSystem.main.saveFile(sheet.path + ".json", targetFileName + ".json", false);
-        } catch (e) {
-            //ignore, as maybe json is missing
-        }
-        
-        return FileSystem.main.renameOrDuplicateThumbnail(sheet.path, targetFileName, false);
+            try {
+                await FileSystem.main.saveFile(srcPath + ".json", targetFileName + ".json", false);
+            } catch (e) {
+                //ignore, as maybe json is missing
+            }
+
+        return FileSystem.main.renameOrDuplicateThumbnail(srcPath, targetFileName, false);
     }
 
     async addPageToSheet(sheet, newPagePath) {
@@ -494,9 +501,14 @@ export class FileSystem {
         let metadata = { color: color ? color : FileSystem.DEFAULT_FOLDER_METADATA.color, icon };
         return RNFS.writeFile(metaDataFilePath, JSON.stringify(metadata), 'utf8').then(
             //Success
-            () => (metadata),
+            () => {
+                return metadata
+            },
             //on error 
-            err => Promise.reject(err)
+            err => {
+                trace("fail writing metadata", err);
+                Promise.reject(err)
+            }
         )
     }
 
@@ -678,10 +690,10 @@ export class FileSystemFolder {
     }
 
     get icon() {
-        return this._metadata.icon;
+        return this?._metadata?.icon || '';
     }
     get color() {
-        return this._metadata.color;
+        return this?._metadata?.color || FileSystem.DEFAULT_FOLDER_METADATA.color;
     }
 
     get loading() {
@@ -716,6 +728,7 @@ export class FileSystemFolder {
         this._loading = true;
         this._files = [];
         for (let fi of filesItems) {
+            trace("read file", fi.name)
             const name = FileSystem.getFileNameFromPath(fi.name, true);
             let sheet = new WorkSheet(fi.path, name);
             let lastUpdate = Math.max(fi.mtime.valueOf(), fi.ctime.valueOf());

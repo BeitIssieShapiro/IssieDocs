@@ -77,12 +77,17 @@ export default class IssieEditPhoto extends React.Component {
         }
 
         let yText = this.s2aH(gestureState.moveY - DRAG_ICON_SIZE / 2)
-        if (yText < -this.state.yOffset) {
-          yText = -this.state.yOffset;
-        } else if (yText > (this.state.canvasH - this.inputTextHeight)) {
-          yText = this.state.canvasH - this.inputTextHeight;
-        } else if (yText > this.state.canvasH - this.state.keyboardHeight - this.state.yOffset - 10) {
-          yText = this.state.canvasH - this.state.keyboardHeight - this.state.yOffset - 10;
+        let yOffset = this.state.yOffset;
+        trace("move", yText, this.state.yOffset, this.state.canvasH)
+        if (yText - DRAG_ICON_SIZE /2 > this.state.canvasH ) {
+          yText = this.state.canvasH - DRAG_ICON_SIZE/2;
+        } else if (yText < 0) {
+          yText = 0;
+        }
+          
+
+        if (yText < -yOffset) {
+          yOffset = -yText
         }
 
         if (this.isImageMode()) {
@@ -90,7 +95,7 @@ export default class IssieEditPhoto extends React.Component {
         }
 
         this.setState({
-          xText, yText
+          xText, yText, yOffset
         });
         //}
       },
@@ -207,7 +212,7 @@ export default class IssieEditPhoto extends React.Component {
       inputTextHeight: 40,
       inputTextWidth: 0,
       canvasTexts: [],
-      topView: 0,
+      topView: 120,
       zoom: 1.0,
       minZoom: 1,
       maxZoom: 3,
@@ -232,6 +237,7 @@ export default class IssieEditPhoto extends React.Component {
   isEraserMode = () => this.state.mode === Modes.ERASER;
 
   _shouldDragText = (evt, gestureState) => {
+    trace("should drag?");
     return this.isTextMode() && this.state.showTextInput || this.isImageMode() && this.state.currentImageElem;
   }
 
@@ -256,6 +262,7 @@ export default class IssieEditPhoto extends React.Component {
     //ignore the part of keyboard that is below the canvas
     let kbHeight = e.endCoordinates.height - (this.state.windowH - this.topLayer() - this.state.canvasH);
 
+    trace("_keyboardDidShow", kbHeight, this.topLayer(), dimensions.toolbarHeight)
     this.setState({
       keyboardHeight: kbHeight, keyboardTop: kbTop,
     });
@@ -466,13 +473,14 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   canvasClick = (ev) => {
-    trace("canvasClick click. x: ", ev.nativeEvent.pageX, ",y: ", ev.nativeEvent.pageY)
+    trace("canvasClick click. x: ", ev.nativeEvent.pageX, ",y: ", ev.nativeEvent.pageY, "topLayer", this.topLayer())
 
     //check that the click is in the canvas area:
     if (ev.nativeEvent.pageX < this.state.sideMargin ||
       ev.nativeEvent.pageX > this.state.sideMargin + this.state.canvasW ||
       ev.nativeEvent.pageY < this.topLayer() ||
       ev.nativeEvent.pageY > this.state.canvasH + this.topLayer()) {
+      trace("canvasClicked out of bound")
       return;
     }
 
@@ -481,6 +489,8 @@ export default class IssieEditPhoto extends React.Component {
 
 
     if (this.isTextMode()) {
+      trace("textMode clicked ",x, y)
+
       y -= this.state.fontSize / 2;
       let needCanvasUpdate = false;
 
@@ -618,6 +628,7 @@ export default class IssieEditPhoto extends React.Component {
   findElementByLocation = (coordinates) => {
     let q = this.isImageMode() ? this.state.canvasImages : this.state.canvasTexts;
     for (let i = q.length - 1; i >= 0; i--) {
+      trace ("find", JSON.stringify(q[i]))
       let foundY = q[i].position.y < coordinates.y + 15 &&
         q[i].position.y + q[i].height > coordinates.y - 15;
 
@@ -660,7 +671,7 @@ export default class IssieEditPhoto extends React.Component {
     newTextElem.fontColor = this.state.color;
     console.log("getTextElem, fontSize", this.state.fontSize);
     newTextElem.fontSize = this.state.fontSize;
-    newTextElem.width = this.getTextWidth();
+    newTextElem.width = this.state.inputTextWidth+5;
     newTextElem.font = APP_FONT;
     return newTextElem;
   }
@@ -674,8 +685,8 @@ export default class IssieEditPhoto extends React.Component {
     const initialImageSizeScaled = initialImageSize / this.state.scaleRatio;
     //newImageElem.anchor = { x: 0, y: 0 };
     newImageElem.normPosition = {
-      x: (this.state.canvasW / 2 / this.state.scaleRatio - initialImageSizeScaled / 2 - this.state.xOffset)/ this.state.zoom,
-      y: (this.state.canvasH / 2 / this.state.scaleRatio - initialImageSizeScaled / 2 - this.state.yOffset)/ this.state.zoom, // + this.getYOffsetFactor(height),
+      x: (this.state.canvasW / 2 / this.state.scaleRatio - initialImageSizeScaled / 2 - this.state.xOffset) / this.state.zoom,
+      y: (this.state.canvasH / 2 / this.state.scaleRatio - initialImageSizeScaled / 2 - this.state.yOffset) / this.state.zoom, // + this.getYOffsetFactor(height),
     };
     newImageElem.imageData = imageData
     newImageElem.width = Math.round(initialImageSizeScaled * ratio);
@@ -1099,6 +1110,20 @@ export default class IssieEditPhoto extends React.Component {
   onLayout = async (e) => {
     if (!this._mounted)
       return;
+
+    if (!this.state.topViewMeasured && this.topView && this._mounted) {
+      this.topView.measure((fx, fy, width, height, px, py) => {
+        trace("topView", py)
+        this.setState({ topView: py, topViewMeasured:true })
+      });
+    }
+    // const measure = this.topView.measure.bind(this.topView);
+    // setTimeout(measure, 50, (fx, fy, width, height, px, py) => {
+    //   if (this._mounted)
+    //     trace("measure", py, windowSize, "zoom", this.state.zoom)
+    //   this.setState({ topView: py, windowSize })
+    // });
+
     let windowSize = e.nativeEvent.layout;
 
     // if (this.state.showTextInput) {
@@ -1114,17 +1139,18 @@ export default class IssieEditPhoto extends React.Component {
     // if (this.state.currentImageElem) {
     //   this.setState({ currentImageElem: undefined });
     // }
-    this.reflectWindowSize(windowSize);
+    this.setState({ windowSize, zoom:1, yOffset:0, xOffset:0 }, 
+        this.reflectWindowSize(windowSize, true));
   }
 
   reflectWindowSize = (windowSize) => {
-    trace("reflectWindowSize", windowSize.width, windowSize.height)
-    const measure = this.topView.measure.bind(this.topView);
-    setTimeout(measure, 50, (fx, fy, width, height, px, py) => {
-      if (this._mounted)
-        //trace("measure", windowSize, "zoom", this.state.zoom)
-        this.setState({ topView: py, windowSize })
-    });
+    // trace("reflectWindowSize", windowSize.width, windowSize.height)
+    // const measure = this.topView.measure.bind(this.topView);
+    // setTimeout(measure, 50, (fx, fy, width, height, px, py) => {
+    //   if (this._mounted)
+    //     trace("measure", py, windowSize, "zoom", this.state.zoom)
+    //   this.setState({ topView: py, windowSize })
+    // });
 
     let sideMargin = Math.floor(windowSize.width * .05)
 
@@ -1206,6 +1232,29 @@ export default class IssieEditPhoto extends React.Component {
     }).catch(err => {
       Alert.alert("Error measuring dimension:" + err.message)
     })
+  }
+
+  doZoom = (delta) => {
+    let newZoom = this.state.zoom + delta;
+    if (newZoom > 3) {
+      newZoom = 3
+    }
+
+    if (newZoom < 1) {
+      newZoom = 1
+    }
+
+    const newState = { zoom: newZoom} //, canvasW: (this.state.canvasW/this.state.zoom*newZoom) }
+
+    if (newZoom === 1) {
+      newState.xOffset = 0;
+      if (this.state.keyboardHeight === 0) {
+        newState.yOffset = 0;
+      }
+    }
+
+    this.setState(newState)
+
   }
 
   render() {
@@ -1399,8 +1448,8 @@ export default class IssieEditPhoto extends React.Component {
 
               {this.isLandscape() && this.state.betaFeatures && extMenu}
               {(!this.isLandscape() && this.state.betaFeatures) && getIconButton(() => this.toggleExtMenu(),
-                  semanticColors.editPhotoButton, this.state.showExtMenu ? "expand-less" : "expand-more", 55, false, 45)}
-              {!this.isLandscape() && !this.state.betaFeatures && zoomButton}
+                semanticColors.editPhotoButton, this.state.showExtMenu ? "expand-less" : "expand-more", 55, false, 45)}
+              {!this.state.betaFeatures && zoomButton}
             </View>
             {/** bottom toolbar */}
             {this.state.showExtMenu && this.state.betaFeatures && <View style={{
@@ -1438,6 +1487,7 @@ export default class IssieEditPhoto extends React.Component {
           top={toolbarHeight}
           width={availablePickerWidth}
           color={this.state.eraseMode ? undefined : this.state.color}
+          isScreenNarrow={this.isScreenNarrow()}
           onSelect={(color) => {
             trace("set-color", color)
             this.setState({ color, showColorPicker: false, eraseMode: false })
@@ -1458,6 +1508,7 @@ export default class IssieEditPhoto extends React.Component {
           width={availablePickerWidth}
           size={this.state.fontSize}
           color={this.state.color}
+          isScreenNarrow={this.isScreenNarrow()}
           onSelect={(size) => this.onTextSize(size)}
         />
 
@@ -1475,16 +1526,15 @@ export default class IssieEditPhoto extends React.Component {
           <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
 
             {
-              getIconButton(() => this.setState({ zoom: this.state.zoom - .5 < 1 ? 1 : this.state.zoom - .5 }),
+              getIconButton(() => this.doZoom(-.5),
                 semanticColors.editPhotoButton, "zoom-out", 55, false, 45)
             }
             {
-              getIconButton(() => this.setState({ zoom: this.state.zoom + .5 > 3 ? 3 : this.state.zoom + .5 }),
+              getIconButton(() => this.doZoom(+.5),
                 semanticColors.editPhotoButton, "zoom-in", 55, false, 45)
             }
           </View>
         </FadeInView>
-
 
         {
           this.state.showTextInput &&
@@ -1665,6 +1715,7 @@ export default class IssieEditPhoto extends React.Component {
 
 
   getBrushSizePicker = (color, size, brushSize, index) => {
+    size = this.isScreenNarrow() ? size + 10 : size;
     return <TouchableOpacity
       style={{ width: size, height: size }}
       onPress={() => this.onBrushSize(brushSize)}

@@ -1,28 +1,36 @@
-import React, { useState, useEffect, View } from 'react';
-import { Animated} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Animated, View } from 'react-native';
+import { trace } from './log';
 
 
 const FadeInView = (props) => {
-  const [fadeAdmin] = useState(new Animated.Value(0))  // Initial value for opacity: 0
+  const [fadeAdmin] = useState(new Animated.Value(0))
+  const [hide, setHide] = useState(false)
+  useEffect(() => {
+    setHide(false)
 
-  React.useEffect(() => {
-    
     Animated.timing(
       fadeAdmin,
       {
-        toValue: props.width?props.width:props.height,
+        toValue: props.width ? props.width : props.height,
         duration: props.duration || 500,
-        useNativeDriver: false
+        useNativeDriver: false,
+        
       }
-    ).start();
+    ).start((res)=>{
+      trace("end animate", res)
+      setHide(props.width ? props.width == 0:props.height == 0)
+    });
   }, [props.height, props.width])
 
-  return (
-    <Animated.View   
+  if (hide) {
+    return (<View />);
+  }
+  return (<Animated.View
       style={[props.style, {
         overflow: "hidden",
-        opacity: fadeAdmin,         // Bind opacity to animated value
-      }, props.width?{width:fadeAdmin}:{height:fadeAdmin}]}
+        //opacity: fadeAdmin,         // Bind opacity to animated value
+      }, props.width ? { width: fadeAdmin } : { height: fadeAdmin }]}
     >
       {props.children}
     </Animated.View>

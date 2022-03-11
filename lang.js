@@ -23,7 +23,7 @@ var strings = {
         "ShareSuccessful": "שיתוף הסתיים בהצלחה",
         "ActionCancelled": "הפעולה בוטלה",
         "PDFLoadFailed": "טעינת PDF נכשלה",
-        "DefaultFolder": "כללי", 
+        "DefaultFolder": "שולחן העבודה", 
         "Search":"חפש",
 
         "DeletePageTitle": "מחיקת דף",
@@ -35,6 +35,7 @@ var strings = {
         "BeforeDeleteFolderQuestion": "מחיקת תיקייה תגרום למחיקת כל הדפים בתוכה, האם למחוק?",
         "BeforeDeleteFoldersAndPagesQuestion": "נבחרה מחיקת דפים ותיקיות. מחיקת התיקיות תמחק את כל הדפים בתוכן. האם להמשיך?",
 
+        "SuccessfulMovePageMsg": "דף '{1}' עבר בהצלחה לתיקית '{2}'",
         "NoPagesYet": "התיקיה ריקה",
         "ChooseFolder": "בחר תיקיה",
 
@@ -117,7 +118,7 @@ var strings = {
         "ShareSuccessful": "انتهت المشاركة بنجاح",
         "ActionCancelled": "تم إلغاء الإجراء",
         "PDFLoadFailed": "فشل في تحميل ملف PDF",
-        "DefaultFolder": "عام",
+        "DefaultFolder": "التطبيق الرئيسي", //verify
         "Search":"بحث",
         "SearchResults": "نتائج البحث",
         
@@ -130,6 +131,8 @@ var strings = {
         "DeleteFoldersAndPagesTitle": "حذف المجلدات والعناوين",
         "BeforeDeleteFolderQuestion": "حذف المجلد سيؤدي إلى مسح جميع الصفحات داخله, وحذفه",
         "BeforeDeleteFoldersAndPagesQuestion": "اختير حذف الصفحات والمجلدات. حذف المجلدات سيؤدي إلى حذف جميع الصفحات والمحتويات. هل تريد المتابعة؟",
+
+        "SuccessfulMovePageMsg": "الصفحة '{1}' تم نقلها بنجاح إلى المجلد '{2}'", //todo validate
 
         "NoPagesYet": "المجلد فارغ",
         "ChooseFolder": "اختار مجلد", 
@@ -166,6 +169,7 @@ var strings = {
         "BtnNextPage": "التالى",
         "BtnPreviousPage": "السابق",
         "BtnNewFolder": "مجلد جديد",
+        "BtnAddPhoto": "اختر صورة",
         "BtnAddPage": "صفحة أخرى",
         "BtnSave": "حفظ",
         "BtnShare": "مشاركة",

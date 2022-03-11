@@ -1,25 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Icon } from 'react-native-elements'
-import { View, Alert, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import {
-    getFolderAndIcon, normalizeTitle, semanticColors, FolderTextStyle,
-    getEmbeddedButton, AppText, folderColors, Spacer, dimensions, FolderIcon
+    normalizeTitle, semanticColors, FolderTextStyle,
+    getEmbeddedButton, AppText, Spacer, dimensions, FolderIcon
 } from './elements'
 import { DraxView } from 'react-native-drax';
 import { trace } from './log';
 import { FileSystem } from './filesystem';
+import { showMessage } from 'react-native-flash-message';
+import { fTranslate } from './lang';
 
 
-
+const dragOverColor = 'lightblue'
 
 export default function FolderNew(props) {
-    
+    const [dragOver, setDragOver] = useState(false);
+
     let caption = normalizeTitle(props.name);
     let captionLimit = props.isLandscape ? 12 : 9;
 
-    // if (props.editMode) {
-    //     captionLimit -= 3;
-    // }
 
     if (!props.asTitle && caption.length > captionLimit) {
         caption = caption.substring(0, captionLimit) + '...';
@@ -27,22 +27,38 @@ export default function FolderNew(props) {
 
     return (
         <DraxView
-            key={props.id}
+            key={props.index}
+            longPressDelay={100000}
+            onReceiveDragEnter={() => {
+                trace("drag enter")
+                if (!props.asTitle)
+                    setDragOver(true)
+            }}
+            onReceiveDragExit={() => setDragOver(false)}
             onReceiveDragDrop={({ dragged: { payload } }) => {
-
+                setDragOver(false);
                 //trace(`received ${JSON.stringify(payload)}`);
-                trace("Drop on Folder", "from", payload.folder,"to" ,props.name)
+                trace("Drop on Folder", "from", payload.folder, "to", props.name)
                 if (payload.folder === props.name) {
                     trace("drop on same folder")
                     return;
                 }
                 FileSystem.main.movePage(payload.item, props.name)
+                    .then(() => showMessage({
+                        message: fTranslate("SuccessfulMovePageMsg", payload.item.name, props.name),
+                        type: "success",
+                        animated: true,
+                        duration: 5000,
+                    })
+                    )
             }}
             style={{
                 alignContent: 'center',
                 width: props.width || '100%',
                 height: props.asTitle ? dimensions.folderAsTitleHeight : dimensions.folderHeight,
                 //paddingTop: 10, paddingBottom: 10
+                borderRadius: 7,
+                backgroundColor: dragOver ? dragOverColor : undefined,
             }}>
 
             {props.editMode && props.asTitle && !props.fixedFolder && props.name && props.name.length > 0 ?
@@ -52,7 +68,7 @@ export default function FolderNew(props) {
                 <View style={{
                     position: 'absolute', flexDirection: 'row-reverse',
                     left: 18,
-                        top: 0,
+                    top: 0,
                     height: '100%', width: '20%',
                     backgroundColor: semanticColors.mainAreaBG,
                     justifyContent: 'flex-end',
@@ -72,7 +88,7 @@ export default function FolderNew(props) {
 
                 style={{
                     flexDirection: 'row-reverse',
-                    backgroundColor: props.current ? semanticColors.selectedFolder : 'transparent',
+                    backgroundColor: dragOver ? dragOverColor : (props.current ? semanticColors.selectedFolder : 'transparent'),
                     height: '100%'
                 }}>
 
@@ -89,10 +105,10 @@ export default function FolderNew(props) {
                                 flexDirection: 'row-reverse'
                             }}
                         >
-                            <View style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', paddingRight: 30, paddingBottom:'5%', height: '100%'}}>
+                            <View style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', paddingRight: 30, paddingBottom: '5%', height: '100%' }}>
                                 <Icon name="folder" size={45} color={props.color} />
                                 <View style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
-                                    <View style={{ width: '100%', height:'100%', justifyContent: 'center',alignItems: 'center', paddingTop:'7%', flexDirection: 'row-reverse' }}>
+                                    <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', paddingTop: '7%', flexDirection: 'row-reverse' }}>
                                         {props.icon && props.icon.length > 0 ? <FolderIcon name={props.icon} size={20} color={'white'} /> : null}
                                     </View>
                                 </View>
@@ -131,7 +147,7 @@ export default function FolderNew(props) {
             {
                 props.editMode && !props.fixedFolder && !props.asTitle && !props.isOverview ?
                     <View style={{ position: 'absolute', left: 0, top: 0, flexDirection: 'column', alignItems: 'center', marginTop: 0, }}>
-                        <Icon name={"expand-less"} size={55} color={props.index == 1 ? 'gray' : 'black'} onPress={props.index > 1 ? props.onMoveUp : undefined} />
+                        <Icon name={"expand-less"} size={55} color={props.index == 0 ? 'gray' : 'black'} onPress={props.index > 0 ? props.onMoveUp : undefined} />
                         <Icon name={"expand-more"} size={55} color={props.isLast ? 'gray' : 'black'} onPress={props.isLast ? undefined : props.onMoveDown} />
                     </View> :
                     <View />
