@@ -285,6 +285,14 @@ export class FileSystem {
             throw translate("IllegalCharacterInPageName");
         }
 
+        if (pathObj.folders.length > 1 && !this._validPathPart(pathObj.folders[1])) {
+            throw translate("IllegalCharacterInPageName");
+        }
+
+        if (pathObj.folders.length > 2) {
+            throw translate("IllegalCharacterInPageName");
+        }
+
         await this._verifyFolderExists(filePath);
 
         let folder = this._getFolder(pathObj.folders[0]);

@@ -17,11 +17,11 @@ missing sort in home
 V* when moving text under keyboard - stop when all picture is above keyboard. also work in non zoom
 when zoom with button, keep center
 put text on zoom - scrolls too much
-add photo quality is too low
-when ext menu is opened, :
-- the drag image is not below finger
+Vadd photo quality is too low
+V when ext menu is opened, :
+V- the drag image is not below finger
 V - text stops too high above keyboard
-- remember last 3 colors
+V - remember last 3 colors
 - 
 
 

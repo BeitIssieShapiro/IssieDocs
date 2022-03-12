@@ -33,7 +33,7 @@ import {
     MenuOption,
     MenuTrigger,
 } from 'react-native-popup-menu';
-import { DraxList, DraxProvider, DraxView, DraxViewDragStatus } from 'react-native-drax';
+import { DraxList, DraxProvider, DraxScrollView, DraxView, DraxViewDragStatus } from 'react-native-drax';
 
 
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
@@ -104,7 +104,7 @@ export default class FolderGallery extends React.Component {
 
             registerLangEvent()
             const betaSettings = Settings.get('beta');
-
+            trace("Beta settings", betaSettings)
             this.props.navigation.addListener("focus", async () => {
                 //this.refresh();
                 this.setState({ selected: undefined });
@@ -150,7 +150,7 @@ export default class FolderGallery extends React.Component {
             });
 
             //trace("beta", betaSettings)
-            this.setState({ folders, loading: false, beta: (betaSettings ? betaSettings.beta : false) });
+            this.setState({ folders, loading: false, beta: (betaSettings ? betaSettings === 1 : false) });
 
         } finally {
 
@@ -1036,7 +1036,7 @@ export default class FolderGallery extends React.Component {
                                     </DraxView>
                                 
 
-                                <ScrollView
+                                <DraxScrollView
                                     ref={ref => this.foldersTree = ref}
                                     scrollEnabled={true}
                                     style={{
@@ -1077,7 +1077,7 @@ export default class FolderGallery extends React.Component {
                                         />)
 
                                     }
-                                </ScrollView>
+                                </DraxScrollView>
                             </View>
                         }
                     </View>

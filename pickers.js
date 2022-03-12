@@ -1,18 +1,20 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     View,
-    StyleSheet
+    StyleSheet,
+    Settings
 } from 'react-native';
 
 import {
     AppText,
-    availableColorPicker, availableTextSize, extendedTextSizes, getColorButton, getColorButtonInt, getRoundedButton, textSizes
+    availableColorPicker, availableTextSize, extendedTextSizes, getColorButton, getColorButtonInt, getRoundedButton, Spacer, textSizes
 } from './elements'
 import FadeInView from './FadeInView';
 import ColorPicker from 'react-native-wheel-color-picker'
 import { trace } from './log';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { translate } from './lang';
+import { LAST_COLORS } from './settings';
 
 
 const styles = StyleSheet.create({
@@ -34,17 +36,41 @@ export function MyColorPicker(props) {
 
     const [openMore, setOpenMore] = useState(false);
     const [composedColor, setComposedColor] = useState(props.color);
+    const [lastColors, setLastColors] = useState([]);
 
-    const _handleSelect = useCallback(() => props.onSelect(composedColor), [composedColor]);
 
-    let colorButtonSize = (props.width) / ((availableColorPicker.length + 1) * (props.isScreenNarrow?1.2:1.4));
+    useEffect(() => {
+        //load last colors
+        const lastC = Settings.get(LAST_COLORS.name);
+        if (lastC?.length > 0) {
+            setLastColors(lastC)
+        }
+    }, [])
+
+    const _handleSelect = useCallback(() => {
+        props.onSelect(composedColor)
+        if (lastColors.find(lc => lc === composedColor)) {
+            return
+        }
+        //save the last three colors
+        const lastC = [composedColor, ...lastColors];
+        while (lastC.length > LAST_COLORS.max) {
+            lastC.pop()
+        }
+        Settings.set({ [LAST_COLORS.name]: lastC })
+        setLastColors(lastC)
+
+    }, [composedColor, lastColors]);
+
+    let colorButtonSize = (props.width) / ((availableColorPicker.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
+    //trace("last colors", lastColors)
     //trace("color", props.color, "composed", composedColor)
     return <FadeInView height={props.open ? colorButtonSize + 10 + (openMore ? 350 : 0) : 0}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
         <View
             style={{
                 flexDirection: 'row',
-                width: '100%', height: colorButtonSize ,
+                width: '100%', height: colorButtonSize,
                 justifyContent: 'space-evenly', alignItems: 'center'
             }}>
             {availableColorPicker.map((color, i) => getColorButton(
@@ -64,6 +90,19 @@ export function MyColorPicker(props) {
             }
         </View>
         {openMore && <View style={{ top: 0, left: 0, height: 300, width: "80%" }}>
+            <View style={{
+                position: "absolute", top: 30, left: 0, height: colorButtonSize * 3 + 30,
+                zIndex: 1000
+            }} >
+                {lastColors.map((color, i) => [getColorButton(
+                    () => props.onSelect(color),
+                    color,
+                    colorButtonSize,
+                    color == props.color,
+                    i), <Spacer key={i + "space"} />]
+                )
+                }
+            </View>
             <ColorPicker
                 // ref={r => { this.picker = r }}
                 color={composedColor}
@@ -100,8 +139,8 @@ export function MyColorPicker(props) {
 export function TextSizePicker(props) {
     const [openMore, setOpenMore] = useState(false);
 
-    const textSizesAct = props.betaFeatures?textSizes.filter(v=>v< 50):textSizes
-    let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow?1.2:1.4));
+    const textSizesAct = props.betaFeatures ? textSizes.filter(v => v < 50) : textSizes
+    let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
 
     return <FadeInView height={props.open ? buttonSize + 10 + (openMore ? buttonSize + 10 : 0) : 0}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
@@ -153,8 +192,10 @@ function getTextSizePicker(color, size, textSize, selected, index, callback) {
             alignContent: 'center',
         }}
         >
-            <AppText style={{ fontSize: textSize, color: color, 
-        textAlignVertical:'center',  lineHeight:textSize+12}}>{translate("A")}</AppText>
+            <AppText style={{
+                fontSize: textSize, color: color,
+                textAlignVertical: 'center', lineHeight: textSize + 12
+            }}>{translate("A")}</AppText>
         </View>
     </TouchableOpacity>
 }

@@ -31,6 +31,11 @@ export const EDIT_TITLE = {
     no: 2
 }
 
+export const LAST_COLORS = {
+    name: 'lastColors',
+    max: 3
+}
+
 export function getUseColorSetting() {
     return getSetting(USE_COLOR.name, USE_COLOR.yes);
 }

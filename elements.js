@@ -188,7 +188,6 @@ export function getEmbeddedSvgButton(callback, icon, iconSize, key, color) {
 
 
 export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction, dark, isMobile) {
-    trace("getRoundedButton", isMobile)
 
     if (getUseTextSetting() && !isMobile) {
         return getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark)

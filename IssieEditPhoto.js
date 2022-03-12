@@ -87,7 +87,7 @@ export default class IssieEditPhoto extends React.Component {
           
 
         if (yText < -yOffset) {
-          yOffset = -yText
+          yOffset = -yText/this.state.zoom;
         }
 
         if (this.isImageMode()) {
