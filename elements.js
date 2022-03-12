@@ -247,6 +247,27 @@ export function getSvgIconButton(callback, color, icon, size, isText, iconSize, 
     return getIconButton(callback, color, icon, size, isText, iconSize, selected, "svg")
 }
 export function getIconButton(callback, color, icon, size, isText, iconSize, selected, iconType, notPressable, key) {
+    return <IconButton 
+        onPress={callback}
+        color={color}
+        icon={icon}
+        size={size}
+        isText={isText}
+        iconSize={iconSize} selected={selected} iconType={iconType} notPressable={notPressable} key={key}
+    />
+}
+
+export function IconButton({
+    onPress, 
+    color, 
+    icon, 
+    size, 
+    isText, 
+    iconSize, 
+    selected, 
+    iconType, 
+    notPressable
+}) {
     iconType = iconType || "material";
     let isSvg = iconType === "svg";
 
@@ -267,7 +288,7 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
             getSvgIcon(icon, sizeToUse, color) :
             <Icon name={icon} type={iconType} size={sizeToUse} color={color} />
 
-    return <View key={key}>
+    return <View>
         {notPressable ?
             <View style={viewStyle}>
                 {viewContent}
@@ -275,7 +296,7 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
             :
             <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={callback}
+                onPress={onPress}
                 style={viewStyle}
             >
                 {viewContent}

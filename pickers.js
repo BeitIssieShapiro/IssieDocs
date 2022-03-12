@@ -15,6 +15,7 @@ import { trace } from './log';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { translate } from './lang';
 import { LAST_COLORS } from './settings';
+import { Icon } from 'react-native-elements'
 
 
 const styles = StyleSheet.create({
@@ -199,3 +200,24 @@ function getTextSizePicker(color, size, textSize, selected, index, callback) {
         </View>
     </TouchableOpacity>
 }
+
+
+export function BrushSizePicker ({color, size, brushSize, isScreenNarrow, onPress, selectedStrokeWidth}) {
+    size = isScreenNarrow ? size + 10 : size;
+    return <TouchableOpacity
+      style={{ width: size, height: size }}
+      onPress={() => onPress(brushSize)}
+      activeOpacity={0.7}      
+    >
+      <View style={{
+        flex: 1,
+        backgroundColor: brushSize === selectedStrokeWidth ? '#eeeded' : 'transparent',
+        borderRadius: size / 2,
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}
+      >
+        <Icon name={"edit"} color={color} size={brushSize * 4 + 12}></Icon>
+      </View>
+    </TouchableOpacity>
+  }
