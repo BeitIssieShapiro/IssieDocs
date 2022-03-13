@@ -18,7 +18,6 @@ const FadeInView = (props) => {
         
       }
     ).start((res)=>{
-      trace("end animate", res)
       setHide(props.width ? props.width == 0:props.height == 0)
     });
   }, [props.height, props.width])

@@ -56,19 +56,17 @@ export function EditorToolbar({
     color = color || "black"
     windowSize = windowSize || {width:500}
 
-    trace("toolbar", "windowSize", windowSize)
-
     isScreenNarrow = () => windowSize?.width < 500;
     isLandscape = () => windowSize?.width > windowSize?.height;
 
     useEffect(()=>{
-        if (toolbarHeight !== isScreenNarrow() || showExtMenu ? 2 * dimensions.toolbarHeight : dimensions.toolbarHeight) {
-            onToolbarHeightChange(isScreenNarrow() || showExtMenu ? 2 * dimensions.toolbarHeight : dimensions.toolbarHeight)
+        const calcHeight = (isScreenNarrow() || showExtMenu) && !isLandscape()  ? 2 * dimensions.toolbarHeight : dimensions.toolbarHeight
+        if (toolbarHeight !== calcHeight) {
+            onToolbarHeightChange(calcHeight)
         }    
-    }, [showExtMenu])
+    }, [showExtMenu, windowSize])
 
     onTextButtonClick = useCallback(() => {
-        trace("onTextButtonClick", isTextMode)
         if (!isTextMode) {
             onTextMode()
         }
@@ -126,8 +124,6 @@ export function EditorToolbar({
     const availablePickerWidth = windowSize ? windowSize.width - 2 * toolbarSideMargin : 500;
     let colorButtonsSize = windowSize ? (windowSize.width - 2 * toolbarSideMargin) / (availableColorPicker.length * 1.4) : 50;
 
-    trace("colorButtonsSize", colorButtonsSize)
-
     const extMenu = [
         <IconButton onPress={onImageButtonClick} color={semanticColors.editPhotoButton}
             icon={"image"} size={55} iconSize={45} key={"1"} selected={isImageMode}/>,
@@ -143,7 +139,7 @@ export function EditorToolbar({
 
     {/* Toolbar */ }
     return <View style={{
-        position: 'absolute', top: 0, width: '100%',
+        width: '100%',
         height: toolbarHeight, backgroundColor: semanticColors.subTitle,
         zIndex: 30
     }} >

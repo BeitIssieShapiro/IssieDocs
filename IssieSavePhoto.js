@@ -193,7 +193,7 @@ export default class IssieSavePhoto extends React.Component {
   isDuplicate = () => this.props.route.params.imageSource === SRC_DUPLICATE;
 
   updateImageDimension = async () => {
-    setTimeout(async () => {
+    //setTimeout(async () => {
       let imgSize =
         (this.isDuplicate() || this.isRename()) ?
           { w: 0, h: 0 } :
@@ -214,20 +214,20 @@ export default class IssieSavePhoto extends React.Component {
         let scaleH = windowSize.height / imgSize.h;
         scale = Math.min(scaleW, scaleH);
       }
+      trace("updateImageDimension", { imgSize, scale, windowSize })
       this.setState({ imgSize, scale, windowSize })
-    }, 50);
+    //}, 50);
   }
 
   onLayout = async () => {
     const measure = this.topView.measure.bind(this.topView);
 
     setTimeout(measure, 50, (fx, fy, width, height, px, py) => {
-      this.setState({ topView: py, windowWidth: width }, this.updateImageDimension);
+      this.setState({ topView: py, windowWidth: width }, ()=>this.updateImageDimension());
     });
   }
 
   isScreenNarrow = () => {
-    trace("isScreenNarrow", this.state.windowWidth)
     return this.state.windowWidth < 500;
   }
 

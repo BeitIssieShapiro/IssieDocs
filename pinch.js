@@ -7,7 +7,7 @@ export function pinchEnd(obj) {
     pinchState.isResizing = false;
 }
 
-export function processPinch(obj, x1, y1, x2, y2) {
+export function processPinch(obj, x1, y1, x2, y2, changeState) {
     let distance = calcDistance(x1, y1, x2, y2);
     let center = calcCenter(x1, y1, x2, y2);
 
@@ -43,7 +43,7 @@ export function processPinch(obj, x1, y1, x2, y2) {
             yOffset = 0;
         }
 
-        obj.setState({
+        changeState({
             zoom,
             xOffset,
             yOffset
@@ -74,7 +74,7 @@ export function processResize(obj, x, y) {
     };
 }
 
-function calcDistance(x1, y1, x2, y2) {
+export function calcDistance(x1, y1, x2, y2) {
     let dx = Math.abs(x1 - x2)
     let dy = Math.abs(y1 - y2)
     return Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));

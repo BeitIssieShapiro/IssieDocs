@@ -74,7 +74,7 @@
             <root>
                 <mxCell id="ephZPgJX-JMvw1b65tYv-0"/>
                 <mxCell id="ephZPgJX-JMvw1b65tYv-1" parent="ephZPgJX-JMvw1b65tYv-0"/>
-                <mxCell id="ephZPgJX-JMvw1b65tYv-2" value="Page" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;align=left;" vertex="1" parent="ephZPgJX-JMvw1b65tYv-1">
+                <mxCell id="ephZPgJX-JMvw1b65tYv-2" value="PageEditor" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;align=left;" vertex="1" parent="ephZPgJX-JMvw1b65tYv-1">
                     <mxGeometry x="90" y="30" width="320" height="280" as="geometry"/>
                 </mxCell>
                 <mxCell id="ephZPgJX-JMvw1b65tYv-9" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="ephZPgJX-JMvw1b65tYv-1">
@@ -95,7 +95,7 @@
                 <mxCell id="ephZPgJX-JMvw1b65tYv-7" value="" style="triangle;whiteSpace=wrap;html=1;rotation=-180;" vertex="1" parent="ephZPgJX-JMvw1b65tYv-1">
                     <mxGeometry x="150" y="180" width="10" height="20" as="geometry"/>
                 </mxCell>
-                <mxCell id="ephZPgJX-JMvw1b65tYv-8" value="Editor" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="ephZPgJX-JMvw1b65tYv-1">
+                <mxCell id="ephZPgJX-JMvw1b65tYv-8" value="mainContainer" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="ephZPgJX-JMvw1b65tYv-1">
                     <mxGeometry x="320" y="80" width="60" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="ephZPgJX-JMvw1b65tYv-10" value="Navigator" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="ephZPgJX-JMvw1b65tYv-1">
@@ -112,6 +112,9 @@
                         <mxPoint x="290" y="220" as="sourcePoint"/>
                         <mxPoint x="340" y="170" as="targetPoint"/>
                     </mxGeometry>
+                </mxCell>
+                <mxCell id="ephZPgJX-JMvw1b65tYv-13" value="MoreMenu" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;dashed=1;" vertex="1" parent="ephZPgJX-JMvw1b65tYv-1">
+                    <mxGeometry x="140" y="112" width="90" height="60" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>

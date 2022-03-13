@@ -14,8 +14,11 @@ import { trace } from './log.js';
 
 
 export const dimensions = {
+    headerHeight:70,
+    thinHeaderHeight:52,
     toolbarHeight: 65,
     toolbarMargin: 5,
+    minSideMargin: 40,
     topView: 70,
     folderHeight: 130,
     folderAsTitleHeight: 62,
@@ -577,11 +580,11 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
 export const globalStyles = StyleSheet.create({
     headerStyle: {
         backgroundColor: semanticColors.header,
-        height: 75
+        height: dimensions.headerHeight
     },
     headerThinStyle: {
         backgroundColor: semanticColors.header,
-        height: 52
+        height: dimensions.thinHeaderHeight
     },
     headerTitleStyle: {
         width: '100%',
