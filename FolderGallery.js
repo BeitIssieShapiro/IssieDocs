@@ -701,7 +701,6 @@ export default class FolderGallery extends React.Component {
         let treeWidth = this.state.currentFolder ? (this.isLandscape() ? 220 : this.isMobile() ? 100 : 180) : 0;//.36 * this.state.windowSize.width;
         let pagesContainerWidth = this.state.windowSize.width - treeWidth;
         let numColumnsForTiles = Math.floor(pagesContainerWidth / dimensions.tileWidth);
-        trace("numOfColumns:", numColumnsForTiles)
         let foldersCount = folders.length;
         let foldersHeightSize = dimensions.topView + dimensions.toolbarHeight + (foldersCount + 1) * dimensions.folderHeight;
         let needFoldersScroll = foldersHeightSize > this.state.windowSize.height;
