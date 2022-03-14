@@ -109,7 +109,8 @@ export default class IssieCreateFolder extends React.Component {
             uri => {
                 // trace("image in base64", uri.length)
                 // this.setState({ icon: uri})
-                this.props.navigation.navigate('SavePhoto', {
+                trace("Saving photo for folder", uri)
+                this.props.navigation.push('SavePhoto', {
                     uri: uri,
                     title: "עריכת תמונה",
                     imageSource: SRC_GALLERY,
@@ -118,6 +119,7 @@ export default class IssieCreateFolder extends React.Component {
                             .then(uri2 => FileSystem.main.convertImageToBase64(uri2))
                             .then(imgBase64 => this.setState({ icon: imgBase64 }))
                     },
+                    skipConfirm: false,
                     folder: undefined,
                     returnFolderCallback: (f) => { },
                     saveNewFolder: (newFolder, color, icon) => { }

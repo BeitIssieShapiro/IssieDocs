@@ -1823,7 +1823,8 @@ export default class IssieEditPhoto extends React.Component {
           left: w,
           top: h - DRAG_ICON_SIZE,
           width: DRAG_ICON_SIZE,
-          height: DRAG_ICON_SIZE
+          height: DRAG_ICON_SIZE,
+          zIndex:30
         }}>
         <Icon name='filter-none' size={DRAG_ICON_SIZE} style={{ transform: [{ rotate: '-90deg' }] }} />
       </View>
@@ -1833,7 +1834,7 @@ export default class IssieEditPhoto extends React.Component {
 
   getTextInput = () => {
     //trace("getTextInput width:", this.getTextWidth(), "fontSize", this.normalizeTextSize(this.state.fontSize))
-    //this._handleInputTextLocationMovingPage(this.state.keyboardHeight, this.state.keyboardTop);
+    this._handleInputTextLocationMovingPage(this.state.keyboardHeight, this.state.keyboardTop);
     const x = this.state.viewPortX;
     const y = this.state.viewPortY;
     return (

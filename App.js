@@ -41,7 +41,8 @@ LogBox.ignoreLogs([
   'Require cycle: node_modules/rn-fetch-blob/index.js',
   'Non-serializable values were found in the navigation state',
   'Can\'t perform a React state update',
-  'ProgressViewIOS has been extracted'
+  'ProgressViewIOS has been extracted',
+  'Cannot update during an existing state transition'
 ]);
 
 function execNavParam(nav, name, def) {

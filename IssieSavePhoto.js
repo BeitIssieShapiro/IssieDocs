@@ -170,7 +170,7 @@ export default class IssieSavePhoto extends React.Component {
     let addToExistingPage = this.props.route.params.addToExistingPage;
     let onConfirm = this.props.route.params.onConfirm;
     const skipConfirm = this.props.route.params.skipConfirm;
-
+    trace("skip confirm", skipConfirm?"yes":"no", skipConfirm)
     let folders = await FileSystem.main.getFolders();
     folders = folders.filter(f => f.name !== FileSystem.DEFAULT_FOLDER.name);
 
