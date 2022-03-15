@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   AppRegistry, StyleSheet, TextInput, View,
-  TouchableOpacity, Text, Alert, PanResponder, Keyboard, PixelRatio, Dimensions
+  TouchableOpacity, Text, Alert, PanResponder, Keyboard, PixelRatio, Dimensions, ActivityIndicator
 } from 'react-native';
 
 import { Icon } from 'react-native-elements'
@@ -43,7 +43,7 @@ const TOP = 0, RIGHT = 1, BOTTOM = 2, LEFT = 3;
 const DEFAULT_STROKE_WIDTH = 5;
 const MAX_STROKE_WIDTH = 12;
 const DRAG_ICON_SIZE = 45;
-const initialImageSize = 200
+const initialImageSize = 120
 const Modes = {
   IMAGE: 1,
   TEXT: 2,
@@ -71,14 +71,15 @@ export default class IssieEditPhoto extends React.Component {
       onMoveElement: (moveObj) => {
         if (this.isImageMode()) {
           this.moveCurrentImage(moveObj.x, moveObj.y);
-        } else {
-          this.changeZoomOrOffset({
-            xText: moveObj.x,
-            yText: moveObj.y,
-            yOffset: moveObj.yOffset,
-            xOffset: moveObj.xOffset
-          });
+
         }
+        this.changeZoomOrOffset({
+          xText: moveObj.x,
+          yText: moveObj.y,
+          yOffset: moveObj.yOffset,
+          xOffset: moveObj.xOffset
+        });
+
       },
       shouldMoveElement: () => {
         const ret = (this.isTextMode() && this.state.showTextInput ||
@@ -89,7 +90,7 @@ export default class IssieEditPhoto extends React.Component {
       screen2ViewPortX: (x) => this.screen2ViewPortX(x),
       screen2ViewPortY: (y) => this.screen2ViewPortY(y),
       onRelease: () => {
-        trace("release move elem")
+
         this.currentPanShouldResult = undefined;
         if (this.isTextMode()) {
           this.SaveText(false, true);
@@ -106,7 +107,7 @@ export default class IssieEditPhoto extends React.Component {
       onMoveShouldSetPanResponder: (evt, gestureState) => this.state.currentImageElem,
       onMoveShouldSetPanResponderCapture: (evt, gestureState) => false,
       onPanResponderMove: (evt, gestureState) => {
-        trace("_panResponderElementResize ")
+
         if (this.isImageMode()) {
           const newSize = processResize(this, gestureState.dx, gestureState.dy);
           this.resizeCurrentImage(newSize);
@@ -114,7 +115,7 @@ export default class IssieEditPhoto extends React.Component {
       },
 
       onPanResponderRelease: (evt, gestureState) => {
-        trace("release resize elem")
+
         this.currentPanShouldResult = undefined;
         const newSize = processResize(this, gestureState.dx, gestureState.dy);
         pinchEnd(this);
@@ -148,11 +149,11 @@ export default class IssieEditPhoto extends React.Component {
 
       },
       onPanResponderRelease: (evt, gestureState) => {
-        trace("release move")
+
         this.currentPanShouldResult = undefined;
         if (this._pinch) {
           this._pinch = false;
-          trace("pinch finished: ")
+
           pinchEnd(this)
           return
         }
@@ -200,7 +201,6 @@ export default class IssieEditPhoto extends React.Component {
       maxZoom: 3,
       isZooming: false,
       scaleRatio: 1.0,
-
       // The offset of the actual image from the viewPort - not sensitive to zoom?
       xOffset: 0,
       yOffset: 0,
@@ -225,39 +225,45 @@ export default class IssieEditPhoto extends React.Component {
   changeZoomOrOffset = (obj) => {
     const stateChange = { ...obj }
 
+    trace("changeZoomOrOffset",
+      "zoom",
+      this.state.zoom,
+      "page", this.state.pageRect,
+      "view",
+      this.state.viewPortRect,
+    )
 
     const pageRect = {
       width: this.state.pageRect.width * this.state.zoom,
       height: this.state.pageRect.height * this.state.zoom,
     }
 
-    if (obj.xOffset) {
-      if (obj.xOffset < 0) {
+    if (obj.xOffset !== undefined) {
+      if (obj.xOffset > 0) {
         // hit left
-        obj.yOffset = 0;
-      }
-      const diff = pageRect.width - (-obj.xOffset + this.state.viewPortRect.width);
-      if (diff < 0) {
-        // hit right
-        obj.xOffset = this.state.xOffset;
-      }
+        obj.xOffset = 0;
+      } else {
+        const diff = pageRect.width - (-obj.xOffset + this.state.viewPortRect.width);
 
-      //stateChange.xText = obj.xText != undefined ? obj.xText : this.state.xText + obj.xOffset - this.state.xOffset;
+        if (diff < 0) {
+          trace("changeZoomOrOffset - hit right", this.state.zoom, this.state.pageRect.width)
+          obj.xOffset = this.state.viewPortRect.width - pageRect.width;
+        }
+      }
       stateChange.xOffset = obj.xOffset;
     }
 
-    if (obj.yOffset) {
+    if (obj.yOffset !== undefined) {
       if (obj.yOffset > 0) {
         // hit top
         obj.yOffset = 0;
       }
-      const diff = pageRect.height - (-obj.yOffset + this.state.viewPortRect.height - this.state.keyboardHeight);
-      if (diff < 0) {
+      const yOffsetLimit = (-obj.yOffset + this.state.viewPortRect.height - this.state.keyboardHeight);
+      if (pageRect.height - yOffsetLimit < 0) {
         // hit bottom
-        obj.yOffset = this.state.yOffset;
+        obj.yOffset = - pageRect.height + this.state.viewPortRect.height - this.state.keyboardHeight;
       }
 
-      //stateChange.yText = obj.yText != undefined ? obj.yText : this.state.yText + obj.yOffset - this.state.yOffset;
       stateChange.yOffset = obj.yOffset;
     }
 
@@ -275,8 +281,7 @@ export default class IssieEditPhoto extends React.Component {
         top: this.state.viewPortRect.top,
         height: this.state.viewPortRect.height,
         left: stateChange.sideMargin,
-        width: Math.min((this.state.viewPortRect.width / this.state.zoom) * obj.zoom,
-          this.state.windowSize.width - 2 * stateChange.sideMargin)
+        width: this.state.windowSize.width - 2 * stateChange.sideMargin
       }
       stateChange.zoom = obj.zoom;
 
@@ -319,6 +324,7 @@ export default class IssieEditPhoto extends React.Component {
       stateChange.yText = normYText;
     }
 
+
     this.setState(stateChange);
   }
 
@@ -338,7 +344,7 @@ export default class IssieEditPhoto extends React.Component {
     } else if (this.isTextMode()) {
       //check if click outside of drag icon:
       if (this.state.showTextInput) {
-        trace("calc text")
+
         let x = this.screen2ViewPortX(evt.nativeEvent.pageX);
         let y = this.screen2ViewPortY(evt.nativeEvent.pageY);
         const distance = calcDistance(this.state.xText, this.state.yText, x, y)
@@ -347,7 +353,7 @@ export default class IssieEditPhoto extends React.Component {
       return !this.state.showTextInput;//
     } else if (this.isImageMode()) {
 
-      trace("move/select image? ", this.state.currentImageElem ? false : true)
+
 
       return true;
     } else if (this.isBrushMode()) {
@@ -366,8 +372,12 @@ export default class IssieEditPhoto extends React.Component {
     //ignore the part of keyboard that is below the canvas
     let kbHeight = e.endCoordinates.height - dimensions.toolbarMargin;
 
+    // if there's room below image, reduce it
+    const emptyBottomSpace = (this.state.windowSize.height - this.state.toolbarHeight -
+      dimensions.toolbarMargin - this.state.viewPortRect.height);
+
     this.setState({
-      keyboardHeight: kbHeight, keyboardTop: kbTop,
+      keyboardHeight: Math.max(kbHeight - emptyBottomSpace, 0), keyboardTop: kbTop,
     });
 
     this._handleInputTextLocationMovingPage(kbHeight, kbTop);
@@ -433,8 +443,9 @@ export default class IssieEditPhoto extends React.Component {
       this.keyboardDidHideListener.remove()
     }
 
-
+    trace("save before exit")
     if (this.state.showTextInput) {
+
       this.SaveText(true, false);
     }
   }
@@ -655,7 +666,7 @@ export default class IssieEditPhoto extends React.Component {
         y: this.viewPort2NormY(y) //this.state.scaleRatio
       });
       if (imageElemIndex >= 0) {
-        trace("found image")
+
         imgElem = this.state.canvasImages[imageElemIndex];
 
         // In Erase mode, remove the img
@@ -686,12 +697,12 @@ export default class IssieEditPhoto extends React.Component {
     if (afterDrag && !this.state.currentTextElem) return false;
 
     //console.trace();
-    trace("SaveText", "afterDrag", afterDrag)
+
     if ((!text || text.length == 0) && origElem === undefined) return false;
 
     let txtWidth = this.state.inputTextWidth / this.state.zoom;
     let txtHeight = this.state.inputTextHeight;
-    //trace("getTextElem", txtWidth, txtHeight)
+
     let newElem = this.getTextElement(text, txtWidth, txtHeight);
     if (origElem) {
       if (origElem.text == newElem.text &&
@@ -701,7 +712,7 @@ export default class IssieEditPhoto extends React.Component {
         origElem.fontColor == newElem.fontColor &&
         origElem.width == newElem.width) {
         //need to set the current text back to canvas
-        trace("Save Text unchanged")
+
         if (!afterDrag) {
           this.setState({
             needCanvasUpdate: true,
@@ -710,7 +721,7 @@ export default class IssieEditPhoto extends React.Component {
         }
         return false;
       }
-      trace("SaveText changed:", origElem, newElem)
+
     }
     if (afterDrag)
       return;
@@ -739,7 +750,7 @@ export default class IssieEditPhoto extends React.Component {
     //let posField = this.isImageMode() ? "position" : "normPosition";
     for (let i = q.length - 1; i >= 0; i--) {
       const elem = this.isImageMode() ? this.imageScale2Norm(q[i]) : q[i];
-      trace("findElementByLocation", coordinates, elem.normPosition, elem.text, "yOffset", this.state.yOffset);
+
       let foundY = elem.normPosition.y < coordinates.y + 15 &&
         elem.normPosition.y + elem.height > coordinates.y - 15;
 
@@ -815,13 +826,13 @@ export default class IssieEditPhoto extends React.Component {
 
     // x = this.viewPort2NormX(x) 
     // y = this.viewPort2NormY(y) 
-    x/=this.state.zoom;
-    y/=this.state.zoom;
+    x = (x - this.state.xOffset) / this.state.zoom;
+    y = (y - this.state.yOffset) / this.state.zoom;
     const scalePos = {
       id: imgElem.id,
       width: imgElem.width,
       height: imgElem.height,
-      position: {  x: (x - imgElem.width) , y },
+      position: { x: (x - imgElem.width), y },
     }
 
     if (this.state.currentImageElem) {
@@ -831,10 +842,10 @@ export default class IssieEditPhoto extends React.Component {
       ...imgElem,
       position: scalePos.position,
       normPosition: {
-        x:scalePos.position.x/this.state.scaleRatio,
-        y:scalePos.position.y/this.state.scaleRatio,
+        x: scalePos.position.x / this.state.scaleRatio,
+        y: scalePos.position.y / this.state.scaleRatio,
       }
-      
+
     }
     // const normElem = this.imageScale2Norm(newScaleElem)
     // newScaleElem.normPosition = normElem.normPosition;
@@ -868,7 +879,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   resizeCurrentImage = ({ width, height, x, y }) => {
-    trace("resize", width, height)
+
     let imgElem = this.state.currentImageElem;
     if (!imgElem)
       return;
@@ -1068,9 +1079,10 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   onAddImage = () => {
-    trace("onAddImage")
+
     getNewPage(SRC_GALLERY,
       (uri) => {
+        this.setState({ showBusy: true })
         //trace("image in base64", uri.length)
         // this.setState({ icon: uri})
         getImageDimensions(uri).then((imgSize) => {
@@ -1078,7 +1090,7 @@ export default class IssieEditPhoto extends React.Component {
           FileSystem.main.resizeImage(uri, Math.round(this.state.viewPortRect.width / 8 * ratio), this.state.viewPortRect.height / 8)
             .then(uri2 => FileSystem.main.convertImageToBase64(uri2))
             .then(imgBase64 => {
-              trace("image added", imgBase64.length)
+
               const img = this.getImageElement(imgBase64, ratio)
               this.state.queue.pushImage(img)
               const scaleImg = this.imageNorm2Scale(img)
@@ -1088,10 +1100,12 @@ export default class IssieEditPhoto extends React.Component {
                 //xText: Math.round(scaleImg.position.x), yText: Math.round(scaleImg.position.yText)
               });
             })
-        });
+        }).finally(() => this.setState({ showBusy: false }));
       },
       //cancel
-      () => { },
+      () => {
+        this.setState({ showBusy: false })
+      },
       this.props.navigation,
       { selectionLimit: 1, quality: 0 });
   }
@@ -1344,7 +1358,8 @@ export default class IssieEditPhoto extends React.Component {
 
         {/** NavigationArea */}
         <View style={styles.navigationArea}>
-
+          {this.state.showBusy && <View style={styles.busy}>
+            <ActivityIndicator size="large"/></View>}
           {/* page more menu */}
           <View style={{ position: 'absolute', top: 0, left: 0 }}>
             {this.getMoreMenu()}
@@ -1480,10 +1495,12 @@ export default class IssieEditPhoto extends React.Component {
     if (location == TOP && this.state.yOffset < 0) {
       style.top = 0, style.left = 100, deg = -90;
       style.left = upDownLeft;
-    } else if (location == RIGHT && this.state.zoom > 1 && this.state.viewPortRect.width < this.state.pageRect.width * this.state.zoom) {
+    } else if (location == RIGHT && this.state.zoom > 1 &&
+      this.state.viewPortRect.width - this.state.xOffset < this.state.pageRect.width * this.state.zoom) {
       style.top = sidesTop;
       style.right = 5, deg = 0;
-    } else if (location == BOTTOM && this.state.zoom > 1) {
+    } else if (location == BOTTOM &&
+      this.state.viewPortRect.height - this.state.yOffset - this.state.keyboardHeight < this.state.pageRect.height * this.state.zoom) {
       style.top = this.state.viewPortRect.height - 60 - this.state.keyboardHeight, deg = 90;
       style.left = upDownLeft;
     } else if (location == LEFT && this.state.xOffset < 0) {
@@ -1635,7 +1652,7 @@ export default class IssieEditPhoto extends React.Component {
   getTextInput = () => {
     this._handleInputTextLocationMovingPage(this.state.keyboardHeight, this.state.keyboardTop);
 
-    trace("getTextInput", "left", this.state.xText - this.getTextWidth(), "width", this.getTextWidth())
+    trace("getTextInput", "yellow-height", this.state.inputTextHeight, "yellow-width", Math.max(this.state.inputTextWidth + 10, 10))
     return (
       <View style={{
         flex: 1, flexDirection: 'row-reverse', position: 'absolute',
@@ -1676,17 +1693,15 @@ export default class IssieEditPhoto extends React.Component {
             color: this.state.color,
             fontFamily: APP_FONT,
             zIndex: 21,
-            // transform: this.getTransformForZoom(this.getTextWidth(), this.state.inputTextHeight, true)
           }}
           value={this.state.inputTextValue}
         />
         <View style={{
           position: 'absolute', left: DRAG_ICON_SIZE - 2, top: 0,
-          width: Math.max(this.state.inputTextWidth + 10, 10),
-          height: this.state.inputTextHeight,
+          width: Math.max(this.state.inputTextWidth + 10, 12),
+          height: this.state.inputTextHeight > 0 ? this.state.inputTextHeight : 45,
           zIndex: 20,
           lineHeight: this.normalizeTextSize(this.state.fontSize),
-          //transform: this.getTransformForZoom(Math.max(this.state.inputTextWidth + 10, 10), this.state.inputTextHeight, true)
         }}
           backgroundColor={this.state.color === '#fee100' ? 'gray' : 'yellow'}
         />
@@ -1763,6 +1778,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     zIndex: 1,
     //borderWidth: 1
+  }, 
+  busy: {
+    position: 'absolute',
+    left: "48%",
+    top:"40%",
+    zIndex:1000
   }
 }
 );

@@ -1,4 +1,5 @@
 import { PanResponder } from "react-native";
+import { trace } from "./log";
 
 
 export function getElementMovePanResponder({
@@ -23,21 +24,34 @@ export function getElementMovePanResponder({
             let yOffset = getState().yOffset;
             let xOffset = getState().xOffset;
 
-            const leftDiff = x - getState().viewPortRect.width;
-            if (leftDiff > 0) {
+            // X -Axis
+            const rightDiff = x - getState().viewPortRect.width;
+            if (rightDiff > 0) {
+                trace("move-elem hit right side", rightDiff)
                 x = getState().viewPortRect.width;
-                xOffset -= leftDiff;
+                xOffset -= 10;
             }
 
-            const bottomDiff = y - getState().viewPortRect.height + getState().keyboardHeight
+            if (x < 25) {
+                //trace("move-elem hit left side", rightDiff)
+                if (xOffset < 0) {
+                    xOffset += 10 
+                }
+                x = 25;
+            }
+
+            // Y- Axis
+            const bottomDiff = y - getState().viewPortRect.height + getState().keyboardHeight + dragIconSize/2
             if (bottomDiff > 0) {
+                //trace("move elem - hit bottom")
                 y = getState().viewPortRect.height - getState().keyboardHeight;
-                yOffset -= bottomDiff / 2 //divided by 2 to slow down
+                yOffset -= 10;
             }
 
             if (y < dragIconSize / 2) {
                 if (yOffset < 0) {
-                    yOffset -= (y - dragIconSize / 2) / 2 //divided by 2 to slow down
+                    yOffset += 10
+                    //trace("move element - hit top", y, yOffset)
                     if (yOffset > 0) {
                         yOffset = 0;
                     }
@@ -46,15 +60,9 @@ export function getElementMovePanResponder({
             }
             x -= dragIconSize / 2
             y -= dragIconSize / 2
-            if (x < 25) {
-                if (xOffset < 0) {
-                    xOffset -= (x - dragIconSize / 2) / 2 //divided by 2 to slow down
-                }
-                x = 25;
-            }
-
+            
             onMoveElement({
-                x, y, yOffset,xOffset
+                x, y, yOffset, xOffset
             })
 
         },

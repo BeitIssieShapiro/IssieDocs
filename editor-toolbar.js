@@ -210,16 +210,16 @@ export function EditorToolbar({
                 <Spacer width={23} />
 
 
-                {isLandscape() && betaFeatures && extMenu}
-                {!isLandscape() && betaFeatures &&
+                {(isLandscape() || isScreenNarrow() )&& betaFeatures && extMenu}
+                {!isLandscape() && !isScreenNarrow() && betaFeatures &&
                     <IconButton onPress={() => setShowExtMenu(oldVal => !oldVal)} color={semanticColors.editPhotoButton}
                         icon={showExtMenu ? "expand-less" : "expand-more"} size={55} iconSize={45} />}
-                {!betaFeatures && <IconButton onPress={onZoomButtonClick} color={semanticColors.editPhotoButton}
+                {!betaFeatures && !isScreenNarrow() && <IconButton onPress={onZoomButtonClick} color={semanticColors.editPhotoButton}
                     icon="zoom-in" size={55} iconSize={45} key={"3"} />}
             </View>
 
             {/** bottom toolbar */}
-            {showExtMenu && betaFeatures && <View style={{
+            {showExtMenu && !isLandscape() && betaFeatures && <View style={{
                 position: 'absolute',
                 height: dimensions.toolbarHeight,
                 flexDirection: 'row', alignItems: 'center',
