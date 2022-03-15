@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Alert, Text, TouchableOpacity, PanResponder, StyleSheet, Dimensions } from 'react-native';
+import { View, Alert, Text, TouchableOpacity, PanResponder, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
 import { AppText, FolderIcon, getSvgIconButton } from './elements.js'
 import { Icon } from 'react-native-elements'
 import { translate } from './lang.js'
@@ -65,7 +65,8 @@ export default class IssieCreateFolder extends React.Component {
             icon,
             color,
             currentFolderName,
-            windowSize: { height: 1000, width: 1000 }
+            windowSize: { height: 1000, width: 1000 },
+            busy: false,
         };
     }
 
@@ -82,7 +83,7 @@ export default class IssieCreateFolder extends React.Component {
         return dim.width > dim.height;
     }
 
-    isMobile=() => this.props.route.params.isMobile
+    isMobile = () => this.props.route.params.isMobile
 
     Save = async () => {
         if (this.saveInProgress)
@@ -115,9 +116,11 @@ export default class IssieCreateFolder extends React.Component {
                     title: "עריכת תמונה",
                     imageSource: SRC_GALLERY,
                     onConfirm: (uri) => {
+                        this.setState({ busy: true })
                         FileSystem.main.resizeImage(uri, 100, 100)
                             .then(uri2 => FileSystem.main.convertImageToBase64(uri2))
                             .then(imgBase64 => this.setState({ icon: imgBase64 }))
+                            .finally(() => this.setState({ busy: false }))
                     },
                     skipConfirm: false,
                     folder: undefined,
@@ -127,9 +130,10 @@ export default class IssieCreateFolder extends React.Component {
                 })
             },
             //cancelEvent
-            () => {},
+            () => { },
+            (err) => Alert.alert("Error", err.description),
             this.props.navigation,
-            { selectionLimit: 1, quality: 0 }
+            { selectionLimit: 1, quality: 0.2 }
         );
     }
 
@@ -145,11 +149,11 @@ export default class IssieCreateFolder extends React.Component {
 
 
             {  //Cancel
-                getRoundedButton(() => this.props.navigation.goBack(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 },undefined, undefined, this.isMobile())
+                getRoundedButton(() => this.props.navigation.goBack(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isMobile())
             }
             <Spacer width={10} />
             {  //Save
-                getRoundedButton(() => this.Save(), 'check-green', translate("BtnSave"), 30, 30, { width: 150, height: 40 },undefined, undefined, this.isMobile())
+                getRoundedButton(() => this.Save(), 'check-green', translate("BtnSave"), 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isMobile())
             }
         </View>
 
@@ -215,6 +219,13 @@ export default class IssieCreateFolder extends React.Component {
             <View style={styles.container}
                 ref={v => this.topView = v}
                 onLayout={this.onLayout}>
+
+                {this.state.busy &&
+                    <View style={globalStyles.busy}>
+                        <ActivityIndicator size="large" />
+                    </View>
+                }
+
 
                 {/* Toolbar */}
                 <View style={{
@@ -297,7 +308,8 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: semanticColors.titleText,
         backgroundColor: 'transparent'
-    }
+    },
+
 
 
 });

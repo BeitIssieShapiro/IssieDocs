@@ -242,6 +242,10 @@ export default class FolderGallery extends React.Component {
             () => {
                 this.setState({ systemModal: false })
             },
+            (err)=>{
+                Alert.alert("Error", err.description)
+                this.setState({ systemModal: false })
+            },
             this.props.navigation
         );
     }
@@ -265,6 +269,7 @@ export default class FolderGallery extends React.Component {
             () => {
                 this.setState({ systemModal: false })
             },
+            (err)=>Alert.alert("Error", err.description),
             this.props.navigation
         );
 

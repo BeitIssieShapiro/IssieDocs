@@ -2,9 +2,9 @@ Bugs 1.3:
 V- yellow indicator lost after two clicks
 - up button below opened fadein
 V- hit right with no zoom too early
-V - add progress to addphoto
+V - add progress to add photo
 V - drag img not moving page
-
+V - create folder with image
 
 
 V- ראשי to home

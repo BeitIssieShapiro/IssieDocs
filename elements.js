@@ -512,7 +512,6 @@ export async function getImageDimensions(uri) {
                 resolve({ w: width, h: height });
             },
                 (err) => {
-                    //Alert.alert(err)
                     reject(err)
                 });
         }
@@ -623,6 +622,12 @@ export const globalStyles = StyleSheet.create({
     btnDimensions: {
         width: 60,
         height: 60
+    },  
+    busy: {
+      position: 'absolute',
+      left: "48%",
+      top:"40%",
+      zIndex:1000
     }
 
 })

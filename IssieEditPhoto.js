@@ -11,7 +11,7 @@ import DoQueue from './do-queue';
 
 import {
   Spacer, getRoundedButton,
-  renderMenuOption, IDMenuOptionsStyle
+  renderMenuOption, IDMenuOptionsStyle, globalStyles
 } from './elements'
 import { getNewPage, SRC_GALLERY, SRC_RENAME } from './newPage';
 import ProgressCircle from 'react-native-progress-circle'
@@ -1106,6 +1106,7 @@ export default class IssieEditPhoto extends React.Component {
       () => {
         this.setState({ showBusy: false })
       },
+      (err)=>Alert.alert("Error", err.description),
       this.props.navigation,
       { selectionLimit: 1, quality: 0 });
   }
@@ -1358,7 +1359,7 @@ export default class IssieEditPhoto extends React.Component {
 
         {/** NavigationArea */}
         <View style={styles.navigationArea}>
-          {this.state.showBusy && <View style={styles.busy}>
+          {this.state.showBusy && <View style={globalStyles.busy}>
             <ActivityIndicator size="large"/></View>}
           {/* page more menu */}
           <View style={{ position: 'absolute', top: 0, left: 0 }}>
@@ -1778,12 +1779,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     zIndex: 1,
     //borderWidth: 1
-  }, 
-  busy: {
-    position: 'absolute',
-    left: "48%",
-    top:"40%",
-    zIndex:1000
   }
 }
 );

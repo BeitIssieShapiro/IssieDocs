@@ -144,7 +144,6 @@ export default class IssieSavePhoto extends React.Component {
   }
 
   componentDidMount = async () => {
-
     let multiPage = false;
     let imageUri, pathToSave, pages = [];
     let pdf = false;
@@ -170,13 +169,12 @@ export default class IssieSavePhoto extends React.Component {
     let addToExistingPage = this.props.route.params.addToExistingPage;
     let onConfirm = this.props.route.params.onConfirm;
     const skipConfirm = this.props.route.params.skipConfirm;
-    trace("skip confirm", skipConfirm?"yes":"no", skipConfirm)
     let folders = await FileSystem.main.getFolders();
     folders = folders.filter(f => f.name !== FileSystem.DEFAULT_FOLDER.name);
 
     this.setState({
       imageUri, pathToSave, pdf, pdfPage: 1,
-      folders, folder, pageName, addToExistingPage, multiPage, pages, onConfirm, phase: skipConfirm?PickName: OK_Cancel,
+      folders, folder, pageName, addToExistingPage, multiPage, pages, onConfirm, phase: skipConfirm ? PickName : OK_Cancel,
     }, () => {
       if (!pdf) {
         this.updateImageDimension();
@@ -194,6 +192,7 @@ export default class IssieSavePhoto extends React.Component {
 
   updateImageDimension = async () => {
     //setTimeout(async () => {
+    try {
       let imgSize =
         (this.isDuplicate() || this.isRename()) ?
           { w: 0, h: 0 } :
@@ -216,6 +215,9 @@ export default class IssieSavePhoto extends React.Component {
       }
       trace("updateImageDimension", { imgSize, scale, windowSize })
       this.setState({ imgSize, scale, windowSize })
+    } catch (err) {
+      Alert.alert("Error measuring file", err.description)
+    }
     //}, 50);
   }
 
@@ -223,7 +225,7 @@ export default class IssieSavePhoto extends React.Component {
     const measure = this.topView.measure.bind(this.topView);
 
     setTimeout(measure, 50, (fx, fy, width, height, px, py) => {
-      this.setState({ topView: py, windowWidth: width }, ()=>this.updateImageDimension());
+      this.setState({ topView: py, windowWidth: width }, () => this.updateImageDimension());
     });
   }
 
@@ -399,6 +401,7 @@ export default class IssieSavePhoto extends React.Component {
       },
       //cancel
       () => { },
+      (err) => Alert.alert("Error", err.description),
       this.props.navigation);
   }
 
