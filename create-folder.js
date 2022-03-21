@@ -1,9 +1,8 @@
 import React from 'react';
 import { View, Alert, Text, TouchableOpacity, PanResponder, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
-import { AppText, FolderIcon, getSvgIconButton } from './elements.js'
+import { AppText, FolderIcon, getFontFamily, getSvgIconButton } from './elements.js'
 import { Icon } from 'react-native-elements'
-import { translate } from './lang.js'
-import Scroller from './scroller';
+import { getRowDirections, translate } from './lang.js'
 
 import {
     getIconButton, folderIcons, availableIcons,
@@ -113,7 +112,7 @@ export default class IssieCreateFolder extends React.Component {
                 trace("Saving photo for folder", uri)
                 this.props.navigation.push('SavePhoto', {
                     uri: uri,
-                    title: "עריכת תמונה",
+                    title: translate("EditPhotoTitle"),
                     imageSource: SRC_GALLERY,
                     onConfirm: (uri) => {
                         this.setState({ busy: true })
@@ -138,11 +137,12 @@ export default class IssieCreateFolder extends React.Component {
     }
 
     render() {
+        const {row, rowReverse, flexEnd, textAlign, direction} = getRowDirections();
         let actionButtons = <View style={{
             position: 'absolute',
             height: '100%',
             right: 10,
-            flexDirection: 'row',
+            flexDirection: row,
             alignItems: 'center'
         }}>
 
@@ -162,23 +162,23 @@ export default class IssieCreateFolder extends React.Component {
         let iconsSelection = <View style={{ flex: 1, width: '100%' }}>
             <View
                 style={{
-                    flexDirection: 'row-reverse',
+                    flexDirection: rowReverse,
                     //width:"80%",
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     //backgroundColor: 'green'
                 }}>
-                <AppText style={styles.titleText}>{translate("CaptionIcon")}</AppText>
+                <AppText style={[styles.titleText, {textAlign}]}>{translate("CaptionIcon")}</AppText>
 
                 {getRoundedButton(() => this.AddPhoto(),
-                    'svg-new-image', translate("BtnAddPhoto"), 30, 30, { width: 250, height: 40 }, 'row-reverse', true)
+                    'svg-new-image', translate("BtnAddPhoto"), 30, 30, { width: 250, height: 40 }, 'row', true)
                 }
             </View>
             <View style={{
                 width: '100%',
                 borderRadius: 10,
                 backgroundColor: 'white',
-                flexDirection: 'row-reverse',
+                flexDirection: rowReverse,
                 alignItems: 'center',
                 flexWrap: 'wrap'
             }}>
@@ -200,7 +200,7 @@ export default class IssieCreateFolder extends React.Component {
         </View>
 
         let colorSelection = <View style={{
-            flexDirection: 'row',
+            flexDirection: row,
             width: '100%', bottom: 0,
             justifyContent: 'space-evenly',
             alignItems: 'center',
@@ -230,7 +230,9 @@ export default class IssieCreateFolder extends React.Component {
                 {/* Toolbar */}
                 <View style={{
                     zIndex: 5, width: '100%',
-                    height: dimensions.toolbarHeight, backgroundColor: semanticColors.subTitle
+                    height: dimensions.toolbarHeight, 
+                    backgroundColor: semanticColors.subTitle,
+                    flexDirection:row
                 }} >
                     {actionButtons}
                 </View>
@@ -241,25 +243,25 @@ export default class IssieCreateFolder extends React.Component {
                     left: '5%', width: '90%'
                 }}
                 >
-                    <View style={[{ flexDirection: 'row-reverse' },
+                    <View style={[{ flexDirection: rowReverse },
                     this.isLandscape() ? { height: '100%' } : {}]}>
                         <View style={{
-                            flex: 1, flexDirection: 'column', width: '100%', alignItems: 'flex-end'
+                            flex: 1, flexDirection: 'column', width: '100%', alignItems: flexEnd
                         }}
                         >
-                            <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'flex-start' }}>
+                            <View style={{ width: '100%', flexDirection: rowReverse, alignItems: 'center', justifyContent: 'flex-start' }}>
                                 <Icon name="folder" size={55} color={this.state.color ? this.state.color : 'gray'} />
-                                <AppText style={styles.titleText}>{translate("CaptionFolderNameInput")}</AppText>
+                                <AppText style={[styles.titleText, {textAlign}]}>{translate("CaptionFolderNameInput")}</AppText>
                                 <View style={{ position: 'absolute', left: 10, top: 21 }}>
                                     {this.state.icon ? <FolderIcon name={this.state.icon} size={30} color='white' /> : null}
                                 </View>
                             </View>
 
 
-                            <TextInput style={[globalStyles.textInput]} value={this.state.name}
+                            <TextInput style={[globalStyles.textInput, {direction, textAlign}, getFontFamily()]} value={this.state.name}
                                 onChangeText={(txt) => this.setState({ name: txt })}
                             />
-                            <AppText style={styles.titleText}>{translate("CaptionFolderColor")}</AppText>
+                            <AppText style={[styles.titleText, {textAlign}]}>{translate("CaptionFolderColor")}</AppText>
                             {colorSelection}
                         </View>
                         {this.isLandscape() ? <Spacer /> : null}
@@ -295,7 +297,6 @@ const styles = StyleSheet.create({
         fontSize: 35,
         height: 70,
         paddingTop: 12,
-        textAlign: "right",
         fontWeight: 'bold',
         color: semanticColors.titleText,
         backgroundColor: 'transparent'

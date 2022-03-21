@@ -5,21 +5,24 @@ import {
 import { Icon } from 'react-native-elements'
 import LinearGradient from 'react-native-linear-gradient';
 import React, { useState } from 'react';
-import { translate, getLocalizedFoldersAndIcons } from "./lang.js";
+import { translate, getLocalizedFoldersAndIcons, isRTL, getRowDirection, getRowDirections, getFlexEnd, getRowReverseDirection } from "./lang.js";
 import { getUseTextSetting } from './settings.js'
 
 import { getSvgIcon, SvgIcon } from './svg-icons.js'
 import { FileSystem } from './filesystem.js';
 import { trace } from './log.js';
+import { DraxScrollView } from 'react-native-drax';
 
 
 export const dimensions = {
-    headerHeight:70,
-    thinHeaderHeight:52,
+    headerHeight: 70,
+    thinHeaderHeight: 52,
     toolbarHeight: 65,
     toolbarMargin: 5,
     minSideMargin: 40,
     topView: 70,
+    pagesTitleHigh: 70,
+    pagesTitleLow: 50,
     folderHeight: 130,
     folderAsTitleHeight: 62,
     tileWidth: 190,
@@ -28,7 +31,13 @@ export const dimensions = {
 
 }
 
-export const APP_FONT = 'Alef';
+
+export function getFont() {
+    return isRTL() ? 'Alef' : 'Calibri';
+}
+export function getFontFamily() {
+    return { fontFamily: getFont() }
+}
 
 export const colors = {
     gray: '#5B748A',
@@ -226,7 +235,7 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
                 alignContent: 'center',
                 justifyContent: textExist ? 'flex-end' : 'center',
                 backgroundColor: dark ? '#a7a7a7' : '#eeeded',
-                flexDirection: direction ? direction : 'row'
+                flexDirection: direction ? direction : getRowDirection()
             }}>
             {textExist ?
                 <AppText style={{ position: 'absolute', paddingTop: 5, left: 0, width: '80%', fontSize: textSize, lineHeight: textSize + 5, color: semanticColors.titleText, textAlign: 'center' }}>{text}</AppText> : null
@@ -236,7 +245,7 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
                 : <Icon name={icon} size={iconSize} color={color} />
             }
             {textExist ?
-                <Spacer width={5} />:null
+                <Spacer width={5} /> : null
             }
         </View>
     </TouchableOpacity>
@@ -250,7 +259,7 @@ export function getSvgIconButton(callback, color, icon, size, isText, iconSize, 
     return getIconButton(callback, color, icon, size, isText, iconSize, selected, "svg")
 }
 export function getIconButton(callback, color, icon, size, isText, iconSize, selected, iconType, notPressable, key) {
-    return <IconButton 
+    return <IconButton
         onPress={callback}
         color={color}
         icon={icon}
@@ -261,15 +270,16 @@ export function getIconButton(callback, color, icon, size, isText, iconSize, sel
 }
 
 export function IconButton({
-    onPress, 
-    color, 
-    icon, 
-    size, 
-    isText, 
-    iconSize, 
-    selected, 
-    iconType, 
-    notPressable
+    onPress,
+    color,
+    icon,
+    size,
+    isText,
+    iconSize,
+    selected,
+    iconType,
+    notPressable,
+    fontWeight
 }) {
     iconType = iconType || "material";
     let isSvg = iconType === "svg";
@@ -279,14 +289,19 @@ export function IconButton({
         alignContent: 'center',
         alignItems: 'center',
         borderRadius: size / 2,
-        justifyContent: 'center'
+        justifyContent: 'center',
     }
     const sizeToUse = iconSize ? iconSize : size;
 
     let viewContent = isText ?
         <AppText
 
-            style={{ fontSize: sizeToUse, lineHeight: sizeToUse + 5, color: color, paddingTop: 6 }}>{icon}</AppText> :
+            style={[
+                { fontSize: sizeToUse, lineHeight: sizeToUse + 5, color: color, paddingTop: 6 },
+                fontWeight ? { fontWeight } : {}
+            ]}
+        >{icon}
+        </AppText> :
         isSvg ?
             getSvgIcon(icon, sizeToUse, color) :
             <Icon name={icon} type={iconType} size={sizeToUse} color={color} />
@@ -361,6 +376,8 @@ export function FileNameDialog({
     onChangeName, onChangeFolder, onSaveNewFolder,
     navigation, isLandscape, isMobile, onLayout }) {
 
+    const { row, rowReverse, flexStart, flexEnd, textAlign, direction } = getRowDirections();
+
     const [more, setMore] = useState(false);
     const defFolder = { name: translate("DefaultFolder"), svgIcon: 'home', color: 'gray', hideName: true };
 
@@ -378,10 +395,10 @@ export function FileNameDialog({
     //     }
     // })
     return (
-        <View style={[styles.textInputView, isLandscape ? { flexDirection: 'row-reverse' } : {}]} onLayout={onLayout}>
+        <View style={[styles.textInputView, isLandscape ? { flexDirection: rowReverse } : {}]} onLayout={onLayout}>
             <View style={{ flex: 1, width: '100%' }}>
-                <AppText style={[styles.titleText, { marginVertical: 7 }]}>{translate("CaptionPageName")}</AppText>
-                <TextInput style={globalStyles.textInput}
+                <AppText style={[styles.titleText, { textAlign }, { marginVertical: 7 }]}>{translate("CaptionPageName")}</AppText>
+                <TextInput style={[globalStyles.textInput, { direction, textAlign }, getFontFamily()]}
                     onChangeText={onChangeName}
 
                 >{name}</TextInput>
@@ -389,22 +406,23 @@ export function FileNameDialog({
             <Spacer />
             <View style={{ flex: 1, width: '100%' }}>
                 <View style={{
-                    flex: 1, flexDirection: 'row-reverse',
+                    flex: 1,
+                    flexDirection: rowReverse,
                     width: '100%',
                     alignItems: 'center',
                     justifyContent: 'space-between'
                 }}>
-                    <AppText style={[styles.titleText, { width: isLandscape ? '40%' : '30%' }]}>{translate("CaptionFolderNameList")}</AppText>
+                    <AppText style={[styles.titleText, { textAlign }, { width: isLandscape ? '40%' : '30%' }]}>{translate("CaptionFolderNameList")}</AppText>
                     {getRoundedButton(() => navigation.navigate('CreateFolder',
                         { saveNewFolder: onSaveNewFolder, isMobile }),
-                        'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 250, height: 40 }, 'row-reverse', true)}
+                        'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 250, height: 40 }, rowReverse, true)}
                 </View>
                 <Spacer />
                 <View style={{
                     flex: 1, width: '100%',
-                    flexDirection: 'column', alignContent: 'flex-end'
+                    flexDirection: 'column', alignContent: flexEnd
                 }}>
-                    <View style={{ flex: 1, backgroundColor: semanticColors.listBackground }}>
+                    <View style={{ flex: 1, backgroundColor: semanticColors.listBackground, alignItems: flexStart }}>
                         {renderFolderLine(defFolder, -1, folder, onChangeFolder)}
                         {folders.map((item, index) => renderFolderLine(item, index, folder, onChangeFolder))}
                         {getIconButton(() => setMore(val => !val), semanticColors.titleText, more ? "expand-less" : "expand-more", 45)}
@@ -425,7 +443,10 @@ export function FileNameDialog({
 }
 
 function renderFolderLine(item, index, folder, onChangeFolder) {
-    return <TouchableOpacity key={index} style={{ height: 65, width: '100%', justifyContent: 'flex-end' }}
+    return <TouchableOpacity key={index} style={{
+        height: 65, width: '100%',
+        justifyContent: getFlexEnd()
+    }}
         onPress={() => onChangeFolder(item)}>
 
         {pickerRenderRow(item, folder.name == item.name)}
@@ -477,26 +498,50 @@ function renderFolderLine(item, index, folder, onChangeFolder) {
 
 
 function pickerRenderRow(rowData, highlighted) {
-
+    const { row, rowReverse } = getRowDirections();
+    const isHome = rowData.svgIcon === "home"
     return (
         <View style={[globalStyles.textInput, {
             backgroundColor: highlighted ? semanticColors.selectedListItem : semanticColors.listBackground,
-            alignContent: 'flex-end', justifyContent: 'space-between',
+            alignContent: getFlexEnd(), justifyContent: 'space-between',
             alignItems: 'center',
-            flexDirection: 'row'
-        }]}>
-            {rowData.icon && rowData.icon != '' ?
+            flexDirection: row
+        },
+        getFontFamily()]}>
+            {isHome ?
+                <View style={{ flex: 1, flexDirection: rowReverse }}>
+                    <Spacer />
+                    <SvgIcon name={rowData.svgIcon} size={50} color={rowData.color} />
+                </View>
+                : <View style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', paddingRight: 30, height: '100%' }}>
+                    <Icon name="folder" size={45} color={rowData.color} />
+                    <View style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
+                        <View style={{
+                            width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center',
+                            flexDirection: rowReverse
+                        }}>
+                            {rowData.icon?.length > 0 ? <FolderIcon
+                                size={20}
+                                name={rowData.icon}
+                                color={'white'}
+                                icon={rowData.icon}
+                            /> : null}
+                        </View>
+                    </View>
+                </View>
+            }
+            {/* {rowData.icon && rowData.icon != '' ?
                 <View style={{ flexDirection: 'row' }}>
                     <Spacer />
                     <FolderIcon name={rowData.icon} size={50} color={rowData.color ? rowData.color : semanticColors.folderIcons} />
                 </View>
                 : <View />}
-            {rowData.svgIcon && <View style={{ flex: 1, flexDirection: 'row-reverse' }}>
+            {rowData.svgIcon && <View style={{ flex: 1, flexDirection: rowReverse }}>
                 <Spacer />
                 <SvgIcon name={rowData.svgIcon} size={50} color={rowData.color} />
-            </View>
-            }
-            {!rowData.hideName && <AppText style={{ fontSize: 26, textAlign: 'right', paddingRight: 25 }}>
+            </View> 
+    */}
+            {!rowData.hideName && <AppText style={{ fontSize: 26, textAlign: 'right', paddingRight: 25, paddingLeft: 25 }}>
                 {rowData.name}
             </AppText>}
         </View>
@@ -538,8 +583,8 @@ export function IDMenuOptionsStyle(props) {
 
 }
 
-export function renderMenuOption(title, icon, iconType) {
-    return <View style={{ width: '100%', flexDirection: 'row-reverse', justifyContent: 'flex-start', alignItems: 'center' }}>
+export function renderMenuOption(title, icon, iconType, rtl) {
+    return <View style={{ width: '100%', flexDirection: rtl ? 'row-reverse' : 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
         {getIconButton(undefined, semanticColors.addButton, icon, 40, undefined, undefined, undefined, iconType, true)}
         <Spacer width={5} />
         <AppText>{title}</AppText>
@@ -576,6 +621,45 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
 }
 
 
+export function SBDraxScrollView ({
+    persistentScrollbar = false,
+    children,
+    myRef,
+    rtl,
+    ...other
+  }) {
+    const [nativeEvent, setNativeEvent] = useState();
+    const top = nativeEvent
+    ? nativeEvent.contentOffset.y +
+      (nativeEvent.contentOffset.y / nativeEvent.contentSize.height) *
+        nativeEvent.layoutMeasurement.height
+    : 0;
+
+    return (
+        <DraxScrollView
+          ref={myRef}
+          scrollEventThrottle={5}
+          showsVerticalScrollIndicator={false}
+          onScroll={event => setNativeEvent(event.nativeEvent)}
+          {...other}>
+          {children}
+    
+          <View
+            style={[{
+              position: 'absolute',
+              top,
+              
+              height: 200,
+              width: 4,
+              borderRadius: 20,
+              backgroundColor: 'gray',
+              opacity:0.6,
+            }, rtl?{left:4}:{right:4}]}
+          />
+        </DraxScrollView>
+      );
+}
+
 export const globalStyles = StyleSheet.create({
     headerStyle: {
         backgroundColor: semanticColors.header,
@@ -587,28 +671,25 @@ export const globalStyles = StyleSheet.create({
     },
     headerTitleStyle: {
         width: '100%',
-        fontFamily: APP_FONT,
         fontSize: 30,
         fontWeight: 'bold'
     },
     headerThinTitleStyle: {
-        fontFamily: APP_FONT,
         fontSize: 25,
         fontWeight: 'bold',
         marginRight: 30,
+        marginLeft: 30,
         color: 'white'
     },
     textInput: {
         fontSize: 40,
         height: 70,
-        textAlign: "right",
         fontWeight: 'bold',
         color: 'black',
         width: '100%',
         backgroundColor: 'white',
         borderColor: semanticColors.inputBorder,
-        borderWidth: 1,
-        fontFamily: APP_FONT
+        borderWidth: 1
     },
     okCancelView: {
         position: 'absolute',
@@ -622,12 +703,12 @@ export const globalStyles = StyleSheet.create({
     btnDimensions: {
         width: 60,
         height: 60
-    },  
+    },
     busy: {
-      position: 'absolute',
-      left: "48%",
-      top:"40%",
-      zIndex:1000
+        position: 'absolute',
+        left: "48%",
+        top: "40%",
+        zIndex: 1000
     }
 
 })
@@ -653,10 +734,10 @@ export function Spacer(props) {
 }
 
 export function FolderIcon(props) {
-    if (props.name.startsWith("svg-")) {
+    if (props.name?.startsWith("svg-")) {
         return getSvgIcon(props.name.substr(4), props.size, props.color);
     }
-    if (props.name.startsWith("data:")) {
+    if (props.name?.startsWith("data:")) {
         return <Image source={{ uri: props.name }} style={{
             width: props.size,
             height: props.size
@@ -668,9 +749,9 @@ export function FolderIcon(props) {
 export function AppText(props) {
     return (
         <Text style={[{
-            fontFamily: APP_FONT,
+            fontFamily: getFont(),
             fontSize: 24,
-            textAlign: 'right',
+            textAlign: isRTL() ? 'right' : 'left',
 
         }, props.style]} >{props.children}</Text>
     );
@@ -745,19 +826,6 @@ const styles = StyleSheet.create({
         color: 'black',
         width: "100%",
         backgroundColor: 'white'
-    },
-
-    textInputPicker: {
-        flex: 1,
-        fontSize: 55,
-        textAlign: "right",
-        paddingTop: 10,
-        fontWeight: 'bold',
-        color: 'black',
-        backgroundColor: 'white',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        fontFamily: APP_FONT
     },
     selected: {
         marginVertical: 0

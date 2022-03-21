@@ -3,7 +3,7 @@ import { View, StyleSheet } from "react-native";
 import { Icon } from 'react-native-elements'
 import { AppText, availableColorPicker, dimensions, getEraserIcon, IconButton, semanticColors, Spacer } from "./elements";
 import FadeInView from "./FadeInView";
-import { translate } from "./lang";
+import { getRowDirections, translate } from "./lang";
 import { trace } from "./log";
 import { BrushSizePicker, MyColorPicker, TextSizePicker } from "./pickers";
 import { getSvgIcon } from "./svg-icons";
@@ -114,7 +114,7 @@ export function EditorToolbar({
         }
     }
 
-
+    const { row, rowReverse, flexEnd, textAlign, rtl, direction } = getRowDirections();
 
     let toolbarSideMargin = sideMargin > 70 ? 70 : sideMargin;
     if (windowSize && windowSize.width - 2 * toolbarSideMargin < 300) {
@@ -150,7 +150,7 @@ export function EditorToolbar({
             height: dimensions.toolbarHeight,
             left: 0,
             right: 0,
-            flexDirection: 'row',
+            flexDirection: row,
             alignItems: 'center'
         }}>
             <IconButton onPress={onGoBack} color={semanticColors.editPhotoButton} icon="folder" size={45} />
@@ -177,12 +177,12 @@ export function EditorToolbar({
             }}>
                 {isTextMode ?
                     <AppText
-                        style={{
+                        style={[{
                             fontSize: fontSize,
                             lineHeight: fontSize + 8,
                             color: color,
                             textAlignVertical: 'center'
-                        }}
+                        }, rtl?{}:{fontWeight: 'bold'}]}
                     >{translate("A B C")}</AppText> :
                     isImageMode ?
                         <Icon name={"image"} size={55} color={semanticColors.editPhotoButton} /> :
@@ -195,13 +195,14 @@ export function EditorToolbar({
             <View style={[{
                 position: 'absolute',
                 height: dimensions.toolbarHeight,
-                flexDirection: 'row-reverse', alignItems: 'center'
+                flexDirection: rowReverse, alignItems: 'center'
             }, isScreenNarrow() ?
                 { top: dimensions.toolbarHeight, left: sideMargin } :
                 { top: 0, right: 50 }
             ]} >
                 <IconButton onPress={onTextButtonClick} icon={translate("A")} isText={true} selected={isTextMode}
-                    color={isTextMode ? color : semanticColors.editPhotoButton} size={55} iconSize={45} />
+                    color={isTextMode ? color : semanticColors.editPhotoButton} size={55} iconSize={rtl?45:35} 
+                    fontWeight={rtl?undefined:'bold'}/>
                 <Spacer width={23} />
                 <IconButton onPress={onBrushButtonClick} icon={"edit"} selected={isTextMode} size={55}
                     color={isBrushMode ? color : semanticColors.editPhotoButton} iconSize={45} selected={isBrushMode} />

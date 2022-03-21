@@ -1,5 +1,6 @@
 import React from 'react';
 import { Alert } from 'react-native'
+import { Icon } from 'react-native-elements';
 import { Svg, Path, Line, Rect, Polygon, G, Text, Ellipse } from 'react-native-svg'
 import { translate } from "./lang.js"
 
@@ -502,6 +503,8 @@ export function SvgIcon ({name, width, height, color, strokeWidth, size}) {
                     </G>
                 </G>
             </Svg>
+        default:
+            return <Icon name="missing"/>
     }
 }
 

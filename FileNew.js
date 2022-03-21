@@ -31,7 +31,8 @@ export default function FileNew(props) {
             style={{ width: props.asTile ? dimensions.tileWidth : props.rowWidth, height: props.asTile ? dimensions.tileHeight : dimensions.lineHeight }}
         >
             {props.asTile ?
-                <View style={{ alignContent: 'center', paddingRight: TILE_PADDING, height: '100%', width: '100%', }}>
+                <View style={{ alignContent: 'center', paddingRight: TILE_PADDING, 
+                    height: '100%', width: '100%', }}>
                     <View
                         style={{
                             borderWidth: TILE_BORDER_WIDTH,
@@ -72,16 +73,16 @@ export default function FileNew(props) {
                     </View>
                 </View>
                 :
-                <View style={{ alignContent: 'center', height: dimensions.lineHeight, borderWidth: 1.5, borderColor: "#D1CFCF", width: '100%', paddingRight: 5 }}>
-                    <View style={{ flexDirection: 'row-reverse', alignItems: 'center', paddingTop: 3 }}>
+                <View style={{ alignContent: 'center', height: dimensions.lineHeight, borderWidth: 1.5, borderColor: "#D1CFCF", width: '100%', paddingRight: 5, paddingLeft: 5 }}>
+                    <View style={{ flexDirection: props.rowDir, alignItems: 'center', paddingTop: 3 }}>
                         <View style={{ borderWidth: .5, borderColor: colors.lightBlue }}>
                             <Image source={{ uri: imageSrc }} style={{ width: 40, height: 50, resizeMode: "stretch" }} />
                         </View>
-                        <AppText style={{ paddingRight: 20, fontSize: 25, color: semanticColors.titleText }}>
+                        <AppText style={{ paddingRight: 20, paddingLeft: 20, fontSize: 25, color: semanticColors.titleText }}>
                             {getFileName(props)}
                         </AppText>
                         <View style={{
-                            position: 'absolute', flexDirection: 'row-reverse',
+                            position: 'absolute', flexDirection: props.rowDir,
                             right: 0,
                             height: '100%', width: '100%', backgroundColor: 'transparent',
                             justifyContent: 'flex-end',
@@ -123,19 +124,19 @@ function getButton(index, props) {
                         alignItems: 'center', justifyContent: 'center', alignContent: 'center'
                     }}                    >
                     <MenuOption onSelect={props.onAddFromCamera} >
-                        {renderMenuOption(translate("MenuFromCamera"), "new-camera", "svg")}
+                        {renderMenuOption(translate("MenuFromCamera"), "new-camera", "svg", props.rtl)}
                     </MenuOption>
                     <MenuOption onSelect={props.onAddFromMediaLib} >
-                        {renderMenuOption(translate("MenuFromMediaLib"), "new-image", "svg")}
+                        {renderMenuOption(translate("MenuFromMediaLib"), "new-image", "svg", props.rtl)}
                     </MenuOption>
                     <MenuOption onSelect={props.onBlankPage} >
-                        {renderMenuOption(translate("MenuNewPageEmpty"), "page-empty", "svg")}
+                        {renderMenuOption(translate("MenuNewPageEmpty"), "page-empty", "svg", props.rtl)}
                     </MenuOption>
                     <MenuOption onSelect={props.onLinesPage} >
-                        {renderMenuOption(translate("MenuNewPageLines"), "page-lines", "svg")}
+                        {renderMenuOption(translate("MenuNewPageLines"), "page-lines", "svg", props.rtl)}
                     </MenuOption>
                     <MenuOption onSelect={props.onMathPage} >
-                        {renderMenuOption(translate("MenuNewPageMath"), "page-math", "svg")}
+                        {renderMenuOption(translate("MenuNewPageMath"), "page-math", "svg", props.rtl)}
                     </MenuOption>
                     <Spacer />
                     {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}

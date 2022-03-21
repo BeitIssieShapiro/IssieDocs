@@ -9,7 +9,9 @@ export function getElementMovePanResponder({
     screen2ViewPortX,
     screen2ViewPortY,
     onRelease,
-    dragIconSize
+    dragIconSize,
+    rtl,
+    textMode
 }) {
     return PanResponder.create({
         onStartShouldSetPanResponder: (evt, gestureState) => shouldMoveElement(evt, gestureState),
@@ -32,12 +34,20 @@ export function getElementMovePanResponder({
                 xOffset -= 10;
             }
 
-            if (x < 25) {
+            if (rtl && x < 25) {
                 //trace("move-elem hit left side", rightDiff)
                 if (xOffset < 0) {
                     xOffset += 10 
                 }
                 x = 25;
+            }
+
+            if (!rtl && x <  dragIconSize/2) {
+                //trace("move-elem hit left side", rightDiff)
+                if (xOffset < 0) {
+                    xOffset += 10 
+                }
+                x =  dragIconSize/2;
             }
 
             // Y- Axis
@@ -58,7 +68,7 @@ export function getElementMovePanResponder({
                 }
                 y = dragIconSize / 2;
             }
-            x -= dragIconSize / 2
+            x = x + (rtl || getState().mode === 1?-1:1) * (dragIconSize / 2)
             y -= dragIconSize / 2
             
             onMoveElement({

@@ -3,10 +3,12 @@ import {
     View, PanResponder, Alert, Text
 } from 'react-native';
 import Animated from 'react-native-reanimated'
+import { getRowDirection, getRowDirections } from './lang';
+import { trace } from './log';
 var isNumber = function isNumber(value) {
     return value && typeof value === 'number' && isFinite(value);
-  }
-
+}
+const scrollWidth = 15;
 function useMergeState(initialState) {
     const [state, setState] = useState(initialState);
     const setMergedState = newState =>
@@ -16,8 +18,14 @@ function useMergeState(initialState) {
 }
 
 export default function Scroller(props) {
+
+    if (props.hidden) {
+        return props.children;
+    }
+
     if (props.onLayout) {
         props.onLayout.onLayout = (e) => {
+            trace("scroller layout", e.nativeEvent.layout)
             setScrollState({ ...scrollState, childHeight: e.nativeEvent.layout.height });
         }
     }
@@ -44,43 +52,83 @@ export default function Scroller(props) {
                 newYOffset = 0;
             }
             setScrollState({ yOffset: newYOffset, begin })
+            if (Math.abs(gestureState.dy) > 2) {
+                trace("on scroll", newYOffset)
+                props.onScroll && props.onScroll(newYOffset);
+            }
         },
 
         onPanResponderRelease: (evt, gestureState) => {
+            props.onScrollComplete && props.onScrollComplete();
+            trace("scroll complete")
             if (gestureState.dx == 0 && gestureState.dy == 0) {
                 return
             }
             setScrollState({ ...scrollState, begin: undefined })
+
         }
     }));
 
-    const { yOffset, childHeight } = scrollState;
-    //Alert.alert("offset"+yOffset)
+    let { yOffset, childHeight } = scrollState;
+
+    if (props.childHeight) {
+        childHeight = props.childHeight;
+    }
 
     let height = isNumber(props.height) ? props.height : 800;
-    let limit = (childHeight>0 && height < childHeight) ? height - childHeight : -100;
+    let limit = (childHeight > 0 && height < childHeight) ? height - childHeight : -100;
     let yOs = yOffset > limit ? yOffset : limit;
-    //Alert.alert("Height:"+height + ",limit:" + limit + ",yos:"+yOs+",yOffset:"+yOffset+","+childHeight)
-    return <View 
-        onLayout={props.onLayout?undefined:e=>setScrollState({ ...scrollState, childHeight: e.nativeEvent.layout.height })}
-        style={ { flexDirection: 'row', width:'100%', height:'100%'}}
+
+    return <View
+        //onLayout={props.onLayout ? undefined : e => setScrollState({ ...scrollState, childHeight: e.nativeEvent.layout.height })}
+        style={[{
+            flexDirection: props.rtl ? 'row' : 'row-reverse',
+            width: '100%', height:'100%',
+            justifyContent: 'flex-end'
+        }, props.top && { top: props.top }]}
         {...panResponder.panHandlers}
     >
-        
-        <View style={{
-            position: 'absolute',
-            top: 10,
-            left: 0, width: 20, 
-            height: height,
-            borderRightColor: 'gray', borderRightWidth: 2
-        }}><View style={{
-            position: 'absolute',
-            left: 0, top: (yOs / limit) * (height-40),
-            width: 20, height: 40, backgroundColor: 'gray'
-        }} />
+
+        {/**Scroll bar */}
+        <View style={[
+            {
+                position: 'absolute',
+                top: 0,
+
+                width: scrollWidth,
+                height: height - 10,
+                left: 0
+
+            },
+            props.rtl ?
+                { borderRightColor: 'gray', borderRightWidth: 1 } :
+                { borderLeftColor: 'gray', borderLeftWidth: 1 }
+        ]}>
+            {/**Position marker */}
+            <View style={
+                {
+                    position: 'absolute',
+                    top: (yOs / limit) * (height - 40),
+                    width: scrollWidth, height: 40,
+                    backgroundColor: 'gray',
+                    opacity: 0.4,
+                    left: 0
+                }
+            } />
         </View>
-    
-        <Animated.View style={[{width:'100%'},props.style,{  transform: [{ translateY: yOs }] }]}>
+
+        <Animated.View style={[
+            props.rtl ?
+                { marginLeft: scrollWidth } :
+                { marginRight: scrollWidth },
+            props.style,
+            {
+                width: '98%',
+                // position: 'absolute',
+                // top: yOs,
+
+                transform: [{ translateY: yOs }] 
+            }]}>
             {props.children}
         </Animated.View>
     </View>

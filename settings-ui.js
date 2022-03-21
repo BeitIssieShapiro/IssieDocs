@@ -13,13 +13,16 @@ import {
 
 
 import FadeInView from './FadeInView'
-import { translate } from './lang';
+import { getFlexEnd, getRowDirection, getRowDirections, getRowReverseDirection, isRTL, translate } from './lang';
 
-import {VIEW, EDIT_TITLE, LANGUAGE, TEXT_BUTTON, 
-    getSetting, getUseColorSetting} from './settings'
+import {
+    VIEW, EDIT_TITLE, LANGUAGE, TEXT_BUTTON,
+    getSetting, getUseColorSetting
+} from './settings'
 
 
 export default function SettingsMenu(props) {
+    const { row, rowReverse, flexStart, flexEnd, textAlign, rtl } = getRowDirections();
 
     let viewStyleSetting = getSetting(VIEW.name, VIEW.list);
     const [viewStyle, setViewStyle] = useState(viewStyleSetting);
@@ -77,21 +80,23 @@ export default function SettingsMenu(props) {
 
     return <TouchableOpacity onPress={props.onClose} style={{
         position: 'absolute',
-        zIndex: 100, top: 0, left: 0, width: '100%', height: '100%'
+        zIndex: 100, top: 0, width: '100%', height: '100%'
     }}>
 
         <FadeInView
             duration={500}
             width={300}
-            style={{
-                zIndex: 101, position: 'absolute', height: '100%', right: 0,
+            style={[{
+                zIndex: 101, position: 'absolute', height: '100%',
 
                 backgroundColor: 'white', borderColor: 'gray', borderWidth: 1
-            }}>
+            }, isRTL() ? { right: 0 } : { left: 0 }]}>
             <Spacer />
-            <View style={{ flexDirection: 'row-reverse', justifyContent: 'flex-start', alignItems: 'center' }}>
-                <Spacer width={11} />
-                <Icon name={'close'} onPress={props.onClose} size={30} />
+            <View style={{ flexDirection: row, justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ flexDirection: row }}>
+                    <Spacer />
+                    <Icon name={'close'} onPress={props.onClose} size={30} />
+                </View>
                 <Spacer />
                 <AppText style={styles.SettingsHeaderText}>{translate("Settings")}</AppText>
             </View>
@@ -101,10 +106,8 @@ export default function SettingsMenu(props) {
                 width: '100%', height: '90%'
             }}
             >
-                <TouchableOpacity activeOpacity={1} style={{ alignItems: 'flex-end' }} >
-
-
-                    <TouchableOpacity onPress={props.onAbout} style={{ flexDirection: 'row', paddingRight: 25 }}>
+                <TouchableOpacity activeOpacity={1} style={{ alignItems: flexEnd }} >
+                    <TouchableOpacity onPress={props.onAbout} style={{ flexDirection: row, paddingRight: 25 }}>
 
                         <AppText style={{ fontSize: 25 }}>{translate("About")}</AppText>
                         <Spacer />
@@ -126,12 +129,12 @@ export default function SettingsMenu(props) {
                             //getSvgIcon('lang-ar', 45), 
                             selected: langSetting == LANGUAGE.arabic,
                             callback: () => setLanguage(LANGUAGE.arabic)
+                        },
+                        {
+                            icon: <AppText style={{ fontSize: 25 }}>English</AppText>,
+                            selected: langSetting == LANGUAGE.english,
+                            callback: () => setLanguage(LANGUAGE.english)
                         }
-                        // ,
-                        // {
-                        //     icon: getSvgIcon('lang-en', 45), selected: langSetting ==  LANGUAGE.english,
-                        //     callback: () => setLanguage(LANGUAGE.english)
-                        // }
                     ])}
                     {getGroup(props, translate("Display") + ":", [
                         {
@@ -155,27 +158,27 @@ export default function SettingsMenu(props) {
                             callback: () => setTextBtnHandler(TEXT_BUTTON.no)
                         }
                     ])}
-                    
-                    {getCheckbox(translate("AllowEditTitle"), 
+
+                    {getCheckbox(translate("AllowEditTitle"),
                         () => {
                             let newValue = editTitle == EDIT_TITLE.yes ? EDIT_TITLE.no : EDIT_TITLE.yes;
                             setEditTitle(newValue);
                             setEditTitleHandler(newValue)
-                        }, 
+                        },
                         editTitle == EDIT_TITLE.yes)}
 
-                    
+
                     {
-                    /*getGroup(props, translate("FolderColors") + ":", [
-                        {
-                            icon: getIcon("folder", 35, 'red'), selected: useColorSetting === USE_COLOR.yes,
-                            callback: () => setUseColorHandler(USE_COLOR.yes)
-                        },
-                        {
-                            icon: getIcon("folder", 35, 'gray'), selected: useColorSetting === USE_COLOR.no,
-                            callback: () => setUseColorHandler(USE_COLOR.no)
-                        }
-                    ])*/
+                        /*getGroup(props, translate("FolderColors") + ":", [
+                            {
+                                icon: getIcon("folder", 35, 'red'), selected: useColorSetting === USE_COLOR.yes,
+                                callback: () => setUseColorHandler(USE_COLOR.yes)
+                            },
+                            {
+                                icon: getIcon("folder", 35, 'gray'), selected: useColorSetting === USE_COLOR.no,
+                                callback: () => setUseColorHandler(USE_COLOR.no)
+                            }
+                        ])*/
                     }
                 </TouchableOpacity>
             </ScrollView>
@@ -193,13 +196,13 @@ function getButtonWithoutText() {
 }
 
 function getGroup(props, name, items) {
-    return <View style={{ width: '100%', paddingTop: 25, paddingRight: 25, alignItems: 'flex-end' }}>
+    return <View style={{ width: '100%', paddingTop: 25, paddingRight: 25, alignItems: getFlexEnd() }}>
         <AppText style={styles.SettingsHeaderText}>{name}</AppText>
 
         {items.map((item, index) =>
             <TouchableOpacity
                 key={index}
-                style={{ flexDirection: 'row', paddingRight: 35, paddingTop: 15, alignItems: 'center' }}
+                style={{ flexDirection: getRowDirection(), paddingRight: 35, paddingTop: 15, alignItems: 'center' }}
                 onPress={item.callback}
             >
                 {item.icon}
@@ -214,10 +217,12 @@ function getGroup(props, name, items) {
 }
 
 function getCheckbox(name, callback, selected) {
-    return <View style={{ width: '100%', paddingTop: 25, 
-        paddingRight: 25, alignItems: 'flex-end' }}>
+    return <View style={{
+        width: '100%', paddingTop: 25,
+        paddingRight: 25, alignItems: getFlexEnd()
+    }}>
         <TouchableOpacity
-            style={{ flexDirection: 'row-reverse', paddingRight: 35, paddingTop: 15, alignItems: 'center' }}
+            style={{ flexDirection: getRowReverseDirection(), paddingRight: 35, paddingTop: 15, alignItems: 'center' }}
             onPress={callback}
         >
             <Spacer />
@@ -256,7 +261,8 @@ const styles = StyleSheet.create({
         fontSize: 27,
         color: semanticColors.titleText,
         fontWeight: 'bold',
-        paddingRight: 10
+        paddingRight: 10,
+        paddingLeft: 10
     },
     radioText: {
         fontSize: 25,

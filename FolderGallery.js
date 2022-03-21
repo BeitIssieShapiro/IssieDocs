@@ -10,7 +10,7 @@ import SettingsMenu from './settings-ui'
 import FolderNew from './FolderNew';
 import FileNew from './FileNew'
 import {
-    registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage,
+    registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage, gCurrentLang, getRowDirections,
 } from "./lang.js"
 import { USE_COLOR, getUseColorSetting, EDIT_TITLE, VIEW } from './settings.js'
 import { setNavParam } from './utils'
@@ -24,8 +24,7 @@ import {
     renderMenuOption,
     getRoundedButton,
     IDMenuOptionsStyle,
-    FolderIcon,
-    APP_FONT
+    SBDraxScrollView,
 } from './elements'
 import {
     Menu,
@@ -45,6 +44,7 @@ import { FileSystem, swapFolders, saveFolderOrder } from './filesystem.js';
 import { trace } from './log.js';
 import { showMessage } from 'react-native-flash-message';
 import { LogBox } from 'react-native';
+import Scroller from './scroller.js';
 
 const SORT_BY_NAME = 0;
 const SORT_BY_DATE = 1;
@@ -54,12 +54,15 @@ function checkFilter(filter, name) {
     if (filter === undefined || filter.length == 0)
         return true;
 
-    if (name.indexOf(filter) >= 0)
-        return true;
+    trace("checkFilter", filter, name)
+    if (name.indexOf(filter) >= 0) {
+        trace("found")
 
-    if (name == FileSystem.DEFAULT_FOLDER.name) {
-        return translate("DefaultFolder").indexOf(filter) >= 0;
+        return true;
     }
+    // if (name == FileSystem.DEFAULT_FOLDER.name) {
+    //     return translate("DefaultFolder").indexOf(filter) >= 0;
+    // }
 
     return false;
 }
@@ -242,7 +245,7 @@ export default class FolderGallery extends React.Component {
             () => {
                 this.setState({ systemModal: false })
             },
-            (err)=>{
+            (err) => {
                 Alert.alert("Error", err.description)
                 this.setState({ systemModal: false })
             },
@@ -269,7 +272,7 @@ export default class FolderGallery extends React.Component {
             () => {
                 this.setState({ systemModal: false })
             },
-            (err)=>Alert.alert("Error", err.description),
+            (err) => Alert.alert("Error", err.description),
             this.props.navigation
         );
 
@@ -319,7 +322,7 @@ export default class FolderGallery extends React.Component {
         if (this.foldersTree) {
             let index = this.state.folders.findIndex(f => f.name === folder.name);
             if (index - 3 >= 0) {
-                setTimeout(()=>this.foldersTree.scrollTo({ animated: true, y: (index-3)*dimensions.folderHeight }), 50)
+                setTimeout(() => this.foldersTree.scrollTo({ animated: true, y: (index - 3) * dimensions.folderHeight }), 50)
             }
         }
 
@@ -481,7 +484,7 @@ export default class FolderGallery extends React.Component {
             FileSystem.main.getFolders().then((folders) => {
                 let folder = folders.find(f => f.name == folderName);
                 if (folder) {
-                    this.setState({ currentFolder: folder });
+                    this.selectFolder(folder);
                 }
             });
         }
@@ -621,7 +624,7 @@ export default class FolderGallery extends React.Component {
     }
 
 
-    newPageButton = () => {
+    newPageButton = (rtl) => {
         return (
 
             <Menu ref={(ref) => this.menu = ref} key="6">
@@ -630,13 +633,13 @@ export default class FolderGallery extends React.Component {
                 </MenuTrigger>
                 <MenuOptions {...IDMenuOptionsStyle({ top: dimensions.toolbarHeight - 12, width: 200 })}>
                     <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Blank)}>
-                        {renderMenuOption(translate("MenuNewPageEmpty"), "page-empty", "svg")}
+                        {renderMenuOption(translate("MenuNewPageEmpty"), "page-empty", "svg", rtl)}
                     </MenuOption>
                     <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Lines)}>
-                        {renderMenuOption(translate("MenuNewPageLines"), "page-lines", "svg")}
+                        {renderMenuOption(translate("MenuNewPageLines"), "page-lines", "svg", rtl)}
                     </MenuOption>
                     <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Math)}>
-                        {renderMenuOption(translate("MenuNewPageMath"), "page-math", "svg")}
+                        {renderMenuOption(translate("MenuNewPageMath"), "page-math", "svg", rtl)}
                     </MenuOption>
                     <Spacer />
                     <View style={{ flex: 1, width: '100%', flexDirection: 'column', alignItems: 'center' }}>
@@ -650,6 +653,8 @@ export default class FolderGallery extends React.Component {
 
 
     render() {
+        const { row, rowReverse, flexStart, flexEnd, textAlign, rtl } = getRowDirections();
+
         LogBox.ignoreLogs(['Could not find image file']);
         let curFolderFullName = "", curFolderColor = "", curFolderIcon = "";
         //let currentParent = undefined;
@@ -676,10 +681,10 @@ export default class FolderGallery extends React.Component {
             if (this.state.filterFolders?.length > 0) {
 
                 //aggregates all files matching the filter
-                folders.forEach(folder => {
+                this.state.folders.forEach(folder => {
                     items = items.concat(folder.items.filter(file => {
                         //trace("file.name", file.name, file.name.indexOf(this.state.filterFolders))
-                        return file.name.indexOf(this.state.filterFolders) >= 0
+                        return checkFilter(this.state.filterFolders, file.name)
                     }));
                 })
 
@@ -708,23 +713,25 @@ export default class FolderGallery extends React.Component {
         let numColumnsForTiles = Math.floor(pagesContainerWidth / dimensions.tileWidth);
         let foldersCount = folders.length;
         let foldersHeightSize = dimensions.topView + dimensions.toolbarHeight + (foldersCount + 1) * dimensions.folderHeight;
-        let needFoldersScroll = foldersHeightSize > this.state.windowSize.height;
+//        let needFoldersScroll = foldersHeightSize > this.state.windowSize.height;
+        const pagesTitleHeight = this.isScreenLow() ? dimensions.pagesTitleLow : dimensions.pagesTitleHigh
 
         let pagesCount = items.length;
         let pagesLines = asTiles ? Math.ceil(pagesCount / numColumnsForTiles) : pagesCount;
         let pageHeight = asTiles ? dimensions.tileHeight : dimensions.lineHeight;
-        let pagesAreaWindowHeight = 0.9 * (this.state.windowSize.height - dimensions.topView + dimensions.toolbarHeight);
+        let pagesAreaWindowHeight = this.state.windowSize.height - dimensions.topView + dimensions.toolbarHeight - pagesTitleHeight - 20;
         let pagesHeightSize = (pagesLines + 1) * pageHeight * 1.4;
-        let needPagesScroll = true;//pagesHeightSize > pagesAreaWindowHeight;
+        //let needPagesScroll = true;//pagesHeightSize > pagesAreaWindowHeight;
+
+        const needScroller = pagesHeightSize + foldersHeightSize > pagesAreaWindowHeight
 
         let isEmptyApp = !this.state.folders || this.state.folders.length == 0;
         if (isEmptyApp)
             console.log("empty app")
 
-        
+
         return (
             <DraxProvider>
-
                 <View style={styles.container}
                     onLayout={this.onLayout}>
 
@@ -735,6 +742,7 @@ export default class FolderGallery extends React.Component {
                             onViewChange={(style) => this.setState({ viewStyle: style })}
                             onLanguageChange={(lang) => {
                                 loadLanguage();
+                                setNavParam(this.props.navigation, "lang", gCurrentLang.languageTag)
                                 this.forceUpdate();
                             }}
                             onFolderColorChange={(folderColor) => {
@@ -750,7 +758,7 @@ export default class FolderGallery extends React.Component {
                         shadowOffset: { width: 0, height: 1 },
                         elevation: 1,
                         zIndex: 5,
-                        flexDirection: "row",
+                        flexDirection: row,
                         alignItems: "center",
                         backgroundColor: semanticColors.subTitle
 
@@ -787,11 +795,11 @@ export default class FolderGallery extends React.Component {
                         }
                         <Spacer />
                         {
-                            this.newPageButton()
+                            this.newPageButton(rtl)
                         }
 
                         {/*right buttons */}
-                        <View style={{ position: 'absolute', right: 17, flexDirection: 'row-reverse', alignItems: 'center' }}>
+                        <View style={{ position: 'absolute', right: 17, flexDirection: rowReverse, alignItems: 'center' }}>
                             {/* {
                             getIconButton(enableEdit ? () => {
                                 this.toggleEditMode()
@@ -808,7 +816,7 @@ export default class FolderGallery extends React.Component {
                     </View>
 
                     <View style={{
-                        flex: 1, flexDirection: "row", backgroundColor: semanticColors.mainAreaBG,
+                        flex: 1, flexDirection: row, backgroundColor: semanticColors.mainAreaBG,
                         position: 'absolute', width: "100%",
                         top: dimensions.toolbarHeight, left: 0,
                         height: this.state.windowSize.height - dimensions.toolbarHeight, zIndex: 4,
@@ -820,8 +828,16 @@ export default class FolderGallery extends React.Component {
                                     <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
                                 </View> :
                                 <View style={{ width: "100%" }}>
-                                    <View style={{ position: 'absolute', left: 80, top: (this.isMobile() ? '5%' : '10%'), alignItems: 'flex-end', flexDirection: 'row' }}>
-                                        {getSvgIcon('start-icon', this.isMobile() ? 70 : 150, semanticColors.addButton)}
+                                    <View style={[
+                                        {
+                                            position: 'absolute', top: (this.isMobile() ? '5%' : '10%'),
+                                            alignItems: flexEnd, flexDirection: row
+                                        },
+                                        rtl ? { left: 80 } : { right: 80 }
+                                    ]}>
+                                        <View style={rtl ? {} : { transform: [{ scaleX: -1 }] }}>
+                                            {getSvgIcon('start-icon', this.isMobile() ? 70 : 150, semanticColors.addButton)}
+                                        </View>
                                         <Spacer />
                                         <AppText style={{ fontSize: this.isMobile() ? 20 : 35, color: '#797a7c' }}>{translate("StartHere")}</AppText>
                                     </View>
@@ -847,14 +863,16 @@ export default class FolderGallery extends React.Component {
                             }}>
                                 {/* pagesTitle */}
                                 <View style={{
-                                    flex: 1, flexDirection: "row", position: 'absolute',
-                                    width: "100%", top: 0, height: this.isScreenLow() ? '17%' : '10%', alignItems: 'center', justifyContent: 'flex-start',
-                                    borderBottomWidth: this.state.currentFolder ? 1 : 0, borderBottomColor: 'gray'
+                                    flex: 1, flexDirection: row, position: 'absolute',
+                                    width: "100%", top: 0, height: pagesTitleHeight , alignItems: 'center',
+                                    justifyContent: 'flex-start',
+                                    borderBottomWidth: this.state.currentFolder ? 1 : 0, borderBottomColor: 'gray',
+                                    zIndex: 1000, backgroundColor: semanticColors.mainAreaBG,
                                 }}>
-                                    {this.state.currentFolder ? <Spacer width={3} /> : null}
-                                    {this.state.currentFolder ? getSvgIconButton(() => this.setState({ sortBy: SORT_BY_DATE }), semanticColors.addButton, "sort-by-date", 45, undefined, undefined, (this.state.sortBy == SORT_BY_DATE)) : null}
-                                    {this.state.currentFolder ? <Spacer width={3} /> : null}
-                                    {this.state.currentFolder ? getSvgIconButton(() => this.setState({ sortBy: SORT_BY_NAME }), semanticColors.addButton, "sort-by-name", 45, undefined, undefined, (this.state.sortBy == SORT_BY_NAME)) : null}
+                                    <Spacer width={3} />
+                                    {getSvgIconButton(() => this.setState({ sortBy: SORT_BY_DATE }), semanticColors.addButton, "sort-by-date", 45, undefined, undefined, (this.state.sortBy == SORT_BY_DATE))}
+                                    <Spacer width={3} />
+                                    {getSvgIconButton(() => this.setState({ sortBy: SORT_BY_NAME }), semanticColors.addButton, "sort-by-name", 45, undefined, undefined, (this.state.sortBy == SORT_BY_NAME))}
 
                                     {this.state.currentFolder ? <FolderNew
                                         width={this.isMobile() ? "75%" : "85%"}
@@ -872,6 +890,8 @@ export default class FolderGallery extends React.Component {
                                         fixedFolder={curFolderFullName === FileSystem.DEFAULT_FOLDER.name}
                                     /> :
                                         <Search
+                                        width={this.isMobile() ? "75%" : "85%"}
+                                            rtl={rtl}
                                             value={this.state.filterFolders}
                                             onChangeText={(txt) => {
                                                 //Alert.alert("filter: "+ txt)
@@ -880,115 +900,140 @@ export default class FolderGallery extends React.Component {
                                             }
                                         />}
 
-                                </View>
 
+                                </View>
                                 {/* pages */}
-                                <View style={{
-                                    flex: 1,
-                                    backgroundColor: semanticColors.mainAreaBG,
-                                    position: 'absolute', top: this.isScreenLow() ? '17%' : '10%', width: "100%",
-                                    height: this.isScreenLow() ? '83%' : '90%'
-                                }}>
-                                    {this.state.filterFolders?.length > 0 &&
-                                        <AppText style={{ fontSize: 25, paddingRight: 15, lineHeight: 25 + 2 }}>
-                                            {translate("SearchResults") + ":   " + (folders.length === 0 && items.length === 0 ? translate("NoSearchResults") : "")}
-                                        </AppText>
-                                    }
+                                <Scroller
+                                    top={pagesTitleHeight}
+                                    rtl={rtl}
+                                    hidden={this.state.currentFolder !== undefined || !needScroller}
+                                    height={pagesAreaWindowHeight - 100}
+                                    childHeight={pagesHeightSize}
+                                    onScroll={(yOffset) => this.setState({ scrollOffset: yOffset, scrolling: true })}
+                                    onScrollComplete={() => this.setState({ scrolling: false })}
 
+                                >
+                                    <View
 
-
-
-                                    {!this.state.currentFolder && <View
                                         style={{
-                                            flexWrap: 'wrap', flexDirection: 'row-reverse',
-                                            width: '100%', justifyContent: 'flex-start', alignItems: 'center',
-                                            //height: '100%'
-                                        }}
-                                    >
-                                        {folders.map((item, index) => <FolderNew
-                                            key={index.toString()}
-                                            id={item.name}
-                                            isOverview={true}
-                                            name={item.name}
-                                            color={item.color}
-                                            icon={item.icon}
-                                            width={this.isLandscape() ? '20%' : '25%'}
-                                            editMode={this.state.editMode}
-                                            fixedFolder={false}//item.name === DEFAULT_FOLDER_NAME}
-                                            current={false}
-                                            onPress={() => this.selectFolder(item)}
+                                            backgroundColor: semanticColors.mainAreaBG,
+                                            top: 0,
+                                            width: "100%",
 
-                                            isLandscape={this.isLandscape()}
-                                        />)}
-
-                                    </View>}
+                                        }}>
+                                        {this.state.filterFolders?.length > 0 && !this.state.currentFolder &&
+                                            <AppText style={{ fontSize: 25, paddingRight: 15, lineHeight: 25 + 2 }}>
+                                                {translate("SearchResults") + ":   " + (folders.length === 0 && items.length === 0 ? translate("NoSearchResults") : "")}
+                                            </AppText>
+                                        }
 
 
-                                    {items.length > 0 ?
-                                        <DraxList
-                                            itemsDraggable={!(this.state.filterFolders?.length > 0)}
-                                            viewPropsExtractor={(item) => ({
-                                                payload:
-                                                    { item, folder: this.state.currentFolder?.name }
-                                            })
-                                            }
-                                            longPressDelay={500}
-                                            contentContainerStyle={{
-                                                width: '100%', alignItems: 'flex-end',
-                                                height: needPagesScroll ? pagesHeightSize : '100%'
-
+                                        {!this.state.currentFolder && <View
+                                            style={{
+                                                flexWrap: 'wrap', flexDirection: rowReverse,
+                                                width: '100%', alignItems: 'center',
                                             }}
-                                            columnWrapperStyle={asTiles && numColumnsForTiles > 1 ? { flexDirection: 'row-reverse' } : undefined}
-                                            bounces={needPagesScroll}
-                                            key={asTiles ? numColumnsForTiles.toString() : "list"}
-                                            data={[...items].sort(this.getSortFunction())}
+                                        >
+                                            {folders.map((item, index) => <FolderNew
+                                                key={index.toString()}
+                                                id={item.name}
+                                                isOverview={true}
+                                                name={item.name}
+                                                color={item.color}
+                                                icon={item.icon}
+                                                width={this.isLandscape() ? '20%' : '25%'}
+                                                editMode={this.state.editMode}
+                                                fixedFolder={false}//item.name === DEFAULT_FOLDER_NAME}
+                                                current={false}
+                                                onPress={() => this.selectFolder(item)}
 
-                                            renderItemContent={({ item }, { viewState }) => (<View
-                                                style={{ opacity: viewState?.dragStatus === DraxViewDragStatus.Dragging ? 0.4 : 1 }}>
-                                                {asTiles && <Spacer />}
-                                                {FileNew({
-                                                    page: item,
-                                                    asTile: asTiles,
-                                                    name: item.name,
-                                                    rowWidth: pagesContainerWidth,
-                                                    editMode: this.state.editMode,
-                                                    selected: this.isSelected(item),
-                                                    onPress: () => this.goEdit(item, this.state.currentFolder, false),
-                                                    onSelect: () => this.toggleSelection(item, 'file'),
-                                                    onDelete: () => this.DeletePage(),
-                                                    onRename: () => this.RenamePage(true),
-                                                    onMove: () => this.RenamePage(false),
-                                                    onShare: () => this.Share(),
-                                                    onAddFromCamera: () => this.AddToPageFromCamera(item),
-                                                    onAddFromMediaLib: () => this.AddToPageFromMediaLib(item),
-                                                    onBlankPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Blank),
-                                                    onLinesPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Lines),
-                                                    onMathPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Math),
-                                                    onDuplicate: () => this.DuplicatePage(),
-                                                    count: item.count
+                                                isLandscape={this.isLandscape()}
+                                            />)}
+
+                                        </View>}
+
+
+                                        {items.length > 0 ?
+                                            <DraxList
+                                                id="1234"
+
+                                                itemsDraggable={!(this.state.filterFolders?.length > 0) && !this.state.scrolling}
+                                                viewPropsExtractor={(item) => ({
+                                                    payload: { item, folder: this.state.currentFolder?.name },
                                                 })}
-                                            </View>)
 
-                                            }
-                                            numColumns={asTiles ? numColumnsForTiles : 1}
-                                            keyExtractor={(item, index) => index.toString()}
-                                        />
+                                                longPressDelay={500}
+                                                contentContainerStyle={{
+                                                    width: '100%',
+                                                    alignItems: flexEnd,
+                                                    height: '100%'
+
+                                                }}
+                                                columnWrapperStyle={asTiles && numColumnsForTiles > 1 ? { flexDirection: rowReverse } : undefined}
+                                                bounces={false}
+                                                key={asTiles ? numColumnsForTiles.toString() : "list"}
+                                                data={[...items].sort(this.getSortFunction())}
+
+                                                renderItemContent={({ item }, { viewState }) => {
+                                                    const yOffset = this.state.scrollOffset
+                                                    if (yOffset && yOffset != 0) {
+                                                        trace("scroll offset", yOffset)
+                                                        viewState?.hoverPosition?.setOffset({ x: 0, y: yOffset })
+                                                    }
+
+                                                    return (<View
+                                                        style={{ opacity: viewState?.dragStatus === DraxViewDragStatus.Dragging ? 0.4 : 1 }}>
+                                                        {asTiles && <Spacer />}
+                                                        {FileNew({
+                                                            rtl,
+                                                            rowDir: rowReverse,
+                                                            page: item,
+                                                            asTile: asTiles,
+                                                            name: item.name,
+                                                            rowWidth: pagesContainerWidth,
+                                                            editMode: this.state.editMode,
+                                                            selected: this.isSelected(item),
+                                                            onPress: () => this.goEdit(item, this.state.currentFolder, false),
+                                                            onSelect: () => this.toggleSelection(item, 'file'),
+                                                            onDelete: () => this.DeletePage(),
+                                                            onRename: () => this.RenamePage(true),
+                                                            onMove: () => this.RenamePage(false),
+                                                            onShare: () => this.Share(),
+                                                            onAddFromCamera: () => this.AddToPageFromCamera(item),
+                                                            onAddFromMediaLib: () => this.AddToPageFromMediaLib(item),
+                                                            onBlankPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Blank),
+                                                            onLinesPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Lines),
+                                                            onMathPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Math),
+                                                            onDuplicate: () => this.DuplicatePage(),
+                                                            count: item.count
+                                                        })}
+                                                    </View>)
+                                                }
+
+                                                }
+                                                numColumns={asTiles ? numColumnsForTiles : 1}
+                                                keyExtractor={(item, index) => index.toString()}
+                                            />
 
 
-                                        : this.state.currentFolder && (folderIsLoading ?
-                                            <View>
-                                                <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
-                                            </View>
-                                            :
-                                            <View style={{ alignItems: 'center', height: '100%' }}>
-                                                <Spacer height='20%' />
-                                                {getSvgIcon('folder', this.isMobile() ? 85 : 150)}
-                                                <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("NoPagesYet")}</AppText>
-                                            </View>
-                                        )
 
-                                    }
-                                </View>
+
+
+                                            : this.state.currentFolder && (folderIsLoading ?
+                                                <View>
+                                                    <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
+                                                </View>
+                                                :
+                                                <View style={{ alignItems: 'center', height: '100%' }}>
+                                                    <Spacer height='20%' />
+                                                    {getSvgIcon('folder', this.isMobile() ? 85 : 150)}
+                                                    <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("NoPagesYet")}</AppText>
+                                                </View>
+                                            )
+
+                                        }
+                                    </View>
+                                </Scroller>
                             </View>
 
                         }
@@ -1004,45 +1049,47 @@ export default class FolderGallery extends React.Component {
                                 height: "100%",
                                 backgroundColor: 'white'
                             }}>
-                                
-                                    <DraxView
-                                        onReceiveDragEnter={() => this.setState({ homeDragOver: true })}
-                                        onReceiveDragExit={() => this.setState({ homeDragOver: false })}
-                                        onReceiveDragDrop={({ dragged: { payload } }) => {
-                                            this.setState({ homeDragOver: false })
-                                            //trace(`received ${JSON.stringify(payload)}`);
-                                            trace("Drop on Folder", "from", payload.folder, "to", FileSystem.DEFAULT_FOLDER.name)
-                                            if (payload.folder === FileSystem.DEFAULT_FOLDER.name) {
-                                                trace("drop on same folder")
-                                                return;
-                                            }
-                                            FileSystem.main.movePage(payload.item, FileSystem.DEFAULT_FOLDER.name)
-                                                .then(() => showMessage({
-                                                    message: fTranslate("SuccessfulMovePageMsg", payload.item.name, translate("DefaultFolder")),
-                                                    type: "success",
-                                                    animated: true,
-                                                    duration: 5000,
 
-                                                })
-                                                )
-                                        }}
-                                        style={{
-                                            height: this.isScreenLow() ? '17%' : '10%',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            backgroundColor: this.state.homeDragOver ? "lightblue" : "transparent"
-                                        }}>
-                                        <TouchableOpacity onPress={() => this.unselectFolder()}>
+                                <DraxView
+                                    onReceiveDragEnter={() => this.setState({ homeDragOver: true })}
+                                    onReceiveDragExit={() => this.setState({ homeDragOver: false })}
+                                    onReceiveDragDrop={({ dragged: { payload } }) => {
+                                        this.setState({ homeDragOver: false })
+                                        //trace(`received ${JSON.stringify(payload)}`);
+                                        trace("Drop on Folder", "from", payload.folder, "to", FileSystem.DEFAULT_FOLDER.name)
+                                        if (payload.folder === FileSystem.DEFAULT_FOLDER.name) {
+                                            trace("drop on same folder")
+                                            return;
+                                        }
+                                        FileSystem.main.movePage(payload.item, FileSystem.DEFAULT_FOLDER.name)
+                                            .then(() => showMessage({
+                                                message: fTranslate("SuccessfulMovePageMsg", payload.item.name, translate("DefaultFolder")),
+                                                type: "success",
+                                                animated: true,
+                                                duration: 5000,
+
+                                            })
+                                            )
+                                    }}
+                                    style={{
+                                        height: this.isScreenLow() ? '17%' : '10%',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        backgroundColor: this.state.homeDragOver ? "lightblue" : "transparent"
+                                    }}>
+                                    <TouchableOpacity onPress={() => this.unselectFolder()}>
 
 
-                                            <SvgIcon name="home" size={40} color={"gray"} />
-                                        </TouchableOpacity>
-                                    </DraxView>
-                                
+                                        <SvgIcon name="home" size={40} color={"gray"} />
+                                    </TouchableOpacity>
+                                </DraxView>
 
-                                <DraxScrollView
-                                    ref={ref => this.foldersTree = ref}
+
+                                <SBDraxScrollView
+                                    rtl={rtl}
+                                    myRef={ref => this.foldersTree = ref}
                                     scrollEnabled={true}
+                                    showsVerticalScrollIndicator={false}
                                     style={{
                                         flex: 1,
                                         flexDirection: "column",
@@ -1050,7 +1097,7 @@ export default class FolderGallery extends React.Component {
                                         backgroundColor: 'white',
                                         zIndex: 99999
                                     }}
-                                    bounces={needFoldersScroll}
+                                    bounces={false}
 
                                     contentContainerStyle={{
                                         height: foldersHeightSize - dimensions.topView - dimensions.toolbarHeight
@@ -1081,7 +1128,7 @@ export default class FolderGallery extends React.Component {
                                         />)
 
                                     }
-                                </DraxScrollView>
+                                </SBDraxScrollView>
                             </View>
                         }
                     </View>

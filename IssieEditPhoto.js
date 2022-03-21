@@ -11,11 +11,11 @@ import DoQueue from './do-queue';
 
 import {
   Spacer, getRoundedButton,
-  renderMenuOption, IDMenuOptionsStyle, globalStyles
+  renderMenuOption, IDMenuOptionsStyle, globalStyles, getFont
 } from './elements'
 import { getNewPage, SRC_GALLERY, SRC_RENAME } from './newPage';
 import ProgressCircle from 'react-native-progress-circle'
-import { fTranslate } from './lang.js'
+import { fTranslate, getRowDirections, isRTL } from './lang.js'
 
 import {
   Menu,
@@ -25,7 +25,7 @@ import {
 } from 'react-native-popup-menu';
 
 import {
-  colors, APP_FONT, getImageDimensions,
+  colors, getImageDimensions,
   AppText,
   semanticColors, dimensions
 } from './elements'
@@ -98,7 +98,9 @@ export default class IssieEditPhoto extends React.Component {
           this.SaveImageAfterMove();
         }
       },
-      dragIconSize: DRAG_ICON_SIZE
+      dragIconSize: DRAG_ICON_SIZE,
+      rtl: isRTL(),
+      
     })
 
     this._panResponderElementResize = PanResponder.create({
@@ -626,9 +628,9 @@ export default class IssieEditPhoto extends React.Component {
 
 
         //convert to rtl text:
-        if (!textElem.rtl) {
-          textElem.rtl = true;
-          textElem.normPosition = { x: textElem.normPosition.x + textElem.width, y: textElem.normPosition.y };
+        if (textElem.rtl == undefined) {
+          textElem.rtl = isRTL();
+          textElem.normPosition = { x: textElem.normPosition.x + isRTL() ? textElem.width : 0, y: textElem.normPosition.y };
         }
 
         initialText = textElem.text;
@@ -751,20 +753,27 @@ export default class IssieEditPhoto extends React.Component {
     for (let i = q.length - 1; i >= 0; i--) {
       const elem = this.isImageMode() ? this.imageScale2Norm(q[i]) : q[i];
 
-      let foundY = elem.normPosition.y < coordinates.y + 15 &&
-        elem.normPosition.y + elem.height > coordinates.y - 15;
+      const margin = 15 / this.state.scaleRatio
+      trace("findElementByLocation", "margin", margin, elem.height)
+      trace(elem.normPosition)
+      trace(coordinates)
+      trace("height", elem.height, "scale", this.state.scaleRatio)
+      let foundY = elem.normPosition.y < coordinates.y + margin &&
+        elem.normPosition.y + elem.height  > coordinates.y - margin;
 
       if (elem.rtl) {
         //todo - fix
-        if (elem.normPosition.x > coordinates.x - 15 &&
-          elem.normPosition.x - elem.width < coordinates.x + 15
+        if (elem.normPosition.x > coordinates.x - margin &&
+          elem.normPosition.x - elem.width  < coordinates.x + margin
           && foundY) {
           return i;
         }
       } else {
-        if (elem.normPosition.x < coordinates.x + 15 &&
-          elem.normPosition.x + elem.width > coordinates.x - 15
+        trace("findElementByLocation eng", foundY ? "foundY" : "notFoundY")
+        if (elem.normPosition.x < coordinates.x + margin &&
+          elem.normPosition.x + elem.width  > coordinates.x - margin
           && foundY) {
+          trace("findElementByLocation eng found!")
           return i;
         }
       }
@@ -774,6 +783,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getTextElement = (newText, width, height) => {
+    const rtl = isRTL();
     const newTextElem = { text: newText, width: width, height: height }
     if (this.state.currentTextElem) {
       newTextElem.id = this.state.currentTextElem.id;
@@ -787,12 +797,12 @@ export default class IssieEditPhoto extends React.Component {
       y: this.viewPort2NormY(this.state.yText), // + this.getYOffsetFactor(height),
     };
     //newTextElem.position = { x: 0, y: 0 };
-    newTextElem.alignment = 'Right';
-    newTextElem.rtl = true;
+    newTextElem.alignment = rtl ? 'Right' : 'Left';
+    newTextElem.rtl = rtl;
     newTextElem.fontColor = this.state.color;
     newTextElem.fontSize = this.state.fontSize;
     newTextElem.width = Math.floor(this.state.inputTextWidth / this.state.zoom);
-    newTextElem.font = APP_FONT;
+    newTextElem.font = getFont();
     return newTextElem;
   }
 
@@ -1106,7 +1116,7 @@ export default class IssieEditPhoto extends React.Component {
       () => {
         this.setState({ showBusy: false })
       },
-      (err)=>Alert.alert("Error", err.description),
+      (err) => Alert.alert("Error", err.description),
       this.props.navigation,
       { selectionLimit: 1, quality: 0 });
   }
@@ -1295,6 +1305,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   render() {
+    const { row, rowReverse, flexEnd, textAlign, rtl, direction } = getRowDirections();
 
     return (
       <View style={styles.mainContainer}
@@ -1360,9 +1371,9 @@ export default class IssieEditPhoto extends React.Component {
         {/** NavigationArea */}
         <View style={styles.navigationArea}>
           {this.state.showBusy && <View style={globalStyles.busy}>
-            <ActivityIndicator size="large"/></View>}
+            <ActivityIndicator size="large" /></View>}
           {/* page more menu */}
-          <View style={{ position: 'absolute', top: 0, left: 0 }}>
+          <View style={[{ position: 'absolute', top: 0}, rtl?{left: 0 }:{right: 0 }]}>
             {this.getMoreMenu()}
           </View>
           {[
@@ -1415,7 +1426,7 @@ export default class IssieEditPhoto extends React.Component {
                 </View>}
               {this.getCanvas()}
             </View>
-            {this.state.showTextInput && this.getTextInput()}
+            {this.state.showTextInput && this.getTextInput(rtl, rowReverse)}
             {this.state.currentImageElem && this.isImageMode() && this.getImageRect()}
           </View>
 
@@ -1454,6 +1465,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getMoreMenu = () => {
+    const rtl = isRTL();
     return <Menu ref={(ref) => this.menu = ref} >
 
 
@@ -1466,13 +1478,13 @@ export default class IssieEditPhoto extends React.Component {
       </MenuTrigger>
       <MenuOptions {...IDMenuOptionsStyle({ top: 0, width: 300 })}      >
         <MenuOption onSelect={() => this.rename(true)} >
-          {renderMenuOption(translate("BtnChangeName"),
+          {renderMenuOption(translate("BtnChangeName", rtl),
             "edit")}
         </MenuOption>
         <Spacer width={5} />
         {this.state.page && this.state.page.count > 1 ?
           <MenuOption onSelect={() => this.deletePage()} >
-            {renderMenuOption(fTranslate("BeforeDeleteSubPageQuestion", this.state.currentIndex + 1, this.state.page.count),
+            {renderMenuOption(fTranslate("BeforeDeleteSubPageQuestion", this.state.currentIndex + 1, this.state.page.count, rtl),
               "delete-forever")}
           </MenuOption>
           : null}
@@ -1493,14 +1505,14 @@ export default class IssieEditPhoto extends React.Component {
     const upDownLeft = this.state.windowSize.width / 2 - 35;
 
     let deg = 0;
-    if (location == TOP && this.state.yOffset < 0) {
+    if (location == TOP && this.state.yOffset < 0 && this.state.keyboardHeight == 0) {
       style.top = 0, style.left = 100, deg = -90;
       style.left = upDownLeft;
     } else if (location == RIGHT && this.state.zoom > 1 &&
       this.state.viewPortRect.width - this.state.xOffset < this.state.pageRect.width * this.state.zoom) {
       style.top = sidesTop;
       style.right = 5, deg = 0;
-    } else if (location == BOTTOM &&
+    } else if (location == BOTTOM && this.state.keyboardHeight == 0 &&
       this.state.viewPortRect.height - this.state.yOffset - this.state.keyboardHeight < this.state.pageRect.height * this.state.zoom) {
       style.top = this.state.viewPortRect.height - 60 - this.state.keyboardHeight, deg = 90;
       style.left = upDownLeft;
@@ -1650,16 +1662,20 @@ export default class IssieEditPhoto extends React.Component {
     </View>
   }
 
-  getTextInput = () => {
+  getTextInput = (rtl, rowDir) => {
     this._handleInputTextLocationMovingPage(this.state.keyboardHeight, this.state.keyboardTop);
 
-    trace("getTextInput", "yellow-height", this.state.inputTextHeight, "yellow-width", Math.max(this.state.inputTextWidth + 10, 10))
+    //trace("getTextInput", "rtl", rtl?"yes":"no")
     return (
       <View style={{
-        flex: 1, flexDirection: 'row-reverse', position: 'absolute',
-        left: this.state.xText - this.getTextWidth(), top: this.state.yText, zIndex: 45,
+        flex: 1,
+        position: 'absolute',
+        flexDirection: rowDir,
+        left: this.state.xText - (rtl ? this.getTextWidth() : DRAG_ICON_SIZE),
+        top: this.state.yText, zIndex: 45,
       }}>
-        <View {...this._panResponderElementMove.panHandlers} style={{ top: -5, zIndex: 25 }}>
+        <View {...this._panResponderElementMove.panHandlers}
+          style={{ top: -5, zIndex: 25 }}>
           <Icon name='open-with' size={DRAG_ICON_SIZE} />
         </View>
 
@@ -1670,7 +1686,6 @@ export default class IssieEditPhoto extends React.Component {
           }}
           onContentSizeChange={(event) => {
             let dim = event.nativeEvent.contentSize;
-            //trace("onContentSizeChange", dim, this.state.zoom)
             setTimeout(() =>
               this.setState({
 
@@ -1685,20 +1700,21 @@ export default class IssieEditPhoto extends React.Component {
           allowFontScaling={false}
           style={{
             backgroundColor: 'transparent',
-            textAlign: 'right',
+            direction: rtl ? 'rtl' : 'ltr',
+            textAlign: rtl ? 'right' : 'left',
             width: this.getTextWidth(),
             height: this.state.inputTextHeight,
             borderWidth: 0,
             margin: 0,
             fontSize: this.normalizeTextSize(this.state.fontSize),
             color: this.state.color,
-            fontFamily: APP_FONT,
+            fontFamily: getFont(),
             zIndex: 21,
           }}
           value={this.state.inputTextValue}
         />
         <View style={{
-          position: 'absolute', left: DRAG_ICON_SIZE - 2, top: 0,
+          position: 'absolute', left: (DRAG_ICON_SIZE - 2), top: 0,
           width: Math.max(this.state.inputTextWidth + 10, 12),
           height: this.state.inputTextHeight > 0 ? this.state.inputTextHeight : 45,
           zIndex: 20,
@@ -1716,7 +1732,10 @@ export default class IssieEditPhoto extends React.Component {
       return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2
     }
   }
-  getTextWidth = () => Math.max(25, this.state.xText);
+  getTextWidth = () => {
+    const width = isRTL() ? this.state.xText : this.state.viewPortRect.width - this.state.xText;
+    return Math.max(25, width);
+  }
   getTextHeight = () => this.state.inputTextHeight
 }
 

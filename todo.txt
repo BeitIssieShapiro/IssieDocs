@@ -1,4 +1,12 @@
 Bugs 1.3:
+V- find the folder in the tree?!
+V- font?
+V- sort in home
+V - scrollbar in tree
+V- remove arrows when keyboard is opened
+V- check default lang based on the iPad
+
+
 V- yellow indicator lost after two clicks
 - up button below opened fadein
 V- hit right with no zoom too early
