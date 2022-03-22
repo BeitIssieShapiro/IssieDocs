@@ -196,7 +196,10 @@ var strings = {
         "CaptionIcon": "رمز",
 
         "ImportProgress": "استيراد الصفحة {1} من {2}",
-        "ExportProgress": "تصدير الصفحة {1} من {2}"
+        "ExportProgress": "تصدير الصفحة {1} من {2}",
+        "MissingCameraPermission":`Missing Permission to use Camera.
+to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
+        "EditPhotoTitle": "تعديل الصورة",
     },
     "en": {
         "StartHere": "Add pages",

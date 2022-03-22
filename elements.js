@@ -621,45 +621,92 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
 }
 
 
-export function SBDraxScrollView ({
+export function SBDraxScrollView({
     persistentScrollbar = false,
     children,
     myRef,
     rtl,
     ...other
-  }) {
+}) {
     const [nativeEvent, setNativeEvent] = useState();
     const top = nativeEvent
-    ? nativeEvent.contentOffset.y +
-      (nativeEvent.contentOffset.y / nativeEvent.contentSize.height) *
+        ? nativeEvent.contentOffset.y +
+        (nativeEvent.contentOffset.y / nativeEvent.contentSize.height) *
         nativeEvent.layoutMeasurement.height
-    : 0;
+        : 0;
 
     return (
         <DraxScrollView
-          ref={myRef}
-          scrollEventThrottle={5}
-          showsVerticalScrollIndicator={false}
-          onScroll={event => setNativeEvent(event.nativeEvent)}
-          {...other}>
-          {children}
-    
-          <View
-            style={[{
-              position: 'absolute',
-              top,
-              
-              height: 200,
-              width: 4,
-              borderRadius: 20,
-              backgroundColor: 'gray',
-              opacity:0.6,
-            }, rtl?{left:4}:{right:4}]}
-          />
+            ref={myRef}
+            scrollEventThrottle={5}
+            showsVerticalScrollIndicator={false}
+            onScroll={event => setNativeEvent(event.nativeEvent)}
+            {...other}>
+            {children}
+
+            <View
+                style={[{
+                    position: 'absolute',
+                    top,
+
+                    height: 200,
+                    width: 4,
+                    borderRadius: 20,
+                    backgroundColor: 'gray',
+                    opacity: 0.6,
+                }, rtl ? { left: 4 } : { right: 4 }]}
+            />
         </DraxScrollView>
-      );
+    );
 }
 
+export function TilesView({
+    children,
+    rtl,
+    numColumns,
+    ...other
+}) {
+
+    if (numColumns <= 1) {
+        return children;
+    }
+    trace("tiles", numColumns)
+    const rows = Math.ceil(children.length / numColumns)
+    const rowsArray = [];
+    let index = 0;
+    for (let i = 0; i < rows; i++) {
+        let untilIndex = index + numColumns;
+        let nonFullRow = false;
+        if (untilIndex > children.length) {
+            untilIndex = children.length;
+            nonFullRow = true;
+        }
+        const rowChildren = []
+        for (; index < untilIndex; index++) {
+            rowChildren.push(children[index]);
+        }
+        rowsArray.push((
+            <View key={i} style={{
+                flexDirection: rtl ? 'row-reverse' : 'row',
+                width: "100%",
+                alignItems: 'center', 
+                justifyContent:nonFullRow?'flex-start':'space-between',
+            }}>
+                {rowChildren}
+            </View>));
+    }
+
+    return <View style={{
+        flex:1,
+        minWidth: "100%",
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
+    }}>
+        {rowsArray}
+    </View>
+
+}
 export const globalStyles = StyleSheet.create({
     headerStyle: {
         backgroundColor: semanticColors.header,
