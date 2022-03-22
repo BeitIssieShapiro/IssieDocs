@@ -60,7 +60,7 @@ export default function FolderNew(props) {
                 height: props.asTitle ? dimensions.folderAsTitleHeight : dimensions.folderHeight,
                 //paddingTop: 10, paddingBottom: 10
                 borderRadius: 7,
-                backgroundColor: dragOver ? dragOverColor : undefined,
+                backgroundColor: dragOver ? dragOverColor : undefined
 
             }}>
 
@@ -120,7 +120,7 @@ export default function FolderNew(props) {
                             </View>
 
                             <Spacer width={8} />
-                            {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: 32, lineHeight: 44 }]}>{caption}</AppText>}
+                            {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: 32, lineHeight: 44}]}>{caption}</AppText>}
                         </View> :
                         /**
                          * Side Panel View or overview

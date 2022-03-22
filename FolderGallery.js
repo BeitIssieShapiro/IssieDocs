@@ -713,7 +713,7 @@ export default class FolderGallery extends React.Component {
         let numColumnsForTiles = Math.floor(pagesContainerWidth / dimensions.tileWidth);
         let foldersCount = folders.length;
         let foldersHeightSize = dimensions.topView + dimensions.toolbarHeight + (foldersCount + 1) * dimensions.folderHeight;
-//        let needFoldersScroll = foldersHeightSize > this.state.windowSize.height;
+        //        let needFoldersScroll = foldersHeightSize > this.state.windowSize.height;
         const pagesTitleHeight = this.isScreenLow() ? dimensions.pagesTitleLow : dimensions.pagesTitleHigh
 
         let pagesCount = items.length;
@@ -815,13 +815,13 @@ export default class FolderGallery extends React.Component {
                         </View>
                     </View>
 
+                    {/* MainExplorer*/}
                     <View style={{
                         flex: 1, flexDirection: row, backgroundColor: semanticColors.mainAreaBG,
                         position: 'absolute', width: "100%",
                         top: dimensions.toolbarHeight, left: 0,
                         height: this.state.windowSize.height - dimensions.toolbarHeight, zIndex: 4,
                     }} >
-                        {/* MainExplorer*/}
                         {isEmptyApp ?
                             this.state.loading ?
                                 <View>
@@ -859,15 +859,22 @@ export default class FolderGallery extends React.Component {
                                 </View>
                             :
                             <View style={{
-                                flex: 1, flexDirection: "column", position: 'absolute', top: 0, width: pagesContainerWidth, left: 0, height: "100%",
+                                flexDirection: "column",
+                                width: pagesContainerWidth, left: 0, height: "100%",
+                                alignItems:flexStart
+
                             }}>
                                 {/* pagesTitle */}
                                 <View style={{
-                                    flex: 1, flexDirection: row, position: 'absolute',
-                                    width: "100%", top: 0, height: pagesTitleHeight , alignItems: 'center',
-                                    justifyContent: 'flex-start',
-                                    borderBottomWidth: this.state.currentFolder ? 1 : 0, borderBottomColor: 'gray',
-                                    zIndex: 1000, backgroundColor: semanticColors.mainAreaBG,
+                                    flexDirection: row,
+                                    width: "100%",
+                                    height: pagesTitleHeight,
+                                    alignItems: 'center',
+                                    alignContent: 'flex-start',
+                                    borderBottomWidth: this.state.currentFolder ? 1 : 0,
+                                    borderBottomColor: 'gray',
+                                    backgroundColor: semanticColors.mainAreaBG,
+                                    zIndex: 1000
                                 }}>
                                     <Spacer width={3} />
                                     {getSvgIconButton(() => this.setState({ sortBy: SORT_BY_DATE }), semanticColors.addButton, "sort-by-date", 45, undefined, undefined, (this.state.sortBy == SORT_BY_DATE))}
@@ -875,7 +882,7 @@ export default class FolderGallery extends React.Component {
                                     {getSvgIconButton(() => this.setState({ sortBy: SORT_BY_NAME }), semanticColors.addButton, "sort-by-name", 45, undefined, undefined, (this.state.sortBy == SORT_BY_NAME))}
 
                                     {this.state.currentFolder ? <FolderNew
-                                        width={this.isMobile() ? "75%" : "85%"}
+                                        width={this.isMobile() ? "70%" : "80%"}
                                         index={fIndex}
                                         id="1"
                                         useColors={this.state.folderColor}
@@ -890,7 +897,7 @@ export default class FolderGallery extends React.Component {
                                         fixedFolder={curFolderFullName === FileSystem.DEFAULT_FOLDER.name}
                                     /> :
                                         <Search
-                                        width={this.isMobile() ? "75%" : "85%"}
+                                            width={this.isMobile() ? "75%" : "85%"}
                                             rtl={rtl}
                                             value={this.state.filterFolders}
                                             onChangeText={(txt) => {
@@ -904,7 +911,7 @@ export default class FolderGallery extends React.Component {
                                 </View>
                                 {/* pages */}
                                 <Scroller
-                                    top={pagesTitleHeight}
+                                    //top={pagesTitleHeight}
                                     rtl={rtl}
                                     hidden={this.state.currentFolder !== undefined || !needScroller}
                                     height={pagesAreaWindowHeight - 100}
@@ -1040,9 +1047,8 @@ export default class FolderGallery extends React.Component {
                         {/* tree */}
                         {!isEmptyApp && this.state.currentFolder &&
                             <View style={{
-                                flex: 1,
+                                
                                 flexDirection: "column",
-                                position: 'absolute',
                                 top: 0,
                                 width: treeWidth,
                                 right: 0,

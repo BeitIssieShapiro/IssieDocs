@@ -51,6 +51,11 @@ export default function Scroller(props) {
             if (newYOffset > 0) {
                 newYOffset = 0;
             }
+            let height = isNumber(props.height) ? props.height : 800;
+            let limit = (childHeight > 0 && height < childHeight) ? height - childHeight : -100;
+            if (newYOffset < limit) {
+                newYOffset = limit;
+            }
             setScrollState({ yOffset: newYOffset, begin })
             if (Math.abs(gestureState.dy) > 2) {
                 trace("on scroll", newYOffset)
@@ -77,11 +82,13 @@ export default function Scroller(props) {
 
     let height = isNumber(props.height) ? props.height : 800;
     let limit = (childHeight > 0 && height < childHeight) ? height - childHeight : -100;
-    let yOs = yOffset > limit ? yOffset : limit;
+    let yOs = yOffset;
+    
 
     return <View
         //onLayout={props.onLayout ? undefined : e => setScrollState({ ...scrollState, childHeight: e.nativeEvent.layout.height })}
         style={[{
+            
             flexDirection: props.rtl ? 'row' : 'row-reverse',
             width: '100%', height:'100%',
             justifyContent: 'flex-end'
