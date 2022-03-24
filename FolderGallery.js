@@ -2,7 +2,8 @@ import React from 'react';
 import {
     Image, StyleSheet, View, YellowBox,
     TouchableOpacity, Button, ScrollView, Alert, Text, Dimensions, Linking, Settings,
-    TextInput
+    TextInput,
+    ActivityIndicator
 } from 'react-native';
 import Search from './search.js'
 import SettingsMenu from './settings-ui'
@@ -34,6 +35,7 @@ import {
     MenuTrigger,
 } from 'react-native-popup-menu';
 import { DraxList, DraxProvider, DraxScrollView, DraxView, DraxViewDragStatus } from 'react-native-drax';
+import ProgressCircle from 'react-native-progress-circle'
 
 
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
@@ -255,10 +257,11 @@ export default class FolderGallery extends React.Component {
     }
 
     newFromMediaLib = (addToExistingPage) => {
-        this.setState({ systemModal: true })
+        this.setState({ systemModal: true})
         getNewPage(SRC_GALLERY,
             (uri) => {
                 this.setState({ systemModal: false })
+                trace("image loaded", uri)
                 this.props.navigation.navigate('SavePhoto', {
                     uri: uri,
                     imageSource: SRC_GALLERY,
@@ -273,7 +276,10 @@ export default class FolderGallery extends React.Component {
             () => {
                 this.setState({ systemModal: false })
             },
-            (err) => Alert.alert("Error", err.description),
+            (err) => {
+                Alert.alert("Error", err.description)
+                this.setState({ systemModal: false })
+            },
             this.props.navigation
         );
 
@@ -713,21 +719,22 @@ export default class FolderGallery extends React.Component {
         let pagesContainerWidth = this.state.windowSize.width - treeWidth;
         let numColumnsForTiles = Math.floor(pagesContainerWidth / dimensions.tileWidth);
         let foldersCount = folders.length;
-        let foldersHeightSize =  (foldersCount + 1) * dimensions.folderHeight;
+        let foldersHeightSize = (foldersCount + 1) * dimensions.folderHeight;
         //        let needFoldersScroll = foldersHeightSize > this.state.windowSize.height;
         const pagesTitleHeight = this.isScreenLow() ? dimensions.pagesTitleLow : dimensions.pagesTitleHigh
 
-        const foldersTilesListHeight = Math.ceil(foldersCount/numColumnsForTiles) * dimensions.folderHeight;
+        const foldersTilesListHeight = Math.ceil(foldersCount / numColumnsForTiles) * dimensions.folderHeight;
 
 
         let pagesCount = items.length;
         let pagesLines = asTiles ? Math.ceil(pagesCount / numColumnsForTiles) : pagesCount;
         let pageHeight = asTiles ? dimensions.tileHeight : dimensions.lineHeight;
-        let pagesAreaWindowHeight = this.state.windowSize.height - dimensions.topView + dimensions.toolbarHeight - pagesTitleHeight - 20;
-        let pagesHeightSize = (pagesLines + 1) * pageHeight ;
+        //let pagesAreaWindowHeight = this.state.windowSize.height - dimensions.topView + dimensions.toolbarHeight - pagesTitleHeight - 20;
+        let pagesHeightSize = (pagesLines + 1) * pageHeight;
         //let needPagesScroll = true;//pagesHeightSize > pagesAreaWindowHeight;
 
-        const scrollerHeight =  pagesHeightSize + (!this.state.currentFolder? foldersTilesListHeight:0) ;//+ dimensions.toolbarHeight;
+
+        const scrollerHeight = pagesHeightSize + (!this.state.currentFolder ? foldersTilesListHeight : 0);//+ dimensions.toolbarHeight;
 
         let isEmptyApp = !this.state.folders || this.state.folders.length == 0;
         if (isEmptyApp)
@@ -738,6 +745,7 @@ export default class FolderGallery extends React.Component {
             <DraxProvider>
                 <View style={styles.container}
                     onLayout={this.onLayout}>
+                    {/* {this.state.inprogress && <ActivityIndicator size="large" />} */}
 
                     {this.state.showMenu ?
                         <SettingsMenu
@@ -881,12 +889,13 @@ export default class FolderGallery extends React.Component {
                                     zIndex: 1000
                                 }}>
                                     <Spacer width={3} />
-                                    {getSvgIconButton(() => this.setState({ sortBy: SORT_BY_DATE }), semanticColors.addButton, "sort-by-date", 45, undefined, undefined, (this.state.sortBy == SORT_BY_DATE))}
+                                    {items.length > 0 && getSvgIconButton(() => this.setState({ sortBy: SORT_BY_DATE }), semanticColors.addButton, "sort-by-date", 45, undefined, undefined, (this.state.sortBy == SORT_BY_DATE))}
                                     <Spacer width={3} />
-                                    {getSvgIconButton(() => this.setState({ sortBy: SORT_BY_NAME }), semanticColors.addButton, "sort-by-name", 45, undefined, undefined, (this.state.sortBy == SORT_BY_NAME))}
+                                    {items.length > 0 && getSvgIconButton(() => this.setState({ sortBy: SORT_BY_NAME }), semanticColors.addButton, "sort-by-name", 45, undefined, undefined, (this.state.sortBy == SORT_BY_NAME))}
+                                    {items.length == 0 && <Spacer width={90} />}
 
                                     {this.state.currentFolder ? <FolderNew
-                                        width={this.isMobile() ? "70%" : "80%"}
+                                        width={pagesContainerWidth - 90}
                                         index={fIndex}
                                         id="1"
                                         useColors={this.state.folderColor}
@@ -914,17 +923,6 @@ export default class FolderGallery extends React.Component {
 
                                 </View>
                                 {/* pages */}
-                                {/* <Scroller
-                                    //top={pagesTitleHeight}
-                                    rtl={rtl}
-                                    hidden={this.state.currentFolder !== undefined || !needScroller}
-                                    height={pagesAreaWindowHeight - 100}
-                                    childHeight={pagesHeightSize}
-                                    onScroll={(yOffset) => this.setState({ scrollOffset: yOffset, scrolling: true })}
-                                    onScrollComplete={() => this.setState({ scrolling: false })}
-
-                                >
-                                    <View */}
                                 <SBDraxScrollView
                                     rtl={rtl}
                                     scrollEnabled={true}
@@ -936,10 +934,10 @@ export default class FolderGallery extends React.Component {
                                     bounces={false}
 
                                     contentContainerStyle={{
-                                        height:scrollerHeight ,
+                                        height: scrollerHeight,
                                         backgroundColor: semanticColors.mainAreaBG,
                                         top: 0,
-                                        width: "100%",
+                                        minWidth: "100%",
                                     }}>
                                     {this.state.filterFolders?.length > 0 && !this.state.currentFolder &&
                                         <AppText style={{ fontSize: 25, paddingRight: 15, lineHeight: 25 + 2 }}>
@@ -974,18 +972,17 @@ export default class FolderGallery extends React.Component {
 
 
                                     {items.length > 0 ?
-                                        <TilesView
-                                            numColumns={asTiles ? numColumnsForTiles : 1}
-                                            rtl={rtl}
-                                        >
+                                        <View style={{
+                                            flexDirection: asTiles ? rowReverse : 'column',
+                                            flexWrap: 'wrap',
+                                            minWidth: "100%",
+                                        }}>
                                             {[...items].sort(this.getSortFunction()).map((item, i) => (<DraxView
                                                 key={i}
                                                 payload={{ item, folder: this.state.currentFolder?.name }}
                                                 numColumns={asTiles ? numColumnsForTiles : 1}
                                                 longPressDelay={700}
-                                                style={{
-                                                    //opacity: viewState?.dragStatus === DraxViewDragStatus.Dragging ? 0.4 : 1 
-                                                }}>
+                                            >
                                                 {asTiles && <Spacer />}
                                                 {FileNew({
                                                     rtl,
@@ -1012,7 +1009,7 @@ export default class FolderGallery extends React.Component {
                                                 })}
                                             </DraxView>))
                                             }
-                                        </TilesView>
+                                        </View>
 
 
                                         : this.state.currentFolder && (folderIsLoading ?
@@ -1020,7 +1017,11 @@ export default class FolderGallery extends React.Component {
                                                 <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
                                             </View>
                                             :
-                                            <View style={{ alignItems: 'center', height: '100%' }}>
+                                            <View style={{
+                                                alignItems: 'center',
+                                                height: '100%',
+                                                minWidth: "100%"
+                                            }}>
                                                 <Spacer height='20%' />
                                                 {getSvgIcon('folder', this.isMobile() ? 85 : 150)}
                                                 <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("NoPagesYet")}</AppText>
@@ -1029,7 +1030,6 @@ export default class FolderGallery extends React.Component {
 
                                     }
                                 </SBDraxScrollView>
-                                {/* </Scroller> */}
                             </View>
 
                         }

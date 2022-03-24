@@ -26,6 +26,7 @@ export async function getNewPage(src, okEvent, cancelEvent, onError, navigation,
             mediaType: 'photo',
             //selectionLimit: 1,
             //quality: 0 to 1 
+            quality:0.7,
             ...options,
             noData: true
         }
@@ -35,6 +36,7 @@ export async function getNewPage(src, okEvent, cancelEvent, onError, navigation,
                     if (options?.includeBase64) {
                         okEvent("data:image/jpg;base64," + response.assets[0].base64);
                     } else {
+                        trace("load image", response.assets[0].uri)
                         okEvent(response.assets[0].uri);
                     }
                 } else {

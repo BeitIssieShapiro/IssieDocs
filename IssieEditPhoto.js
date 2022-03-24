@@ -733,7 +733,7 @@ export default class IssieEditPhoto extends React.Component {
     this.state.queue.pushText(newElem);
     if (beforeExit) {
       this.Save();
-      return false;
+      //return false;
     }
     this.setState({
       needCanvasUpdate: true, needCanavaDataSave: true,
@@ -1301,7 +1301,7 @@ export default class IssieEditPhoto extends React.Component {
 
   doZoom = (delta) => {
     let newZoom = this.state.zoom + delta;
-    this.changeZoomOrOffset({ zoom: newZoom });
+    this.changeZoomOrOffset({ zoom: newZoom, xOffset:this.state.xOffset, yOffset:this.state.yOffset });
   }
 
   render() {

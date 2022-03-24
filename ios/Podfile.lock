@@ -194,7 +194,7 @@ PODS:
   - react-native-image-editor (2.3.0):
     - React
     - React-RCTImage
-  - react-native-image-picker (4.0.3):
+  - react-native-image-picker (4.7.3):
     - React-Core
   - react-native-image-resizer (1.2.6):
     - React
@@ -278,8 +278,8 @@ PODS:
     - React
   - RNFS (2.16.6):
     - React
-  - RNGestureHandler (1.6.1):
-    - React
+  - RNGestureHandler (1.10.3):
+    - React-Core
   - RNLocalize (1.4.0):
     - React
   - RNPermissions (3.3.0):
@@ -482,7 +482,7 @@ SPEC CHECKSUMS:
   React-jsinspector: b14e62ebe7a66e9231e9581279909f2fc3db6606
   react-native-document-picker: dd96ce05bf1453b110d7a3912097bf6d298d2cb6
   react-native-image-editor: bd67912f38a8e7a895bf6eb8f445acdcefd8fd0c
-  react-native-image-picker: 4089335b89b625d4e34d53fb249c48a7a791b3ea
+  react-native-image-picker: 4e6008ad8c2321622affa2c85432a5ebd02d480c
   react-native-image-resizer: f9fd7a61ffb3683987a6528e15e32bc32eb9dee3
   react-native-pdf: 7d76a6619f76a6ebfb2f82a4f2feeb17826ba8b4
   react-native-progress-view: 1efac84cef4f7e72e584227203076204e9752193
@@ -504,7 +504,7 @@ SPEC CHECKSUMS:
   rn-fetch-blob: f065bb7ab7fb48dd002629f8bdcb0336602d3cba
   RNCMaskedView: f5c7d14d6847b7b44853f7acb6284c1da30a3459
   RNFS: 2bd9eb49dc82fa9676382f0585b992c424cd59df
-  RNGestureHandler: 8f09cd560f8d533eb36da5a6c5a843af9f056b38
+  RNGestureHandler: a479ebd5ed4221a810967000735517df0d2db211
   RNLocalize: fc27ee5878ce5a3af73873fb2d8e866e0d1e6d84
   RNPermissions: bcd846e8f5a7f39e921cc7ca7172e2de0e698b6f
   RNReanimated: b5ccb50650ba06f6e749c7c329a1bc3ae0c88b43

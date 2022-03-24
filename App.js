@@ -198,14 +198,14 @@ function App(props) {
                   <Icon name={'menu'} color='white' size={30} />
                 </TouchableOpacity>
               </View>);
-              const headerName = () => <Text style={globalStyles.headerThinTitleStyle & getFontFamily()}>{fileName + multiPageTitleAddition}</Text>
+              const headerName = () => <Text style={[globalStyles.headerThinTitleStyle, getFontFamily()] }>{fileName + multiPageTitleAddition}</Text>
 
               return {
                 title: "",//fileName + multiPageTitleAddition,
                 headerLayoutPreset: 'right',
                 headerStyle: isMobile() ? globalStyles.headerStyle : globalStyles.headerThinStyle,
                 headerTintColor: 'white',
-                headerTitleStyle: globalStyles.headerThinTitleStyle & getFontFamily(),
+                headerTitleStyle: [globalStyles.headerThinTitleStyle, getFontFamily()] ,
                 headerRight: isRTL()?headerName:headerNav,
                 headerLeft:isRTL()?headerNav:headerName
               }

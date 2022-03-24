@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     titleText: {
         fontSize: 35,
         height: 70,
-        paddingTop: 12,
+        lineHeight:70,
         fontWeight: 'bold',
         color: semanticColors.titleText,
         backgroundColor: 'transparent'

@@ -104,10 +104,11 @@ export default function FolderNew(props) {
                          */
                         <View
                             style={{
-                                flexDirection: rowReverse
+                                flexDirection: rowReverse,                                
                             }}
                         >
-                            <View style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', paddingRight: 30, paddingBottom: '5%', height: '100%' }}>
+                            <View style={[{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', 
+                            paddingBottom: '5%', height: '100%'}, rtl? {paddingRight: 30}:{paddingLeft: 30}]}>
                                 <Icon name="folder" size={45} color={props.color} />
                                 <View style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
                                     <View style={{
@@ -120,7 +121,7 @@ export default function FolderNew(props) {
                             </View>
 
                             <Spacer width={8} />
-                            {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: 32, lineHeight: 44}]}>{caption}</AppText>}
+                            {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: 32, lineHeight: 60}]}>{caption}</AppText>}
                         </View> :
                         /**
                          * Side Panel View or overview
