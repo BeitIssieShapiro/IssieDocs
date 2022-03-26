@@ -145,7 +145,7 @@ function App(props) {
                     />,
                   headerStyle: globalStyles.headerStyle,
                   headerTintColor: 'white',
-                  headerTitleStyle: globalStyles.headerTitleStyle & getFontFamily(),
+                  headerTitleStyle: [globalStyles.headerTitleStyle , getFontFamily()],
                   headerRight: isRTL() ? HeaderButtons : headerNav,
                   headerLeft: isRTL() ? headerNav : HeaderButtons,
                 };
@@ -161,7 +161,7 @@ function App(props) {
                 title: title,
                 headerStyle: globalStyles.headerStyle,
                 headerTintColor: 'white',
-                headerTitleStyle: globalStyles.headerTitleStyle & getFontFamily(),
+                headerTitleStyle: [globalStyles.headerTitleStyle , getFontFamily()],
                 headerLeft: null //()=>getHeaderBackButton(props.navigation)
               }
             }
@@ -219,7 +219,7 @@ function App(props) {
                 title: translate("About"),
                 headerStyle: globalStyles.headerStyle,
                 headerTintColor: 'white',
-                headerTitleStyle: globalStyles.headerTitleStyle & getFontFamily(),
+                headerTitleStyle: [globalStyles.headerTitleStyle , getFontFamily()],
                 headerLeft: () => getHeaderBackButton(() => props.navigation.pop())
               }
             }
@@ -232,7 +232,7 @@ function App(props) {
                 title,
                 headerStyle: globalStyles.headerStyle,
                 headerTintColor: 'white',
-                headerTitleStyle: globalStyles.headerTitleStyle & getFontFamily(),
+                headerTitleStyle:[globalStyles.headerTitleStyle , getFontFamily()],
                 headerLeft: null
               }
             }
@@ -245,7 +245,7 @@ function App(props) {
                 title: "Camera",
                 headerStyle: globalStyles.headerStyle,
                 headerTintColor: 'white',
-                headerTitleStyle: globalStyles.headerTitleStyle & getFontFamily(),
+                headerTitleStyle: [globalStyles.headerTitleStyle , getFontFamily()],
                 headerLeft: null
               }
             }

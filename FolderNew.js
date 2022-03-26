@@ -110,7 +110,7 @@ export default function FolderNew(props) {
                             <View style={[{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', 
                             paddingBottom: '5%', height: '100%'}, rtl? {paddingRight: 30}:{paddingLeft: 30}]}>
                                 <Icon name="folder" size={45} color={props.color} />
-                                <View style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
+                                <View style={[{ position: 'absolute', top: 0, width: '100%', height: '100%' }, rtl?{left: 0}:{right:0}]}>
                                     <View style={{
                                         width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', paddingTop: '7%',
                                         flexDirection: rowReverse

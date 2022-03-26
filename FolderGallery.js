@@ -257,10 +257,11 @@ export default class FolderGallery extends React.Component {
     }
 
     newFromMediaLib = (addToExistingPage) => {
-        this.setState({ systemModal: true})
+        this.setState({ systemModal: true })
+        setTimeout(()=>this.setState ({inprogress: true}), 500)
         getNewPage(SRC_GALLERY,
             (uri) => {
-                this.setState({ systemModal: false })
+                this.setState({ systemModal: false, inprogress: false })
                 trace("image loaded", uri)
                 this.props.navigation.navigate('SavePhoto', {
                     uri: uri,
@@ -274,13 +275,16 @@ export default class FolderGallery extends React.Component {
             },
             //cancel
             () => {
-                this.setState({ systemModal: false })
+                this.setState({ systemModal: false, inprogress: false })
             },
             (err) => {
                 Alert.alert("Error", err.description)
-                this.setState({ systemModal: false })
+                this.setState({ systemModal: false, inprogress: false })
             },
-            this.props.navigation
+            this.props.navigation,
+            undefined,
+            //onProgress
+            () => this.setState({ inprogress: true })
         );
 
     }
@@ -745,7 +749,7 @@ export default class FolderGallery extends React.Component {
             <DraxProvider>
                 <View style={styles.container}
                     onLayout={this.onLayout}>
-                    {/* {this.state.inprogress && <ActivityIndicator size="large" />} */}
+                    {this.state.inprogress && <ActivityIndicator size="large" />}
 
                     {this.state.showMenu ?
                         <SettingsMenu
@@ -834,6 +838,7 @@ export default class FolderGallery extends React.Component {
                         top: dimensions.toolbarHeight, left: 0,
                         height: this.state.windowSize.height - dimensions.toolbarHeight, zIndex: 4,
                     }} >
+
                         {isEmptyApp ?
                             this.state.loading ?
                                 <View>
@@ -923,6 +928,10 @@ export default class FolderGallery extends React.Component {
 
                                 </View>
                                 {/* pages */}
+                                {this.state.inprogress && <View style={{position:'absolute', left:"50%", top:"50%"}}>
+                                    <ActivityIndicator size="large" />
+                                </View>}
+
                                 <SBDraxScrollView
                                     rtl={rtl}
                                     scrollEnabled={true}
