@@ -396,7 +396,7 @@ export default class IssieEditPhoto extends React.Component {
 
       let diff = (this.state.yText + this.state.inputTextHeight) - kbTop;
       if (diff > 0) {
-        yOffset -= diff / this.state.zoom;
+        yOffset -= diff ;
       }
 
       if (yOffset !== this.state.yOffset) {
@@ -1363,6 +1363,7 @@ export default class IssieEditPhoto extends React.Component {
           onToolbarHeightChange={(toolbarHeight) => {
             this.setState({ toolbarHeight }, () => this.reflectWindowSizeAndImageSize())
           }}
+          onFloatingMenu={(size)=>this.setState({floatingMenuHeight:size})}
         />
         {/** Top Margin */}
         <View style={styles.topMargin} />
@@ -1506,7 +1507,7 @@ export default class IssieEditPhoto extends React.Component {
 
     let deg = 0;
     if (location == TOP && this.state.yOffset < 0 && this.state.keyboardHeight == 0) {
-      style.top = 0, style.left = 100, deg = -90;
+      style.top = this.state.floatingMenuHeight, style.left = 100, deg = -90;
       style.left = upDownLeft;
     } else if (location == RIGHT && this.state.zoom > 1 &&
       this.state.viewPortRect.width - this.state.xOffset < this.state.pageRect.width * this.state.zoom) {

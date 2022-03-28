@@ -800,7 +800,9 @@ export function AppText(props) {
             fontSize: 24,
             textAlign: isRTL() ? 'right' : 'left',
 
-        }, props.style]} >{props.children}</Text>
+        }, props.style]} 
+        onPress={props.onPress}
+        >{props.children}</Text>
     );
 }
 

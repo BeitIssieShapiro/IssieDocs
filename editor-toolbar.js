@@ -12,6 +12,8 @@ const availableBrushSize = [
     1, 3, 5, 7, 9
 ]
 
+const pickerMenuHeight = 70;
+
 export function EditorToolbar({
     windowSize,
 
@@ -42,7 +44,8 @@ export function EditorToolbar({
     sideMargin,
     betaFeatures,
     toolbarHeight,
-    onToolbarHeightChange
+    onToolbarHeightChange,
+    onFloatingMenu
 
 }) {
     const [showExtMenu, setShowExtMenu] = useState(false);
@@ -72,7 +75,14 @@ export function EditorToolbar({
         }
 
         if (isTextMode || showBrushPicker) {
-            setShowTextSizePicker(oldVal => !oldVal);
+            setShowTextSizePicker(oldVal => {
+                if (oldVal) {
+                    onFloatingMenu(0)
+                } else {
+                    onFloatingMenu(pickerMenuHeight)
+                }
+                return !oldVal
+            });
             setShowBrushPicker(false);
             setShowZoomPicker(false);
             setShowColorPicker(false);
@@ -85,7 +95,14 @@ export function EditorToolbar({
         }
 
         if (isBrushMode || showTextSizePicker) {
-            setShowBrushPicker(oldVal => !oldVal);
+            setShowBrushPicker(oldVal => {
+                if (oldVal) {
+                    onFloatingMenu(0)
+                } else {
+                    onFloatingMenu(pickerMenuHeight)
+                }
+                return !oldVal
+            });
             setShowTextSizePicker(false);
             setShowZoomPicker(false);
             setShowColorPicker(false);
@@ -93,14 +110,28 @@ export function EditorToolbar({
     }, [isBrushMode, showBrushPicker, showTextSizePicker]);
 
     onColorButtonClick = () => {
-        setShowColorPicker(oldVal => !oldVal);
+        setShowColorPicker(oldVal => {
+            if (oldVal) {
+                onFloatingMenu(0)
+            } else {
+                onFloatingMenu(pickerMenuHeight)
+            }
+            return !oldVal
+        });
         setShowBrushPicker(false);
         setShowTextSizePicker(false);
         setShowZoomPicker(false);
     }
 
     onZoomButtonClick = () => {
-        setShowZoomPicker(oldVal => !oldVal);
+        setShowZoomPicker(oldVal => {
+            if (oldVal) {
+                onFloatingMenu(0)
+            } else {
+                onFloatingMenu(pickerMenuHeight)
+            }
+            return !oldVal
+        });
         setShowBrushPicker(false);
         setShowTextSizePicker(false);
         setShowColorPicker(false);
@@ -155,9 +186,9 @@ export function EditorToolbar({
         }}>
             <IconButton onPress={onGoBack} color={semanticColors.editPhotoButton} icon="folder" size={45} />
             <Spacer width={45} />
-            <IconButton onPress={onUndo} color={semanticColors.editPhotoButton} icon="undo" size={55} />
+            <IconButton onPress={onUndo} color={semanticColors.editPhotoButton} icon={rtl?"undo":"redo"} size={55} />
             <Spacer width={23} />
-            <IconButton onPress={onRedo} color={canRedo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} icon="redo" size={55} />
+            <IconButton onPress={onRedo} color={canRedo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} icon={rtl?"redo":"undo"} size={55} />
             <Spacer width={23} />
             {getEraserIcon(onEraser, 55, eraseMode ? 'black' : semanticColors.editPhotoButton, eraseMode)}
 
@@ -237,7 +268,10 @@ export function EditorToolbar({
             width={availablePickerWidth}
             color={eraseMode ? undefined : color}
             isScreenNarrow={isScreenNarrow()}
-            onSelect={(color) => onSelectColor(color)}
+            onSelect={(color) => {
+                onSelectColor(color);
+                setShowColorPicker(false);
+            }}
 
         />
 
@@ -249,11 +283,14 @@ export function EditorToolbar({
             size={fontSize}
             color={color}
             isScreenNarrow={isScreenNarrow()}
-            onSelect={(size) => onSelectTextSize(size)}
+            onSelect={(size) => {
+                onSelectTextSize(size);
+                setShowTextSizePicker(false);
+            }}
         />
 
         {/*View for selecting brush size*/}
-        <FadeInView height={showBrushPicker ? 70 : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
+        <FadeInView height={showBrushPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 {
                     availableBrushSize.map((size, i) => <BrushSizePicker
@@ -261,7 +298,10 @@ export function EditorToolbar({
                         brushSize={size}
                         size={colorButtonsSize}
                         key={"" + i}
-                        onPress={(brushSize) => onSelectBrushSize(brushSize)}
+                        onPress={(brushSize) => {
+                            onSelectBrushSize(brushSize);
+                            setShowBrushPicker(false);
+                        }}
                         selectedStrokeWidth={strokeWidth}
                         isScreenNarrow={isScreenNarrow()} />)
                 }
@@ -269,7 +309,7 @@ export function EditorToolbar({
         </FadeInView>
 
         {/*View for zoom*/}
-        <FadeInView height={showZoomPicker ? 70 : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
+        <FadeInView height={showZoomPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 <IconButton onPress={onZoomOut} icon={"zoom-out"} size={55} iconSize={45} />
                 <IconButton onPress={onZoomIn} icon={"zoom-in"} size={55} iconSize={45} />

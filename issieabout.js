@@ -8,6 +8,7 @@ import {
 import {
     Linking, ScrollView
 } from 'react-native';
+import { trace } from './log';
 
 export default function IssieAbout(props) {
 
@@ -59,7 +60,10 @@ IssieDocs was developed through the collaboration of The Technology Center of Be
             <AppText > </AppText>
             <View style={{ flexDirection: 'row' }}>
                 <AppText style={textStyle}>For more information:</AppText><AppText style={linkStyle}
-                    onPress={() => Linking.openURL('http://en.beitissie.org.il')}
+                    onPress={() => {
+                        trace("Link pressed")
+                        Linking.openURL('http://en.beitissie.org.il')
+                    }}
                 > http://en.beitissie.org.il</AppText>
             </View>
             <View style={{ flexDirection: 'row' }}>
