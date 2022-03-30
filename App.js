@@ -26,6 +26,7 @@ import { MenuProvider } from 'react-native-popup-menu';
 import CameraModal from './CameraOverlay';
 import { SvgIcon } from './svg-icons';
 import FlashMessage from "react-native-flash-message";
+import { OpenLink } from './parental-gate';
 
 
 // const MainNavigator = createStackNavigator({
@@ -145,7 +146,7 @@ function App(props) {
                     />,
                   headerStyle: globalStyles.headerStyle,
                   headerTintColor: 'white',
-                  headerTitleStyle: [globalStyles.headerTitleStyle , getFontFamily()],
+                  headerTitleStyle: [globalStyles.headerTitleStyle, getFontFamily()],
                   headerRight: isRTL() ? HeaderButtons : headerNav,
                   headerLeft: isRTL() ? headerNav : HeaderButtons,
                 };
@@ -161,7 +162,7 @@ function App(props) {
                 title: title,
                 headerStyle: globalStyles.headerStyle,
                 headerTintColor: 'white',
-                headerTitleStyle: [globalStyles.headerTitleStyle , getFontFamily()],
+                headerTitleStyle: [globalStyles.headerTitleStyle, getFontFamily()],
                 headerLeft: null //()=>getHeaderBackButton(props.navigation)
               }
             }
@@ -198,16 +199,16 @@ function App(props) {
                   <Icon name={'menu'} color='white' size={30} />
                 </TouchableOpacity>
               </View>);
-              const headerName = () => <Text style={[globalStyles.headerThinTitleStyle, getFontFamily()] }>{fileName + multiPageTitleAddition}</Text>
+              const headerName = () => <Text style={[globalStyles.headerThinTitleStyle, getFontFamily()]}>{fileName + multiPageTitleAddition}</Text>
 
               return {
                 title: "",//fileName + multiPageTitleAddition,
                 headerLayoutPreset: 'right',
                 headerStyle: isMobile() ? globalStyles.headerStyle : globalStyles.headerThinStyle,
                 headerTintColor: 'white',
-                headerTitleStyle: [globalStyles.headerThinTitleStyle, getFontFamily()] ,
-                headerRight: isRTL()?headerName:headerNav,
-                headerLeft:isRTL()?headerNav:headerName
+                headerTitleStyle: [globalStyles.headerThinTitleStyle, getFontFamily()],
+                headerRight: isRTL() ? headerName : headerNav,
+                headerLeft: isRTL() ? headerNav : headerName
               }
             }
             }
@@ -219,7 +220,7 @@ function App(props) {
                 title: translate("About"),
                 headerStyle: globalStyles.headerStyle,
                 headerTintColor: 'white',
-                headerTitleStyle: [globalStyles.headerTitleStyle , getFontFamily()],
+                headerTitleStyle: [globalStyles.headerTitleStyle, getFontFamily()],
                 headerLeft: () => getHeaderBackButton(() => props.navigation.pop())
               }
             }
@@ -232,7 +233,7 @@ function App(props) {
                 title,
                 headerStyle: globalStyles.headerStyle,
                 headerTintColor: 'white',
-                headerTitleStyle:[globalStyles.headerTitleStyle , getFontFamily()],
+                headerTitleStyle: [globalStyles.headerTitleStyle, getFontFamily()],
                 headerLeft: null
               }
             }
@@ -245,7 +246,21 @@ function App(props) {
                 title: "Camera",
                 headerStyle: globalStyles.headerStyle,
                 headerTintColor: 'white',
-                headerTitleStyle: [globalStyles.headerTitleStyle , getFontFamily()],
+                headerTitleStyle: [globalStyles.headerTitleStyle, getFontFamily()],
+                headerLeft: null
+              }
+            }
+            } />
+
+          <Stack.Screen name="OpenLink" component={OpenLink}
+            options={(props) => {
+
+              return {
+
+                title: "Open Link",
+                headerStyle: globalStyles.headerStyle,
+                headerTintColor: 'white',
+                headerTitleStyle: [globalStyles.headerTitleStyle, getFontFamily()],
                 headerLeft: null
               }
             }
