@@ -343,10 +343,14 @@ export default class IssieEditPhoto extends React.Component {
       stateChange.sideMargin = Math.max((this.state.windowSize.width - this.state.pageRect.width * obj.zoom) / 2, dimensions.minSideMargin);
       stateChange.viewPortRect = {
         top: this.state.viewPortRect.top,
-        height: this.state.viewPortRect.height,
+        //height: this.state.viewPortRect.height,
+        height: Math.min(this.state.windowSize.height 
+            - this.state.toolbarHeight
+            - 2 * dimensions.toolbarMargin, pageRect.height),
         left: stateChange.sideMargin,
         width: this.state.windowSize.width - 2 * stateChange.sideMargin
       }
+      trace("viewport change", stateChange.viewPortRect)
       stateChange.zoom = obj.zoom;
 
       if (stateChange.zoom === 1) {
@@ -371,8 +375,8 @@ export default class IssieEditPhoto extends React.Component {
         normXText += stateChange.xOffset;
       }
       stateChange.xText = normXText;
+    } 
 
-    }
     if (obj.yText == undefined) {
       // only adjust yText if not provided
       let normYText = this.state.yText
@@ -429,13 +433,8 @@ export default class IssieEditPhoto extends React.Component {
       trace("would pinch");
       return true;
     } else if (this.isTextMode()) {
-      //check if click outside of drag icon:
       if (this.state.showTextInput) {
-
-        let x = this.screen2ViewPortX(evt.nativeEvent.pageX);
-        let y = this.screen2ViewPortY(evt.nativeEvent.pageY);
-        const distance = calcDistance(this.state.xText, this.state.yText, x, y)
-        return (distance > DRAG_ICON_SIZE * 1.5)
+        return true; 
       }
       return !this.state.showTextInput;//
     } else if (this.isImageMode()) {
@@ -694,7 +693,7 @@ export default class IssieEditPhoto extends React.Component {
 
     let x = this.screen2ViewPortX(ev.nativeEvent.pageX);
     let y = this.screen2ViewPortY(ev.nativeEvent.pageY);
-    //trace("canvasClick x: ", x, ",y: ", y)
+    trace("canvasClick x: ", x, ",y: ", y)
 
 
     if (this.isTextMode()) {
@@ -719,7 +718,7 @@ export default class IssieEditPhoto extends React.Component {
       let fontSize = this.state.fontSize;
       let fontColor = this.state.color;
       let inputTextWidth = 0;
-      let inputTextHeight = 0;
+      let inputTextHeight = this.normalizeTextSize(this.state.fontSize * 1.3);
       let textElem = undefined;
       if (textElemIndex >= 0) {
         textElem = this.state.canvasTexts[textElemIndex];
@@ -852,13 +851,13 @@ export default class IssieEditPhoto extends React.Component {
     for (let i = q.length - 1; i >= 0; i--) {
       const elem = this.isImageMode() ? this.imageScale2Norm(q[i]) : q[i];
 
-      const margin = 15 / this.state.scaleRatio
-      trace("findElementByLocation", "margin", margin, elem.height)
-      trace(elem.normPosition)
-      trace(coordinates)
-      trace("height", elem.height, "scale", this.state.scaleRatio)
-      let foundY = elem.normPosition.y < coordinates.y + margin &&
-        elem.normPosition.y + elem.height > coordinates.y - margin;
+      const margin = 5 / this.state.scaleRatio
+      // trace("findElementByLocation", "margin", margin, elem.height)
+      // trace(elem.normPosition)
+      // trace(coordinates)
+      // trace("height", elem.height, "scale", this.state.scaleRatio)
+      let foundY = elem.normPosition.y < coordinates.y + 10 + margin &&
+        elem.normPosition.y + elem.height > coordinates.y + 10 - margin;
 
       if (elem.rtl) {
         //todo - fix
@@ -1795,11 +1794,12 @@ export default class IssieEditPhoto extends React.Component {
           }}
           onContentSizeChange={(event) => {
             let dim = event.nativeEvent.contentSize;
+            trace("onContentSizeChange", dim)
             setTimeout(() =>
               this.setState({
 
                 inputTextWidth: dim.width > 0 ? dim.width : this.state.inputTextWidth,
-                inputTextHeight: dim.height
+                inputTextHeight: Math.max(dim.height, this.normalizeTextSize(this.state.fontSize))
               }), 10);
           }}
           autoCapitalize={'none'}
@@ -1843,6 +1843,9 @@ export default class IssieEditPhoto extends React.Component {
   }
   getTextWidth = () => {
     const width = isRTL() ? this.state.xText : this.state.viewPortRect.width - this.state.xText;
+    // const width = isRTL() ?
+    //   Math.min(this.state.xText, this.state.inputTextWidth + 2*this.state.fontSize) :
+    //   Math.min(this.state.viewPortRect.width - this.state.xText, this.state.inputTextWidth + 2*this.state.fontSize);
     return Math.max(25, width);
   }
   getTextHeight = () => this.state.inputTextHeight

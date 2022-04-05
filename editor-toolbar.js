@@ -161,7 +161,7 @@ export function EditorToolbar({
 
     const extMenu = [
         <IconButton onPress={onImageButtonClick} color={semanticColors.editPhotoButton}
-            icon={"image"} size={55} iconSize={45} key={"1"} selected={isImageMode} />,
+            icon={isImageMode?"new-image":"image"} size={55} iconSize={45} key={"1"} selected={isImageMode} iconType={isImageMode?"svg":""}/>,
         <Spacer width={23} key="2" />,
         <IconButton onPress={onZoomButtonClick} color={semanticColors.editPhotoButton}
             icon="zoom-in" size={55} iconSize={45} key={"3"} />,

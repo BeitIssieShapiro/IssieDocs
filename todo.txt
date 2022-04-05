@@ -7,7 +7,7 @@ V- when keyboard is opened, allow up/down with one finger swipe
 
 Version 1.4:
 -----------
-V V- Move pic without drag icon
+V- Move pic without drag icon
 V- click on image mode with no image - load image
 V- preview for very large text
 V- image with high quality
@@ -16,9 +16,10 @@ V- in image mode - no preview
 V- in image mode, change the image icon to have a "plus"
 V- in colors: always "collapse/expand icon" and ok button to select
 V- also in text extra size: collapse/expand. in extra size - have a slider and remember mode like colors
-- sensitivity of locating a text box
-- move color to the center and down
-- bug in picture that leaves room at bottom
+V- sensitivity of locating a text box
+V- plus sign in image mode
+V- move color to the center and down
+V- bug in picture that leaves room at bottom
 
 
 

@@ -99,7 +99,7 @@ export function MyColorPicker(props) {
                 flexWrap: "wrap",
                 zIndex: 1000, flexDirection: "row"
             }} >
-                {lastColors.map((color, i) => <View style={{ padding: 5 }}>{
+                {lastColors.map((color, i) => <View key={i} style={{ padding: 5 }}>{
                     getColorButton(
                         () => props.onSelect(color),
                         color,
@@ -115,7 +115,7 @@ export function MyColorPicker(props) {
 
             <View style={{
                 position: "absolute",
-                top: 30, right: 0,
+                top: "30%", right: "5%",
                 //height: colorButtonSize * 3 + 30,
                 width: colorButtonSize * 2 + 30,
                 flexWrap: "wrap",
