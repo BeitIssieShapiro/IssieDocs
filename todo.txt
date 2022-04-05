@@ -1,13 +1,13 @@
 Results of observing kids in person:
-- When keyboard is closed/opened, move page slower and with animation
-- when keyboard is opened, allow up/down with one finger swipe
-- When Text is back to canvas, use some animation to ease the way the input text box is gone 
+V- When keyboard is closed/opened, move page slower and with animation
+V- when keyboard is opened, allow up/down with one finger swipe
+??- When Text is back to canvas, use some animation to ease the way the input text box is gone 
 (not to loose track of the text)
-- Moving text box - location of frag icon?!
+- Moving text box - location of drag icon?!
 
 Version 1.4:
 -----------
-V - Move pic without drag icon
+V V- Move pic without drag icon
 V- click on image mode with no image - load image
 V- preview for very large text
 V- image with high quality
@@ -16,6 +16,9 @@ V- in image mode - no preview
 V- in image mode, change the image icon to have a "plus"
 V- in colors: always "collapse/expand icon" and ok button to select
 V- also in text extra size: collapse/expand. in extra size - have a slider and remember mode like colors
+- sensitivity of locating a text box
+- move color to the center and down
+- bug in picture that leaves room at bottom
 
 
 

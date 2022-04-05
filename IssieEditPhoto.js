@@ -71,35 +71,58 @@ export default class IssieEditPhoto extends React.Component {
       getState: () => this.state,
       onMoveElement: (moveObj) => {
 
-        if (this.isImageMode()) {
-          if (this.state.currentImageElem) {
-            const x = (moveObj.x - this.state.xOffset) / this.state.zoom;
-            const y = (moveObj.y - this.state.yOffset) / this.state.zoom;
-            let fingerOffsetX = 0;
-            let fingerOffsetY = 0;
-            if (!this.state.moveElemState) {
-              // set the finger offset of image
+        const doMove = (obj) => {
+          if (this.isImageMode()) {
+            if (this.state.currentImageElem) {
+              const x = (moveObj.x - this.state.xOffset) / this.state.zoom;
+              const y = (moveObj.y - this.state.yOffset) / this.state.zoom;
+              let fingerOffsetX = 0;
+              let fingerOffsetY = 0;
+              if (!this.state.moveElemState) {
+                // set the finger offset of image
 
-              fingerOffsetX = x - this.state.currentImageElem.position.x;
-              fingerOffsetY = y - this.state.currentImageElem.position.y;
-              this.setState({ moveElemState: { 
-                dx:fingerOffsetX,
-                dy:fingerOffsetY
-              } })
-            } else {
-              fingerOffsetX = this.state.moveElemState.dx;
-              fingerOffsetY = this.state.moveElemState.dy;
+                fingerOffsetX = x - this.state.currentImageElem.position.x;
+                fingerOffsetY = y - this.state.currentImageElem.position.y;
+                this.setState({
+                  moveElemState: {
+                    dx: fingerOffsetX,
+                    dy: fingerOffsetY
+                  }
+                })
+              } else {
+                fingerOffsetX = this.state.moveElemState.dx;
+                fingerOffsetY = this.state.moveElemState.dy;
+              }
+              this.moveCurrentImage(x - fingerOffsetX, y - fingerOffsetY);
             }
-            this.moveCurrentImage(x - fingerOffsetX, y - fingerOffsetY);
           }
+          this.changeZoomOrOffset({
+            xText: moveObj.x,
+            yText: moveObj.y,
+            yOffset: moveObj.yOffset,
+            xOffset: moveObj.xOffset
+          });
         }
-        this.changeZoomOrOffset({
-          xText: moveObj.x,
-          yText: moveObj.y,
-          yOffset: moveObj.yOffset,
-          xOffset: moveObj.xOffset
-        });
 
+        if (moveObj.repeat) {
+          if (this.repeatMovement) {
+            clearInterval(this.repeatMovement)
+          }
+          this.repeatMovement = setInterval(() => {
+            if (moveObj.repeat.xOffset) {
+              moveObj.xOffset += moveObj.repeat.xOffset;
+            }
+            if (moveObj.repeat.yOffset) {
+              moveObj.yOffset += moveObj.repeat.yOffset;
+            }
+            doMove(moveObj)
+          }, 40)
+
+        } else if (this.repeatMovement) {
+          clearInterval(this.repeatMovement);
+          this.repeatMovement = undefined;
+        }
+        doMove(moveObj);
       },
       shouldMoveElement: () => {
         const ret = (this.isTextMode() && this.state.showTextInput ||
@@ -111,6 +134,10 @@ export default class IssieEditPhoto extends React.Component {
       screen2ViewPortY: (y) => this.screen2ViewPortY(y),
       onRelease: () => {
         this.setState({ moveElemState: undefined });
+        if (this.repeatMovement) {
+          clearInterval(this.repeatMovement)
+          this.repeatMovement = undefined;
+        }
         if (this.isTextMode()) {
           this.SaveText(false, true);
         } else if (this.isImageMode()) {

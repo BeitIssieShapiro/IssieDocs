@@ -111,6 +111,7 @@ export default class FolderGallery extends React.Component {
             registerLangEvent()
             const betaSettings = Settings.get('beta');
             trace("Beta settings", betaSettings)
+
             this.props.navigation.addListener("focus", async () => {
                 //this.refresh();
                 this.setState({ selected: undefined });
@@ -119,10 +120,10 @@ export default class FolderGallery extends React.Component {
             setNavParam(this.props.navigation, 'betaFeatures', () => {
                 trace
                 if (this.state.betaCounter === 7) {
-                    //toggle beta features
-                    const newMode = { beta: !this.state.beta };
-                    Settings.set(newMode);
-                    this.setState(newMode);
+                    //toggle beta features - always on for now
+                    // const newMode = { beta: !this.state.beta };
+                    // Settings.set(newMode);
+                    // this.setState(newMode);
                     Alert.alert("Beta features", "Beta features has been " + (newMode.beta ? "Enabled" : "Disabled"));
 
                     return;
@@ -156,7 +157,10 @@ export default class FolderGallery extends React.Component {
             });
 
             //trace("beta", betaSettings)
-            this.setState({ folders, loading: false, beta: (betaSettings ? betaSettings === 1 : false) });
+            this.setState({
+                folders, loading: false, beta: true
+                //    (betaSettings ? betaSettings === 1 : false) 
+            });
 
         } finally {
 
@@ -258,7 +262,7 @@ export default class FolderGallery extends React.Component {
 
     newFromMediaLib = (addToExistingPage) => {
         this.setState({ systemModal: true })
-        setTimeout(()=>this.setState ({inprogress: true}), 500)
+        setTimeout(() => this.setState({ inprogress: true }), 500)
         getNewPage(SRC_GALLERY,
             (uri) => {
                 this.setState({ systemModal: false, inprogress: false })
@@ -928,7 +932,7 @@ export default class FolderGallery extends React.Component {
 
                                 </View>
                                 {/* pages */}
-                                {this.state.inprogress && <View style={{position:'absolute', left:"50%", top:"50%"}}>
+                                {this.state.inprogress && <View style={{ position: 'absolute', left: "50%", top: "50%" }}>
                                     <ActivityIndicator size="large" />
                                 </View>}
 
