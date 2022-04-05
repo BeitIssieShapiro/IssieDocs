@@ -24,6 +24,7 @@ export function processPinch(obj, x1, y1, x2, y2, changeState) {
         }
 
     } else {
+        const shouldMove = zoom != 1 || obj.state.showTextInput;
         let touchZoom = distance / pinchState.initialDistance;
         let zoom = touchZoom * pinchState.initialZoom > obj.state.minZoom
             ? touchZoom * pinchState.initialZoom : obj.state.minZoom;
@@ -31,8 +32,8 @@ export function processPinch(obj, x1, y1, x2, y2, changeState) {
         //trace("pinch: 1:", x1, ",", y1, " 2:", x2, ",", y2)
         const deltaZoom = pinchState.initialZoom / zoom;
 
-        let xOffset = zoom == 1 ? 0 : pinchState.initialLeft * deltaZoom - pinchState.initialX * (1 - deltaZoom) - (pinchState.initialX - center.x) * deltaZoom;
-        let yOffset = zoom == 1 ? 0 : pinchState.initialTop * deltaZoom - pinchState.initialY * (1 - deltaZoom) - (pinchState.initialY - center.y) * deltaZoom;
+        let xOffset = shouldMove ?  pinchState.initialLeft * deltaZoom - pinchState.initialX * (1 - deltaZoom) - (pinchState.initialX - center.x) * deltaZoom : 0;
+        let yOffset = shouldMove ? pinchState.initialTop * deltaZoom - pinchState.initialY * (1 - deltaZoom) - (pinchState.initialY - center.y) * deltaZoom : 0;
 
         //trace("Xos", xOffset, "Yos", yOffset, "Ileft", pinchState.initialLeft, "Xcenter", center.x, "dZoom", deltaZoom)
         if (xOffset > 0 || zoom === 1) {

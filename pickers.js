@@ -82,28 +82,55 @@ export function MyColorPicker(props) {
                 i))
             }
             {/* More color button */}
-            {props.betaFeatures && getColorButtonInt(openMore ? _handleSelect : () => setOpenMore(val => !val),
-                openMore ? composedColor : "gray",
+            {props.betaFeatures && getColorButtonInt(() => setOpenMore(val => !val),
+                "white",
                 colorButtonSize,
-                openMore ? (props.color === composedColor ? "check" : undefined) : "add",
-                ""
+                openMore ? "expand-less" : "expand-more",
+                "", "black"
             )
             }
         </View>
         {openMore && <View style={{ top: 0, left: 0, height: 300, width: "80%" }}>
             <View style={{
-                position: "absolute", top: 30, left: 0, height: colorButtonSize * 3 + 30,
-                zIndex: 1000
+                position: "absolute",
+                top: 30, left: 0,
+                //height: colorButtonSize * 3 + 30,
+                width: colorButtonSize * 2 + 30,
+                flexWrap: "wrap",
+                zIndex: 1000, flexDirection: "row"
             }} >
-                {lastColors.map((color, i) => [getColorButton(
-                    () => props.onSelect(color),
-                    color,
-                    colorButtonSize,
-                    color == props.color,
-                    i), <Spacer key={i + "space"} />]
-                )
+                {lastColors.map((color, i) => <View style={{ padding: 5 }}>{
+                    getColorButton(
+                        () => props.onSelect(color),
+                        color,
+                        colorButtonSize,
+                        color == props.color,
+                        i)
+                }</View>
+                )}
+
+
+
+            </View>
+
+            <View style={{
+                position: "absolute",
+                top: 30, right: 0,
+                //height: colorButtonSize * 3 + 30,
+                width: colorButtonSize * 2 + 30,
+                flexWrap: "wrap",
+                zIndex: 1000, flexDirection: "row"
+            }} >
+                {
+                    composedColor && composedColor != props.color && !lastColors.find(lc => lc === composedColor) &&
+                    <View style={{ padding: 5 }}>{getColorButton(
+                        _handleSelect,
+                        composedColor,
+                        colorButtonSize,
+                        false)}</View>
                 }
             </View>
+
             <ColorPicker
                 // ref={r => { this.picker = r }}
                 color={composedColor}
@@ -136,14 +163,22 @@ export function MyColorPicker(props) {
     </FadeInView>
 }
 
+const textSizeVolumeBarSize = 400;
+const dotSize = 30;
 
 export function TextSizePicker(props) {
     const [openMore, setOpenMore] = useState(false);
+    const [composedSize, setComposedSize] = useState(props.size);
+
+    useEffect(()=>{
+        setComposedSize(props.size);
+    }, [props.size])
+
 
     const textSizesAct = props.betaFeatures ? textSizes.filter(v => v < 50) : textSizes
     let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
 
-    return <FadeInView height={props.open ? buttonSize + 10 + (openMore ? buttonSize + 10 : 0) : 0}
+    return <FadeInView height={props.open ? buttonSize + 10 + (openMore ? 350 : 0) : 0}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
         <View
             style={{
@@ -160,17 +195,73 @@ export function TextSizePicker(props) {
             {props.betaFeatures && getColorButtonInt(() => setOpenMore(val => !val),
                 "white",
                 buttonSize,
-                "more-vert",
+                openMore ? "expand-less" : "expand-more",
                 "",
                 "black"
             )}
         </View>
         <View
             style={{
-                flexDirection: 'row', width: '100%', height: buttonSize + 5,
-                justifyContent: 'space-evenly'
+                flexDirection: 'column',
+                width: '100%',
+                justifyContent: 'center',
+                alignItems: 'center'
+                //justifyContent: 'space-evenly'
             }}>
-            {extendedTextSizes.map((size, i) => getTextSizePicker(props.color, buttonSize, size, size === props.size, i, (size) => props.onSelect(size)))}
+            <Spacer height={15} />
+            <View style={{ 
+                position:'absolute',
+                top:Math.max(100-composedSize/2, 0),
+                minHeight: 200}}>
+                <AppText style={{
+                    fontSize: composedSize,
+                    lineHeight: composedSize
+                }}
+                onPress={()=>props.onSelect(composedSize)}
+                >{translate("A")}</AppText>
+            </View>
+            <Spacer height={25} />
+            <View style={{
+                height:100,
+                position:'absolute',
+                top:250,
+            }} 
+            
+                onTouchStart={(e) => {
+                trace("touch", e.nativeEvent.locationX);
+                let val = Math.floor(e.nativeEvent.locationX);
+                if (val < 10) {
+                    val = 10;
+                } else if (val>370) {
+                    val = 370;
+                }
+                setComposedSize(val)
+            }}
+            >
+                <View style={{
+                    width: 0,
+                    height: 0,
+                    backgroundColor: "transparent",
+                    borderStyle: "solid",
+                    borderLeftWidth: 400,
+                    borderBottomWidth: 30,
+                    borderLeftColor: "transparent",
+                    borderTopColor: "black"
+                }}
+                >
+                    <View style={{
+                        position: 'absolute',
+                        bottom: -2 * dotSize,
+                        left: -textSizeVolumeBarSize + (composedSize),
+                        borderRadius: dotSize / 2,
+                        width: dotSize,
+                        height: dotSize,
+                        backgroundColor: 'black'
+
+                    }}></View>
+                </View>
+            </View>
+            {/* {extendedTextSizes.map((size, i) => getTextSizePicker(props.color, buttonSize, size, size === props.size, i, (size) => props.onSelect(size)))} */}
 
 
         </View>
@@ -202,22 +293,22 @@ function getTextSizePicker(color, size, textSize, selected, index, callback) {
 }
 
 
-export function BrushSizePicker ({color, size, brushSize, isScreenNarrow, onPress, selectedStrokeWidth}) {
+export function BrushSizePicker({ color, size, brushSize, isScreenNarrow, onPress, selectedStrokeWidth }) {
     size = isScreenNarrow ? size + 10 : size;
     return <TouchableOpacity
-      style={{ width: size, height: size }}
-      onPress={() => onPress(brushSize)}
-      activeOpacity={0.7}      
+        style={{ width: size, height: size }}
+        onPress={() => onPress(brushSize)}
+        activeOpacity={0.7}
     >
-      <View style={{
-        flex: 1,
-        backgroundColor: brushSize === selectedStrokeWidth ? '#eeeded' : 'transparent',
-        borderRadius: size / 2,
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}
-      >
-        <Icon name={"edit"} color={color} size={brushSize * 4 + 12}></Icon>
-      </View>
+        <View style={{
+            flex: 1,
+            backgroundColor: brushSize === selectedStrokeWidth ? '#eeeded' : 'transparent',
+            borderRadius: size / 2,
+            justifyContent: 'center',
+            alignItems: 'center'
+        }}
+        >
+            <Icon name={"edit"} color={color} size={brushSize * 4 + 12}></Icon>
+        </View>
     </TouchableOpacity>
-  }
+}

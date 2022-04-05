@@ -57,16 +57,16 @@ export function EditorToolbar({
     fontSize = fontSize || 25;
     strokeWidth = strokeWidth || 1;
     color = color || "black"
-    windowSize = windowSize || {width:500}
+    windowSize = windowSize || { width: 500 }
 
     isScreenNarrow = () => windowSize?.width < 500;
     isLandscape = () => windowSize?.width > windowSize?.height;
 
-    useEffect(()=>{
-        const calcHeight = (isScreenNarrow() || showExtMenu) && !isLandscape()  ? 2 * dimensions.toolbarHeight : dimensions.toolbarHeight
+    useEffect(() => {
+        const calcHeight = (isScreenNarrow() || showExtMenu) && !isLandscape() ? 2 * dimensions.toolbarHeight : dimensions.toolbarHeight
         if (toolbarHeight !== calcHeight) {
             onToolbarHeightChange(calcHeight)
-        }    
+        }
     }, [showExtMenu, windowSize])
 
     onTextButtonClick = useCallback(() => {
@@ -155,9 +155,13 @@ export function EditorToolbar({
     const availablePickerWidth = windowSize ? windowSize.width - 2 * toolbarSideMargin : 500;
     let colorButtonsSize = windowSize ? (windowSize.width - 2 * toolbarSideMargin) / (availableColorPicker.length * 1.4) : 50;
 
+    const previewFontSize = fontSize > 50 ? 50 : fontSize;
+    const previewFontSizePlus = fontSize > 50;
+
+
     const extMenu = [
         <IconButton onPress={onImageButtonClick} color={semanticColors.editPhotoButton}
-            icon={"image"} size={55} iconSize={45} key={"1"} selected={isImageMode}/>,
+            icon={"image"} size={55} iconSize={45} key={"1"} selected={isImageMode} />,
         <Spacer width={23} key="2" />,
         <IconButton onPress={onZoomButtonClick} color={semanticColors.editPhotoButton}
             icon="zoom-in" size={55} iconSize={45} key={"3"} />,
@@ -186,9 +190,9 @@ export function EditorToolbar({
         }}>
             <IconButton onPress={onGoBack} color={semanticColors.editPhotoButton} icon="folder" size={45} />
             <Spacer width={45} />
-            <IconButton onPress={onUndo} color={semanticColors.editPhotoButton} icon={rtl?"undo":"redo"} size={55} />
+            <IconButton onPress={onUndo} color={semanticColors.editPhotoButton} icon={rtl ? "undo" : "redo"} size={55} />
             <Spacer width={23} />
-            <IconButton onPress={onRedo} color={canRedo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} icon={rtl?"redo":"undo"} size={55} />
+            <IconButton onPress={onRedo} color={canRedo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} icon={rtl ? "redo" : "undo"} size={55} />
             <Spacer width={23} />
             {getEraserIcon(onEraser, 55, eraseMode ? 'black' : semanticColors.editPhotoButton, eraseMode)}
 
@@ -207,16 +211,29 @@ export function EditorToolbar({
                 alignContent: 'center',
             }}>
                 {isTextMode ?
-                    <AppText
-                        style={[{
-                            fontSize: fontSize,
-                            lineHeight: fontSize + 8,
-                            color: color,
-                            textAlignVertical: 'center'
-                        }, rtl?{}:{fontWeight: 'bold'}]}
-                    >{translate("A B C")}</AppText> :
-                    isImageMode ?
-                        <Icon name={"image"} size={55} color={semanticColors.editPhotoButton} /> :
+                    <View>
+                        <AppText
+                            style={[{
+                                fontSize: previewFontSize,
+                                lineHeight: previewFontSize + 8,
+                                color: color,
+                                textAlignVertical: 'center'
+                            }, rtl ? {} : { fontWeight: 'bold' }]}
+                        >{translate("A B C")}</AppText>
+                        {previewFontSizePlus &&
+                            <View style={[{
+                                position: 'absolute',
+                                top: -15,
+                                
+                            },rtl?{left: -25}:{right:-25}]}><AppText
+                                style={{
+                                    fontSize: previewFontSize,
+                                }}>+</AppText>
+                            </View>}
+                    </View> :
+                    !isImageMode &&
+                        //<Icon name={"image"} size={55} color={semanticColors.editPhotoButton} /> :
+                        
                         getSvgIcon('doodle', 55, color, strokeWidth * .8)
                 }
             </View>
@@ -232,8 +249,8 @@ export function EditorToolbar({
                 { top: 0, right: 50 }
             ]} >
                 <IconButton onPress={onTextButtonClick} icon={translate("A")} isText={true} selected={isTextMode}
-                    color={isTextMode ? color : semanticColors.editPhotoButton} size={55} iconSize={rtl?45:35} 
-                    fontWeight={rtl?undefined:'bold'}/>
+                    color={isTextMode ? color : semanticColors.editPhotoButton} size={55} iconSize={rtl ? 45 : 35}
+                    fontWeight={rtl ? undefined : 'bold'} />
                 <Spacer width={23} />
                 <IconButton onPress={onBrushButtonClick} icon={"edit"} selected={isTextMode} size={55}
                     color={isBrushMode ? color : semanticColors.editPhotoButton} iconSize={45} selected={isBrushMode} />
@@ -242,7 +259,7 @@ export function EditorToolbar({
                 <Spacer width={23} />
 
 
-                {(isLandscape() || isScreenNarrow() )&& betaFeatures && extMenu}
+                {(isLandscape() || isScreenNarrow()) && betaFeatures && extMenu}
                 {!isLandscape() && !isScreenNarrow() && betaFeatures &&
                     <IconButton onPress={() => setShowExtMenu(oldVal => !oldVal)} color={semanticColors.editPhotoButton}
                         icon={showExtMenu ? "expand-less" : "expand-more"} size={55} iconSize={45} />}

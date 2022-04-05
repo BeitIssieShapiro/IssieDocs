@@ -31,36 +31,36 @@ export function getElementMovePanResponder({
             if (rightDiff > 0) {
                 trace("move-elem hit right side", rightDiff)
                 x = getState().viewPortRect.width;
-                xOffset -= 10;
+                xOffset -= 5;
             }
 
             if (rtl && x < 25) {
                 //trace("move-elem hit left side", rightDiff)
                 if (xOffset < 0) {
-                    xOffset += 10 
+                    xOffset += 5
                 }
                 x = 25;
             }
 
-            if (!rtl && x <  dragIconSize/2) {
+            if (!rtl && x < dragIconSize / 2) {
                 //trace("move-elem hit left side", rightDiff)
                 if (xOffset < 0) {
-                    xOffset += 10 
+                    xOffset += 5
                 }
-                x =  dragIconSize/2;
+                x = dragIconSize / 2;
             }
 
             // Y- Axis
-            const bottomDiff = y - getState().viewPortRect.height + getState().keyboardHeight + dragIconSize/2
+            const bottomDiff = y - getState().viewPortRect.height + getState().keyboardHeight + getState().inputTextHeight - dragIconSize / 2
             if (bottomDiff > 0) {
                 //trace("move elem - hit bottom")
-                y = getState().viewPortRect.height - getState().keyboardHeight;
-                yOffset -= 10;
+                y -= bottomDiff;
+                yOffset -= 5;
             }
 
             if (y < dragIconSize / 2) {
                 if (yOffset < 0) {
-                    yOffset += 10
+                    yOffset += 5
                     //trace("move element - hit top", y, yOffset)
                     if (yOffset > 0) {
                         yOffset = 0;
@@ -68,9 +68,11 @@ export function getElementMovePanResponder({
                 }
                 y = dragIconSize / 2;
             }
-            x = x + (rtl || getState().mode === 1?-1:1) * (dragIconSize / 2)
-            y -= dragIconSize / 2
-            
+            if (getState().mode !== 1) {
+                x = x + (rtl ? -1 : 1) * (dragIconSize / 2)
+                y -= dragIconSize / 2
+            }
+
             onMoveElement({
                 x, y, yOffset, xOffset
             })
