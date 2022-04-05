@@ -9,7 +9,7 @@ import { DraxView } from 'react-native-drax';
 import { trace } from './log';
 import { FileSystem } from './filesystem';
 import { showMessage } from 'react-native-flash-message';
-import { fTranslate } from './lang';
+import { fTranslate, getRowDirections } from './lang';
 
 
 const dragOverColor = 'lightblue'
@@ -24,6 +24,8 @@ export default function FolderNew(props) {
     if (!props.asTitle && caption.length > captionLimit) {
         caption = caption.substring(0, captionLimit) + '...';
     }
+
+    const { row, rowReverse, rtl } = getRowDirections();
 
     return (
         <DraxView
@@ -58,23 +60,23 @@ export default function FolderNew(props) {
                 height: props.asTitle ? dimensions.folderAsTitleHeight : dimensions.folderHeight,
                 //paddingTop: 10, paddingBottom: 10
                 borderRadius: 7,
-                backgroundColor: dragOver ? dragOverColor : undefined,
+                backgroundColor: dragOver ? dragOverColor : undefined
+
             }}>
 
             {props.editMode && props.asTitle && !props.fixedFolder && props.name && props.name.length > 0 ?
                 /**
                  * Buttons for editing in title mode
                  */
-                <View style={{
-                    position: 'absolute', flexDirection: 'row-reverse',
-                    left: 18,
+                <View style={[{
+                    position: 'absolute', flexDirection: rowReverse,
                     top: 0,
                     height: '100%', width: '20%',
                     backgroundColor: semanticColors.mainAreaBG,
                     justifyContent: 'flex-end',
                     alignItems: 'center',
                     zIndex: 100
-                }}>
+                }, rtl ? { left: 18 } : { right: 18 }]}>
                     {getEmbeddedButton(props.onDelete, 'delete-forever', 40)}
                     <Spacer width={17} />
                     {getEmbeddedButton(props.onRename, 'edit', 40)}
@@ -87,13 +89,13 @@ export default function FolderNew(props) {
                 onLongPress={props.onLongPress ? (e) => props.onLongPress(e) : undefined}
 
                 style={{
-                    flexDirection: 'row-reverse',
+                    flexDirection: rowReverse,
                     backgroundColor: dragOver ? dragOverColor : (props.current ? semanticColors.selectedFolder : 'transparent'),
                     height: '100%'
                 }}>
 
                 <View style={{
-                    flexDirection: 'row-reverse', alignItems: 'center'
+                    flexDirection: rowReverse, alignItems: 'center'
 
                 }}>
                     {props.asTitle ?
@@ -102,20 +104,24 @@ export default function FolderNew(props) {
                          */
                         <View
                             style={{
-                                flexDirection: 'row-reverse'
+                                flexDirection: rowReverse,                                
                             }}
                         >
-                            <View style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', paddingRight: 30, paddingBottom: '5%', height: '100%' }}>
+                            <View style={[{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', 
+                            paddingBottom: '5%', height: '100%'}, rtl? {paddingRight: 30}:{paddingLeft: 30}]}>
                                 <Icon name="folder" size={45} color={props.color} />
-                                <View style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
-                                    <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', paddingTop: '7%', flexDirection: 'row-reverse' }}>
+                                <View style={[{ position: 'absolute', top: 0, width: '100%', height: '100%' }, rtl?{left: 0}:{right:0}]}>
+                                    <View style={{
+                                        width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', paddingTop: '7%',
+                                        flexDirection: rowReverse
+                                    }}>
                                         {props.icon && props.icon.length > 0 ? <FolderIcon name={props.icon} size={20} color={'white'} /> : null}
                                     </View>
                                 </View>
                             </View>
 
                             <Spacer width={8} />
-                            {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: 32, lineHeight: 44 }]}>{caption}</AppText>}
+                            {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: 32, lineHeight: 60}]}>{caption}</AppText>}
                         </View> :
                         /**
                          * Side Panel View or overview
@@ -126,17 +132,17 @@ export default function FolderNew(props) {
                                 width: '100%'
                             }}
                         >
-                            <View style={{ flexDirection: 'row', justifyContent: 'center', width: '100%' }}>
+                            <View style={{ flexDirection: row, justifyContent: 'center', width: '100%' }}>
                                 <Icon name="folder" size={72} color={props.color} />
 
                                 <View style={{ position: 'absolute', left: 0, top: 25, width: '100%', height: '100%' }}>
-                                    <View style={{ width: '100%', justifyContent: 'center', flexDirection: 'row-reverse' }}>
+                                    <View style={{ width: '100%', justifyContent: 'center', flexDirection: rowReverse }}>
                                         {props.icon && props.icon.length ? <FolderIcon name={props.icon} size={30} color='white' /> : null}
                                     </View>
                                 </View>
 
                             </View>
-                            <View style={{ flexDirection: 'row-reverse', width: '100%' }}>
+                            <View style={{ flexDirection: rowReverse, width: '100%' }}>
                                 <AppText style={[FolderTextStyle,
                                     { width: '100%', lineHeight: 28, textAlign: 'center' }]} >{caption}</AppText>
                             </View>
@@ -146,7 +152,9 @@ export default function FolderNew(props) {
             </TouchableOpacity>
             {
                 props.editMode && !props.fixedFolder && !props.asTitle && !props.isOverview ?
-                    <View style={{ position: 'absolute', left: 0, top: 0, flexDirection: 'column', alignItems: 'center', marginTop: 0, }}>
+                    <View style={[
+                        { position: 'absolute',  top: 0, flexDirection: 'column', alignItems: 'center', marginTop: 10},
+                        rtl ? { left: 0 } : { right: 0 }]}>
                         <Icon name={"expand-less"} size={55} color={props.index == 0 ? 'gray' : 'black'} onPress={props.index > 0 ? props.onMoveUp : undefined} />
                         <Icon name={"expand-more"} size={55} color={props.isLast ? 'gray' : 'black'} onPress={props.isLast ? undefined : props.onMoveDown} />
                     </View> :

@@ -2,6 +2,7 @@ import * as RNLocalize from "react-native-localize";
 import { Alert, Settings } from "react-native";
 import { LANGUAGE } from "./settings";
 import { isSimulator } from "./device";
+import { trace } from "./log";
 
 export var gCurrentLang = { languageTag: "he", isRTL: true }
 const DEFAULT_LANG = "he";
@@ -99,8 +100,12 @@ var strings = {
         "ImportProgress": "מייבא דף {1} מתוך {2}",
         "ExportProgress": "מייצא דף {1} מתוך {2}",
 
+        //todo: translate
         "MissingCameraPermission": `לא ניתנה רשות לשימוש במצלמה לאפליקציה
-        למתן רשות יש לגשת להגדרות -> פרטיות -> מצלמה, ולאפשר שימוש עבור IssieDocs`, //todo translate
+        למתן רשות יש לגשת להגדרות -> פרטיות -> מצלמה, ולאפשר שימוש עבור IssieDocs`,
+        "EditPhotoTitle": "עריכת תמונה",
+
+
 
     },
     "ar": {
@@ -191,8 +196,106 @@ var strings = {
         "CaptionIcon": "رمز",
 
         "ImportProgress": "استيراد الصفحة {1} من {2}",
-        "ExportProgress": "تصدير الصفحة {1} من {2}"
-    }
+        "ExportProgress": "تصدير الصفحة {1} من {2}",
+        "MissingCameraPermission":`Missing Permission to use Camera.
+to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
+        "EditPhotoTitle": "تعديل الصورة",
+    },
+    "en": {
+        "StartHere": "Add pages",
+        "DesktopEmpty":"Empty Desktop",
+        "Loading":"Loading...",
+        "DefaultAppTitle": "{1} - My Desktop",
+        "MissingFolderName": "Missing folder name",
+        "SaveFolderWithEmptyNameQuestion": "Save a folder without a name?",
+        "MissingPageName": "Missing page name",
+        "IllegalCharacterInFolderName": "Folder name contains illigal characters",
+        "IllegalCharacterInPageName": "Page name contains illigal characters",
+        "FolderAlreadyExists": "Folder with this name already exists",
+        "PageAlreadyExists": "page with this name already exists",
+        "ShareSuccessful": "Share successfully done",
+        "ActionCancelled": "Action cancelled",
+        "PDFLoadFailed": "PDF loading failed",
+        "DefaultFolder": "Desktop", 
+        "Search":"Search",
+
+        "DeletePageTitle": "Delete page",
+        "DeleteFolderTitle": "Delete folder",
+        "BeforeDeletePageQuestion": "Are you sure you want to delete the page?",
+        "BeforeDeleteSubPageQuestion":"Delete page {1} of {2}?", 
+
+        "DeleteFoldersAndPagesTitle": "Delete folders and pages",
+        "BeforeDeleteFolderQuestion": "Deleteing a folder will delete all pages in it, are you sure?",
+        //"BeforeDeleteFoldersAndPagesQuestion": "Deleting folder and pages,",
+
+        "SuccessfulMovePageMsg": "Page '{1}' successfuly moved to folder '{2}'",
+        "NoPagesYet": "Empty folder",
+        "ChooseFolder": "Choose a folder",
+
+        "SearchResults": "Search results",
+        "NoSearchResults": "No pages or folders found",
+
+        "SavePageFormTitle": "Save Page",
+        "RenameFormTitle": "Rename",
+        "DuplicatePageFormTitle": "Duplicate Page",
+        "MovePageFormTitle": "Move Page",
+
+        "EditFolderFormTitle": "Edit Folder Name",
+        "NewFolderFormTitle": "Create New Folder",
+        "ShareWithTitle": "'Share with...'",
+        "ShareEmailSubject": "worksheet",
+
+        "CameraTitle": "Take a photo",
+        "MediaPickerTitle": "Choose a photo",
+
+        //buttons
+        "A": "A",
+        "A B C": "ABC",
+
+        "SortA": "a",
+        "SortZ": "z",
+        "Menu": "Menu",
+        "Settings": "Settings",
+        "About": "About",
+        "Display": "Display",
+        "Language": "Language",
+        "AllowEditTitle": "Edit Desktop name",
+        "TextInButtons": "Button design",
+        "FolderColors": "Folder colors",
+        "Warning": "Warning",
+        "BtnContinue": "Continue",
+        "BtnCancel": "Cancel",
+        "BtnNextPage": "Next",
+        "BtnPreviousPage": "Prev",
+        "BtnNewFolder": "New folder",
+        "BtnAddPhoto": "Add a photo",
+        "BtnAddPage": "Add",
+        "BtnSave": "Save",
+        "BtnShare": "Share",
+        "BtnChangeName": "Rename",
+        "BtnDelete": "Delete",
+        "BtnDuplicate": "Duplicate",
+        "MenuFromCamera": "Camera",
+        "MenuFromMediaLib": "Camera roll",
+        "MenuNewPageEmpty": "Blank",
+        "MenuNewPageLines": "Lined",
+        "MenuNewPageMath": "Grid",
+        "EmptyPageName":"Empty page",
+
+        "CaptionPageName": "Name",
+        "CaptionFolderNameList": "Folder",
+        "CaptionFolderNameInput": "Folder Name",
+        "CaptionFolderColor": "Folder Color",
+        "NoIcon": "None",
+        "CaptionIcon": "Icon",
+
+        "ImportProgress": "Import page {1} of {2}",
+        "ExportProgress": "Export page {1} of {2}",
+
+        "MissingCameraPermission": `Missing Permission to use Camera.
+to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
+
+    },
 }
 
 const foldersAndIcons = {
@@ -228,12 +331,22 @@ const foldersAndIcons = {
         { icon: 'public', text: 'جغرافيا' },
         { icon: 'music-note', text: 'موسيقى' },
         { icon: 'svg-literature-course', text: 'أدب' }
+    ],
+    "en": [ //todo list and icons
+        { icon: 'svg-math-course', text: 'Math' },
+        { icon: 'svg-eng-course', text: 'English' },
+        { icon: 'svg-science-course', text: 'Science' },
+        //{ icon: 'svg-religion-course', text: 'Religion' },
+        { icon: 'svg-history-course', text: 'History' },
+        { icon: 'public', text: 'Public' },
+        { icon: 'music-note', text: 'Music' },
+        { icon: 'svg-literature-course', text: 'Literature' }
     ]
 
 }
 
 
-var currStrings = strings[DEFAULT_LANG];
+let currStrings = strings[DEFAULT_LANG];
 
 
 export function registerLangEvent() {
@@ -247,13 +360,9 @@ export function unregisterLangEvent() {
 }
 
 export function loadLanguage() {
-    let langSetting = Settings.get('language');
+    let langSetting =  Settings.get('language');
     if (langSetting === undefined || langSetting === LANGUAGE.default) {
         gCurrentLang = RNLocalize.findBestAvailableLanguage(["he", "ar", "en-US", "en"])
-        //Alert.alert(JSON.stringify(gCurrentLang))
-        if (gCurrentLang.languageTag.startsWith("en")) {
-            gCurrentLang = { languageTag: "he", isRTL: true }
-        }
     } else {
         switch (langSetting) {
             case LANGUAGE.hebrew:
@@ -263,7 +372,7 @@ export function loadLanguage() {
                 gCurrentLang = { languageTag: "ar", isRTL: true }
                 break;
             case LANGUAGE.english:
-                gCurrentLang = { languageTag: "he", isRTL: true }
+                gCurrentLang = { languageTag: "en", isRTL: false }
                 break;
             default:
                 gCurrentLang = { languageTag: "he", isRTL: true }
@@ -284,14 +393,39 @@ export function loadLanguage() {
             currStrings = strings[DEFAULT_LANG];
         }
     }
+    trace("Lang set to ", currStrings["A"])
 
     if (isSimulator()) {
         //gPrefix = "."
     }
 }
 
-function isRTL() {
-    return gCurrentLang.isRTL();
+export function isRTL() {
+    return gCurrentLang.isRTL;
+}
+
+export function getRowDirection() {
+    return isRTL()?"row":"row-reverse";
+}
+
+export function getRowReverseDirection() {
+    return isRTL()?"row-reverse":"row";
+}
+
+export function getRowDirections() {
+    return isRTL()?
+        {row: 'row', rowReverse:'row-reverse', flexStart: 'flex-start', 
+        flexEnd:'flex-end', textAlign:'right', rtl:true, direction:'rtl'}:
+        {row: 'row-reverse', rowReverse:'row', flexStart: 'flex-end', 
+        flexEnd:'flex-start', textAlign:'left', rtl:false, direction:'ltr'};
+}
+
+export function getFlexStart() {
+    return isRTL()?"flex-start":"flex-end";
+}
+
+export function getFlexEnd() {
+    return isRTL()?"flex-end": "flex-start";
 }
 
 export function translate(id, ...args) {

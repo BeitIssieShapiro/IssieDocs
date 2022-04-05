@@ -11,13 +11,14 @@ import {
     Spacer,
     semanticColors,
     getMaterialCommunityIconButton,
-    getIconButton
+    getIconButton,
+    getFontFamily
 } from './elements'
 
 
 export default function TitleEdit(props) {
     const inputEl = useRef(null);
-    const titleStyle = [globalStyles.headerTitleStyle, { color: 'white', textAlign: 'center' }];
+    const titleStyle = [globalStyles.headerTitleStyle, { color: 'white', textAlign: 'center' }, getFontFamily()];
 
     const [editedTitle, setEditedTitle] = useState(props.title);
     const [previousEditMode, setPreviousEditMode] = useState(false);

@@ -9,7 +9,7 @@ import Pdf from 'react-native-pdf';
 import ViewShot from "react-native-view-shot";
 import { StackActions } from '@react-navigation/native';
 import { Icon } from 'react-native-elements'
-import { translate } from './lang.js'
+import { getRowDirections, translate } from './lang.js'
 
 import {
   getIconButton,
@@ -216,7 +216,8 @@ export default class IssieSavePhoto extends React.Component {
       trace("updateImageDimension", { imgSize, scale, windowSize })
       this.setState({ imgSize, scale, windowSize })
     } catch (err) {
-      Alert.alert("Error measuring file", err.description)
+      Alert.alert("Error measuring file", err)
+      trace("Error measuring file", JSON.stringify(err))
     }
     //}, 50);
   }
@@ -502,6 +503,7 @@ export default class IssieSavePhoto extends React.Component {
   }
 
   render() {
+    const {row, flexStart, rtl} = getRowDirections();
     this.state.imageUri;
 
     let editPicButtons = <View />;
@@ -517,7 +519,7 @@ export default class IssieSavePhoto extends React.Component {
           position: 'absolute',
           height: '100%',
           right: 10,
-          flexDirection: 'row',
+          flexDirection: row,
           alignItems: 'center'
         }}>
 
@@ -549,10 +551,10 @@ export default class IssieSavePhoto extends React.Component {
         position: 'absolute',
         height: '100%',
         left: 10,
-        flexDirection: 'row',
+        flexDirection: row,
         alignItems: 'center'
       }}>
-        {editPhoto ? <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {editPhoto ? <View style={{ flexDirection: row, alignItems: 'center' }}>
           {
             getIconButton(this.crop, semanticColors.addButton, "crop", 45)
           }
@@ -576,7 +578,9 @@ export default class IssieSavePhoto extends React.Component {
     const onLayoutHost = {}
     if (this.state.phase == PickName) {
       PageNameInput =
-        <Scroller height={this.state.windowSize.height}
+        <Scroller 
+          height={this.state.windowSize.height}
+          rtl={rtl}
           onLayout={onLayoutHost}>
 
           <FileNameDialog
@@ -637,7 +641,8 @@ export default class IssieSavePhoto extends React.Component {
         {/* Toolbar */}
         <View style={{
           flex: 1, zIndex: 5, position: 'absolute', top: 0, width: '100%',
-          height: dimensions.toolbarHeight, backgroundColor: semanticColors.subTitle
+          height: dimensions.toolbarHeight, backgroundColor: semanticColors.subTitle,
+          flexDirection: row
         }} >
           {editPicButtons}
           {actionButtons}
@@ -681,7 +686,7 @@ export default class IssieSavePhoto extends React.Component {
             {PageNameInput}
           </View> :
           <View style={[{
-            justifyContent: 'flex-start',
+            justifyContent: flexStart,
             alignItems: 'center',
             top: dimensions.toolbarHeight
           },
