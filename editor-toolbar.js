@@ -42,7 +42,6 @@ export function EditorToolbar({
     strokeWidth,
 
     sideMargin,
-    betaFeatures,
     toolbarHeight,
     onToolbarHeightChange,
     onFloatingMenu
@@ -138,6 +137,11 @@ export function EditorToolbar({
     }
 
     onImageButtonClick = () => {
+        setShowBrushPicker(false);
+        setShowTextSizePicker(false);
+        setShowColorPicker(false);
+        setShowZoomPicker(false);
+
         if (isImageMode) {
             onAddImage();
         } else {
@@ -155,8 +159,8 @@ export function EditorToolbar({
     const availablePickerWidth = windowSize ? windowSize.width - 2 * toolbarSideMargin : 500;
     let colorButtonsSize = windowSize ? (windowSize.width - 2 * toolbarSideMargin) / (availableColorPicker.length * 1.4) : 50;
 
-    const previewFontSize = fontSize > 50 ? 50 : fontSize;
-    const previewFontSizePlus = fontSize > 50;
+    const previewFontSize = fontSize > 75 ? 75 : fontSize;
+    const previewFontSizePlus = fontSize > 75;
 
 
     const extMenu = [
@@ -259,16 +263,16 @@ export function EditorToolbar({
                 <Spacer width={23} />
 
 
-                {(isLandscape() || isScreenNarrow()) && betaFeatures && extMenu}
-                {!isLandscape() && !isScreenNarrow() && betaFeatures &&
+                {(isLandscape() || isScreenNarrow()) &&  extMenu}
+                {!isLandscape() && !isScreenNarrow() && 
                     <IconButton onPress={() => setShowExtMenu(oldVal => !oldVal)} color={semanticColors.editPhotoButton}
                         icon={showExtMenu ? "expand-less" : "expand-more"} size={55} iconSize={45} />}
-                {!betaFeatures && !isScreenNarrow() && <IconButton onPress={onZoomButtonClick} color={semanticColors.editPhotoButton}
-                    icon="zoom-in" size={55} iconSize={45} key={"3"} />}
+                {/* {!betaFeatures && !isScreenNarrow() && <IconButton onPress={onZoomButtonClick} color={semanticColors.editPhotoButton}
+                    icon="zoom-in" size={55} iconSize={45} key={"3"} />} */}
             </View>
 
             {/** bottom toolbar */}
-            {showExtMenu && !isLandscape() && betaFeatures && <View style={{
+            {showExtMenu && !isLandscape() && <View style={{
                 position: 'absolute',
                 height: dimensions.toolbarHeight,
                 flexDirection: 'row', alignItems: 'center',
@@ -280,7 +284,6 @@ export function EditorToolbar({
 
         <MyColorPicker
             open={showColorPicker}
-            betaFeatures={betaFeatures}
             top={toolbarHeight}
             width={availablePickerWidth}
             color={eraseMode ? undefined : color}
@@ -294,14 +297,14 @@ export function EditorToolbar({
 
         <TextSizePicker
             open={showTextSizePicker && isTextMode}
-            betaFeatures={betaFeatures}
             top={toolbarHeight}
             width={availablePickerWidth}
             size={fontSize}
             color={color}
             isScreenNarrow={isScreenNarrow()}
-            onSelect={(size) => {
+            onSelect={(size, keepOpen) => {
                 onSelectTextSize(size);
+                if (!keepOpen)
                 setShowTextSizePicker(false);
             }}
         />

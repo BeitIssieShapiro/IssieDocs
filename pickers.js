@@ -66,7 +66,7 @@ export function MyColorPicker(props) {
     let colorButtonSize = (props.width) / ((availableColorPicker.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
     //trace("last colors", lastColors)
     //trace("color", props.color, "composed", composedColor)
-    return <FadeInView height={props.open ? colorButtonSize + 10 + (openMore ? 350 : 0) : 0}
+    return <FadeInView height={props.open ? colorButtonSize + 10 + (openMore ? 290 : 0) : 0}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
         <View
             style={{
@@ -82,7 +82,7 @@ export function MyColorPicker(props) {
                 i))
             }
             {/* More color button */}
-            {props.betaFeatures && getColorButtonInt(() => setOpenMore(val => !val),
+            {getColorButtonInt(() => setOpenMore(val => !val),
                 "white",
                 colorButtonSize,
                 openMore ? "expand-less" : "expand-more",
@@ -148,7 +148,7 @@ export function MyColorPicker(props) {
                     }
                 }}
 
-                sliderSize={30}
+                sliderSize={0}
                 noSnap={true}
                 row={false}
                 gapSize={10}
@@ -175,7 +175,7 @@ export function TextSizePicker(props) {
     }, [props.size])
 
 
-    const textSizesAct = props.betaFeatures ? textSizes.filter(v => v < 50) : textSizes
+    const textSizesAct = textSizes
     let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
 
     return <FadeInView height={props.open ? buttonSize + 10 + (openMore ? 350 : 0) : 0}
@@ -192,7 +192,7 @@ export function TextSizePicker(props) {
                 }))}
 
             {/* More button */}
-            {props.betaFeatures && getColorButtonInt(() => setOpenMore(val => !val),
+            {getColorButtonInt(() => setOpenMore(val => !val),
                 "white",
                 buttonSize,
                 openMore ? "expand-less" : "expand-more",
@@ -235,7 +235,8 @@ export function TextSizePicker(props) {
                 } else if (val>370) {
                     val = 370;
                 }
-                setComposedSize(val)
+                setComposedSize(val);
+                props.onSelect(val, true);
             }}
             >
                 <View style={{

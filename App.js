@@ -111,7 +111,7 @@ function App(props) {
                       activeOpacity={0.7}
                       onPress={() => {
                         execNavParam(props.route, "menuHandler", "");
-                        execNavParam(props.route, "betaFeatures", "");
+                        //execNavParam(props.route, "betaFeatures", "");
                       }
                       }
                     >

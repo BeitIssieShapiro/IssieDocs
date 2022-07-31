@@ -133,6 +133,8 @@ export default class IssieEditPhoto extends React.Component {
       screen2ViewPortX: (x) => this.screen2ViewPortX(x),
       screen2ViewPortY: (y) => this.screen2ViewPortY(y),
       onRelease: () => {
+        console.log("xxx")
+
         this.setState({ moveElemState: undefined });
         if (this.repeatMovement) {
           clearInterval(this.repeatMovement)
@@ -193,7 +195,6 @@ export default class IssieEditPhoto extends React.Component {
             (state) => this.changeZoomOrOffset(state));
           return
         }
-
         if (touches.length == 1 && this.state.showTextInput) {// && Math.abs(touches[0].dy) > 2) {
           this._pinch = true;
           trace("move with one finger")
@@ -529,8 +530,8 @@ export default class IssieEditPhoto extends React.Component {
     this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this._keyboardDidHide);
 
     const metaDataUri = currentFile + ".json";
-    const betaFeatures = this.props.route.params.betaFeatures;
-    this.setState({ page: page, currentFile: currentFile, currentIndex: 0, metaDataUri: metaDataUri, betaFeatures },
+    //const betaFeatures = this.props.route.params.betaFeatures;
+    this.setState({ page: page, currentFile: currentFile, currentIndex: 0, metaDataUri: metaDataUri },
       () => this.Load());
   }
 
@@ -770,15 +771,15 @@ export default class IssieEditPhoto extends React.Component {
         imgElem = this.state.canvasImages[imageElemIndex];
 
         // In Erase mode, remove the img
-        if (this.state.eraseMode) {
-          this.state.queue.pushDeleteImage({ id: imgElem.id })
-          this.setState({
-            currentImageElem: undefined,
-            needCanvasUpdate: true,
-            needCanvasDataSave: true,
-          });
-          return;
-        }
+        // if (this.isImageMode()) {
+        //   this.state.queue.pushDeleteImage({ id: imgElem.id })
+        //   this.setState({
+        //     currentImageElem: undefined,
+        //     needCanvasUpdate: true,
+        //     needCanvasDataSave: true,
+        //   });
+        //   return;
+        // }
 
         x = Math.round(imgElem.position.x) + imgElem.width;
         y = Math.round(imgElem.position.y);
@@ -1179,6 +1180,9 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   onEraserButton = () => {
+
+    if (this.isImageMode()) return;
+
     if (!this.state.eraseMode && this.isTextMode()) {
       this.onBrushMode();
     }
@@ -1193,7 +1197,7 @@ export default class IssieEditPhoto extends React.Component {
         // this.setState({ icon: uri})
         getImageDimensions(uri).then((imgSize) => {
           const ratio = imgSize.w / imgSize.h;
-          FileSystem.main.resizeImage(uri, Math.round(this.state.viewPortRect.width / 8 * ratio), this.state.viewPortRect.height / 8)
+          FileSystem.main.resizeImage(uri, Math.round(this.state.viewPortRect.width / 2 * ratio), this.state.viewPortRect.height / 2)
             .then(uri2 => FileSystem.main.convertImageToBase64(uri2))
             .then(imgBase64 => {
 
@@ -1214,7 +1218,10 @@ export default class IssieEditPhoto extends React.Component {
       },
       (err) => Alert.alert("Error", err.description),
       this.props.navigation,
-      { selectionLimit: 1, quality: 0.8 });
+      { 
+        selectionLimit: 1, 
+      //  quality: 0.8 
+      });
   }
 
 
@@ -1450,7 +1457,7 @@ export default class IssieEditPhoto extends React.Component {
           strokeWidth={this.state.strokeWidth}
 
           sideMargin={this.state.sideMargin}
-          betaFeatures={this.state.betaFeatures}
+          // betaFeatures={this.state.betaFeatures}
 
           onSelectColor={(color) => {
             this.setState({ color, eraseMode: false })
@@ -1720,19 +1727,20 @@ export default class IssieEditPhoto extends React.Component {
       height: h,
       zIndex: 50,
     }}>
-      <TouchableOpacity
-        onPress={() => {
-          if (this.state.eraseMode) {
-            this.state.queue.pushDeleteImage({ id: this.state.currentImageElem.id })
-            this.setState({
-              currentImageElem: undefined,
-              needCanvasUpdate: true,
-              needCanavaDataSave: true,
-            });
-            return;
-          }
-        }}
-      >
+      {/* <TouchableOpacity 
+        // onPress={() => {
+
+        //   if (this.state.eraseMode) {
+        //     this.state.queue.pushDeleteImage({ id: this.state.currentImageElem.id })
+        //     this.setState({
+        //       currentImageElem: undefined,
+        //       needCanvasUpdate: true,
+        //       needCanavaDataSave: true,
+        //     });
+        //     return;
+        //   }
+        // }}
+      //>*/}
         <View
 
           style={{
@@ -1746,7 +1754,7 @@ export default class IssieEditPhoto extends React.Component {
 
           {...this._panResponderElementMove.panHandlers}
         />
-      </TouchableOpacity>
+      {/* </TouchableOpacity> */}
       {/* <View {...this._panResponderElementMove.panHandlers} style={{
         zIndex: 25, top: -5
       }}>
@@ -1765,6 +1773,27 @@ export default class IssieEditPhoto extends React.Component {
         <Icon name='border-style' size={DRAG_ICON_SIZE}
           style={{ transform: [{ rotate: '180deg' }] }}
         />
+      </View>
+      <View
+        style={{
+          position: "absolute",
+          left: 5,
+          top: 7,
+          width: DRAG_ICON_SIZE,
+          height: DRAG_ICON_SIZE,
+          zIndex: 25
+        }}
+        
+        >
+        <Icon name='delete-forever' size={DRAG_ICON_SIZE} onPress={()=>{
+          console.log("image delete clicked")
+          this.state.queue.pushDeleteImage({ id: this.state.currentImageElem.id })
+          this.setState({
+            currentImageElem: undefined,
+            needCanvasUpdate: true,
+            needCanvasDataSave: true,
+          });
+        }} />
       </View>
 
     </View>

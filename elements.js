@@ -126,7 +126,7 @@ export const availableColorPicker = [
 ]
 
 export const textSizes = [
-    25, 30, 35, 40, 45, 50,
+    25, 35, 45, 55, 65, 75,
 ]
 export const extendedTextSizes = [
     50, 55, 60, 65, 70, 75

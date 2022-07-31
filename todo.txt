@@ -136,3 +136,26 @@ Low:
 - (low) when using arrows to move in zoom, should the view port moves or page moves?
 - date of page?
 
+
+
+
+
+31-july
+------
+- splashscreen - image is hebrew
+
+V- remove slider in color picking
+
+- show placeholder so you know 
+
+Pictures:
+V- leave pic in max quality
+V- delete pic, icon inside and ask before deletion
+V- avoid using the erasor
+V- in pic mode close other selectors
+
+TextSize: 
+V- more difference between the preset letters
+V- preview on large fontsize
+
+- Marker??

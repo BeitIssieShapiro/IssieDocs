@@ -109,33 +109,31 @@ export default class FolderGallery extends React.Component {
             })
 
             registerLangEvent()
-            const betaSettings = Settings.get('beta');
-            trace("Beta settings", betaSettings)
-
+            
             this.props.navigation.addListener("focus", async () => {
                 //this.refresh();
                 this.setState({ selected: undefined });
             })
             setNavParam(this.props.navigation, 'menuHandler', () => this._menuHandler());
-            setNavParam(this.props.navigation, 'betaFeatures', () => {
-                trace
-                if (this.state.betaCounter === 7) {
-                    //toggle beta features - always on for now
-                    // const newMode = { beta: !this.state.beta };
-                    // Settings.set(newMode);
-                    // this.setState(newMode);
-                    Alert.alert("Beta features", "Beta features has been " + (newMode.beta ? "Enabled" : "Disabled"));
+            // setNavParam(this.props.navigation, 'betaFeatures', () => {
+            //     trace
+            //     if (this.state.betaCounter === 7) {
+            //         //toggle beta features - always on for now
+            //         // const newMode = { beta: !this.state.beta };
+            //         // Settings.set(newMode);
+            //         // this.setState(newMode);
+            //         //Alert.alert("Beta features", "Beta features has been " + (newMode.beta ? "Enabled" : "Disabled"));
 
-                    return;
-                }
-                if (this.betaTimer) {
-                    clearTimeout(this.betaTimer);
-                }
-                this.betaTimer = setTimeout(() => this.setState({ betaCounter: 0 }), 1000);
+            //         return;
+            //     }
+            //     if (this.betaTimer) {
+            //         clearTimeout(this.betaTimer);
+            //     }
+            //     this.betaTimer = setTimeout(() => this.setState({ betaCounter: 0 }), 1000);
 
-                this.setState({ betaCounter: (this.state.betaCounter ? this.state.betaCounter + 1 : 1) });
-                trace("betacounter ", this.state.betaCounter)
-            });
+            //     this.setState({ betaCounter: (this.state.betaCounter ? this.state.betaCounter + 1 : 1) });
+            //     trace("betacounter ", this.state.betaCounter)
+            // });
             setNavParam(this.props.navigation, 'editHandler', () => this.toggleEditMode());
             setNavParam(this.props.navigation, 'isEditEnabled', () => {
                 let editTitleSetting = Settings.get(EDIT_TITLE.name);
@@ -376,7 +374,6 @@ export default class FolderGallery extends React.Component {
                 page: this.state.selected,
                 folder: this.state.currentFolder,
                 share: true,
-                betaFeatures: this.state.beta === true
             })
     }
 
@@ -583,7 +580,6 @@ export default class FolderGallery extends React.Component {
                     }
                 }, 10);
             },
-            betaFeatures: this.state.beta === true
         });
     }
 
