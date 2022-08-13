@@ -12,8 +12,10 @@ import {
     semanticColors,
     getMaterialCommunityIconButton,
     getIconButton,
-    getFontFamily
+    getFontFamily,
+    dimensions
 } from './elements'
+import { getRowDirection, isRTL } from './lang';
 
 
 export default function TitleEdit(props) {
@@ -45,7 +47,8 @@ export default function TitleEdit(props) {
             marginBottom: 5,
             alignItems: 'center', justifyContent: 'center',
             alignContent: 'center',
-            borderWidth:2,
+            borderWidth:1,
+            height: 45,
             borderColor:'transparent'
         },
         props.editMode ? {
@@ -68,11 +71,15 @@ export default function TitleEdit(props) {
             }}
             onFocus={conditionalBlur}
         />
-        <View style={{ position: 'absolute', left: '2%', flexDirection: 'row', alignItems: 'center' }}>
+        <View style={
+            [
+                { position: 'absolute',  top: -7,  flexDirection: 'row', alignItems: 'center' },
+                isRTL()?{left:-25}:{right:-25}
+            ]}>
             {props.editMode ? getIconButton(() => {
                 setEditedTitle("")
                 props.onSaveCallback.getTitleToSave = () => ""
-            }, "white", "close", 30) : null}
+            }, "white", "close", 40) : null}
         </View>
         
     </View>

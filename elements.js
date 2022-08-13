@@ -15,7 +15,7 @@ import { DraxScrollView } from 'react-native-drax';
 
 
 export const dimensions = {
-    headerHeight: 70,
+    headerHeight: 75,
     thinHeaderHeight: 52,
     toolbarHeight: 65,
     toolbarMargin: 5,
@@ -33,7 +33,7 @@ export const dimensions = {
 
 
 export function getFont() {
-    return isRTL() ? 'Alef' : 'Calibri';
+    return isRTL() ? 'Alef' : 'DroidSans';
 }
 export function getFontFamily() {
     return { fontFamily: getFont() }
@@ -126,11 +126,9 @@ export const availableColorPicker = [
 ]
 
 export const textSizes = [
-    25, 35, 45, 55, 65, 75,
+    25, 35, 45, 55, 65
 ]
-export const extendedTextSizes = [
-    50, 55, 60, 65, 70, 75
-]
+
 
 export const availableBrushSize = [
     1, 3, 5, 7, 9

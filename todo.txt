@@ -150,12 +150,19 @@ V- remove slider in color picking
 
 Pictures:
 V- leave pic in max quality
-V- delete pic, icon inside and ask before deletion
+- delete pic, icon outside and ask before deletion
 V- avoid using the erasor
 V- in pic mode close other selectors
 
 TextSize: 
 V- more difference between the preset letters
-V- preview on large fontsize
+- preview on large fontsize
+- + with same color
+- large font picker - same color, pan responder
+- 
+
+Editor:
+- line location when changing portrait to landscape
+
 
 - Marker??

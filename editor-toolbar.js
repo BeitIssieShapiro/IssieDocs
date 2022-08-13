@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { Icon } from 'react-native-elements'
-import { AppText, availableColorPicker, dimensions, getEraserIcon, IconButton, semanticColors, Spacer } from "./elements";
+import { AppText, availableColorPicker, dimensions, getEraserIcon, IconButton, semanticColors, Spacer, textSizes } from "./elements";
 import FadeInView from "./FadeInView";
 import { getRowDirections, translate } from "./lang";
 import { trace } from "./log";
@@ -14,9 +14,9 @@ const availableBrushSize = [
 
 const pickerMenuHeight = 70;
 
-export function EditorToolbar({
+function EditorToolbar({
     windowSize,
-
+    fontSize4Toolbar,
     onGoBack,
     onUndo,
     onRedo,
@@ -46,7 +46,7 @@ export function EditorToolbar({
     onToolbarHeightChange,
     onFloatingMenu
 
-}) {
+}, ref) {
     const [showExtMenu, setShowExtMenu] = useState(false);
     const [showColorPicker, setShowColorPicker] = useState(false);
     const [showTextSizePicker, setShowTextSizePicker] = useState(false);
@@ -60,6 +60,16 @@ export function EditorToolbar({
 
     isScreenNarrow = () => windowSize?.width < 500;
     isLandscape = () => windowSize?.width > windowSize?.height;
+
+    useImperativeHandle(ref, () => ({
+        closePicker: () => {
+            setShowBrushPicker(false);
+            setShowColorPicker(false);
+            setShowTextSizePicker(false);
+            setShowZoomPicker(false);
+        },
+    }));
+
 
     useEffect(() => {
         const calcHeight = (isScreenNarrow() || showExtMenu) && !isLandscape() ? 2 * dimensions.toolbarHeight : dimensions.toolbarHeight
@@ -159,13 +169,19 @@ export function EditorToolbar({
     const availablePickerWidth = windowSize ? windowSize.width - 2 * toolbarSideMargin : 500;
     let colorButtonsSize = windowSize ? (windowSize.width - 2 * toolbarSideMargin) / (availableColorPicker.length * 1.4) : 50;
 
-    const previewFontSize = fontSize > 75 ? 75 : fontSize;
-    const previewFontSizePlus = fontSize > 75;
+    
+    let previewFontSize = fontSize4Toolbar(fontSize);
+    let previewFontSizePlus = false;
+    trace ("previewFontSize", previewFontSize);
+    if (previewFontSize > dimensions.toolbarHeight) {
+        previewFontSizePlus = true;
+        previewFontSize = dimensions.toolbarHeight;
+    }
 
 
     const extMenu = [
         <IconButton onPress={onImageButtonClick} color={semanticColors.editPhotoButton}
-            icon={isImageMode?"new-image":"image"} size={55} iconSize={45} key={"1"} selected={isImageMode} iconType={isImageMode?"svg":""}/>,
+            icon={isImageMode ? "new-image" : "image"} size={55} iconSize={45} key={"1"} selected={isImageMode} iconType={isImageMode ? "svg" : ""} />,
         <Spacer width={23} key="2" />,
         <IconButton onPress={onZoomButtonClick} color={semanticColors.editPhotoButton}
             icon="zoom-in" size={55} iconSize={45} key={"3"} />,
@@ -206,39 +222,53 @@ export function EditorToolbar({
                 position: 'absolute',
                 top: 0,
                 right: isScreenNarrow() ? 0 : windowSize.width / 2 - 50,
-                width: 100,
+                width: 120,
                 height: dimensions.toolbarHeight,
                 backgroundColor: 'transparent',
                 borderRadius: 24.5,
                 justifyContent: 'center',
                 alignItems: 'center',
                 alignContent: 'center',
+                // borderRadius: dimensions.toolbarHeight,
+                // borderColor: "black",
+                // borderTopWidth: 3,
+                // borderBottomWidth: 3,
+                // borderStartWidth: 1,
+                // borderEndWidth: 1,
             }}>
                 {isTextMode ?
-                    <View>
+                    <View
+
+                    >
                         <AppText
                             style={[{
                                 fontSize: previewFontSize,
+                                width: "100%",
                                 lineHeight: previewFontSize + 8,
                                 color: color,
                                 textAlignVertical: 'center'
                             }, rtl ? {} : { fontWeight: 'bold' }]}
-                        >{translate("A B C")}</AppText>
-                        {previewFontSizePlus &&
+                        >{translate("A B C") + (previewFontSizePlus ? "+" : "")}</AppText>
+                        {/* {previewFontSizePlus &&
                             <View style={[{
                                 position: 'absolute',
                                 top: -15,
+                                flex:1,
+                                justifyContent:"center",
+                                alignItems:"center",
+                                alignContent:"center"
                                 
                             },rtl?{left: -25}:{right:-25}]}><AppText
                                 style={{
                                     fontSize: previewFontSize,
+                                    color: color,
                                 }}>+</AppText>
-                            </View>}
+                            </View>} */}
                     </View> :
                     !isImageMode &&
-                        //<Icon name={"image"} size={55} color={semanticColors.editPhotoButton} /> :
-                        
-                        getSvgIcon('doodle', 55, color, strokeWidth * .8)
+                    //<Icon name={"image"} size={55} color={semanticColors.editPhotoButton} /> :
+
+                    getSvgIcon('doodle', 55, color, strokeWidth * .8)
                 }
             </View>
 
@@ -247,9 +277,9 @@ export function EditorToolbar({
             <View style={[{
                 position: 'absolute',
                 height: dimensions.toolbarHeight,
-                flexDirection: rowReverse, alignItems: 'center'
+                flexDirection: rowReverse, alignItems: 'center',
             }, isScreenNarrow() ?
-                { top: dimensions.toolbarHeight, left: sideMargin } :
+                { top: dimensions.toolbarHeight, left: 0 } :
                 { top: 0, right: 50 }
             ]} >
                 <IconButton onPress={onTextButtonClick} icon={translate("A")} isText={true} selected={isTextMode}
@@ -263,8 +293,8 @@ export function EditorToolbar({
                 <Spacer width={23} />
 
 
-                {(isLandscape() || isScreenNarrow()) &&  extMenu}
-                {!isLandscape() && !isScreenNarrow() && 
+                {(isLandscape() || isScreenNarrow()) && extMenu}
+                {!isLandscape() && !isScreenNarrow() &&
                     <IconButton onPress={() => setShowExtMenu(oldVal => !oldVal)} color={semanticColors.editPhotoButton}
                         icon={showExtMenu ? "expand-less" : "expand-more"} size={55} iconSize={45} />}
                 {/* {!betaFeatures && !isScreenNarrow() && <IconButton onPress={onZoomButtonClick} color={semanticColors.editPhotoButton}
@@ -300,12 +330,13 @@ export function EditorToolbar({
             top={toolbarHeight}
             width={availablePickerWidth}
             size={fontSize}
+            fontSize4Toolbar={fontSize4Toolbar}
             color={color}
             isScreenNarrow={isScreenNarrow()}
             onSelect={(size, keepOpen) => {
                 onSelectTextSize(size);
                 if (!keepOpen)
-                setShowTextSizePicker(false);
+                    setShowTextSizePicker(false);
             }}
         />
 
@@ -339,6 +370,8 @@ export function EditorToolbar({
     </View>
 }
 
+
+
 const styles = StyleSheet.create({
     pickerView: {
         flexDirection: 'row',
@@ -351,3 +384,6 @@ const styles = StyleSheet.create({
     }
 }
 );
+
+
+export default forwardRef(EditorToolbar);

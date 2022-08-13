@@ -32,6 +32,9 @@ var strings = {
         "BeforeDeletePageQuestion": "האם למחוק את הדף?",
         "BeforeDeleteSubPageQuestion":"מחיקת עמוד {1} מתוך {2}", 
 
+        "DeleteImageTitle": "מחיקת תמונה",
+        "BeforeDeleteImageQuestion":"האם למחוק את התמונה מהדף?", 
+
         "DeleteFoldersAndPagesTitle": "מחיקת תיקיות ודפים",
         "BeforeDeleteFolderQuestion": "מחיקת תיקייה תגרום למחיקת כל הדפים בתוכה, האם למחוק?",
         "BeforeDeleteFoldersAndPagesQuestion": "נבחרה מחיקת דפים ותיקיות. מחיקת התיקיות תמחק את כל הדפים בתוכן. האם להמשיך?",
@@ -137,6 +140,10 @@ var strings = {
         "BeforeDeleteFolderQuestion": "حذف المجلد سيؤدي إلى مسح جميع الصفحات داخله, وحذفه",
         "BeforeDeleteFoldersAndPagesQuestion": "اختير حذف الصفحات والمجلدات. حذف المجلدات سيؤدي إلى حذف جميع الصفحات والمحتويات. هل تريد المتابعة؟",
 
+        "DeleteImageTitle": "Delete Image", //todo
+        "BeforeDeleteImageQuestion":"Are you sure?", //todo
+
+
         "SuccessfulMovePageMsg": "الصفحة '{1}' تم نقلها بنجاح إلى المجلد '{2}'", //todo validate
 
         "NoPagesYet": "المجلد فارغ",
@@ -223,6 +230,9 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "DeleteFolderTitle": "Delete folder",
         "BeforeDeletePageQuestion": "Are you sure you want to delete the page?",
         "BeforeDeleteSubPageQuestion":"Delete page {1} of {2}?", 
+
+        "DeleteImageTitle": "Delete Image", 
+        "BeforeDeleteImageQuestion":"Are you sure you want to delete the image?",
 
         "DeleteFoldersAndPagesTitle": "Delete folders and pages",
         "BeforeDeleteFolderQuestion": "Deleteing a folder will delete all pages in it, are you sure?",

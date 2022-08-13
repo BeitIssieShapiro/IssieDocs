@@ -7,7 +7,7 @@ import {
 
 import {
     AppText,
-    availableColorPicker, availableTextSize, extendedTextSizes, getColorButton, getColorButtonInt, getRoundedButton, Spacer, textSizes
+    availableColorPicker, availableTextSize, getColorButton, getColorButtonInt, getRoundedButton, semanticColors, Spacer, textSizes
 } from './elements'
 import FadeInView from './FadeInView';
 import ColorPicker from 'react-native-wheel-color-picker'
@@ -27,7 +27,8 @@ const styles = StyleSheet.create({
         left: 0,
         borderColor: 'gray',
         borderWidth: 1,
-        padding: 5,
+        //padding: 5,
+        paddingTop:2,
         alignItems: 'center'
     }
 });
@@ -185,7 +186,7 @@ export function TextSizePicker(props) {
                 flexDirection: 'row', width: '100%', height: buttonSize + 5,
                 justifyContent: 'space-evenly', alignContent: 'center'
             }}>
-            {textSizesAct.map((size, i) => getTextSizePicker(props.color, buttonSize, size, size === props.size, i,
+            {textSizesAct.map((size, i) => getTextSizePicker(props.color, buttonSize, size, size === props.size, i,  props.fontSize4Toolbar,
                 (size) => {
                     setOpenMore(false)
                     props.onSelect(size)
@@ -215,7 +216,8 @@ export function TextSizePicker(props) {
                 minHeight: 200}}>
                 <AppText style={{
                     fontSize: composedSize,
-                    lineHeight: composedSize
+                    lineHeight: composedSize,
+                    color: props.color
                 }}
                 onPress={()=>props.onSelect(composedSize)}
                 >{translate("A")}</AppText>
@@ -225,16 +227,20 @@ export function TextSizePicker(props) {
                 height:100,
                 position:'absolute',
                 top:250,
+                
             }} 
             
                 onTouchStart={(e) => {
                 trace("touch", e.nativeEvent.locationX);
-                let val = Math.floor(e.nativeEvent.locationX);
-                if (val < 10) {
-                    val = 10;
-                } else if (val>370) {
-                    val = 370;
+                let val = e.nativeEvent.locationX;
+                if (val < 25) {
+                    val = 25;
+                } else if (val>305) {
+                    val = 305;
                 }
+
+                val = Math.floor(val / 10) * 10 + 5;
+
                 setComposedSize(val);
                 props.onSelect(val, true);
             }}
@@ -247,29 +253,28 @@ export function TextSizePicker(props) {
                     borderLeftWidth: 400,
                     borderBottomWidth: 30,
                     borderLeftColor: "transparent",
-                    borderTopColor: "black"
+                    borderBottomColor: semanticColors.editPhotoButton
                 }}
                 >
-                    <View style={{
+                    <TouchableOpacity style={{
                         position: 'absolute',
                         bottom: -2 * dotSize,
-                        left: -textSizeVolumeBarSize + (composedSize),
+                        left: -textSizeVolumeBarSize + (composedSize) - dotSize/2,
                         borderRadius: dotSize / 2,
                         width: dotSize,
                         height: dotSize,
-                        backgroundColor: 'black'
+                        backgroundColor: semanticColors.editPhotoButton
 
-                    }}></View>
+                    }}></TouchableOpacity>
                 </View>
             </View>
-            {/* {extendedTextSizes.map((size, i) => getTextSizePicker(props.color, buttonSize, size, size === props.size, i, (size) => props.onSelect(size)))} */}
-
+            
 
         </View>
     </FadeInView>
 }
 
-function getTextSizePicker(color, size, textSize, selected, index, callback) {
+function getTextSizePicker(color, size, textSize, selected, index, fontSize4Toolbar, callback) {
     return <TouchableOpacity
         onPress={() => callback(textSize)}
         activeOpacity={0.7}
@@ -286,8 +291,8 @@ function getTextSizePicker(color, size, textSize, selected, index, callback) {
         }}
         >
             <AppText style={{
-                fontSize: textSize, color: color,
-                textAlignVertical: 'center', lineHeight: textSize + 12
+                fontSize: fontSize4Toolbar(textSize), //* rotateRatio, color: color,
+                textAlignVertical: 'center', lineHeight: fontSize4Toolbar(textSize) + 12
             }}>{translate("A")}</AppText>
         </View>
     </TouchableOpacity>

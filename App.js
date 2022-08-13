@@ -8,7 +8,7 @@ import FolderGallery from './FolderGallery';
 import IssieEditPhoto from './IssieEditPhoto';
 import IssieAbout from './issieabout'
 import IssieCreateFolder from './create-folder';
-import { Spacer, globalStyles, getHeaderBackButton, getIconButton, getFont, getFontFamily } from './elements';
+import { Spacer, globalStyles, getHeaderBackButton, getIconButton, getFont, getFontFamily, dimensions } from './elements';
 
 import { fTranslate, getRowDirection, getRowDirections, isRTL, translate } from './lang.js';
 import {
@@ -169,6 +169,7 @@ function App(props) {
             }
           />
           <Stack.Screen name="EditPhoto" component={IssieEditPhoto}
+           initialParams={{headerHeight:isMobile()?dimensions.headerHeight: dimensions.thinHeaderHeight}}
             options={(props) => {
               const page = props.route.params.page;
               //let pathParts = page.path.split('/');
