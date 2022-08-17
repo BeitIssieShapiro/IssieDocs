@@ -37,30 +37,30 @@ export function getElementMovePanResponder({
                 repeat = { xOffset: -5 }
             }
 
-            trace("move left", "text width", getState().inputTextWidth)
+            trace("move left", "text width", getState().inputTextWidth * getState().scaleRatio)
             if (rtl &&
                 (
-                    xOffset < 0 && x - getState().inputTextWidth - 20 < 0 ||
-                    x < 25
+                    xOffset < 0 && x - getState().inputTextWidth * getState().scaleRatio - 20 < 0 ||
+                    x < dragIconSize / 2
                 )) {
                 trace("move-elem hit left side", rightDiff)
                 if (xOffset < 0) {
                     xOffset += 5
                     repeat = { xOffset: 5 }
-                    x = getState().inputTextWidth + 20;
+                    x = getState().inputTextWidth * getState().scaleRatio + 20;
                 } else {
-                    x = 25;
+                    x = dragIconSize / 2;
                 }
                 
             }
 
-            if (!rtl && x < dragIconSize / 2) {
-                //trace("move-elem hit left side", rightDiff)
+            if (!rtl && x < 0) {
+                trace("x-move-elem hit left side", rightDiff)
                 if (xOffset < 0) {
                     xOffset += 5
                     repeat = { xOffset: 5 }
                 }
-                x = dragIconSize / 2;
+                x = 0; // dragIconSize / 2;
             }
 
             // Y- Axis

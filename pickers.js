@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
         borderColor: 'gray',
         borderWidth: 1,
         //padding: 5,
-        paddingTop:2,
+        paddingTop: 2,
         alignItems: 'center'
     }
 });
@@ -91,14 +91,14 @@ export function MyColorPicker(props) {
             )
             }
         </View>
-        {openMore && <View style={{ top: 0, left: 0, height: 300, width: "80%" }}>
+        {openMore && <View style={{ flex:1,top: 0, left: 0, height: 300, width: "90%" , alignItems:"center"}}>
             <View style={{
                 position: "absolute",
-                top: 30, left: 0,
+                top: 30, left: -12,
                 //height: colorButtonSize * 3 + 30,
                 width: colorButtonSize * 2 + 30,
                 flexWrap: "wrap",
-                zIndex: 1000, flexDirection: "row"
+                zIndex: 1000, flexDirection: "row",
             }} >
                 {lastColors.map((color, i) => <View key={i} style={{ padding: 5 }}>{
                     getColorButton(
@@ -116,7 +116,7 @@ export function MyColorPicker(props) {
 
             <View style={{
                 position: "absolute",
-                top: "30%", right: "5%",
+                top: 30, right: -12,
                 //height: colorButtonSize * 3 + 30,
                 width: colorButtonSize * 2 + 30,
                 flexWrap: "wrap",
@@ -131,32 +131,34 @@ export function MyColorPicker(props) {
                         false)}</View>
                 }
             </View>
+            <View style={{ width: "90%", height:"100%" }}>
+                <ColorPicker
+                    // ref={r => { this.picker = r }}
+                    color={composedColor}
+                    // swatchesOnly={this.state.swatchesOnly}
+                    onColorChangeComplete={(color) => {
+                        if (props.open) {
+                            //trace("onColorChangeComplete", color)
+                            setComposedColor(color)
+                        }
+                    }}
+                    onColorChange={(color) => {
+                        if (props.open) {
+                            //trace("onColorChange", color)
+                            setComposedColor(color)
+                        }
+                    }}
 
-            <ColorPicker
-                // ref={r => { this.picker = r }}
-                color={composedColor}
-                // swatchesOnly={this.state.swatchesOnly}
-                onColorChangeComplete={(color) => {
-                    if (props.open) {
-                        //trace("onColorChangeComplete", color)
-                        setComposedColor(color)
-                    }
-                }}
-                onColorChange={(color) => {
-                    if (props.open) {
-                        //trace("onColorChange", color)
-                        setComposedColor(color)
-                    }
-                }}
+                    sliderSize={0}
+                    noSnap={true}
+                    row={false}
+                    gapSize={10}
+                    thumbSize={25}
+                    autoResetSlider={true}
 
-                sliderSize={0}
-                noSnap={true}
-                row={false}
-                gapSize={10}
-                autoResetSlider={true}
-
-                swatches={false}
-            />
+                    swatches={false}
+                />
+            </View>
 
         </View>
         }
@@ -171,7 +173,7 @@ export function TextSizePicker(props) {
     const [openMore, setOpenMore] = useState(false);
     const [composedSize, setComposedSize] = useState(props.size);
 
-    useEffect(()=>{
+    useEffect(() => {
         setComposedSize(props.size);
     }, [props.size])
 
@@ -186,7 +188,7 @@ export function TextSizePicker(props) {
                 flexDirection: 'row', width: '100%', height: buttonSize + 5,
                 justifyContent: 'space-evenly', alignContent: 'center'
             }}>
-            {textSizesAct.map((size, i) => getTextSizePicker(props.color, buttonSize, size, size === props.size, i,  props.fontSize4Toolbar,
+            {textSizesAct.map((size, i) => getTextSizePicker(props.color, buttonSize, size, size === props.size, i, props.fontSize4Toolbar,
                 (size) => {
                     setOpenMore(false)
                     props.onSelect(size)
@@ -210,40 +212,41 @@ export function TextSizePicker(props) {
                 //justifyContent: 'space-evenly'
             }}>
             <Spacer height={15} />
-            <View style={{ 
-                position:'absolute',
-                top:Math.max(100-composedSize/2, 0),
-                minHeight: 200}}>
+            <View style={{
+                position: 'absolute',
+                top: Math.max(100 - composedSize / 2, 0),
+                minHeight: 200
+            }}>
                 <AppText style={{
                     fontSize: composedSize,
                     lineHeight: composedSize,
                     color: props.color
                 }}
-                onPress={()=>props.onSelect(composedSize)}
+                    onPress={() => props.onSelect(composedSize)}
                 >{translate("A")}</AppText>
             </View>
             <Spacer height={25} />
             <View style={{
-                height:100,
-                position:'absolute',
-                top:250,
-                
-            }} 
-            
-                onTouchStart={(e) => {
-                trace("touch", e.nativeEvent.locationX);
-                let val = e.nativeEvent.locationX;
-                if (val < 25) {
-                    val = 25;
-                } else if (val>305) {
-                    val = 305;
-                }
+                height: 100,
+                position: 'absolute',
+                top: 250,
 
-                val = Math.floor(val / 10) * 10 + 5;
-
-                setComposedSize(val);
-                props.onSelect(val, true);
             }}
+
+                onTouchStart={(e) => {
+                    trace("touch", e.nativeEvent.locationX);
+                    let val = e.nativeEvent.locationX;
+                    if (val < 25) {
+                        val = 25;
+                    } else if (val > 305) {
+                        val = 305;
+                    }
+
+                    val = Math.floor(val / 10) * 10 + 5;
+
+                    setComposedSize(val);
+                    props.onSelect(val, true);
+                }}
             >
                 <View style={{
                     width: 0,
@@ -259,7 +262,7 @@ export function TextSizePicker(props) {
                     <TouchableOpacity style={{
                         position: 'absolute',
                         bottom: -2 * dotSize,
-                        left: -textSizeVolumeBarSize + (composedSize) - dotSize/2,
+                        left: -textSizeVolumeBarSize + (composedSize) - dotSize / 2,
                         borderRadius: dotSize / 2,
                         width: dotSize,
                         height: dotSize,
@@ -268,7 +271,7 @@ export function TextSizePicker(props) {
                     }}></TouchableOpacity>
                 </View>
             </View>
-            
+
 
         </View>
     </FadeInView>
