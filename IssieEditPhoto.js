@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import {
   AppRegistry, StyleSheet, TextInput, View,
-  TouchableOpacity, Alert, PanResponder, Keyboard, PixelRatio, Dimensions, ActivityIndicator,
+  Text, Alert, PanResponder, Keyboard, PixelRatio, Dimensions, ActivityIndicator,
   Animated
 } from 'react-native';
 
@@ -273,7 +273,7 @@ export default class IssieEditPhoto extends React.Component {
       yText: 0,
       keyboardHeight: 0,
       needCanvasUpdate: false,
-      needCanavaDataSave: false,
+      needCanvasDataSave: false,
       needCanvasUpdateTextOnly: false,
       sharing: false
     }
@@ -645,7 +645,7 @@ export default class IssieEditPhoto extends React.Component {
     ).catch((e) => {/*no json file yet*/ })
       .finally(() => {
         //this.UpdateCanvas(true)
-        this.setState({ needCanvasUpdate: true, needCanavaDataSave: false });
+        this.setState({ needCanvasUpdate: true, needCanvasDataSave: false });
       });
   }
 
@@ -828,8 +828,9 @@ export default class IssieEditPhoto extends React.Component {
         Math.abs(origElem.normPosition.x - newElem.normPosition.x) <= 5 &&
         Math.abs(origElem.normPosition.y - newElem.normPosition.y) <= 5 &&
         origElem.normFontSize == newElem.normFontSize &&
-        origElem.fontColor == newElem.fontColor &&
-        Math.abs(origElem.width - newElem.width) <= 2) {
+        origElem.fontColor == newElem.fontColor //&&
+        //Math.abs(origElem.width - newElem.width) <= 2
+      ) {
         //need to set the current text back to canvas
         trace("txt no change")
         if (!afterDrag) {
@@ -840,6 +841,7 @@ export default class IssieEditPhoto extends React.Component {
         }
         return false;
       }
+      trace("txt changed", origElem, newElem)
     }
     if (afterDrag)
       return;
@@ -850,7 +852,7 @@ export default class IssieEditPhoto extends React.Component {
       //return false;
     }
     this.setState({
-      needCanvasUpdate: true, needCanavaDataSave: true,
+      needCanvasUpdate: true, needCanvasDataSave: true,
       needCanvasUpdateTextOnly: true
     });
     return true;
@@ -997,7 +999,7 @@ export default class IssieEditPhoto extends React.Component {
 
     this.setState({
       needCanvasUpdate: true,
-      needCanavaDataSave: true,
+      needCanvasDataSave: true,
       needCanvasUpdateImageSizeOnly: true,
     });
 
@@ -1043,7 +1045,7 @@ export default class IssieEditPhoto extends React.Component {
     //need to set the current text back to canvas
     this.setState({
       needCanvasUpdate: true,
-      needCanavaDataSave: true,
+      needCanvasDataSave: true,
     });
     return true;
 
@@ -1072,7 +1074,6 @@ export default class IssieEditPhoto extends React.Component {
     for (let i = 0; i < q.length; i++) {
       if (q[i].type === 'text') {
         const txtElem = this.txtElemNorm2Scale(q[i].elem)
-        trace("update-canvas", txtElem);
 
         //first try to find same ID and replace, or add it
         let found = false;
@@ -1120,7 +1121,7 @@ export default class IssieEditPhoto extends React.Component {
       canvasImages.forEach(ci => canvas.addOrSetCanvasImage(ci));
     }
 
-    if (this.state.needCanavaDataSave) {
+    if (this.state.needCanvasDataSave) {
       setTimeout(() => this.Save(), 100);
     }
 
@@ -1128,7 +1129,7 @@ export default class IssieEditPhoto extends React.Component {
 
     this.setState({
       canvasTexts, canvasImages, needCanvasUpdate: false,
-      needCanavaDataSave: false, needCanvasUpdateTextOnly: false,
+      needCanvasDataSave: false, needCanvasUpdateTextOnly: false,
       needCanvasUpdateImageSizeOnly: false,
       lastCanvasScaleRatio: this.state.scaleRatio
     });
@@ -1277,7 +1278,7 @@ export default class IssieEditPhoto extends React.Component {
               this.state.queue.pushImage(img)
               const scaleImg = this.imageNorm2Scale(img)
               this.setState({
-                needCanvasUpdate: true, needCanavaDataSave: true,
+                needCanvasUpdate: true, needCanvasDataSave: true,
                 currentImageElem: scaleImg,
                 //xText: Math.round(scaleImg.position.x), yText: Math.round(scaleImg.position.yText)
               });
@@ -1430,7 +1431,7 @@ export default class IssieEditPhoto extends React.Component {
 
       let ratio = Math.min(ratioX, ratioY);
 
-      ratio = Math.round((ratio + Number.EPSILON) * 100) / 100;
+      ratio = Math.floor((ratio + Number.EPSILON) * 100) / 100;
 
       let xOffset = this.state.xOffset;
       let yOffset = this.state.yOffset;
@@ -1474,7 +1475,7 @@ export default class IssieEditPhoto extends React.Component {
         sideMargin,
         scaleRatio: ratio,
         needCanvasUpdate: true,
-        needCanavaDataSave: false,
+        needCanvasDataSave: false,
         xText, yText,
         currentImageElem: imgElem,
       });
@@ -1504,12 +1505,12 @@ export default class IssieEditPhoto extends React.Component {
           onGoBack={() => this.props.navigation.goBack()}
           onUndo={() => {
             this.state.queue.undo();
-            this.setState({ needCanvasUpdate: true, needCanavaDataSave: true, currentImageElem: undefined });
+            this.setState({ needCanvasUpdate: true, needCanvasDataSave: true, currentImageElem: undefined });
           }}
           canRedo={this.state.queue.canRedo()}
           onRedo={() => {
             this.state.queue.redo();
-            this.setState({ needCanvasUpdate: true, needCanavaDataSave: true });
+            this.setState({ needCanvasUpdate: true, needCanvasDataSave: true });
           }}
           fontSize4Toolbar={this.fontSize4Toolbar}
           onZoomOut={() => this.doZoom(-.5)}
@@ -1820,7 +1821,7 @@ export default class IssieEditPhoto extends React.Component {
         //     this.setState({
         //       currentImageElem: undefined,
         //       needCanvasUpdate: true,
-        //       needCanavaDataSave: true,
+        //       needCanvasDataSave: true,
         //     });
         //     return;
         //   }
@@ -1953,6 +1954,15 @@ export default class IssieEditPhoto extends React.Component {
               this.state.scaleRatio * this.state.zoom, isRTL()),
           }}
           value={this.state.inputTextValue}
+          onTouchStart={(ev) => {
+            let x = this.screen2ViewPortX(ev.nativeEvent.pageX);
+            trace("click on text input", this.state.xText - x, this.state.inputTextWidth * this.state.scaleRatio*this.state.zoom)
+            if (Math.abs(this.state.xText - x) > this.state.inputTextWidth * this.state.scaleRatio*this.state.zoom + DRAG_ICON_SIZE / 2) {
+              //treats it as if click outside the text input, delegates to canvasClick
+              this.canvasClick(ev);
+            }
+          }}
+
         />
         <View style={{
           position: 'absolute', left: (DRAG_ICON_SIZE - 2), top: 0,

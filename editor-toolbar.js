@@ -171,11 +171,11 @@ function EditorToolbar({
 
     
     let previewFontSize = fontSize4Toolbar(fontSize);
+    trace("previewFontSize",previewFontSize, dimensions.toolbarHeight)
     let previewFontSizePlus = false;
-    trace ("previewFontSize", previewFontSize);
-    if (previewFontSize > dimensions.toolbarHeight) {
+    if (previewFontSize > dimensions.toolbarHeight - 5) {
         previewFontSizePlus = true;
-        previewFontSize = dimensions.toolbarHeight;
+        previewFontSize = dimensions.toolbarHeight - 5;
     }
 
 

@@ -295,7 +295,8 @@ function getTextSizePicker(color, size, textSize, selected, index, fontSize4Tool
         >
             <AppText style={{
                 fontSize: fontSize4Toolbar(textSize), //* rotateRatio, color: color,
-                textAlignVertical: 'center', lineHeight: fontSize4Toolbar(textSize) + 12
+                textAlignVertical: 'center', 
+                lineHeight: fontSize4Toolbar(textSize)+4
             }}>{translate("A")}</AppText>
         </View>
     </TouchableOpacity>
