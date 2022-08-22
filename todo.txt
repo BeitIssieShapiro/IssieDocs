@@ -166,3 +166,12 @@ Editor:
 
 
 - Marker??
+
+21-Aug
+------
+V - click on one of the three up buttons - collapse toolbar
+V - Add picture from camera - with a sub-menu
+V - custom font - bar to the editing
+splash screen in english
+V - Arabic texts
+V - better resolution of added images

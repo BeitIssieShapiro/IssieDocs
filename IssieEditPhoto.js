@@ -14,7 +14,7 @@ import {
   Spacer, getRoundedButton,
   renderMenuOption, IDMenuOptionsStyle, globalStyles, getFont
 } from './elements'
-import { getNewPage, SRC_GALLERY, SRC_RENAME } from './newPage';
+import { getNewPage, SRC_CAMERA, SRC_GALLERY, SRC_RENAME } from './newPage';
 import ProgressCircle from 'react-native-progress-circle'
 import { fTranslate, getRowDirections, isRTL } from './lang.js'
 
@@ -1125,7 +1125,7 @@ export default class IssieEditPhoto extends React.Component {
       setTimeout(() => this.Save(), 100);
     }
 
-    //trace("u-texts", canvasTexts);
+    trace("u-texts", canvasTexts);
 
     this.setState({
       canvasTexts, canvasImages, needCanvasUpdate: false,
@@ -1164,20 +1164,22 @@ export default class IssieEditPhoto extends React.Component {
   normFontSize2FontSize = (normFontSize) => {
 
     const map = {
-      f25: 35,
+      f25: 25.6,
+      f30: 21,
       f35: 18,
-      f45: 14,
-      f55: 11,
-      f65: 10,
-      f75: 9.5,
-      f85: 9.1,
-      f95: 8.7,
-      f105: 8.3,
-      f115: 7.9,
-      f125: 7.5,
-      f135: 7.1,
-      f145: 6.7,
-      f155: 6.3,
+      f40: 16,
+      f45: 14.1,
+      f55: 13.2,
+      f65: 12.3,
+      f75: 11.5,
+      f85: 10.7,
+      f95: 10,
+      f105: 9.3,
+      f115: 8.6,
+      f125: 8,
+      f135: 7.5,
+      f145: 7,
+      f155: 6.5,
       f165: 6,
       f175: 5.7,
       f185: 5.4,
@@ -1198,7 +1200,7 @@ export default class IssieEditPhoto extends React.Component {
     if (y == undefined) {
       return 30;
     }
-    const h = this.state.imageSize?.h || 1000;
+    const h = this.state.imageSize ? this.state.imageSize.w : 1000;
     //trace("font factor", normFontSize, y, (h / y) * this.state.scaleRatio)
     return (h / y) * this.state.scaleRatio;
   }
@@ -1245,6 +1247,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   onTextSize = (size) => {
+    trace("set text size", size)
     this.setState({
       fontSize: size, showTextSizePicker: false, eraseMode: false
     });
@@ -1262,15 +1265,15 @@ export default class IssieEditPhoto extends React.Component {
     this.onEraserChange();
   }
 
-  onAddImage = () => {
-    getNewPage(SRC_GALLERY,
+  onAddImage = (src) => {
+    getNewPage(src,
       (uri) => {
         this.setState({ showBusy: true })
         //trace("image in base64", uri.length)
         // this.setState({ icon: uri})
         getImageDimensions(uri).then((imgSize) => {
           const ratio = imgSize.w / imgSize.h;
-          FileSystem.main.resizeImage(uri, Math.round(this.state.viewPortRect.width / 2 * ratio), this.state.viewPortRect.height / 2)
+          FileSystem.main.resizeImage(uri, Math.round(this.state.viewPortRect.width / 1.5 ), this.state.viewPortRect.height / 1.5)
             .then(uri2 => FileSystem.main.convertImageToBase64(uri2))
             .then(imgBase64 => {
 
@@ -1527,12 +1530,13 @@ export default class IssieEditPhoto extends React.Component {
               mode: Modes.IMAGE, showTextInput: false,
             })
             if (!(this.state?.canvasImages?.length > 0)) {
-              this.onAddImage();
+              this.toolbarRef.current.openImageSubMenu();
             } else if (this.state.canvasImages.length == 1) {
               this.setState({ currentImageElem: this.state.canvasImages[0] })
             }
           }}
-          onAddImage={() => this.onAddImage()}
+          onAddImageFromGallery={() => this.onAddImage(SRC_GALLERY)}
+          onAddImageFromCamera={() => this.onAddImage(SRC_CAMERA)}
           onBrushMode={() => this.onBrushMode()}
 
           isTextMode={this.isTextMode()}

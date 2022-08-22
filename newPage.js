@@ -26,7 +26,7 @@ export async function getNewPage(src, okEvent, cancelEvent, onError, navigation,
             mediaType: 'photo',
             //selectionLimit: 1,
             //quality: 0 to 1 
-            quality:0.7,
+            quality:0.8,
             ...options,
             noData: true
         }

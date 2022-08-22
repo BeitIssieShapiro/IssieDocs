@@ -37,7 +37,7 @@ var strings = {
 
         "DeleteFoldersAndPagesTitle": "מחיקת תיקיות ודפים",
         "BeforeDeleteFolderQuestion": "מחיקת תיקייה תגרום למחיקת כל הדפים בתוכה, האם למחוק?",
-        "BeforeDeleteFoldersAndPagesQuestion": "נבחרה מחיקת דפים ותיקיות. מחיקת התיקיות תמחק את כל הדפים בתוכן. האם להמשיך?",
+        //"BeforeDeleteFoldersAndPagesQuestion": "נבחרה מחיקת דפים ותיקיות. מחיקת התיקיות תמחק את כל הדפים שבתוכן. האם להמשיך?",
 
         "SuccessfulMovePageMsg": "דף '{1}' עבר בהצלחה לתיקית '{2}'",
         "NoPagesYet": "התיקיה ריקה",
@@ -61,7 +61,7 @@ var strings = {
 
         //buttons
         "A": "א",
-        "A B C": "א ב ג",
+        "A B C": "אבג",
 
         "SortA": "א",
         "SortZ": "ת",
@@ -107,9 +107,6 @@ var strings = {
         "MissingCameraPermission": `לא ניתנה רשות לשימוש במצלמה לאפליקציה
         למתן רשות יש לגשת להגדרות -> פרטיות -> מצלמה, ולאפשר שימוש עבור IssieDocs`,
         "EditPhotoTitle": "עריכת תמונה",
-
-
-
     },
     "ar": {
         "StartHere": "إضافة صفحات",
@@ -138,13 +135,13 @@ var strings = {
         "BeforeDeleteSubPageQuestion":"احذف الصفحة {1} من {2}",
         "DeleteFoldersAndPagesTitle": "حذف المجلدات والعناوين",
         "BeforeDeleteFolderQuestion": "حذف المجلد سيؤدي إلى مسح جميع الصفحات داخله, وحذفه",
-        "BeforeDeleteFoldersAndPagesQuestion": "اختير حذف الصفحات والمجلدات. حذف المجلدات سيؤدي إلى حذف جميع الصفحات والمحتويات. هل تريد المتابعة؟",
+        //"BeforeDeleteFoldersAndPagesQuestion": "اختير حذف الصفحات والمجلدات. حذف المجلدات سيؤدي إلى حذف جميع الصفحات والمحتويات. هل تريد المتابعة؟",
 
-        "DeleteImageTitle": "Delete Image", //todo
-        "BeforeDeleteImageQuestion":"Are you sure?", //todo
+        "DeleteImageTitle": "حذف صورة", //verify
+        "BeforeDeleteImageQuestion":"هل أنت واثق?", //verify
 
 
-        "SuccessfulMovePageMsg": "الصفحة '{1}' تم نقلها بنجاح إلى المجلد '{2}'", //todo validate
+        "SuccessfulMovePageMsg": "الصفحة '{1}' تم نقلها بنجاح إلى المجلد '{2}'", //verify
 
         "NoPagesYet": "المجلد فارغ",
         "ChooseFolder": "اختار مجلد", 
@@ -162,7 +159,7 @@ var strings = {
         "MediaPickerTitle": "تحديد الصورة",
 
         "A": "أ",
-        "A B C": "أ ب ج",
+        "A B C": "أبج",
 
         "SortA": "أ",
         "SortZ":"ي",
@@ -225,6 +222,8 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "PDFLoadFailed": "PDF loading failed",
         "DefaultFolder": "Desktop", 
         "Search":"Search",
+
+        "EditPhotoTitle": "Edit page",
 
         "DeletePageTitle": "Delete page",
         "DeleteFolderTitle": "Delete folder",

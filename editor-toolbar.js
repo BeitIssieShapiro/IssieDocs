@@ -25,7 +25,8 @@ function EditorToolbar({
     onEraser,
     onTextMode,
     onImageMode,
-    onAddImage,
+    onAddImageFromCamera,
+    onAddImageFromGallery,
     onBrushMode,
     onZoomIn,
     onZoomOut,
@@ -52,6 +53,7 @@ function EditorToolbar({
     const [showTextSizePicker, setShowTextSizePicker] = useState(false);
     const [showBrushPicker, setShowBrushPicker] = useState(false);
     const [showZoomPicker, setShowZoomPicker] = useState(false);
+    const [showAddImagePicker, setShowAddImagePicker] = useState(false);
 
     fontSize = fontSize || 25;
     strokeWidth = strokeWidth || 1;
@@ -61,13 +63,28 @@ function EditorToolbar({
     isScreenNarrow = () => windowSize?.width < 500;
     isLandscape = () => windowSize?.width > windowSize?.height;
 
+    closeAllPickers = () => {
+        setShowBrushPicker(false);
+        setShowColorPicker(false);
+        setShowTextSizePicker(false);
+        setShowZoomPicker(false);
+        setShowAddImagePicker(false);
+    }
+
+    collapseExtended = () => {
+        setShowExtMenu(false);
+        setShowZoomPicker(false);
+        setShowAddImagePicker(false);
+    }
+
     useImperativeHandle(ref, () => ({
         closePicker: () => {
-            setShowBrushPicker(false);
-            setShowColorPicker(false);
-            setShowTextSizePicker(false);
-            setShowZoomPicker(false);
+            closeAllPickers();
         },
+        openImageSubMenu: () => {
+            closeAllPickers();
+            setShowAddImagePicker(true);
+        }
     }));
 
 
@@ -81,6 +98,7 @@ function EditorToolbar({
     onTextButtonClick = useCallback(() => {
         if (!isTextMode) {
             onTextMode()
+            collapseExtended();
         }
 
         if (isTextMode || showBrushPicker) {
@@ -95,12 +113,14 @@ function EditorToolbar({
             setShowBrushPicker(false);
             setShowZoomPicker(false);
             setShowColorPicker(false);
+            setShowAddImagePicker(false);
         }
     }, [isTextMode, showBrushPicker, showTextSizePicker]);
 
     onBrushButtonClick = useCallback(() => {
         if (!isBrushMode) {
-            onBrushMode()
+            onBrushMode();
+            collapseExtended();
         }
 
         if (isBrushMode || showTextSizePicker) {
@@ -115,6 +135,8 @@ function EditorToolbar({
             setShowTextSizePicker(false);
             setShowZoomPicker(false);
             setShowColorPicker(false);
+            setShowAddImagePicker(false);
+
         }
     }, [isBrushMode, showBrushPicker, showTextSizePicker]);
 
@@ -130,6 +152,8 @@ function EditorToolbar({
         setShowBrushPicker(false);
         setShowTextSizePicker(false);
         setShowZoomPicker(false);
+        setShowAddImagePicker(false);
+        collapseExtended();
     }
 
     onZoomButtonClick = () => {
@@ -144,19 +168,28 @@ function EditorToolbar({
         setShowBrushPicker(false);
         setShowTextSizePicker(false);
         setShowColorPicker(false);
+        setShowAddImagePicker(false);
+
     }
 
     onImageButtonClick = () => {
-        setShowBrushPicker(false);
-        setShowTextSizePicker(false);
-        setShowColorPicker(false);
-        setShowZoomPicker(false);
-
-        if (isImageMode) {
-            onAddImage();
+        if (!isImageMode) {
+            onImageMode();
         } else {
-            onImageMode()
+            setShowAddImagePicker(oldVal => {
+                if (oldVal) {
+                    onFloatingMenu(0)
+                } else {
+                    onFloatingMenu(pickerMenuHeight)
+                }
+                return !oldVal
+            });
+            setShowBrushPicker(false);
+            setShowTextSizePicker(false);
+            setShowColorPicker(false);
+            setShowZoomPicker(false);
         }
+
     }
 
     const { row, rowReverse, flexEnd, textAlign, rtl, direction } = getRowDirections();
@@ -169,9 +202,9 @@ function EditorToolbar({
     const availablePickerWidth = windowSize ? windowSize.width - 2 * toolbarSideMargin : 500;
     let colorButtonsSize = windowSize ? (windowSize.width - 2 * toolbarSideMargin) / (availableColorPicker.length * 1.4) : 50;
 
-    
+
     let previewFontSize = fontSize4Toolbar(fontSize);
-    trace("previewFontSize",previewFontSize, dimensions.toolbarHeight)
+    trace("previewFontSize", previewFontSize, dimensions.toolbarHeight)
     let previewFontSizePlus = false;
     if (previewFontSize > dimensions.toolbarHeight - 5) {
         previewFontSizePlus = true;
@@ -181,7 +214,7 @@ function EditorToolbar({
 
     const extMenu = [
         <IconButton onPress={onImageButtonClick} color={semanticColors.editPhotoButton}
-            icon={isImageMode ? "new-image" : "image"} size={55} iconSize={45} key={"1"} selected={isImageMode} iconType={isImageMode ? "svg" : ""} />,
+            icon={"image"} size={55} iconSize={45} key={"1"} selected={isImageMode} />,
         <Spacer width={23} key="2" />,
         <IconButton onPress={onZoomButtonClick} color={semanticColors.editPhotoButton}
             icon="zoom-in" size={55} iconSize={45} key={"3"} />,
@@ -366,6 +399,16 @@ function EditorToolbar({
                 <IconButton onPress={onZoomIn} icon={"zoom-in"} size={55} iconSize={45} />
             </View>
         </FadeInView>
+
+        {/*View for zoom*/}
+        <FadeInView height={showAddImagePicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
+            <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
+                <IconButton onPress={onAddImageFromGallery} icon={"new-image"} size={55} iconSize={45} iconType="svg" color="black" />
+                <IconButton onPress={onAddImageFromCamera} icon={"new-camera"} size={55} iconSize={45} iconType="svg" color="black" />
+            </View>
+        </FadeInView>
+
+
 
     </View>
 }

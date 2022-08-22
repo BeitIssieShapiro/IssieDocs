@@ -171,12 +171,13 @@ const dotSize = 30;
 
 export function TextSizePicker(props) {
     const [openMore, setOpenMore] = useState(false);
-    const [composedSize, setComposedSize] = useState(props.size);
+    // const [composedSize, setComposedSize] = useState(props.size);
 
-    useEffect(() => {
-        setComposedSize(props.size);
-    }, [props.size])
+    // useEffect(() => {
+    //     setComposedSize(props.size);
+    // }, [props.size])
 
+    const scrollPos = props.size * 400 / 325 - 25
 
     const textSizesAct = textSizes
     let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
@@ -214,15 +215,15 @@ export function TextSizePicker(props) {
             <Spacer height={15} />
             <View style={{
                 position: 'absolute',
-                top: Math.max(100 - composedSize / 2, 0),
+                top: Math.max(100 - props.size / 2, 0),
                 minHeight: 200
             }}>
                 <AppText style={{
-                    fontSize: composedSize,
-                    lineHeight: composedSize,
+                    fontSize: props.size,
+                    lineHeight: props.size,
                     color: props.color
                 }}
-                    onPress={() => props.onSelect(composedSize)}
+                    onPress={() => props.onSelect(props.size)}
                 >{translate("A")}</AppText>
             </View>
             <Spacer height={25} />
@@ -230,28 +231,26 @@ export function TextSizePicker(props) {
                 height: 100,
                 position: 'absolute',
                 top: 250,
-
             }}
 
                 onTouchStart={(e) => {
                     trace("touch", e.nativeEvent.locationX);
+                    // 0 - 400
                     let val = e.nativeEvent.locationX;
-                    if (val < 25) {
-                        val = 25;
-                    } else if (val > 305) {
-                        val = 305;
-                    }
+                    
+                    // round to the nearest 5
 
+                    //setComposedSize(val);
+                    //inverse of props.size * 400 / 325 - 25
+                    val = (val + 25) * 325 / 400;
                     val = Math.floor(val / 10) * 10 + 5;
 
-                    setComposedSize(val);
                     props.onSelect(val, true);
                 }}
             >
                 <View style={{
-                    width: 0,
-                    height: 0,
-                    backgroundColor: "transparent",
+                    //width: 100,
+                    //height: 20,
                     borderStyle: "solid",
                     borderLeftWidth: 400,
                     borderBottomWidth: 30,
@@ -262,7 +261,7 @@ export function TextSizePicker(props) {
                     <TouchableOpacity style={{
                         position: 'absolute',
                         bottom: -2 * dotSize,
-                        left: -textSizeVolumeBarSize + (composedSize) - dotSize / 2,
+                        left: -textSizeVolumeBarSize + (scrollPos) - dotSize / 2,
                         borderRadius: dotSize / 2,
                         width: dotSize,
                         height: dotSize,
