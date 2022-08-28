@@ -243,7 +243,10 @@ export class FileSystem {
     }
 
     async saveThumbnail(uri, page) {
-        let pathObj = this._parsePath(page.defaultSrc);
+        let pathObj = page?
+            this._parsePath(page.defaultSrc) :
+            this._parsePath(uri);
+        
         if (pathObj.folders.length < 1)
             return;
 
@@ -259,9 +262,17 @@ export class FileSystem {
 
         // delete existing thumbnail
         try {
-            if (page.thumbnail.endsWith(THUMBNAIL_SUFFIX))
+            if (page && page.thumbnail.endsWith(THUMBNAIL_SUFFIX))
                 await RNFS.unlink(page.thumbnail);
         } catch (e) { }
+
+        if (!page) {
+            console.log("cp", uri, thumbnailPath);
+            return RNFS.copyFile(uri, thumbnailPath).then(() => {
+                this._notify(pathObj.folders[0]);
+            });
+        } 
+
         console.log("mv", uri, thumbnailPath);
         return RNFS.moveFile(uri, thumbnailPath).then(() => {
             page.setThumbnail(thumbnailPath);

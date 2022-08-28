@@ -316,14 +316,16 @@ export default class IssieSavePhoto extends React.Component {
         trace("save: src - ", this.state.pathToSave, "target:", filePath)
 
         if (this.state.multiPage) {
-          //create a folder with the name fo the file (happens implicitly)
+          //create a folder with the name of the file (happens implicitly)
           for (let i = 0; i < this.state.pages.length; i++) {
             let page = this.state.pages[i];
             await FileSystem.main.saveFile(page, filePath + "/" + i + ".jpg");
           }
+          await FileSystem.main.saveThumbnail(filePath + "/0" + ".jpg");
         } else {
           //move/copy entire folder, or save single file
           await FileSystem.main.saveFile(this.state.pathToSave, filePath, this.isDuplicate());
+          await FileSystem.main.saveThumbnail(filePath);
         }
 
         if ((this.isRename() || this.isDuplicate()) && this.state.pathToSave.endsWith('.jpg')) {
@@ -503,7 +505,7 @@ export default class IssieSavePhoto extends React.Component {
   }
 
   render() {
-    const {row, flexStart, rtl} = getRowDirections();
+    const { row, flexStart, rtl } = getRowDirections();
     this.state.imageUri;
 
     let editPicButtons = <View />;
@@ -578,7 +580,7 @@ export default class IssieSavePhoto extends React.Component {
     const onLayoutHost = {}
     if (this.state.phase == PickName) {
       PageNameInput =
-        <Scroller 
+        <Scroller
           height={this.state.windowSize.height}
           rtl={rtl}
           onLayout={onLayoutHost}>

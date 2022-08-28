@@ -819,7 +819,7 @@ export default class IssieEditPhoto extends React.Component {
 
     if ((!text || text.length == 0) && origElem === undefined) return false;
 
-    let txtWidth = this.state.inputTextWidth;
+    let txtWidth = this.state.inputTextWidth *  this.state.scaleRatio;
     let txtHeight = this.state.inputTextHeight / this.state.scaleRatio;
 
     let newElem = this.getTextElement(text, txtWidth, txtHeight);
@@ -1143,6 +1143,8 @@ export default class IssieEditPhoto extends React.Component {
     if (scaleElem.normFontSize === undefined) {
       //migrate elem
       scaleElem.normFontSize = scaleElem.fontSize;
+      //add some to width to compensate  - todo follow - this is questionable
+      //scaleElem.width += 15;
     }
 
     scaleElem.fontSize = this.normFontSize2FontSize(scaleElem.normFontSize)
@@ -1151,7 +1153,7 @@ export default class IssieEditPhoto extends React.Component {
       y: scaleElem.normPosition.y * this.state.scaleRatio,
     };
     //add some to width to compensate  - todo follow - this is questionable
-    scaleElem.width += 15;
+    //scaleElem.width += 15;
     //trace("txtElemNorm2Scale", scaleElem)
     return scaleElem;
   }
@@ -1273,7 +1275,7 @@ export default class IssieEditPhoto extends React.Component {
         // this.setState({ icon: uri})
         getImageDimensions(uri).then((imgSize) => {
           const ratio = imgSize.w / imgSize.h;
-          FileSystem.main.resizeImage(uri, Math.round(this.state.viewPortRect.width / 1.5 ), this.state.viewPortRect.height / 1.5)
+          FileSystem.main.resizeImage(uri, Math.round(this.state.viewPortRect.width / 1.5), this.state.viewPortRect.height / 1.5)
             .then(uri2 => FileSystem.main.convertImageToBase64(uri2))
             .then(imgBase64 => {
 
@@ -1908,7 +1910,8 @@ export default class IssieEditPhoto extends React.Component {
   getTextInput = (rtl, rowDir) => {
     this._handleInputTextLocationMovingPage(this.state.keyboardHeight, this.state.keyboardTop);
 
-    //trace("getTextInput", "sr", this.state.scaleRatio)
+    trace("getTextInput", 
+    "fontSize", (this.normalizeTextSize(this.state.fontSize) / this.state.scaleRatio), "sr", this.state.scaleRatio)
     return (
       <View style={{
         //flex: 1,
@@ -1929,8 +1932,8 @@ export default class IssieEditPhoto extends React.Component {
           }}
           onContentSizeChange={(event) => {
             let dim = event.nativeEvent.contentSize;
-            trace("onContentSizeChange", dim)
-            setTimeout(() =>
+            trace("onContentSizeChange", dim, this.state.inputTextWidth)
+            setTimeout(() => 
               this.setState({
 
                 inputTextWidth: dim.width > 0 ? dim.width : this.state.inputTextWidth,
@@ -1960,8 +1963,8 @@ export default class IssieEditPhoto extends React.Component {
           value={this.state.inputTextValue}
           onTouchStart={(ev) => {
             let x = this.screen2ViewPortX(ev.nativeEvent.pageX);
-            trace("click on text input", this.state.xText - x, this.state.inputTextWidth * this.state.scaleRatio*this.state.zoom)
-            if (Math.abs(this.state.xText - x) > this.state.inputTextWidth * this.state.scaleRatio*this.state.zoom + DRAG_ICON_SIZE / 2) {
+            trace("click on text input", this.state.xText - x, this.state.inputTextWidth * this.state.scaleRatio * this.state.zoom)
+            if (Math.abs(this.state.xText - x) > this.state.inputTextWidth * this.state.scaleRatio * this.state.zoom + DRAG_ICON_SIZE / 2) {
               //treats it as if click outside the text input, delegates to canvasClick
               this.canvasClick(ev);
             }
@@ -1973,7 +1976,7 @@ export default class IssieEditPhoto extends React.Component {
           width: Math.max(this.state.inputTextWidth + 10, 12),
           height: this.state.inputTextHeight > 0 ? this.state.inputTextHeight / this.state.scaleRatio : 45 / this.state.scaleRatio,
           zIndex: 20,
-          transform: this.getTransform(this.state.inputTextWidth, this.state.inputTextHeight / this.state.scaleRatio,
+          transform: this.getTransform(this.state.inputTextWidth, this.state.inputTextHeight ,
             this.state.scaleRatio * this.state.zoom, isRTL()),
           //lineHeight: this.normalizeTextSize(this.state.fontSize)* this.state.scaleRatio,
         }}
