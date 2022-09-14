@@ -1976,7 +1976,7 @@ export default class IssieEditPhoto extends React.Component {
           width: Math.max(this.state.inputTextWidth + 10, 12),
           height: this.state.inputTextHeight > 0 ? this.state.inputTextHeight / this.state.scaleRatio : 45 / this.state.scaleRatio,
           zIndex: 20,
-          transform: this.getTransform(this.state.inputTextWidth, this.state.inputTextHeight ,
+          transform: this.getTransform(this.state.inputTextWidth, this.state.inputTextHeight/ this.state.scaleRatio ,
             this.state.scaleRatio * this.state.zoom, isRTL()),
           //lineHeight: this.normalizeTextSize(this.state.fontSize)* this.state.scaleRatio,
         }}
