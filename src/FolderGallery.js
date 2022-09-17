@@ -26,7 +26,6 @@ import {
     getRoundedButton,
     IDMenuOptionsStyle,
     SBDraxScrollView,
-    TilesView,
 } from './elements'
 import {
     Menu,
@@ -34,20 +33,17 @@ import {
     MenuOption,
     MenuTrigger,
 } from 'react-native-popup-menu';
-import { DraxList, DraxProvider, DraxScrollView, DraxView, DraxViewDragStatus } from 'react-native-drax';
-import ProgressCircle from 'react-native-progress-circle'
+import { DraxProvider, DraxView } from 'react-native-drax';
 
 
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
 import DocumentPicker from 'react-native-document-picker';
-import SplashScreen from 'react-native-splash-screen';
 import { getSvgIcon, SvgIcon } from './svg-icons';
 import { StackActions } from '@react-navigation/native';
 import { FileSystem, swapFolders, saveFolderOrder } from './filesystem.js';
 import { trace } from './log.js';
 import { showMessage } from 'react-native-flash-message';
 import { LogBox } from 'react-native';
-import Scroller from './scroller.js';
 
 const SORT_BY_NAME = 0;
 const SORT_BY_DATE = 1;
@@ -58,7 +54,7 @@ function checkFilter(filter, name) {
         return true;
 
     trace("checkFilter", filter, name)
-    if (name.indexOf(filter) >= 0) {
+    if (name.toLowerCase().indexOf(filter.toLowerCase()) >= 0) {
         trace("found")
 
         return true;
@@ -109,7 +105,7 @@ export default class FolderGallery extends React.Component {
             })
 
             registerLangEvent()
-            
+
             this.props.navigation.addListener("focus", async () => {
                 //this.refresh();
                 this.setState({ selected: undefined });
@@ -135,15 +131,7 @@ export default class FolderGallery extends React.Component {
             //     trace("betacounter ", this.state.betaCounter)
             // });
             setNavParam(this.props.navigation, 'editHandler', () => this.toggleEditMode());
-            setNavParam(this.props.navigation, 'isEditEnabled', () => {
-                let editTitleSetting = Settings.get(EDIT_TITLE.name);
-                if (editTitleSetting === undefined) {
-                    editTitleSetting = EDIT_TITLE.no;
-                }
-                return editTitleSetting === EDIT_TITLE.yes ||
-                    this.state.currentFolder && (this.state.foldersCount > 1 || this.state.currentFolder.name !== FileSystem.DEFAULT_FOLDER.name);
-            });
-
+            this.setEditEnabled(false);
             Linking.addEventListener("url", this._handleOpenURL);
 
             //load only the folders
@@ -166,13 +154,24 @@ export default class FolderGallery extends React.Component {
             let ellapsed = new Date() - this.state.startTime;
             ellapsed /= 1000;
             var ellapsedSeconds = Math.round(ellapsed);
-            if (ellapsedSeconds >= 2) {
-                SplashScreen.hide();
-            } else {
-                setTimeout(() => SplashScreen.hide(), 2000 - ellapsed * 1000);
-            }
+            console.log("loading took ", ellapsedSeconds, "seconds");
+            // if (ellapsedSeconds >= 2) {
+            //     SplashScreen.hide();
+            // } else {
+            //     setTimeout(() => SplashScreen.hide(), 2000 - ellapsed * 1000);
+            // }
         }
     };
+
+    setEditEnabled = (inFolder) => {
+        setNavParam(this.props.navigation, 'isEditEnabled', () => {
+            let editTitleSetting = Settings.get(EDIT_TITLE.name);
+            if (editTitleSetting === undefined) {
+                editTitleSetting = EDIT_TITLE.no;
+            }
+            return editTitleSetting === EDIT_TITLE.yes || inFolder;
+        });
+    }
 
     componentWillUnmount = () => {
         unregisterLangEvent()
@@ -324,8 +323,12 @@ export default class FolderGallery extends React.Component {
 
 
     selectFolder = (folder) => {
+        if (folder)
+            this.setEditEnabled(true);
         this.setState({ currentFolder: folder, selected: undefined }, () => {
-            setNavParam(this.props.navigation, 'showHome', () => this.unselectFolder())
+            setNavParam(this.props.navigation, 'showHome', () => {
+                this.unselectFolder();
+            })
             this.scrollToFolder(folder);
         });
 
@@ -343,6 +346,8 @@ export default class FolderGallery extends React.Component {
     unselectFolder = () => {
         this.setState({ currentFolder: undefined })
         setNavParam(this.props.navigation, 'showHome', undefined);
+        this.setEditEnabled(false);
+
     }
 
     isSelected = (page) => {
@@ -572,7 +577,16 @@ export default class FolderGallery extends React.Component {
                     //find the page for the path
                     //todo
                     let fileName = FileSystem.getFileNameFromPath(path, false);
-                    let item = await folder.getItem(fileName);
+                    let item;
+                    if (folder) {
+                        item = await folder.getItem(fileName);
+                    } else {
+                        const defFolder = this.state.folders?.find(f => f.name == FileSystem.DEFAULT_FOLDER.name);
+                        if (defFolder) {
+                            item = await defFolder.getItem(fileName);
+                        }
+                    }
+
                     if (item) {
                         this.goEdit(item, this.state.currentFolder, false);
                     } else {
@@ -630,8 +644,8 @@ export default class FolderGallery extends React.Component {
 
     getSortFunction = () => {
         return this.state.sortBy == SORT_BY_DATE ?
-            (a, b) => a.lastUpdate < b.lastUpdate :
-            (a, b) => a.name > b.name;
+            (a, b) => b.lastUpdate - a.lastUpdate :
+            (a, b) => a.name.localeCompare(b.name);
     }
 
 
@@ -660,6 +674,16 @@ export default class FolderGallery extends React.Component {
                 </MenuOptions>
 
             </Menu>);
+    }
+
+    sortFiles = (items) => {
+        console.log("sort items", items?.length);
+        const clone = [...items];
+        console.log(clone.map(item => item.name + ":" + item.lastUpdate % 1663000000000));
+        clone.sort(this.getSortFunction());
+        console.log(clone.map(item => item.name + ":" + item.lastUpdate % 1663000000000));
+
+        return clone;
     }
 
 
@@ -986,7 +1010,7 @@ export default class FolderGallery extends React.Component {
                                             flexWrap: 'wrap',
                                             minWidth: "100%",
                                         }}>
-                                            {[...items].sort(this.getSortFunction()).map((item, i) => (<DraxView
+                                            {this.sortFiles(items).map((item, i) => (<DraxView
                                                 key={i}
                                                 payload={{ item, folder: this.state.currentFolder?.name }}
                                                 numColumns={asTiles ? numColumnsForTiles : 1}

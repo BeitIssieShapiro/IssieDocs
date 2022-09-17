@@ -5,6 +5,7 @@ import {
   Animated
 } from 'react-native';
 
+
 import { Icon } from "./elements"
 import RNSketchCanvas from 'issie-sketch-canvas';
 import Share from 'react-native-share';
@@ -228,6 +229,7 @@ export default class IssieEditPhoto extends React.Component {
 
     const windowSize = Dimensions.get("window");
     this.state = {
+      showBusy: true,
       color: colors.black,
       fontSize: 25,
       mode: Modes.TEXT,
@@ -539,6 +541,7 @@ export default class IssieEditPhoto extends React.Component {
     //const betaFeatures = this.props.route.params.betaFeatures;
     this.setState({ page: page, currentFile: currentFile, currentIndex: 0, metaDataUri: metaDataUri },
       () => this.Load());
+
   }
 
   componentWillUnmount = () => {
@@ -559,10 +562,13 @@ export default class IssieEditPhoto extends React.Component {
 
   pageTitleAddition = (count, index) => count > 1 ? " - " + (index + 1) + "/" + count : ""
 
-
   Load = async () => {
+    this.setState({ showBusy: true }, () => this.LoadInternal().finally(() => this.setState({ showBusy: false })));
+  }
+
+  LoadInternal = async () => {
     if (this.state.metaDataUri && this.state.metaDataUri.length > 0)
-      this.loadFile(this.state.metaDataUri);
+      await this.loadFile(this.state.metaDataUri);
 
     if (this.props.route.params && this.props.route.params['share']) {
       //iterates over all files and exports them
@@ -582,7 +588,7 @@ export default class IssieEditPhoto extends React.Component {
         const currentIndex = i;
         const metaDataUri = currentFile + ".json";
         this.setState({ currentFile, currentIndex, metaDataUri })
-        this.loadFile(metaDataUri);
+        await this.loadFile(metaDataUri);
         dataUrls.push(await this.exportToBase64());
       }
 
@@ -632,13 +638,15 @@ export default class IssieEditPhoto extends React.Component {
 
 
   loadFile = (metaDataUri) => {
+    trace("load metadata", new Date().toISOString())
     this.state.queue.clear();
-    FileSystem.main.loadFile(metaDataUri).then((value) => {
+    return FileSystem.main.loadFile(metaDataUri).then((value) => {
       let sketchState = JSON.parse(value);
       //Alert.alert("Load: "+sketchState.length)
       for (let i = 0; i < sketchState.length; i++) {
         this.state.queue.add(sketchState[i])
       }
+      trace("load metadata - end", new Date().toISOString())
 
     },
       (err) => {/*no json file yet*/ }
@@ -819,7 +827,7 @@ export default class IssieEditPhoto extends React.Component {
 
     if ((!text || text.length == 0) && origElem === undefined) return false;
 
-    let txtWidth = this.state.inputTextWidth *  this.state.scaleRatio;
+    let txtWidth = this.state.inputTextWidth * this.state.scaleRatio;
     let txtHeight = this.state.inputTextHeight / this.state.scaleRatio;
 
     let newElem = this.getTextElement(text, txtWidth, txtHeight);
@@ -1125,7 +1133,7 @@ export default class IssieEditPhoto extends React.Component {
       setTimeout(() => this.Save(), 100);
     }
 
-    trace("u-texts", canvasTexts);
+    //trace("u-texts", canvasTexts);
 
     this.setState({
       canvasTexts, canvasImages, needCanvasUpdate: false,
@@ -1403,15 +1411,18 @@ export default class IssieEditPhoto extends React.Component {
       zoom: 1, xOffset: 0, yOffset: 0, showTextInput: false, inputTextValue: '', currentImageElem: undefined
     }, () => {
       this.reflectWindowSizeAndImageSize();
+
       this.Load();
+
     });
   }
+
 
 
   onLayout = async (e) => {
     if (!this._mounted)
       return;
-
+    //trace("on Layout start", new Date().toISOString())
     let windowSize = e.nativeEvent.layout;
 
     this.setState({ windowSize, zoom: 1, yOffset: 0, xOffset: 0 },
@@ -1448,7 +1459,7 @@ export default class IssieEditPhoto extends React.Component {
       //trace("getImageDimensions", this.state.currentFile, "imageSize", imageSize, "ratio", ratio)
 
       const sideMargin = (windowSize.width - imageSize.w * ratio) / 2
-      trace("sideMergin", sideMargin);
+      //trace("sideMargin", sideMargin);
       const viewPortRect = {
         top: 0,
         left: sideMargin,
@@ -1485,7 +1496,7 @@ export default class IssieEditPhoto extends React.Component {
         currentImageElem: imgElem,
       });
       this.changeZoomOrOffset({ zoom: this.state.zoom, xOffset, yOffset });
-
+      //trace("on Layout end", new Date().toISOString())
 
     }).catch(err => {
       Alert.alert("Error measuring image dimension:" + err.message)
@@ -1503,157 +1514,158 @@ export default class IssieEditPhoto extends React.Component {
     return (
       <View style={styles.mainContainer}
         onLayout={this.onLayout}>
+          <EditorToolbar
+            ref={this.toolbarRef}
+            windowSize={this.state.windowSize}
+            onGoBack={() => this.props.navigation.goBack()}
+            onUndo={() => {
+              this.state.queue.undo();
+              this.setState({ needCanvasUpdate: true, needCanvasDataSave: true, currentImageElem: undefined });
+            }}
+            canRedo={this.state.queue.canRedo()}
+            onRedo={() => {
+              this.state.queue.redo();
+              this.setState({ needCanvasUpdate: true, needCanvasDataSave: true });
+            }}
+            fontSize4Toolbar={this.fontSize4Toolbar}
+            onZoomOut={() => this.doZoom(-.5)}
+            onZoomIn={() => this.doZoom(.5)}
+            eraseMode={this.state.eraseMode}
+            onEraser={() => this.onEraserButton()}
 
-        <EditorToolbar
-          ref={this.toolbarRef}
-          windowSize={this.state.windowSize}
-          onGoBack={() => this.props.navigation.goBack()}
-          onUndo={() => {
-            this.state.queue.undo();
-            this.setState({ needCanvasUpdate: true, needCanvasDataSave: true, currentImageElem: undefined });
-          }}
-          canRedo={this.state.queue.canRedo()}
-          onRedo={() => {
-            this.state.queue.redo();
-            this.setState({ needCanvasUpdate: true, needCanvasDataSave: true });
-          }}
-          fontSize4Toolbar={this.fontSize4Toolbar}
-          onZoomOut={() => this.doZoom(-.5)}
-          onZoomIn={() => this.doZoom(.5)}
-          eraseMode={this.state.eraseMode}
-          onEraser={() => this.onEraserButton()}
+            onTextMode={() => this.onTextMode()}
+            onImageMode={() => {
+              if (this.isTextMode()) {
+                this.SaveText()
+              }
+              this.setState({
+                mode: Modes.IMAGE, showTextInput: false,
+              })
+              if (!(this.state?.canvasImages?.length > 0)) {
+                this.toolbarRef.current.openImageSubMenu();
+              } else if (this.state.canvasImages.length == 1) {
+                this.setState({ currentImageElem: this.state.canvasImages[0] })
+              }
+            }}
+            onAddImageFromGallery={() => this.onAddImage(SRC_GALLERY)}
+            onAddImageFromCamera={() => this.onAddImage(SRC_CAMERA)}
+            onBrushMode={() => this.onBrushMode()}
 
-          onTextMode={() => this.onTextMode()}
-          onImageMode={() => {
-            if (this.isTextMode()) {
-              this.SaveText()
+            isTextMode={this.isTextMode()}
+            isImageMode={this.isImageMode()}
+            isBrushMode={!this.isTextMode() && !this.isImageMode()}
+            fontSize={this.state.fontSize}
+            color={this.state.color}
+            strokeWidth={this.state.strokeWidth}
+
+            sideMargin={this.state.sideMargin}
+            // betaFeatures={this.state.betaFeatures}
+
+            onSelectColor={(color) => {
+              this.setState({ color, eraseMode: false })
+              this.updateBrush(this.state.strokeWidth, color);
+              this.updateInputText();
+
+            }}
+            onSelectTextSize={(size) => this.onTextSize(size)}
+            onSelectBrushSize={(brushSize) => this.onBrushSize(brushSize)}
+            toolbarHeight={this.state.toolbarHeight}
+            onToolbarHeightChange={(toolbarHeight) => {
+              this.setState({ toolbarHeight }, () => this.reflectWindowSizeAndImageSize())
+            }}
+            onFloatingMenu={(size) => this.setState({ floatingMenuHeight: size })}
+          />
+          {/** Top Margin */}
+          <View style={styles.topMargin} />
+
+
+          {/** NavigationArea */}
+          <View style={styles.navigationArea}>
+            {this.state.showBusy &&
+              <View style={globalStyles.busy}>
+                <ActivityIndicator size="large" /></View>
             }
-            this.setState({
-              mode: Modes.IMAGE, showTextInput: false,
-            })
-            if (!(this.state?.canvasImages?.length > 0)) {
-              this.toolbarRef.current.openImageSubMenu();
-            } else if (this.state.canvasImages.length == 1) {
-              this.setState({ currentImageElem: this.state.canvasImages[0] })
+            {/* page more menu */}
+            <View style={[{ position: 'absolute', top: 0 }, rtl ? { left: 0 } : { right: 0 }]}>
+              {this.getMoreMenu()}
+            </View>
+            {[
+              this.getArrow(LEFT),
+              this.getArrow(TOP),
+              this.getArrow(RIGHT),
+              this.getArrow(BOTTOM)
+            ]}
+
+            <View {...this._panResponderMove.panHandlers} style={[styles.leftMargin, {
+              width: this.state.sideMargin,
+            }]} />
+            <View {...this._panResponderMove.panHandlers} style={[styles.rightMargin, {
+              width: this.state.sideMargin,
+            }]} />
+
+            <View style={[styles.viewPort, {
+              top: this.state.viewPortRect.top,
+              height: this.state.viewPortRect.height,
+              width: this.state.viewPortRect.width, //Math.max(this.state.viewPortRect.width * this.state.zoom, this.state.windowSize.width),
+              left: this.state.sideMargin,
+            }, {
+            }]}  {...this._panResponderMove.panHandlers} >
+              <Animated.View
+                style={{
+                  zIndex: 1,
+                  // left: this.state.xOffset,
+                  // top: this.state.yOffset,
+                  left: this.state.viewPortXOffset,
+                  top: this.state.viewPortYOffset,
+                  width: this.state.pageRect.width,
+                  height: this.state.pageRect.height,
+                  backgroundColor: 'gray',
+                  alignSelf: 'flex-start',
+                  justifyContent: 'flex-start',
+                  transform: this.getTransform(this.state.pageRect.width, this.state.pageRect.height, this.state.zoom)
+                }}
+
+              >
+                {this.state.sharing &&
+                  <View style={{ position: 'absolute', top: '25%', left: 0, width: this.state.viewPortRect.width, zIndex: 1000, backgroundColor: 'white', alignItems: 'center' }}>
+
+                    <ProgressCircle
+                      radius={150}
+                      color="#3399FF"
+                      shadowColor="#999"
+                      bgColor="white"
+                      percent={this.state.shareProgress}
+                      borderWidth={5} >
+                      <Text style={{ zIndex: 100, fontSize: 25 }}>{fTranslate("ExportProgress", this.state.shareProgressPage, (this.state.page.count > 0 ? this.state.page.count : 1))}</Text>
+                    </ProgressCircle>
+                  </View>}
+                {this.getCanvas()}
+              </Animated.View>
+              {this.state.showTextInput && this.getTextInput(rtl, rowReverse)}
+              {this.state.currentImageElem && this.isImageMode() && this.getImageRect()}
+            </View>
+
+            {/** Bottom Margin */}
+            <View style={styles.bottomMargin} />
+
+            {/** previous page button */}
+            {
+              this.state.page && this.state.page.count > 0 && this.state.currentFile !== this.state.page.getPage(0) ?
+                <View style={{ position: 'absolute', bottom: 50, left: 10, width: 155, height: 40, zIndex: 100 }}>
+                  {getRoundedButton(() => this.movePage(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 125, height: 40 }, 'row-reverse', true)}
+                </View> :
+                null
             }
-          }}
-          onAddImageFromGallery={() => this.onAddImage(SRC_GALLERY)}
-          onAddImageFromCamera={() => this.onAddImage(SRC_CAMERA)}
-          onBrushMode={() => this.onBrushMode()}
-
-          isTextMode={this.isTextMode()}
-          isImageMode={this.isImageMode()}
-          isBrushMode={!this.isTextMode() && !this.isImageMode()}
-          fontSize={this.state.fontSize}
-          color={this.state.color}
-          strokeWidth={this.state.strokeWidth}
-
-          sideMargin={this.state.sideMargin}
-          // betaFeatures={this.state.betaFeatures}
-
-          onSelectColor={(color) => {
-            this.setState({ color, eraseMode: false })
-            this.updateBrush(this.state.strokeWidth, color);
-            this.updateInputText();
-
-          }}
-          onSelectTextSize={(size) => this.onTextSize(size)}
-          onSelectBrushSize={(brushSize) => this.onBrushSize(brushSize)}
-          toolbarHeight={this.state.toolbarHeight}
-          onToolbarHeightChange={(toolbarHeight) => {
-            this.setState({ toolbarHeight }, () => this.reflectWindowSizeAndImageSize())
-          }}
-          onFloatingMenu={(size) => this.setState({ floatingMenuHeight: size })}
-        />
-        {/** Top Margin */}
-        <View style={styles.topMargin} />
-
-
-        {/** NavigationArea */}
-        <View style={styles.navigationArea}>
-          {this.state.showBusy && <View style={globalStyles.busy}>
-            <ActivityIndicator size="large" /></View>}
-          {/* page more menu */}
-          <View style={[{ position: 'absolute', top: 0 }, rtl ? { left: 0 } : { right: 0 }]}>
-            {this.getMoreMenu()}
+            {/** next page button */}
+            {
+              this.state.page && this.state.page.count > 1 &&
+                this.state.currentFile !== this.state.page.getPage(this.state.page.count - 1) ?
+                <View style={{ position: 'absolute', bottom: 50, right: 10, height: 40, zIndex: 100 }}>
+                  {getRoundedButton(() => this.movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 125, height: 40 }, 'row', true)}
+                </View> :
+                null
+            }
           </View>
-          {[
-            this.getArrow(LEFT),
-            this.getArrow(TOP),
-            this.getArrow(RIGHT),
-            this.getArrow(BOTTOM)
-          ]}
-
-          <View {...this._panResponderMove.panHandlers} style={[styles.leftMargin, {
-            width: this.state.sideMargin,
-          }]} />
-          <View {...this._panResponderMove.panHandlers} style={[styles.rightMargin, {
-            width: this.state.sideMargin,
-          }]} />
-
-          <View style={[styles.viewPort, {
-            top: this.state.viewPortRect.top,
-            height: this.state.viewPortRect.height,
-            width: this.state.viewPortRect.width, //Math.max(this.state.viewPortRect.width * this.state.zoom, this.state.windowSize.width),
-            left: this.state.sideMargin,
-          }, {
-          }]}  {...this._panResponderMove.panHandlers} >
-            <Animated.View
-              style={{
-                zIndex: 1,
-                // left: this.state.xOffset,
-                // top: this.state.yOffset,
-                left: this.state.viewPortXOffset,
-                top: this.state.viewPortYOffset,
-                width: this.state.pageRect.width,
-                height: this.state.pageRect.height,
-                backgroundColor: 'gray',
-                alignSelf: 'flex-start',
-                justifyContent: 'flex-start',
-                transform: this.getTransform(this.state.pageRect.width, this.state.pageRect.height, this.state.zoom)
-              }}
-
-            >
-              {this.state.sharing &&
-                <View style={{ position: 'absolute', top: '25%', left: 0, width: this.state.viewPortRect.width, zIndex: 1000, backgroundColor: 'white', alignItems: 'center' }}>
-
-                  <ProgressCircle
-                    radius={150}
-                    color="#3399FF"
-                    shadowColor="#999"
-                    bgColor="white"
-                    percent={this.state.shareProgress}
-                    borderWidth={5} >
-                    <Text style={{ zIndex: 100, fontSize: 25 }}>{fTranslate("ExportProgress", this.state.shareProgressPage, (this.state.page.count > 0 ? this.state.page.count : 1))}</Text>
-                  </ProgressCircle>
-                </View>}
-              {this.getCanvas()}
-            </Animated.View>
-            {this.state.showTextInput && this.getTextInput(rtl, rowReverse)}
-            {this.state.currentImageElem && this.isImageMode() && this.getImageRect()}
-          </View>
-
-          {/** Bottom Margin */}
-          <View style={styles.bottomMargin} />
-
-          {/** previous page button */}
-          {
-            this.state.page && this.state.page.count > 0 && this.state.currentFile !== this.state.page.getPage(0) ?
-              <View style={{ position: 'absolute', bottom: 50, left: 10, width: 155, height: 40, zIndex: 100 }}>
-                {getRoundedButton(() => this.movePage(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 125, height: 40 }, 'row-reverse', true)}
-              </View> :
-              null
-          }
-          {/** next page button */}
-          {
-            this.state.page && this.state.page.count > 1 &&
-              this.state.currentFile !== this.state.page.getPage(this.state.page.count - 1) ?
-              <View style={{ position: 'absolute', bottom: 50, right: 10, height: 40, zIndex: 100 }}>
-                {getRoundedButton(() => this.movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 125, height: 40 }, 'row', true)}
-              </View> :
-              null
-          }
-        </View>
       </View >
     );
   }
@@ -1784,15 +1796,16 @@ export default class IssieEditPhoto extends React.Component {
 
 
   updateInputText = () => {
-    if (this._textInput) {
-      this._textInput.setNativeProps({ text: this.state.inputTextValue + ' ' });
+    // With react-native 0.70 this is no longer needed
+    // if (this._textInput) {
+    //   this._textInput.setNativeProps({ text: this.state.inputTextValue + ' ' });
 
-      setTimeout(() => {
-        if (this._textInput) {
-          this._textInput.setNativeProps({ text: this.state.inputTextValue });
-        }
-      }, 50);
-    }
+    //   setTimeout(() => {
+    //     if (this._textInput) {
+    //       this._textInput.setNativeProps({ text: this.state.inputTextValue });
+    //     }
+    //   }, 50);
+    // }
   }
 
   getSpace = (dist) => {
@@ -1910,8 +1923,8 @@ export default class IssieEditPhoto extends React.Component {
   getTextInput = (rtl, rowDir) => {
     this._handleInputTextLocationMovingPage(this.state.keyboardHeight, this.state.keyboardTop);
 
-    trace("getTextInput", 
-    "fontSize", (this.normalizeTextSize(this.state.fontSize) / this.state.scaleRatio), "sr", this.state.scaleRatio)
+    trace("getTextInput",
+      "fontSize", (this.normalizeTextSize(this.state.fontSize) / this.state.scaleRatio), "sr", this.state.scaleRatio)
     return (
       <View style={{
         //flex: 1,
@@ -1933,7 +1946,7 @@ export default class IssieEditPhoto extends React.Component {
           onContentSizeChange={(event) => {
             let dim = event.nativeEvent.contentSize;
             trace("onContentSizeChange", dim, this.state.inputTextWidth)
-            setTimeout(() => 
+            setTimeout(() =>
               this.setState({
 
                 inputTextWidth: dim.width > 0 ? dim.width : this.state.inputTextWidth,
@@ -1976,7 +1989,7 @@ export default class IssieEditPhoto extends React.Component {
           width: Math.max(this.state.inputTextWidth + 10, 12),
           height: this.state.inputTextHeight > 0 ? this.state.inputTextHeight / this.state.scaleRatio : 45 / this.state.scaleRatio,
           zIndex: 20,
-          transform: this.getTransform(this.state.inputTextWidth, this.state.inputTextHeight/ this.state.scaleRatio ,
+          transform: this.getTransform(this.state.inputTextWidth, this.state.inputTextHeight / this.state.scaleRatio,
             this.state.scaleRatio * this.state.zoom, isRTL()),
           //lineHeight: this.normalizeTextSize(this.state.fontSize)* this.state.scaleRatio,
         }}

@@ -5946,10 +5946,10 @@
   "resolved" "https://registry.npmjs.org/react-native-document-picker/-/react-native-document-picker-3.5.4.tgz"
   "version" "3.5.4"
 
-"react-native-drax@^0.9.3":
-  "integrity" "sha512-+yxMJFS9Nhs5oofnjyMI+FVaSI82fmUO2s7wxzlMBkfoXHUYoeBigw1lT0YLLYEWXJ4J21ftgTWJ2M4gmYknaA=="
-  "resolved" "https://registry.npmjs.org/react-native-drax/-/react-native-drax-0.9.3.tgz"
-  "version" "0.9.3"
+"react-native-drax@^0.10.3":
+  "integrity" "sha512-44hoX5etOm3R4MK6YK5/w+lFFchQnPm/mt7FS20lnLqZtS5tfK+IEWRvk7dwUfEeOGEkHgFRFdbHiQKV98XQTQ=="
+  "resolved" "https://registry.npmjs.org/react-native-drax/-/react-native-drax-0.10.3.tgz"
+  "version" "0.10.3"
   dependencies:
     "lodash.isequal" "^4.5.0"
     "lodash.throttle" "^4.1.1"
@@ -6106,11 +6106,6 @@
   "integrity" "sha512-mKOfBLIBFBcs9br1rlZDvxD5+mAl8Gfr5CounwJtxI6Z82rGrMO+Kgl9EIg3RMVf3G855a85YVqHJL2f5EDRlw=="
   "resolved" "https://registry.npmjs.org/react-native-size-matters/-/react-native-size-matters-0.3.1.tgz"
   "version" "0.3.1"
-
-"react-native-splash-screen@^3.2.0":
-  "integrity" "sha512-rGjt6HkoSXxMqH4SQUJ1gnPQlPJV8+J47+4yhgTIan4bVvAwJhEeJH7wWt9hXSdH4+VfwTS0GTaflj1Tw83IhA=="
-  "resolved" "https://registry.npmjs.org/react-native-splash-screen/-/react-native-splash-screen-3.3.0.tgz"
-  "version" "3.3.0"
 
 "react-native-svg@^12.3.0":
   "integrity" "sha512-LpcNlEVCURexqPAvQ9ne8KrPVfYz0wIDygwud8VMRmXLezysXzyQN/DTsjm1BO9lIfYp55WQsr3u3yW/vk6iiA=="

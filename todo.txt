@@ -21,7 +21,21 @@ V- plus sign in image mode
 V- move color to the center and down
 V- bug in picture that leaves room at bottom
 
+V- rename from edit -> throws rejection
+V- yello: "attempt to capture a commit phase"
+- "open with" from pdf - crash
+V- remove masked-view
+V- remove native prop for fontsize
+V- sort not working
+V- on home, edit button should be disabled
+V- search case insensitive
+V- performance of loading page to edit
 
+- test:
+  V- camera rotation
+  V- drag and drop to move pages
+  V- import from pdf
+  -  
 
 
 

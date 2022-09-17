@@ -1,6 +1,6 @@
 import * as RNFS from 'react-native-fs';
 import { translate } from './lang';
-import { Image } from 'react-native';
+import { Image, LogBox } from 'react-native';
 import blankPage from './blank-page.jpg'
 import mathPage from './math-page.jpg'
 import linesPage from './lines-page.jpg'
@@ -243,10 +243,10 @@ export class FileSystem {
     }
 
     async saveThumbnail(uri, page) {
-        let pathObj = page?
+        let pathObj = page ?
             this._parsePath(page.defaultSrc) :
             this._parsePath(uri);
-        
+
         if (pathObj.folders.length < 1)
             return;
 
@@ -271,11 +271,13 @@ export class FileSystem {
             return RNFS.copyFile(uri, thumbnailPath).then(() => {
                 this._notify(pathObj.folders[0]);
             });
-        } 
+        }
 
         console.log("mv", uri, thumbnailPath);
-        return RNFS.moveFile(uri, thumbnailPath).then(() => {
+        return RNFS.moveFile(uri, thumbnailPath).then(async () => {
             page.setThumbnail(thumbnailPath);
+            let fi = await RNFS.stat(thumbnailPath);
+            page.lastUpdate = Math.max(fi.mtime.valueOf(), fi.ctime.valueOf());
             this._notify(pathObj.folders[0]);
         });
     };
@@ -312,7 +314,7 @@ export class FileSystem {
         }
         return new Promise((resolve, reject) => {
             if (uri.startsWith("rct-image-store")) {
-                console.disableYellowBox = true;
+                LogBox.ignoreAllLogs();
                 ImageStore.getBase64ForTag(
                     uri,
                     //success

@@ -89,6 +89,7 @@ const App = (props) => {
   if (props.isSimulator) {
     setIsSimulator(true)
   }
+
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {

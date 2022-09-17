@@ -504,6 +504,14 @@ export default class IssieSavePhoto extends React.Component {
     return false
   }
 
+  verifyFilePrefix = (url) => {
+    if (url && url.startsWith("/")) {
+      return "file://" + url;
+    }
+
+    return url;
+  };
+
   render() {
     const { row, flexStart, rtl } = getRowDirections();
     this.state.imageUri;
@@ -669,7 +677,7 @@ export default class IssieSavePhoto extends React.Component {
                 flex: 1, position: 'absolute', width: this.state.pdfWidth, height: this.state.pdfHeight
               }}>
               <Pdf
-                source={{ uri: this.state.imageUri }}
+                source={{ uri: this.verifyFilePrefix(this.state.imageUri) }}
                 page={this.state.pdfPage}
                 style={{ flex: 1 }}
                 onLoadComplete={(numberOfPages, filePath, dim) => {
@@ -679,7 +687,7 @@ export default class IssieSavePhoto extends React.Component {
                 }}
 
                 onError={(error) => {
-                  Alert.alert(translate("PDFLoadFailed: ") + error);
+                  Alert.alert(translate("PDFLoadFailed") + ":" + error);
                 }}
               >
 
