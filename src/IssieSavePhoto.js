@@ -216,7 +216,7 @@ export default class IssieSavePhoto extends React.Component {
       trace("updateImageDimension", { imgSize, scale, windowSize })
       this.setState({ imgSize, scale, windowSize })
     } catch (err) {
-      Alert.alert("Error measuring file", err)
+      Alert.alert("Error measuring file" + err.toString())
       trace("Error measuring file", JSON.stringify(err))
     }
     //}, 50);

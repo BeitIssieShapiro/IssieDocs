@@ -230,7 +230,7 @@ export function TextSizePicker(props) {
             <View style={{
                 height: 100,
                 position: 'absolute',
-                top: 250,
+                top: 270,
             }}
 
                 onTouchStart={(e) => {

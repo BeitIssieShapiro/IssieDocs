@@ -98,12 +98,6 @@ export default class FolderGallery extends React.Component {
 
     componentDidMount = async () => {
         try {
-            Linking.getInitialURL().then((url) => {
-                if (url) {
-                    this._handleOpenURL({ url });
-                }
-            })
-
             registerLangEvent()
 
             this.props.navigation.addListener("focus", async () => {
@@ -187,6 +181,8 @@ export default class FolderGallery extends React.Component {
     }
 
     _handleOpenURL = (event) => {
+        console.log("_handleOpenURL event:", JSON.stringify(event));
+        
         this.props.navigation.navigate('SavePhoto', {
             uri: decodeURI(event.url),
             imageSource: SRC_FILE,
