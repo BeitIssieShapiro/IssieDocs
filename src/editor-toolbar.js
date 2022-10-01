@@ -1,4 +1,4 @@
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { AppText, availableColorPicker, dimensions, getEraserIcon, IconButton, semanticColors, Spacer, textSizes } from "./elements";
 import FadeInView from "./FadeInView";
@@ -12,6 +12,7 @@ const availableBrushSize = [
 ]
 
 const pickerMenuHeight = 70;
+
 
 function EditorToolbar({
     windowSize,
@@ -42,9 +43,7 @@ function EditorToolbar({
     strokeWidth,
 
     sideMargin,
-    toolbarHeight,
-    onToolbarHeightChange,
-    onFloatingMenu
+    onToolBarDimensionsChange
 
 }, ref) {
     const [showExtMenu, setShowExtMenu] = useState(false);
@@ -53,6 +52,18 @@ function EditorToolbar({
     const [showBrushPicker, setShowBrushPicker] = useState(false);
     const [showZoomPicker, setShowZoomPicker] = useState(false);
     const [showAddImagePicker, setShowAddImagePicker] = useState(false);
+    const [toolbarHeight, setToolbarHeight] = useState(dimensions.toolbarHeight);
+    const [textMenuHeight, setTextMenuHeight] = useState(0);
+    const [colorMenuHeight, setColorMenuHeight] = useState(0);
+    const [brushMenuHeight, setBrushMenuHeight] = useState(0);
+    const [zoomMenuHeight, setZoomMenuHeight] = useState(0);
+    const [imageMenuHeight, setImageMenuHeight] = useState(0);
+
+
+    useEffect(() => {
+        onToolBarDimensionsChange(toolbarHeight, Math.max(textMenuHeight, colorMenuHeight, brushMenuHeight, zoomMenuHeight, imageMenuHeight))
+    }, [textMenuHeight, colorMenuHeight, brushMenuHeight, zoomMenuHeight, imageMenuHeight]);
+
 
     fontSize = fontSize || 25;
     strokeWidth = strokeWidth || 1;
@@ -88,10 +99,9 @@ function EditorToolbar({
 
 
     useEffect(() => {
-        const calcHeight = (isScreenNarrow() || showExtMenu) && !isLandscape() ? 2 * dimensions.toolbarHeight : dimensions.toolbarHeight
-        if (toolbarHeight !== calcHeight) {
-            onToolbarHeightChange(calcHeight)
-        }
+        setToolbarHeight(
+            (isScreenNarrow() || showExtMenu) && !isLandscape() ? 2 * dimensions.toolbarHeight : dimensions.toolbarHeight
+        )
     }, [showExtMenu, windowSize])
 
     onTextButtonClick = useCallback(() => {
@@ -101,14 +111,7 @@ function EditorToolbar({
         }
 
         if (isTextMode || showBrushPicker) {
-            setShowTextSizePicker(oldVal => {
-                if (oldVal) {
-                    onFloatingMenu(0)
-                } else {
-                    onFloatingMenu(pickerMenuHeight)
-                }
-                return !oldVal
-            });
+            setShowTextSizePicker(oldVal => !oldVal);
             setShowBrushPicker(false);
             setShowZoomPicker(false);
             setShowColorPicker(false);
@@ -123,14 +126,7 @@ function EditorToolbar({
         }
 
         if (isBrushMode || showTextSizePicker) {
-            setShowBrushPicker(oldVal => {
-                if (oldVal) {
-                    onFloatingMenu(0)
-                } else {
-                    onFloatingMenu(pickerMenuHeight)
-                }
-                return !oldVal
-            });
+            setShowBrushPicker(oldVal =>  !oldVal);
             setShowTextSizePicker(false);
             setShowZoomPicker(false);
             setShowColorPicker(false);
@@ -140,14 +136,7 @@ function EditorToolbar({
     }, [isBrushMode, showBrushPicker, showTextSizePicker]);
 
     onColorButtonClick = () => {
-        setShowColorPicker(oldVal => {
-            if (oldVal) {
-                onFloatingMenu(0)
-            } else {
-                onFloatingMenu(pickerMenuHeight)
-            }
-            return !oldVal
-        });
+        setShowColorPicker(oldVal => !oldVal);
         setShowBrushPicker(false);
         setShowTextSizePicker(false);
         setShowZoomPicker(false);
@@ -156,14 +145,7 @@ function EditorToolbar({
     }
 
     onZoomButtonClick = () => {
-        setShowZoomPicker(oldVal => {
-            if (oldVal) {
-                onFloatingMenu(0)
-            } else {
-                onFloatingMenu(pickerMenuHeight)
-            }
-            return !oldVal
-        });
+        setShowZoomPicker(oldVal => !oldVal);
         setShowBrushPicker(false);
         setShowTextSizePicker(false);
         setShowColorPicker(false);
@@ -175,14 +157,7 @@ function EditorToolbar({
         if (!isImageMode) {
             onImageMode();
         } else {
-            setShowAddImagePicker(oldVal => {
-                if (oldVal) {
-                    onFloatingMenu(0)
-                } else {
-                    onFloatingMenu(pickerMenuHeight)
-                }
-                return !oldVal
-            });
+            setShowAddImagePicker(oldVal =>  !oldVal);
             setShowBrushPicker(false);
             setShowTextSizePicker(false);
             setShowColorPicker(false);
@@ -275,26 +250,26 @@ function EditorToolbar({
                         <AppText
                             style={
                                 //[
-                                    {
-                                fontSize: previewFontSize,
-                                width: "100%",
-                                lineHeight: previewFontSize + 8,
-                                color: color,
-                                textAlignVertical: 'center'
+                                {
+                                    fontSize: previewFontSize,
+                                    width: "100%",
+                                    lineHeight: previewFontSize + 8,
+                                    color: color,
+                                    textAlignVertical: 'center'
+                                }
+                                //,rtl ? {} : { fontWeight: 'bold' }]
                             }
-                            //,rtl ? {} : { fontWeight: 'bold' }]
-                        }
                         >{translate("A B C")}</AppText>
                         {previewFontSizePlus &&
                             <View style={[{
                                 position: 'absolute',
                                 top: 0,
-                                flex:1,
-                                justifyContent:"center",
-                                alignItems:"center",
-                                alignContent:"center"
-                                
-                            },rtl?{left: -25}:{right:-25}]}><AppText
+                                flex: 1,
+                                justifyContent: "center",
+                                alignItems: "center",
+                                alignContent: "center"
+
+                            }, rtl ? { left: -25 } : { right: -25 }]}><AppText
                                 style={{
                                     fontSize: 35,
                                     color: color,
@@ -304,50 +279,50 @@ function EditorToolbar({
                     !isImageMode &&
                     //<Icon name={"image"} size={55} color={semanticColors.editPhotoButton} /> :
 
-            getSvgIcon('doodle', 55, color, strokeWidth * .8)
+                    getSvgIcon('doodle', 55, color, strokeWidth * .8)
                 }
-        </View>
+            </View>
 
 
-        {/** right side top toolbar */}
-        <View style={[{
-            position: 'absolute',
-            height: dimensions.toolbarHeight,
-            flexDirection: rowReverse, alignItems: 'center',
-        }, isScreenNarrow() ?
-            { top: dimensions.toolbarHeight, left: 0 } :
-            { top: 0, right: 50 }
-        ]} >
-            <IconButton onPress={onTextButtonClick} icon={translate("A")} isText={true} selected={isTextMode}
-                color={isTextMode ? color : semanticColors.editPhotoButton} size={55} iconSize={rtl ? 45 : 35}
+            {/** right side top toolbar */}
+            <View style={[{
+                position: 'absolute',
+                height: dimensions.toolbarHeight,
+                flexDirection: rowReverse, alignItems: 'center',
+            }, isScreenNarrow() ?
+                { top: dimensions.toolbarHeight, left: 0 } :
+                { top: 0, right: 50 }
+            ]} >
+                <IconButton onPress={onTextButtonClick} icon={translate("A")} isText={true} selected={isTextMode}
+                    color={isTextMode ? color : semanticColors.editPhotoButton} size={55} iconSize={rtl ? 45 : 35}
                 //fontWeight={rtl ? undefined : 'bold'} 
                 />
-            <Spacer width={23} />
-            <IconButton onPress={onBrushButtonClick} icon={"edit"} selected={isTextMode} size={55}
-                color={isBrushMode ? color : semanticColors.editPhotoButton} iconSize={45} selected={isBrushMode} />
-            <Spacer width={23} />
-            <IconButton onPress={onColorButtonClick} icon={"color-lens"} size={55} color={semanticColors.editPhotoButton} />
-            <Spacer width={23} />
+                <Spacer width={23} />
+                <IconButton onPress={onBrushButtonClick} icon={"edit"} selected={isTextMode} size={55}
+                    color={isBrushMode ? color : semanticColors.editPhotoButton} iconSize={45} selected={isBrushMode} />
+                <Spacer width={23} />
+                <IconButton onPress={onColorButtonClick} icon={"color-lens"} size={55} color={semanticColors.editPhotoButton} />
+                <Spacer width={23} />
 
 
-            {(isLandscape() || isScreenNarrow()) && extMenu}
-            {!isLandscape() && !isScreenNarrow() &&
-                <IconButton onPress={() => setShowExtMenu(oldVal => !oldVal)} color={semanticColors.editPhotoButton}
-                    icon={showExtMenu ? "expand-less" : "expand-more"} size={55} iconSize={45} />}
-            {/* {!betaFeatures && !isScreenNarrow() && <IconButton onPress={onZoomButtonClick} color={semanticColors.editPhotoButton}
+                {(isLandscape() || isScreenNarrow()) && extMenu}
+                {!isLandscape() && !isScreenNarrow() &&
+                    <IconButton onPress={() => setShowExtMenu(oldVal => !oldVal)} color={semanticColors.editPhotoButton}
+                        icon={showExtMenu ? "expand-less" : "expand-more"} size={55} iconSize={45} />}
+                {/* {!betaFeatures && !isScreenNarrow() && <IconButton onPress={onZoomButtonClick} color={semanticColors.editPhotoButton}
                     icon="zoom-in" size={55} iconSize={45} key={"3"} />} */}
-        </View>
+            </View>
 
-        {/** bottom toolbar */}
-        {showExtMenu && !isLandscape() && <View style={{
-            position: 'absolute',
-            height: dimensions.toolbarHeight,
-            flexDirection: 'row', alignItems: 'center',
-            top: dimensions.toolbarHeight, left: sideMargin + 30
-        }} >
-            {extMenu}
-        </View>}
-    </View>
+            {/** bottom toolbar */}
+            {showExtMenu && !isLandscape() && <View style={{
+                position: 'absolute',
+                height: dimensions.toolbarHeight,
+                flexDirection: 'row', alignItems: 'center',
+                top: dimensions.toolbarHeight, left: sideMargin + 30
+            }} >
+                {extMenu}
+            </View>}
+        </View>
 
         <MyColorPicker
             open={showColorPicker}
@@ -359,7 +334,10 @@ function EditorToolbar({
                 onSelectColor(color);
                 setShowColorPicker(false);
             }}
-
+            onHeightChanged={(height)=>{
+                console.log("color height ", height)
+                setColorMenuHeight(height)
+            }}
         />
 
         <TextSizePicker
@@ -375,42 +353,46 @@ function EditorToolbar({
                 if (!keepOpen)
                     setShowTextSizePicker(false);
             }}
+            onHeightChanged={(height)=>{
+                console.log("Text height " , height)
+                setTextMenuHeight(height)
+            }}
         />
 
-    {/*View for selecting brush size*/ }
-    <FadeInView height={showBrushPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
-        <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
-            {
-                availableBrushSize.map((size, i) => <BrushSizePicker
-                    color={color}
-                    brushSize={size}
-                    size={colorButtonsSize}
-                    key={"" + i}
-                    onPress={(brushSize) => {
-                        onSelectBrushSize(brushSize);
-                        setShowBrushPicker(false);
-                    }}
-                    selectedStrokeWidth={strokeWidth}
-                    isScreenNarrow={isScreenNarrow()} />)
-            }
-        </View>
-    </FadeInView>
+        {/*View for selecting brush size*/}
+        <FadeInView height={showBrushPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
+            <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
+                {
+                    availableBrushSize.map((size, i) => <BrushSizePicker
+                        color={color}
+                        brushSize={size}
+                        size={colorButtonsSize}
+                        key={"" + i}
+                        onPress={(brushSize) => {
+                            onSelectBrushSize(brushSize);
+                            setShowBrushPicker(false);
+                        }}
+                        selectedStrokeWidth={strokeWidth}
+                        isScreenNarrow={isScreenNarrow()} />)
+                }
+            </View>
+        </FadeInView>
 
-    {/*View for zoom*/ }
-    <FadeInView height={showZoomPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
-        <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
-            <IconButton onPress={onZoomOut} icon={"zoom-out"} size={55} iconSize={45} />
-            <IconButton onPress={onZoomIn} icon={"zoom-in"} size={55} iconSize={45} />
-        </View>
-    </FadeInView>
+        {/*View for zoom*/}
+        <FadeInView height={showZoomPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
+            <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
+                <IconButton onPress={onZoomOut} icon={"zoom-out"} size={55} iconSize={45} />
+                <IconButton onPress={onZoomIn} icon={"zoom-in"} size={55} iconSize={45} />
+            </View>
+        </FadeInView>
 
-    {/*View for zoom*/ }
-    <FadeInView height={showAddImagePicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
-        <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
-            <IconButton onPress={onAddImageFromGallery} icon={"new-image"} size={55} iconSize={45} iconType="svg" color="black" />
-            <IconButton onPress={onAddImageFromCamera} icon={"new-camera"} size={55} iconSize={45} iconType="svg" color="black" />
-        </View>
-    </FadeInView>
+        {/*View for zoom*/}
+        <FadeInView height={showAddImagePicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
+            <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
+                <IconButton onPress={onAddImageFromGallery} icon={"new-image"} size={55} iconSize={45} iconType="svg" color="black" />
+                <IconButton onPress={onAddImageFromCamera} icon={"new-camera"} size={55} iconSize={45} iconType="svg" color="black" />
+            </View>
+        </FadeInView>
 
 
 

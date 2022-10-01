@@ -237,7 +237,7 @@ export default class IssieEditPhoto extends React.Component {
       showTextInput: false,
       strokeWidth: DEFAULT_STROKE_WIDTH,
       queue: new DoQueue(),
-      toolbarHeight: dimensions.toolbarHeight,
+      toolbarHeight: 0,
       sideMargin: 0,
       windowSize,
       viewPortRect: {
@@ -268,8 +268,6 @@ export default class IssieEditPhoto extends React.Component {
       viewPortXOffset: new Animated.Value(0),
       viewPortYOffset: new Animated.Value(0),
 
-
-
       // the viewPorts coordinates of the textBox or imageRect
       xText: 0,
       yText: 0,
@@ -288,7 +286,7 @@ export default class IssieEditPhoto extends React.Component {
 
 
 
-  changeZoomOrOffset = (obj, animateMove) => {
+  changeZoomOrOffset = (obj, animateMove, allowPassTop) => {
     const stateChange = { ...obj }
 
     trace("changeZoomOrOffset",
@@ -323,7 +321,7 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     if (obj.yOffset !== undefined) {
-      if (obj.yOffset > 0) {
+      if (obj.yOffset > 0 && !allowPassTop) {
         // hit top
         trace("changeZoomOrOffset - hit top")
         obj.yOffset = 0;
@@ -412,6 +410,22 @@ export default class IssieEditPhoto extends React.Component {
         this.state.viewPortXOffset.setValue(stateChange.xOffset);
       }
     }
+
+    // remove changes if the same:
+    if (stateChange.yOffset === this.state.yOffset) {
+      delete stateChange.yOffset;
+    }
+    if (stateChange.xOffset === this.state.xOffset) {
+      delete stateChange.xOffset;
+    }
+    if (stateChange.yText === this.state.yText) {
+      delete stateChange.yText;
+    }
+    if (stateChange.xText === this.state.xText) {
+      delete stateChange.xText;
+    }
+
+
     if (stateChange.yOffset != undefined) {
       if (animateMove) {
         Animated.timing(this.state.viewPortYOffset, {
@@ -424,7 +438,10 @@ export default class IssieEditPhoto extends React.Component {
       }
     }
 
-    this.setState(stateChange);
+    if (Object.keys(stateChange).length > 0) {
+      console.log("change", stateChange)
+      this.setState(stateChange);
+    }
   }
 
 
@@ -472,42 +489,65 @@ export default class IssieEditPhoto extends React.Component {
 
     this.setState({
       keyboardHeight: Math.max(kbHeight - emptyBottomSpace, 0), keyboardTop: kbTop,
-    });
-
-    this._handleInputTextLocationMovingPage(kbHeight, kbTop);
+    }, () => this._handleInputTextLocationMovingPage());
   }
 
-  _handleInputTextLocationMovingPage = (kbHeight, kbTop) => {
-    if (!kbHeight || !kbTop)
-      return;
-
-    let yOffset = this.state.yOffset;
+  _handleInputTextLocationMovingPage = () => {
 
     // if keyboard hides the textInput, scroll the window
     if (this.state.showTextInput) {
+      // positive means overlap
+      let diffFromKB = (this.state.yText + this.state.inputTextHeight) - this.state.keyboardTop;
+      let diffFromFloatingMenu = this.state.floatingMenuHeight - this.state.yText;
 
-      let diff = (this.state.yText + this.state.inputTextHeight) - kbTop;
-      if (diff > 0) {
-        trace("scroll due to keyboard", this.state.inputTextHeight)
-        yOffset -= diff;
+      if (this.state.keyboardTop > 0 && diffFromKB > 0) {
+        trace("scroll up due to keyboard", this.state.inputTextHeight, this.state.yText, diffFromKB, diffFromFloatingMenu)
+        this.changeZoomOrOffset({
+          yOffset: this.state.yOffset - diffFromKB,
+        }, true);
+        return;
       }
 
-      if (yOffset !== this.state.yOffset) {
-        this.setState({
-          yOffset,
-          yText: this.state.yText - diff
-        });
-        // trace("animate", "to", yOffset)
-        // Animated.timing(this.state.viewPortYOffset, {
-        //   toValue: yOffset,
-        //   duration: 200,
-        //   useNativeDriver: false,
-        // }).start();
-        this.state.viewPortYOffset.setValue(yOffset);
+      diffFromFloatingMenu = Math.min(diffFromFloatingMenu, - diffFromKB);
 
+      if (diffFromFloatingMenu > 0) {
+        // make sure not to hit keyboard or bottom
+        trace("scroll down due to menu", this.state.inputTextHeight, diffFromKB, diffFromFloatingMenu)
+        this.changeZoomOrOffset({
+          yOffset: this.state.yOffset + diffFromFloatingMenu,
+        }, true, true);
+        return;
       }
+
+
+
+
+      //   // make sure we don't push it down more than there is room before we hit the keyboard - otherwise endless loop
+      //   if (this.state.keyboardTop > 0 && diffFromFloatingMenu > 0) {
+      //     if (diff < 0 && diffForTop > 0 && -diff < diffForTop) {
+      //       diffForTop = -diff;
+      //     }
+      //   }
+
+      //   if (diff > 0 || diffForTop > 0) {
+      //     trace("scroll due to keyboard", this.state.inputTextHeight, diff, diffForTop)
+      //     let mergedDiff = diff > 0 ? diff : 0;
+      //     if (diffForTop > 0) {
+      //       mergedDiff -= diffForTop;
+      //     }
+
+      //     const yOffset = this.state.yOffset - mergedDiff;
+
+      //     this.setState({
+      //       yOffset,
+      //       yText: this.state.yText - mergedDiff
+      //     });
+
+      //     this.state.viewPortYOffset.setValue(yOffset);
+      //   }
     }
   }
+
 
   _keyboardDidHide = (e) => {
 
@@ -1201,10 +1241,15 @@ export default class IssieEditPhoto extends React.Component {
       f235: 4.2,
       f245: 4,
       f255: 3.8,
-      f275: 3.6,
-      f285: 3.4,
-      f295: 3.2,
-      f305: 3
+      f265: 3.6,
+      f275: 3.4,
+      f285: 3.2,
+      f295: 3,
+      f305: 2.8,
+      f315: 2.6,
+      f325: 2.4,
+      f335: 2.3,
+      f345: 2.2,
     }
 
     const y = map["f" + normFontSize];
@@ -1515,158 +1560,169 @@ export default class IssieEditPhoto extends React.Component {
     return (
       <View style={styles.mainContainer}
         onLayout={this.onLayout}>
-          <EditorToolbar
-            ref={this.toolbarRef}
-            windowSize={this.state.windowSize}
-            onGoBack={() => this.props.navigation.goBack()}
-            onUndo={() => {
-              this.state.queue.undo();
-              this.setState({ needCanvasUpdate: true, needCanvasDataSave: true, currentImageElem: undefined });
-            }}
-            canRedo={this.state.queue.canRedo()}
-            onRedo={() => {
-              this.state.queue.redo();
-              this.setState({ needCanvasUpdate: true, needCanvasDataSave: true });
-            }}
-            fontSize4Toolbar={this.fontSize4Toolbar}
-            onZoomOut={() => this.doZoom(-.5)}
-            onZoomIn={() => this.doZoom(.5)}
-            eraseMode={this.state.eraseMode}
-            onEraser={() => this.onEraserButton()}
+        <EditorToolbar
+          ref={this.toolbarRef}
+          windowSize={this.state.windowSize}
+          onGoBack={() => this.props.navigation.goBack()}
+          onUndo={() => {
+            this.state.queue.undo();
+            this.setState({ needCanvasUpdate: true, needCanvasDataSave: true, currentImageElem: undefined });
+          }}
+          canRedo={this.state.queue.canRedo()}
+          onRedo={() => {
+            this.state.queue.redo();
+            this.setState({ needCanvasUpdate: true, needCanvasDataSave: true });
+          }}
+          fontSize4Toolbar={this.fontSize4Toolbar}
+          onZoomOut={() => this.doZoom(-.5)}
+          onZoomIn={() => this.doZoom(.5)}
+          eraseMode={this.state.eraseMode}
+          onEraser={() => this.onEraserButton()}
 
-            onTextMode={() => this.onTextMode()}
-            onImageMode={() => {
-              if (this.isTextMode()) {
-                this.SaveText()
+          onTextMode={() => this.onTextMode()}
+          onImageMode={() => {
+            if (this.isTextMode()) {
+              this.SaveText()
+            }
+            this.setState({
+              mode: Modes.IMAGE, showTextInput: false,
+            })
+            if (!(this.state?.canvasImages?.length > 0)) {
+              this.toolbarRef.current.openImageSubMenu();
+            } else if (this.state.canvasImages.length == 1) {
+              this.setState({ currentImageElem: this.state.canvasImages[0] })
+            }
+          }}
+          onAddImageFromGallery={() => this.onAddImage(SRC_GALLERY)}
+          onAddImageFromCamera={() => this.onAddImage(SRC_CAMERA)}
+          onBrushMode={() => this.onBrushMode()}
+
+          isTextMode={this.isTextMode()}
+          isImageMode={this.isImageMode()}
+          isBrushMode={!this.isTextMode() && !this.isImageMode()}
+          fontSize={this.state.fontSize}
+          color={this.state.color}
+          strokeWidth={this.state.strokeWidth}
+
+          sideMargin={this.state.sideMargin}
+          // betaFeatures={this.state.betaFeatures}
+
+          onSelectColor={(color) => {
+            this.setState({ color, eraseMode: false })
+            this.updateBrush(this.state.strokeWidth, color);
+            this.updateInputText();
+
+          }}
+          onSelectTextSize={(size) => this.onTextSize(size)}
+          onSelectBrushSize={(brushSize) => this.onBrushSize(brushSize)}
+          onToolBarDimensionsChange={(height, floatingHeight) => {
+            trace("onToolBarDimensionsChange", height, floatingHeight)
+            const change = {
+              toolbarHeight: height,
+              floatingMenuHeight: floatingHeight
+            };
+
+            this.setState(change,
+              //move Text Input if needed
+              () => {
+                if (this.state.yOffset > 0) {
+                  this.changeZoomOrOffset({ yOffset: 0 }, true);
+                }
               }
-              this.setState({
-                mode: Modes.IMAGE, showTextInput: false,
-              })
-              if (!(this.state?.canvasImages?.length > 0)) {
-                this.toolbarRef.current.openImageSubMenu();
-              } else if (this.state.canvasImages.length == 1) {
-                this.setState({ currentImageElem: this.state.canvasImages[0] })
-              }
-            }}
-            onAddImageFromGallery={() => this.onAddImage(SRC_GALLERY)}
-            onAddImageFromCamera={() => this.onAddImage(SRC_CAMERA)}
-            onBrushMode={() => this.onBrushMode()}
-
-            isTextMode={this.isTextMode()}
-            isImageMode={this.isImageMode()}
-            isBrushMode={!this.isTextMode() && !this.isImageMode()}
-            fontSize={this.state.fontSize}
-            color={this.state.color}
-            strokeWidth={this.state.strokeWidth}
-
-            sideMargin={this.state.sideMargin}
-            // betaFeatures={this.state.betaFeatures}
-
-            onSelectColor={(color) => {
-              this.setState({ color, eraseMode: false })
-              this.updateBrush(this.state.strokeWidth, color);
-              this.updateInputText();
-
-            }}
-            onSelectTextSize={(size) => this.onTextSize(size)}
-            onSelectBrushSize={(brushSize) => this.onBrushSize(brushSize)}
-            toolbarHeight={this.state.toolbarHeight}
-            onToolbarHeightChange={(toolbarHeight) => {
-              this.setState({ toolbarHeight }, () => this.reflectWindowSizeAndImageSize())
-            }}
-            onFloatingMenu={(size) => this.setState({ floatingMenuHeight: size })}
-          />
-          {/** Top Margin */}
-          <View style={styles.topMargin} />
+            );
+          }}
+        />
+        {/** Top Margin */}
+        <View style={styles.topMargin} />
 
 
-          {/** NavigationArea */}
-          <View style={styles.navigationArea}>
-            {this.state.showBusy &&
-              <View style={globalStyles.busy}>
-                <ActivityIndicator size="large" /></View>
-            }
-            {/* page more menu */}
-            <View style={[{ position: 'absolute', top: 0 }, rtl ? { left: 0 } : { right: 0 }]}>
-              {this.getMoreMenu()}
-            </View>
-            {[
-              this.getArrow(LEFT),
-              this.getArrow(TOP),
-              this.getArrow(RIGHT),
-              this.getArrow(BOTTOM)
-            ]}
-
-            <View {...this._panResponderMove.panHandlers} style={[styles.leftMargin, {
-              width: this.state.sideMargin,
-            }]} />
-            <View {...this._panResponderMove.panHandlers} style={[styles.rightMargin, {
-              width: this.state.sideMargin,
-            }]} />
-
-            <View style={[styles.viewPort, {
-              top: this.state.viewPortRect.top,
-              height: this.state.viewPortRect.height,
-              width: this.state.viewPortRect.width, //Math.max(this.state.viewPortRect.width * this.state.zoom, this.state.windowSize.width),
-              left: this.state.sideMargin,
-            }, {
-            }]}  {...this._panResponderMove.panHandlers} >
-              <Animated.View
-                style={{
-                  zIndex: 1,
-                  // left: this.state.xOffset,
-                  // top: this.state.yOffset,
-                  left: this.state.viewPortXOffset,
-                  top: this.state.viewPortYOffset,
-                  width: this.state.pageRect.width,
-                  height: this.state.pageRect.height,
-                  backgroundColor: 'gray',
-                  alignSelf: 'flex-start',
-                  justifyContent: 'flex-start',
-                  transform: this.getTransform(this.state.pageRect.width, this.state.pageRect.height, this.state.zoom)
-                }}
-
-              >
-                {this.state.sharing &&
-                  <View style={{ position: 'absolute', top: '25%', left: 0, width: this.state.viewPortRect.width, zIndex: 1000, backgroundColor: 'white', alignItems: 'center' }}>
-
-                    <ProgressCircle
-                      radius={150}
-                      color="#3399FF"
-                      shadowColor="#999"
-                      bgColor="white"
-                      percent={this.state.shareProgress}
-                      borderWidth={5} >
-                      <Text style={{ zIndex: 100, fontSize: 25 }}>{fTranslate("ExportProgress", this.state.shareProgressPage, (this.state.page.count > 0 ? this.state.page.count : 1))}</Text>
-                    </ProgressCircle>
-                  </View>}
-                {this.getCanvas()}
-              </Animated.View>
-              {this.state.showTextInput && this.getTextInput(rtl, rowReverse)}
-              {this.state.currentImageElem && this.isImageMode() && this.getImageRect()}
-            </View>
-
-            {/** Bottom Margin */}
-            <View style={styles.bottomMargin} />
-
-            {/** previous page button */}
-            {
-              this.state.page && this.state.page.count > 0 && this.state.currentFile !== this.state.page.getPage(0) ?
-                <View style={{ position: 'absolute', bottom: 50, left: 10, width: 155, height: 40, zIndex: 100 }}>
-                  {getRoundedButton(() => this.movePage(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 125, height: 40 }, 'row-reverse', true)}
-                </View> :
-                null
-            }
-            {/** next page button */}
-            {
-              this.state.page && this.state.page.count > 1 &&
-                this.state.currentFile !== this.state.page.getPage(this.state.page.count - 1) ?
-                <View style={{ position: 'absolute', bottom: 50, right: 10, height: 40, zIndex: 100 }}>
-                  {getRoundedButton(() => this.movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 125, height: 40 }, 'row', true)}
-                </View> :
-                null
-            }
+        {/** NavigationArea */}
+        <View style={styles.navigationArea}>
+          {this.state.showBusy &&
+            <View style={globalStyles.busy}>
+              <ActivityIndicator size="large" /></View>
+          }
+          {/* page more menu */}
+          <View style={[{ position: 'absolute', top: 0 }, rtl ? { left: 0 } : { right: 0 }]}>
+            {this.getMoreMenu()}
           </View>
+          {[
+            this.getArrow(LEFT),
+            this.getArrow(TOP),
+            this.getArrow(RIGHT),
+            this.getArrow(BOTTOM)
+          ]}
+
+          <View {...this._panResponderMove.panHandlers} style={[styles.leftMargin, {
+            width: this.state.sideMargin,
+          }]} />
+          <View {...this._panResponderMove.panHandlers} style={[styles.rightMargin, {
+            width: this.state.sideMargin,
+          }]} />
+
+          <View style={[styles.viewPort, {
+            top: this.state.viewPortRect.top,
+            height: this.state.viewPortRect.height,
+            width: this.state.viewPortRect.width, //Math.max(this.state.viewPortRect.width * this.state.zoom, this.state.windowSize.width),
+            left: this.state.sideMargin,
+          }, {
+          }]}  {...this._panResponderMove.panHandlers} >
+            <Animated.View
+              style={{
+                zIndex: 1,
+                // left: this.state.xOffset,
+                // top: this.state.yOffset,
+                left: this.state.viewPortXOffset,
+                top: this.state.viewPortYOffset,
+                width: this.state.pageRect.width,
+                height: this.state.pageRect.height,
+                backgroundColor: 'gray',
+                alignSelf: 'flex-start',
+                justifyContent: 'flex-start',
+                transform: this.getTransform(this.state.pageRect.width, this.state.pageRect.height, this.state.zoom)
+              }}
+
+            >
+              {this.state.sharing &&
+                <View style={{ position: 'absolute', top: '25%', left: 0, width: this.state.viewPortRect.width, zIndex: 1000, backgroundColor: 'white', alignItems: 'center' }}>
+
+                  <ProgressCircle
+                    radius={150}
+                    color="#3399FF"
+                    shadowColor="#999"
+                    bgColor="white"
+                    percent={this.state.shareProgress}
+                    borderWidth={5} >
+                    <Text style={{ zIndex: 100, fontSize: 25 }}>{fTranslate("ExportProgress", this.state.shareProgressPage, (this.state.page.count > 0 ? this.state.page.count : 1))}</Text>
+                  </ProgressCircle>
+                </View>}
+              {this.getCanvas()}
+            </Animated.View>
+            {this.state.showTextInput && this.getTextInput(rtl, rowReverse)}
+            {this.state.currentImageElem && this.isImageMode() && this.getImageRect()}
+          </View>
+
+          {/** Bottom Margin */}
+          <View style={styles.bottomMargin} />
+
+          {/** previous page button */}
+          {
+            this.state.page && this.state.page.count > 0 && this.state.currentFile !== this.state.page.getPage(0) ?
+              <View style={{ position: 'absolute', bottom: 50, left: 10, width: 155, height: 40, zIndex: 100 }}>
+                {getRoundedButton(() => this.movePage(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 125, height: 40 }, 'row-reverse', true)}
+              </View> :
+              null
+          }
+          {/** next page button */}
+          {
+            this.state.page && this.state.page.count > 1 &&
+              this.state.currentFile !== this.state.page.getPage(this.state.page.count - 1) ?
+              <View style={{ position: 'absolute', bottom: 50, right: 10, height: 40, zIndex: 100 }}>
+                {getRoundedButton(() => this.movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 125, height: 40 }, 'row', true)}
+              </View> :
+              null
+          }
+        </View>
       </View >
     );
   }
@@ -1797,16 +1853,15 @@ export default class IssieEditPhoto extends React.Component {
 
 
   updateInputText = () => {
-    // With react-native 0.70 this is no longer needed
-    // if (this._textInput) {
-    //   this._textInput.setNativeProps({ text: this.state.inputTextValue + ' ' });
+    if (this._textInput) {
+      this._textInput.setNativeProps({ text: this.state.inputTextValue + ' ' });
 
-    //   setTimeout(() => {
-    //     if (this._textInput) {
-    //       this._textInput.setNativeProps({ text: this.state.inputTextValue });
-    //     }
-    //   }, 50);
-    // }
+      setTimeout(() => {
+        if (this._textInput) {
+          this._textInput.setNativeProps({ text: this.state.inputTextValue });
+        }
+      }, 50);
+    }
   }
 
   getSpace = (dist) => {
@@ -1922,7 +1977,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getTextInput = (rtl, rowDir) => {
-    this._handleInputTextLocationMovingPage(this.state.keyboardHeight, this.state.keyboardTop);
+    this._handleInputTextLocationMovingPage();
 
     trace("getTextInput",
       "fontSize", (this.normalizeTextSize(this.state.fontSize) / this.state.scaleRatio), "sr", this.state.scaleRatio)

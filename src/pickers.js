@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useImperativeHandle } from 'react';
 import {
     View,
     StyleSheet,
@@ -49,6 +49,14 @@ export function MyColorPicker(props) {
         }
     }, [])
 
+    let colorButtonSize = (props.width) / ((availableColorPicker.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
+    let height = props.open ? colorButtonSize + 10 + (openMore ? 290 : 0) : 0;
+
+    useEffect(() => {
+        props.onHeightChanged(height);
+    }, [openMore, props.open]);
+
+
     const _handleSelect = useCallback(() => {
         props.onSelect(composedColor)
         if (lastColors.find(lc => lc === composedColor)) {
@@ -64,10 +72,9 @@ export function MyColorPicker(props) {
 
     }, [composedColor, lastColors]);
 
-    let colorButtonSize = (props.width) / ((availableColorPicker.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
     //trace("last colors", lastColors)
     //trace("color", props.color, "composed", composedColor)
-    return <FadeInView height={props.open ? colorButtonSize + 10 + (openMore ? 290 : 0) : 0}
+    return <FadeInView height={height}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
         <View
             style={{
@@ -91,7 +98,7 @@ export function MyColorPicker(props) {
             )
             }
         </View>
-        {openMore && <View style={{ flex:1,top: 0, left: 0, height: 300, width: "90%" , alignItems:"center"}}>
+        {openMore && <View style={{ flex: 1, top: 0, left: 0, height: 300, width: "90%", alignItems: "center" }}>
             <View style={{
                 position: "absolute",
                 top: 30, left: -12,
@@ -131,7 +138,7 @@ export function MyColorPicker(props) {
                         false)}</View>
                 }
             </View>
-            <View style={{ width: "90%", height:"100%" }}>
+            <View style={{ width: "90%", height: "100%" }}>
                 <ColorPicker
                     // ref={r => { this.picker = r }}
                     color={composedColor}
@@ -171,16 +178,23 @@ const dotSize = 30;
 
 export function TextSizePicker(props) {
     const [openMore, setOpenMore] = useState(false);
-    // const [composedSize, setComposedSize] = useState(props.size);
+    const [height, setHeight] = useState(0);
 
-    // useEffect(() => {
-    //     setComposedSize(props.size);
-    // }, [props.size])
-
-    const scrollPos = props.size * 400 / 325 - 25
+    useEffect(() => props.onHeightChanged(height), [height]);
 
     const textSizesAct = textSizes
     let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
+
+    useEffect(() => {
+        if (props.open) {
+            setHeight(buttonSize + 10 + (openMore ? 350 : 0))
+        } else {
+            setHeight(0);
+        }
+    }, [openMore, props.open]);
+
+    const scrollPos = props.size * 400 / 325 - 25
+
 
     return <FadeInView height={props.open ? buttonSize + 10 + (openMore ? 350 : 0) : 0}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
@@ -203,6 +217,7 @@ export function TextSizePicker(props) {
                 "",
                 "black"
             )}
+            <AppText>{props.size}</AppText>
         </View>
         <View
             style={{
@@ -225,6 +240,7 @@ export function TextSizePicker(props) {
                 }}
                     onPress={() => props.onSelect(props.size)}
                 >{translate("A")}</AppText>
+                
             </View>
             <Spacer height={25} />
             <View style={{
@@ -237,7 +253,7 @@ export function TextSizePicker(props) {
                     trace("touch", e.nativeEvent.locationX);
                     // 0 - 400
                     let val = e.nativeEvent.locationX;
-                    
+
                     // round to the nearest 5
 
                     //setComposedSize(val);
@@ -294,8 +310,8 @@ function getTextSizePicker(color, size, textSize, selected, index, fontSize4Tool
         >
             <AppText style={{
                 fontSize: fontSize4Toolbar(textSize), //* rotateRatio, color: color,
-                textAlignVertical: 'center', 
-                lineHeight: fontSize4Toolbar(textSize)+4
+                textAlignVertical: 'center',
+                lineHeight: fontSize4Toolbar(textSize) + 4
             }}>{translate("A")}</AppText>
         </View>
     </TouchableOpacity>
