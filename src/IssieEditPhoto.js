@@ -493,31 +493,30 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   _handleInputTextLocationMovingPage = () => {
-
     // if keyboard hides the textInput, scroll the window
     if (this.state.showTextInput) {
       // positive means overlap
-      let diffFromKB = (this.state.yText + this.state.inputTextHeight) - this.state.keyboardTop;
-      let diffFromFloatingMenu = this.state.floatingMenuHeight - this.state.yText;
+      let diffFromKB = (this.state.yText + this.state.inputTextHeight) - this.state.keyboardTop + this.state.yOffset;
+      //let diffFromFloatingMenu = this.state.floatingMenuHeight - this.state.yText;
 
       if (this.state.keyboardTop > 0 && diffFromKB > 0) {
-        trace("scroll up due to keyboard", this.state.inputTextHeight, this.state.yText, diffFromKB, diffFromFloatingMenu)
+        trace("scroll up due to keyboard", this.state.inputTextHeight+ this.state.yText, this.state.keyboardTop, this.state.yOffset)
         this.changeZoomOrOffset({
           yOffset: this.state.yOffset - diffFromKB,
         }, true);
         return;
       }
 
-      diffFromFloatingMenu = Math.min(diffFromFloatingMenu, - diffFromKB);
+      // diffFromFloatingMenu = Math.min(diffFromFloatingMenu, - diffFromKB);
 
-      if (diffFromFloatingMenu > 0) {
-        // make sure not to hit keyboard or bottom
-        trace("scroll down due to menu", this.state.inputTextHeight, diffFromKB, diffFromFloatingMenu)
-        this.changeZoomOrOffset({
-          yOffset: this.state.yOffset + diffFromFloatingMenu,
-        }, true, true);
-        return;
-      }
+      // if (diffFromFloatingMenu > 0) {
+      //   // make sure not to hit keyboard or bottom
+      //   trace("scroll down due to menu", this.state.inputTextHeight, diffFromKB, diffFromFloatingMenu)
+      //   this.changeZoomOrOffset({
+      //     yOffset: this.state.yOffset + diffFromFloatingMenu,
+      //   }, true, true);
+      //   return;
+      // }
 
 
 
@@ -968,6 +967,7 @@ export default class IssieEditPhoto extends React.Component {
     newTextElem.rtl = rtl;
     newTextElem.fontColor = this.state.color;
     newTextElem.normFontSize = this.state.fontSize;
+    newTextElem.normWidth = width * this.state.fontSize / this.normFontSize2FontSize(this.state.fontSize) ;
     newTextElem.font = getFont();
     return newTextElem;
   }
@@ -1191,18 +1191,25 @@ export default class IssieEditPhoto extends React.Component {
     if (scaleElem.normFontSize === undefined) {
       //migrate elem
       scaleElem.normFontSize = scaleElem.fontSize;
-      //add some to width to compensate  - todo follow - this is questionable
-      //scaleElem.width += 15;
     }
 
+    
+
+    
     scaleElem.fontSize = this.normFontSize2FontSize(scaleElem.normFontSize)
+    
+    if (scaleElem.normWidth === undefined) {
+      scaleElem.normWidth = scaleElem.width * scaleElem.normFontSize / scaleElem.fontSize;
+    }
+
+    scaleElem.width = scaleElem.normWidth * scaleElem.fontSize / scaleElem.normFontSize;
     scaleElem.position = {
       x: scaleElem.normPosition.x * this.state.scaleRatio,
       y: scaleElem.normPosition.y * this.state.scaleRatio,
     };
     //add some to width to compensate  - todo follow - this is questionable
     //scaleElem.width += 15;
-    //trace("txtElemNorm2Scale", scaleElem)
+    //trace("txtElemNorm2Scale", scaleElem.text, scaleElem)
     return scaleElem;
   }
 
@@ -1631,6 +1638,7 @@ export default class IssieEditPhoto extends React.Component {
               }
             );
           }}
+          maxFloatingHeight={this.state.viewPortRect.height - this.state.keyboardHeight}
         />
         {/** Top Margin */}
         <View style={styles.topMargin} />
@@ -1977,7 +1985,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getTextInput = (rtl, rowDir) => {
-    this._handleInputTextLocationMovingPage();
+    //this._handleInputTextLocationMovingPage();
 
     trace("getTextInput",
       "fontSize", (this.normalizeTextSize(this.state.fontSize) / this.state.scaleRatio), "sr", this.state.scaleRatio)

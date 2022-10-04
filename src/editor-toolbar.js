@@ -43,6 +43,7 @@ function EditorToolbar({
     strokeWidth,
 
     sideMargin,
+    maxFloatingHeight,
     onToolBarDimensionsChange
 
 }, ref) {
@@ -338,6 +339,7 @@ function EditorToolbar({
                 console.log("color height ", height)
                 setColorMenuHeight(height)
             }}
+            maxHeight={maxFloatingHeight}
         />
 
         <TextSizePicker
@@ -357,6 +359,7 @@ function EditorToolbar({
                 console.log("Text height " , height)
                 setTextMenuHeight(height)
             }}
+            maxHeight={maxFloatingHeight}
         />
 
         {/*View for selecting brush size*/}

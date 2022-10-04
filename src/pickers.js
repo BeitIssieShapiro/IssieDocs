@@ -16,6 +16,7 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import { translate } from './lang';
 import { LAST_COLORS } from './settings';
 import { Icon } from "./elements"
+import Slider from '@react-native-community/slider';
 
 
 const styles = StyleSheet.create({
@@ -123,7 +124,7 @@ export function MyColorPicker(props) {
 
             <View style={{
                 position: "absolute",
-                top: 30, right: -12,
+                top: 95, right: 65,
                 //height: colorButtonSize * 3 + 30,
                 width: colorButtonSize * 2 + 30,
                 flexWrap: "wrap",
@@ -184,19 +185,19 @@ export function TextSizePicker(props) {
 
     const textSizesAct = textSizes
     let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
-
+    const _height = buttonSize + 10 + (openMore ? 60 : 0)
+    const gap = props.maxHeight - _height;
+    console.log(gap)
     useEffect(() => {
         if (props.open) {
-            setHeight(buttonSize + 10 + (openMore ? 350 : 0))
+            setHeight(Math.min(_height, props.maxHeight))
         } else {
             setHeight(0);
         }
     }, [openMore, props.open]);
 
-    const scrollPos = props.size * 400 / 325 - 25
 
-
-    return <FadeInView height={props.open ? buttonSize + 10 + (openMore ? 350 : 0) : 0}
+    return <FadeInView height={props.open ? Math.min(_height, props.maxHeight) : 0}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
         <View
             style={{
@@ -217,21 +218,58 @@ export function TextSizePicker(props) {
                 "",
                 "black"
             )}
-            <AppText>{props.size}</AppText>
+
         </View>
-        <View
+        <View style={{
+            position:"absolute",
+            top:buttonSize+5,
+            flex: 1,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "85%"
+        }}>
+            <AppText style={{
+                fontSize: 30,
+                lineHeight: 30,
+            }}
+                onPress={() => props.onSelect(props.size)}
+            >{translate("A")}</AppText>
+            <Slider
+                value={props.size}
+                tapToSeek={true}
+                minimumValue={5}
+                maximumValue={345}
+                // step = {10}
+                style={{
+                    width: "80%"
+                }}
+                onSlidingComplete={(val => {
+                    val = Math.floor(val / 10) * 10 + 5;
+                    props.onSelect(val, false);
+                })}
+            />
+            <AppText style={{
+                fontSize: 65,
+                lineHeight: 65,
+            }}
+                onPress={() => props.onSelect(props.size)}
+            >{translate("A")}</AppText>
+        </View>
+        {/* <View
             style={{
                 flexDirection: 'column',
                 width: '100%',
                 justifyContent: 'center',
-                alignItems: 'center'
+                alignItems: 'center',
                 //justifyContent: 'space-evenly'
             }}>
-            <Spacer height={15} />
+            {gap > 0 && <Spacer height={15} />}
             <View style={{
                 position: 'absolute',
+                top:-50,
                 top: Math.max(100 - props.size / 2, 0),
-                minHeight: 200
+                minHeight: 200, 
             }}>
                 <AppText style={{
                     fontSize: props.size,
@@ -242,13 +280,11 @@ export function TextSizePicker(props) {
                 >{translate("A")}</AppText>
                 
             </View>
-            <Spacer height={25} />
             <View style={{
                 height: 100,
                 position: 'absolute',
-                top: 270,
+                top: gap > 0 ? 270 : 0,
             }}
-
                 onTouchStart={(e) => {
                     trace("touch", e.nativeEvent.locationX);
                     // 0 - 400
@@ -288,7 +324,7 @@ export function TextSizePicker(props) {
             </View>
 
 
-        </View>
+        </View> */}
     </FadeInView>
 }
 
