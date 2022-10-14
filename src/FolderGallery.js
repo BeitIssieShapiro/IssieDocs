@@ -611,7 +611,7 @@ export default class FolderGallery extends React.Component {
         // } else {
         //     Alert.alert("error finding newly created file")
         // }
-        let uri = await FileSystem.main.getStaticPageTempFile(type);
+        let uri = await FileSystem.main.getStaticPageTempFile(type, this.state.windowSize);
         this.props.navigation.navigate('SavePhoto', {
             uri,
             imageSource: SRC_FILE,
@@ -624,7 +624,7 @@ export default class FolderGallery extends React.Component {
     }
 
     addEmptyPageToPage = async (addToExistingPage, pageType) => {
-        let tempFileName = await FileSystem.main.getStaticPageTempFile(pageType);
+        let tempFileName = await FileSystem.main.getStaticPageTempFile(pageType, this.state.windowSize);
         this.props.navigation.navigate('SavePhoto', {
             uri: tempFileName,
             imageSource: SRC_FILE,

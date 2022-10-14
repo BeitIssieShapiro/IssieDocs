@@ -162,51 +162,47 @@ function Canvas({
                 }
             }
         }
+        const waitFor = [
+            new Promise((resolve) => canvas.current?.getImageIds((ids) => {
+                const idsStatus = ids ? ids.map(id => ({ id, exists: false })) : [];
+                canvasImages.forEach(ci => {
 
-        canvas.current?.getImageIds((ids) => {
-            const idsStatus = ids ? ids.map(id => ({ id, exists: false })) : [];
-            canvasImages.forEach(ci => {
+                    const stat = idsStatus.find(idStat => idStat.id === ci.id);
+                    if (stat) {
+                        const scalePos = {
+                            id: ci.id,
+                            width: ci.width,
+                            height: ci.height,
+                            position: ci.position,
+                        }
 
-                const stat = idsStatus.find(idStat => idStat.id === ci.id);
-                if (stat) {
-                    const scalePos = {
-                        id: ci.id,
-                        width: ci.width,
-                        height: ci.height,
-                        position: ci.position,
+                        canvas?.current?.setCanvasImagePosition(scalePos)
+                        stat.exists = true;
+                    } else {
+                        canvas.current?.addOrSetCanvasImage(ci);
                     }
+                });
+                // delete those images who are no longer exists in the queue
+                idsStatus.filter(idStat => !idStat.exists).forEach(idStat => canvas.current?.deleteImage(idStat.id));
+                resolve();
+            })),
+            new Promise((resolve) => canvas.current?.getPathIds((ids) => {
+                trace("path ids :", JSON.stringify(ids))
 
-                    canvas?.current?.setCanvasImagePosition(scalePos)
-                    stat.exists = true;
-                } else {
-                    canvas.current?.addOrSetCanvasImage(ci);
-                }
-            });
-            // delete those images who are no longer exists in the queue
-            idsStatus.filter(idStat => !idStat.exists).forEach(idStat => canvas.current?.deleteImage(idStat.id));
-        });
-
-        canvas.current?.getPathIds((ids) => {
-            trace("path ids :", JSON.stringify(ids))
-
-            const idsStatus = ids ? ids.map(id => ({ id, exists: false })) : [];
-            paths.forEach(path => {
-                canvas.current?.addPath(path, width, height);
-                const stat = idsStatus.find(idStat => idStat.id == path.path.id);
-                if (stat) {
-                    stat.exists = true;
-                }
-            });
-            // delete those paths who are no longer exists in the queue
-            idsStatus.filter(idStat => !idStat.exists).forEach(idStat => canvas.current?.deletePath(idStat.id));
-
-            // setTimeout(() => {
-            //     paths.forEach(path => canvas.current?.addPath(path))
-            //     AfterRender(revision)
-            // }, 1);
-
-        });
-
+                const idsStatus = ids ? ids.map(id => ({ id, exists: false })) : [];
+                paths.forEach(path => {
+                    canvas.current?.addPath(path, width, height);
+                    const stat = idsStatus.find(idStat => idStat.id == path.path.id);
+                    if (stat) {
+                        stat.exists = true;
+                    }
+                });
+                // delete those paths who are no longer exists in the queue
+                idsStatus.filter(idStat => !idStat.exists).forEach(idStat => canvas.current?.deletePath(idStat.id));
+                resolve()
+            }))
+        ]
+        Promise.all(waitFor).then(() => AfterRender(revision));
 
         setTexts(canvasTexts);
         setImages(canvasImages);
