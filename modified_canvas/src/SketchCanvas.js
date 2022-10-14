@@ -125,12 +125,12 @@ class SketchCanvas extends React.Component {
     return lastId
   }
 
-  addPath(data) {
+  addPath(data, width, height) {
     if (this._initialized) {
       if (this._paths.filter(p => p.path.id === data.path.id).length === 0) this._paths.push(data)
       const pathData = data.path.data.map(p => {
         const coor = p.split(',').map(pp => parseFloat(pp).toFixed(2))
-        return `${coor[0] * this._screenScale * this._size.width / data.size.width},${coor[1] * this._screenScale * this._size.height / data.size.height}`;
+        return `${coor[0] * this._screenScale * width / data.size.width},${coor[1] * this._screenScale * height / data.size.height}`;
       })
       UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.addPath, [
         data.path.id, processColor(data.path.color), data.path.width * this._screenScale, pathData
@@ -156,6 +156,19 @@ class SketchCanvas extends React.Component {
   clearImages() {
     SketchCanvasManager.clearImages(this._handle);
   }
+
+  getImageIds(callback) {
+    SketchCanvasManager.getImageIds(this._handle, callback);
+  }
+
+  getPathIds(callback) {
+    SketchCanvasManager.getPathIds(this._handle, callback);
+  }
+
+  deleteImage(imageId) {
+    SketchCanvasManager.deleteImage(this._handle, imageId);
+  }
+
 
   export(imageType, scaleToSize, callback) {
     if (Platform.OS === 'ios') {
@@ -239,8 +252,9 @@ class SketchCanvas extends React.Component {
       onPanResponderRelease: (evt, gestureState) => {
         if (!this.props.touchEnabled) return
         if (this._path) {
-          this._paths.push({ path: this._path, size: this._size, drawer: this.props.user })
-          this.props.onStrokeEnd({ path: this._path, size: this._size, drawer: this.props.user })
+          const size = {width:this.props.width, height:this.props.height}
+          this._paths.push({ path: this._path, size, drawer: this.props.user })
+          this.props.onStrokeEnd({ path: this._path, size, drawer: this.props.user })
         }
         UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.endPath, [])
       },
@@ -276,7 +290,8 @@ class SketchCanvas extends React.Component {
         }}
         style={this.props.style}
         onLayout={e => {
-          this._size = { width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height }
+          //this._size = { width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height }
+          //console.log("internal layout", this._size)
           this._initialized = true
           this._pathsToProcess.length > 0 && this._pathsToProcess.forEach(p => this.addPath(p))
         }}

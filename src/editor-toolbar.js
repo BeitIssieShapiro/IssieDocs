@@ -63,7 +63,7 @@ function EditorToolbar({
 
     useEffect(() => {
         onToolBarDimensionsChange(toolbarHeight, Math.max(textMenuHeight, colorMenuHeight, brushMenuHeight, zoomMenuHeight, imageMenuHeight))
-    }, [textMenuHeight, colorMenuHeight, brushMenuHeight, zoomMenuHeight, imageMenuHeight]);
+    }, [textMenuHeight, colorMenuHeight, brushMenuHeight, zoomMenuHeight, imageMenuHeight, toolbarHeight]);
 
 
     fontSize = fontSize || 25;
@@ -179,7 +179,7 @@ function EditorToolbar({
 
 
     let previewFontSize = fontSize4Toolbar(fontSize);
-    trace("previewFontSize", previewFontSize, dimensions.toolbarHeight)
+    //trace("previewFontSize", previewFontSize, dimensions.toolbarHeight)
     let previewFontSizePlus = false;
     if (previewFontSize > dimensions.toolbarHeight - 5) {
         previewFontSizePlus = true;
@@ -336,7 +336,7 @@ function EditorToolbar({
                 setShowColorPicker(false);
             }}
             onHeightChanged={(height)=>{
-                console.log("color height ", height)
+                trace("color height ", height)
                 setColorMenuHeight(height)
             }}
             maxHeight={maxFloatingHeight}
@@ -356,7 +356,7 @@ function EditorToolbar({
                     setShowTextSizePicker(false);
             }}
             onHeightChanged={(height)=>{
-                console.log("Text height " , height)
+                trace("Text height " , height)
                 setTextMenuHeight(height)
             }}
             maxHeight={maxFloatingHeight}

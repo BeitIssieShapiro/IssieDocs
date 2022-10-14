@@ -33,6 +33,7 @@
         _eventDispatcher = eventDispatcher;
         _paths = [NSMutableArray new];
         _needsFullRedraw = YES;
+        //self.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 
         self.backgroundColor = [UIColor clearColor];
         self.clearsContextBeforeDrawing = YES;
@@ -48,6 +49,7 @@
     if (_needsFullRedraw) {
         [self setFrozenImageNeedsUpdate];
         CGContextClearRect(_drawingContext, bounds);
+        [NSThread sleepForTimeInterval:0.010f];
         for (RNSketchData *path in _paths) {
             [path drawInContext:_drawingContext];
         }
@@ -284,6 +286,23 @@
     [self setNeedsDisplay];
 }
 
+
+- (NSArray *)getImageIds {
+    NSMutableArray *newArray = [NSMutableArray array];
+    for (CanvasImage *img in _arrImages) {
+        [newArray addObject:img.id];
+    }
+    return newArray;
+}
+- (NSArray *)getPathIds {
+    NSMutableArray *newArray = [NSMutableArray array];
+    for (RNSketchData *path in _paths) {
+        NSNumber *anumber = [NSNumber numberWithInteger:path.pathId];
+        [newArray addObject:anumber];
+    }
+    return newArray;
+}
+
 - (void)addOrSetImageOnCanvas:(NSDictionary *)imageOnCanvas {
     if (_arrImages == nil) {
         _arrImages = [NSMutableArray new];
@@ -339,25 +358,23 @@
 }
 
 - (void) addPath:(int) pathId strokeColor:(UIColor*) strokeColor strokeWidth:(int) strokeWidth points:(NSArray*) points {
-    bool exist = false;
+    
     for(int i=0; i<_paths.count; i++) {
         if (((RNSketchData*)_paths[i]).pathId == pathId) {
-            exist = true;
+            [self deletePath:pathId];
             break;
         }
     }
     
-    if (!exist) {
-        RNSketchData *data = [[RNSketchData alloc] initWithId: pathId
-                                                  strokeColor: strokeColor
-                                                  strokeWidth: strokeWidth
-                                                       points: points];
-        [_paths addObject: data];
-        [data drawInContext:_drawingContext];
-        [self setFrozenImageNeedsUpdate];
-        [self setNeedsDisplay];
-        [self notifyPathsUpdate];
-    }
+    RNSketchData *data = [[RNSketchData alloc] initWithId: pathId
+                                              strokeColor: strokeColor
+                                              strokeWidth: strokeWidth
+                                                   points: points];
+    [_paths addObject: data];
+    [data drawInContext:_drawingContext];
+    [self setFrozenImageNeedsUpdate];
+    [self setNeedsDisplay];
+    [self notifyPathsUpdate];
 }
 
 - (void)deletePath:(int) pathId {
@@ -376,6 +393,23 @@
         [self notifyPathsUpdate];
     }
 }
+
+- (void)deleteImage:(NSString*) imageId {
+    int index = 0;
+    for (CanvasImage *img in _arrImages) {
+        
+        if (img.id == imageId) {
+            [_arrImages removeObjectAtIndex:index];
+            break;
+        }
+        index++;
+    }
+
+    _arrImages = nil;
+    _needsFullRedraw = YES;
+    [self setNeedsDisplay];
+}
+
 
 - (void)addPointX: (float)x Y: (float)y {
     CGPoint newPoint = CGPointMake(x, y);

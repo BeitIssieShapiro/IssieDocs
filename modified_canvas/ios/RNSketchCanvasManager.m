@@ -48,6 +48,7 @@ RCT_CUSTOM_VIEW_PROPERTY(text, NSArray, RNSketchCanvas)
     });
 }
 
+
 #pragma mark - Lifecycle
 
 - (UIView *)view
@@ -82,6 +83,23 @@ RCT_EXPORT_METHOD(setCanvasImagePosition:(nonnull NSNumber *)reactTag canvasImag
         [canvas setCanvasImagePosition:dict];
     }];
 }
+
+
+RCT_EXPORT_METHOD(getPathIds:(nonnull NSNumber *)reactTag :(RCTResponseSenderBlock)callback)
+{
+    [self runCanvas:reactTag block:^(RNSketchCanvas *canvas) {
+        callback(@[[canvas getPathIds]]);
+                 
+    }];
+}
+
+RCT_EXPORT_METHOD(getImageIds:(nonnull NSNumber *)reactTag :(RCTResponseSenderBlock)callback)
+{
+    [self runCanvas:reactTag block:^(RNSketchCanvas *canvas) {
+        callback(@[[canvas getImageIds]]);
+    }];
+}
+
 
 RCT_EXPORT_METHOD(save:(nonnull NSNumber *)reactTag type:(NSString*) type folder:(NSString*) folder filename:(NSString*) filename withTransparentBackground:(BOOL) transparent includeImage:(BOOL)includeImage includeText:(BOOL)includeText cropToImageSize:(BOOL)cropToImageSize scaleToSize:(CGSize)scaleToSize)
 {
@@ -134,6 +152,14 @@ RCT_EXPORT_METHOD(deletePath:(nonnull NSNumber *)reactTag pathId: (int) pathId)
         [canvas deletePath: pathId];
     }];
 }
+
+RCT_EXPORT_METHOD(deleteImage:(nonnull NSNumber *)reactTag imageId: (NSString*) imageId)
+{
+    [self runCanvas:reactTag block:^(RNSketchCanvas *canvas) {
+        [canvas deleteImage: imageId];
+    }];
+}
+
 
 RCT_EXPORT_METHOD(endPath:(nonnull NSNumber *)reactTag)
 {

@@ -149,10 +149,8 @@ export class FileSystem {
 
     async renameFolder(name, newName, icon, color) {
         await this.addFolder(newName, icon, color, name !== newName, false, true);
-        trace("0")
         //move all files and delete old folder
         if (name !== newName) {
-            trace("1")
             await RNFS.readDir(this._basePath + name).then(async (files) => {
                 for (let f of files) {
                     trace("iterate files", f)
@@ -162,12 +160,9 @@ export class FileSystem {
                     }
                 }
             });
-            trace("2")
             await this.deleteFolder(name);
-            trace("3")
             await _renameFolderOrders(name, newName);
             await _sortFolders(this._folders);
-            trace("4")
             await this._reloadFolder(newName);
         }
         this._notify();

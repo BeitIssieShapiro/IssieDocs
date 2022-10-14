@@ -449,7 +449,7 @@ export default class IssieEditPhoto extends React.Component {
   isTextMode = () => this.state.mode === Modes.TEXT;
   isBrushMode = () => this.state.mode === Modes.BRUSH;
   isImageMode = () => this.state.mode === Modes.IMAGE;
-  isEraserMode = () => this.state.eraseMode;
+  isEraserMode = () => this.state.mode === Modes.ERASER;
 
 
 
@@ -652,19 +652,9 @@ export default class IssieEditPhoto extends React.Component {
     }
   }
 
-  handleOnRevisionRendered = (revID) => {
-    if (this.state.needExport && revID >= this.state.needExport.revision) {
-      let promise = this.state.needExport;
-      this.setState({ needExport: undefined })
-      setTimeout(() => {
-        this.doExport(promise.resolve, promise.reject);
-      }, shareTimeMs);
-    }
-  }
-
   exportToBase64 = async () => {
     return new Promise((resolve, reject) => {
-      this.setState({ needExport: { resolve, reject, revision: this.state.revision + 1 }, revision: this.state.revision + 1 })
+      this.setState({ needExport: { resolve, reject } })
     });
   }
 
@@ -721,7 +711,7 @@ export default class IssieEditPhoto extends React.Component {
             let lastSlashPos = filePath.lastIndexOf('/');
             let folder = filePath.substring(0, lastSlashPos);
             console.log("save thumbnail to folder", folder)
-            this.canvas.current?.canvas.current.export("jpg", { width: 80, height: 120 }, (err, path) => {
+            this.canvas.current?.export("jpg", { width: 80, height: 120 }, (err, path) => {
               console.log("save thumbnail", path)
               FileSystem.main.saveThumbnail(path, this.props.route.params.page);
             });
@@ -776,20 +766,24 @@ export default class IssieEditPhoto extends React.Component {
       }
 
 
-      let textElem = this.canvas.current.findElementByLocation({
+      let textElemIndex = this.findElementByLocation({
         x: this.viewPort2NormX(x),
         y: this.viewPort2NormY(y)
       });
 
       //in erase mode, only act on found texts
-      if (!textElem && this.state.eraseMode) return;
+      if (textElemIndex < 0 && this.state.eraseMode) return;
 
       let initialText = '';
       let fontSize = this.state.fontSize;
       let fontColor = this.state.color;
       let inputTextWidth = 0;
       let inputTextHeight = this.normFontSize2FontSize(this.state.fontSize);
-      if (textElem) {
+      let textElem = undefined;
+      if (textElemIndex >= 0) {
+        textElem = this.state.canvasTexts[textElemIndex];
+
+
 
         //convert to rtl text:
         if (textElem.rtl == undefined || textElem.rtl !== isRTL()) {
@@ -823,8 +817,8 @@ export default class IssieEditPhoto extends React.Component {
         inputTextHeight,
         color: fontColor,
         currentTextElem: textElem,
-        xText: textElem ? this.norm2viewPortX(textElem.normPosition.x) : x,
-        yText: textElem ? this.norm2viewPortY(textElem.normPosition.y) : y,
+        xText: textElemIndex >= 0 ? this.norm2viewPortX(textElem.normPosition.x) : x,
+        yText: textElemIndex >= 0 ? this.norm2viewPortY(textElem.normPosition.y) : y,
       }, () => {
 
         if (this.state.eraseMode) {
@@ -832,12 +826,16 @@ export default class IssieEditPhoto extends React.Component {
         }
       });
     } else if (this.isImageMode()) {
+      let imgElem = undefined;
 
-      let imgElem = this.canvas.current.findElementByLocation({
+      let imageElemIndex = this.findElementByLocation({
         x: this.viewPort2NormX(x), //this.state.scaleRatio,
         y: this.viewPort2NormY(y) //this.state.scaleRatio
       });
-      if (imgElem) {
+      if (imageElemIndex >= 0) {
+
+        imgElem = this.state.canvasImages[imageElemIndex];
+
         // In Erase mode, remove the img
         // if (this.isImageMode()) {
         //   this.state.queue.pushDeleteImage({ id: imgElem.id })
@@ -1013,7 +1011,7 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     if (this.state.currentImageElem) {
-      this.canvas?.current.canvas.current?.setCanvasImagePosition(scalePos)
+      //this.canvas?.current.setCanvasImagePosition(scalePos)
     }
     const newScaleElem = {
       ...imgElem,
@@ -1063,8 +1061,7 @@ export default class IssieEditPhoto extends React.Component {
       height,
       position: imgElem.position,
     }
-    trace("resizeCurrentImage", scalePos)
-    this.canvas.current?.canvas.current?.setCanvasImagePosition(scalePos);
+    this.canvas.current?.setCanvasImagePosition(scalePos);
 
     this.setState({
       currentImageElem: {
@@ -1361,7 +1358,13 @@ export default class IssieEditPhoto extends React.Component {
 
   onEraserChange = (isOff) => {
     let eraserOn = isOff ? false : !this.state.eraseMode;
+    let newColor = eraserOn ? '#00000000' : this.state.color;
+    let newStrokeWidth = eraserOn ?
+      (this.state.strokeWidth * 3 < 15 ? 15 : this.state.strokeWidth * 3)
+      : this.state.strokeWidth;
+
     this.setState({ eraseMode: eraserOn });
+    this.updateBrush(newStrokeWidth, newColor);
   }
 
   onBrushMode = () => {
@@ -1389,6 +1392,11 @@ export default class IssieEditPhoto extends React.Component {
     this.setState({
       strokeWidth: newStrokeWidth
     })
+    this.updateBrush(newStrokeWidth, this.state.color);
+  }
+
+  updateBrush = (strokeWidth, color) => {
+    this.canvas.current?.setState({ strokeWidth, color });
   }
 
   rename = async (isRename) => {
@@ -1508,6 +1516,7 @@ export default class IssieEditPhoto extends React.Component {
 
       trace("onImageDimensions", imageSize, winSize, viewPortRect, sideMarginFinal, sideMargin)
 
+
       // translate locations that bound to scaleRatio:
       let xText = this.state.xText;
       let yText = this.state.yText;
@@ -1524,8 +1533,8 @@ export default class IssieEditPhoto extends React.Component {
         imgElem = undefined
       }
 
+      trace("x-rotate")
       this.setState({
-        layoutReady: true,
         windowSize: winSize,
         imageSize,
         viewPortRect,
@@ -1612,6 +1621,7 @@ export default class IssieEditPhoto extends React.Component {
 
           onSelectColor={(color) => {
             this.setState({ color, eraseMode: false })
+            this.updateBrush(this.state.strokeWidth, color);
             this.updateInputText();
 
           }}
@@ -1699,7 +1709,7 @@ export default class IssieEditPhoto extends React.Component {
                     <Text style={{ zIndex: 100, fontSize: 25 }}>{fTranslate("ExportProgress", this.state.shareProgressPage, (this.state.page.count > 0 ? this.state.page.count : 1))}</Text>
                   </ProgressCircle>
                 </View>}
-              {this.getCanvas(this.state.pageRect.width, this.state.pageRect.height)}
+              {this.getCanvas()}
             </Animated.View>
             {this.state.showTextInput && this.getTextInput(rtl, rowReverse)}
             {this.state.currentImageElem && this.isImageMode() && this.getImageRect()}
@@ -1821,35 +1831,20 @@ export default class IssieEditPhoto extends React.Component {
   }
 
 
-  getCanvas = (width, height) => {
-    let strokeWidth = this.isEraserMode() ?
-      (this.state.strokeWidth * 3 < 15 ? 15 : this.state.strokeWidth * 3)
-      : this.state.strokeWidth;
-
-    let color = this.isEraserMode() ? '#00000000' : this.state.color;
-
+  getCanvas = () => {
     return (
       <Canvas
-        ref={this.canvas}
-        width={width}
-        height={height}
-        layoutReady={this.state.layoutReady}
         revision={this.state.revision}
         zoom={this.state.zoom} //important for path to be in correct size
         scaleRatio={this.state.scaleRatio}
         isBrushMode={this.isBrushMode()}
-        isImageMode={this.isImageMode()}
         imagePath={this.state.currentFile}
         SketchEnd={this.SketchEnd}
         SketchStart={this.SketchStart}
-        AfterRender={this.handleOnRevisionRendered}
         queue={this.state.queue}
         normFontSize2FontSize={this.normFontSize2FontSize}
         imageNorm2Scale={this.imageNorm2Scale}
-        imageScale2Norm={this.imageScale2Norm}
-        currentTextElemId={this.isTextMode() && this.state.currentTextElem?.id}
-        strokeWidth={strokeWidth}
-        color={color}
+        currentTextElemId={this.state?.currentTextElem?.id}
       />
 
     );

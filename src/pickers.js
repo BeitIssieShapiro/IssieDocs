@@ -187,7 +187,6 @@ export function TextSizePicker(props) {
     let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
     const _height = buttonSize + 10 + (openMore ? 60 : 0)
     const gap = props.maxHeight - _height;
-    console.log(gap)
     useEffect(() => {
         if (props.open) {
             setHeight(Math.min(_height, props.maxHeight))

@@ -146,8 +146,8 @@ export default class RNSketchCanvas extends React.Component {
     return this._sketchCanvas.undo()
   }
 
-  addPath(data) {
-    this._sketchCanvas.addPath(data)
+  addPath(data, width, height) {
+    this._sketchCanvas.addPath(data, width, height)
   }
 
   deletePath(id) {
@@ -169,6 +169,18 @@ export default class RNSketchCanvas extends React.Component {
   }
   clearImages() {
     this._sketchCanvas.clearImages();
+  }
+
+  getPathIds(callback) {
+    this._sketchCanvas.getPathIds(callback);
+  }
+
+  getImageIds(callback) {
+    this._sketchCanvas.getImageIds(callback);
+  }
+
+  deleteImage(imageId) {
+    this._sketchCanvas.deleteImage(imageId);
   }
 
   export(type, scaleToSize, callback) {
@@ -276,6 +288,8 @@ export default class RNSketchCanvas extends React.Component {
         </View>
         <SketchCanvas
           ref={ref => this._sketchCanvas = ref}
+          width={this.props.width}
+          height={this.props.height}
           scale={this.props.scale}
           style={this.props.canvasStyle}
           strokeColor={this.state.color + (this.state.color.length === 9 ? '' : this.state.alpha)}
