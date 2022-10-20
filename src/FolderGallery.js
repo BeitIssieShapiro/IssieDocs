@@ -611,9 +611,10 @@ export default class FolderGallery extends React.Component {
         // } else {
         //     Alert.alert("error finding newly created file")
         // }
-        let uri = await FileSystem.main.getStaticPageTempFile(type, this.state.windowSize);
+        let uri = await FileSystem.main.getStaticPageTempFile(type);
         this.props.navigation.navigate('SavePhoto', {
             uri,
+            isBlank: true,
             imageSource: SRC_FILE,
             addToExistingPage: false,
             skipConfirm: true,
@@ -624,9 +625,10 @@ export default class FolderGallery extends React.Component {
     }
 
     addEmptyPageToPage = async (addToExistingPage, pageType) => {
-        let tempFileName = await FileSystem.main.getStaticPageTempFile(pageType, this.state.windowSize);
+        let tempFileName = await FileSystem.main.getStaticPageTempFile(pageType);
         this.props.navigation.navigate('SavePhoto', {
             uri: tempFileName,
+            isBlank: true,
             imageSource: SRC_FILE,
             addToExistingPage,
             folder: this.state.currentFolder,
@@ -634,9 +636,6 @@ export default class FolderGallery extends React.Component {
             saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
         })
     }
-
-
-
 
     getSortFunction = () => {
         return this.state.sortBy == SORT_BY_DATE ?
@@ -652,16 +651,27 @@ export default class FolderGallery extends React.Component {
                 <MenuTrigger >
                     {getSvgIconButton(() => this.menu.open(), semanticColors.addButton, "menu-new-empty-page", 40)}
                 </MenuTrigger>
-                <MenuOptions {...IDMenuOptionsStyle({ top: dimensions.toolbarHeight - 12, width: 200 })}>
+                <MenuOptions {...IDMenuOptionsStyle({ top: dimensions.toolbarHeight - 12, width: 240 })}>
                     <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Blank)}>
                         {renderMenuOption(translate("MenuNewPageEmpty"), "page-empty", "svg", rtl)}
                     </MenuOption>
+                    {/* <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Blank)}>
+                        {renderMenuOption(translate("MenuNewPageEmptyLandscape"), "page-empty", "svg", rtl)}
+                    </MenuOption> */}
+
                     <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Lines)}>
                         {renderMenuOption(translate("MenuNewPageLines"), "page-lines", "svg", rtl)}
                     </MenuOption>
+                    {/* <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Lines)}>
+                        {renderMenuOption(translate("MenuNewPageLinesLandscape"), "page-lines", "svg", rtl)}
+                    </MenuOption> */}
                     <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Math)}>
                         {renderMenuOption(translate("MenuNewPageMath"), "page-math", "svg", rtl)}
                     </MenuOption>
+                    {/* <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Math)}>
+                        {renderMenuOption(translate("MenuNewPageMathLandscape"), "page-math", "svg", rtl)}
+                    </MenuOption> */}
+
                     <Spacer />
                     <View style={{ flex: 1, width: '100%', flexDirection: 'column', alignItems: 'center' }}>
                         {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}

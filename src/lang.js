@@ -94,6 +94,7 @@ var strings = {
         "EmptyPageName":"דף חדש",
 
         "CaptionPageName": "שם הדף",
+        "OrientationCaption": "כיוון",
         "CaptionFolderNameList": "תיקיה",
         "CaptionFolderNameInput": "שם התיקיה",
         "CaptionFolderColor": "צבע התיקיה",
@@ -194,6 +195,7 @@ var strings = {
         "EmptyPageName":"صفحة جديدة",
 
         "CaptionPageName": "اسم الصفحة",
+        "OrientationCaption":"الاتجاه",
         "CaptionFolderNameList": "مجلد",
         "CaptionFolderNameInput": "اسم المجلد",
         "NoIcon": "بلا",
@@ -292,6 +294,7 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "EmptyPageName":"Empty page",
 
         "CaptionPageName": "Name",
+        "OrientationCaption": "Orientation",
         "CaptionFolderNameList": "Folder",
         "CaptionFolderNameInput": "Folder Name",
         "CaptionFolderColor": "Folder Color",

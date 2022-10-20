@@ -8,7 +8,7 @@ import ImageEditor from "@react-native-community/image-editor";
 import Pdf from 'react-native-pdf';
 import ViewShot from "react-native-view-shot";
 import { StackActions } from '@react-navigation/native';
-import { Icon } from "./elements"
+import { Icon, OrientationPicker } from "./elements"
 import { getRowDirections, translate } from './lang.js'
 
 import {
@@ -172,6 +172,8 @@ export default class IssieSavePhoto extends React.Component {
     let folders = await FileSystem.main.getFolders();
     folders = folders.filter(f => f.name !== FileSystem.DEFAULT_FOLDER.name);
 
+
+
     this.setState({
       imageUri, pathToSave, pdf, pdfPage: 1,
       folders, folder, pageName, addToExistingPage, multiPage, pages, onConfirm, phase: skipConfirm ? PickName : OK_Cancel,
@@ -189,6 +191,8 @@ export default class IssieSavePhoto extends React.Component {
   isRename = () => this.props.route.params.imageSource === SRC_RENAME;
   isFile = () => this.props.route.params.imageSource === SRC_FILE;
   isDuplicate = () => this.props.route.params.imageSource === SRC_DUPLICATE;
+  isBlankPage = () => this.props.route.params.isBlank === true;
+
 
   updateImageDimension = async () => {
     //setTimeout(async () => {
@@ -198,11 +202,13 @@ export default class IssieSavePhoto extends React.Component {
           { w: 0, h: 0 } :
           await getImageDimensions(this.state.imageUri);
 
-      let windowSize = Dimensions.get("window");
-      windowSize = {
-        width: windowSize.width,
-        height: windowSize.height - dimensions.topView - this.state.topView - 10
+      const fullWindowSize = Dimensions.get("window");
+      const windowSize = {
+        width: fullWindowSize.width,
+        height: fullWindowSize.height - dimensions.topView - this.state.topView - 10
       };
+
+      const orientationLandscape = windowSize.width > windowSize.height;
 
       let dx = windowSize.width - imgSize.w;
       let dy = windowSize.height - imgSize.h;
@@ -214,7 +220,7 @@ export default class IssieSavePhoto extends React.Component {
         scale = Math.min(scaleW, scaleH);
       }
       trace("updateImageDimension", { imgSize, scale, windowSize })
-      this.setState({ imgSize, scale, windowSize })
+      this.setState({ imgSize, scale, windowSize, fullWindowSize, orientationLandscape })
     } catch (err) {
       Alert.alert("Error measuring file" + err.toString())
       trace("Error measuring file", JSON.stringify(err))
@@ -267,7 +273,8 @@ export default class IssieSavePhoto extends React.Component {
         //In a mode of adding another page to existing set-of-pages
         //Current assumptions: only one page added (no pdf, no add multi page)
         let page = this.state.addToExistingPage;
-        await FileSystem.main.addPageToSheet(page, this.state.pathToSave);
+        const newPathToAdd = await this.AdjustToOrientation(this.state.pathToSave);
+        await FileSystem.main.addPageToSheet(page, newPathToAdd);
 
         this.props.route.params.returnFolderCallback(this.state.folder.name);
         this.props.navigation.dispatch(StackActions.popToTop());
@@ -285,9 +292,30 @@ export default class IssieSavePhoto extends React.Component {
     }
   }
 
+  AdjustToOrientation = async (uri) => {
+    if (!this.isBlankPage()) {
+      // do nothing
+      return uri;
+    }
+    const w = this.state.fullWindowSize.width;
+    const h = this.state.fullWindowSize.height;
+    const width = this.state.orientationLandscape ? Math.max(w, h) : Math.min(w, h);
+    const height = this.state.orientationLandscape ? Math.min(w, h) : Math.max(w, h);
+
+    let cropData = {
+      offset: { x: 0, y: 0 },
+      size: { width, height }
+    };
+    return ImageEditor.cropImage(uri, cropData);
+  }
+
+
+
   save = async () => {
     if (this.saveInProgress)
       return;
+
+    const newPathToSave = await this.AdjustToOrientation(this.state.pathToSave);
 
     try {
       this.saveInProgress = true;
@@ -307,13 +335,13 @@ export default class IssieSavePhoto extends React.Component {
 
         //add .jpg only if not rename or dup
         if (this.isDuplicate() || this.isRename()) {
-          if (this.state.pathToSave.endsWith(".jpg")) {
+          if (newPathToSave.endsWith(".jpg")) {
             filePath += ".jpg";
           }
         } else if (!this.state.multiPage) {
           filePath += ".jpg";
         }
-        trace("save: src - ", this.state.pathToSave, "target:", filePath)
+        trace("save: src - ", newPathToSave, "target:", filePath)
 
         if (this.state.multiPage) {
           //create a folder with the name of the file (happens implicitly)
@@ -324,14 +352,14 @@ export default class IssieSavePhoto extends React.Component {
           await FileSystem.main.saveThumbnail(filePath + "/0" + ".jpg");
         } else {
           //move/copy entire folder, or save single file
-          await FileSystem.main.saveFile(this.state.pathToSave, filePath, this.isDuplicate());
+          await FileSystem.main.saveFile(newPathToSave, filePath, this.isDuplicate());
           await FileSystem.main.saveThumbnail(filePath);
         }
 
-        if ((this.isRename() || this.isDuplicate()) && this.state.pathToSave.endsWith('.jpg')) {
+        if ((this.isRename() || this.isDuplicate()) && newPathToSave.endsWith('.jpg')) {
           //single existing file
           try {
-            await FileSystem.main.saveFile(this.state.pathToSave + ".json", filePath + ".json", this.isDuplicate());
+            await FileSystem.main.saveFile(newPathToSave + ".json", filePath + ".json", this.isDuplicate());
             // todo move thumbnail too
           } catch (e) {
             //ignore, as maybe json is missing
@@ -340,7 +368,7 @@ export default class IssieSavePhoto extends React.Component {
         }
 
         if (this.isRename() || this.isDuplicate()) {
-          await FileSystem.main.renameOrDuplicateThumbnail(this.state.pathToSave, filePath, this.isDuplicate());
+          await FileSystem.main.renameOrDuplicateThumbnail(newPathToSave, filePath, this.isDuplicate());
         }
 
 
@@ -512,6 +540,7 @@ export default class IssieSavePhoto extends React.Component {
     return url;
   };
 
+
   render() {
     const { row, flexStart, rtl } = getRowDirections();
     this.state.imageUri;
@@ -554,7 +583,7 @@ export default class IssieSavePhoto extends React.Component {
         </View>;
     }
 
-    let editPhoto = this.state.phase == OK_Cancel && !this.state.pdf;
+    let editPhoto = this.state.phase == OK_Cancel && !this.state.pdf && !this.isBlankPage();
 
     editPicButtons =
       <View style={{
@@ -597,6 +626,9 @@ export default class IssieSavePhoto extends React.Component {
             name={this.state.pageName}
             folder={this.state.folder}
             folders={this.state.folders}
+            orientationLandscape={this.state.orientationLandscape}
+            includeOrientation={this.isBlankPage()}
+            onChangeOrientation={(isLandscape) => this.setState({ orientationLandscape: isLandscape })}
             onChangeName={(text) => this.setState({ pageName: text })}
             onChangeFolder={(folder) => this.setState({ folder: folder })}
             onSaveNewFolder={(name, color, icon) => this.saveNewFolder(name, color, icon)}
@@ -711,6 +743,10 @@ export default class IssieSavePhoto extends React.Component {
               height: this.state.windowSize.height,
             }
           ]}>
+            {this.isBlankPage && this.state.addToExistingPage && <OrientationPicker
+              orientationLandscape={this.state.orientationLandscape}
+              onChangeOrientation={(orientationLandscape)=>this.setState({orientationLandscape})}
+            />}
             {this.state.phase == OK_Cancel ?
               <ImageBackground
                 style={{

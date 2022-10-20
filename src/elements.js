@@ -2,7 +2,7 @@ import {
     TouchableOpacity, Text, StyleSheet, Image, View
     , Alert, TextInput, ShadowPropTypesIOS
 } from 'react-native';
-import {Icon as IconLocal } from 'react-native-elements'
+import { Icon as IconLocal } from 'react-native-elements'
 import LinearGradient from 'react-native-linear-gradient';
 import React, { useState } from 'react';
 import { translate, getLocalizedFoldersAndIcons, isRTL, getRowDirection, getRowDirections, getFlexEnd, getRowReverseDirection } from "./lang.js";
@@ -368,10 +368,49 @@ export function normalizeTitle(title) {
 }
 
 
+function RadioButton(props) {
+    const borderStyle = props.selected ? {
+        borderColor: semanticColors.titleText,
+        borderWidth: 5,
+        borderRadius: 8,
+    } : undefined;
+
+    const rotated = props.rotate != undefined ? { transform: [{ rotate: props.rotate }] } : undefined;
+
+    return (
+        <TouchableOpacity style={[{ width: 70, height: 70, padding: 3 }, borderStyle, rotated]} onPress={props.onSelect}>
+            {props.icon && getSvgIcon(props.icon, 40, 'black')}
+        </TouchableOpacity>
+    );
+}
+
+export function OrientationPicker({
+    orientationLandscape,
+    onChangeOrientation,
+}) {
+    const {  textAlign } = getRowDirections();
+
+    return <View style={{ flex: 1, width: '100%', zIndex:1000 }}>
+        <AppText style={[styles.titleText, { textAlign }, { marginVertical: 7 }]}>{translate("OrientationCaption")}</AppText>
+        <View style={{ flexDirection: 'row', width: "100%", height: 80, justifyContent: "center" }}>
+            <RadioButton value={"Portrait"} icon="page-empty" selected={!orientationLandscape}
+                onSelect={() => onChangeOrientation(false)}
+            />
+            <Spacer width={20} />
+            <RadioButton value={"Landscape"} icon="page-empty" selected={orientationLandscape}
+                rotate={"90deg"}
+                onSelect={() => onChangeOrientation(true)}
+            />
+        </View>
+    </View>
+}
 
 export function FileNameDialog({
     name,
     folder, folders,
+    orientationLandscape,
+    includeOrientation,
+    onChangeOrientation,
     onChangeName, onChangeFolder, onSaveNewFolder,
     navigation, isLandscape, isMobile, onLayout }) {
 
@@ -401,6 +440,20 @@ export function FileNameDialog({
                     onChangeText={onChangeName}
                     value={name}
                 />
+                <Spacer />
+                {includeOrientation && <View style={{ flex: 1, width: '100%' }}>
+                    <AppText style={[styles.titleText, { textAlign }, { marginVertical: 7 }]}>{translate("OrientationCaption")}</AppText>
+                    <View style={{ flexDirection: 'row', width: "100%", height: 80, justifyContent: "center" }}>
+                        <RadioButton value={"Portrait"} icon="page-empty" selected={!orientationLandscape}
+                            onSelect={() => onChangeOrientation(false)}
+                        />
+                        <Spacer width={20} />
+                        <RadioButton value={"Landscape"} icon="page-empty" selected={orientationLandscape}
+                            rotate={"90deg"}
+                            onSelect={() => onChangeOrientation(true)}
+                        />
+                    </View>
+                </View>}
             </View>
             <Spacer />
             <View style={{ flex: 1, width: '100%' }}>
@@ -688,15 +741,15 @@ export function TilesView({
             <View key={i} style={{
                 flexDirection: rtl ? 'row-reverse' : 'row',
                 width: "100%",
-                alignItems: 'center', 
-                justifyContent:nonFullRow?'flex-start':'space-between',
+                alignItems: 'center',
+                justifyContent: nonFullRow ? 'flex-start' : 'space-between',
             }}>
                 {rowChildren}
             </View>));
     }
 
     return <View style={{
-        flex:1,
+        flex: 1,
         minWidth: "100%",
         flexDirection: 'column',
         alignItems: 'flex-start',
@@ -799,8 +852,8 @@ export function AppText(props) {
             fontSize: 24,
             textAlign: isRTL() ? 'right' : 'left',
 
-        }, props.style]} 
-        onPress={props.onPress}
+        }, props.style]}
+            onPress={props.onPress}
         >{props.children}</Text>
     );
 }

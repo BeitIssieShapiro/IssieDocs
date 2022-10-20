@@ -8,7 +8,6 @@ import mockPage from './mock.jpg'
 import { WorkSheet } from './work-sheet';
 import { trace, assert } from './log'
 import ImageResizer from 'react-native-image-resizer';
-import ImageEditor from '@react-native-community/image-editor';
 
 const THUMBNAIL_SUFFIX = ".thumbnail.jpg";
 
@@ -634,17 +633,9 @@ export class FileSystem {
     // }
 
     // size = {width, height}
-    getStaticPageTempFile(pageType, size) {
+    getStaticPageTempFile(pageType) {
         let tempFileName = FileSystem.getTempFileName("jpg");
-        return this._getStaticPage(tempFileName, pageType).then(() => {
-            trace("crop empty page,0,0", size)
-            let cropData = {
-                offset: { x: 0, y: 0 },
-                size:{width: size.width, height: size.height}
-            };
-            trace("about to crop")
-            return ImageEditor.cropImage(tempFileName, cropData);
-        });
+        return this._getStaticPage(tempFileName, pageType).then(()=>tempFileName);
     }
 
     async cloneToTemp(uri) {
