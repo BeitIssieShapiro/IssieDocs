@@ -44,6 +44,7 @@ import { FileSystem, swapFolders, saveFolderOrder } from './filesystem.js';
 import { trace } from './log.js';
 import { showMessage } from 'react-native-flash-message';
 import { LogBox } from 'react-native';
+import { FileContextMenu } from './file-context-menu.js';
 
 const SORT_BY_NAME = 0;
 const SORT_BY_DATE = 1;
@@ -182,7 +183,7 @@ export default class FolderGallery extends React.Component {
 
     _handleOpenURL = (event) => {
         console.log("_handleOpenURL event:", JSON.stringify(event));
-        
+
         this.props.navigation.navigate('SavePhoto', {
             uri: decodeURI(event.url),
             imageSource: SRC_FILE,
@@ -367,6 +368,7 @@ export default class FolderGallery extends React.Component {
         }
     };
 
+
     Share = () => {
         if (!this.state.selected) return;
 
@@ -408,18 +410,17 @@ export default class FolderGallery extends React.Component {
         );
     }
 
-    DeletePage = () => {
-        if (!this.state.selected) return;
+    DeletePage = (page) => {
+        if (!page) return;
 
         Alert.alert(translate("DeletePageTitle"), translate("BeforeDeletePageQuestion"),
             [
                 {
                     text: translate("BtnDelete"), onPress: () => {
-                        let selectedPath = this.state.selected.path;
+                        let selectedPath = page.path;
                         FileSystem.main.deleteFile(selectedPath);
 
                         this.setState({ selected: undefined });
-
                     },
                     style: 'destructive'
                 },
@@ -556,9 +557,10 @@ export default class FolderGallery extends React.Component {
         setNavParam(this.props.navigation, 'isMenuOpened', false);
 
     }
-    goEdit = (page, folder, share) => {
+    goEdit = (page, folder, share, pageIndex) => {
         this.props.navigation.navigate('EditPhoto', {
             page,
+            pageIndex,
             folder,
             share,
             goHome: () => {
@@ -567,7 +569,7 @@ export default class FolderGallery extends React.Component {
             },
             returnFolderCallback: (f) => this.setReturnFolder(f),
             saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false),
-            goHomeAndThenToEdit: (path) => {
+            goHomeAndThenToEdit: (path, pIndex) => {
                 setTimeout(async () => {
                     this.props.navigation.dispatch(StackActions.popToTop());
                     //find the page for the path
@@ -584,7 +586,7 @@ export default class FolderGallery extends React.Component {
                     }
 
                     if (item) {
-                        this.goEdit(item, this.state.currentFolder, false);
+                        this.goEdit(item, this.state.currentFolder, false, pIndex);
                     } else {
                         console.log("goHomeAndThenToEdit - no page " + fileName + " in folder " + this.state.currentFolder.name)
                     }
@@ -777,8 +779,32 @@ export default class FolderGallery extends React.Component {
 
         return (
             <DraxProvider>
+
                 <View style={styles.container}
                     onLayout={this.onLayout}>
+                    <FileContextMenu
+                        inFoldersMode={true}
+                        isLandscape={this.isLandscape()}
+                        item={this.state.selected}
+                        open={this.state.selected !== undefined}
+                        height={this.state.windowSize.height * .8}
+                        onClose={() => {
+                            this.setState({ selected: undefined })
+                        }}
+
+                        onDelete={()=>this.DeletePage(this.state.selected)}
+                        onRename={() => this.RenamePage(true)}
+                        onMove={() => this.RenamePage(false)}
+                        onShare={() => this.Share()}
+                        onDuplicate={() => this.DuplicatePage()}
+                        onAddFromCamera={() => this.AddToPageFromCamera(this.state.selected)}
+                        onAddFromMediaLib={() => this.AddToPageFromMediaLib(this.state.selected)}
+                        onBlankPage={() => this.addEmptyPageToPage(this.state.selected, FileSystem.StaticPages.Blank)}
+                        onLinesPage={() => this.addEmptyPageToPage(this.state.selected, FileSystem.StaticPages.Lines)}
+                        onMathPage={() => this.addEmptyPageToPage(this.state.selected, FileSystem.StaticPages.Math)}
+                    />
+
+
                     {this.state.inprogress && <ActivityIndicator size="large" />}
 
                     {this.state.showMenu ?
@@ -962,6 +988,7 @@ export default class FolderGallery extends React.Component {
                                     <ActivityIndicator size="large" />
                                 </View>}
 
+
                                 <SBDraxScrollView
                                     rtl={rtl}
                                     scrollEnabled={true}
@@ -978,6 +1005,9 @@ export default class FolderGallery extends React.Component {
                                         top: 0,
                                         minWidth: "100%",
                                     }}>
+
+
+
                                     {this.state.filterFolders?.length > 0 && !this.state.currentFolder &&
                                         <AppText style={{ fontSize: 25, paddingRight: 15, lineHeight: 25 + 2 }}>
                                             {translate("SearchResults") + ":   " + (folders.length === 0 && items.length === 0 ? translate("NoSearchResults") : "")}
@@ -1009,7 +1039,6 @@ export default class FolderGallery extends React.Component {
 
                                     </View>}
 
-
                                     {items.length > 0 ?
                                         <View style={{
                                             flexDirection: asTiles ? rowReverse : 'column',
@@ -1031,19 +1060,9 @@ export default class FolderGallery extends React.Component {
                                                     name: item.name,
                                                     rowWidth: pagesContainerWidth,
                                                     editMode: this.state.editMode,
-                                                    selected: this.isSelected(item),
+                                                    //selected: this.isSelected(item),
                                                     onPress: () => this.goEdit(item, this.state.currentFolder, false),
-                                                    onSelect: () => this.toggleSelection(item, 'file'),
-                                                    onDelete: () => this.DeletePage(),
-                                                    onRename: () => this.RenamePage(true),
-                                                    onMove: () => this.RenamePage(false),
-                                                    onShare: () => this.Share(),
-                                                    onAddFromCamera: () => this.AddToPageFromCamera(item),
-                                                    onAddFromMediaLib: () => this.AddToPageFromMediaLib(item),
-                                                    onBlankPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Blank),
-                                                    onLinesPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Lines),
-                                                    onMathPage: () => this.addEmptyPageToPage(item, FileSystem.StaticPages.Math),
-                                                    onDuplicate: () => this.DuplicatePage(),
+                                                    onContextMenu: () => this.setSelected(item),
                                                     count: item.count
                                                 })}
                                             </DraxView>))

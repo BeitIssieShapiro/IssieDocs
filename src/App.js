@@ -24,7 +24,7 @@ import FolderGallery from './FolderGallery';
 import IssieEditPhoto from './IssieEditPhoto';
 import IssieAbout from './issieabout'
 import IssieCreateFolder from './create-folder';
-import { Spacer, globalStyles, getHeaderBackButton, getIconButton, getFont, getFontFamily, dimensions } from './elements';
+import { Spacer, globalStyles, getHeaderBackButton, getIconButton, getFont, getFontFamily, dimensions, MoreButton } from './elements';
 
 import { fTranslate, getRowDirection, getRowDirections, isRTL, translate } from './lang.js';
 import {
@@ -201,13 +201,11 @@ const App = (props) => {
                   <SvgIcon name='home' color='white' size={30} />
                 </TouchableOpacity>
                 <Spacer />
-                <TouchableOpacity onPress={() => {
+                <MoreButton 
+                size={30} color={"white"} 
+                 onPress={() => {
                   props.route.params.onMoreMenu ? props.route.params.onMoreMenu() : {}
-                }}
-                  activeOpacity={1}
-                  style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Icon name={'menu'} color='white' size={30} />
-                </TouchableOpacity>
+                }} />
               </View>);
               const headerName = () => <Text style={[globalStyles.headerThinTitleStyle, getFontFamily()]}>{fileName + multiPageTitleAddition}</Text>
 

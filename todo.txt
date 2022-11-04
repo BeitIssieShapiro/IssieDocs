@@ -1,3 +1,17 @@
+Comments from Nechama
+-------
+1. Create folder - colors in landscape - 4 lines of two?
+2. context menu redesign
+
+
+Bugs:
+V- text  disappears if move from brush to text (without click)
+V- look for text is not accurate on width
+V- buttons next and back of pages without text is too small and luck background
+
+
+
+
 Results of observing kids in person:
 V- When keyboard is closed/opened, move page slower and with animation
 V- when keyboard is opened, allow up/down with one finger swipe

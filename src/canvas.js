@@ -64,7 +64,7 @@ function Canvas({
 
 
 
-    const findElementByLocation = useCallback((normXY) => {
+    const findElementByLocation = useCallback((normXY, scaleRatio) => {
         let q = isImageMode ? images : texts;
         //let posField = this.isImageMode() ? "position" : "normPosition";
         const margin = 5; //this.isTextMode() && this.state.fontSize > 60 ? 0 : 5 / scaleRatio
@@ -76,7 +76,7 @@ function Canvas({
             trace("findElementByLocation", elem.text)
             trace("np", elem.normPosition.x, elem.normPosition.y)
             trace("normXY", normXY.x, normXY.y)
-            trace("height", elem.height, "width", elem.width)
+            trace("height", elem.height, "width", elem.width, elem.normWidth, scaleRatio)
 
             const elemY = elem.normPosition.y;
             const normHeight = elem.height;/// this.state.scaleRatio;
@@ -86,7 +86,7 @@ function Canvas({
             //   "elemY + elem.height > normXY.y + 10 - margin", (elemY + elem.height > normXY.y + 10 - margin) ? true : false)
             let foundY = elemY < normXY.y + 10 + margin && elemY + normHeight > normXY.y + 10 - margin;
             trace("findElementByLocation eng", elem.text, foundY ? "foundY " + elem.text : "notFoundY")
-            const normWidth = elem.width;// /  this.state.scaleRatio;
+            const normWidth = elem.width / scaleRatio;
 
             if (elem.rtl) {
                 //todo - fix

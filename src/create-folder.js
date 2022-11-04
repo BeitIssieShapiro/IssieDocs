@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Alert, Text, TouchableOpacity, PanResponder, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
 import { AppText, FolderIcon, getFontFamily, getSvgIconButton } from './elements.js'
 import { Icon } from "./elements"
-import { getRowDirections, translate } from './lang.js'
+import { getRowDirection, getRowDirections, translate } from './lang.js'
 
 import {
     getIconButton, folderIcons, availableIcons,
@@ -171,7 +171,7 @@ export default class IssieCreateFolder extends React.Component {
                 <AppText style={[styles.titleText, {textAlign}]}>{translate("CaptionIcon")}</AppText>
 
                 {getRoundedButton(() => this.AddPhoto(),
-                    'svg-new-image', translate("BtnAddPhoto"), 30, 30, { width: 250, height: 40 }, 'row', true)
+                    'svg-new-image', translate("BtnAddPhoto"), 30, 30, { width: 250, height: 40 }, row, true)
                 }
             </View>
             <View style={{
@@ -202,13 +202,13 @@ export default class IssieCreateFolder extends React.Component {
         let colorSelection = <View style={{
             flexDirection: row,
             width: '100%', bottom: 0,
-            justifyContent: 'space-evenly',
+            justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap'
         }}
         >
             {availableColorPicker.map((color, i) => (
-                <View key={i} style={[this.isLandscape() && { height: 100, width: '30%', alignItems: 'center', marginTop: 20 }]}>
+                <View key={i} style={[this.isLandscape() && { height: 100, width: '23%', alignItems: 'center', marginTop: 20 }]}>
                     {getColorButton(() => this.setState({ color: color }),
                         color, 50, color == this.state.color, i)}
                 </View>))

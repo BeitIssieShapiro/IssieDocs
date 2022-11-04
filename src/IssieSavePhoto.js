@@ -270,14 +270,19 @@ export default class IssieSavePhoto extends React.Component {
       }
 
       if (this.state.addToExistingPage) {
+        trace("add to existing")
         //In a mode of adding another page to existing set-of-pages
         //Current assumptions: only one page added (no pdf, no add multi page)
         let page = this.state.addToExistingPage;
         const newPathToAdd = await this.AdjustToOrientation(this.state.pathToSave);
         await FileSystem.main.addPageToSheet(page, newPathToAdd);
 
-        this.props.route.params.returnFolderCallback(this.state.folder.name);
-        this.props.navigation.dispatch(StackActions.popToTop());
+        if (this.props.route.params.goHomeAndThenToEdit) {
+          this.props.route.params.goHomeAndThenToEdit(page.path, this.props.route.params.pageIndex);
+        } else {
+          this.props.route.params.returnFolderCallback(this.state.folder.name);
+          this.props.navigation.dispatch(StackActions.popToTop());
+        }
         return;
       }
       this.setState({ phase: PickName });
@@ -380,7 +385,7 @@ export default class IssieSavePhoto extends React.Component {
         }
 
         if (this.props.route.params.goHomeAndThenToEdit) {
-          this.props.route.params.goHomeAndThenToEdit(filePath);
+          this.props.route.params.goHomeAndThenToEdit(filePath, this.props.route.params.pageIndex);
         } else {
           this.props.navigation.dispatch(StackActions.popToTop());
         }
@@ -743,15 +748,16 @@ export default class IssieSavePhoto extends React.Component {
               height: this.state.windowSize.height,
             }
           ]}>
-            {this.isBlankPage && this.state.addToExistingPage && <OrientationPicker
+            {this.isBlankPage() && this.state.addToExistingPage && <OrientationPicker
               orientationLandscape={this.state.orientationLandscape}
-              onChangeOrientation={(orientationLandscape)=>this.setState({orientationLandscape})}
+              onChangeOrientation={(orientationLandscape) => this.setState({ orientationLandscape })}
             />}
             {this.state.phase == OK_Cancel ?
               <ImageBackground
                 style={{
                   width: '100%',
-                  height: '100%'
+                  height: '100%',
+                  backgroundColor:"white",
                 }}
 
                 imageStyle={{ resizeMode: 'contain' }}

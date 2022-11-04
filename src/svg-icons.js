@@ -32,19 +32,19 @@ export function SvgIcon ({name, width, height, color, strokeWidth, size}) {
                     <Path d="M 60 15 L 84 15" strokeWidth="9" />
                 </G></Svg>);
         case 'page-empty':
-            return (<Svg viewBox="-0.5 -0.5 83 103">
+            return (<Svg viewBox="-0.5 -0.5 83 103" {...props}>
                 <G>
-                    <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" stroke={color} strokeWidth="3" />
+                    <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" stroke={color} strokeWidth="5" />
                     <Path d="M 51 1 L 51 31 L 81 31 Z" />
-                    <Path d="M 51 1 L 51 31 L 81 31" stroke={color} strokeWidth="3" />
+                    <Path d="M 51 1 L 51 31 L 81 31" stroke={color} strokeWidth="5" />
                 </G>
             </Svg>);
         case 'page-lines':
-            return (<Svg viewBox="-0.5 -0.5 83 103">
+            return (<Svg viewBox="-0.5 -0.5 83 103" {...props}>
                 <G>
-                    <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" stroke={color} strokeWidth="3" />
+                    <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" stroke={color} strokeWidth="5" />
                     <Path d="M 51 1 L 51 31 L 81 31 Z" />
-                    <Path d="M 51 1 L 51 31 L 81 31" fill="none" stroke={color} strokeWidth="3" />
+                    <Path d="M 51 1 L 51 31 L 81 31" fill="none" stroke={color} strokeWidth="5" />
                     <Path d="M 11 31 L 41 31" fill="none" stroke={color} strokeWidth="2" />
                     <Path d="M 11 41 L 71 41" fill="none" stroke={color} strokeWidth="2" />
                     <Path d="M 11 51 L 31 51 Q 41 51 51 51 L 71 51" fill="none" stroke={color} strokeWidth="2" />
@@ -55,11 +55,11 @@ export function SvgIcon ({name, width, height, color, strokeWidth, size}) {
                     <Path d="M 11 21 L 41 21" fill="none" stroke={color} strokeWidth="2" />
                 </G></Svg>);
         case 'page-math':
-            return (<Svg viewBox="-0.5 -0.5 83 104">
-                <G stroke={color} strokeWidth="2">
-                    <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" strokeWidth="3" />
-                    <Path d="M 51 1 L 51 31 L 81 31 Z" strokeWidth="3" />
-                    <Path d="M 51 1 L 51 31 L 81 31" strokeWidth="3" />
+            return (<Svg viewBox="-0.5 -0.5 83 104" {...props}>
+                <G stroke={color} strokeWidth="2" >
+                    <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" strokeWidth="5" />
+                    <Path d="M 51 1 L 51 31 L 81 31 Z" strokeWidth="5" />
+                    <Path d="M 51 1 L 51 31 L 81 31" strokeWidth="5" />
                     <Path d="M 11 91 L 31 91 Q 41 91 51 91 L 71 91" />
                     <Path d="M 3 91 L 79 91" />
                     <Path d="M 3 81 L 79 81" />

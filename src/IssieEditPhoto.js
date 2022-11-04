@@ -15,7 +15,7 @@ import {
   Spacer, getRoundedButton,
   renderMenuOption, IDMenuOptionsStyle, globalStyles, getFont
 } from './elements'
-import { getNewPage, SRC_CAMERA, SRC_GALLERY, SRC_RENAME } from './newPage';
+import { getNewPage, SRC_CAMERA, SRC_FILE, SRC_GALLERY, SRC_RENAME } from './newPage';
 import ProgressCircle from 'react-native-progress-circle'
 import { fTranslate, getRowDirections, isRTL } from './lang.js'
 
@@ -39,6 +39,7 @@ import { calcDistance, pinchEnd, processPinch, processResize } from './pinch';
 import EditorToolbar from './editor-toolbar';
 import { getElementMovePanResponder } from './editors-panresponders';
 import Canvas from './canvas';
+import { FileContextMenu } from './file-context-menu';
 
 const shareTimeMs = 2000;
 
@@ -276,7 +277,8 @@ export default class IssieEditPhoto extends React.Component {
       needCanvasUpdate: false,
       revision: 0,
       needCanvasUpdateTextOnly: false,
-      sharing: false
+      sharing: false,
+      openContextMenu: false,
     }
 
   }
@@ -568,20 +570,26 @@ export default class IssieEditPhoto extends React.Component {
   componentDidMount = async () => {
     this._mounted = true;
     const page = this.props.route.params.page;
+    const pageIndex = this.props.route.params.pageIndex;
+    
     const currentFile = page.defaultSrc;
     trace("EditPhoto CurrentFile: ", currentFile);
     if (page.count > 0) {
       setNavParam(this.props.navigation, 'pageTitleAddition', this.pageTitleAddition(page.count, 0));
     }
-    setNavParam(this.props.navigation, 'onMoreMenu', () => this.menu.open())
+    setNavParam(this.props.navigation, 'onMoreMenu', () => this.setState({ openContextMenu: true }))
     this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this._keyboardDidShow);
     this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this._keyboardDidHide);
 
     const metaDataUri = currentFile + ".json";
     //const betaFeatures = this.props.route.params.betaFeatures;
     this.setState({ page: page, currentFile: currentFile, currentIndex: 0, metaDataUri: metaDataUri },
-      () => this.Load());
-
+      () => {
+        this.Load()
+        if (pageIndex != undefined) {
+          setTimeout(()=>this.movePage(pageIndex), 500);
+        }
+      });
   }
 
   componentWillUnmount = () => {
@@ -779,7 +787,7 @@ export default class IssieEditPhoto extends React.Component {
       let textElem = this.canvas.current.findElementByLocation({
         x: this.viewPort2NormX(x),
         y: this.viewPort2NormY(y)
-      });
+      }, this.state.scaleRatio);
 
       //in erase mode, only act on found texts
       if (!textElem && this.state.eraseMode) return;
@@ -836,7 +844,7 @@ export default class IssieEditPhoto extends React.Component {
       let imgElem = this.canvas.current.findElementByLocation({
         x: this.viewPort2NormX(x), //this.state.scaleRatio,
         y: this.viewPort2NormY(y) //this.state.scaleRatio
-      });
+      }, this.state.scaleRatio);
       if (imgElem) {
         // In Erase mode, remove the img
         // if (this.isImageMode()) {
@@ -907,49 +915,49 @@ export default class IssieEditPhoto extends React.Component {
     return true;
   }
 
-  findElementByLocation = (normXY) => {
-    let q = this.isImageMode() ? this.state.canvasImages : this.state.canvasTexts;
-    //let posField = this.isImageMode() ? "position" : "normPosition";
-    const margin = this.isTextMode() && this.state.fontSize > 60 ? 0 : 5 / this.state.scaleRatio
+  // findElementByLocation = (normXY) => {
+  //   let q = this.isImageMode() ? this.state.canvasImages : this.state.canvasTexts;
+  //   //let posField = this.isImageMode() ? "position" : "normPosition";
+  //   const margin = this.isTextMode() && this.state.fontSize > 60 ? 0 : 5 / this.state.scaleRatio
 
 
-    for (let i = q.length - 1; i >= 0; i--) {
-      const elem = this.isImageMode() ? this.imageScale2Norm(q[i]) : q[i];
+  //   for (let i = q.length - 1; i >= 0; i--) {
+  //     const elem = this.isImageMode() ? this.imageScale2Norm(q[i]) : q[i];
 
-      trace("findElementByLocation", elem.text)
-      trace("np", elem.normPosition.x, elem.normPosition.y)
-      trace("normXY", normXY.x, normXY.y)
-      trace("height", elem.height, "width", elem.width)
+  //     trace("findElementByLocation", elem.text)
+  //     trace("np", elem.normPosition.x, elem.normPosition.y)
+  //     trace("normXY", normXY.x, normXY.y)
+  //     trace("height", elem.height, "width", elem.width)
 
-      const elemY = elem.normPosition.y;
-      const normHeight = elem.height;/// this.state.scaleRatio;
-      // trace("y-params",
-      //   "elemY < normXY.y + 10 + margin", (elemY < normXY.y + 10 + margin) ? true : false,
-      //   elemY, normXY.y,
-      //   "elemY + elem.height > normXY.y + 10 - margin", (elemY + elem.height > normXY.y + 10 - margin) ? true : false)
-      let foundY = elemY < normXY.y + 10 + margin && elemY + normHeight > normXY.y + 10 - margin;
-      trace("findElementByLocation eng", elem.text, foundY ? "foundY " + elem.text : "notFoundY")
-      const normWidth = elem.width;// /  this.state.scaleRatio;
+  //     const elemY = elem.normPosition.y;
+  //     const normHeight = elem.height;/// this.state.scaleRatio;
+  //     // trace("y-params",
+  //     //   "elemY < normXY.y + 10 + margin", (elemY < normXY.y + 10 + margin) ? true : false,
+  //     //   elemY, normXY.y,
+  //     //   "elemY + elem.height > normXY.y + 10 - margin", (elemY + elem.height > normXY.y + 10 - margin) ? true : false)
+  //     let foundY = elemY < normXY.y + 10 + margin && elemY + normHeight > normXY.y + 10 - margin;
+  //     trace("findElementByLocation eng", elem.text, foundY ? "foundY " + elem.text : "notFoundY")
+  //     const normWidth = elem.width;// /  this.state.scaleRatio;
 
-      if (elem.rtl) {
-        //todo - fix
-        if (elem.normPosition.x > normXY.x - margin &&
-          elem.normPosition.x - normWidth < normXY.x + margin
-          && foundY) {
-          return i;
-        }
-      } else {
-        if (elem.normPosition.x < normXY.x + margin &&
-          elem.normPosition.x + normWidth > normXY.x - margin
-          && foundY) {
-          trace("findElementByLocation eng found!")
-          return i;
-        }
-      }
-    }
+  //     if (elem.rtl) {
+  //       //todo - fix
+  //       if (elem.normPosition.x > normXY.x - margin &&
+  //         elem.normPosition.x - normWidth < normXY.x + margin
+  //         && foundY) {
+  //         return i;
+  //       }
+  //     } else {
+  //       if (elem.normPosition.x < normXY.x + margin &&
+  //         elem.normPosition.x + normWidth > normXY.x - margin
+  //         && foundY) {
+  //         trace("findElementByLocation eng found!")
+  //         return i;
+  //       }
+  //     }
+  //   }
 
-    return -1;
-  }
+  //   return -1;
+  // }
 
   getTextElement = (newText, width, height) => {
     const rtl = isRTL();
@@ -1358,6 +1366,25 @@ export default class IssieEditPhoto extends React.Component {
       });
   }
 
+  onAddNewPage = async (src) => {
+    getNewPage(src, (uri) => this.addNewPage(uri, src, false), undefined, (err)=>{}, this.props.navigation);
+  }
+
+  onAddBlankPage =  (type) => {
+    FileSystem.main.getStaticPageTempFile(type).then(uri=>this.addNewPage(uri, SRC_FILE, true));
+  }
+
+  addNewPage = (uri, src, isBlank) => {
+    this.props.navigation.navigate('SavePhoto', {
+      uri,
+      isBlank,
+      imageSource: src,
+      addToExistingPage:this.state.page,
+      goHomeAndThenToEdit: this.props.route.params.goHomeAndThenToEdit,
+      pageIndex:this.state.page.count,
+    })
+  }
+
 
   onEraserChange = (isOff) => {
     let eraserOn = isOff ? false : !this.state.eraseMode;
@@ -1371,6 +1398,7 @@ export default class IssieEditPhoto extends React.Component {
     this.setState({
       showTextInput: false,
       yOffset: this.state.zoom == 1 ? 0 : this.state.yOffset,
+      currentTextElem: undefined,
       mode: Modes.BRUSH,
     })
     this.onEraserChange(true);
@@ -1588,7 +1616,9 @@ export default class IssieEditPhoto extends React.Component {
               this.SaveText()
             }
             this.setState({
-              mode: Modes.IMAGE, showTextInput: false,
+              mode: Modes.IMAGE,
+              showTextInput: false,
+              currentTextElem: undefined,
             })
             if (!(this.state?.canvasImages?.length > 0)) {
               this.toolbarRef.current.openImageSubMenu();
@@ -1646,9 +1676,9 @@ export default class IssieEditPhoto extends React.Component {
               <ActivityIndicator size="large" /></View>
           }
           {/* page more menu */}
-          <View style={[{ position: 'absolute', top: 0 }, rtl ? { left: 0 } : { right: 0 }]}>
-            {this.getMoreMenu()}
-          </View>
+          {/* <View style={[{ position: 'absolute', top: 0 }, rtl ? { left: 0 } : { right: 0 }]}> */}
+          {this.getMoreMenu()}
+          {/* </View> */}
           {[
             this.getArrow(LEFT),
             this.getArrow(TOP),
@@ -1740,38 +1770,78 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getMoreMenu = () => {
-    const rtl = isRTL();
-    return <Menu ref={(ref) => this.menu = ref} >
+    // const rtl = isRTL();
+    // return <Menu ref={(ref) => this.menu = ref} >
 
 
-      <MenuTrigger >
-        {/* {getIconButton(() => {
-          //   
-          this.menu.open()
+    //   <MenuTrigger >
+    //     {/* {getIconButton(() => {
+    //       //   
+    //       this.menu.open()
 
-        }, semanticColors.editPhotoButton, 'more-vert', 55)} */}
-      </MenuTrigger>
-      <MenuOptions {...IDMenuOptionsStyle({ top: 0, width: 300 })}      >
-        <MenuOption onSelect={() => this.rename(true)} >
-          {renderMenuOption(translate("BtnChangeName", rtl),
-            "edit")}
-        </MenuOption>
-        <Spacer width={5} />
-        {this.state.page && this.state.page.count > 1 ?
-          <MenuOption onSelect={() => this.deletePage()} >
-            {renderMenuOption(fTranslate("BeforeDeleteSubPageQuestion", this.state.currentIndex + 1, this.state.page.count, rtl),
-              "delete-forever")}
-          </MenuOption>
-          : null}
-        {this.state.page && this.state.page.count > 1 ? <Spacer /> : null}
-        <View style={{ flex: 1, width: '100%', flexDirection: 'column', alignItems: 'center' }}>
-          {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
-        </View>
-        <Spacer width={5} />
-      </MenuOptions>
+    //     }, semanticColors.editPhotoButton, 'more-vert', 55)} */}
+    //   </MenuTrigger>
+    //   <MenuOptions {...IDMenuOptionsStyle({ top: 0, width: 300 })}      >
+    //     <MenuOption onSelect={() => this.rename(true)} >
+    //       {renderMenuOption(translate("BtnChangeName", rtl),
+    //         "edit")}
+    //     </MenuOption>
+    //     <Spacer width={5} />
+    //     {this.state.page && this.state.page.count > 1 ?
+    //       <MenuOption onSelect={() => this.deletePage()} >
+    //         {renderMenuOption(fTranslate("BeforeDeleteSubPageQuestion", this.state.currentIndex + 1, this.state.page.count, rtl),
+    //           "delete-forever")}
+    //       </MenuOption>
+    //       : null}
+    //     {this.state.page && this.state.page.count > 1 ? <Spacer /> : null}
+    //     <View style={{ flex: 1, width: '100%', flexDirection: 'column', alignItems: 'center' }}>
+    //       {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
+    //     </View>
+    //     <Spacer width={5} />
+    //   </MenuOptions>
 
-    </Menu>
+    // </Menu>
+    const deletePageMenu = this.state.page && this.state.page.count > 1;
 
+    return <FileContextMenu
+      item={this.state.page}
+      isLandscape={this.state.windowSize.height < this.state.windowSize.width}
+      open={this.state.openContextMenu}
+      height={Math.min(700, this.state.windowSize.height*.7)}
+      onClose={() => {
+        this.setState({ openContextMenu: false })
+      }}
+
+      onRename={() => this.rename(true)}
+      onDeletePage={deletePageMenu ? () => {
+        Alert.alert(translate("BeforeDeleteSubPageTitle"), translate("BeforeDeleteSubPageQuestion"),
+        [
+          {
+            text: translate("BtnDelete"), onPress: () => {
+              this.deletePage();
+
+            },
+            style: 'destructive'
+          },
+          {
+            text: translate("BtnCancel"), onPress: () => {
+              //do nothing
+            },
+            style: 'cancel'
+          }
+        ]
+      );
+
+      } : undefined}
+      deletePageIndex={this.state.currentIndex + 1}
+      pagesCount={this.state.page?.count}
+
+      onBlankPage={() => this.onAddBlankPage(FileSystem.StaticPages.Blank)}
+      onLinesPage={() => this.onAddBlankPage(FileSystem.StaticPages.Lines)}
+      onMathPage={() => this.onAddBlankPage(FileSystem.StaticPages.Math)}
+      onAddFromCamera={() => this.onAddNewPage(SRC_CAMERA)}
+      onAddFromMediaLib={() => this.onAddNewPage(SRC_GALLERY)}
+    />
   }
 
   getArrow = (location, func) => {

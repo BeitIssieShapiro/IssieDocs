@@ -147,6 +147,26 @@ export function getIcon(name, size, color) {
     return <Icon name={name} size={size} color={color} />
 }
 
+export function MoreButton({
+    onPress,
+    size,
+    color
+}) {
+
+    return <TouchableOpacity
+        style={{
+            borderRadius: size / 2,
+            width: size,
+            height: size,
+            borderWidth: 2,
+            borderStyle: "solid",
+            borderColor: color,
+        }}
+        onPress={onPress} >
+        <Icon name={'more-horiz'} size={size - 3} color={color} />
+    </TouchableOpacity>
+}
+
 
 
 export function getSquareButton(func, color, selectedColor, txt, icon, size, selected, dimensions,
@@ -204,12 +224,12 @@ export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, 
         return getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark)
     } else {
         let newDim = { width: dim.height, height: dim.height };
-        return getRoundedButtonInt(callback, icon, "", textSize, iconSize, newDim, direction, false)
+        return getRoundedButtonInt(callback, icon, "", textSize, iconSize, newDim, direction, dark)
     }
 
 }
 export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark) {
-    let color = semanticColors.titleText;
+    let color = dark ? "white" : semanticColors.titleText;
     if (icon === 'check-green') {
         color = 'green';
         icon = 'check';
@@ -233,11 +253,12 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
                 alignItems: 'center',
                 alignContent: 'center',
                 justifyContent: textExist ? 'flex-end' : 'center',
-                backgroundColor: dark ? '#a7a7a7' : '#eeeded',
+                backgroundColor: dark ? '#808080' : '#eeeded',
                 flexDirection: direction ? direction : getRowDirection()
             }}>
             {textExist ?
-                <AppText style={{ position: 'absolute', paddingTop: 5, left: 0, width: '80%', fontSize: textSize, lineHeight: textSize + 5, color: semanticColors.titleText, textAlign: 'center' }}>{text}</AppText> : null
+                <AppText style={{ position: 'absolute', paddingTop: 5, left: 0, width: '80%', fontSize: textSize, lineHeight: textSize + (isRTL()?5:0), 
+                    color: dark ? "white" : semanticColors.titleText, textAlign: 'center' }}>{text}</AppText> : null
             }
             {icon.startsWith("svg-") ?
                 <SvgIcon name={icon.substr(4)} size={iconSize} color={color} />
@@ -378,7 +399,7 @@ function RadioButton(props) {
     const rotated = props.rotate != undefined ? { transform: [{ rotate: props.rotate }] } : undefined;
 
     return (
-        <TouchableOpacity style={[{ width: 70, height: 70, padding: 3 }, borderStyle, rotated]} onPress={props.onSelect}>
+        <TouchableOpacity style={[{ width: 70, height: 70, padding: 3, justifyContent: "center", alignItems: "center" }, borderStyle, rotated]} onPress={props.onSelect}>
             {props.icon && getSvgIcon(props.icon, 40, 'black')}
         </TouchableOpacity>
     );
@@ -388,9 +409,9 @@ export function OrientationPicker({
     orientationLandscape,
     onChangeOrientation,
 }) {
-    const {  textAlign } = getRowDirections();
+    const { textAlign } = getRowDirections();
 
-    return <View style={{ flex: 1, width: '100%', zIndex:1000 }}>
+    return <View style={{ flex: 1, width: '100%', zIndex: 1000 }}>
         <AppText style={[styles.titleText, { textAlign }, { marginVertical: 7 }]}>{translate("OrientationCaption")}</AppText>
         <View style={{ flexDirection: 'row', width: "100%", height: 80, justifyContent: "center" }}>
             <RadioButton value={"Portrait"} icon="page-empty" selected={!orientationLandscape}
@@ -467,7 +488,7 @@ export function FileNameDialog({
                     <AppText style={[styles.titleText, { textAlign }, { width: isLandscape ? '40%' : '30%' }]}>{translate("CaptionFolderNameList")}</AppText>
                     {getRoundedButton(() => navigation.navigate('CreateFolder',
                         { saveNewFolder: onSaveNewFolder, isMobile }),
-                        'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 250, height: 40 }, rowReverse, true)}
+                        'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 250, height: 40 }, row, true)}
                 </View>
                 <Spacer />
                 <View style={{

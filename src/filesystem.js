@@ -71,7 +71,7 @@ export class FileSystem {
                 }
             }
 
-            _sortFolders(this._folders);
+            await _sortFolders(this._folders);
         });
         this._notify();
     }

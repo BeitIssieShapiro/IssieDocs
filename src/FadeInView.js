@@ -27,7 +27,7 @@ const FadeInView = (props) => {
   }
   return (<Animated.View
       style={[props.style, {
-        overflow: "hidden",
+        overflow: props.overflow || "hidden",
         //opacity: fadeAdmin,         // Bind opacity to animated value
       }, props.width ? { width: fadeAdmin } : { height: fadeAdmin }]}
     >

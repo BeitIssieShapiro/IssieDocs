@@ -30,10 +30,11 @@ var strings = {
         "DeletePageTitle": "מחיקת דף",
         "DeleteFolderTitle": "מחיקת תיקייה",
         "BeforeDeletePageQuestion": "האם למחוק את הדף?",
-        "BeforeDeleteSubPageQuestion":"מחיקת עמוד {1} מתוך {2}", 
-
+        "BeforeDeleteSubPageTitle": "מחיקת עמוד",
+        "BeforeDeleteSubPageMenu":"מחיקת עמוד {1} מתוך {2}", 
+        "BeforeDeleteSubPageQuestion": "האם למחוק עמוד נוכחי?",
         "DeleteImageTitle": "מחיקת תמונה",
-        "BeforeDeleteImageQuestion":"האם למחוק את התמונה מהדף?", 
+        "BeforeDeleteImageQuestion":"האם למחוק את התמונה מהעמוד?", 
 
         "DeleteFoldersAndPagesTitle": "מחיקת תיקיות ודפים",
         "BeforeDeleteFolderQuestion": "מחיקת תיקייה תגרום למחיקת כל הדפים בתוכה, האם למחוק?",
@@ -44,12 +45,12 @@ var strings = {
         "ChooseFolder": "בחר תיקיה",
 
         "SearchResults": "תוצאות חיפוש",
-        "NoSearchResults": "לא נמצאו תיקיות או דפי עבודה המתאימים לחיפוש",
+        "NoSearchResults": "לא נמצאו תיקיות או דפים המתאימים לחיפוש",
 
         "SavePageFormTitle": "שמירת דף",
-        "RenameFormTitle": "שנה שם",
-        "DuplicatePageFormTitle": "שכפל דף",
-        "MovePageFormTitle": "העבר דף",
+        "RenameFormTitle": "שינוי שם",
+        "DuplicatePageFormTitle": "שיכפול דף",
+        "MovePageFormTitle": "העברת דף",
 
         "EditFolderFormTitle": "עריכת שם תיקיה",
         "NewFolderFormTitle": "יצירת תיקיה חדשה",
@@ -85,7 +86,9 @@ var strings = {
         "BtnShare": "שיתוף",
         "BtnChangeName": "שינוי שם",
         "BtnDelete": "מחיקה",
-        "BtnDuplicate": "הכפלה",
+        "BtnDuplicate": "שיכפול",
+        "BtnMove": "העברה",
+        "AddPageMenuTitle": "הוספת עמוד",
         "MenuFromCamera": "מצלמה",
         "MenuFromMediaLib": "ספריית התמונות",
         "MenuNewPageEmpty": "חלק",
@@ -101,8 +104,8 @@ var strings = {
         "NoIcon": "ללא",
         "CaptionIcon": "סמל",
 
-        "ImportProgress": "מייבא דף {1} מתוך {2}",
-        "ExportProgress": "מייצא דף {1} מתוך {2}",
+        "ImportProgress": "מייבא עמוד {1} מתוך {2}",
+        "ExportProgress": "מייצא עמוד {1} מתוך {2}",
 
         //todo: translate
         "MissingCameraPermission": `לא ניתנה רשות לשימוש במצלמה לאפליקציה
@@ -133,7 +136,10 @@ var strings = {
         "DeletePageTitle": "حذف الصفحة",
         "DeleteFolderTitle": "حذف المجلد",
         "BeforeDeletePageQuestion": "حذف الصفحة؟",
-        "BeforeDeleteSubPageQuestion":"احذف الصفحة {1} من {2}",
+        "BeforeDeleteSubPageTitle": "حذف الصفحة", //todo
+
+        "BeforeDeleteSubPageMenu":"احذف الصفحة {1} من {2}",
+        "BeforeDeleteSubPageQuestion": "حذف الصفحة؟", //todo
         "DeleteFoldersAndPagesTitle": "حذف المجلدات والعناوين",
         "BeforeDeleteFolderQuestion": "حذف المجلد سيؤدي إلى مسح جميع الصفحات داخله, وحذفه",
         //"BeforeDeleteFoldersAndPagesQuestion": "اختير حذف الصفحات والمجلدات. حذف المجلدات سيؤدي إلى حذف جميع الصفحات والمحتويات. هل تريد المتابعة؟",
@@ -186,6 +192,8 @@ var strings = {
         "BtnChangeName": "إعادة تسمية",
         "BtnDelete": "حذف",
         "BtnDuplicate": "تكرير",
+        "BtnMove": "يتحرك", //todo check
+        "AddPageMenuTitle": "صفحة أخرى", //todo check
 
         "MenuFromCamera": "الة تصوير",
         "MenuFromMediaLib": "مكتبة الصور",
@@ -208,35 +216,37 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "EditPhotoTitle": "تعديل الصورة",
     },
     "en": {
-        "StartHere": "Add pages",
+        "StartHere": "Add worksheets",
         "DesktopEmpty":"Empty Desktop",
         "Loading":"Loading...",
         "DefaultAppTitle": "{1} - My Desktop",
         "MissingFolderName": "Missing folder name",
         "SaveFolderWithEmptyNameQuestion": "Save a folder without a name?",
-        "MissingPageName": "Missing page name",
+        "MissingPageName": "Missing worksheet name",
         "IllegalCharacterInFolderName": "Folder name contains illigal characters",
-        "IllegalCharacterInPageName": "Page name contains illigal characters",
+        "IllegalCharacterInPageName": "Worksheet name contains illigal characters",
         "FolderAlreadyExists": "Folder with this name already exists",
-        "PageAlreadyExists": "page with this name already exists",
+        "PageAlreadyExists": "Worksheet with this name already exists",
         "ShareSuccessful": "Share successfully done",
         "ActionCancelled": "Action cancelled",
         "PDFLoadFailed": "PDF loading failed",
         "DefaultFolder": "Desktop", 
         "Search":"Search",
 
-        "EditPhotoTitle": "Edit page",
+        "EditPhotoTitle": "Edit Photo",
 
-        "DeletePageTitle": "Delete page",
-        "DeleteFolderTitle": "Delete folder",
-        "BeforeDeletePageQuestion": "Are you sure you want to delete the page?",
-        "BeforeDeleteSubPageQuestion":"Delete page {1} of {2}?", 
+        "DeletePageTitle": "Delete Worksheet",
+        "DeleteFolderTitle": "Delete Folder",
+        "BeforeDeletePageQuestion": "Are you sure you want to delete the worksheet?",
+        "BeforeDeleteSubPageMenu":"Delete page {1} of {2}",
+        "BeforeDeleteSubPageTitle": "Delete Page",
+        "BeforeDeleteSubPageQuestion": "Are you sure you want to delete the current page?",
 
         "DeleteImageTitle": "Delete Image", 
         "BeforeDeleteImageQuestion":"Are you sure you want to delete the image?",
 
-        "DeleteFoldersAndPagesTitle": "Delete folders and pages",
-        "BeforeDeleteFolderQuestion": "Deleteing a folder will delete all pages in it, are you sure?",
+        "DeleteFoldersAndPagesTitle": "Delete folders and worksheet",
+        "BeforeDeleteFolderQuestion": "Deleteing a folder will delete all worksheets in it, are you sure?",
         //"BeforeDeleteFoldersAndPagesQuestion": "Deleting folder and pages,",
 
         "SuccessfulMovePageMsg": "Page '{1}' successfuly moved to folder '{2}'",
@@ -244,17 +254,17 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "ChooseFolder": "Choose a folder",
 
         "SearchResults": "Search results",
-        "NoSearchResults": "No pages or folders found",
+        "NoSearchResults": "No worksheets or folders were found",
 
-        "SavePageFormTitle": "Save Page",
+        "SavePageFormTitle": "Save Worksheet",
         "RenameFormTitle": "Rename",
-        "DuplicatePageFormTitle": "Duplicate Page",
-        "MovePageFormTitle": "Move Page",
+        "DuplicatePageFormTitle": "Duplicate Worksheet",
+        "MovePageFormTitle": "Move Worksheet",
 
         "EditFolderFormTitle": "Edit Folder Name",
         "NewFolderFormTitle": "Create New Folder",
         "ShareWithTitle": "'Share with...'",
-        "ShareEmailSubject": "worksheet",
+        "ShareEmailSubject": "Worksheet",
 
         "CameraTitle": "Take a photo",
         "MediaPickerTitle": "Choose a photo",
@@ -286,6 +296,8 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "BtnChangeName": "Rename",
         "BtnDelete": "Delete",
         "BtnDuplicate": "Duplicate",
+        "BtnMove": "Move",
+        "AddPageMenuTitle": "Add Page",
         "MenuFromCamera": "Camera",
         "MenuFromMediaLib": "Camera roll",
         "MenuNewPageEmpty": "Blank",

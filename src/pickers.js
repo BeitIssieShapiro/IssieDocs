@@ -7,7 +7,7 @@ import {
 
 import {
     AppText,
-    availableColorPicker, availableTextSize, getColorButton, getColorButtonInt, getRoundedButton, semanticColors, Spacer, textSizes
+    availableColorPicker, getColorButton, getColorButtonInt, textSizes
 } from './elements'
 import FadeInView from './FadeInView';
 import ColorPicker from 'react-native-wheel-color-picker'
@@ -255,75 +255,7 @@ export function TextSizePicker(props) {
                 onPress={() => props.onSelect(props.size)}
             >{translate("A")}</AppText>
         </View>
-        {/* <View
-            style={{
-                flexDirection: 'column',
-                width: '100%',
-                justifyContent: 'center',
-                alignItems: 'center',
-                //justifyContent: 'space-evenly'
-            }}>
-            {gap > 0 && <Spacer height={15} />}
-            <View style={{
-                position: 'absolute',
-                top:-50,
-                top: Math.max(100 - props.size / 2, 0),
-                minHeight: 200, 
-            }}>
-                <AppText style={{
-                    fontSize: props.size,
-                    lineHeight: props.size,
-                    color: props.color
-                }}
-                    onPress={() => props.onSelect(props.size)}
-                >{translate("A")}</AppText>
-                
-            </View>
-            <View style={{
-                height: 100,
-                position: 'absolute',
-                top: gap > 0 ? 270 : 0,
-            }}
-                onTouchStart={(e) => {
-                    trace("touch", e.nativeEvent.locationX);
-                    // 0 - 400
-                    let val = e.nativeEvent.locationX;
 
-                    // round to the nearest 5
-
-                    //setComposedSize(val);
-                    //inverse of props.size * 400 / 325 - 25
-                    val = (val + 25) * 325 / 400;
-                    val = Math.floor(val / 10) * 10 + 5;
-
-                    props.onSelect(val, true);
-                }}
-            >
-                <View style={{
-                    //width: 100,
-                    //height: 20,
-                    borderStyle: "solid",
-                    borderLeftWidth: 400,
-                    borderBottomWidth: 30,
-                    borderLeftColor: "transparent",
-                    borderBottomColor: semanticColors.editPhotoButton
-                }}
-                >
-                    <TouchableOpacity style={{
-                        position: 'absolute',
-                        bottom: -2 * dotSize,
-                        left: -textSizeVolumeBarSize + (scrollPos) - dotSize / 2,
-                        borderRadius: dotSize / 2,
-                        width: dotSize,
-                        height: dotSize,
-                        backgroundColor: semanticColors.editPhotoButton
-
-                    }}></TouchableOpacity>
-                </View>
-            </View>
-
-
-        </View> */}
     </FadeInView>
 }
 
