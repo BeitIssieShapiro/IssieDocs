@@ -834,7 +834,7 @@ async function _sortFolders(folders) {
         let order = JSON.parse(orderStr.toString('utf8'));
         //Alert.alert(order)
         let msg = ""
-        for (let i = 0; i < order.length; i++) {
+        for (let i = 0; i < order.length && nextPlace < folders.length; i++) {
             let foundFolderIndex = folders.findIndex(f => f.name === order[i]);
             if (foundFolderIndex >= 0) {
                 let len = folders.length;

@@ -5,6 +5,10 @@
 # Xcode
 #
 build/
+ios/Bundle
+ios/source-map
+
+
 *.pbxuser
 !default.pbxuser
 *.mode1v3

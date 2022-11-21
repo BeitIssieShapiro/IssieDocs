@@ -6,6 +6,7 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "start": "react-native start",
+    "sourcemap": "mkdir -p ios/{Bundle,source-map}; react-native bundle --platform ios --entry-file index.js --dev false --bundle-output ios/Bundle/main.jsbundle --assets-dest ios/Bundle --sourcemap-output ios/source-map/sourcemap.js",
     "test": "jest",
     "lint": "eslint ."
   },
