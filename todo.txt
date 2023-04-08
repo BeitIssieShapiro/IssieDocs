@@ -1,3 +1,13 @@
+Features:
+- Document backup
+- folder in folder
+- Marker
+- Table
+- Fonts?
+
+
+
+
 Comments from Nechama
 -------
 1. Create folder - colors in landscape - 4 lines of two?

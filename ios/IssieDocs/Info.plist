@@ -6,32 +6,21 @@
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>IssieDocs</string>
-	<key>CFBundleDocumentTypes</key>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict/>
+	</dict>
+	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
-			<key>CFBundleTypeIconFiles</key>
-			<array/>
-			<key>CFBundleTypeName</key>
-			<string>IssieDoc PDF</string>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>LSHandlerRank</key>
-			<string>Owner</string>
-			<key>LSItemContentTypes</key>
+			<key>CFBundleURLName</key>
+			<string>IssieDocs</string>
+			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.adobe.pdf</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleTypeName</key>
-			<string>IssieDoc Image</string>
-			<key>CFBundleTypeRole</key>
-			<string>Viewer</string>
-			<key>LSHandlerRank</key>
-			<string>Alternate</string>
-			<key>LSItemContentTypes</key>
-			<array>
-				<string>public.image</string>
+				<string>openissiedocs</string>
 			</array>
 		</dict>
 	</array>
@@ -75,13 +64,13 @@
 		</dict>
 	</dict>
 	<key>NSAppleMusicUsageDescription</key>
-	<string>Loading and save Images as pages</string>
+	<string>Allow IssieDocs load images as IssieDocs pages and save pages as images</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Capturing new pages</string>
+	<string>The Camera will be used to allow you capture photos that you&apos;ll embed in IssieDocs pages</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Save pages as images</string>
+	<string>Allow IssieDocs save pages as photos in the Photo Library</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Loading images as pages</string>
+	<string>Allow IssieDocs loading photos from the Photo Library into IssieDocs pages</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Alef_Regular.ttf</string>

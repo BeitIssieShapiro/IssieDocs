@@ -183,14 +183,21 @@ export default class FolderGallery extends React.Component {
 
     _handleOpenURL = (event) => {
         console.log("_handleOpenURL event:", JSON.stringify(event));
+        let url = event.url
+        if (url?.startsWith("openissiedocs")) {
+            const urlPos = url.indexOf("url=");
+            if (urlPos > 0) {
+                url = url.substr(urlPos + 4);
 
-        this.props.navigation.navigate('SavePhoto', {
-            uri: decodeURI(event.url),
-            imageSource: SRC_FILE,
-            folder: this.state.currentFolder,
-            returnFolderCallback: (f) => this.setReturnFolder(f),
-            saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
-        })
+                this.props.navigation.navigate('SavePhoto', {
+                    uri: decodeURI(url),
+                    imageSource: SRC_FILE,
+                    folder: this.state.currentFolder,
+                    returnFolderCallback: (f) => this.setReturnFolder(f),
+                    saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
+                })
+            }
+        }
     }
 
     // refresh = async (folderName, callback) => {
@@ -792,7 +799,7 @@ export default class FolderGallery extends React.Component {
                             this.setState({ selected: undefined })
                         }}
 
-                        onDelete={()=>this.DeletePage(this.state.selected)}
+                        onDelete={() => this.DeletePage(this.state.selected)}
                         onRename={() => this.RenamePage(true)}
                         onMove={() => this.RenamePage(false)}
                         onShare={() => this.Share()}
