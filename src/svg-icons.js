@@ -1,21 +1,21 @@
 import React from 'react';
-import { Icon } from './elements';
+import { Icon, MARKER_TRANSPARENCY_CONSTANT } from './elements';
 import { Svg, Path, Line, Rect, Polygon, G, Text, Ellipse } from 'react-native-svg'
 import { translate } from "./lang.js"
 
 export function getSvgIcon(name, size, color, strokeWidth) {
-    return <SvgIcon name={name} size={size}  color={color} strokeWidth={strokeWidth}  />
+    return <SvgIcon name={name} size={size} color={color} strokeWidth={strokeWidth} />
 }
 
-export function SvgIcon ({name, width, height, color, strokeWidth, size}) {
-    let props = size ? { width:size, height:size }: {width, height};
-    
+export function SvgIcon({ name, width, height, color, strokeWidth, size }) {
+    let props = size ? { width: size, height: size } : { width, height };
+
     switch (name) {
         case 'home':
             return <Svg viewBox="0 0 495.398 495.398" {...props} fill={color} x={0} y={0}>
                 <G>
-                    <Path d="M487.083,225.514l-75.08-75.08V63.704c0-15.682-12.708-28.391-28.413-28.391c-15.669,0-28.377,12.709-28.377,28.391 v29.941L299.31,37.74c-27.639-27.624-75.694-27.575-103.27,0.05L8.312,225.514c-11.082,11.104-11.082,29.071,0,40.158 c11.087,11.101,29.089,11.101,40.172,0l187.71-187.729c6.115-6.083,16.893-6.083,22.976-0.018l187.742,187.747 c5.567,5.551,12.825,8.312,20.081,8.312c7.271,0,14.541-2.764,20.091-8.312C498.17,254.586,498.17,236.619,487.083,225.514z"/>
-                    <Path d="M257.561,131.836c-5.454-5.451-14.285-5.451-19.723,0L72.712,296.913c-2.607,2.606-4.085,6.164-4.085,9.877v120.401 c0,28.253,22.908,51.16,51.16,51.16h81.754v-126.61h92.299v126.61h81.755c28.251,0,51.159-22.907,51.159-51.159V306.79 c0-3.713-1.465-7.271-4.085-9.877L257.561,131.836z"/>
+                    <Path d="M487.083,225.514l-75.08-75.08V63.704c0-15.682-12.708-28.391-28.413-28.391c-15.669,0-28.377,12.709-28.377,28.391 v29.941L299.31,37.74c-27.639-27.624-75.694-27.575-103.27,0.05L8.312,225.514c-11.082,11.104-11.082,29.071,0,40.158 c11.087,11.101,29.089,11.101,40.172,0l187.71-187.729c6.115-6.083,16.893-6.083,22.976-0.018l187.742,187.747 c5.567,5.551,12.825,8.312,20.081,8.312c7.271,0,14.541-2.764,20.091-8.312C498.17,254.586,498.17,236.619,487.083,225.514z" />
+                    <Path d="M257.561,131.836c-5.454-5.451-14.285-5.451-19.723,0L72.712,296.913c-2.607,2.606-4.085,6.164-4.085,9.877v120.401 c0,28.253,22.908,51.16,51.16,51.16h81.754v-126.61h92.299v126.61h81.755c28.251,0,51.159-22.907,51.159-51.159V306.79 c0-3.713-1.465-7.271-4.085-9.877L257.561,131.836z" />
                 </G>
             </Svg>
         case 'menu-new-empty-page':
@@ -502,8 +502,27 @@ export function SvgIcon ({name, width, height, color, strokeWidth, size}) {
                     </G>
                 </G>
             </Svg>
+        case 'marker':
+            return <Svg {...props} viewBox="0 0 24 24">
+                <G fill={color}>
+                    <Path d="M4.56681 3.09871C4.91328 2.93219 5.32452 2.979 5.6247 3.21914L10.4679 7.09367L17.2747 9.03849C17.4381 9.08517 17.5869 9.17273 17.7071 9.2929L20.7071 12.2929C21.0976 12.6834 21.0976 13.3166 20.7071 13.7071C20.3166 14.0976 19.6834 14.0976 19.2929 13.7071L17 11.4142L10.4142 18L12.7071 20.2929C13.0976 20.6834 13.0976 21.3166 12.7071 21.7071C12.3166 22.0977 11.6834 22.0977 11.2929 21.7071L8.29289 18.7071C8.17272 18.5869 8.08516 18.4381 8.03848 18.2747L6.10966 11.5239L4.2929 9.70713C4.10537 9.51959 4.00001 9.26524 4.00001 9.00002L4 4.00001C4 3.61561 4.22034 3.26523 4.56681 3.09871ZM8.12317 11.2911L9.49463 16.0912L15.0912 10.4946L10.291 9.12318L8.12317 11.2911ZM8.50287 8.08293L6 6.08064L6.00001 8.58581L7 9.5858L8.50287 8.08293Z"  />
+                    
+                </G>
+            </Svg>
+        
         default:
-            return <Icon name="missing"/>
+            return <Icon name="missing" />
     }
 }
 
+export function MarkerStroke({color, strokeWidth}) {
+    const maxMarkerWidth = 50
+    const delta = maxMarkerWidth - strokeWidth;
+    const y1 = 10 + delta/2 + "";
+    const y2 = 10 + maxMarkerWidth -  delta/2 + "";
+    return <Svg viewBox="0 0 70 70" >
+        <G stroke={color}>
+            <Polygon points={"7,"+y1+" 70,"+y1+" 63,"+y2+" 0,"+y2} fill={color + MARKER_TRANSPARENCY_CONSTANT} stroke="#00000000"/>
+        </G>
+    </Svg>
+}

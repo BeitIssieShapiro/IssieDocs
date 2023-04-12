@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 
 
-import { Icon } from "./elements"
+import { Icon, MARKER_TRANSPARENCY_CONSTANT } from "./elements"
 import RNSketchCanvas from 'issie-sketch-canvas';
 import Share from 'react-native-share';
 import DoQueue from './do-queue';
@@ -45,6 +45,7 @@ const shareTimeMs = 2000;
 
 const TOP = 0, RIGHT = 1, BOTTOM = 2, LEFT = 3;
 const DEFAULT_STROKE_WIDTH = 5;
+const DEFAULT_MARKER_WIDTH = 10;
 const MAX_STROKE_WIDTH = 12;
 const DRAG_ICON_SIZE = 45;
 const initialImageSize = 120
@@ -53,6 +54,7 @@ const Modes = {
   TEXT: 2,
   BRUSH: 3,
   ERASER: 4,
+  MARKER: 5,
 }
 
 
@@ -238,6 +240,7 @@ export default class IssieEditPhoto extends React.Component {
       eraseMode: false,
       showTextInput: false,
       strokeWidth: DEFAULT_STROKE_WIDTH,
+      markerWidth: DEFAULT_MARKER_WIDTH,
       queue: new DoQueue(),
       toolbarHeight: 0,
       sideMargin: 0,
@@ -448,6 +451,7 @@ export default class IssieEditPhoto extends React.Component {
 
   isTextMode = () => this.state.mode === Modes.TEXT;
   isBrushMode = () => this.state.mode === Modes.BRUSH;
+  isMarkerMode = () => this.state.mode === Modes.MARKER;
   isImageMode = () => this.state.mode === Modes.IMAGE;
   isEraserMode = () => this.state.eraseMode;
 
@@ -468,7 +472,7 @@ export default class IssieEditPhoto extends React.Component {
 
 
       return true;
-    } else if (this.isBrushMode()) {
+    } else if (this.isBrushMode() || this.isMarkerMode()) {
       return false;
     }
 
@@ -1187,6 +1191,19 @@ export default class IssieEditPhoto extends React.Component {
     this.onEraserChange(true);
   }
 
+  onMarkerMode = () => {
+    if (this.isTextMode()) {
+      this.SaveText();
+    }
+    this.setState({
+      showTextInput: false,
+      yOffset: this.state.zoom == 1 ? 0 : this.state.yOffset,
+      currentTextElem: undefined,
+      mode: Modes.MARKER,
+    })
+    this.onEraserChange(true);
+  }
+
   onBrushSize = (size) => {
 
     let newStrokeWidth = size; //this.canvas.state.strokeWidth + inc;
@@ -1201,6 +1218,13 @@ export default class IssieEditPhoto extends React.Component {
       strokeWidth: newStrokeWidth
     })
   }
+
+  onMarkerSize = (size) => {
+    this.setState({
+      markerWidth: size
+    })
+  }
+
 
   rename = async (isRename) => {
     const page = this.state.page;
@@ -1410,14 +1434,16 @@ export default class IssieEditPhoto extends React.Component {
           onAddImageFromGallery={() => this.onAddImage(SRC_GALLERY)}
           onAddImageFromCamera={() => this.onAddImage(SRC_CAMERA)}
           onBrushMode={() => this.onBrushMode()}
+          onMarkerMode={()=>this.onMarkerMode()} 
 
+          isMarkerMode={this.isMarkerMode()}
           isTextMode={this.isTextMode()}
           isImageMode={this.isImageMode()}
-          isBrushMode={!this.isTextMode() && !this.isImageMode()}
+          isBrushMode={this.isBrushMode()} //!this.isTextMode() && !this.isImageMode() && !this.isMarkerMode()}
           fontSize={this.state.fontSize}
           color={this.state.color}
           strokeWidth={this.state.strokeWidth}
-
+          markerWidth={this.state.markerWidth}
           sideMargin={this.state.sideMargin}
           // betaFeatures={this.state.betaFeatures}
 
@@ -1428,6 +1454,7 @@ export default class IssieEditPhoto extends React.Component {
           }}
           onSelectTextSize={(size) => this.onTextSize(size)}
           onSelectBrushSize={(brushSize) => this.onBrushSize(brushSize)}
+          onSelectMarkerSize={(markerSize) => this.onMarkerSize(markerSize)}
           onToolBarDimensionsChange={(height, floatingHeight) => {
             trace("onToolBarDimensionsChange", height, floatingHeight)
             const change = {
@@ -1688,7 +1715,7 @@ export default class IssieEditPhoto extends React.Component {
         revision={this.state.revision}
         zoom={this.state.zoom} //important for path to be in correct size
         scaleRatio={this.state.scaleRatio}
-        isBrushMode={this.isBrushMode()}
+        isBrushMode={this.isBrushMode() || this.isMarkerMode()}
         isImageMode={this.isImageMode()}
         imagePath={this.state.currentFile}
         SketchEnd={this.SketchEnd}
@@ -1699,8 +1726,8 @@ export default class IssieEditPhoto extends React.Component {
         imageNorm2Scale={this.imageNorm2Scale}
         imageScale2Norm={this.imageScale2Norm}
         currentTextElemId={this.isTextMode() && this.state.showTextInput && this.state.currentTextElem?.id}
-        strokeWidth={strokeWidth}
-        color={color}
+        strokeWidth={this.isBrushMode() ? strokeWidth : this.state.markerWidth}
+        color={this.isMarkerMode() ? color + MARKER_TRANSPARENCY_CONSTANT : color}
       />
 
     );

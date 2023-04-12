@@ -32,6 +32,8 @@ export const dimensions = {
 
 }
 
+export const MARKER_TRANSPARENCY_CONSTANT = "40";
+
 
 export function getFont() {
     return isRTL() ? 'Alef' : 'Verdana';
@@ -257,8 +259,10 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
                 flexDirection: direction ? direction : getRowDirection()
             }}>
             {textExist ?
-                <AppText style={{ position: 'absolute', paddingTop: 5, left: 0, width: '80%', fontSize: textSize, lineHeight: textSize + (isRTL()?5:0), 
-                    color: dark ? "white" : semanticColors.titleText, textAlign: 'center' }}>{text}</AppText> : null
+                <AppText style={{
+                    position: 'absolute', paddingTop: 5, left: 0, width: '80%', fontSize: textSize, lineHeight: textSize + (isRTL() ? 5 : 0),
+                    color: dark ? "white" : semanticColors.titleText, textAlign: 'center'
+                }}>{text}</AppText> : null
             }
             {icon.startsWith("svg-") ?
                 <SvgIcon name={icon.substr(4)} size={iconSize} color={color} />
@@ -347,7 +351,6 @@ export function IconButton({
         /> : null}
     </View>
 }
-
 
 
 export function getFolderAndIcon(folderName) {

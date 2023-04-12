@@ -143,7 +143,7 @@
 
     CGContextSetStrokeColorWithColor(context, _strokeColor.CGColor);
     CGContextSetLineWidth(context, _strokeWidth);
-    CGContextSetLineCap(context, kCGLineCapRound);
+    CGContextSetLineCap(context, kCGLineCapButt);
     CGContextSetLineJoin(context, kCGLineJoinRound);
     CGContextSetBlendMode(context, isErase ? kCGBlendModeClear : kCGBlendModeNormal);
     CGContextBeginPath(context);

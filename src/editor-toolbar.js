@@ -1,14 +1,18 @@
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { AppText, availableColorPicker, dimensions, getEraserIcon, IconButton, semanticColors, Spacer, textSizes } from "./elements";
 import FadeInView from "./FadeInView";
 import { getRowDirections, translate } from "./lang";
 import { trace } from "./log";
 import { BrushSizePicker, MyColorPicker, TextSizePicker } from "./pickers";
-import { getSvgIcon } from "./svg-icons";
+import { getSvgIcon, MarkerStroke, SvgIcon } from "./svg-icons";
 
 const availableBrushSize = [
     1, 3, 5, 7, 9
+]
+
+const availableMarkerSize = [
+    10, 20, 30, 40, 50
 ]
 
 const pickerMenuHeight = 70;
@@ -27,10 +31,12 @@ function EditorToolbar({
     onImageMode,
     onAddImageFromCamera,
     onAddImageFromGallery,
+    onMarkerMode,
     onBrushMode,
     onZoomIn,
     onZoomOut,
 
+    onSelectMarkerSize,
     onSelectBrushSize,
     onSelectColor,
     onSelectTextSize,
@@ -38,9 +44,11 @@ function EditorToolbar({
     isTextMode,
     isImageMode,
     isBrushMode,
+    isMarkerMode,
     fontSize,
     color,
     strokeWidth,
+    markerWidth,
 
     sideMargin,
     maxFloatingHeight,
@@ -52,6 +60,7 @@ function EditorToolbar({
     const [showTextSizePicker, setShowTextSizePicker] = useState(false);
     const [showBrushPicker, setShowBrushPicker] = useState(false);
     const [showZoomPicker, setShowZoomPicker] = useState(false);
+    const [showMarkerPicker, setShowMarkerPicker] = useState(false);
     const [showAddImagePicker, setShowAddImagePicker] = useState(false);
     const [toolbarHeight, setToolbarHeight] = useState(dimensions.toolbarHeight);
     const [textMenuHeight, setTextMenuHeight] = useState(0);
@@ -111,14 +120,15 @@ function EditorToolbar({
             collapseExtended();
         }
 
-        if (isTextMode || showBrushPicker) {
+        if (isTextMode || showBrushPicker || showMarkerPicker) {
             setShowTextSizePicker(oldVal => !oldVal);
             setShowBrushPicker(false);
             setShowZoomPicker(false);
             setShowColorPicker(false);
             setShowAddImagePicker(false);
+            setShowMarkerPicker(false);
         }
-    }, [isTextMode, showBrushPicker, showTextSizePicker]);
+    }, [isTextMode, showBrushPicker, showTextSizePicker, showMarkerPicker]);
 
     onBrushButtonClick = useCallback(() => {
         if (!isBrushMode) {
@@ -126,15 +136,16 @@ function EditorToolbar({
             collapseExtended();
         }
 
-        if (isBrushMode || showTextSizePicker) {
-            setShowBrushPicker(oldVal =>  !oldVal);
+        if (isBrushMode || showTextSizePicker || showMarkerPicker) {
+            setShowBrushPicker(oldVal => !oldVal);
             setShowTextSizePicker(false);
             setShowZoomPicker(false);
             setShowColorPicker(false);
             setShowAddImagePicker(false);
+            setShowMarkerPicker(false);
 
         }
-    }, [isBrushMode, showBrushPicker, showTextSizePicker]);
+    }, [isBrushMode, showBrushPicker, showTextSizePicker, showMarkerPicker]);
 
     onColorButtonClick = () => {
         setShowColorPicker(oldVal => !oldVal);
@@ -142,6 +153,7 @@ function EditorToolbar({
         setShowTextSizePicker(false);
         setShowZoomPicker(false);
         setShowAddImagePicker(false);
+        setShowMarkerPicker(false);
         collapseExtended();
     }
 
@@ -151,18 +163,35 @@ function EditorToolbar({
         setShowTextSizePicker(false);
         setShowColorPicker(false);
         setShowAddImagePicker(false);
-
+        setShowMarkerPicker(false);
     }
+
+    onMarkerButtonClick = useCallback(() => {
+        if (!isMarkerMode) {
+            onMarkerMode();
+        }
+
+        if (isMarkerMode || showTextSizePicker || showBrushPicker) {
+            setShowMarkerPicker(oldVal => !oldVal);
+            setShowBrushPicker(false);
+            setShowTextSizePicker(false);
+            setShowColorPicker(false);
+            setShowAddImagePicker(false);
+            setShowZoomPicker(false);
+        }
+    }, [isMarkerMode, showBrushPicker, showTextSizePicker, showMarkerPicker]);
+
 
     onImageButtonClick = () => {
         if (!isImageMode) {
             onImageMode();
         } else {
-            setShowAddImagePicker(oldVal =>  !oldVal);
+            setShowAddImagePicker(oldVal => !oldVal);
             setShowBrushPicker(false);
             setShowTextSizePicker(false);
             setShowColorPicker(false);
             setShowZoomPicker(false);
+            setShowMarkerPicker(false);
         }
 
     }
@@ -194,6 +223,10 @@ function EditorToolbar({
         <IconButton onPress={onZoomButtonClick} color={semanticColors.editPhotoButton}
             icon="zoom-in" size={55} iconSize={45} key={"3"} />,
         <Spacer width={23} key="4" />,
+        <IconButton onPress={onMarkerButtonClick} color={semanticColors.editPhotoButton}
+            icon="marker" size={55} iconSize={45} key={"5"} selected={isMarkerMode} iconType="svg" />,
+        <Spacer width={23} key="6" />,
+
         // page && page.count > 1 &&
         // getIconButton(() => this.deletePage(), semanticColors.editPhotoButton, 'delete-forever', 55, undefined, undefined, undefined, "5"),
         // < Spacer width={23} key="6" />,
@@ -277,10 +310,10 @@ function EditorToolbar({
                                 }}>+</AppText>
                             </View>}
                     </View> :
-                    !isImageMode &&
-                    //<Icon name={"image"} size={55} color={semanticColors.editPhotoButton} /> :
-
-                    getSvgIcon('doodle', 55, color, strokeWidth * .8)
+                    !isImageMode && (isMarkerMode ?
+                        <MarkerStroke color={color} strokeWidth={markerWidth} />
+                        :
+                        getSvgIcon('doodle', 55, color, strokeWidth * .8))
                 }
             </View>
 
@@ -299,7 +332,7 @@ function EditorToolbar({
                 //fontWeight={rtl ? undefined : 'bold'} 
                 />
                 <Spacer width={23} />
-                <IconButton onPress={onBrushButtonClick} icon={"edit"} selected={isTextMode} size={55}
+                <IconButton onPress={onBrushButtonClick} icon={"edit"} size={55}
                     color={isBrushMode ? color : semanticColors.editPhotoButton} iconSize={45} selected={isBrushMode} />
                 <Spacer width={23} />
                 <IconButton onPress={onColorButtonClick} icon={"color-lens"} size={55} color={semanticColors.editPhotoButton} />
@@ -335,7 +368,7 @@ function EditorToolbar({
                 onSelectColor(color);
                 setShowColorPicker(false);
             }}
-            onHeightChanged={(height)=>{
+            onHeightChanged={(height) => {
                 trace("color height ", height)
                 setColorMenuHeight(height)
             }}
@@ -355,8 +388,8 @@ function EditorToolbar({
                 if (!keepOpen)
                     setShowTextSizePicker(false);
             }}
-            onHeightChanged={(height)=>{
-                trace("Text height " , height)
+            onHeightChanged={(height) => {
+                trace("Text height ", height)
                 setTextMenuHeight(height)
             }}
             maxHeight={maxFloatingHeight}
@@ -389,7 +422,7 @@ function EditorToolbar({
             </View>
         </FadeInView>
 
-        {/*View for zoom*/}
+        {/*View for add image*/}
         <FadeInView height={showAddImagePicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 <IconButton onPress={onAddImageFromGallery} icon={"new-image"} size={55} iconSize={45} iconType="svg" color="black" />
@@ -397,7 +430,25 @@ function EditorToolbar({
             </View>
         </FadeInView>
 
+        {/*View for selecting marker size*/}
+        <FadeInView height={showMarkerPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
 
+            <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
+                {
+                    availableMarkerSize.map((size, i) => (<TouchableOpacity
+                        key={i}
+                        style={{ width: 50, height: 50 }}
+                        onPress={() => {
+                            onSelectMarkerSize(size);
+                            setShowMarkerPicker(false);
+                        }} >
+                        <MarkerStroke color={color} strokeWidth={size} />
+                        {size === markerWidth && <View style={{ position: "absolute", bottom: 0, height: 8, width: 8, left: 21, borderRadius: 4, backgroundColor: color }} />}
+                    </TouchableOpacity>
+                    ))
+                }
+            </View>
+        </FadeInView>
 
     </View >
 }
