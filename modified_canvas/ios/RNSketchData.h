@@ -15,9 +15,12 @@
 @property (nonatomic, readonly) CGFloat strokeWidth;
 @property (nonatomic, readonly) UIColor* strokeColor;
 @property (nonatomic, readonly) NSArray<NSValue*> *points;
+@property (nonatomic, readonly) CGFloat dash;
+@property (nonatomic, readonly) CGFloat dashGap;
+@property (nonatomic, readonly) CGFloat phase;
 //@property (nonatomic, readonly) BOOL isTranslucent;
 
-- (instancetype)initWithId:(int) pathId strokeColor:(UIColor*) strokeColor strokeWidth:(int) strokeWidth points: (NSArray*) points;
+- (instancetype)initWithId:(int) pathId strokeColor:(UIColor*) strokeColor strokeWidth:(int) strokeWidth points: (NSArray*) points dash: (CGFloat)dash dashGap: (CGFloat)dashGap phase:(CGFloat) phase;
 - (instancetype)initWithId:(int) pathId strokeColor:(UIColor*) strokeColor strokeWidth:(int) strokeWidth;
 
 - (CGRect)addPoint:(CGPoint) point;

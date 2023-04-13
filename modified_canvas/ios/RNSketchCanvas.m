@@ -357,7 +357,7 @@
     [_paths addObject: _currentPath];
 }
 
-- (void) addPath:(int) pathId strokeColor:(UIColor*) strokeColor strokeWidth:(int) strokeWidth points:(NSArray*) points {
+- (void) addPath:(int) pathId strokeColor:(UIColor*) strokeColor strokeWidth:(int) strokeWidth points:(NSArray*) points dash: (CGFloat)dash dashGap:(CGFloat)dashGap  phase:(double) phase{
     
     for(int i=0; i<_paths.count; i++) {
         if (((RNSketchData*)_paths[i]).pathId == pathId) {
@@ -369,7 +369,10 @@
     RNSketchData *data = [[RNSketchData alloc] initWithId: pathId
                                               strokeColor: strokeColor
                                               strokeWidth: strokeWidth
-                                                   points: points];
+                                                   points: points
+                                                     dash: dash
+                                                  dashGap: dashGap
+                                                    phase: phase ];
     [_paths addObject: data];
     [data drawInContext:_drawingContext];
     [self setFrozenImageNeedsUpdate];

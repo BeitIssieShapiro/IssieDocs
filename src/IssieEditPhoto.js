@@ -55,6 +55,7 @@ const Modes = {
   BRUSH: 3,
   ERASER: 4,
   MARKER: 5,
+  TABLE: 6,
 }
 
 
@@ -147,7 +148,7 @@ export default class IssieEditPhoto extends React.Component {
           this.repeatMovement = undefined;
         }
         if (this.isTextMode()) {
-          this.SaveText( true);
+          this.SaveText(true);
         } else if (this.isImageMode()) {
           this.SaveImageAfterMove();
         }
@@ -211,8 +212,39 @@ export default class IssieEditPhoto extends React.Component {
           return
         }
 
+        if (touches.length == 1 && this.isTableMode()) {
+          this._tableResize = true;
+          //trace("resize table")
+          const state = this.state.tableResizeState || {
+            initialX: this.screen2ViewPortX(touches[0].pageX),
+            initialY: this.screen2ViewPortY(touches[0].pageY),
+          };
+
+          const newState = {
+            ...state,
+            currentX: this.screen2ViewPortX(touches[0].pageX),
+            currentY: this.screen2ViewPortY(touches[0].pageY),
+          }
+
+          trace("resize table new state", newState)
+
+          this.setState({
+            tableResizeState: newState
+          });
+        }
       },
+
       onPanResponderRelease: (evt, gestureState) => {
+        if (this._tableResize) {
+          this._tableResize = false;
+          trace("resize table end")
+          this.changeTable(this.state.tableResizeState);
+          this.setState({
+            tableResizeState: undefined
+          });
+
+          return;
+        }
 
         if (this._pinch) {
           this._pinch = false;
@@ -288,6 +320,8 @@ export default class IssieEditPhoto extends React.Component {
   screen2ViewPortX = (x) => x - this.state.sideMargin;
   screen2ViewPortY = (y) => y - this.state.toolbarHeight - dimensions.toolbarMargin - this.props.route.params.headerHeight;
 
+  screen2NormX = (x) => this.viewPort2NormX(this.screen2ViewPortX(x));
+  screen2NormY = (y) => this.viewPort2NormY(this.screen2ViewPortY(y));
 
 
   changeZoomOrOffset = (obj, animateMove, allowPassTop) => {
@@ -452,9 +486,9 @@ export default class IssieEditPhoto extends React.Component {
   isTextMode = () => this.state.mode === Modes.TEXT;
   isBrushMode = () => this.state.mode === Modes.BRUSH;
   isMarkerMode = () => this.state.mode === Modes.MARKER;
+  isTableMode = () => this.state.mode === Modes.TABLE;
   isImageMode = () => this.state.mode === Modes.IMAGE;
   isEraserMode = () => this.state.eraseMode;
-
 
 
   _shouldMove = (evt, gestureState) => {
@@ -467,10 +501,7 @@ export default class IssieEditPhoto extends React.Component {
         return true;
       }
       return !this.state.showTextInput;//
-    } else if (this.isImageMode()) {
-
-
-
+    } else if (this.isImageMode() || this.isTableMode()) {
       return true;
     } else if (this.isBrushMode() || this.isMarkerMode()) {
       return false;
@@ -517,10 +548,12 @@ export default class IssieEditPhoto extends React.Component {
 
   _keyboardDidHide = (e) => {
     this.SaveText();
-    this.setState({ keyboardTop: -1, keyboardHeight: 0, 
-      showTextInput: false, 
+    this.setState({
+      keyboardTop: -1, keyboardHeight: 0,
+      showTextInput: false,
       currentTextElem: undefined,
-      yOffset: this.state.zoom === 1 ? 0 : this.state.yOffset });
+      yOffset: this.state.zoom === 1 ? 0 : this.state.yOffset
+    });
 
     Animated.timing(this.state.viewPortYOffset, {
       toValue: this.state.zoom === 1 ? 0 : this.state.yOffset,
@@ -797,7 +830,7 @@ export default class IssieEditPhoto extends React.Component {
     }
   }
 
-  SaveText = ( afterDrag) => {
+  SaveText = (afterDrag) => {
     if (!this.state.showTextInput) {
       trace("SaveText exit doing nothing")
       return;
@@ -1204,6 +1237,15 @@ export default class IssieEditPhoto extends React.Component {
     this.onEraserChange(true);
   }
 
+  onTableMode = () => {
+    this.setState({
+      showTextInput: false,
+      mode: Modes.TABLE,
+      eraseMode: false
+    });
+    this.onEraserChange(true);
+  }
+
   onBrushSize = (size) => {
 
     let newStrokeWidth = size; //this.canvas.state.strokeWidth + inc;
@@ -1434,8 +1476,10 @@ export default class IssieEditPhoto extends React.Component {
           onAddImageFromGallery={() => this.onAddImage(SRC_GALLERY)}
           onAddImageFromCamera={() => this.onAddImage(SRC_CAMERA)}
           onBrushMode={() => this.onBrushMode()}
-          onMarkerMode={()=>this.onMarkerMode()} 
+          onMarkerMode={() => this.onMarkerMode()}
+          onTableMode={() => this.onTableMode()}
 
+          isTableMode={this.isTableMode()}
           isMarkerMode={this.isMarkerMode()}
           isTextMode={this.isTextMode()}
           isImageMode={this.isImageMode()}
@@ -1699,6 +1743,56 @@ export default class IssieEditPhoto extends React.Component {
   }
 
 
+  changeTable = (tableResizeState) => {
+    //find the table
+    let table = undefined;
+    const queue = this.state.queue.getAll();
+    for (let i = queue.length - 1; i >= 0; i--) {
+      trace("q elem", i, queue[i])
+      if (queue[i].type === "tableDelete") {
+        return;
+      }
+      if (queue[i].type === "table") {
+        table = queue[i].elem;
+        break;
+      }
+    }
+
+    if (table) {
+      const changedTable = this.resizeTable(table, tableResizeState,
+        this.state.pageRect.width, this.state.pageRect.height, true);
+      if (changedTable) {
+        this.state.queue.pushTable(changedTable);
+        this.Save();
+      }
+    }
+  }
+
+
+  resizeTable = (table, tableResizeState, width, height, onlyIfChanged) => {
+    const xFactor = width / table.size.width;
+    const yFactor = height / table.size.height;
+
+    for (let c = 0; c < table.verticalLines.length; c++) {
+      if (Math.abs(tableResizeState.initialX / xFactor - table.verticalLines[c]) < 15) {
+        let retTable = { ...table, verticalLines: [...table.verticalLines] };
+        retTable.verticalLines[c] += tableResizeState.currentX / xFactor - tableResizeState.initialX / xFactor;
+        return retTable;
+      }
+    }
+
+    for (let r = 0; r < table.horizontalLines.length; r++) {
+      if (Math.abs(tableResizeState.initialY / yFactor - table.horizontalLines[r]) < 15) {
+        let retTable = { ...table, horizontalLines: [...table.horizontalLines] };
+        retTable.horizontalLines[r] += tableResizeState.currentY / yFactor - tableResizeState.initialY / yFactor;
+        return retTable;
+      }
+    }
+
+    return (onlyIfChanged ? undefined : table);
+  }
+
+
   getCanvas = (width, height) => {
     let strokeWidth = this.isEraserMode() ?
       (this.state.strokeWidth * 3 < 15 ? 15 : this.state.strokeWidth * 3)
@@ -1717,6 +1811,9 @@ export default class IssieEditPhoto extends React.Component {
         scaleRatio={this.state.scaleRatio}
         isBrushMode={this.isBrushMode() || this.isMarkerMode()}
         isImageMode={this.isImageMode()}
+        isTableMode={this.isTableMode()}
+        TableResizeState={this.state.tableResizeState}
+        ResizeTable={this.resizeTable}
         imagePath={this.state.currentFile}
         SketchEnd={this.SketchEnd}
         SketchStart={this.SketchStart}

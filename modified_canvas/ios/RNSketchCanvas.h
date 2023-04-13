@@ -17,7 +17,7 @@
 - (void)clearImages;
 - (void)setCanvasImagePosition:(NSDictionary *)imageOnCanvas;
 - (void)newPath:(int) pathId strokeColor:(UIColor*) strokeColor strokeWidth:(int) strokeWidth;
-- (void)addPath:(int) pathId strokeColor:(UIColor*) strokeColor strokeWidth:(int) strokeWidth points:(NSArray*) points;
+- (void)addPath:(int) pathId strokeColor:(UIColor*) strokeColor strokeWidth:(int) strokeWidth points:(NSArray*) points dash: (CGFloat)dash dashGap: (CGFloat)dashGap phase:(double) phase;
 - (void)deletePath:(int) pathId;
 - (void)deleteImage:(NSString*) imageId;
 - (void)addPointX: (float)x Y: (float)y;

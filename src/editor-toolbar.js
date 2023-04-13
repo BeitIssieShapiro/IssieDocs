@@ -32,6 +32,7 @@ function EditorToolbar({
     onAddImageFromCamera,
     onAddImageFromGallery,
     onMarkerMode,
+    onTableMode,
     onBrushMode,
     onZoomIn,
     onZoomOut,
@@ -45,6 +46,7 @@ function EditorToolbar({
     isImageMode,
     isBrushMode,
     isMarkerMode,
+    isTableMode,
     fontSize,
     color,
     strokeWidth,
@@ -61,6 +63,7 @@ function EditorToolbar({
     const [showBrushPicker, setShowBrushPicker] = useState(false);
     const [showZoomPicker, setShowZoomPicker] = useState(false);
     const [showMarkerPicker, setShowMarkerPicker] = useState(false);
+    const [showTableMenu, setShowTableMenu] = useState(false);
     const [showAddImagePicker, setShowAddImagePicker] = useState(false);
     const [toolbarHeight, setToolbarHeight] = useState(dimensions.toolbarHeight);
     const [textMenuHeight, setTextMenuHeight] = useState(0);
@@ -68,7 +71,7 @@ function EditorToolbar({
     const [brushMenuHeight, setBrushMenuHeight] = useState(0);
     const [zoomMenuHeight, setZoomMenuHeight] = useState(0);
     const [imageMenuHeight, setImageMenuHeight] = useState(0);
-
+    
 
     useEffect(() => {
         onToolBarDimensionsChange(toolbarHeight, Math.max(textMenuHeight, colorMenuHeight, brushMenuHeight, zoomMenuHeight, imageMenuHeight))
@@ -181,6 +184,22 @@ function EditorToolbar({
         }
     }, [isMarkerMode, showBrushPicker, showTextSizePicker, showMarkerPicker]);
 
+    onTableButtonClick = useCallback(() => {
+        if (isTableMode) {
+            onTextMode();
+        } else {
+            onTableMode();
+        } 
+
+        setShowTableMenu(oldVal => !oldVal);
+        setShowBrushPicker(false);
+        setShowTextSizePicker(false);
+        setShowColorPicker(false);
+        setShowAddImagePicker(false);
+        setShowMarkerPicker(false);
+        
+    }, [isTableMode]);
+
 
     onImageButtonClick = () => {
         if (!isImageMode) {
@@ -226,6 +245,9 @@ function EditorToolbar({
         <IconButton onPress={onMarkerButtonClick} color={semanticColors.editPhotoButton}
             icon="marker" size={55} iconSize={45} key={"5"} selected={isMarkerMode} iconType="svg" />,
         <Spacer width={23} key="6" />,
+        <IconButton onPress={onTableButtonClick} color={semanticColors.editPhotoButton}
+            icon="table-chart" size={55} iconSize={45} key={"7"} selected={isTableMode} />,
+        <Spacer width={23} key="8" />,
 
         // page && page.count > 1 &&
         // getIconButton(() => this.deletePage(), semanticColors.editPhotoButton, 'delete-forever', 55, undefined, undefined, undefined, "5"),

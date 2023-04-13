@@ -15,7 +15,9 @@
 @property (nonatomic, readwrite) CGFloat strokeWidth;
 @property (nonatomic, readwrite) UIColor* strokeColor;
 @property (nonatomic, readwrite) NSMutableArray<NSValue*> *points;
-
+@property (nonatomic, readwrite) CGFloat dash;
+@property (nonatomic, readwrite) CGFloat dashGap;
+@property (nonatomic, readwrite) CGFloat phase;
 @end
 
 @implementation RNSketchData
@@ -31,6 +33,9 @@
         _strokeColor = strokeColor;
         _strokeWidth = strokeWidth;
         _points = [NSMutableArray new];
+        _dash = 0.0;
+        _dashGap = 0.0;
+        _phase = 0.0;
         //_isTranslucent = CGColorGetComponents(strokeColor.CGColor)[3] != 1.0 &&
         //    ![Utility isSameColor:strokeColor color:[UIColor clearColor]];
         _path = nil; //_isTranslucent ? [UIBezierPath new] : nil;
@@ -39,13 +44,17 @@
     return self;
 }
 
-- (instancetype)initWithId:(int) pathId strokeColor:(UIColor*) strokeColor strokeWidth:(int) strokeWidth points: (NSArray*) points {
+- (instancetype)initWithId:(int) pathId strokeColor:(UIColor*) strokeColor strokeWidth:(int) strokeWidth points: (NSArray*) points dash: (CGFloat)dash dashGap: (CGFloat)dashGap phase:(CGFloat) phase{
     self = [super init];
     if (self) {
         _pathId = pathId;
         _strokeColor = strokeColor;
         _strokeWidth = strokeWidth;
         _points = [points mutableCopy];
+        _dash = dash;
+        _dashGap = dashGap;
+        _phase = phase;
+        
         //_isTranslucent = CGColorGetComponents(strokeColor.CGColor)[3] != 1.0 &&
         //    ![Utility isSameColor:strokeColor color:[UIColor clearColor]];
         _path = nil; //_isTranslucent ? [self evaluatePath] : nil;
@@ -144,6 +153,12 @@
     CGContextSetStrokeColorWithColor(context, _strokeColor.CGColor);
     CGContextSetLineWidth(context, _strokeWidth);
     CGContextSetLineCap(context, kCGLineCapButt);
+    if (_dash > 0) {
+        double dashLengths[] = {_dash, _dashGap};
+        CGContextSetLineDash(context, _phase, dashLengths, 2);
+    } else {
+        CGContextSetLineDash(context, 0.0, nil, 0);
+    }
     CGContextSetLineJoin(context, kCGLineJoinRound);
     CGContextSetBlendMode(context, isErase ? kCGBlendModeClear : kCGBlendModeNormal);
     CGContextBeginPath(context);

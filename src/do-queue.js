@@ -23,13 +23,26 @@ export default class DoQueue {
 
     pushImage(elem) {
       this.add({ elem: elem, type: 'image' });
-      //once new item added redo is reset
       this._undoQueue = [];
     }
   
     pushPath(elem) {
       this.add({ elem: elem, type: 'path' });
-      //once new item added redo is reset
+      this._undoQueue = [];
+    }
+
+    pushTable(elem) {
+      this.add({ elem: elem, type: 'table' });
+      this._undoQueue = [];
+    }
+
+    pushColumnWidth(id, colIndex, width) {
+      this.add({ elemID: id, type: 'tableColWidth', colIndex, width });
+      this._undoQueue = [];
+    }
+
+    pushDeleteTable(id) {
+      this.add({ elemID: id, type: 'tableDelete' });
       this._undoQueue = [];
     }
   

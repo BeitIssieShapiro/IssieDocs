@@ -2,6 +2,7 @@ import RNSketchCanvas from 'issie-sketch-canvas';
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
 import { colors } from './elements';
 import { trace } from './log';
+import { tableResizeDone } from './pinch';
 
 
 const DEFAULT_STROKE_WIDTH = 5;
@@ -14,10 +15,13 @@ function Canvas({
     scaleRatio,
     isBrushMode,
     isImageMode,
+    isTableMode,
     imagePath,
     SketchEnd,
     SketchStart,
     AfterRender,
+    TableResizeState,
+    ResizeTable,
     queue,
     normFontSize2FontSize,
     imageNorm2Scale,
@@ -30,6 +34,7 @@ function Canvas({
     const [canvas, setCanvas] = useState(React.createRef(null));
     const [texts, setTexts] = useState([]);
     const [images, setImages] = useState([]);
+    const [tablePhase, setTablePhase] = useState(0);
 
     useEffect(() => {
         canvas.current?.setState({
@@ -119,13 +124,14 @@ function Canvas({
         if (!canvas || !canvas.current || !layoutReady)
             return;
 
-        trace("New UpdateCanvas", "ratio", scaleRatio, "zoom", zoom)
+        //trace("New UpdateCanvas", "ratio", scaleRatio, "zoom", zoom)
 
         let q = queue.getAll();
         let canvasTexts = [];
         let canvasImages = [];
         let paths = [];
-        //canvas.current.clear();
+        let table = undefined;
+
         for (let i = 0; i < q.length; i++) {
             if (q[i].type === 'text') {
                 const txtElem = txtElemNorm2Scale(q[i].elem)
@@ -154,14 +160,18 @@ function Canvas({
                     const updatedImage = { ...canvasImages[elemIndex], ...q[i].elem }
                     canvasImages[elemIndex] = imageNorm2Scale(updatedImage)
                 }
-
             } else if (q[i].type === 'imageDelete') {
                 const elemIndex = canvasImages.findIndex(ci => ci.id === q[i].elem.id);
                 if (elemIndex >= 0) {
                     canvasImages.splice(elemIndex, 1);
                 }
+            } else if (q[i].type === 'table') {
+                table = q[i].elem;
+            } else if (q[i].type === 'tableDelete') {
+                table = undefined;
             }
         }
+
         const waitFor = [
             new Promise((resolve) => canvas.current?.getImageIds((ids) => {
                 const idsStatus = ids ? ids.map(id => ({ id, exists: false })) : [];
@@ -187,7 +197,7 @@ function Canvas({
                 resolve();
             })),
             new Promise((resolve) => canvas.current?.getPathIds((ids) => {
-                trace("path ids :", JSON.stringify(ids))
+                //trace("path ids :", JSON.stringify(ids))
 
                 const idsStatus = ids ? ids.map(id => ({ id, exists: false })) : [];
                 paths.forEach(path => {
@@ -197,6 +207,106 @@ function Canvas({
                         stat.exists = true;
                     }
                 });
+
+                if (table) {
+                    if (isTableMode && TableResizeState) {
+                        table = ResizeTable(table, TableResizeState, width, height);
+                    }
+
+
+                    const size = table.size;
+                    const dash = isTableMode ? 10 : 0;
+                    const dashGap = isTableMode ? 5 : 0;
+                    const tableWidth = isTableMode ? table.width * 2 : table.width;
+
+                    if (isTableMode) {
+                        // if (TableResizeState) {
+                        //     if (TableResizeState.isTableResizeDone) {
+                        //         TableResizeState.clear();
+                        //         trace("change the table - todo", TableResizeState)
+                        //     }
+                        // }
+
+                        if (!TableResizeState) {
+                            setTimeout(() => {
+                                setTablePhase(oldPhase => {
+                                    if (oldPhase === 9) {
+                                        return 0.;
+                                    }
+                                    return oldPhase + 3;
+                                });
+                            }, 200);
+                        }
+                    }
+
+                    const addLength = table.width / 2;
+                    for (let c = 0; c < table.verticalLines.length; c++) {
+                        //let resizeDelta = 0;
+
+                        // if (TableResizeState) {
+                        //     trace("loc", c, TableResizeState.initialX - table.verticalLines[c])
+                        //     if (Math.abs(TableResizeState.initialX - table.verticalLines[c]) < 15) {
+                        //         resizeDelta = TableResizeState.currentX - TableResizeState.initialX;
+                        //     }
+                        // }
+                        let x = table.verticalLines[c] + addLength; //+ resizeDelta;
+
+
+                        const path = {
+                            path: {
+                                id: table.id + 100 + c,
+                                color: table.color,
+                                width: tableWidth,
+                                data: [
+                                    (x + "," + (table.horizontalLines[0] - addLength)),
+                                    (x + "," + (table.horizontalLines[table.horizontalLines.length - 1] + addLength)),
+                                    (x + "," + (table.horizontalLines[table.horizontalLines.length - 1] + addLength)),
+                                ],
+                                dash, dashGap, phase: tablePhase
+                            },
+                            size
+                        }
+
+                        canvas.current?.addPath(path, width, height);
+                        const stat = idsStatus.find(idStat => idStat.id == path.path.id);
+                        if (stat) {
+                            stat.exists = true;
+                        }
+                    }
+
+                    for (let r = 0; r < table.horizontalLines.length; r++) {
+
+                        // if (TableResizeState) {
+                        //     trace("loc", r, TableResizeState.initialY - table.horizontalLines[r])
+                        //     if (Math.abs(TableResizeState.initialY - table.horizontalLines[r]) < 15) {
+                        //         resizeDelta = TableResizeState.currentY - TableResizeState.initialY;
+                        //     }
+                        // }
+
+                        const y = table.horizontalLines[r]; //+ resizeDelta;
+
+                        const path = {
+                            path: {
+                                id: table.id + 200 + r,
+                                color: table.color,
+                                width: tableWidth,
+                                data: [
+                                    (table.verticalLines[0] + "," + y),
+                                    (table.verticalLines[table.verticalLines.length - 1] + "," + y),
+                                    (table.verticalLines[table.verticalLines.length - 1] + "," + y)
+                                ],
+                                dash, dashGap, phase: tablePhase
+                            },
+                            size
+                        }
+                        canvas.current?.addPath(path, width, height);
+                        const stat = idsStatus.find(idStat => idStat.id == path.path.id);
+                        if (stat) {
+                            stat.exists = true;
+                        }
+                    }
+                }
+
                 // delete those paths who are no longer exists in the queue
                 idsStatus.filter(idStat => !idStat.exists).forEach(idStat => canvas.current?.deletePath(idStat.id));
                 resolve()
@@ -206,7 +316,7 @@ function Canvas({
 
         setTexts(canvasTexts);
         setImages(canvasImages);
-    }, [revision, scaleRatio, currentTextElemId, width, height]);
+    }, [revision, scaleRatio, currentTextElemId, width, height, isTableMode, tablePhase, TableResizeState]);
 
     return (
         <RNSketchCanvas
