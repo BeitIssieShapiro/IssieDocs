@@ -21,6 +21,7 @@ function Canvas({
     SketchStart,
     AfterRender,
     TableResizeState,
+    Table,
     ResizeTable,
     queue,
     normFontSize2FontSize,
@@ -316,7 +317,7 @@ function Canvas({
 
         setTexts(canvasTexts);
         setImages(canvasImages);
-    }, [revision, scaleRatio, currentTextElemId, width, height, isTableMode, tablePhase, TableResizeState]);
+    }, [revision, scaleRatio, currentTextElemId, width, height, isTableMode, tablePhase, TableResizeState, Table]);
 
     return (
         <RNSketchCanvas

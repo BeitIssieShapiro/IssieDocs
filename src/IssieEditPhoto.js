@@ -1241,7 +1241,8 @@ export default class IssieEditPhoto extends React.Component {
     this.setState({
       showTextInput: false,
       mode: Modes.TABLE,
-      eraseMode: false
+      eraseMode: false,
+      currentTable: this.findTable(),
     });
     this.onEraserChange(true);
   }
@@ -1442,13 +1443,17 @@ export default class IssieEditPhoto extends React.Component {
           onGoBack={() => this.props.navigation.goBack()}
           onUndo={() => {
             this.state.queue.undo();
-            this.setState({ revision: this.state.revision + 1, currentImageElem: undefined });
+            this.setState({
+              revision: this.state.revision + 1,
+              currentImageElem: undefined,
+              currentTable: this.findTable()
+            });
             this.Save();
           }}
           canRedo={this.state.queue.canRedo()}
           onRedo={() => {
             this.state.queue.redo();
-            this.setState({ revision: this.state.revision + 1, });
+            this.setState({ revision: this.state.revision + 1, currentTable: this.findTable() });
             this.Save();
           }}
           fontSize4Toolbar={this.fontSize4Toolbar}
@@ -1467,19 +1472,42 @@ export default class IssieEditPhoto extends React.Component {
               showTextInput: false,
               currentTextElem: undefined,
             })
-            if (!(this.state?.canvasImages?.length > 0)) {
-              this.toolbarRef.current.openImageSubMenu();
-            } else if (this.state.canvasImages.length == 1) {
-              this.setState({ currentImageElem: this.state.canvasImages[0] })
+
+            // find image. if none - open sub menu. if only one, make current
+            let images = []
+            const queue = this.state.queue.getAll();
+            for (let i = 0; i< queue.length; i++) {
+              if (queue[i].type === "image") {
+                images.push(queue[i].elem);
+              } else if (queue[i].type === 'imagePosition') {
+                trace("resize img", images)
+                const elemIndex = images.findIndex(ci => ci.id === queue[i].elem.id);
+                if (elemIndex >= 0) {
+                  trace("resize img", elemIndex)
+                  images[elemIndex] = { ...images[elemIndex], ...queue[i].elem }
+                  images = images.map(img => img.id !== queue[i].elem.id ? img : queue[i].elem);
+                }
+              } else if (queue[i].type === "imageDelete") {
+                images = images.filter(img => img.id !== queue[i].elem.id)
+              }
             }
-          }}
+
+            if (images.length === 0) {
+              this.toolbarRef.current.openImageSubMenu();
+            } else if (images.length == 1) {
+              this.setState({ currentImageElem: this.imageNorm2Scale(images[0], this.state.scaleRatio) })
+            }
+          }
+          }
           onAddImageFromGallery={() => this.onAddImage(SRC_GALLERY)}
           onAddImageFromCamera={() => this.onAddImage(SRC_CAMERA)}
           onBrushMode={() => this.onBrushMode()}
           onMarkerMode={() => this.onMarkerMode()}
           onTableMode={() => this.onTableMode()}
+          TableActions={this.TableActions}
 
           isTableMode={this.isTableMode()}
+          Table={this.state.currentTable}
           isMarkerMode={this.isMarkerMode()}
           isTextMode={this.isTextMode()}
           isImageMode={this.isImageMode()}
@@ -1494,6 +1522,9 @@ export default class IssieEditPhoto extends React.Component {
           onSelectColor={(color) => {
             this.setState({ color, eraseMode: false })
             this.updateInputText();
+            if (this.isTableMode()) {
+              this.TableActions.setColor(color);
+            }
 
           }}
           onSelectTextSize={(size) => this.onTextSize(size)}
@@ -1742,27 +1773,123 @@ export default class IssieEditPhoto extends React.Component {
     </View>
   }
 
-
-  changeTable = (tableResizeState) => {
-    //find the table
-    let table = undefined;
+  findTable = () => {
     const queue = this.state.queue.getAll();
     for (let i = queue.length - 1; i >= 0; i--) {
-      trace("q elem", i, queue[i])
+      //trace("q elem", i, queue[i])
       if (queue[i].type === "tableDelete") {
         return;
       }
       if (queue[i].type === "table") {
-        table = queue[i].elem;
-        break;
+        return queue[i].elem;
       }
     }
+    return undefined;
+  }
+
+  TableActions = {
+    delete: (id) => {
+      this.state.queue.pushDeleteTable(id)
+      this.setState({ currentTable: undefined })
+    },
+    addTable: (cols, rows, color, borderWidth) => {
+      trace("addTable")
+      const newTable = {
+        id: 123, //for now hard coded
+        color: color + "FF",
+        width: borderWidth,
+        verticalLines: [],
+        horizontalLines: [],
+        size: {
+          width: this.state.pageRect.width,
+          height: this.state.pageRect.height
+        },
+      }
+      const margin = 50;
+      const colWidth = Math.floor((newTable.size.width - margin * 2) / cols);
+      const rowHeight = Math.floor((newTable.size.height - margin * 2) / rows);
+
+      for (let i = 0; i <= cols; i++) {
+        newTable.verticalLines.push(margin + i * colWidth);
+      }
+      for (let i = 0; i <= rows; i++) {
+        newTable.horizontalLines.push(margin + i * rowHeight);
+      }
+
+      this.state.queue.pushTable(newTable);
+      this.setState({ currentTable: newTable })
+      this.Save();
+    },
+    setRowsOrColumns: (newVal, isCols) => {
+      if (newVal < 1) return;
+
+      const table = this.findTable();
+      if (table) {
+        const newTable = { ...table };
+        let array = isCols ? [...newTable.verticalLines] : [...newTable.horizontalLines];
+        const lastLine = array[array.length - 1];
+        const lastElemSize = array[array.length - 1] - array[array.length - 2];
+        let isGrowing = true;
+        if (newVal < array.length - 1) {
+          array[array.length - 2] = array[array.length - 1];
+          array = array.slice(0, -1);
+          isGrowing = false;
+        } else if (newVal >= array.length) {
+          array.push(lastLine);
+        }
+
+        // Adjust the other elements
+        let accDelta = 0;
+        for (let i = 1; i < array.length - 1; i++) {
+          const elemSize = array[i] - array[i - 1];
+          accDelta = isGrowing ?
+            accDelta - (elemSize / (array.length)) :
+            accDelta + (lastElemSize / (array.length - 1))
+          array[i] += accDelta;
+        }
+
+        if (isCols) {
+          newTable.verticalLines = array;
+        } else {
+          newTable.horizontalLines = array;
+        }
+        this.state.queue.pushTable(newTable);
+        this.setState({ currentTable: newTable })
+        this.Save();
+      }
+    },
+    setColor: (newColor) => {
+      const table = this.findTable();
+      if (table) {
+        const newTable = { ...table };
+        newTable.color = newColor + "FF";
+        this.state.queue.pushTable(newTable);
+        this.setState({ currentTable: newTable })
+        this.Save();
+      }
+    },
+    setBorderWidth: (borderWidth) => {
+      const table = this.findTable();
+      if (table && table.width !== borderWidth) {
+        const newTable = { ...table };
+        newTable.width = borderWidth;
+        this.state.queue.pushTable(newTable);
+        this.setState({ currentTable: newTable })
+        this.Save();
+      }
+    }
+  }
+
+  changeTable = (tableResizeState) => {
+    //find the table
+    const table = this.findTable();
 
     if (table) {
       const changedTable = this.resizeTable(table, tableResizeState,
         this.state.pageRect.width, this.state.pageRect.height, true);
       if (changedTable) {
         this.state.queue.pushTable(changedTable);
+        this.setState({ currentTable: changedTable });
         this.Save();
       }
     }
@@ -1812,6 +1939,7 @@ export default class IssieEditPhoto extends React.Component {
         isBrushMode={this.isBrushMode() || this.isMarkerMode()}
         isImageMode={this.isImageMode()}
         isTableMode={this.isTableMode()}
+        Table={this.state.currentTable}
         TableResizeState={this.state.tableResizeState}
         ResizeTable={this.resizeTable}
         imagePath={this.state.currentFile}
