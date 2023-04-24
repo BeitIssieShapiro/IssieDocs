@@ -1,10 +1,10 @@
 Features:
 V- Document backup
-- folder in folder
 V- Marker
 - Table
 - Fonts?
-
+- folder in folder
+- read text
 
 
 

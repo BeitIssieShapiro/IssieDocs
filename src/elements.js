@@ -908,8 +908,8 @@ export function getColorButtonInt(callback, color, size, icon, index, iconColor)
     </TouchableOpacity>
 }
 
-export function getEraserIcon(callback, size, color, selected) {
-    return <View><TouchableOpacity
+export function getEraserIcon(callback, size, color, selected, key) {
+    return <View key={key} style={{alignItems:"center"}}><TouchableOpacity
         activeOpacity={0.7}
         onPress={callback}
         style={{
@@ -918,12 +918,13 @@ export function getEraserIcon(callback, size, color, selected) {
             width: size,
             alignItems: 'center',
             justifyContent: 'flex-end',
-            //backgroundColor: selected ? semanticColors.selectedEditToolColor : 'transparent'
         }}>{getSvgIcon('eraser-new', size - 10, color)}
     </TouchableOpacity>
         {selected ? <View
             style={{
-                borderBottomColor: 'black',
+                width:"80%",
+                marginTop:2,
+                borderBottomColor: semanticColors.editPhotoButton,
                 borderBottomWidth: 6,
             }}
         /> : null}

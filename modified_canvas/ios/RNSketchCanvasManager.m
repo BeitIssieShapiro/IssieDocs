@@ -4,6 +4,8 @@
 #import <React/RCTView.h>
 #import <React/UIView+React.h>
 #import <React/RCTUIManager.h>
+#import <AVFoundation/AVFoundation.h>
+
 
 @implementation RNSketchCanvasManager
 
@@ -174,6 +176,37 @@ RCT_EXPORT_METHOD(clear:(nonnull NSNumber *)reactTag)
         [canvas clear];
     }];
 }
+
+RCT_EXPORT_METHOD(readoutText:(nonnull NSString *) text)
+{
+    if ([text length] > 0) {
+        // Initialize the synthesizer
+        AVSpeechSynthesizer *synthesizer = [[AVSpeechSynthesizer alloc] init];
+        
+        // Create an utterance object with the text to be read out
+        AVSpeechUtterance *utterance = [AVSpeechUtterance speechUtteranceWithString:text];
+        
+        // Create a language tagger and analyze the text
+        NSLinguisticTagger *tagger = [[NSLinguisticTagger alloc] initWithTagSchemes:@[NSLinguisticTagSchemeLanguage] options:0];
+        [tagger setString:text];
+        NSString *language = [tagger tagAtIndex:0 scheme:NSLinguisticTagSchemeLanguage tokenRange:nil sentenceRange:nil];
+        
+        if (language != nil) {
+            
+            if ([language isEqualToString:@"en"]) {
+                utterance.voice = [AVSpeechSynthesisVoice voiceWithLanguage:@"en-US"];
+            } else if ([language isEqualToString:@"he"]) {
+                utterance.voice = [AVSpeechSynthesisVoice voiceWithLanguage:@"he-IL"];
+            } else if ([language isEqualToString:@"ar"]) {
+                utterance.voice = [AVSpeechSynthesisVoice voiceWithLanguage:@"ar-SA"];
+            }
+
+            // Speak the utterance using the synthesizer
+            [synthesizer speakUtterance:utterance];
+        }
+    }
+}
+
 
 RCT_EXPORT_METHOD(transferToBase64:(nonnull NSNumber *)reactTag type: (NSString*) type withTransparentBackground:(BOOL) transparent includeImage:(BOOL)includeImage includeText:(BOOL)includeText cropToImageSize:(BOOL)cropToImageSize :(RCTResponseSenderBlock)callback)
 {

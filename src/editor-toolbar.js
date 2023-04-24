@@ -1,5 +1,6 @@
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, Fragment, useState } from "react";
 import { View, StyleSheet, TouchableOpacity, Text, Button } from "react-native";
+import Svg, { Line } from "react-native-svg";
 import { AppText, availableColorPicker, dimensions, getEraserIcon, IconButton, semanticColors, Spacer, textSizes } from "./elements";
 import FadeInView from "./FadeInView";
 import { getRowDirections, translate } from "./lang";
@@ -17,6 +18,7 @@ const Pickers = {
     TABLE: 6,
     ZOOM: 7,
     COLOR: 8,
+    VOICE: 9,
 }
 
 const availableBrushSize = [
@@ -29,6 +31,18 @@ const availableMarkerSize = [
 
 const pickerMenuHeight = 70;
 
+const ButtonSpacer = () => (<Spacer key={16} width={23} />);
+function spread(btns) {
+    return (<Fragment>
+        <ButtonSpacer />
+        {btns.map((item,i) => (
+            <Fragment key={i}>
+                {item}
+                <ButtonSpacer />
+            </Fragment>
+        ))}
+    </Fragment>);
+}
 
 function EditorToolbar({
     windowSize,
@@ -47,6 +61,7 @@ function EditorToolbar({
     onTableMode,
     TableActions,
     onBrushMode,
+    onVoiceMode,
     onZoomIn,
     onZoomOut,
 
@@ -60,6 +75,7 @@ function EditorToolbar({
     isBrushMode,
     isMarkerMode,
     isTableMode,
+    isVoiceMode,
     Table,
     fontSize,
     color,
@@ -76,7 +92,6 @@ function EditorToolbar({
     const [previousPickerType, setPreviousPickerType] = useState(undefined)
 
     const [showExtMenu, setShowExtMenu] = useState(false);
-
     const [toolbarHeight, setToolbarHeight] = useState(dimensions.toolbarHeight);
     const [textMenuHeight, setTextMenuHeight] = useState(0);
     const [colorMenuHeight, setColorMenuHeight] = useState(0);
@@ -135,7 +150,7 @@ function EditorToolbar({
 
     useEffect(() => {
         setToolbarHeight(
-            (isScreenNarrow() || showExtMenu) && !isLandscape() ? 2 * dimensions.toolbarHeight : dimensions.toolbarHeight
+            (isScreenNarrow() || showExtMenu) ? 2 * dimensions.toolbarHeight : dimensions.toolbarHeight
         )
     }, [showExtMenu, windowSize])
 
@@ -152,18 +167,16 @@ function EditorToolbar({
                     if (!pickerTypeChanged) setShowPicker(oldVal => !oldVal);
                 } else {
                     onTextMode();
+                    setShowExtMenu(false);
                 }
-                setShowExtMenu(false);
                 break;
             case Pickers.BRUSH:
                 if (isBrushMode) {
                     if (!pickerTypeChanged) setShowPicker(oldVal => !oldVal);
                 } else {
                     onBrushMode();
+                    setShowExtMenu(false);
                 }
-                setShowExtMenu(false);
-
-                //collapseExtended();
                 break;
             case Pickers.TABLE:
                 if (isTableMode) {
@@ -189,15 +202,20 @@ function EditorToolbar({
                     onImageMode();
                 }
                 break;
+            case Pickers.VOICE: 
+                if (!isVoiceMode) {
+                    onVoiceMode();
+                }
+            break;
         }
-    }, [isTextMode, isBrushMode, isTableMode, isImageMode, isMarkerMode, showPickerType, showPicker]);
+    }, [isVoiceMode, isTextMode, isBrushMode, isTableMode, isImageMode, isMarkerMode, showPickerType, showPicker]);
 
 
     onSelectButtonClick = useCallback((type, preservePrevious) => {
         if (showPickerType === type) {
             setShowPicker(oldVal => !oldVal);
         } else {
-            if (preservePrevious) {
+            if (preservePrevious && showPicker) {
                 setPreviousPickerType(showPickerType);
             } else {
                 setPreviousPickerType(undefined);
@@ -205,7 +223,7 @@ function EditorToolbar({
             setShowPickerType(type);
             setShowPicker(true);
         }
-    }, [showPickerType]);
+    }, [showPickerType, showPicker]);
 
 
     const { row, rowReverse, flexEnd, textAlign, rtl, direction } = getRowDirections();
@@ -227,25 +245,52 @@ function EditorToolbar({
         previewFontSize = dimensions.toolbarHeight - 5;
     }
 
+    const sideMenu = [
+        // <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM)} color={semanticColors.editPhotoButton}
+        //     icon="zoom-in" size={42} iconSize={42}/>,
+        //     <ButtonSpacer/>,
+        // <IconButton onPress={() => onSelectButtonClick(Pickers.COLOR, true)} icon={"color-lens"}
+        //     size={42} color={semanticColors.editPhotoButton} />,
+        //     <ButtonSpacer/>,
+        // getEraserIcon(onEraser, 42, eraseMode ? 'black' : semanticColors.editPhotoButton, eraseMode, 25)
+    ]
 
     const extMenu = [
-        <IconButton onPress={() => onModeButtonClick(Pickers.IMAGE)} color={semanticColors.editPhotoButton}
-            icon={"image"} size={55} iconSize={45} key={"1"} selected={isImageMode} />,
-        <Spacer width={23} key="2" />,
-        <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM)} color={semanticColors.editPhotoButton}
-            icon="zoom-in" size={55} iconSize={45} key={"3"} />,
-        <Spacer width={23} key="4" />,
-        <IconButton onPress={() => onModeButtonClick(Pickers.MARKER)} color={isMarkerMode?color:semanticColors.editPhotoButton}
-            icon="marker" size={55} iconSize={45} key={"5"} selected={isMarkerMode} iconType="svg" />,
-        <Spacer width={23} key="6" />,
-        <IconButton onPress={() => onModeButtonClick(Pickers.TABLE)} color={isTableMode ? (Table ? Table.color : color) : semanticColors.editPhotoButton}
-            icon="table-chart" size={55} iconSize={45} key={"7"} selected={isTableMode} />,
-        <Spacer width={23} key="8" />,
+        <IconButton onPress={() => onModeButtonClick(Pickers.MARKER)} color={isMarkerMode ? color : semanticColors.editPhotoButton}
+            icon="marker" size={55} iconSize={45} selected={isMarkerMode} iconType="svg" />,
 
-        // page && page.count > 1 &&
-        // getIconButton(() => this.deletePage(), semanticColors.editPhotoButton, 'delete-forever', 55, undefined, undefined, undefined, "5"),
-        // < Spacer width={23} key="6" />,
-    ];
+        <IconButton onPress={() => onModeButtonClick(Pickers.IMAGE)} color={semanticColors.editPhotoButton}
+            icon={"image"} size={55} iconSize={45} selected={isImageMode} />,
+
+        <IconButton onPress={() => onModeButtonClick(Pickers.TABLE)} color={isTableMode ? (Table ? Table.color : color) : semanticColors.editPhotoButton}
+            icon="table-chart" size={55} iconSize={45} selected={isTableMode} />,
+        <IconButton onPress={() => onModeButtonClick(Pickers.VOICE)} color={semanticColors.editPhotoButton}
+            icon="record-voice-over" size={55} iconSize={45} selected={isVoiceMode} />,
+
+        <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM)} color={semanticColors.editPhotoButton}
+            icon="zoom-in" size={55} iconSize={45} />,
+        getEraserIcon(onEraser, 55, eraseMode ? 'black' : semanticColors.editPhotoButton, eraseMode, 25)
+
+    ]
+
+    const modesMenu = [
+        <IconButton key={11} onPress={() => onModeButtonClick(Pickers.TEXT)} icon={translate("A")} isText={true} selected={isTextMode}
+            color={isTextMode ? color : semanticColors.editPhotoButton} size={55} iconSize={rtl ? 45 : 40}
+        />,
+        <IconButton key={13} onPress={() => onModeButtonClick(Pickers.BRUSH)} icon={"edit"} size={55}
+            color={isBrushMode ? color : semanticColors.editPhotoButton} iconSize={45} selected={isBrushMode} />,
+        <IconButton onPress={() => onSelectButtonClick(Pickers.COLOR, true)} icon={"color-lens"}
+            size={55} iconSize={45} color={semanticColors.editPhotoButton} />,
+        <IconButton onPress={() => setShowExtMenu(currVal => !currVal)} icon={showExtMenu ? "expand-less" : "expand-more"}
+            size={45} color={semanticColors.editPhotoButton} />,
+    ]
+
+    // calc preview-window position: (width 120)
+    // const folderUndoRedo = 55 * 3 + 23 * 2;
+    // const modesButton = 55 * 5 + 23 * 4;
+    const previewOffset = isScreenNarrow() ? 0 :
+        windowSize.width / 2 - 60;
+    //(windowSize.width - folderUndoRedo - modesButton) / 2 - 60 + folderUndoRedo;
 
 
     {/* Toolbar */ }
@@ -262,73 +307,64 @@ function EditorToolbar({
             left: 0,
             right: 0,
             flexDirection: row,
-            alignItems: 'center'
+            alignItems: 'center',
         }}>
-            <IconButton onPress={onGoBack} color={semanticColors.editPhotoButton} icon="folder" size={45} />
+            <IconButton onPress={onGoBack} color={semanticColors.editPhotoButton} icon="folder" size={55} iconSize={45} />
             <Spacer width={45} />
             <IconButton onPress={onUndo} color={semanticColors.editPhotoButton} icon={rtl ? "undo" : "redo"} size={55} />
             <Spacer width={23} />
             <IconButton onPress={onRedo} color={canRedo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} icon={rtl ? "redo" : "undo"} size={55} />
-            <Spacer width={23} />
-            {getEraserIcon(onEraser, 55, eraseMode ? 'black' : semanticColors.editPhotoButton, eraseMode)}
 
 
             { /* text size preview */}
-            <View style={{
+            <View style={[{
                 position: 'absolute',
                 top: 0,
-                right: isScreenNarrow() ? 0 : windowSize.width / 2 - 50,
                 width: 120,
                 height: dimensions.toolbarHeight,
                 backgroundColor: 'transparent',
-                borderRadius: 24.5,
                 justifyContent: 'center',
                 alignItems: 'center',
                 alignContent: 'center',
-                // borderRadius: dimensions.toolbarHeight,
-                // borderColor: "black",
-                // borderTopWidth: 3,
-                // borderBottomWidth: 3,
-                // borderStartWidth: 1,
-                // borderEndWidth: 1,
-            }}>
-                {isTextMode ?
-                    <View
+            }, rtl ? { left: isScreenNarrow() ? 0 : previewOffset } : { left: isScreenNarrow() ? 0 : previewOffset }]} >
+                {
+                    isTextMode ?
+                        <View
 
-                    >
-                        <AppText
-                            style={
-                                //[
-                                {
-                                    fontSize: previewFontSize,
-                                    width: "100%",
-                                    lineHeight: previewFontSize + 8,
-                                    color: color,
-                                    textAlignVertical: 'center'
+                        >
+                            < AppText
+                                style={
+                                    //[
+                                    {
+                                        fontSize: previewFontSize,
+                                        width: "100%",
+                                        lineHeight: previewFontSize + 8,
+                                        color: color,
+                                        textAlignVertical: 'center'
+                                    }
+                                    //,rtl ? {} : { fontWeight: 'bold' }]
                                 }
-                                //,rtl ? {} : { fontWeight: 'bold' }]
-                            }
-                        >{translate("A B C")}</AppText>
-                        {previewFontSizePlus &&
-                            <View style={[{
-                                position: 'absolute',
-                                top: 0,
-                                flex: 1,
-                                justifyContent: "center",
-                                alignItems: "center",
-                                alignContent: "center"
+                            >{translate("A B C")}</AppText>
+                            {previewFontSizePlus &&
+                                <View style={[{
+                                    position: 'absolute',
+                                    top: 0,
+                                    flex: 1,
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    alignContent: "center"
 
-                            }, rtl ? { left: -25 } : { right: -25 }]}><AppText
-                                style={{
-                                    fontSize: 35,
-                                    color: color,
-                                }}>+</AppText>
-                            </View>}
-                    </View> :
-                    !isImageMode && !isTableMode && (isMarkerMode ?
-                        <MarkerStroke color={color} strokeWidth={markerWidth} />
-                        :
-                        getSvgIcon('doodle', 55, color, strokeWidth * .8))
+                                }, rtl ? { left: -25 } : { right: -25 }]}><AppText
+                                    style={{
+                                        fontSize: 35,
+                                        color: color,
+                                    }}>+</AppText>
+                                </View>}
+                        </View> :
+                        !isImageMode && !isTableMode && (isMarkerMode ?
+                            <MarkerStroke color={color} strokeWidth={markerWidth} />
+                            :
+                            getSvgIcon('doodle', 55, color, strokeWidth * .8))
                 }
             </View>
 
@@ -340,38 +376,26 @@ function EditorToolbar({
                 flexDirection: rowReverse, alignItems: 'center',
             }, isScreenNarrow() ?
                 { top: dimensions.toolbarHeight, left: 0 } :
-                { top: 0, right: 50 }
+                { top: 0, right: 0 }
             ]} >
-                <IconButton onPress={() => onModeButtonClick(Pickers.TEXT)} icon={translate("A")} isText={true} selected={isTextMode}
-                    color={isTextMode ? color : semanticColors.editPhotoButton} size={55} iconSize={rtl ? 45 : 35}
-                //fontWeight={rtl ? undefined : 'bold'} 
-                />
-                <Spacer width={23} />
-                <IconButton onPress={() => onModeButtonClick(Pickers.BRUSH)} icon={"edit"} size={55}
-                    color={isBrushMode ? color : semanticColors.editPhotoButton} iconSize={45} selected={isBrushMode} />
-                <Spacer width={23} />
-                <IconButton onPress={() => onSelectButtonClick(Pickers.COLOR, true)} icon={"color-lens"} size={55} color={semanticColors.editPhotoButton} />
-                <Spacer width={23} />
-
-
-                {(isLandscape() || isScreenNarrow()) && extMenu}
-                {!isLandscape() && !isScreenNarrow() &&
-                    <IconButton onPress={() => setShowExtMenu(oldVal => !oldVal)} color={semanticColors.editPhotoButton}
-                        icon={showExtMenu ? "expand-less" : "expand-more"} size={55} iconSize={45} />}
-                {/* {!betaFeatures && !isScreenNarrow() && <IconButton onPress={onZoomButtonClick} color={semanticColors.editPhotoButton}
-                    icon="zoom-in" size={55} iconSize={45} key={"3"} />} */}
+                {spread(modesMenu)}
             </View>
-
-            {/** bottom toolbar */}
-            {showExtMenu && !isLandscape() && <View style={{
-                position: 'absolute',
-                height: dimensions.toolbarHeight,
-                flexDirection: 'row', alignItems: 'center',
-                top: dimensions.toolbarHeight, left: sideMargin + 30
-            }} >
-                {extMenu}
-            </View>}
-        </View>
+        </View >
+        {/** bottom toolbar */}
+        {showExtMenu && <View style={{
+            position: 'absolute',
+            height: dimensions.toolbarHeight,
+            flexDirection: 'row', alignItems: 'center',
+            top: dimensions.toolbarHeight, left: 0
+        }} >
+            {spread(extMenu)}
+        </View>}
+        {/**Side menu */}
+        < View style={[{ position: "absolute", flexDirection: "column", top: 250, width: 45 },
+        rtl ? { right: 0 } : { left: 0 }]
+        }>
+            {sideMenu}
+        </View >
 
         <MyColorPicker
             open={showPickerType === Pickers.COLOR && showPicker}
@@ -471,20 +495,12 @@ function EditorToolbar({
 
         {/*View for selecting Table options*/}
         <FadeInView height={showPickerType === Pickers.TABLE && showPicker ? 150 : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
-            <View style={{ flexDirection: 'column', width: '30%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
-                <NumberSelector caption="rows" value={tableRows} setValue={setRows} />
-                <NumberSelector caption="cols" value={tableCols} setValue={setColumns} />
+            <View style={{ flexDirection: 'column', width: '25%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
+                <NumberSelector caption="Rows" value={tableRows} setValue={setRows} />
+                <NumberSelector caption="Cols" value={tableCols} setValue={setColumns} />
             </View>
 
-            <View style={{ flexDirection: 'column', width: '30%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
-                {/* <Text style={{fontSize:25}}>Line Style</Text> */}
-                {/* <TouchableOpacity onPress={() => {
-                    if (Table) {
-                        TableActions.delete(Table.id);
-                    }
-                }}>
-                    <Text>None</Text>
-                </TouchableOpacity> */}
+            <View style={{ flexDirection: 'column', width: '20%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 {
                     [2, 5, 8].map((borderWidth, i) => (<LineWidthSelector
                         key={i}
@@ -495,9 +511,20 @@ function EditorToolbar({
                         color={Table ? Table.color : color}
                     />))
                 }
+            </View>
+            <View style={{ flexDirection: 'column', width: '20%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
+                {
+                    ["0,0", "2,2", "4,2"].map((style, i) => (<LineStyleSelector
+                        key={i}
+                        style={style}
+                        Table={Table}
+                        TableActions={TableActions}
+                        color={Table ? Table.color : color}
+                    />))
+                }
 
             </View>
-            <View style={{ flexDirection: 'column', width: '30%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'column', width: '20%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 <PushButton title={"Show"} onPress={() => {
                     if (Table) return;
                     TableActions.addTable(tableCols, tableCols, color, 2);
@@ -517,8 +544,8 @@ function EditorToolbar({
 
 function NumberSelector({ caption, value, setValue }) {
     return (
-        <View style={{ flexDirection: 'row', width: '30%', }}>
-            <Text style={{ fontSize: 25, marginRight: 10 }}>{caption}</Text>
+        <View style={{ flexDirection: 'row', width: '100%', }}>
+            <Text style={{ fontSize: 25, marginRight: 10, marginLeft: 10, width: 60, textAlign: "right" }}>{caption}</Text>
             <IconButton icon="remove" size={35} onPress={() => setValue(value - 1)} />
             <Text style={{ backgroundColor: "lightgray", fontSize: 25, lineHeight: 38, height: 35, width: 35, textAlign: "center", justifyContent: "center" }}>
                 {value || 0}
@@ -530,10 +557,10 @@ function NumberSelector({ caption, value, setValue }) {
 }
 
 function LineWidthSelector({ borderWidth, color, Table, TableActions, tableCols, tableRows }) {
-    return <TouchableOpacity style={{ height: 35, width: 70, alignItems: "center", justifyContent: "center" }} onPress={() => {
+    return <TouchableOpacity style={styles.lineStyle} onPress={() => {
         //add table
         if (!Table) {
-            TableActions.addTable(tableCols, tableCols, color, borderWidth);
+            TableActions.addTable(tableCols, tableRows, color, borderWidth, "0,0");
         } else {
             TableActions.setBorderWidth(borderWidth);
         }
@@ -542,7 +569,20 @@ function LineWidthSelector({ borderWidth, color, Table, TableActions, tableCols,
     </TouchableOpacity>
 }
 
-
+function LineStyleSelector({ tableCols, tableRows, style, Table, TableActions, color }) {
+    return <TouchableOpacity style={styles.lineStyle} onPress={() => {
+        //add table
+        if (!Table) {
+            TableActions.addTable(tableCols, tableRows, color, 2, style);
+        } else {
+            TableActions.setBorderStyle(style);
+        }
+    }}>
+        <Svg viewBox="0 0 70 3">
+            <Line x1="0" y1="0" x2="70" y2="0" stroke={color} strokeWidth="3" strokeDasharray={style} />
+        </Svg>
+    </TouchableOpacity>
+}
 const styles = StyleSheet.create({
     pickerView: {
         flexDirection: 'row',
@@ -552,7 +592,11 @@ const styles = StyleSheet.create({
         left: 0,
         borderColor: 'gray',
         borderWidth: 1
-    }
+    },
+    lineStyle: {
+        height: 35, width: 70,
+        alignItems: "center", justifyContent: "center"
+    },
 }
 );
 

@@ -174,6 +174,9 @@ class SketchCanvas extends React.Component {
     SketchCanvasManager.deleteImage(this._handle, imageId);
   }
 
+  readoutText(text) {
+    SketchCanvasManager.readoutText(text);
+  }
 
   export(imageType, scaleToSize, callback) {
     if (Platform.OS === 'ios') {

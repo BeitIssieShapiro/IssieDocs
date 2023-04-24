@@ -183,6 +183,11 @@ export default class RNSketchCanvas extends React.Component {
     this._sketchCanvas.deleteImage(imageId);
   }
 
+  readoutText(text) {
+    this._sketchCanvas.readoutText(text);
+  }
+
+
   export(type, scaleToSize, callback) {
     this._sketchCanvas.export(type, scaleToSize, callback);
   }

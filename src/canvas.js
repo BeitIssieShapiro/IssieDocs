@@ -114,11 +114,15 @@ function Canvas({
         return undefined;
     }, [texts, images, isImageMode]);
 
+    const canvasTexts = useCallback(() => texts,[texts]);
+
+
     useImperativeHandle(ref, () => ({
         findElementByLocation,
+        canvasTexts,
         canvas,
     }),
-        [findElementByLocation]);
+        [findElementByLocation,canvasTexts]);
 
     // Canvas Update
     useEffect(() => {
@@ -214,43 +218,30 @@ function Canvas({
                         table = ResizeTable(table, TableResizeState, width, height);
                     }
 
-
                     const size = table.size;
-                    const dash = isTableMode ? 10 : 0;
-                    const dashGap = isTableMode ? 5 : 0;
-                    const tableWidth = isTableMode ? table.width * 2 : table.width;
+                    const tableWidth = table.width; // isTableMode ? table.width  : table.width;
+                    let style = table.style || "0,0";
+                    const styles = style.split(",")
+                    const dash = parseInt(styles[0] * tableWidth); //isTableMode ? 10 : 0;
+                    const dashGap = parseInt(styles[1] * tableWidth) //isTableMode ? 5 :0 style[1];
 
                     if (isTableMode) {
-                        // if (TableResizeState) {
-                        //     if (TableResizeState.isTableResizeDone) {
-                        //         TableResizeState.clear();
-                        //         trace("change the table - todo", TableResizeState)
-                        //     }
-                        // }
 
-                        if (!TableResizeState) {
-                            setTimeout(() => {
-                                setTablePhase(oldPhase => {
-                                    if (oldPhase === 9) {
-                                        return 0.;
-                                    }
-                                    return oldPhase + 3;
-                                });
-                            }, 200);
-                        }
+                        // if (!TableResizeState) {
+                        //     setTimeout(() => {
+                        //         setTablePhase(oldPhase => {
+                        //             if (oldPhase === 9) {
+                        //                 return 0.;
+                        //             }
+                        //             return oldPhase + 3;
+                        //         });
+                        //     }, 200);
+                        // }
                     }
 
-                    const addLength = table.width / 2;
+                    const addLength = table.width / 4;
                     for (let c = 0; c < table.verticalLines.length; c++) {
-                        //let resizeDelta = 0;
-
-                        // if (TableResizeState) {
-                        //     trace("loc", c, TableResizeState.initialX - table.verticalLines[c])
-                        //     if (Math.abs(TableResizeState.initialX - table.verticalLines[c]) < 15) {
-                        //         resizeDelta = TableResizeState.currentX - TableResizeState.initialX;
-                        //     }
-                        // }
-                        let x = table.verticalLines[c] + addLength; //+ resizeDelta;
+                        let x = table.verticalLines[c] + addLength; 
 
 
                         const path = {
@@ -276,15 +267,7 @@ function Canvas({
                     }
 
                     for (let r = 0; r < table.horizontalLines.length; r++) {
-
-                        // if (TableResizeState) {
-                        //     trace("loc", r, TableResizeState.initialY - table.horizontalLines[r])
-                        //     if (Math.abs(TableResizeState.initialY - table.horizontalLines[r]) < 15) {
-                        //         resizeDelta = TableResizeState.currentY - TableResizeState.initialY;
-                        //     }
-                        // }
-
-                        const y = table.horizontalLines[r]; //+ resizeDelta;
+                        const y = table.horizontalLines[r]; 
 
                         const path = {
                             path: {

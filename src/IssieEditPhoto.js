@@ -2,7 +2,8 @@ import React, { useRef } from 'react';
 import {
   AppRegistry, StyleSheet, TextInput, View,
   Text, Alert, PanResponder, Keyboard, PixelRatio, Dimensions, ActivityIndicator,
-  Animated
+  Animated,
+  TouchableOpacity
 } from 'react-native';
 
 
@@ -56,6 +57,7 @@ const Modes = {
   ERASER: 4,
   MARKER: 5,
   TABLE: 6,
+  VOICE: 7,
 }
 
 
@@ -292,7 +294,6 @@ export default class IssieEditPhoto extends React.Component {
 
       inputTextHeight: 40,
       inputTextWidth: 0,
-      canvasTexts: [],
       zoom: 1.0,
       minZoom: 1,
       maxZoom: 3,
@@ -488,6 +489,7 @@ export default class IssieEditPhoto extends React.Component {
   isMarkerMode = () => this.state.mode === Modes.MARKER;
   isTableMode = () => this.state.mode === Modes.TABLE;
   isImageMode = () => this.state.mode === Modes.IMAGE;
+  isVoiceMode = () => this.state.mode === Modes.VOICE;
   isEraserMode = () => this.state.eraseMode;
 
 
@@ -666,6 +668,9 @@ export default class IssieEditPhoto extends React.Component {
     return new Promise((resolve, reject) => {
       this.setState({ needExport: { resolve, reject, revision: this.state.revision + 1 }, revision: this.state.revision + 1 })
     });
+  }
+  readoutText = (text) => {
+    if (text?.length > 0)  this.canvas.current?.canvas.current?.readoutText(text);
   }
 
   doExport = (resolve, reject) => {
@@ -1247,6 +1252,15 @@ export default class IssieEditPhoto extends React.Component {
     this.onEraserChange(true);
   }
 
+  onVoiceMode = () => {
+    this.setState({
+      showTextInput: false,
+      mode: Modes.VOICE,
+      eraseMode: false,
+    });
+    this.onEraserChange(true);
+  }
+
   onBrushSize = (size) => {
 
     let newStrokeWidth = size; //this.canvas.state.strokeWidth + inc;
@@ -1476,7 +1490,7 @@ export default class IssieEditPhoto extends React.Component {
             // find image. if none - open sub menu. if only one, make current
             let images = []
             const queue = this.state.queue.getAll();
-            for (let i = 0; i< queue.length; i++) {
+            for (let i = 0; i < queue.length; i++) {
               if (queue[i].type === "image") {
                 images.push(queue[i].elem);
               } else if (queue[i].type === 'imagePosition') {
@@ -1503,6 +1517,7 @@ export default class IssieEditPhoto extends React.Component {
           onAddImageFromCamera={() => this.onAddImage(SRC_CAMERA)}
           onBrushMode={() => this.onBrushMode()}
           onMarkerMode={() => this.onMarkerMode()}
+          onVoiceMode={() => this.onVoiceMode()}
           onTableMode={() => this.onTableMode()}
           TableActions={this.TableActions}
 
@@ -1511,6 +1526,7 @@ export default class IssieEditPhoto extends React.Component {
           isMarkerMode={this.isMarkerMode()}
           isTextMode={this.isTextMode()}
           isImageMode={this.isImageMode()}
+          isVoiceMode={this.isVoiceMode()}
           isBrushMode={this.isBrushMode()} //!this.isTextMode() && !this.isImageMode() && !this.isMarkerMode()}
           fontSize={this.state.fontSize}
           color={this.state.color}
@@ -1615,6 +1631,31 @@ export default class IssieEditPhoto extends React.Component {
               {this.getCanvas(this.state.pageRect.width, this.state.pageRect.height)}
             </Animated.View>
             {this.state.showTextInput && this.getTextInput(rtl, rowReverse)}
+
+            {/** Show Texts rectangles for voice reading */}
+            {
+              this.isVoiceMode() && this.canvas.current?.canvasTexts()?.filter(t=>t.text.length > 0).map((textElem, i) => {
+                console.log("textElem", textElem)
+                const elem = this.txtElemNorm2Scale(textElem);
+                return (
+                  <TouchableOpacity
+                    key={i}
+                    style={{
+                      opacity: 0.5,
+                      backgroundColor: "green",
+                      borderRadius:7,
+                      position: "absolute",
+                      left: (elem.rtl? elem.position.x - elem.width : elem.position.x) * this.state.zoom + + this.state.xOffset,
+                      top: (elem.position.y)* this.state.zoom + this.state.yOffset,
+                      width: elem.width* this.state.zoom,
+                      height: elem.height* this.state.zoom,
+                      zIndex:1000,
+                    }} onPress={() => this.readoutText(textElem.text)} />
+                )
+              })}
+
+
+
             {this.state.currentImageElem && this.isImageMode() && this.getImageRect()}
           </View>
 
@@ -1792,7 +1833,7 @@ export default class IssieEditPhoto extends React.Component {
       this.state.queue.pushDeleteTable(id)
       this.setState({ currentTable: undefined })
     },
-    addTable: (cols, rows, color, borderWidth) => {
+    addTable: (cols, rows, color, borderWidth, style) => {
       trace("addTable")
       const newTable = {
         id: 123, //for now hard coded
@@ -1873,6 +1914,16 @@ export default class IssieEditPhoto extends React.Component {
       if (table && table.width !== borderWidth) {
         const newTable = { ...table };
         newTable.width = borderWidth;
+        this.state.queue.pushTable(newTable);
+        this.setState({ currentTable: newTable })
+        this.Save();
+      }
+    },
+    setBorderStyle: (borderStyle) => {
+      const table = this.findTable();
+      if (table && table.style !== borderStyle) {
+        const newTable = { ...table };
+        newTable.style = borderStyle;
         this.state.queue.pushTable(newTable);
         this.setState({ currentTable: newTable })
         this.Save();

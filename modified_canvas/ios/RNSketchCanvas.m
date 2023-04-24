@@ -477,7 +477,6 @@
         
         if (includeText) {
             for (CanvasText *text in _arrTextOnSketch) {
-                [text.text drawInRect: text.drawRect withAttributes: text.attribute];
             }
         }
         
