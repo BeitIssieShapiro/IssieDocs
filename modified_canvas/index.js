@@ -183,6 +183,10 @@ export default class RNSketchCanvas extends React.Component {
     this._sketchCanvas.deleteImage(imageId);
   }
 
+  detectTextsInBackgroundImage(callback) {
+    this._sketchCanvas.detectTextsInBackgroundImage(callback);
+  }
+
   readoutText(text) {
     this._sketchCanvas.readoutText(text);
   }

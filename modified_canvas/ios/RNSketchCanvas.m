@@ -5,6 +5,8 @@
 #import <React/RCTView.h>
 #import <React/UIView+React.h>
 #import "Utility.h"
+#import <AVFoundation/AVFoundation.h>
+#import <Vision/Vision.h>
 
 @implementation RNSketchCanvas
 {
@@ -302,6 +304,123 @@
     }
     return newArray;
 }
+
+- (NSArray<NSDictionary *> *)detectTextsInBackgroundImage {
+    if (_backgroundImage == nil) {
+        return @[];
+    }
+    
+    NSMutableArray<NSDictionary *> *textRectsAndStrings = [NSMutableArray array];
+    
+    // Create a request handler for the image
+    VNImageRequestHandler *handler = [[VNImageRequestHandler alloc] initWithCGImage:_backgroundImage.CGImage options:@{}];
+    
+//    // Create a request to recognize text
+//    VNDetectTextRectanglesRequest *request = [[VNDetectTextRectanglesRequest alloc] initWithCompletionHandler:^(VNRequest * _Nonnull request, NSError * _Nullable error) {
+//        if (error) {
+//            NSLog(@"Error recognizing text: %@", error);
+//            return;
+//        }
+//
+//        // Get the recognized text boxes
+//        NSArray<VNTextObservation *> *textObservations = request.results;
+//
+//        // Loop through the text boxes and convert them to CGRects
+//        for (VNTextObservation *textObservation in textObservations) {
+//            CGRect rect = VNImageRectForNormalizedRect(textObservation.boundingBox, _backgroundImage.size.width, _backgroundImage.size.height);
+//
+//            // Convert the text observation to a string
+//            NSString *text = [textObservation topCandidates:1][0].string;
+//            //NSString *text = [self stringFromTextObservation:textObservation];
+//
+//
+//            // Add the text and rect to the array
+//            NSDictionary *rectDict = @{
+//                @"x": @(rect.origin.x),
+//                @"y": @(rect.origin.y),
+//                @"width": @(rect.size.width),
+//                @"height": @(rect.size.height)
+//            };
+//            NSDictionary *textRectDict = @{
+//                @"text": text,
+//                @"rect": rectDict
+//            };
+//            [textRectsAndStrings addObject:textRectDict];
+//        }
+//    }];
+    
+    VNRecognizeTextRequest *request = [[VNRecognizeTextRequest alloc] initWithCompletionHandler:^(VNRequest * _Nonnull request, NSError * _Nullable error) {
+        // Handle completion of the text recognition request
+        if (error) {
+            NSLog(@"Error recognizing text: %@", error);
+            return;
+        }
+        
+        // Get the recognized text observation from the request
+        if (@available(iOS 13.0, *)) {
+            NSArray<VNRecognizedTextObservation *> *textObservations = request.results;
+
+            for (VNRecognizedTextObservation *observation in textObservations) {
+                CGRect convertedBoundingBox = CGRectMake(observation.boundingBox.origin.x, 1 - observation.boundingBox.origin.y - observation.boundingBox.size.height, observation.boundingBox.size.width, observation.boundingBox.size.height);
+                CGRect rect = VNImageRectForNormalizedRect(convertedBoundingBox, _backgroundImage.size.width, _backgroundImage.size.height);
+                // Extract the recognized text from the observation
+                NSString *recognizedText = [observation topCandidates:1].firstObject.string;
+                // Add the text and rect to the array
+                NSDictionary *rectDict = @{
+                    @"x": @(rect.origin.x),
+                    @"y": @(rect.origin.y),
+                    @"width": @(rect.size.width),
+                    @"height": @(rect.size.height)
+                };
+                NSDictionary *textRectDict = @{
+                    @"text": recognizedText,
+                    @"rect": rectDict
+                };
+                [textRectsAndStrings addObject:textRectDict];
+            }
+        } else {
+            // Fallback on earlier versions
+            NSLog(@"Error recognizing text - IOS version must be 13");
+            return;
+        }
+    }];
+    // Set the languages to prioritize
+    [request setRecognitionLanguages:@[@"en-US", @"he-IL", @"ar-SA"]];
+    
+    //request.reportCharacterBoxes = YES;
+    request.recognitionLevel = VNRequestTextRecognitionLevelAccurate;
+    request.minimumTextHeight = 0.03;
+        
+    // Perform the request
+    [handler performRequests:@[request] error:nil];
+    
+    return textRectsAndStrings;
+}
+
+- (NSString *)stringFromTextObservation:(VNTextObservation *)textObservation {
+//    NSMutableString *result = [NSMutableString string];
+//
+//    for (VNRectangleObservation *rectObservation in textObservation.characterBoxes) {
+//        CGRect rect = VNImageRectForNormalizedRect(rectObservation.boundingBox, textObservation.imageSize.width, textObservation.imageSize.height);
+//
+//        // Get the image subregion for the character
+//        CGImageRef subimageRef = CGImageCreateWithImageInRect(textObservation.croppedNormalizedImage, rect);
+//        UIImage *subimage = [UIImage imageWithCGImage:subimageRef];
+//        CGImageRelease(subimageRef);
+//
+//        // Recognize the character with Tesseract OCR
+//        G8Tesseract *tesseract = [[G8Tesseract alloc] initWithLanguage:@"eng+heb+ara"];
+//        [tesseract setImage:subimage];
+//        [tesseract recognize];
+//        NSString *character = [tesseract recognizedText];
+//
+//        [result appendString:character];
+//    }
+//
+//    return result;
+    return @"todo";
+}
+
 
 - (void)addOrSetImageOnCanvas:(NSDictionary *)imageOnCanvas {
     if (_arrImages == nil) {

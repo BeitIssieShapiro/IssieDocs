@@ -23,6 +23,7 @@
 - (void)addPointX: (float)x Y: (float)y;
 - (void)endPath;
 - (void)clear;
+- (NSArray *)detectTextsInBackgroundImage;
 - (NSString*)saveImageOfType:(NSString*) type folder:(NSString*) folder filename:(NSString*) filename withTransparentBackground:(BOOL) transparent includeImage:(BOOL)includeImage includeText:(BOOL)includeText cropToImageSize:(BOOL)cropToImageSize scaleToSize:(CGSize)scaleToSize;
 - (NSString*) transferToBase64OfType: (NSString*) type withTransparentBackground: (BOOL) transparent includeImage:(BOOL)includeImage includeText:(BOOL)includeText cropToImageSize:(BOOL)cropToImageSize;
 

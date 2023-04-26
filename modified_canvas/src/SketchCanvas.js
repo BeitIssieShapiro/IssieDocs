@@ -174,6 +174,10 @@ class SketchCanvas extends React.Component {
     SketchCanvasManager.deleteImage(this._handle, imageId);
   }
 
+  detectTextsInBackgroundImage(callback) {
+    SketchCanvasManager.detectTextsInBackgroundImage(this._handle, callback);
+  }
+
   readoutText(text) {
     SketchCanvasManager.readoutText(text);
   }

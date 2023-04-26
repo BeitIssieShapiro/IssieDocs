@@ -177,6 +177,13 @@ RCT_EXPORT_METHOD(clear:(nonnull NSNumber *)reactTag)
     }];
 }
 
+RCT_EXPORT_METHOD(detectTextsInBackgroundImage:(nonnull NSNumber *)reactTag :(RCTResponseSenderBlock)callback)
+{
+    [self runCanvas:reactTag block:^(RNSketchCanvas *canvas) {
+        callback(@[[canvas detectTextsInBackgroundImage]]);
+    }];
+}
+
 RCT_EXPORT_METHOD(readoutText:(nonnull NSString *) text)
 {
     if ([text length] > 0) {

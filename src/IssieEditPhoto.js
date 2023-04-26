@@ -654,6 +654,14 @@ export default class IssieEditPhoto extends React.Component {
     }
   }
 
+  detectTextsInBackgroundImage = () => {
+    this.setState({ showBusy: true })
+    setTimeout(()=>this.canvas.current?.canvas.current?.detectTextsInBackgroundImage((texts) => {
+      console.log("texts in image:", texts);
+      this.setState({detectedTexts:texts, showBusy: false})
+    }), 50);
+  }
+
   handleOnRevisionRendered = (revID) => {
     if (this.state.needExport && revID >= this.state.needExport.revision) {
       let promise = this.state.needExport;
@@ -670,7 +678,7 @@ export default class IssieEditPhoto extends React.Component {
     });
   }
   readoutText = (text) => {
-    if (text?.length > 0)  this.canvas.current?.canvas.current?.readoutText(text);
+    if (text?.length > 0) this.canvas.current?.canvas.current?.readoutText(text);
   }
 
   doExport = (resolve, reject) => {
@@ -1258,6 +1266,9 @@ export default class IssieEditPhoto extends React.Component {
       mode: Modes.VOICE,
       eraseMode: false,
     });
+
+    this.detectTextsInBackgroundImage();
+
     this.onEraserChange(true);
   }
 
@@ -1634,8 +1645,11 @@ export default class IssieEditPhoto extends React.Component {
 
             {/** Show Texts rectangles for voice reading */}
             {
-              this.isVoiceMode() && this.canvas.current?.canvasTexts()?.filter(t=>t.text.length > 0).map((textElem, i) => {
-                console.log("textElem", textElem)
+              this.isVoiceMode() && this.canvas.current?.canvasTexts()?.filter(t => t.text.length > 0).map((textElem, i) => {
+                // console.log("textElem", textElem)
+
+
+
                 const elem = this.txtElemNorm2Scale(textElem);
                 return (
                   <TouchableOpacity
@@ -1643,16 +1657,35 @@ export default class IssieEditPhoto extends React.Component {
                     style={{
                       opacity: 0.5,
                       backgroundColor: "green",
-                      borderRadius:7,
+                      borderRadius: 7,
                       position: "absolute",
-                      left: (elem.rtl? elem.position.x - elem.width : elem.position.x) * this.state.zoom + + this.state.xOffset,
-                      top: (elem.position.y)* this.state.zoom + this.state.yOffset,
-                      width: elem.width* this.state.zoom,
-                      height: elem.height* this.state.zoom,
-                      zIndex:1000,
+                      left: (elem.rtl ? elem.position.x - elem.width : elem.position.x) * this.state.zoom + + this.state.xOffset,
+                      top: (elem.position.y) * this.state.zoom + this.state.yOffset,
+                      width: elem.width * this.state.zoom,
+                      height: elem.height * this.state.zoom,
+                      zIndex: 1000,
                     }} onPress={() => this.readoutText(textElem.text)} />
                 )
               })}
+
+              {
+                this.isVoiceMode() && this.state.detectedTexts?.length > 0 && 
+                this.state.detectedTexts.map((textOnImage,i)=>(
+                  <TouchableOpacity
+                    key={i}
+                    style={{
+                      opacity: 0.5,
+                      backgroundColor: "green",
+                      borderRadius: 7,
+                      position: "absolute",
+                      left: textOnImage.rect.x * this.state.scaleRatio * this.state.zoom + + this.state.xOffset,
+                      top: textOnImage.rect.y * this.state.scaleRatio* this.state.zoom + this.state.yOffset,
+                      width: textOnImage.rect.width * this.state.scaleRatio*this.state.zoom,
+                      height: textOnImage.rect.height *this.state.scaleRatio* this.state.zoom,
+                      zIndex: 1000,
+                    }} onPress={() => this.readoutText(textOnImage.text)} />
+                ))
+              }
 
 
 
