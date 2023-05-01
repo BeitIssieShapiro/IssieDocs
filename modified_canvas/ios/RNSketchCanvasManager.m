@@ -4,10 +4,19 @@
 #import <React/RCTView.h>
 #import <React/UIView+React.h>
 #import <React/RCTUIManager.h>
-#import <AVFoundation/AVFoundation.h>
+//#import <AVFoundation/AVFoundation.h>
 
 
 @implementation RNSketchCanvasManager
+
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _speechSynthesizer = [[AVSpeechSynthesizer alloc] init];
+    }
+    return self;
+}
 
 RCT_EXPORT_MODULE()
 
@@ -188,7 +197,7 @@ RCT_EXPORT_METHOD(readoutText:(nonnull NSString *) text)
 {
     if ([text length] > 0) {
         // Initialize the synthesizer
-        AVSpeechSynthesizer *synthesizer = [[AVSpeechSynthesizer alloc] init];
+        //AVSpeechSynthesizer *synthesizer = [[AVSpeechSynthesizer alloc] init];
         
         // Create an utterance object with the text to be read out
         AVSpeechUtterance *utterance = [AVSpeechUtterance speechUtteranceWithString:text];
@@ -209,7 +218,8 @@ RCT_EXPORT_METHOD(readoutText:(nonnull NSString *) text)
             }
 
             // Speak the utterance using the synthesizer
-            [synthesizer speakUtterance:utterance];
+            //[synthesizer speakUtterance:utterance];
+            [self.speechSynthesizer speakUtterance:utterance];
         }
     }
 }

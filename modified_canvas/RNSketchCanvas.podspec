@@ -7,7 +7,7 @@ Pod::Spec.new do |s|
   s.name         = 'RNSketchCanvas'
   s.version      = package['version']
   s.summary      = package['description']
-  s.license      = package['license']
+  #s.license      = package['license']
   s.homepage     = './issie-sketch-canvas'
   s.authors      = package['author']
 

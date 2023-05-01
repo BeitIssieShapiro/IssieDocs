@@ -6,7 +6,8 @@ install! 'cocoapods', :deterministic_uuids => false
 
 target 'IssieDocs' do
   pod 'Permission-Camera', :path => "../node_modules/react-native-permissions/ios/Camera"
-
+  #pod 'TesseractOCRiOS', :path => "../../Tesseract-OCR-iOS"
+  #pod 'OCR', :path => "../OCR"
   config = use_native_modules!
 
   # Flags change depending on the env values.

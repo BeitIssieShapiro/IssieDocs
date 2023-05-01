@@ -1,0 +1,14 @@
+{
+    "name": "ocr",
+    "version": "0.9.0",
+    "description": "extract texts and rects from image",
+    "author": "Ariel Bentolila",
+    "main": "index.js",
+    "keywords": [
+      "react-native",
+      "react",
+      "native",
+      "ocr"
+    ],
+    "nativePackage": true
+}

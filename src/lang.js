@@ -8,6 +8,7 @@ export var gCurrentLang = { languageTag: "he", isRTL: true }
 const DEFAULT_LANG = "he";
 let gPrefix = "";
 
+
 var strings = {
     "he": {
         "StartHere": "הוספת דפים",
