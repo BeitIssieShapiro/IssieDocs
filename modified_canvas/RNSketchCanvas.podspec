@@ -1,5 +1,4 @@
 require 'json'
-zipfile = "#{__dir__}/temp.zip"
 
 package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
 
@@ -11,8 +10,9 @@ Pod::Spec.new do |s|
   s.homepage     = './issie-sketch-canvas'
   s.authors      = package['author']
 
-  system("rm -rf #{zipfile} && zip -r #{zipfile} #{__dir__} > /dev/null")
-  s.source = { :http => "file://#{zipfile}"}
+  
+  s.source = { :path => '#{__dir__}' }
+  
   #s.source       = { :git => package['repository']['url'] }
   
   s.platform     = :ios, '8.0'

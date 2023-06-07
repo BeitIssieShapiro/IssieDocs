@@ -1,4 +1,4 @@
-import * as RNLocalize from "react-native-localize";
+import {getLocales} from "react-native-localize";
 import { Alert, Settings } from "react-native";
 import { LANGUAGE } from "./settings";
 import { isSimulator } from "./device";
@@ -12,8 +12,8 @@ let gPrefix = "";
 var strings = {
     "he": {
         "StartHere": "הוספת דפים",
-        "DesktopEmpty":"שולחן העבודה ריק",
-        "Loading":"טוען...",
+        "DesktopEmpty": "שולחן העבודה ריק",
+        "Loading": "טוען...",
         "DefaultAppTitle": "{1} - שולחן העבודה שלי",
         "MissingFolderName": "חובה להזין שם תיקיה",
         "SaveFolderWithEmptyNameQuestion": "שמירת תיקייה ללא שם?",
@@ -25,17 +25,17 @@ var strings = {
         "ShareSuccessful": "שיתוף הסתיים בהצלחה",
         "ActionCancelled": "הפעולה בוטלה",
         "PDFLoadFailed": "טעינת PDF נכשלה",
-        "DefaultFolder": "שולחן העבודה", 
-        "Search":"חפש",
+        "DefaultFolder": "שולחן העבודה",
+        "Search": "חפש",
 
         "DeletePageTitle": "מחיקת דף",
         "DeleteFolderTitle": "מחיקת תיקייה",
         "BeforeDeletePageQuestion": "האם למחוק את הדף?",
         "BeforeDeleteSubPageTitle": "מחיקת עמוד",
-        "BeforeDeleteSubPageMenu":"מחיקת עמוד {1} מתוך {2}", 
+        "BeforeDeleteSubPageMenu": "מחיקת עמוד {1} מתוך {2}",
         "BeforeDeleteSubPageQuestion": "האם למחוק עמוד נוכחי?",
         "DeleteImageTitle": "מחיקת תמונה",
-        "BeforeDeleteImageQuestion":"האם למחוק את התמונה מהעמוד?", 
+        "BeforeDeleteImageQuestion": "האם למחוק את התמונה מהעמוד?",
 
         "DeleteFoldersAndPagesTitle": "מחיקת תיקיות ודפים",
         "BeforeDeleteFolderQuestion": "מחיקת תיקייה תגרום למחיקת כל הדפים בתוכה, האם למחוק?",
@@ -95,7 +95,7 @@ var strings = {
         "MenuNewPageEmpty": "חלק",
         "MenuNewPageLines": "שורות",
         "MenuNewPageMath": "משבצות",
-        "EmptyPageName":"דף חדש",
+        "EmptyPageName": "דף חדש",
 
         "CaptionPageName": "שם הדף",
         "OrientationCaption": "כיוון",
@@ -115,8 +115,8 @@ var strings = {
     },
     "ar": {
         "StartHere": "إضافة صفحات",
-        "DesktopEmpty":"التطبيق الرئيسي فارغ",
-        "Loading":"جار التحميل...",
+        "DesktopEmpty": "التطبيق الرئيسي فارغ",
+        "Loading": "جار التحميل...",
         "DefaultAppTitle": "{1} - التطبيق الرئيسي",
         "MissingFolderName": "يجب إدخال اسم مجلد",
         "SaveFolderWithEmptyNameQuestion": "حفظ مجلد بدون اسم؟",
@@ -129,9 +129,9 @@ var strings = {
         "ActionCancelled": "تم إلغاء الإجراء",
         "PDFLoadFailed": "فشل في تحميل ملف PDF",
         "DefaultFolder": "التطبيق الرئيسي", //verify
-        "Search":"بحث",
+        "Search": "بحث",
         "SearchResults": "نتائج البحث",
-        
+
         "NoSearchResults": "لم يتم العثور على مجلدات أو أوراق عمل بحسب عملية البحث",
 
         "DeletePageTitle": "حذف الصفحة",
@@ -139,20 +139,20 @@ var strings = {
         "BeforeDeletePageQuestion": "حذف الصفحة؟",
         "BeforeDeleteSubPageTitle": "حذف الصفحة", //todo
 
-        "BeforeDeleteSubPageMenu":"احذف الصفحة {1} من {2}",
+        "BeforeDeleteSubPageMenu": "احذف الصفحة {1} من {2}",
         "BeforeDeleteSubPageQuestion": "حذف الصفحة؟", //todo
         "DeleteFoldersAndPagesTitle": "حذف المجلدات والعناوين",
         "BeforeDeleteFolderQuestion": "حذف المجلد سيؤدي إلى مسح جميع الصفحات داخله, وحذفه",
         //"BeforeDeleteFoldersAndPagesQuestion": "اختير حذف الصفحات والمجلدات. حذف المجلدات سيؤدي إلى حذف جميع الصفحات والمحتويات. هل تريد المتابعة؟",
 
         "DeleteImageTitle": "حذف صورة", //verify
-        "BeforeDeleteImageQuestion":"هل أنت واثق?", //verify
+        "BeforeDeleteImageQuestion": "هل أنت واثق?", //verify
 
 
         "SuccessfulMovePageMsg": "الصفحة '{1}' تم نقلها بنجاح إلى المجلد '{2}'", //verify
 
         "NoPagesYet": "المجلد فارغ",
-        "ChooseFolder": "اختار مجلد", 
+        "ChooseFolder": "اختار مجلد",
         "SavePageFormTitle": "حفظ الصفحة",
         "RenameFormTitle": "تغيير العنوان",
         "DuplicatePageFormTitle": "صفحة مكررة",
@@ -170,7 +170,7 @@ var strings = {
         "A B C": "أبج",
 
         "SortA": "أ",
-        "SortZ":"ي",
+        "SortZ": "ي",
         "Settings": "الإعدادات",
         "Menu": "القائمة",
         "Display": "العرض",
@@ -178,7 +178,7 @@ var strings = {
         "Language": "اللغة",
         "AllowEditTitle": "تحرير العنوان",
         "TextInButtons": "تصميم الأزرار",
-        "CaptionFolderColor": "لون المجلد", 
+        "CaptionFolderColor": "لون المجلد",
         "FolderColors": "ألوان المجلد",
         "Warning": "تحذير",
         "BtnContinue": "متابعة",
@@ -201,10 +201,10 @@ var strings = {
         "MenuNewPageEmpty": "صفحة فارغة جديدة",
         "MenuNewPageLines": "صفحة مسطرة جديدة",
         "MenuNewPageMath": "صفحة مشبكة جديدة",
-        "EmptyPageName":"صفحة جديدة",
+        "EmptyPageName": "صفحة جديدة",
 
         "CaptionPageName": "اسم الصفحة",
-        "OrientationCaption":"الاتجاه",
+        "OrientationCaption": "الاتجاه",
         "CaptionFolderNameList": "مجلد",
         "CaptionFolderNameInput": "اسم المجلد",
         "NoIcon": "بلا",
@@ -212,14 +212,14 @@ var strings = {
 
         "ImportProgress": "استيراد الصفحة {1} من {2}",
         "ExportProgress": "تصدير الصفحة {1} من {2}",
-        "MissingCameraPermission":`Missing Permission to use Camera.
+        "MissingCameraPermission": `Missing Permission to use Camera.
 to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "EditPhotoTitle": "تعديل الصورة",
     },
     "en": {
         "StartHere": "Add worksheets",
-        "DesktopEmpty":"Empty Desktop",
-        "Loading":"Loading...",
+        "DesktopEmpty": "Empty Desktop",
+        "Loading": "Loading...",
         "DefaultAppTitle": "{1} - My Desktop",
         "MissingFolderName": "Missing folder name",
         "SaveFolderWithEmptyNameQuestion": "Save a folder without a name?",
@@ -231,20 +231,20 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "ShareSuccessful": "Share successfully done",
         "ActionCancelled": "Action cancelled",
         "PDFLoadFailed": "PDF loading failed",
-        "DefaultFolder": "Desktop", 
-        "Search":"Search",
+        "DefaultFolder": "Desktop",
+        "Search": "Search",
 
         "EditPhotoTitle": "Edit Photo",
 
         "DeletePageTitle": "Delete Worksheet",
         "DeleteFolderTitle": "Delete Folder",
         "BeforeDeletePageQuestion": "Are you sure you want to delete the worksheet?",
-        "BeforeDeleteSubPageMenu":"Delete page {1} of {2}",
+        "BeforeDeleteSubPageMenu": "Delete page {1} of {2}",
         "BeforeDeleteSubPageTitle": "Delete Page",
         "BeforeDeleteSubPageQuestion": "Are you sure you want to delete the current page?",
 
-        "DeleteImageTitle": "Delete Image", 
-        "BeforeDeleteImageQuestion":"Are you sure you want to delete the image?",
+        "DeleteImageTitle": "Delete Image",
+        "BeforeDeleteImageQuestion": "Are you sure you want to delete the image?",
 
         "DeleteFoldersAndPagesTitle": "Delete folders and worksheet",
         "BeforeDeleteFolderQuestion": "Deleteing a folder will delete all worksheets in it, are you sure?",
@@ -304,7 +304,7 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "MenuNewPageEmpty": "Blank",
         "MenuNewPageLines": "Lined",
         "MenuNewPageMath": "Grid",
-        "EmptyPageName":"Empty page",
+        "EmptyPageName": "Empty page",
 
         "CaptionPageName": "Name",
         "OrientationCaption": "Orientation",
@@ -375,7 +375,7 @@ let currStrings = strings[DEFAULT_LANG];
 
 
 export function registerLangEvent() {
-    RNLocalize.addEventListener("change", loadLanguage);
+    //RNLocalize.addEventListener("change", loadLanguage);
     loadLanguage();
 
 }
@@ -385,26 +385,41 @@ export function unregisterLangEvent() {
 }
 
 export function loadLanguage() {
-    let langSetting =  Settings.get('language');
+    let langSetting = Settings.get('language');
     if (langSetting === undefined || langSetting === LANGUAGE.default) {
-        gCurrentLang = RNLocalize.findBestAvailableLanguage(["he", "ar", "en-US", "en"])
-    } else {
-        switch (langSetting) {
-            case LANGUAGE.hebrew:
-                gCurrentLang = { languageTag: "he", isRTL: true }
-                break;
-            case LANGUAGE.arabic:
-                gCurrentLang = { languageTag: "ar", isRTL: true }
-                break;
-            case LANGUAGE.english:
-                gCurrentLang = { languageTag: "en", isRTL: false }
-                break;
-            default:
-                gCurrentLang = { languageTag: "he", isRTL: true }
-                break;
+        const locales = getLocales();
+        langSetting = LANGUAGE.english;
 
+        for (let i = 0; i < locales.length; i++) {
+            if (locales[i].languageCode === "en") {
+                langSetting = LANGUAGE.english;
+                break;
+            } else if (locales[i].languageCode === "he") {
+                langSetting = LANGUAGE.hebrew;
+                break;
+            } else if (locales[i].languageCode === "ar") {
+                langSetting = LANGUAGE.arabic;
+                break;
+            }
         }
     }
+
+    switch (langSetting) {
+        case LANGUAGE.hebrew:
+            gCurrentLang = { languageTag: "he", isRTL: true }
+            break;
+        case LANGUAGE.arabic:
+            gCurrentLang = { languageTag: "ar", isRTL: true }
+            break;
+        case LANGUAGE.english:
+            gCurrentLang = { languageTag: "en", isRTL: false }
+            break;
+        default:
+            gCurrentLang = { languageTag: "he", isRTL: true }
+            break;
+
+    }
+
     currStrings = strings[gCurrentLang.languageTag];
     if (!currStrings) {
         //remove the specifics
@@ -430,27 +445,31 @@ export function isRTL() {
 }
 
 export function getRowDirection() {
-    return isRTL()?"row":"row-reverse";
+    return isRTL() ? "row" : "row-reverse";
 }
 
 export function getRowReverseDirection() {
-    return isRTL()?"row-reverse":"row";
+    return isRTL() ? "row-reverse" : "row";
 }
 
 export function getRowDirections() {
-    return isRTL()?
-        {row: 'row', rowReverse:'row-reverse', flexStart: 'flex-start', 
-        flexEnd:'flex-end', textAlign:'right', rtl:true, direction:'rtl'}:
-        {row: 'row-reverse', rowReverse:'row', flexStart: 'flex-end', 
-        flexEnd:'flex-start', textAlign:'left', rtl:false, direction:'ltr'};
+    return isRTL() ?
+        {
+            row: 'row', rowReverse: 'row-reverse', flexStart: 'flex-start',
+            flexEnd: 'flex-end', textAlign: 'right', rtl: true, direction: 'rtl'
+        } :
+        {
+            row: 'row-reverse', rowReverse: 'row', flexStart: 'flex-end',
+            flexEnd: 'flex-start', textAlign: 'left', rtl: false, direction: 'ltr'
+        };
 }
 
 export function getFlexStart() {
-    return isRTL()?"flex-start":"flex-end";
+    return isRTL() ? "flex-start" : "flex-end";
 }
 
 export function getFlexEnd() {
-    return isRTL()?"flex-end": "flex-start";
+    return isRTL() ? "flex-end" : "flex-start";
 }
 
 export function translate(id, ...args) {

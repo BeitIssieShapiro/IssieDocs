@@ -30,3 +30,7 @@ cd ..
 
 
 
+if pod install fails on glog:
+https://stackoverflow.com/questions/50448717/os-pod-install-error-module-glog-cannot-be-installed
+
+
