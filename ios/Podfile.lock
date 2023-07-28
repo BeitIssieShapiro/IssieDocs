@@ -79,6 +79,7 @@ PODS:
     - hermes-engine/Pre-built (= 0.71.8)
   - hermes-engine/Pre-built (0.71.8)
   - libevent (2.1.12)
+  - OpenCV (4.3.0)
   - OpenSSL-Universal (1.1.1100)
   - Permission-Camera (3.8.0):
     - RNPermissions
@@ -529,6 +530,7 @@ DEPENDENCIES:
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - libevent (~> 2.1.12)
+  - OpenCV
   - OpenSSL-Universal (= 1.1.1100)
   - Permission-Camera (from `../node_modules/react-native-permissions/ios/Camera`)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -599,6 +601,7 @@ SPEC REPOS:
     - FlipperKit
     - fmt
     - libevent
+    - OpenCV
     - OpenSSL-Universal
     - SocketRocket
     - YogaKit
@@ -743,6 +746,7 @@ SPEC CHECKSUMS:
   glog: 04b94705f318337d7ead9e6d17c019bd9b1f6b1b
   hermes-engine: 47986d26692ae75ee7a17ab049caee8864f855de
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
+  OpenCV: 681e0451c1e54c5930a8922277f817ed5d5ab459
   OpenSSL-Universal: ebc357f1e6bc71fa463ccb2fe676756aff50e88c
   Permission-Camera: e6d142d7d8b714afe0a83e5e6ae17eb949f1e3e9
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
@@ -799,6 +803,6 @@ SPEC CHECKSUMS:
   Yoga: 065f0b74dba4832d6e328238de46eb72c5de9556
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
-PODFILE CHECKSUM: b84bce2204259920bc7bd64b7d86507e01a9dd2b
+PODFILE CHECKSUM: b05e5addcb4f1f6c93312b91f6941a630c43e32e
 
 COCOAPODS: 1.12.1

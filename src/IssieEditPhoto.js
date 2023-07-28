@@ -41,7 +41,7 @@ import EditorToolbar from './editor-toolbar';
 import { getElementMovePanResponder } from './editors-panresponders';
 import Canvas from './canvas';
 import { FileContextMenu } from './file-context-menu';
-import { detectTextsInImage } from '../ocr';
+import { detectTexts } from '../textdetection';
 
 const shareTimeMs = 2000;
 
@@ -662,7 +662,7 @@ export default class IssieEditPhoto extends React.Component {
     
     this.setState({ showBusy: true })
     setTimeout(() =>
-      detectTextsInImage(this.state.currentFile, lang, 50,
+      detectTexts(this.state.currentFile, lang, 50,
         // success
         (texts) => {
           this.setState({ detectedTexts: texts, showBusy: false })
