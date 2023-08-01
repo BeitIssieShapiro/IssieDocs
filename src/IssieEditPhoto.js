@@ -666,7 +666,7 @@ export default class IssieEditPhoto extends React.Component {
         // success
         (texts) => {
           this.setState({ detectedTexts: texts, showBusy: false })
-          console.log("detected texts", JSON.stringify(texts))
+          console.log("detected texts", JSON.stringify(texts.map(t=>t.text)))
         },
         //error
         (err) => {

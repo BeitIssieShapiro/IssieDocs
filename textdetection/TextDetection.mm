@@ -13,10 +13,20 @@
 - (NSArray *)detectTexts:(NSString *)filePath language:(NSString *)language confidenceThreshold:(NSNumber *)threshold {
  
     // Convert NSString to std::string
-    std::string path = [filePath cStringUsingEncoding:NSASCIIStringEncoding];
+    std::string path = [filePath UTF8String];
     
     // Load the image
     cv::Mat image = cv::imread(path);
+  
+    int newWidth = (int)(image.cols / 32) * 32;
+    int newHeight = (int)(image.rows / 32) * 32;
+  
+    cv::Point2f ratio((float)image.cols / newWidth, (float)image.rows / newHeight);
+
+    //cv::resize(image, image, cv::Size(newWidth, newHeight));
+  
+//    image.convertTo(image, CV_32FC3, 1 / 255.0);  // Convert the image from uint8 to float32 and scale values from 0-255 to 0-1
+//    image = (image - 0.5) * 2;  // Shift from range 0-1 to -1 to 1
 
     // Load pre-trained EAST model
     NSString *modelPathNSTR = [[NSBundle mainBundle] pathForResource:@"tessdata/frozen_east_text_detection" ofType:@"pb"];
@@ -25,7 +35,7 @@
     cv::dnn::Net net = cv::dnn::readNet(modelPath);
     
     // Blob from the image
-    cv::Mat blob = cv::dnn::blobFromImage(image, 1.0, cv::Size(320, 320), cv::Scalar(123.68, 116.78, 103.94), true, false);
+    cv::Mat blob = cv::dnn::blobFromImage(image, 1.0, cv::Size(newWidth, newHeight), cv::Scalar(123.68, 116.78, 103.94), true, false);
     net.setInput(blob);
     
     // Forward pass
@@ -50,7 +60,6 @@
     cv::dnn::NMSBoxes(boxes, confidences, confThreshold, nmsThreshold, indices);
 
   
-    cv::Point2f ratio((float)image.cols / 320, (float)image.rows / 320);
 
   
     // Array to store results
@@ -58,12 +67,14 @@
     
     //for debug:
     cv::Mat debugMat;
-  bool first = true;
+    bool first = true;
   
     // For each text box detected by EAST
     for (size_t i = 0; i < indices.size(); ++i)
     {
       cv::RotatedRect& box = boxes[indices[i]];
+      
+      box = expandRotatedRect(box, 2);
       
       cv::Point2f vertices[4];
       box.points(vertices);
@@ -73,18 +84,22 @@
         vertices[j].y *= ratio.y;
       }
 
+      cv::Mat cropped_;
+      fourPointsTransform(image, vertices, cropped_);
       cv::Mat cropped;
-      fourPointsTransform(image, vertices, cropped);
-     
+      int borderSize = 20;
+      cv::copyMakeBorder(cropped_, cropped, borderSize, borderSize, borderSize, borderSize, cv::BORDER_CONSTANT, cv::Scalar(255,255,255));
       
-      cv::Mat forOCR = cropped ; //prepareImageForOCR(cropped);
-      
+      cv::Mat forOCR = prepareImageForOCR(cropped);
+      cv::Mat forOCR_resized;
+      cv::resize(forOCR, forOCR_resized, cv::Size(150,50));
+
       if (first) {
         first = false;
-        debugMat = cropped;
+        debugMat = forOCR_resized;
       } else {
         cv::Mat tempMat;
-        cv::vconcat(debugMat, cropped, tempMat);  // Concatenate vertically.
+        cv::vconcat(debugMat, forOCR_resized, tempMat);  // Concatenate vertically.
         
         debugMat = tempMat;
       }
@@ -95,6 +110,10 @@
 
       NSString *text = performOCROnCVImage(forOCR, dataPath, lang);
       if (text != nil && [text length] > 0) {
+        text = [text stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+      } else {
+        text = @"";
+      }
         cv::Rect boundingRect = box.boundingRect();
 
         NSDictionary *rectDict = @{
@@ -106,64 +125,100 @@
           NSDictionary *elem = @{@"rect": rectDict, @"text": text};
           [results addObject:elem];
       }
-    }
+    
 
     cv::imwrite("/tmp/debug.png", debugMat);
   
-  
-  //    for (cv::Rect rect : rects) {
-//        // Get sub-image
-//        cv::Mat roi = image(rect);
-//
-//        // Pre-process image for Tesseract
-//        // Resize, convert to grayscale, apply thresholding, etc.
-//        // This part is omitted for brevity.
-//
-//        // Convert cv::Mat to UIImage
-//        UIImage *roiImage = [UIImage imageWithCVImageBuffer:roi];
-//
-//        // Initialize Tesseract
-//        G8Tesseract *tesseract = [[G8Tesseract alloc] initWithLanguage:@"eng"];
-//        tesseract.image = roiImage;
-//        [tesseract recognize];
-//
-//        // Get OCR result
-//        NSString *text = [tesseract recognizedText];
-//
-//        // Convert cv::Rect to CGRect
-//        CGRect cgRect = cvRectToCGRect(rect);
-//
-//        // Store result
-//        NSDictionary *result = @{@"rect": [NSValue valueWithCGRect:cgRect], @"text": text};
-//        [results addObject:result];
-//    }
-
     return results;
 }
 
+cv::RotatedRect expandRotatedRect(const cv::RotatedRect& rect, int pixels) {
+    // Get the bounding rectangle
+    cv::Rect boundingRect = rect.boundingRect();
+    
+    // Expand the bounding rectangle
+    boundingRect.x -= pixels;
+    boundingRect.y -= pixels;
+    boundingRect.width += 2 * pixels;
+    boundingRect.height += 2 * pixels;
+    
+    // Create a new RotatedRect using the expanded bounding rectangle
+    cv::RotatedRect expandedRect = cv::RotatedRect(
+        cv::Point2f(boundingRect.x + boundingRect.width / 2.0f, boundingRect.y + boundingRect.height / 2.0f),
+        cv::Size2f(boundingRect.width, boundingRect.height),
+        rect.angle
+    );
+    
+    return expandedRect;
+}
+
 cv::Mat prepareImageForOCR(const cv::Mat& inputImage) {
+    // Define the structuring element
+//    cv::Mat kernel3 = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+    //cv::Mat kernel2 = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
+    cv::Mat kernel3 = cv::Mat::ones(3, 3, CV_8UC1);
     // Convert the input image to grayscale
     cv::Mat grayImage;
     cv::cvtColor(inputImage, grayImage, cv::COLOR_BGR2GRAY);
     
+    // Apply Gaussian blur
+//    cv::Mat blurredImage;
+//    cv::GaussianBlur(grayImage, blurredImage, cv::Size(5, 5), 0);
+//
     // Apply adaptive thresholding
     cv::Mat thresholdedImage;
-    cv::adaptiveThreshold(grayImage, thresholdedImage, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 11, 2);
-    
-    // Perform dilation
+    //cv::adaptiveThreshold(grayImage, thresholdedImage, 255, cv::THRESH_BINARY & cv::THRESH_OTSU , cv::THRESH_BINARY, 3, 5);
+    cv::adaptiveThreshold(grayImage, thresholdedImage, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 3, 5);
+
+//    cv::Mat erodedImage;
+//    cv::erode(thresholdedImage, erodedImage, kernel3);
+//
+//  // Perform dilation
     cv::Mat dilatedImage;
-    cv::dilate(thresholdedImage, dilatedImage, cv::Mat(), cv::Point(1, 1), 2);
-    
-    // Perform erosion
-    cv::Mat erodedImage;
-    cv::erode(dilatedImage, erodedImage, cv::Mat(), cv::Point(1, 1), 1);
-    
-    // Denoise the image using a median filter
-    cv::Mat denoisedImage;
-    cv::medianBlur(erodedImage, denoisedImage, 3);
-    
-    return denoisedImage;
+    cv::dilate(thresholdedImage, dilatedImage, kernel3);
+//
+//
+//  cv::Mat openedImage;
+//  cv::morphologyEx(thresholdedImage, openedImage, cv::MORPH_OPEN, kernel3);
+//    // Perform median filtering
+//    cv::Mat medianImage;
+//    cv::medianBlur(dilatedImage, medianImage, 3);
+//
+    cv::Mat resizedImage;
+    //cv::copyMakeBorder(grayImage, withBorder, 2,2,2,2, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
+  double aspectRatio = (double)grayImage.cols / (double)grayImage.rows;
+  int newWidth = 30 * aspectRatio; // calculate new width based on aspect ratio
+
+    cv::resize(grayImage, resizedImage, cv::Size(newWidth, 30));
+    return resizedImage;
 }
+
+//cv::Mat prepareImageForOCR(const cv::Mat& inputImage) {
+//
+//    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2.5, 2.5));
+//
+//    // Convert the input image to grayscale
+//    cv::Mat grayImage;
+//    cv::cvtColor(inputImage, grayImage, cv::COLOR_BGR2GRAY);
+//
+//    // Apply adaptive thresholding
+//    cv::Mat thresholdedImage;
+//    cv::adaptiveThreshold(grayImage, thresholdedImage, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 11, 2);
+//
+////    // Perform dilation
+//    cv::Mat dilatedImage;
+//    cv::dilate(thresholdedImage, dilatedImage, kernel, cv::Point(-1, -1), 2);
+//
+//    // Perform erosion
+//    cv::Mat erodedImage;
+//    cv::erode(dilatedImage, erodedImage, kernel, cv::Point(-1, -1), 1);
+//
+//    // Denoise the image using a median filter
+//    cv::Mat denoisedImage;
+//    cv::medianBlur(erodedImage, denoisedImage, 3);
+//
+//    return denoisedImage;
+//}
 
 void fourPointsTransform(const cv::Mat& frame, cv::Point2f vertices[4], cv::Mat& result)
 {
@@ -178,91 +233,35 @@ void fourPointsTransform(const cv::Mat& frame, cv::Point2f vertices[4], cv::Mat&
   warpPerspective(frame, result, rotationMatrix, outputSize);
 }
 
-//cv::Mat extractRegionFromMat(const cv::Mat& inputMat, const cv::RotatedRect& rotatedRect) {
-//    // Convert the RotatedRect to a Rect
-//    cv::Rect boundingRect = rotatedRect.boundingRect();
-//
-//    // Create a mask image of the same size as the input Mat
-//    cv::Mat mask(inputMat.size(), CV_8UC1, cv::Scalar(0));
-//
-//    // Create a region of interest (ROI) mask within the boundingRect
-//    cv::Point2f vertices[4];
-//    rotatedRect.points(vertices);
-//    fillConvexPoly(mask, vertices, 4, cv::Scalar(255));
-//
-//    // Apply the mask to the input Mat
-//    cv::Mat extractedRegion;
-//    inputMat.copyTo(extractedRegion, mask);
-//
-//    // Create a new Mat representing the extracted region
-//    cv::Mat extractedMat = extractedRegion(boundingRect);
-//
-//    return extractedMat;
-//}
 
 NSString * performOCROnCVImage(cv::Mat &cvImage, std::string dataPath, std::string lang) {
-    // Convert OpenCV cv::Mat to NSData
-    NSData *imageData = imageDataFromCVImage(cvImage);
-
     // Initialize Tesseract engine
     TessBaseAPI* tesseract = TessBaseAPICreate();
 
     // Set the language for OCR
-    TessBaseAPIInit3(tesseract, dataPath.data(), lang.data());
+    TessBaseAPIInit2(tesseract, dataPath.data(), lang.data(), tesseract::OEM_LSTM_ONLY);
 
-    // Set the image data for OCR
-    const unsigned char *imageBytes = (const unsigned char *)imageData.bytes;
-    int width = cvImage.cols;
-    int height = cvImage.rows;
-    int bytesPerPixel = cvImage.elemSize();
-    int bytesPerLine = cvImage.step1();
+    TessBaseAPISetPageSegMode(tesseract, tesseract::PSM_SINGLE_WORD);
 
-    TessBaseAPISetImage(tesseract, imageBytes, width, height, bytesPerPixel, bytesPerLine);
+    TessBaseAPISetImage(tesseract, (uchar*)cvImage.data, cvImage.size().width, cvImage.size().height, cvImage.channels(), cvImage.step1());
+  
 
     // Perform OCR
     TessBaseAPIRecognize(tesseract, NULL);
 
     // Get the recognized text
+    NSString *result = @"";
     char *recognizedText = TessBaseAPIGetUTF8Text(tesseract);
-    NSString *result = [NSString stringWithUTF8String:recognizedText];
-
+    if (recognizedText != NULL) {
+      result = [NSString stringWithUTF8String:recognizedText];
+      delete[] recognizedText;
+    }
     // Clean up
     TessBaseAPIEnd(tesseract);
     TessBaseAPIDelete(tesseract);
-    delete[] recognizedText;
     
-  return result;
-  //return @"abcd";
+    return result;
 }
-
-NSData * imageDataFromCVImage(cv::Mat &cvImage) {
-    // Create a data buffer with the CV image data
-    cv::Mat cvImageRGB;
-    cv::cvtColor(cvImage, cvImageRGB, cv::COLOR_BGR2RGB);
-    NSData *imageData = [NSData dataWithBytes:cvImageRGB.data length:cvImageRGB.total() * cvImageRGB.elemSize()];
-    
-    return imageData;
-}
-
-/*
-for (const cv::RotatedRect& rect : boxes) {
-    cv::Rect boundingRect = rect.boundingRect();
-
-    NSDictionary *rectDict = @{
-        @"x": @(boundingRect.x),
-        @"y": @(boundingRect.y),
-        @"width": @(boundingRect.width),
-        @"height": @(boundingRect.height)
-    };
-
-    NSDictionary *elementDict = @{
-        @"rect": rectDict,
-        @"text": @"Your text here"
-    };
-
-    [resultArray addObject:elementDict];
-}
- */
 
 void decodeBoundingBoxes(const cv::Mat& scores, const cv::Mat& geometry, float scoreThresh, std::vector<cv::RotatedRect>& detections, std::vector<float>& confidences)
 {
