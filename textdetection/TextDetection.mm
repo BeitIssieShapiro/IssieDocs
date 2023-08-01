@@ -4,8 +4,29 @@
 #undef NO
 #undef YES
 
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <cmath>
+#include <boost/algorithm/string/join.hpp>
+
 #import "opencv2/opencv.hpp"
 #import <tesseract/capi.h>
+
+
+struct Word {
+    std::string text;
+    cv::Rect rect;
+    
+    Word(std::string t, cv::Rect r) : text(t), rect(r) {}
+};
+
+struct Paragraph {
+    std::string text;
+    cv::Rect rect;
+    
+    Paragraph(std::string t, cv::Rect r) : text(t), rect(r) {}
+};
 
 
 @implementation TextDetection
@@ -60,11 +81,8 @@
     cv::dnn::NMSBoxes(boxes, confidences, confThreshold, nmsThreshold, indices);
 
   
+    std::vector<Word> words;
 
-  
-    // Array to store results
-    NSMutableArray *results = [[NSMutableArray alloc] init];
-    
     //for debug:
     cv::Mat debugMat;
     bool first = true;
@@ -84,15 +102,16 @@
         vertices[j].y *= ratio.y;
       }
 
-      cv::Mat cropped_;
-      fourPointsTransform(image, vertices, cropped_);
       cv::Mat cropped;
-      int borderSize = 20;
-      cv::copyMakeBorder(cropped_, cropped, borderSize, borderSize, borderSize, borderSize, cv::BORDER_CONSTANT, cv::Scalar(255,255,255));
-      
+      fourPointsTransform(image, vertices, cropped);
       cv::Mat forOCR = prepareImageForOCR(cropped);
+
+      int borderSize = 20;
+      cv::copyMakeBorder(forOCR, forOCR, borderSize, borderSize, borderSize, borderSize, cv::BORDER_CONSTANT, cv::Scalar(255,255,255));
+      
       cv::Mat forOCR_resized;
-      cv::resize(forOCR, forOCR_resized, cv::Size(150,50));
+      cv::resize(forOCR, forOCR_resized, cv::Size(250,80));
+#ifdef DEBUG
 
       if (first) {
         first = false;
@@ -103,6 +122,7 @@
         
         debugMat = tempMat;
       }
+#endif
       NSString *dataPathNSTR = [[NSBundle mainBundle] pathForResource:@"tessdata" ofType:nil];
       std::string dataPath = [dataPathNSTR cStringUsingEncoding:NSASCIIStringEncoding];
     
@@ -111,26 +131,134 @@
       NSString *text = performOCROnCVImage(forOCR, dataPath, lang);
       if (text != nil && [text length] > 0) {
         text = [text stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+        text = [text stringByReplacingOccurrencesOfString:@"|" withString:@""];
+        text = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
       } else {
         text = @"";
       }
-        cv::Rect boundingRect = box.boundingRect();
-
-        NSDictionary *rectDict = @{
-            @"x": @(boundingRect.x * ratio.x),
-            @"y": @(boundingRect.y * ratio.y),
-            @"width": @(boundingRect.width * ratio.x),
-            @"height": @(boundingRect.height * ratio.y)
-        };
-          NSDictionary *elem = @{@"rect": rectDict, @"text": text};
-          [results addObject:elem];
-      }
-    
-
+      
+      cv::Rect boundingRect = box.boundingRect();
+      words.push_back(Word([text UTF8String] , boundingRect));
+    }
+#ifdef DEBUG
     cv::imwrite("/tmp/debug.png", debugMat);
+#endif
   
-    return results;
+
+  // Group words into paragraphs
+  bool rtl = ![language isEqualToString:@"eng"]; // Set this to true for right-to-left text
+  std::vector<Paragraph> paragraphs = groupWordsIntoParagraphs(words, rtl);
+
+  // Convert back to your desired NSDictionary structure
+  NSMutableArray *groupedResults = [NSMutableArray array];
+  for (const Paragraph &paragraph : paragraphs) {
+      NSMutableDictionary *paragraphDict = [NSMutableDictionary dictionary];
+      [paragraphDict setObject:@{
+          @"x": @(paragraph.rect.x * ratio.x),
+          @"y": @(paragraph.rect.y * ratio.y),
+          @"width": @(paragraph.rect.width * ratio.x),
+          @"height": @(paragraph.rect.height * ratio.y)
+      } forKey:@"rect"];
+
+      [paragraphDict setObject:[NSString stringWithUTF8String:paragraph.text.c_str()] forKey:@"text"];
+
+      [groupedResults addObject:paragraphDict];
+  }
+  return groupedResults;
 }
+
+bool isWordInSameLineAs(Word word, Word otherWord) {
+    float verticalDistance = std::abs(word.rect.y + word.rect.height / 2.0 - (otherWord.rect.y + otherWord.rect.height / 2.0));
+    return verticalDistance <= std::max(word.rect.height, otherWord.rect.height) / 2.0;
+}
+
+bool isWordNearbyTo(Word word, Word otherWord) {
+    float horizontalDistance = word.rect.x - (otherWord.rect.x + otherWord.rect.width);
+    return horizontalDistance <= std::max(word.rect.width, otherWord.rect.width);
+}
+
+Paragraph mergeWordsIntoParagraph(std::vector<Word> words) {
+    cv::Rect paragraphRect = words[0].rect;
+    std::vector<std::string> texts;
+    texts.push_back(words[0].text);
+    
+    for (int i = 1; i < words.size(); i++) {
+        Word word = words[i];
+        cv::Rect wordRect = word.rect;
+        
+        paragraphRect = paragraphRect | wordRect;
+        texts.push_back(word.text);
+    }
+    
+    std::string joinedText = boost::algorithm::join(texts, " ");
+    
+    std::map<std::string, float> rectDict;
+    rectDict["x"] = paragraphRect.x;
+    rectDict["y"] = paragraphRect.y;
+    rectDict["width"] = paragraphRect.width;
+    rectDict["height"] = paragraphRect.height;
+    
+    Paragraph paragraph( joinedText, paragraphRect);
+    
+    return paragraph;
+}
+
+
+std::vector<Paragraph> groupWordsIntoParagraphs(std::vector<Word> words, bool rtl) {
+
+    std::sort(words.begin(), words.end(), [&rtl](const Word& a, const Word& b) {
+        return rtl ? (a.rect.x > b.rect.x) : (a.rect.x < b.rect.x);
+    });
+
+  std::vector<std::vector<Word>> lines;
+  std::vector<Word> currentLineWords;
+  std::vector<Word> currentParagraphWords;
+
+  int yThreashold = 25;
+  int xThreashold = 25;
+  int currentX = -1, currentY = -1;
+  while (words.size() > 0) {
+    yThreashold = words[0].rect.height / 2.0;
+    xThreashold = std::max(words[0].rect.width, 40) / 2;
+    
+    currentLineWords.clear();
+    currentX = rtl ? words[0].rect.x :  words[0].rect.x+words[0].rect.width;
+    currentY = (words[0].rect.y + words[0].rect.height) / 2.0;
+    currentLineWords.push_back(words[0]);
+    words.erase(words.begin());
+    
+    int size = words.size();
+    int i =0;
+    while (i < size) {
+      if (std::abs((words[i].rect.y + words[i].rect.height) / 2.0 - currentY) < yThreashold &&
+          ((rtl && currentX - (words[i].rect.x + words[i].rect.width) < xThreashold) ||
+           (!rtl && (words[i].rect.x - currentX < xThreashold)))) {
+        // same line next word
+        currentX = rtl ? words[i].rect.x :  words[i].rect.x+words[i].rect.width;
+        currentY = (words[i].rect.y + words[i].rect.height) / 2.0;
+
+        currentLineWords.push_back(words[i]);
+        words.erase(words.begin()+i);
+        i--;
+        size--;
+      }
+      i++;
+    }
+    std::vector<Word> line;
+    line.insert(line.begin(), currentLineWords.begin(), currentLineWords.end());
+              
+    lines.push_back(line);
+  }
+  std::vector<Paragraph> paragraphs;
+
+  for (std::vector<Word> line : lines) {
+    paragraphs.push_back(mergeWordsIntoParagraph(line));
+  }
+        
+    return paragraphs;
+}
+
+
 
 cv::RotatedRect expandRotatedRect(const cv::RotatedRect& rect, int pixels) {
     // Get the bounding rectangle
@@ -154,29 +282,29 @@ cv::RotatedRect expandRotatedRect(const cv::RotatedRect& rect, int pixels) {
 
 cv::Mat prepareImageForOCR(const cv::Mat& inputImage) {
     // Define the structuring element
-//    cv::Mat kernel3 = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
-    //cv::Mat kernel2 = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
     cv::Mat kernel3 = cv::Mat::ones(3, 3, CV_8UC1);
+    cv::Mat kernel2 = cv::Mat::ones(2, 2, CV_8UC1);
+  
     // Convert the input image to grayscale
     cv::Mat grayImage;
     cv::cvtColor(inputImage, grayImage, cv::COLOR_BGR2GRAY);
     
     // Apply Gaussian blur
-//    cv::Mat blurredImage;
-//    cv::GaussianBlur(grayImage, blurredImage, cv::Size(5, 5), 0);
+    cv::Mat blurredImage;
+    cv::GaussianBlur(grayImage, blurredImage, cv::Size(5, 5), 0);
 //
     // Apply adaptive thresholding
     cv::Mat thresholdedImage;
     //cv::adaptiveThreshold(grayImage, thresholdedImage, 255, cv::THRESH_BINARY & cv::THRESH_OTSU , cv::THRESH_BINARY, 3, 5);
-    cv::adaptiveThreshold(grayImage, thresholdedImage, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 3, 5);
+    cv::adaptiveThreshold(blurredImage, thresholdedImage, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 7, 5);
 
-//    cv::Mat erodedImage;
-//    cv::erode(thresholdedImage, erodedImage, kernel3);
+    cv::Mat erodedImage;
+    cv::erode(thresholdedImage, erodedImage, kernel3);
 //
 //  // Perform dilation
     cv::Mat dilatedImage;
-    cv::dilate(thresholdedImage, dilatedImage, kernel3);
-//
+    cv::dilate(erodedImage, dilatedImage, kernel3);
+
 //
 //  cv::Mat openedImage;
 //  cv::morphologyEx(thresholdedImage, openedImage, cv::MORPH_OPEN, kernel3);
@@ -185,11 +313,9 @@ cv::Mat prepareImageForOCR(const cv::Mat& inputImage) {
 //    cv::medianBlur(dilatedImage, medianImage, 3);
 //
     cv::Mat resizedImage;
-    //cv::copyMakeBorder(grayImage, withBorder, 2,2,2,2, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
-  double aspectRatio = (double)grayImage.cols / (double)grayImage.rows;
-  int newWidth = 30 * aspectRatio; // calculate new width based on aspect ratio
-
-    cv::resize(grayImage, resizedImage, cv::Size(newWidth, 30));
+    double aspectRatio = (double)grayImage.cols / (double)grayImage.rows;
+    int newWidth = 30 * aspectRatio; // calculate new width based on aspect ratio
+    cv::resize(dilatedImage, resizedImage, cv::Size(newWidth, 30));
     return resizedImage;
 }
 

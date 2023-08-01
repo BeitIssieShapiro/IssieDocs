@@ -23,20 +23,14 @@
 		6A972F9128D26BA10086BB05 /* Verdana_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A972F9028D26BA10086BB05 /* Verdana_Bold.ttf */; };
 		6A972F9328D26BBD0086BB05 /* Verdana.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A972F9228D26BBD0086BB05 /* Verdana.ttf */; };
 		6A972F9428D27EDD0086BB05 /* hermes.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A972F8128D205560086BB05 /* hermes.xcframework */; };
-		6A972F9528D27EDD0086BB05 /* hermes.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6A972F8128D205560086BB05 /* hermes.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		6AB1BAA62A73FD09002A3431 /* TextDetectionPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 6AB1BA432A73FD09002A3431 /* TextDetectionPlugin.m */; };
 		6AB1BAA82A73FD09002A3431 /* TextDetection.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6AB1BA8E2A73FD09002A3431 /* TextDetection.mm */; };
 		6AB1BAA92A73FD09002A3431 /* libjpeg-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AB1BA902A73FD09002A3431 /* libjpeg-ios.a */; };
 		6AB1BAAA2A73FD09002A3431 /* libpng16-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AB1BA912A73FD09002A3431 /* libpng16-ios.a */; };
-		6AB1BAAB2A73FD09002A3431 /* libtesseract-sim.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AB1BA922A73FD09002A3431 /* libtesseract-sim.a */; };
 		6AB1BAAC2A73FD09002A3431 /* libtiff-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AB1BA932A73FD09002A3431 /* libtiff-ios.a */; };
 		6AB1BAAE2A73FD09002A3431 /* liblept-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AB1BA952A73FD09002A3431 /* liblept-ios.a */; };
 		6AB1BAAF2A73FD09002A3431 /* libltdl.la in Resources */ = {isa = PBXBuildFile; fileRef = 6AB1BA962A73FD09002A3431 /* libltdl.la */; };
-		6AB1BAB72A73FD09002A3431 /* libjpeg-sim.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AB1BA9E2A73FD09002A3431 /* libjpeg-sim.a */; };
-		6AB1BAB82A73FD09002A3431 /* libpng16-sim.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AB1BA9F2A73FD09002A3431 /* libpng16-sim.a */; };
 		6AB1BAB92A73FD09002A3431 /* libtesseract-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AB1BAA02A73FD09002A3431 /* libtesseract-ios.a */; };
-		6AB1BABB2A73FD09002A3431 /* libtiff-sim.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AB1BAA22A73FD09002A3431 /* libtiff-sim.a */; };
-		6AB1BABC2A73FD09002A3431 /* liblept-sim.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AB1BAA32A73FD09002A3431 /* liblept-sim.a */; };
 		7699B88040F8A987B510C191 /* libPods-IssieDocs-IssieDocsTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19F6CBCC0A4E27FBF8BF4A61 /* libPods-IssieDocs-IssieDocsTests.a */; };
 /* End PBXBuildFile section */
 
@@ -60,14 +54,13 @@
 /* Begin PBXCopyFilesBuildPhase section */
 		6A972F9628D27EDE0086BB05 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 8;
+			buildActionMask = 12;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				6A972F9528D27EDD0086BB05 /* hermes.xcframework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 1;
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 		6AB98BF929DF019C0097A0DE /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -229,18 +222,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6AB1BABB2A73FD09002A3431 /* libtiff-sim.a in Frameworks */,
 				6AB1BAAE2A73FD09002A3431 /* liblept-ios.a in Frameworks */,
 				6AB1BAAA2A73FD09002A3431 /* libpng16-ios.a in Frameworks */,
 				0C80B921A6F3F58F76C31292 /* libPods-IssieDocs.a in Frameworks */,
 				6AB1BAAC2A73FD09002A3431 /* libtiff-ios.a in Frameworks */,
 				6AB1BAB92A73FD09002A3431 /* libtesseract-ios.a in Frameworks */,
 				6AB1BAA92A73FD09002A3431 /* libjpeg-ios.a in Frameworks */,
-				6AB1BAAB2A73FD09002A3431 /* libtesseract-sim.a in Frameworks */,
-				6AB1BAB82A73FD09002A3431 /* libpng16-sim.a in Frameworks */,
 				6A972F9428D27EDD0086BB05 /* hermes.xcframework in Frameworks */,
-				6AB1BABC2A73FD09002A3431 /* liblept-sim.a in Frameworks */,
-				6AB1BAB72A73FD09002A3431 /* libjpeg-sim.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -914,8 +902,8 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
-				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = "";
+				CURRENT_PROJECT_VERSION = 3;
+				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				ENABLE_BITCODE = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				HEADER_SEARCH_PATHS = (
@@ -1135,8 +1123,8 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
-				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = "";
+				CURRENT_PROJECT_VERSION = 3;
+				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				GCC_NO_COMMON_BLOCKS = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1213,6 +1201,7 @@
 					"\"$(PODS_ROOT)/Headers/Private/React-Core\"",
 					"\"$(PODS_TARGET_SRCROOT)/include/\"",
 					"$(SRCROOT)/../node_modules/react-native-splash-screen/ios",
+					"$(SRCROOT)/../textdetection/include/**",
 				);
 				INFOPLIST_FILE = IssieDocs/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.3;
