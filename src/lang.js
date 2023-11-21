@@ -85,6 +85,7 @@ var strings = {
         "BtnAddPage": "דף נוסף",
         "BtnSave": "שמירה",
         "BtnShare": "שיתוף",
+        "BtnShareIssieDocs":"שיתוף עם איזידוקס",
         "BtnChangeName": "שינוי שם",
         "BtnDelete": "מחיקה",
         "BtnDuplicate": "שיכפול",
@@ -107,6 +108,8 @@ var strings = {
 
         "ImportProgress": "מייבא עמוד {1} מתוך {2}",
         "ExportProgress": "מייצא עמוד {1} מתוך {2}",
+
+        "ImportSuccessful":"דף עבודה {1} התקבל בהצלחה",
 
         //todo: translate
         "MissingCameraPermission": `לא ניתנה רשות לשימוש במצלמה לאפליקציה

@@ -22,6 +22,7 @@ export function FileContextMenu({
     onRename,
     onMove,
     onShare,
+    onShareIssieDocs,
     onDuplicate,
 
     onAddFromCamera,
@@ -105,6 +106,8 @@ export function FileContextMenu({
                                 <OneMenu scale={scale} icon="file-multiple" iconType={"material-community"} onPress={callbackAndClose(onDuplicate)} text={translate("BtnDuplicate")} />
                                 <Seperator />
                                 <OneMenu scale={scale} icon="share" onPress={callbackAndClose(onShare)} text={translate("BtnShare")} />
+                                <Seperator />
+                                <OneMenu scale={scale} icon="share" onPress={callbackAndClose(onShareIssieDocs)} text={translate("BtnShareIssieDocs")} />
                             </React.Fragment>
                         }
                     </MenuGroup>

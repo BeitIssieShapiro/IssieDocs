@@ -7,9 +7,12 @@ import {
 } from 'react-native';
 import Search from './search.js'
 import SettingsMenu from './settings-ui'
+import Share from 'react-native-share';
 
 import FolderNew from './FolderNew';
 import FileNew from './FileNew'
+import * as RNFS from 'react-native-fs';
+
 import {
     registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage, gCurrentLang, getRowDirections,
 } from "./lang.js"
@@ -189,13 +192,17 @@ export default class FolderGallery extends React.Component {
             if (urlPos > 0) {
                 url = url.substr(urlPos + 4);
 
-                this.props.navigation.navigate('SavePhoto', {
-                    uri: decodeURI(url),
-                    imageSource: SRC_FILE,
-                    folder: this.state.currentFolder,
-                    returnFolderCallback: (f) => this.setReturnFolder(f),
-                    saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
-                })
+                if (url.endsWith(".zip")) {
+                    FileSystem.main.importWorhsheep(url).then((name)=>Alert.alert(fTranslate("ImportSuccessful", name)));
+                } else {
+                    this.props.navigation.navigate('SavePhoto', {
+                        uri: decodeURI(url),
+                        imageSource: SRC_FILE,
+                        folder: this.state.currentFolder,
+                        returnFolderCallback: (f) => this.setReturnFolder(f),
+                        saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
+                    })
+                }
             }
         }
     }
@@ -376,7 +383,7 @@ export default class FolderGallery extends React.Component {
     };
 
 
-    Share = () => {
+    ShareImgs = () => {
         if (!this.state.selected) return;
 
         this.props.navigation.navigate('EditPhoto',
@@ -385,6 +392,23 @@ export default class FolderGallery extends React.Component {
                 folder: this.state.currentFolder,
                 share: true,
             })
+    }
+
+    ShareIssieDocs = () => {
+        if (!this.state.selected) return;
+
+        FileSystem.main.exportWorksheet(this.state.selected).then(sheetArchivePath=>{
+            const shareOptions = {
+                title: translate("ShareWithTitle"),
+                subject: translate("ShareEmailSubject"),
+                urls: [sheetArchivePath],
+            };
+            Share.open(shareOptions).then(() => {
+                Alert.alert(translate("ShareSuccessful"));
+            }).catch(err => {
+                Alert.alert(translate("ActionCancelled"));
+            });
+        });
     }
 
     AddToPageFromCamera = (page) => {
@@ -802,7 +826,8 @@ export default class FolderGallery extends React.Component {
                         onDelete={() => this.DeletePage(this.state.selected)}
                         onRename={() => this.RenamePage(true)}
                         onMove={() => this.RenamePage(false)}
-                        onShare={() => this.Share()}
+                        onShare={() => this.ShareImgs()}
+                        onShareIssieDocs={() => this.ShareIssieDocs()}
                         onDuplicate={() => this.DuplicatePage()}
                         onAddFromCamera={() => this.AddToPageFromCamera(this.state.selected)}
                         onAddFromMediaLib={() => this.AddToPageFromMediaLib(this.state.selected)}

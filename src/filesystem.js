@@ -8,6 +8,8 @@ import mockPage from './mock.jpg'
 import { WorkSheet } from './work-sheet';
 import { trace, assert } from './log'
 import ImageResizer from 'react-native-image-resizer';
+import { unzip, zip } from 'react-native-zip-archive';
+import { TemporaryDirectoryPath } from 'react-native-fs'
 
 const THUMBNAIL_SUFFIX = ".thumbnail.jpg";
 
@@ -635,7 +637,7 @@ export class FileSystem {
     // size = {width, height}
     getStaticPageTempFile(pageType) {
         let tempFileName = FileSystem.getTempFileName("jpg");
-        return this._getStaticPage(tempFileName, pageType).then(()=>tempFileName);
+        return this._getStaticPage(tempFileName, pageType).then(() => tempFileName);
     }
 
     async cloneToTemp(uri) {
@@ -656,10 +658,120 @@ export class FileSystem {
         await downloadInfo.promise;
     }
 
+    static async fileExists(path) {
+        try {
+            await RNFS.stat(path);
+            //file exists, :
+            return true
+        } catch (e) {
+            return false;
+        }
+    }
+
+    async exportWorksheet(sheet) {
+        const name = sheet.name;
+        const pathObj = this._parsePath(sheet.defaultSrc);
+        const folder = this._getFolder(pathObj.folders[0]);
+
+        const folderMetaData = {
+            name: folder.name,
+            color: folder.color,
+            icon: folder.icon,
+        };
+
+
+        const files = [];
+        const containingFolderInfoFileName = FileSystem.getTempFileName("metadata");
+
+        files.push(containingFolderInfoFileName);
+
+        if (sheet.path.endsWith(".jpg")) {
+            files.push(sheet.defaultSrc);
+            const jsonFileName = sheet.defaultSrc + ".json";
+            if (await RNFS.exists(jsonFileName)) {
+                files.push(jsonFileName);
+            }
+        } else {
+            folderMetaData.subFolder = sheet.name;
+            const items = await RNFS.readDir(sheet.path);
+            for (let fi of items) {
+                files.push(fi.path);
+            }
+        }
+
+        // write metadata file
+        const mdStr = JSON.stringify(folderMetaData);
+        trace("add metadata file", mdStr)
+        await FileSystem.main.writeFile(containingFolderInfoFileName, mdStr);
+
+
+        return zip(files, (TemporaryDirectoryPath + name + ".zip"));
+    }
+
+    async importWorhsheep(zipPath) {
+        const targetPath = RNFS.TemporaryDirectoryPath + "imported";
+        // verify no files from last import:
+        try {
+            await RNFS.unlink(targetPath);
+        } catch (e) {
+            trace("delete folder failed", e)
+        }
+
+        return unzip(zipPath, targetPath).then(async (unzipPath) => {
+            const items = await RNFS.readDir(unzipPath);
+
+            let targetPath = this._basePath
+            let folderMetaData = {};
+
+            const metaDataItems = items.filter(f => f.name.endsWith(".metadata"));
+            if (metaDataItems?.length > 0) {
+                trace("read metadata", metaDataItems[0].path)
+
+                const folderMetadataStr = await RNFS.readFile(metaDataItems[0].path);
+                trace("metadata", folderMetadataStr.toString('utf8'))
+                folderMetaData = JSON.parse(folderMetadataStr.toString('utf8'));
+                // check if folder exists already - if yes, ignore metadata. if not, create it:
+                const folder = this._getFolder(folderMetaData.name);
+                if (!folder) {
+                    await this.addFolder(folderMetaData.name, folderMetaData.icon, folderMetaData.color);
+                }
+                targetPath += folderMetaData.name + "/";
+            } else {
+                targetPath += FileSystem.DEFAULT_FOLDER.name + "/";
+            }
+            if (folderMetaData.subFolder) {
+                targetPath += folderMetaData.subFolder + "/";
+                try {
+                    await RNFS.mkdir(targetPath);
+                } catch (e) {
+                    // ignore if already exist
+                }
+            }
+
+            // copy all other files
+            const filesItems = items.filter(f => !f.name.endsWith(".metadata"));
+            for (let fi of filesItems) {
+                try {
+                    await RNFS.moveFile(fi.path, targetPath + fi.name);
+                } catch (e) {
+                    trace("error copy file", e, fi.path, targetPath);
+                }
+            }
+            this._notify();
+
+            // extract zip name:
+            const lastSlash = zipPath.lastIndexOf("/");
+            const name = zipPath.substr(lastSlash + 1, zipPath.length - lastSlash - 4);
+
+            return name;
+        });
+
+    }
+
     async _fileExists(path) {
         try {
             await RNFS.stat(path);
-            //file exists, try increment index:
+            //file exists:
             return true
         } catch (e) {
             return false;
