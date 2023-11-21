@@ -757,11 +757,13 @@ export class FileSystem {
                     trace("error copy file", e, fi.path, targetPath);
                 }
             }
+            const folder = this._getFolder(folderMetaData.name);
+            await folder.reload()
             this._notify();
 
             // extract zip name:
             const lastSlash = zipPath.lastIndexOf("/");
-            const name = zipPath.substr(lastSlash + 1, zipPath.length - lastSlash - 4);
+            const name = zipPath.substr(lastSlash + 1, zipPath.length - lastSlash - 5);
 
             return name;
         });

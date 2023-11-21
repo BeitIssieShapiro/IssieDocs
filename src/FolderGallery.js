@@ -80,7 +80,8 @@ export default class FolderGallery extends React.Component {
             folderColor: (getUseColorSetting() === USE_COLOR.yes),
             loading: true,
             startTime: new Date(),
-            sortBy: SORT_BY_NAME
+            sortBy: SORT_BY_NAME,
+            reload: 0,
         }
 
         // this._panResponder = PanResponder.create({
@@ -137,7 +138,7 @@ export default class FolderGallery extends React.Component {
             FileSystem.main.registerListener(async () => {
                 let folders = await FileSystem.main.getFolders();
 
-                this.setState({ folders });
+                this.setState({ folders, reload: this.state.reload+1 });
             });
 
             //trace("beta", betaSettings)
@@ -826,7 +827,7 @@ export default class FolderGallery extends React.Component {
                         onDelete={() => this.DeletePage(this.state.selected)}
                         onRename={() => this.RenamePage(true)}
                         onMove={() => this.RenamePage(false)}
-                        onShare={() => this.ShareImgs()}
+                        onShareImgs={() => this.ShareImgs()}
                         onShareIssieDocs={() => this.ShareIssieDocs()}
                         onDuplicate={() => this.DuplicatePage()}
                         onAddFromCamera={() => this.AddToPageFromCamera(this.state.selected)}
