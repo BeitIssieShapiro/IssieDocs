@@ -16,7 +16,7 @@ import { DraxScrollView } from 'react-native-drax';
 export const Icon = IconLocal;
 
 export const dimensions = {
-    headerHeight: 75,
+    headerHeight: 38,
     thinHeaderHeight: 52,
     toolbarHeight: 65,
     toolbarMargin: 5,

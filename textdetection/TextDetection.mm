@@ -1,5 +1,6 @@
 #import "TextDetection.h"
 
+#import <Vision/Vision.h>
 
 #undef NO
 #undef YES
@@ -31,141 +32,315 @@ struct Paragraph {
 
 @implementation TextDetection
 
-- (NSArray *)detectTexts:(NSString *)filePath language:(NSString *)language confidenceThreshold:(NSNumber *)threshold {
- 
-    // Convert NSString to std::string
-    std::string path = [filePath UTF8String];
-    
-    // Load the image
-    cv::Mat image = cv::imread(path);
+- (void) detectTexts:(NSString *)filePath language:(NSString *)language confidenceThreshold:(NSNumber *)threshold callback:(RCTResponseSenderBlock)callback {
   
-    int newWidth = (int)(image.cols / 32) * 32;
-    int newHeight = (int)(image.rows / 32) * 32;
+  NSURL *imageURL = [NSURL fileURLWithPath:filePath];
+  CIImage * image = getImage(imageURL);
   
-    cv::Point2f ratio((float)image.cols / newWidth, (float)image.rows / newHeight);
-
-    //cv::resize(image, image, cv::Size(newWidth, newHeight));
   
-//    image.convertTo(image, CV_32FC3, 1 / 255.0);  // Convert the image from uint8 to float32 and scale values from 0-255 to 0-1
-//    image = (image - 0.5) * 2;  // Shift from range 0-1 to -1 to 1
-
-    // Load pre-trained EAST model
-    NSString *modelPathNSTR = [[NSBundle mainBundle] pathForResource:@"tessdata/frozen_east_text_detection" ofType:@"pb"];
-    std::string modelPath = [modelPathNSTR cStringUsingEncoding:NSASCIIStringEncoding];
+  CGSize imageSize = image.extent.size;
   
-    cv::dnn::Net net = cv::dnn::readNet(modelPath);
-    
-    // Blob from the image
-    cv::Mat blob = cv::dnn::blobFromImage(image, 1.0, cv::Size(newWidth, newHeight), cv::Scalar(123.68, 116.78, 103.94), true, false);
-    net.setInput(blob);
-    
-    // Forward pass
-    std::vector<cv::Mat> output;
-    std::vector<std::string> outNames(2);
-    outNames[0] = "feature_fusion/Conv_7/Sigmoid";
-    outNames[1] = "feature_fusion/concat_3";
-    net.forward(output, outNames);
-
+  VNImageRequestHandler *handler = [[VNImageRequestHandler alloc] initWithCIImage:image options:@{}];
   
-    cv::Mat scores = output[0];
-    cv::Mat geometry = output[1];
-    float confThreshold = 0.5;
-    float nmsThreshold = 0.5;
-    
-    // Decode predicted bounding boxes.
-    std::vector<cv::RotatedRect> boxes;
-    std::vector<float> confidences;
-    decodeBoundingBoxes(scores, geometry, confThreshold, boxes, confidences);
-    
-    std::vector<int> indices;
-    cv::dnn::NMSBoxes(boxes, confidences, confThreshold, nmsThreshold, indices);
-
-  
-    std::vector<Word> words;
-
-    //for debug:
-    cv::Mat debugMat;
-    bool first = true;
-  
-    // For each text box detected by EAST
-    for (size_t i = 0; i < indices.size(); ++i)
-    {
-      cv::RotatedRect& box = boxes[indices[i]];
+  VNRecognizeTextRequest *request = [[VNRecognizeTextRequest alloc] initWithCompletionHandler:^(VNRequest * _Nonnull request, NSError * _Nullable error) {
+    if (error) {
+      NSLog(@"Error: %@", error);
+    } else {
+      NSMutableArray *boundingBoxes = [[NSMutableArray alloc] init];
       
-      box = expandRotatedRect(box, 2);
+      cv::Mat cvImage;
+      //for debug:
+      cv::Mat debugMat;
+      bool isFirst = true;
+      bool useTesserct = ![language isEqualToString:@"eng"];
       
-      cv::Point2f vertices[4];
-      box.points(vertices);
-      for (int j = 0; j < 4; ++j)
-      {
-        vertices[j].x *= ratio.x;
-        vertices[j].y *= ratio.y;
-      }
-
-      cv::Mat cropped;
-      fourPointsTransform(image, vertices, cropped);
-      cv::Mat forOCR = prepareImageForOCR(cropped);
-
-      int borderSize = 20;
-      cv::copyMakeBorder(forOCR, forOCR, borderSize, borderSize, borderSize, borderSize, cv::BORDER_CONSTANT, cv::Scalar(255,255,255));
-      
-      cv::Mat forOCR_resized;
-      cv::resize(forOCR, forOCR_resized, cv::Size(250,80));
-#ifdef DEBUG
-
-      if (first) {
-        first = false;
-        debugMat = forOCR_resized;
-      } else {
-        cv::Mat tempMat;
-        cv::vconcat(debugMat, forOCR_resized, tempMat);  // Concatenate vertically.
-        
-        debugMat = tempMat;
-      }
-#endif
-      NSString *dataPathNSTR = [[NSBundle mainBundle] pathForResource:@"tessdata" ofType:nil];
-      std::string dataPath = [dataPathNSTR cStringUsingEncoding:NSASCIIStringEncoding];
-    
-      std::string lang = [language cStringUsingEncoding:NSASCIIStringEncoding];
-
-      NSString *text = performOCROnCVImage(forOCR, dataPath, lang);
-      if (text != nil && [text length] > 0) {
-        text = [text stringByReplacingOccurrencesOfString:@"\n" withString:@""];
-        text = [text stringByReplacingOccurrencesOfString:@"|" withString:@""];
-        text = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-      } else {
-        text = @"";
+      if (useTesserct) {
+        std::string path = [filePath UTF8String];
+        cvImage = cv::imread(path);
       }
       
-      cv::Rect boundingRect = box.boundingRect();
-      words.push_back(Word([text UTF8String] , boundingRect));
+      for (VNRecognizedTextObservation *observation in request.results) {
+        VNRecognizedText *topCandidate = [[observation topCandidates:1] firstObject];
+        if (topCandidate) {
+          NSLog(@"Found text: %@", topCandidate.string);
+          NSLog(@"Confidence: %f", topCandidate.confidence);
+          NSLog(@"Bounding box: %@", NSStringFromCGRect(observation.boundingBox));
+          
+          NSString *text = topCandidate.string;
+          CGRect boundingBox = observation.boundingBox;
+          CGRect rect = CGRectMake(boundingBox.origin.x * imageSize.width,(1 - (boundingBox.origin.y + boundingBox.size.height)) * imageSize.height,boundingBox.size.width * imageSize.width,boundingBox.size.height * imageSize.height);
+          if (useTesserct) {
+            text = getTesseractText(cvImage, rect, language, debugMat, isFirst);
+            isFirst = false;
+          }
+          
+          NSMutableDictionary *elem = [NSMutableDictionary dictionary];
+          [elem setObject:@{
+            @"x": @(rect.origin.x),
+            @"y": @(rect.origin.y),
+            @"width": @(rect.size.width),
+            @"height": @(rect.size.height)
+          } forKey:@"rect"];
+          
+          [elem setObject:text forKey:@"text"];
+          
+          [boundingBoxes addObject:elem];
+          
+          
+        }
+      }
+      
+      #ifdef DEBUG
+      if (useTesserct && !isFirst) {
+        cv::imwrite("/tmp/debug.png", debugMat);
+      }
+      #endif
+      // Return the bounding boxes
+      callback(@[boundingBoxes]);
     }
-#ifdef DEBUG
-    cv::imwrite("/tmp/debug.png", debugMat);
-#endif
+    
+  }];
+  
+  //request.recognitionLevel = VNRequestTrackingLevelAccurate;  // Use accurate for more precise results, but it's slower.
+  request.usesLanguageCorrection = (BOOL)0;  // You may want to set this to false to avoid modifying the recognized text.
+  request.recognitionLanguages = @[ @"he"];
+  
+  NSError *performError = nil;
+  [handler performRequests:@[request] error:&performError];
+  if (performError) {
+    NSLog(@"Failed to perform text recognition: %@", performError);
+  }
+}
+  
+CIImage * getImage(NSURL * imageURL) {
+  CGImageSourceRef source = CGImageSourceCreateWithURL((CFURLRef)imageURL, NULL);
+  NSDictionary *metadata = (__bridge NSDictionary *) CGImageSourceCopyPropertiesAtIndex(source, 0, NULL);
+  CFRelease(source);
+  
+  NSDictionary *tiffDict = [metadata objectForKey:(NSString *)kCGImagePropertyTIFFDictionary];
+  int orientationValue = [[tiffDict objectForKey:(NSString *)kCGImagePropertyOrientation] intValue];
+  
+  
+  // rotate if needed
+  // Create the rotation transform. The argument is in radians.
+  CGFloat angleInRadians;
+  
+  switch (orientationValue) {
+    case 1:
+      angleInRadians = 0.0;
+      break;
+    case 3:
+      angleInRadians  = 180.0;
+      break;
+    case 6:
+      angleInRadians = -90.0;
+      break;
+    case 8:
+      angleInRadians = 90.0;
+      break;
+    default:
+      angleInRadians = 0.0;
+      break;
+  }
+  
+  angleInRadians = angleInRadians * (M_PI / 180);
+  CIImage *image = [CIImage imageWithContentsOfURL:imageURL];
+  
+  if (angleInRadians != 0) {
+    CGAffineTransform rotation = CGAffineTransformMakeRotation(angleInRadians);
+    
+    // Create the filter and apply it.
+    CIFilter *affineTransformFilter = [CIFilter filterWithName:@"CIAffineTransform"];
+    [affineTransformFilter setValue:image forKey:kCIInputImageKey];
+    [affineTransformFilter setValue:[NSValue valueWithBytes:&rotation objCType:@encode(CGAffineTransform)] forKey:@"inputTransform"];
+    
+    image = [affineTransformFilter outputImage];
+  }
+  
+  return image;
+}
+
+ 
+  
+  
+NSString * getTesseractText(cv::Mat cvImage, CGRect rect, NSString *language, cv::Mat &debugMat, bool first) {
   
 
-  // Group words into paragraphs
-  bool rtl = ![language isEqualToString:@"eng"]; // Set this to true for right-to-left text
-  std::vector<Paragraph> paragraphs = groupWordsIntoParagraphs(words, rtl);
+  cv::Rect cvRect(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
 
-  // Convert back to your desired NSDictionary structure
-  NSMutableArray *groupedResults = [NSMutableArray array];
-  for (const Paragraph &paragraph : paragraphs) {
-      NSMutableDictionary *paragraphDict = [NSMutableDictionary dictionary];
-      [paragraphDict setObject:@{
-          @"x": @(paragraph.rect.x * ratio.x),
-          @"y": @(paragraph.rect.y * ratio.y),
-          @"width": @(paragraph.rect.width * ratio.x),
-          @"height": @(paragraph.rect.height * ratio.y)
-      } forKey:@"rect"];
+  // Crop the image
+  cv::Mat cropped = cvImage(cvRect);
+//  fourPointsTransform(cvImage, vertices, cropped);
+  cv::Mat forOCR = prepareImageForOCR(cropped);
+  
+  int borderSize = 20;
+  cv::copyMakeBorder(forOCR, forOCR, borderSize, borderSize, borderSize, borderSize, cv::BORDER_CONSTANT, cv::Scalar(255,255,255));
+  
+  cv::Mat forOCR_resized;
+  cv::resize(forOCR, forOCR_resized, cv::Size(250,80));
+#ifdef DEBUG
+  
+  if (first) {
+    first = false;
+    debugMat = forOCR_resized;
+  } else {
+    cv::Mat tempMat;
+    cv::vconcat(debugMat, forOCR_resized, tempMat);  // Concatenate vertically.
 
-      [paragraphDict setObject:[NSString stringWithUTF8String:paragraph.text.c_str()] forKey:@"text"];
-
-      [groupedResults addObject:paragraphDict];
+    debugMat = tempMat;
   }
-  return groupedResults;
+#endif
+  NSString *dataPathNSTR = [[NSBundle mainBundle] pathForResource:@"tessdata" ofType:nil];
+  std::string dataPath = [dataPathNSTR cStringUsingEncoding:NSASCIIStringEncoding];
+  
+  std::string lang = [language cStringUsingEncoding:NSASCIIStringEncoding];
+  
+  NSString *text = performOCROnCVImage(forOCR, dataPath, lang);
+  if (text != nil && [text length] > 0) {
+    text = [text stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+    text = [text stringByReplacingOccurrencesOfString:@"|" withString:@""];
+    text = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+  } else {
+    text = @"";
+  }
+  return text;
 }
+  
+  
+  //------------//
+//    // Convert NSString to std::string
+//    std::string path = [filePath UTF8String];
+//
+//    // Load the image
+//    cv::Mat image = cv::imread(path);
+//
+//    int newWidth = (int)(image.cols / 32) * 32;
+//    int newHeight = (int)(image.rows / 32) * 32;
+//
+//    cv::Point2f ratio((float)image.cols / newWidth, (float)image.rows / newHeight);
+//
+//    //cv::resize(image, image, cv::Size(newWidth, newHeight));
+//
+////    image.convertTo(image, CV_32FC3, 1 / 255.0);  // Convert the image from uint8 to float32 and scale values from 0-255 to 0-1
+////    image = (image - 0.5) * 2;  // Shift from range 0-1 to -1 to 1
+//
+//    // Load pre-trained EAST model
+//    NSString *modelPathNSTR = [[NSBundle mainBundle] pathForResource:@"tessdata/frozen_east_text_detection" ofType:@"pb"];
+//    std::string modelPath = [modelPathNSTR cStringUsingEncoding:NSASCIIStringEncoding];
+//
+//    cv::dnn::Net net = cv::dnn::readNet(modelPath);
+//
+//    // Blob from the image
+//    cv::Mat blob = cv::dnn::blobFromImage(image, 1.0, cv::Size(newWidth, newHeight), cv::Scalar(123.68, 116.78, 103.94), true, false);
+//    net.setInput(blob);
+//
+//    // Forward pass
+//    std::vector<cv::Mat> output;
+//    std::vector<std::string> outNames(2);
+//    outNames[0] = "feature_fusion/Conv_7/Sigmoid";
+//    outNames[1] = "feature_fusion/concat_3";
+//    net.forward(output, outNames);
+//
+//
+//    cv::Mat scores = output[0];
+//    cv::Mat geometry = output[1];
+//    float confThreshold = 0.5;
+//    float nmsThreshold = 0.5;
+//
+//    // Decode predicted bounding boxes.
+//    std::vector<cv::RotatedRect> boxes;
+//    std::vector<float> confidences;
+//    decodeBoundingBoxes(scores, geometry, confThreshold, boxes, confidences);
+//
+//    std::vector<int> indices;
+//    cv::dnn::NMSBoxes(boxes, confidences, confThreshold, nmsThreshold, indices);
+//
+//
+//    std::vector<Word> words;
+//
+//    //for debug:
+//    cv::Mat debugMat;
+//    bool first = true;
+//
+//    // For each text box detected by EAST
+//    for (size_t i = 0; i < indices.size(); ++i)
+//    {
+//      cv::RotatedRect& box = boxes[indices[i]];
+//
+//      box = expandRotatedRect(box, 2);
+//
+//      cv::Point2f vertices[4];
+//      box.points(vertices);
+//      for (int j = 0; j < 4; ++j)
+//      {
+//        vertices[j].x *= ratio.x;
+//        vertices[j].y *= ratio.y;
+//      }
+//
+//      cv::Mat cropped;
+//      fourPointsTransform(image, vertices, cropped);
+//      cv::Mat forOCR = prepareImageForOCR(cropped);
+//
+//      int borderSize = 20;
+//      cv::copyMakeBorder(forOCR, forOCR, borderSize, borderSize, borderSize, borderSize, cv::BORDER_CONSTANT, cv::Scalar(255,255,255));
+//
+//      cv::Mat forOCR_resized;
+//      cv::resize(forOCR, forOCR_resized, cv::Size(250,80));
+//#ifdef DEBUG
+//
+//      if (first) {
+//        first = false;
+//        debugMat = forOCR_resized;
+//      } else {
+//        cv::Mat tempMat;
+//        cv::vconcat(debugMat, forOCR_resized, tempMat);  // Concatenate vertically.
+//
+//        debugMat = tempMat;
+//      }
+//#endif
+//      NSString *dataPathNSTR = [[NSBundle mainBundle] pathForResource:@"tessdata" ofType:nil];
+//      std::string dataPath = [dataPathNSTR cStringUsingEncoding:NSASCIIStringEncoding];
+//
+//      std::string lang = [language cStringUsingEncoding:NSASCIIStringEncoding];
+//
+//      NSString *text = performOCROnCVImage(forOCR, dataPath, lang);
+//      if (text != nil && [text length] > 0) {
+//        text = [text stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+//        text = [text stringByReplacingOccurrencesOfString:@"|" withString:@""];
+//        text = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+//      } else {
+//        text = @"";
+//      }
+//
+//      cv::Rect boundingRect = box.boundingRect();
+//      words.push_back(Word([text UTF8String] , boundingRect));
+//    }
+//#ifdef DEBUG
+//    cv::imwrite("/tmp/debug.png", debugMat);
+//#endif
+//
+//
+//  // Group words into paragraphs
+//  bool rtl = ![language isEqualToString:@"eng"]; // Set this to true for right-to-left text
+//  std::vector<Paragraph> paragraphs = groupWordsIntoParagraphs(words, rtl);
+//
+//  // Convert back to your desired NSDictionary structure
+//  NSMutableArray *groupedResults = [NSMutableArray array];
+//  for (const Paragraph &paragraph : paragraphs) {
+//      NSMutableDictionary *paragraphDict = [NSMutableDictionary dictionary];
+//      [paragraphDict setObject:@{
+//          @"x": @(paragraph.rect.x * ratio.x),
+//          @"y": @(paragraph.rect.y * ratio.y),
+//          @"width": @(paragraph.rect.width * ratio.x),
+//          @"height": @(paragraph.rect.height * ratio.y)
+//      } forKey:@"rect"];
+//
+//      [paragraphDict setObject:[NSString stringWithUTF8String:paragraph.text.c_str()] forKey:@"text"];
+//
+//      [groupedResults addObject:paragraphDict];
+//  }
+//  return groupedResults;
+//}
 
 bool isWordInSameLineAs(Word word, Word otherWord) {
     float verticalDistance = std::abs(word.rect.y + word.rect.height / 2.0 - (otherWord.rect.y + otherWord.rect.height / 2.0));
@@ -367,7 +542,7 @@ NSString * performOCROnCVImage(cv::Mat &cvImage, std::string dataPath, std::stri
     // Set the language for OCR
     TessBaseAPIInit2(tesseract, dataPath.data(), lang.data(), tesseract::OEM_LSTM_ONLY);
 
-    TessBaseAPISetPageSegMode(tesseract, tesseract::PSM_SINGLE_WORD);
+    TessBaseAPISetPageSegMode(tesseract, tesseract::PSM_SINGLE_LINE);
 
     TessBaseAPISetImage(tesseract, (uchar*)cvImage.data, cvImage.size().width, cvImage.size().height, cvImage.channels(), cvImage.step1());
   

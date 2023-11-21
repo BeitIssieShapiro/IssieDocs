@@ -19,7 +19,7 @@ export function SvgIcon({ name, width, height, color, strokeWidth, size }) {
                 </G>
             </Svg>
         case 'menu-new-empty-page':
-            return (<Svg viewBox="-0.5 -0.5 85 94" {...props} stroke={color}>
+            return (<Svg viewBox="-0.5 -0.5 85 94" {...props} stroke={color} >
                 <G strokeWidth="7">
                     <Path d="M 72 90 L 72 35" />
                     <Path d="M 31 15 L 52 15" />
@@ -28,12 +28,12 @@ export function SvgIcon({ name, width, height, color, strokeWidth, size }) {
                     <Path d="M 2 46 L 32 15" />
                     <Path d="M 3 45 L 33 45" />
                     <Path d="M 32 15 L 32 45" />
-                    <Path d="M 72 28 L 72 2" strokeWidth="9" />
+                    <Path d="M 72 28 L 72 2" strokeWidth="9"/>
                     <Path d="M 60 15 L 84 15" strokeWidth="9" />
                 </G></Svg>);
         case 'page-empty':
             return (<Svg viewBox="-0.5 -0.5 83 103" {...props}>
-                <G>
+                <G fill="none">
                     <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" stroke={color} strokeWidth="5" />
                     <Path d="M 51 1 L 51 31 L 81 31 Z" />
                     <Path d="M 51 1 L 51 31 L 81 31" stroke={color} strokeWidth="5" />
@@ -41,7 +41,7 @@ export function SvgIcon({ name, width, height, color, strokeWidth, size }) {
             </Svg>);
         case 'page-lines':
             return (<Svg viewBox="-0.5 -0.5 83 103" {...props}>
-                <G>
+                <G  fill="none">
                     <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" stroke={color} strokeWidth="5" />
                     <Path d="M 51 1 L 51 31 L 81 31 Z" />
                     <Path d="M 51 1 L 51 31 L 81 31" fill="none" stroke={color} strokeWidth="5" />
@@ -56,7 +56,7 @@ export function SvgIcon({ name, width, height, color, strokeWidth, size }) {
                 </G></Svg>);
         case 'page-math':
             return (<Svg viewBox="-0.5 -0.5 83 104" {...props}>
-                <G stroke={color} strokeWidth="2" >
+                <G stroke={color} strokeWidth="2"  fill="none">
                     <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" strokeWidth="5" />
                     <Path d="M 51 1 L 51 31 L 81 31 Z" strokeWidth="5" />
                     <Path d="M 51 1 L 51 31 L 81 31" strokeWidth="5" />
@@ -84,7 +84,7 @@ export function SvgIcon({ name, width, height, color, strokeWidth, size }) {
                 <G stroke={color}>
                     <Path d="M 8 8 L 8 37.9" strokeWidth="3" />
                     <Path d="M 8 44.65 L 3.5 35.65 L 8 37.9 L 12.5 35.65 Z" strokeWidth="3" fill={color} />
-                    <Ellipse cx="28" cy="28" rx="10" ry="10" strokeWidth="3" />
+                    <Ellipse cx="28" cy="28" rx="10" ry="10" strokeWidth="3" fill="none"/>
                     <Path d="M 28 29 L 28 20" strokeWidth="2" />
                     <Path d="M 20 28 L 29 28" strokeWidth="2" />
                 </G>

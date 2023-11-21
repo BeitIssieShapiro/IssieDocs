@@ -31,14 +31,15 @@ const availableMarkerSize = [
 
 const pickerMenuHeight = 70;
 
-const ButtonSpacer = () => (<Spacer key={16} width={23} />);
+const ButtonSpacer = (props) => (<Spacer key={16} width={props.width || 23} />);
+
 function spread(btns) {
     return (<Fragment>
         <ButtonSpacer />
-        {btns.map((item,i) => (
+        {btns.map((item, i) => (
             <Fragment key={i}>
                 {item}
-                <ButtonSpacer />
+                <ButtonSpacer width={isScreenNarrow()?15:23}/>
             </Fragment>
         ))}
     </Fragment>);
@@ -150,7 +151,10 @@ function EditorToolbar({
 
     useEffect(() => {
         setToolbarHeight(
-            (isScreenNarrow() || showExtMenu) ? 2 * dimensions.toolbarHeight : dimensions.toolbarHeight
+            isScreenNarrow() ? (showExtMenu ? 3 : 2) * dimensions.toolbarHeight
+                : (
+                    showExtMenu ? 2 * dimensions.toolbarHeight : dimensions.toolbarHeight
+                )
         )
     }, [showExtMenu, windowSize])
 
@@ -202,11 +206,11 @@ function EditorToolbar({
                     onImageMode();
                 }
                 break;
-            case Pickers.VOICE: 
+            case Pickers.VOICE:
                 if (!isVoiceMode) {
                     onVoiceMode();
                 }
-            break;
+                break;
         }
     }, [isVoiceMode, isTextMode, isBrushMode, isTableMode, isImageMode, isMarkerMode, showPickerType, showPicker]);
 
@@ -317,7 +321,7 @@ function EditorToolbar({
 
 
             { /* text size preview */}
-            <View style={[{
+            <View style={{
                 position: 'absolute',
                 top: 0,
                 width: 120,
@@ -326,7 +330,8 @@ function EditorToolbar({
                 justifyContent: 'center',
                 alignItems: 'center',
                 alignContent: 'center',
-            }, rtl ? { left: isScreenNarrow() ? 0 : previewOffset } : { left: isScreenNarrow() ? 0 : previewOffset }]} >
+                right: isScreenNarrow() ? 0 : previewOffset
+            }} >
                 {
                     isTextMode ?
                         <View
@@ -386,7 +391,7 @@ function EditorToolbar({
             position: 'absolute',
             height: dimensions.toolbarHeight,
             flexDirection: 'row', alignItems: 'center',
-            top: dimensions.toolbarHeight, left: 0
+            top: (isScreenNarrow()?2:1) * dimensions.toolbarHeight, left: 0
         }} >
             {spread(extMenu)}
         </View>}

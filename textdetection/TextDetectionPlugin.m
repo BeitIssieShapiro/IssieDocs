@@ -11,13 +11,14 @@ RCT_EXPORT_METHOD(
                   )
 {
     TextDetection *textDetection = [[TextDetection alloc] init];
-    NSArray *results = [textDetection detectTexts:filePath language:language confidenceThreshold:threshold];
-    if (results.count > 0) {
-        callback(@[results]);
-    } else {
-      callback(@[@[]]);
-
-    }
+  //  NSArray *results =
+  [textDetection detectTexts:filePath language:language confidenceThreshold:threshold callback:(RCTResponseSenderBlock)callback];
+//    if (results.count > 0) {
+//        callback(@[results]);
+//    } else {
+//      callback(@[@[]]);
+//
+//    }
 }
 
 @end

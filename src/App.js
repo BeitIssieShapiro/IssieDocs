@@ -16,7 +16,7 @@ import {
   Colors,
 } from 'react-native/Libraries/NewAppScreen';
 
- import IssieSavePhoto from './IssieSavePhoto'
+import IssieSavePhoto from './IssieSavePhoto'
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
@@ -24,9 +24,9 @@ import FolderGallery from './FolderGallery';
 import IssieEditPhoto from './IssieEditPhoto';
 import IssieAbout from './issieabout'
 import IssieCreateFolder from './create-folder';
-import { Spacer, globalStyles, getHeaderBackButton, getIconButton, getFont, getFontFamily, dimensions, MoreButton } from './elements';
+import { Spacer, globalStyles, getHeaderBackButton, getIconButton, getFont, getFontFamily, dimensions, MoreButton, semanticColors } from './elements';
 
-import { fTranslate, getRowDirection, getRowDirections, isRTL, translate } from './lang.js';
+import { fTranslate, getRowDirection, getRowDirections, getRowReverseDirection, isRTL, translate } from './lang.js';
 import {
   View, LogBox, Alert,
   TouchableOpacity, Settings, useWindowDimensions, Text
@@ -44,6 +44,8 @@ import CameraModal from './CameraOverlay';
 import { SvgIcon } from './svg-icons';
 import FlashMessage from "react-native-flash-message";
 import { OpenLink } from './parental-gate';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TopHeader } from './header';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -99,11 +101,10 @@ const App = (props) => {
   return (
     <MenuProvider>
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ gestureEnabled: false }}>
+        <Stack.Navigator screenOptions={{ gestureEnabled: false, headerShown: true }}>
           <Stack.Screen name="Home" component={FolderGallery}
             options={
               (props) => {
-                let menuIcon = 'settings';
                 let editMode = props.route.params && props.route.params.editMode || false;
                 let titleSetting = Settings.get('appTitle');
                 if (titleSetting === undefined) {
@@ -117,165 +118,126 @@ const App = (props) => {
 
                 let title = titleSetting;
                 let titleSavedCallback = { getTitleToSave: undefined };
-                const headerNav = props.route.params && props.route.params.showHome ? () => getHeaderBackButton(props.route.params.showHome) : undefined;
-                const HeaderButtons = (() =>
-                  <View style={{ flexDirection: 'row-reverse' }}>
-                    {isScreenNarrow() ? null : <Spacer />}
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        execNavParam(props.route, "menuHandler", "");
-                        //execNavParam(props.route, "betaFeatures", "");
-                      }
-                      }
-                    >
-                      <View style={{ flexDirection: getRowDirection() }}>
-                        {
-                          props.route && props.route.params ?
-                            getIconButton(() => {
+                const header = (() => <TopHeader
+                  actions={<View style={{ width: "100%", flexDirection: getRowDirection(), justifyContent: "flex-end" }}>
+                    {
+                      props.route && props.route.params ?
+                        getIconButton(() => {
 
-                              if (execNavParam(props.route, "isEditEnabled")) {
-                                if (editMode && titleSavedCallback.getTitleToSave) {
-                                  let newTitle = titleSavedCallback.getTitleToSave();
-                                  Settings.set({ appTitle: newTitle });
-                                  //props.navigation.setParams({ saveTitle: true }); //to cause refresh
-                                }
-                                execNavParam(props.route, "editHandler", "");
-                              }
+                          if (execNavParam(props.route, "isEditEnabled")) {
+                            if (editMode && titleSavedCallback.getTitleToSave) {
+                              let newTitle = titleSavedCallback.getTitleToSave();
+                              Settings.set({ appTitle: newTitle });
+                              //props.navigation.setParams({ saveTitle: true }); //to cause refresh
+                            }
+                            execNavParam(props.route, "editHandler", "");
+                          }
 
-                            }, execNavParam(props.route, "isEditEnabled", false) ? 'white' : 'gray', getNavParam(props.route, "editMode", false) ? "check" : "edit", 35) : null
-                        }
-                        {isScreenNarrow() ? null : <Spacer />}
-                        <Icon name={menuIcon} color='white' size={35} />
+                        }, execNavParam(props.route, "isEditEnabled", false) ? 'white' : 'gray', getNavParam(props.route, "editMode", false) ? "check" : "edit", 35) : null
+                    }
+                    {!isScreenNarrow() && <Spacer />}
+                    <Icon name="settings" color='white' size={35} onPress={() => execNavParam(props.route, "menuHandler", "")}
+                    />
 
-                      </View>
-                    </TouchableOpacity>
-                  </View>)
+                  </View>
+                  }
+                  title={<TitleEdit
+                    title={title}
+                    editMode={getNavParam(props.route, "editMode", false) && editTitleSetting == EDIT_TITLE.yes}
+                    onSaveCallback={titleSavedCallback}
+                  />}
+                  nav={props.route.params?.showHome && getHeaderBackButton(props.route.params.showHome)}
+                />
+                )
                 return {
-                  headerTitle: () =>
-                    <TitleEdit
-                      title={title}
-                      editMode={getNavParam(props.route, "editMode", false) && editTitleSetting == EDIT_TITLE.yes}
-                      onSaveCallback={titleSavedCallback}
-                    />,
-                  headerStyle: globalStyles.headerStyle,
-                  headerTintColor: 'white',
-                  headerTitleStyle: [globalStyles.headerTitleStyle, getFontFamily()],
-                  headerRight: isRTL() ? HeaderButtons : headerNav,
-                  headerLeft: isRTL() ? headerNav : HeaderButtons,
-                };
-
+                  header
+                }
               }
             }
-
           />
+
           <Stack.Screen name="SavePhoto" component={IssieSavePhoto}
             options={(props) => {
               let title = props.route.params.title || translate("SavePageFormTitle");
-              return {
-                title: title,
-                headerStyle: globalStyles.headerStyle,
-                headerTintColor: 'white',
-                headerTitleStyle: [globalStyles.headerTitleStyle, getFontFamily()],
-                headerLeft: null //()=>getHeaderBackButton(props.navigation)
-              }
-            }
-            }
+              const header = () => <TopHeader titleText={title} />
+              return { header };
+            }}
           />
+
           <Stack.Screen name="EditPhoto" component={IssieEditPhoto}
             initialParams={{ headerHeight: isMobile() ? dimensions.headerHeight : dimensions.thinHeaderHeight }}
             options={(props) => {
               const page = props.route.params.page;
-              //let pathParts = page.path.split('/');
-              //let isPageOnHome = pathParts[pathParts.length - 2] == DEFAULT_FOLDER_NAME;
-
               let fileName = page.name;
-
               let multiPageTitleAddition = props.route.params.pageTitleAddition || "";
-              const headerNav = () => (<View style={{ flex: 1, flexDirection: getRowDirection() }}>
-                <TouchableOpacity onPress={() => {
-                  props.route.params.goHome ? props.route.params.goHome() : {}
-                }}
-                  activeOpacity={1}
-                  style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <SvgIcon name='home' color='white' size={30} />
-                </TouchableOpacity>
-                <Spacer />
-                <MoreButton 
-                size={30} color={"white"} 
-                 onPress={() => {
-                  props.route.params.onMoreMenu ? props.route.params.onMoreMenu() : {}
-                }} />
-              </View>);
-              const headerName = () => <Text style={[globalStyles.headerThinTitleStyle, getFontFamily()]}>{fileName + multiPageTitleAddition}</Text>
 
-              return {
-                title: "",//fileName + multiPageTitleAddition,
-                headerLayoutPreset: 'right',
-                headerStyle: isMobile() ? globalStyles.headerStyle : globalStyles.headerThinStyle,
-                headerTintColor: 'white',
-                headerTitleStyle: [globalStyles.headerThinTitleStyle, getFontFamily()],
-                headerRight: isRTL() ? headerName : headerNav,
-                headerLeft: isRTL() ? headerNav : headerName
-              }
+              const header = () => <TopHeader
+                actions={<View />}
+                titleText={fileName + multiPageTitleAddition}
+                nav={<View style={{ flex: 1, flexDirection: getRowDirection() }}>
+                  <TouchableOpacity onPress={() => {
+                    props.route.params.goHome ? props.route.params.goHome() : {}
+                  }}
+                    activeOpacity={1}
+                    style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <SvgIcon name='home' color='white' size={30} />
+                  </TouchableOpacity>
+                  <Spacer />
+                  <MoreButton
+                    size={30} color={"white"}
+                    onPress={() => {
+                      props.route.params.onMoreMenu ? props.route.params.onMoreMenu() : {}
+                    }} />
+                </View>} />
+
+              return { header };
             }
             }
-
           />
           <Stack.Screen name="About" component={IssieAbout}
             options={(props) => {
-              return {
-                title: translate("About"),
-                headerStyle: globalStyles.headerStyle,
-                headerTintColor: 'white',
-                headerTitleStyle: [globalStyles.headerTitleStyle, getFontFamily()],
-                headerLeft: () => getHeaderBackButton(() => props.navigation.pop())
-              }
-            }
-            } />
+              const header = () => <TopHeader
+                titleText={translate("About")}
+                nav={getHeaderBackButton(() => props.navigation.pop())}
+              />
+              return { header };
+            }}
+          />
+
           <Stack.Screen name="CreateFolder" component={IssieCreateFolder}
             options={(props) => {
               let curFolder = props.route.params.currentFolderName;
               let title = curFolder ? translate("EditFolderFormTitle") : translate("NewFolderFormTitle");
-              return {
-                title,
-                headerStyle: globalStyles.headerStyle,
-                headerTintColor: 'white',
-                headerTitleStyle: [globalStyles.headerTitleStyle, getFontFamily()],
-                headerLeft: null
-              }
-            }
-            } />
+
+              const header = () => <TopHeader
+                titleText={title}
+              />
+              return { header };
+            }}
+          />
+
+
           <Stack.Screen name="OpenCamera" component={CameraModal}
             options={(props) => {
+              let title = translate("CameraTitle");
 
-              return {
-
-                title: "Camera",
-                headerStyle: globalStyles.headerStyle,
-                headerTintColor: 'white',
-                headerTitleStyle: [globalStyles.headerTitleStyle, getFontFamily()],
-                headerLeft: null
-              }
-            }
-            } />
+              const header = () => <TopHeader
+                titleText={title}
+              />
+              return { header };
+            }}
+          />
 
           <Stack.Screen name="OpenLink" component={OpenLink}
             options={(props) => {
-
-              return {
-
-                title: "Open Link",
-                headerStyle: globalStyles.headerStyle,
-                headerTintColor: 'white',
-                headerTitleStyle: [globalStyles.headerTitleStyle, getFontFamily()],
-                headerLeft: null
-              }
-            }
-            } />
+              const header = () => <TopHeader
+                titleText={"Open Link"}
+              />
+              return { header };
+            }} />
 
         </Stack.Navigator>
-      </NavigationContainer>
+      </NavigationContainer >
 
 
       <FlashMessage position="bottom" style={{
@@ -288,7 +250,7 @@ const App = (props) => {
           fontSize: 18,
           textAlign: 'center',
         }} />
-    </MenuProvider>
+    </MenuProvider >
   );
 };
 

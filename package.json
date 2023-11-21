@@ -5,6 +5,7 @@
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
+    "bundle:ios": "node ./node_modules/react-native/local-cli/cli.js bundle --platform ios --entry-file index.js --bundle-output ios/**yourAppName**/main.jsbundle --dev=false --verbose",
     "start": "react-native start",
     "sourcemap": "mkdir -p ios/{Bundle,source-map}; react-native bundle --platform ios --entry-file index.js --dev false --bundle-output ios/Bundle/main.jsbundle --assets-dest ios/Bundle --sourcemap-output ios/source-map/sourcemap.js",
     "test": "jest",
@@ -12,10 +13,7 @@
   },
   "dependencies": {
     "@react-native-community/image-editor": "^2.3.0",
-    "@react-native-community/masked-view": "^0.1.10",
-    "@react-native-community/progress-view": "^1.4.1",
     "@react-native-community/slider": "^4.4.2",
-    "@react-native-community/toolbar-android": "^0.2.1",
     "@react-native-material/core": "^1.3.7",
     "@react-navigation/native": "^6.1.6",
     "@react-navigation/stack": "^6.3.16",
@@ -46,7 +44,8 @@
     "react-native-svg": "^13.9.0",
     "react-native-vector-icons": "^9.2.0",
     "react-native-view-shot": "^3.6.0",
-    "react-native-wheel-color-picker": "^1.2.0"
+    "react-native-wheel-color-picker": "^1.2.0",
+    "react-native-zip-archive": "^6.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.22.1",

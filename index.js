@@ -2,9 +2,11 @@
  * @format
  */
 
-import {AppRegistry} from 'react-native';
+import { AppRegistry, View } from 'react-native';
 import App from './src/App';
-import {name as appName} from './app.json';
+import { name as appName } from './app.json';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { semanticColors } from './src/elements';
 
 //import * as Sentry from "@sentry/react-native";
 
@@ -17,4 +19,28 @@ import {name as appName} from './app.json';
 
 // const wApp = Sentry.wrap(App);
 
-AppRegistry.registerComponent(appName, () => App);
+function SafeAppContainer() {
+    return <SafeAreaProvider>
+        <SafeApp />
+    </SafeAreaProvider>;
+}
+
+function SafeApp() {
+    const insets = useSafeAreaInsets();
+
+    return <View style={{
+        width: "100%",
+        height: "100%",
+
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+        backgroundColor: semanticColors.header
+      }}>
+        <App />
+    </View>
+
+}
+
+AppRegistry.registerComponent(appName, () => SafeAppContainer);
