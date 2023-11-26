@@ -1,5 +1,5 @@
 import * as RNFS from 'react-native-fs';
-import { translate } from './lang';
+import { fTranslate, translate } from './lang';
 import { Image, LogBox } from 'react-native';
 import blankPage from './blank-page.png'
 import mathPage from './math-page.png'
@@ -10,6 +10,7 @@ import { trace, assert } from './log'
 import ImageResizer from 'react-native-image-resizer';
 import { unzip, zip } from 'react-native-zip-archive';
 import { TemporaryDirectoryPath } from 'react-native-fs'
+import { PromiseAllProgress } from './utils';
 
 const THUMBNAIL_SUFFIX = ".thumbnail.jpg";
 
@@ -708,66 +709,120 @@ export class FileSystem {
         return zip(files, (TemporaryDirectoryPath + name + ".zip"));
     }
 
-    async importWorhsheep(zipPath) {
-        const targetPath = RNFS.TemporaryDirectoryPath + "imported";
+
+    async exportAllWorksheets(progressCB) {
+        const folderItemsAsync = [];
+        this._folders.forEach(folder => folderItemsAsync.push(folder.itemsAsync));
+        return Promise.all(folderItemsAsync).then(foldersItems => {
+
+            const exportedSheetsAsync = [];
+            foldersItems.forEach(folderItems => folderItems.forEach(
+                sheet => exportedSheetsAsync.push(this.exportWorksheet(sheet)))
+            );
+
+            return PromiseAllProgress(exportedSheetsAsync, progressCB).then(allZipPaths => {
+                trace("3")
+                //todo add backup metadata file
+                const backupMetadataPath = TemporaryDirectoryPath + "backup.metadata";
+                return FileSystem.main.writeFile(backupMetadataPath, "{\"backup\":true}").then(() => {
+                    allZipPaths.push(backupMetadataPath);
+
+                    const date = new Date()
+                    let fn = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + ' ' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2);
+
+                    return zip(allZipPaths, (TemporaryDirectoryPath + "backup-" + fn + ".zip"));
+                });
+            })
+        });
+
+
+    }
+
+    async extractZipInfo(zipPath, unzipInPath) {
+        const unzipTargetPath = unzipInPath || RNFS.TemporaryDirectoryPath + "imported";
         // verify no files from last import:
         try {
-            await RNFS.unlink(targetPath);
+            await RNFS.unlink(unzipTargetPath);
         } catch (e) {
             trace("delete folder failed", e)
         }
 
-        return unzip(zipPath, targetPath).then(async (unzipPath) => {
+        // extract zip name:
+        const lastSlash = zipPath.lastIndexOf("/");
+        const name = zipPath.substr(lastSlash + 1, zipPath.length - lastSlash - 5);
+
+
+        return unzip(zipPath, unzipTargetPath).then(async (unzipPath) => {
             const items = await RNFS.readDir(unzipPath);
-
-            let targetPath = this._basePath
-            let folderMetaData = {};
-
             const metaDataItems = items.filter(f => f.name.endsWith(".metadata"));
             if (metaDataItems?.length > 0) {
                 trace("read metadata", metaDataItems[0].path)
 
-                const folderMetadataStr = await RNFS.readFile(metaDataItems[0].path);
-                trace("metadata", folderMetadataStr.toString('utf8'))
-                folderMetaData = JSON.parse(folderMetadataStr.toString('utf8'));
-                // check if folder exists already - if yes, ignore metadata. if not, create it:
-                const folder = this._getFolder(folderMetaData.name);
-                if (!folder) {
-                    await this.addFolder(folderMetaData.name, folderMetaData.icon, folderMetaData.color);
-                }
-                targetPath += folderMetaData.name + "/";
-            } else {
-                targetPath += FileSystem.DEFAULT_FOLDER.name + "/";
+                const metadataStr = await RNFS.readFile(metaDataItems[0].path);
+                trace("metadata", metadataStr.toString('utf8'))
+                return { metadata: JSON.parse(metadataStr.toString('utf8')), unzipPath: unzipTargetPath, name };
             }
-            if (folderMetaData.subFolder) {
-                targetPath += folderMetaData.subFolder + "/";
-                try {
-                    await RNFS.mkdir(targetPath);
-                } catch (e) {
-                    // ignore if already exist
-                }
-            }
-
-            // copy all other files
-            const filesItems = items.filter(f => !f.name.endsWith(".metadata"));
-            for (let fi of filesItems) {
-                try {
-                    await RNFS.moveFile(fi.path, targetPath + fi.name);
-                } catch (e) {
-                    trace("error copy file", e, fi.path, targetPath);
-                }
-            }
-            const folder = this._getFolder(folderMetaData.name);
-            await folder.reload()
-            this._notify();
-
-            // extract zip name:
-            const lastSlash = zipPath.lastIndexOf("/");
-            const name = zipPath.substr(lastSlash + 1, zipPath.length - lastSlash - 5);
-
-            return name;
+            trace("missing metadata")
+            return undefined;
         });
+    }
 
+    async RestoreFromBackup(zipInfo, monitorCB) {
+        const unzipTargetPath = RNFS.TemporaryDirectoryPath + "imported";
+        const items = await RNFS.readDir(zipInfo.unzipPath);
+
+        const allWorkSheetImports = []
+        const worksheetItems = items.filter(f => f.name.endsWith(".zip"));
+        for (let i = 0; i < worksheetItems.length; i++) {
+            let wsi = worksheetItems[i];
+            trace("add zip: " + wsi.path)
+            const targetUnzipForWorksheet = unzipTargetPath + "/" + i;
+            allWorkSheetImports.push(this.importWorhsheet(wsi.path, targetUnzipForWorksheet));
+        }
+        return PromiseAllProgress(allWorkSheetImports, monitorCB).then(() => fTranslate("RestoreSuccessful", zipInfo.name));
+    }
+
+    async importWorhsheet(zipPath, unzipInPath) {
+        return this.extractZipInfo(zipPath, unzipInPath).then(info => this.importWorhsheetWithInfo(info, true));
+    }
+
+    async importWorhsheetWithInfo(zipInfo, preserveFolder) {
+
+        const items = await RNFS.readDir(zipInfo.unzipPath);
+
+        let targetPath = this._basePath
+        const folderName = preserveFolder ? zipInfo.metadata.name : FileSystem.DEFAULT_FOLDER.name;
+        const folder = this._getFolder(folderName);
+        if (!folder) {
+            const icon = preserveFolder ? zipInfo.metadata.icon : FileSystem.DEFAULT_FOLDER_METADATA.icon;
+            const color = preserveFolder ? zipInfo.metadata.color : FileSystem.DEFAULT_FOLDER_METADATA.color;
+            await this.addFolder(folderName, icon, color);
+        }
+        targetPath += folderName + "/";
+
+        if (zipInfo.metadata.subFolder) {
+            targetPath += zipInfo.metadata.subFolder + "/";
+            try {
+                await RNFS.mkdir(targetPath);
+            } catch (e) {
+                // ignore if already exist
+            }
+        }
+
+        // copy all other files
+        const filesItems = items.filter(f => !f.name.endsWith(".metadata"));
+        for (let fi of filesItems) {
+            try {
+                await RNFS.moveFile(fi.path, targetPath + fi.name);
+            } catch (e) {
+                trace("error copy file", e, fi.path, targetPath);
+            }
+        }
+        const folderToNotify = this._getFolder(folderName);
+        await folderToNotify.reload()
+        this._notify();
+
+        return fTranslate("ImportSuccessful", zipInfo.name);
     }
 
     async _fileExists(path) {
@@ -835,6 +890,15 @@ export class FileSystemFolder {
             this._loading = true;
             this._files = [];
             this.reload().then(() => this._fs._notify(this._name));
+        }
+        return this._files;
+    }
+
+    get itemsAsync() {
+        if (!this._files) {
+            this._loading = true;
+            this._files = [];
+            return this.reload().then(() => this._fs._notify(this._name)).then(() => this._files);
         }
         return this._files;
     }

@@ -58,6 +58,13 @@ var strings = {
         "ShareWithTitle": "'שיתוף בעזרת...'",
         "ShareEmailSubject": "דף עבודה",
 
+        "ImportQuestionTitle":"קבלת דף עבודה חדשה {1}",
+        "BtnPreserveImportFolder":"שמירה לתיקיה {1}",
+        "BtnIgnoreImportFolder":"שמירה לתיקיית הבית",
+
+        "ImportSuccessful":"Worksheet {1} saved succesfully",
+        "RestoreSuccessful":"Backup file {1} restored successfully",
+
         "CameraTitle": "צילום דף עבודה",
         "MediaPickerTitle": "בחירת תמונה",
 
@@ -110,6 +117,7 @@ var strings = {
         "ExportProgress": "מייצא עמוד {1} מתוך {2}",
 
         "ImportSuccessful":"דף עבודה {1} התקבל בהצלחה",
+        "RestoreSuccessful":"קובץ גיבוי {1} שוחזר בהצלחה",
 
         //todo: translate
         "MissingCameraPermission": `לא ניתנה רשות לשימוש במצלמה לאפליקציה
@@ -320,6 +328,14 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
 
         "ImportProgress": "Import page {1} of {2}",
         "ExportProgress": "Export page {1} of {2}",
+
+        "ImportQuestionTitle":"Recieve a New Worksheet: {1}",
+        "BtnPreserveImportFolder":"Save into {1} folder",
+        "BtnIgnoreImportFolder":"Save into Home folder",
+
+        "ImportSuccessful":"Worksheet {1} saved succesfully",
+        "RestoreSuccessful":"Backup file {1} restored successfully",
+
 
         "MissingCameraPermission": `Missing Permission to use Camera.
 to allow, goto Settings->Privacy->Camera and allow IssieDocs`,

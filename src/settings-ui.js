@@ -10,6 +10,8 @@ import {
     getRoundedButtonInt,
     AppText
 } from './elements'
+import Share from 'react-native-share';
+import ProgressCircle from 'react-native-progress-circle'
 
 
 import FadeInView from './FadeInView'
@@ -19,9 +21,13 @@ import {
     VIEW, EDIT_TITLE, LANGUAGE, TEXT_BUTTON,
     getSetting, getUseColorSetting
 } from './settings'
+import { Button } from 'react-native-elements';
+import { FileSystem } from './filesystem';
 
 
 export default function SettingsMenu(props) {
+    const [backupProgress, setBackupProgress] = useState(undefined);
+
     const { row, rowReverse, flexStart, flexEnd, textAlign, rtl } = getRowDirections();
 
     let viewStyleSetting = getSetting(VIEW.name, VIEW.list);
@@ -83,6 +89,20 @@ export default function SettingsMenu(props) {
         zIndex: 100, top: 0, width: '100%', height: '100%'
     }}>
 
+        {backupProgress !== undefined && <View style={{
+            position: 'absolute', width: "100%", height: '100%', top: 0,
+            zIndex: 1000, alignItems: "center", justifyContent: "center"
+        }}>
+             <ProgressCircle
+                    radius={100}
+                    color="#3399FF"
+                    shadowColor="#999"
+                    bgColor="white"
+                    percent={backupProgress}
+                    borderWidth={5} >
+                  </ProgressCircle>
+        </View>}
+
         <FadeInView
             duration={500}
             width={300}
@@ -92,6 +112,7 @@ export default function SettingsMenu(props) {
                 backgroundColor: 'white', borderColor: 'gray', borderWidth: 1
             }, isRTL() ? { right: 0 } : { left: 0 }]}>
             <Spacer />
+
             <View style={{ flexDirection: row, justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flexDirection: row }}>
                     <Spacer />
@@ -166,6 +187,32 @@ export default function SettingsMenu(props) {
                             setEditTitleHandler(newValue)
                         },
                         editTitle == EDIT_TITLE.yes)}
+
+                    <View style={{ width: '100%', paddingTop: 25, paddingRight: 25, alignItems: getFlexEnd() }}>
+                        <AppText style={styles.SettingsHeaderText}>{translate("BackupTitle") + ":"}</AppText>
+                        <View style={{ paddingStart: 40, paddingTop: 10 }}>
+                            <Button title="Backup" onPress={() => {
+                                setBackupProgress(0);
+                                FileSystem.main.exportAllWorksheets((percent) => setBackupProgress(percent))
+                                    .then((backupZipPath) => {
+                                        const shareOptions = {
+                                            title: translate("ShareWithTitle"),
+                                            subject: translate("ShareEmailSubject"),
+                                            urls: [backupZipPath],
+                                        };
+                                        Share.open(shareOptions).then(() => {
+                                            Alert.alert(translate("BackupSuccessful"));
+                                        }).catch(err => {
+                                            Alert.alert(translate("ActionCancelled"));
+                                        });
+                                    })
+                                    .catch((err) => Alert.alert("Backup failed: " + err))
+                                    .finally(() => setBackupProgress(undefined));
+
+
+                            }} />
+                        </View>
+                    </View>
 
 
                     {

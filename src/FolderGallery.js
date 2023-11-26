@@ -138,7 +138,7 @@ export default class FolderGallery extends React.Component {
             FileSystem.main.registerListener(async () => {
                 let folders = await FileSystem.main.getFolders();
 
-                this.setState({ folders, reload: this.state.reload+1 });
+                this.setState({ folders, reload: this.state.reload + 1 });
             });
 
             //trace("beta", betaSettings)
@@ -192,12 +192,29 @@ export default class FolderGallery extends React.Component {
             const urlPos = url.indexOf("url=");
             if (urlPos > 0) {
                 url = url.substr(urlPos + 4);
+                url = decodeURI(url);
+
+                const handleDoneMessage = (msg) => Alert.alert(msg);
 
                 if (url.endsWith(".zip")) {
-                    FileSystem.main.importWorhsheep(url).then((name)=>Alert.alert(fTranslate("ImportSuccessful", name)));
+                    FileSystem.main.extractZipInfo(url).then(zipInfo => {
+                        if (zipInfo.metadata.backup) {
+                            FileSystem.main.RestoreFromBackup(zipInfo, (progress) => { trace("restore progress" + progress) })
+                                .then(handleDoneMessage);
+                        } else {
+                            // ask if to preserve folder
+                            const title = fTranslate("ImportQuestionTitle", zipInfo.name);
+                            const buttons = [
+                                { text: fTranslate("BtnPreserveImportFolder", zipInfo.metadata.name), onPress: () => FileSystem.main.importWorhsheetWithInfo(zipInfo, true).then(handleDoneMessage) },
+                                { text: translate("BtnIgnoreImportFolder"), onPress: () => FileSystem.main.importWorhsheetWithInfo(zipInfo, false).then(handleDoneMessage) },
+                                { text: translate("BtnCancel"), type: 'cancel' },
+                            ];
+                            Alert.alert(title, undefined, buttons);
+                        }
+                    });
                 } else {
                     this.props.navigation.navigate('SavePhoto', {
-                        uri: decodeURI(url),
+                        uri: url,
                         imageSource: SRC_FILE,
                         folder: this.state.currentFolder,
                         returnFolderCallback: (f) => this.setReturnFolder(f),
@@ -398,7 +415,7 @@ export default class FolderGallery extends React.Component {
     ShareIssieDocs = () => {
         if (!this.state.selected) return;
 
-        FileSystem.main.exportWorksheet(this.state.selected).then(sheetArchivePath=>{
+        FileSystem.main.exportWorksheet(this.state.selected).then(sheetArchivePath => {
             const shareOptions = {
                 title: translate("ShareWithTitle"),
                 subject: translate("ShareEmailSubject"),
