@@ -47,7 +47,7 @@ const shareTimeMs = 2000;
 
 const TOP = 0, RIGHT = 1, BOTTOM = 2, LEFT = 3;
 const DEFAULT_STROKE_WIDTH = 5;
-const DEFAULT_MARKER_WIDTH = 10;
+const DEFAULT_MARKER_WIDTH = 30;
 const MAX_STROKE_WIDTH = 12;
 const DRAG_ICON_SIZE = 45;
 const initialImageSize = 120
@@ -269,7 +269,11 @@ export default class IssieEditPhoto extends React.Component {
     const windowSize = Dimensions.get("window");
     this.state = {
       showBusy: true,
-      color: colors.black,
+      brushColor: colors.black,
+      textColor: colors.black,
+      tableColor: colors.blue,
+      markerColor: colors.yellow,
+
       fontSize: 25,
       mode: Modes.TEXT,
       eraseMode: false,
@@ -659,14 +663,14 @@ export default class IssieEditPhoto extends React.Component {
 
     const lang = gCurrentLang.languageTag === "en" ? "eng" :
       gCurrentLang.languageTag === "he" ? "heb" : "ara";
-    
+
     this.setState({ showBusy: true })
     setTimeout(() =>
       detectTexts(this.state.currentFile, lang, 50,
         // success
         (texts) => {
           this.setState({ detectedTexts: texts, showBusy: false })
-          console.log("detected texts", JSON.stringify(texts.map(t=>t.text)))
+          console.log("detected texts", JSON.stringify(texts.map(t => t.text)))
         },
         //error
         (err) => {
@@ -802,7 +806,7 @@ export default class IssieEditPhoto extends React.Component {
 
       let initialText = '';
       let fontSize = this.state.fontSize;
-      let fontColor = this.state.color;
+      let fontColor = this.state.textColor;
       let inputTextWidth = 0;
       let inputTextHeight = this.normFontSize2FontSize(this.state.fontSize);
       if (textElem) {
@@ -924,7 +928,7 @@ export default class IssieEditPhoto extends React.Component {
     };
     newTextElem.alignment = rtl ? 'Right' : 'Left';
     newTextElem.rtl = rtl;
-    newTextElem.fontColor = this.state.color;
+    newTextElem.fontColor = this.state.textColor;
     newTextElem.normFontSize = this.state.fontSize;
     newTextElem.normWidth = width * this.state.fontSize / this.normFontSize2FontSize(this.state.fontSize);
     newTextElem.font = getFont();
@@ -1563,20 +1567,28 @@ export default class IssieEditPhoto extends React.Component {
           isVoiceMode={this.isVoiceMode()}
           isBrushMode={this.isBrushMode()} //!this.isTextMode() && !this.isImageMode() && !this.isMarkerMode()}
           fontSize={this.state.fontSize}
-          color={this.state.color}
           strokeWidth={this.state.strokeWidth}
           markerWidth={this.state.markerWidth}
           sideMargin={this.state.sideMargin}
           // betaFeatures={this.state.betaFeatures}
 
           onSelectColor={(color) => {
-            this.setState({ color, eraseMode: false })
+            trace("setColor", color, this.state.mode)
+            const updateState = { eraseMode: false }
+            if (this.isBrushMode()) updateState.brushColor = color;
+            if (this.isMarkerMode()) updateState.markerColor = color;
             this.updateInputText();
             if (this.isTableMode()) {
+              updateState.tableColor = color;
               this.TableActions.setColor(color);
             }
 
+            if (this.isTextMode()) updateState.textColor = color;
+            this.setState(updateState);
           }}
+
+          color={this.getColorByMode()}
+
           onSelectTextSize={(size) => this.onTextSize(size)}
           onSelectBrushSize={(brushSize) => this.onBrushSize(brushSize)}
           onSelectMarkerSize={(markerSize) => this.onMarkerSize(markerSize)}
@@ -2026,13 +2038,20 @@ export default class IssieEditPhoto extends React.Component {
     return (onlyIfChanged ? undefined : table);
   }
 
+  getColorByMode = () => this.isBrushMode() ? this.state.brushColor :
+    this.isMarkerMode() ? this.state.markerColor :
+      this.isTableMode() ? this.state.tableColor :
+        this.state.textColor;
+
+
+
 
   getCanvas = (width, height) => {
     let strokeWidth = this.isEraserMode() ?
       (this.state.strokeWidth * 3 < 15 ? 15 : this.state.strokeWidth * 3)
       : this.state.strokeWidth;
 
-    let color = this.isEraserMode() ? '#00000000' : this.state.color;
+    let color = this.isEraserMode() ? '#00000000' : this.getColorByMode();
 
     return (
       <Canvas
@@ -2217,7 +2236,7 @@ export default class IssieEditPhoto extends React.Component {
             height: this.state.inputTextHeight / this.state.scaleRatio,
             borderWidth: 0,
             fontSize: (this.normalizeTextSize(this.state.fontSize) / this.state.scaleRatio),
-            color: this.state.color,
+            color: this.getColorByMode(),
             fontFamily: getFont(),
             zIndex: 21,
             transform: this.getTransform(this.getTextWidth() / this.state.scaleRatio, this.state.inputTextHeight / this.state.scaleRatio,
@@ -2243,7 +2262,7 @@ export default class IssieEditPhoto extends React.Component {
             this.state.scaleRatio * this.state.zoom, isRTL()),
           //lineHeight: this.normalizeTextSize(this.state.fontSize)* this.state.scaleRatio,
         }}
-          backgroundColor={this.state.color === '#fee100' ? 'gray' : 'yellow'}
+          backgroundColor={this.getColorByMode() === '#fee100' ? 'gray' : 'yellow'}
         />
       </View >);
   }
