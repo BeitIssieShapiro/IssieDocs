@@ -134,9 +134,10 @@ export default class FolderGallery extends React.Component {
             Linking.addEventListener("url", this._handleOpenURL);
 
             //load only the folders
-            let folders = await FileSystem.main.getFolders();
+            let folders = await FileSystem.main.getRootFolders();
+            trace("folders loaded", folders)
             FileSystem.main.registerListener(async () => {
-                let folders = await FileSystem.main.getFolders();
+                let folders = await FileSystem.main.getRootFolders();
 
                 this.setState({ folders, reload: this.state.reload + 1 });
             });
@@ -544,7 +545,7 @@ export default class FolderGallery extends React.Component {
         if (folderName === FileSystem.DEFAULT_FOLDER.name) {
             this.unselectFolder();
         } else {
-            FileSystem.main.getFolders().then((folders) => {
+            FileSystem.main.getRootFolders().then((folders) => {
                 let folder = folders.find(f => f.name == folderName);
                 if (folder) {
                     this.selectFolder(folder);
@@ -651,7 +652,7 @@ export default class FolderGallery extends React.Component {
 
         // let folder = this.state.currentFolder
         // if (this.state.currentFolder == undefined) {
-        //     let folders = await FileSystem.main.getFolders();
+        //     let folders = await FileSystem.main.getRootFolders();
         //     folder = folders.find(f => f.name == folderName);
         //     this.selectFolder(folder);
         // }

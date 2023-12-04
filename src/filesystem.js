@@ -14,6 +14,21 @@ import { PromiseAllProgress } from './utils';
 
 const THUMBNAIL_SUFFIX = ".thumbnail.jpg";
 
+/**
+ * Filesystem:
+ * 
+            <basePath>/<first-level>
+ *                      /files 
+ *                      /folders/<next-level>
+ *                         /files
+ *                         /folders/...
+ * 
+ */
+
+
+
+
+
 export class FileSystem {
     static SimulatorMockPage = mockPage;
     static main = new FileSystem();
@@ -24,6 +39,7 @@ export class FileSystem {
         SimulatorMock: 4
     }
     static DEFAULT_FOLDER_METADATA = { icon: '', color: 'gray' };
+    static FOLDERS_PATH = "folders";
     static DEFAULT_FOLDER = { name: 'Default', color: 'gray', icon: '' };
 
     _folders = [];
@@ -53,34 +69,45 @@ export class FileSystem {
         return this._basePath;
     }
 
-    async getFolders() {
+    async getRootFolders() {
+        trace("Load root folders")
         if (!this._loaded) {
-            await this.load();
+            await this._loadRootFolders();
         }
         return this._folders;
     }
 
-    async load() {
+    
+    async readFolder(fsFolder, parentFolder) {
+        if (fsFolder.isDirectory()) {
+            metadata = await this._readFolderMetaData(fsFolder.path)
+            console.log("folder color :" + metadata.color)
+            let fsf = new FileSystemFolder(fsFolder.name, parentFolder, this, metadata);
+            if (parentFolder) {
+                parentFolder._folder.push(fsf);
+            } else {
+                this._folders.push(fsf);
+            }
+        }
+    }
+
+    async _loadRootFolders() {
         this._loaded = true
         this._folders = [];
         await RNFS.readDir(this._basePath).then(async (folders) => {
 
             for (let folder of folders) {
-                if (folder.isDirectory()) {
-                    metadata = await this._readFolderMetaData(folder.name)
-                    console.log("folder color :" + metadata.color)
-                    let fsf = new FileSystemFolder(folder.name, this, metadata);
-                    this._folders.push(fsf);
-                }
+                trace("reading folder", folder.name)
+                await this.readFolder(folder);
             }
 
-            await _sortFolders(this._folders);
+            await _sortRootFolders(this._folders);
         });
         this._notify();
     }
 
-    async _reloadFolder(name) {
-        let folder = this._folders.find(f => f.name == name);
+    async _reloadFolder(ID) {
+        let folder = this.findFolderByID(ID);
         if (folder) {
             await folder.reload();
         }
@@ -105,8 +132,30 @@ export class FileSystem {
         this._notify();
     }
 
-    async addFolder(name, icon, color, strictChecks, skipCreateMetadata, rename) {
-        console.log("add folder: " + name + ", color:" + color + ", icon=" + icon)
+    // only search pupolated folders
+    findFolder(name, parentID) {
+        const id = parentID ? parentID + "/" + name : name;
+        return this.findFolderByID(id);
+    }
+
+    findFolderByID(ID) {
+        let parts = ID.split("/");
+
+        let folders = this._folders;
+        let folder
+        for (let i = 0; i < parts.length; i++) {
+            folder = folders.find(f => f.name === parts[i])
+            folders = folder?.folders;
+        }
+        return folder;
+    }
+
+    // return FileSystemFolder obj
+    // todo verify works also for deep folder (e.g. in imporr with preserve folders)
+    async addFolder(name, icon, color, strictChecks, skipCreateMetadata, rename, parentID) {
+        const parent = this.findFolderByID(parentID);
+        const parentPath = (parent ? parent.path + "/" + FileSystem.FOLDERS_PATH + "/" : "")
+        console.log("add folder: " + name + ", color:" + color + ", icon=" + icon + ", in parent" + parentPath)
         if (!name || name.length == 0) {
             throw translate("MissingFolderName");
         }
@@ -115,64 +164,74 @@ export class FileSystem {
             throw translate("IllegalCharacterInFolderName");
         }
 
-
-        let folderPath = this._basePath + name;
+        let fsf;
+        let folderPath = this._basePath + parentPath + name;
         let newFolder = true
-        if (await this._fileExists(folderPath)) {
+        if (await RNFS.exists(folderPath)) {
             if (strictChecks) {
                 //folder exists:
                 throw translate("FolderAlreadyExists");
             }
             newFolder = false;
+            fsf = this.findFolder(name, parentID);
         } else {
             trace("Folder ", name, " is about to be created")
             await RNFS.mkdir(folderPath);
             trace("Folder ", folderPath, " has been created")
-            let fsf = new FileSystemFolder(name, this, { color, icon });
-            this._folders.push(fsf);
+            fsf = new FileSystemFolder(name, parent, this, { color, icon });
+            if (parent) {
+                parent._folders.push(fsf);
+            } else {
+                // add as root folder
+                this._folders.push(fsf);
+            }
         }
         if (!skipCreateMetadata) {
-            const newMetadata = await this._writeFolderMetaData(name, color, icon);
+            const newMetadata = await this._writeFolderMetaData(folderPath, color, icon);
 
-            if (name !== FileSystem.DEFAULT_FOLDER.name && !rename) {
+            if (!parent && name !== FileSystem.DEFAULT_FOLDER.name && !rename) {
                 await pushFolderOrder(name)
-                await _sortFolders(this._folders)
+                await _sortRootFolders(this._folders)
             }
 
             if (!newFolder) {
                 //update existing color/icon
-                const folder = this._getFolder(name)
+                const folder = this.findFolder(name, parentID);
                 folder.metadata = newMetadata;
             }
         }
-        trace("Folder ", name, " has been notified")
+        trace("Folder ", name, " has been notified", parent ? "in" + parent.path : "")
         this._notify(name);
-
+        return fsf;
     }
 
-    async renameFolder(name, newName, icon, color) {
-        await this.addFolder(newName, icon, color, name !== newName, false, true);
+    async renameFolder(ID, newID, icon, color) {
+        const newParts = newID.split("/");
+        let name = newParts.pop()
+        let parentID = newParts.length && newParts.join("/");
+
+        await this.addFolder(name, icon, color, ID !== newID, false, true, parentID);
         //move all files and delete old folder
-        if (name !== newName) {
-            await RNFS.readDir(this._basePath + name).then(async (files) => {
+        if (ID !== newID) {
+            const folder = this.findFolder(ID);
+
+            await RNFS.readDir(this._basePath + folder.path).then(async (files) => {
                 for (let f of files) {
                     trace("iterate files", f)
                     if (f.name !== ".metadata") {
+                        //todo - check if moveFile works on folders
                         // skip meta data as it was created already
                         await RNFS.moveFile(f.path, this._basePath + newName + "/" + f.name);
                     }
                 }
             });
-            await this.deleteFolder(name);
+            await this.deleteFolder(ID);
+            // todo check if root
             await _renameFolderOrders(name, newName);
-            await _sortFolders(this._folders);
-            await this._reloadFolder(newName);
+            await _sortRootFolders(this._folders);
+            await this._reloadFolder(newID);
         }
         this._notify();
-    }
-
-    _getFolder(name) {
-        return this._folders?.find(f => f.name == name);
     }
 
     loadFile(path) {
@@ -188,19 +247,18 @@ export class FileSystem {
         if (pathObj.folders.length < 1)
             return;
 
-        const thumbnailContainingFolder = this._basePath + pathObj.folders[0];
-        let pageName = pathObj.folders.length > 1 ? pathObj.folders[1] : pathObj.fileName;
+        const folder = this.findFolderByID(pathObj.folderID)
 
-        if (pageName.endsWith(".jpg")) {
-            pageName = pageName.substring(0, pageName.length - 4);
-        }
+        const thumbnailContainingFolder = this._basePath + folder.path
+        let pageName = pathObj.fileName;
+
         let items = await RNFS.readDir(thumbnailContainingFolder);
 
         let thumbnailFile = items.find(f => f.name.startsWith(pageName + ".") && f.name.endsWith(THUMBNAIL_SUFFIX));
 
         if (thumbnailFile) {
             // from name.<cache>.thumbnail.jpg remove name
-            let pageNameSuffix = thumbnailFile.name.substr(pageName.length);
+            let pageNameSuffix = thumbnailFile.name.substring(pageName.length);
 
 
             trace("start moveOrDuplicateThumbnail", pagePath, targetPage)
@@ -218,15 +276,11 @@ export class FileSystem {
 
                 // update page's thumbnail
                 let pathObj = this._parsePath(targetPage);
-                trace("notify thumbnail change", pathObj.folders[0])
+                trace("notify thumbnail change", pathObj.folderID)
                 if (pathObj.folders.length >= 1) {
-                    let folder = this._getFolder(pathObj.folders[0]);
+                    let folder = this.findFolderByID(pathObj.folderID);
                     if (folder) {
-                        let pageName = pathObj.folders.length > 2 ? pathObj.folders[1] : pathObj.fileName;
-                        trace("notify thumbnail change 1", pageName)
-                        if (pageName.endsWith(".jpg")) {
-                            pageName = pageName.substring(0, pageName.length - 4);
-                        }
+                        let pageName = pathObj.fileName;
 
                         const item = await folder.getItem(pageName)
                         item.setThumbnail(targetThumbnailPath);
@@ -248,12 +302,9 @@ export class FileSystem {
         if (pathObj.folders.length < 1)
             return;
 
-        let thumbnailPath = this._basePath + pathObj.folders[0] + '/' +
-            (pathObj.folders.length == 2 ? pathObj.folders[1] : pathObj.fileName);
+        const folder = this.findFolderByID(pathObj.folderID)
+        let thumbnailPath = this._basePath + folder.path + '/' + pathObj.fileName;
 
-        if (thumbnailPath.endsWith(".jpg")) {
-            thumbnailPath = thumbnailPath.substring(0, thumbnailPath.length - 4);
-        }
         let cacheBuster = Math.floor(Math.random() * 100000);
         //let thumbnailPathPattern = thumbnailPath + ".*" + THUMBNAIL_SUFFIX;
         thumbnailPath += "." + cacheBuster + THUMBNAIL_SUFFIX;
@@ -267,7 +318,7 @@ export class FileSystem {
         if (!page) {
             console.log("cp", uri, thumbnailPath);
             return RNFS.copyFile(uri, thumbnailPath).then(() => {
-                this._notify(pathObj.folders[0]);
+                this._notify(pathObj.folderId);
             });
         }
 
@@ -276,7 +327,7 @@ export class FileSystem {
             page.setThumbnail(thumbnailPath);
             let fi = await RNFS.stat(thumbnailPath);
             page.lastUpdate = Math.max(fi.mtime.valueOf(), fi.ctime.valueOf());
-            this._notify(pathObj.folders[0]);
+            this._notify(pathObj.folderID);
         });
     };
 
@@ -288,7 +339,6 @@ export class FileSystem {
 
         let pathObj = this._parsePath(filePath);
 
-
         if (!pathObj.fileName || pathObj.fileName.length == 0) {
             throw translate("MissingPageName");
         }
@@ -296,19 +346,20 @@ export class FileSystem {
             throw translate("IllegalCharacterInPageName");
         }
 
-        if (pathObj.folders.length > 1 && !this._validPathPart(pathObj.folders[1])) {
+        if (pathObj.isWorksheetInFolder && !this._validPathPart(pathObj.folders[pathObj.folders.length - 1])) {
             throw translate("IllegalCharacterInPageName");
         }
 
-        if (pathObj.folders.length > 2) {
-            throw translate("IllegalCharacterInPageName");
-        }
+        // todo change the validation to avoid / in file name or folder name
+        // if (pathObj.folders.length > 2) {
+        //     throw translate("IllegalCharacterInPageName");
+        // }
 
         await this._verifyFolderExists(filePath);
 
-        let folder = this._getFolder(pathObj.folders[0]);
+        let folder = this.findFolderByID(pathObj.folderID);
         if (!folder) {
-            console.log("cant find folder " + pathObj.folders[0])
+            console.log("cant find folder " + pathObj.folderID)
         }
         return new Promise((resolve, reject) => {
             if (uri.startsWith("rct-image-store")) {
@@ -325,7 +376,7 @@ export class FileSystem {
                             async () => {
                                 await folder.reload();
                                 resolve();
-                                this._notify(folder.name);
+                                this._notify(folder.ID);
                             },
                             //on error 
                             err => this._handleSaveFileError('', err, reject)
@@ -334,8 +385,6 @@ export class FileSystem {
                         this._handleSaveFileError('', err, reject);
                     });
             } else {
-
-
                 let ret
                 if (isCopy) {
                     trace("copy: ", uri, " to: ", filePath);
@@ -353,8 +402,8 @@ export class FileSystem {
                         if (!isCopy && uri.startsWith(this._basePath)) {
                             parseObjFrom = this._parsePath(uri);
                             parseObjTo = this._parsePath(filePath);
-                            if (parseObjFrom.folders[0] != parseObjTo.folders[0]) {
-                                let srcFolder = this._getFolder(parseObjFrom.folders[0]);
+                            if (parseObjFrom.folderID != parseObjTo.folderID) {
+                                let srcFolder = this.findFolderByID(parseObjFrom.folderID);
                                 await srcFolder.reload();
                             }
                         }
@@ -439,9 +488,10 @@ export class FileSystem {
     async _reloadBySheet(sheet) {
         let pathObj = this._parsePath(sheet.path);
         trace("reload by sheet: ", sheet.path, JSON.stringify(pathObj))
-        let folder = this._getFolder(pathObj.folders[0]);
+        let folder = this.findFolderByID(pathObj.folderID);
+
         await folder.reload();
-        this._notify(pathObj.folders[0]);
+        this._notify(pathObj.folderID);
         return await folder.getItem(sheet.name);
     }
 
@@ -482,12 +532,28 @@ export class FileSystem {
     _parsePath(filePath) {
         let lastSlashPos = filePath.lastIndexOf('/');
         let fileName = filePath.substr(lastSlashPos + 1);
+        let isWorksheetInFolder = false;
+        if (fileName.endsWith(".jpg")) {
+            isWorksheetInFolder = true;
+            fileName = fileName.substr(0, fileName.length - 4);
+        }
 
         //remove base path
         let foldersPath = filePath.substring(this._basePath.length, lastSlashPos)
         let folders = foldersPath.split('/');
 
-        return { fileName, folders };
+        //examples:
+        // f1
+        // f1/ws1
+        // f1/folders/f2
+        // f1/folders/f2/ws2
+        let realFolders = []
+        for (let i = 0; i < folders.length; i += 2) {
+            realFolders.push(folders[i]);
+        }
+
+
+        return { fileName, folders, folderID: realFolders.join("/"), isWorksheetInFolder };
     }
 
     async deleteFile(filePath) {
@@ -501,21 +567,23 @@ export class FileSystem {
     }
 
 
-    async _readFolderMetaData(folderName) {
+    async _readFolderMetaData(folderPath) {
         try {
-            let metaDataFilePath = this._basePath + folderName + "/.metadata";
+            trace("read folder metadata", folderPath)
+            let metaDataFilePath = folderPath + "/.metadata";
             let metadataString = await RNFS.readFile(metaDataFilePath, 'utf8');
 
             let metadata = JSON.parse(metadataString.toString('utf8'));
 
             return metadata;
         } catch (e) {
+            trace("_readFolderMetaData failed", e)
             return FileSystem.DEFAULT_FOLDER_METADATA;
         }
     }
 
-    async _writeFolderMetaData(folderName, color, icon) {
-        let metaDataFilePath = this._basePath + folderName + "/.metadata";
+    async _writeFolderMetaData(folderPath, color, icon) {
+        let metaDataFilePath = this._basePath + folderPath + "/.metadata";
 
         let metadata = { color: color ? color : FileSystem.DEFAULT_FOLDER_METADATA.color, icon };
         return RNFS.writeFile(metaDataFilePath, JSON.stringify(metadata), 'utf8').then(
@@ -538,15 +606,13 @@ export class FileSystem {
         let currPath = this._basePath;
         for (let i = 0; i < pathObj.folders.length; i++) {
             currPath += pathObj.folders[i] + '/';
-            try {
-                await RNFS.stat(currPath);
-            } catch (e) {
-                if (i == 0) { //root level folder
+            if (!await RNFS.exists(currPath)) {
+                if (i % 2) { //real IssieDocs folder
                     await this.addFolder(pathObj.folders[i], FileSystem.DEFAULT_FOLDER_METADATA.icon, FileSystem.DEFAULT_FOLDER_METADATA.color)
                 } else {
+                    // either a folder that stores a multi-page worksheet or "folders" folder
                     await RNFS.mkdir(currPath);
                 }
-
             }
         }
     }
@@ -625,15 +691,7 @@ export class FileSystem {
         return fileName;
     }
 
-    // async getStaticPage(intoFolderName, pageType) {
-    //     await this._verifyFolderExists(intoFolderName)
-    //     let newFileName = await this._getEmptyFileName(intoFolderName);
-    //     await this._getStaticPage(this._basePath + intoFolderName + '/' + newFileName, pageType);
-    //     await this._reloadFolder(intoFolderName);
-    //     this._notify(intoFolderName);
-    //     trace("getStaticPage", intoFolderName)
-    //     return newFileName;
-    // }
+
 
     // size = {width, height}
     getStaticPageTempFile(pageType) {
@@ -672,14 +730,13 @@ export class FileSystem {
     async exportWorksheet(sheet) {
         const name = sheet.name;
         const pathObj = this._parsePath(sheet.defaultSrc);
-        const folder = this._getFolder(pathObj.folders[0]);
+        const folder = this.findFolderByID(pathObj.folderID);
 
         const folderMetaData = {
-            name: folder.name,
+            name: folder.ID,
             color: folder.color,
             icon: folder.icon,
         };
-
 
         const files = [];
         const containingFolderInfoFileName = FileSystem.getTempFileName("metadata");
@@ -791,14 +848,19 @@ export class FileSystem {
         const items = await RNFS.readDir(zipInfo.unzipPath);
 
         let targetPath = this._basePath
-        const folderName = preserveFolder ? zipInfo.metadata.name : FileSystem.DEFAULT_FOLDER.name;
-        const folder = this._getFolder(folderName);
+        const folderID = preserveFolder ? zipInfo.metadata.name : FileSystem.DEFAULT_FOLDER.name;
+        let folder = this.find(folderID);
         if (!folder) {
+            const parts = folderID.split("/");
+            const folderName = parts.pop();
+            const parentID = parts.length && parts.join("/");
+
+
             const icon = preserveFolder ? zipInfo.metadata.icon : FileSystem.DEFAULT_FOLDER_METADATA.icon;
             const color = preserveFolder ? zipInfo.metadata.color : FileSystem.DEFAULT_FOLDER_METADATA.color;
-            await this.addFolder(folderName, icon, color);
+            folder = await this.addFolder(folderName, icon, color, parentID);
         }
-        targetPath += folderName + "/";
+        targetPath += folder.path + "/";
 
         if (zipInfo.metadata.subFolder) {
             targetPath += zipInfo.metadata.subFolder + "/";
@@ -818,51 +880,22 @@ export class FileSystem {
                 trace("error copy file", e, fi.path, targetPath);
             }
         }
-        const folderToNotify = this._getFolder(folderName);
-        await folderToNotify.reload()
+        await folder.reload()
         this._notify();
 
         return fTranslate("ImportSuccessful", zipInfo.name);
     }
-
-    async _fileExists(path) {
-        try {
-            await RNFS.stat(path);
-            //file exists:
-            return true
-        } catch (e) {
-            return false;
-        }
-    }
-
-    async _getEmptyFileName(intoFolderName) {
-        let basePath = this._basePath + intoFolderName + "/";
-        let baseFileName = translate("EmptyPageName");
-
-        //only relevant for Simulator
-        baseFileName = baseFileName.replace(".", "");
-
-        //try a file name that is not taken:
-        let fileName
-        let index = ""
-        while (true) {
-            fileName = basePath + baseFileName + index;
-            if (await this._fileExists(fileName) || await this._fileExists(fileName + ".jpg"))
-                index = index == "" ? " 1" : " " + (parseInt(index) + 1);
-            else
-                return baseFileName + index + ".jpg";
-        }
-    }
-
 }
 
 export class FileSystemFolder {
     _files = undefined;
     _loading = true;
 
-    constructor(name, fs, metadata) {
+    constructor(name, parentFolder, fs, metadata) {
         this._metadata = metadata
         this._name = name;
+        this._parent = parentFolder;
+        this._path = parentFolder ? parentFolder._path + "/" + FileSystem.FOLDERS_PATH + "/" + name : name;
         this._fs = fs;
     }
 
@@ -872,6 +905,14 @@ export class FileSystemFolder {
 
     get name() {
         return this._name;
+    }
+
+    get ID() {
+        return _parent ? this._parent + "/" + this._name : this._name;
+    }
+
+    get path() {
+        return this._path;
     }
 
     get icon() {
@@ -914,58 +955,68 @@ export class FileSystemFolder {
     }
 
     async reload() {
-        console.log("reload folder: " + this._name);
-        const items = await RNFS.readDir(this._fs.basePath + this._name);
+        console.log("reload folder: " + this._path);
+        const items = await RNFS.readDir(this._fs.basePath + this._path);
         const filesItems = items.filter(f => !f.name.endsWith(".json") && f.name !== ORDER_FILE_NAME &&
             f.name !== ".metadata" && !f.name.endsWith("thumbnail.jpg"));
 
         this._loading = true;
         this._files = [];
+        this._folders = [];
         for (let fi of filesItems) {
-            trace("read file", fi.name)
-            const name = FileSystem.getFileNameFromPath(fi.name, true);
-            let sheet = new WorkSheet(fi.path, name);
-            let lastUpdate = Math.max(fi.mtime.valueOf(), fi.ctime.valueOf());
-
-            if (fi.isDirectory()) {
-                //read all pages
-                const pages = await RNFS.readDir(fi.path);
-
-                for (let i = 0; i < pages.length; i++) {
-                    lastUpdate = Math.max(lastUpdate, pages[i].mtime.valueOf(), pages[i].ctime.valueOf());
-
-                    if (!pages[i].name.endsWith(".json")) {
-
-                        sheet.addPage(pages[i].path);
-                    }
+            if (fi.name === FileSystem.FOLDERS_PATH) {
+                trace("read sub folders for ", fi.name);
+                const foldersBasePath = this._path + "/" + FileSystem.FOLDERS_PATH
+                const subFoldersItems = await RNFS.readDir(this._fs.basePath + foldersBasePath);
+                for (let sfi of subFoldersItems) {
+                    await FileSystem.readFolder(sfi, this);
                 }
             } else {
-                lastUpdate = Math.max(lastUpdate, fi.mtime.valueOf(), fi.ctime.valueOf());
-                sheet.addPage(fi.path);
-                //finds the .json file if exists
-                let dotJsonFile = items.find(f => f.name === fi.name + ".json");
-                if (dotJsonFile) {
-                    lastUpdate = Math.max(lastUpdate, dotJsonFile.mtime.valueOf(), dotJsonFile.ctime.valueOf());
+                trace("read file", fi.name)
+                const name = FileSystem.getFileNameFromPath(fi.name, true);
+                let sheet = new WorkSheet(fi.path, name);
+                let lastUpdate = Math.max(fi.mtime.valueOf(), fi.ctime.valueOf());
+
+                if (fi.isDirectory()) {
+                    //read all pages
+                    const pages = await RNFS.readDir(fi.path);
+
+                    for (let i = 0; i < pages.length; i++) {
+                        lastUpdate = Math.max(lastUpdate, pages[i].mtime.valueOf(), pages[i].ctime.valueOf());
+
+                        if (!pages[i].name.endsWith(".json")) {
+
+                            sheet.addPage(pages[i].path);
+                        }
+                    }
+                } else {
+                    lastUpdate = Math.max(lastUpdate, fi.mtime.valueOf(), fi.ctime.valueOf());
+                    sheet.addPage(fi.path);
+                    //finds the .json file if exists
+                    let dotJsonFile = items.find(f => f.name === fi.name + ".json");
+                    if (dotJsonFile) {
+                        lastUpdate = Math.max(lastUpdate, dotJsonFile.mtime.valueOf(), dotJsonFile.ctime.valueOf());
+                    }
                 }
+
+                //find thumbnail
+                let thumbnail = items.find(f => f.name.startsWith(name + ".") && f.name.endsWith(THUMBNAIL_SUFFIX));
+
+                if (thumbnail) {
+                    sheet.setThumbnail(thumbnail.path);
+                    //console.log("found tn", thumbnail.path)
+                }
+                sheet.lastUpdate = lastUpdate;
+
+                this._files.push(sheet);
             }
-
-            //find thumbnail
-            let thumbnail = items.find(f => f.name.startsWith(name + ".") && f.name.endsWith(THUMBNAIL_SUFFIX));
-
-            if (thumbnail) {
-                sheet.setThumbnail(thumbnail.path);
-                //console.log("found tn", thumbnail.path)
-            }
-            sheet.lastUpdate = lastUpdate;
-
-            this._files.push(sheet);
         }
         this._loading = false;
         this._fs._notify();
     }
 }
 
-
+//todo check with deep folders
 //sort.js
 const ORDER_FILE_NAME = 'order.json'
 
@@ -993,7 +1044,7 @@ export async function saveFolderOrder(folders) {
  * @param {*} folders 
  * @return array of folders in the correct order
  */
-async function _sortFolders(folders) {
+async function _sortRootFolders(folders) {
     if (!folders) {
         return folders;
     }
