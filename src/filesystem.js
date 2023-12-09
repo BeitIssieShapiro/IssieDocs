@@ -114,13 +114,19 @@ export class FileSystem {
     }
 
     registerListener(callback) {
-        this._listeners.push(callback);
+        const id =  Math.floor(Math.random() * 100000);
+        this._listeners.push({id, callback});
+        return id
+    }
+
+    unregisterListener(id) {
+        this._listeners = this._listeners.filter(reg=>this.registerListener.id != id)
     }
 
     _notify(folderName) {
 
         for (let i = 0; i < this._listeners.length; i++) {
-            this._listeners[i](folderName);
+            this._listeners[i].callback(folderName);
         }
     }
 

@@ -4,8 +4,8 @@ import {
 } from 'react-native';
 import { Icon as IconLocal } from 'react-native-elements'
 import LinearGradient from 'react-native-linear-gradient';
-import React, { useState } from 'react';
-import { translate, getLocalizedFoldersAndIcons, isRTL, getRowDirection, getRowDirections, getFlexEnd, getRowReverseDirection } from "./lang.js";
+import React, { useEffect, useState } from 'react';
+import { translate, getLocalizedFoldersAndIcons, isRTL, getRowDirection, getRowDirections, getFlexEnd, getRowReverseDirection, getFlexStart } from "./lang.js";
 import { getUseTextSetting } from './settings.js'
 
 import { getSvgIcon, SvgIcon } from './svg-icons.js'
@@ -429,16 +429,31 @@ export function OrientationPicker({
     </View>
 }
 
-export function RootFolderPicker({folders, currentFolder, onChangeFolder}) {
+export function RootFolderPicker({ folders, currentFolder, onChangeFolder, showSubFolders }) {
     const [more, setMore] = useState(false);
+    const [reload, setReload] = useState(0);
+
+    const [expandedFolders, setExpandedFolders] = useState([]);
     const defFolder = { name: translate("DefaultFolder"), svgIcon: 'home', color: 'gray', hideName: true };
 
+    useEffect(() => {
+        const regID = FileSystem.main.registerListener((folder) => {
+            setReload(old => old + 1);
+        });
+
+        // expand current folder if needed
+        if (currentFolder.parent) {
+            setExpandedFolders([currentFolder.parent.ID]);
+        }
+
+        return () => FileSystem.main.unregisterListener(regID);
+    }, [])
 
     if (!currentFolder || currentFolder.name === FileSystem.DEFAULT_FOLDER.name || currentFolder.name === '') {
         currentFolder = defFolder;
     }
 
-    const {  flexStart, flexEnd } = getRowDirections();
+    const { flexStart, flexEnd } = getRowDirections();
 
 
     return <View style={{
@@ -446,14 +461,14 @@ export function RootFolderPicker({folders, currentFolder, onChangeFolder}) {
         flexDirection: 'column', alignContent: flexEnd
     }}>
         <View style={{ flex: 1, backgroundColor: semanticColors.listBackground, alignItems: flexStart }}>
-            {renderFolderLine(defFolder, -1, currentFolder, onChangeFolder)}
-            {folders.map((item, index) => renderFolderLine(item, index, currentFolder, onChangeFolder))}
+            {renderFolderLine(defFolder, -1, currentFolder, onChangeFolder, false, 0)}
+            {folders.map((item, index) => renderFolderLine(item, index, currentFolder, onChangeFolder, showSubFolders, 0, expandedFolders, setExpandedFolders))}
             {getIconButton(() => setMore(val => !val), semanticColors.titleText, more ? "expand-less" : "expand-more", 45)}
             {more &&
                 getLocalizedFoldersAndIcons()
                     .filter(f => folders.find(f2 => f2.name === f.text) == undefined)
                     .map((itm, index) => ({ name: itm.text, icon: itm.icon, color: (availableColorPicker[index % availableColorPicker.length]) }))
-                    .map((item, index) => renderFolderLine(item, index, currentFolder, onChangeFolder))
+                    .map((item, index) => renderFolderLine(item, index, currentFolder, onChangeFolder, false, 0))
 
             }
         </View>
@@ -474,14 +489,6 @@ export function FileNameDialog({
 
     const [more, setMore] = useState(false);
 
-    //let foldersWithDesktop = [defFolderName, ...folders];
-    // getLocalizedFoldersAndIcons().forEach((itm, index) => {
-    //     if (fullListFolder.findIndex(f =>
-    //         f.name === itm.text) == -1) {
-    //         //only add those folders that do not exist already
-    //         fullListFolder.push({ name: itm.text, icon: itm.icon, color: (availableColorPicker[index % availableColorPicker.length]) });
-    //     }
-    // })
     return (
         <View style={[styles.textInputView, isLandscape ? { flexDirection: rowReverse } : {}]} onLayout={onLayout}>
             <View style={{ flex: 1, width: '100%' }}>
@@ -520,7 +527,7 @@ export function FileNameDialog({
                         'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 250, height: 40 }, row, true)}
                 </View>
                 <Spacer />
-                <RootFolderPicker onChangeFolder={onChangeFolder} folders={folders} currentFolder={folder}/>
+                <RootFolderPicker onChangeFolder={onChangeFolder} folders={folders} currentFolder={folder} showSubFolders={true} />
             </View>
 
 
@@ -528,15 +535,84 @@ export function FileNameDialog({
         </View>);
 }
 
-function renderFolderLine(item, index, folder, onChangeFolder) {
-    return <TouchableOpacity key={index} style={{
+function renderFolderLine(rowData, index, currentFolder, onChangeFolder, showSubFolders, indentLevel, expandedFolders, setExpandedFolders) {
+    const { row, rowReverse } = getRowDirections();
+    const isHome = rowData.svgIcon === "home";
+    const expanded = !!expandedFolders?.some(ef => ef == rowData.ID);
+
+    if (expanded && rowData.loading)
+        rowData.reload();
+
+    trace("pickerRenderRow", rowData.ID, expanded, expandedFolders)
+
+    return [<TouchableOpacity key={index} style={{
         height: 65, width: '100%',
         justifyContent: getFlexEnd()
     }}
-        onPress={() => onChangeFolder(item)}>
+        onPress={() => onChangeFolder(rowData)}>
 
-        {pickerRenderRow(item, folder.name == item.name)}
-    </TouchableOpacity>
+        <View style={[globalStyles.textInput, {
+            backgroundColor: currentFolder.ID === rowData.ID ? semanticColors.selectedListItem : semanticColors.listBackground,
+            alignContent: getFlexEnd(), justifyContent: getFlexEnd(),
+            alignItems: 'center',
+            flexDirection: rowReverse
+        },
+        getFontFamily()]}>
+            {indentLevel > 0 && <View style={{ minWidth: 70 * indentLevel }} />}
+            {!isHome && showSubFolders && <Icon name={expanded ? "expand-less" : "expand-more"} size={45} onPress={() => {
+                if (expanded) {
+                    setExpandedFolders(expandedFolders.filter(f => f !== rowData.ID))
+                } else {
+                    trace("setExpandedFolder", [rowData.ID, ...expandedFolders])
+                    setExpandedFolders([rowData.ID, ...expandedFolders])
+                }
+            }} />}
+
+
+            {isHome ?
+                <View style={{ flex: 1, flexDirection: rowReverse }}>
+                    <Spacer />
+                    <SvgIcon name={rowData.svgIcon} size={50} color={rowData.color} />
+                </View>
+                :
+                <View style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', paddingRight: 30, height: '100%' }}>
+                    <Icon name="folder" size={45} color={rowData.color} />
+                    <View style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
+                        <View style={{
+                            width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center',
+                            flexDirection: rowReverse
+                        }}>
+                            {rowData.icon?.length > 0 ? <FolderIcon
+                                size={20}
+                                name={rowData.icon}
+                                color={'white'}
+                                icon={rowData.icon}
+                            /> : null}
+                        </View>
+                    </View>
+                </View>
+            }
+            {/* {rowData.icon && rowData.icon != '' ?
+                <View style={{ flexDirection: 'row' }}>
+                    <Spacer />
+                    <FolderIcon name={rowData.icon} size={50} color={rowData.color ? rowData.color : semanticColors.folderIcons} />
+                </View>
+                : <View />}
+            {rowData.svgIcon && <View style={{ flex: 1, flexDirection: rowReverse }}>
+                <Spacer />
+                <SvgIcon name={rowData.svgIcon} size={50} color={rowData.color} />
+            </View> 
+    */}
+            {!rowData.hideName && <AppText style={{ fontSize: 26, textAlign: "left", paddingRight: 25, paddingLeft: 25 }}>
+                {rowData.name}
+            </AppText>}
+
+
+        </View>
+    </TouchableOpacity>,
+    expanded && rowData?.folders.length > 0 ?
+        rowData.folders.map((subFolder, j) => renderFolderLine(subFolder, index + "-" + j, currentFolder, onChangeFolder, false, indentLevel + 1)) : null
+    ]
 
 }
 
@@ -583,55 +659,9 @@ function renderFolderLine(item, index, folder, onChangeFolder) {
 
 
 
-function pickerRenderRow(rowData, highlighted) {
-    const { row, rowReverse } = getRowDirections();
-    const isHome = rowData.svgIcon === "home"
-    return (
-        <View style={[globalStyles.textInput, {
-            backgroundColor: highlighted ? semanticColors.selectedListItem : semanticColors.listBackground,
-            alignContent: getFlexEnd(), justifyContent: 'space-between',
-            alignItems: 'center',
-            flexDirection: row
-        },
-        getFontFamily()]}>
-            {isHome ?
-                <View style={{ flex: 1, flexDirection: rowReverse }}>
-                    <Spacer />
-                    <SvgIcon name={rowData.svgIcon} size={50} color={rowData.color} />
-                </View>
-                : <View style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', paddingRight: 30, height: '100%' }}>
-                    <Icon name="folder" size={45} color={rowData.color} />
-                    <View style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
-                        <View style={{
-                            width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center',
-                            flexDirection: rowReverse
-                        }}>
-                            {rowData.icon?.length > 0 ? <FolderIcon
-                                size={20}
-                                name={rowData.icon}
-                                color={'white'}
-                                icon={rowData.icon}
-                            /> : null}
-                        </View>
-                    </View>
-                </View>
-            }
-            {/* {rowData.icon && rowData.icon != '' ?
-                <View style={{ flexDirection: 'row' }}>
-                    <Spacer />
-                    <FolderIcon name={rowData.icon} size={50} color={rowData.color ? rowData.color : semanticColors.folderIcons} />
-                </View>
-                : <View />}
-            {rowData.svgIcon && <View style={{ flex: 1, flexDirection: rowReverse }}>
-                <Spacer />
-                <SvgIcon name={rowData.svgIcon} size={50} color={rowData.color} />
-            </View> 
-    */}
-            {!rowData.hideName && <AppText style={{ fontSize: 26, textAlign: 'right', paddingRight: 25, paddingLeft: 25 }}>
-                {rowData.name}
-            </AppText>}
-        </View>
-    );
+function pickerRenderRow(rowData, currentFolder, onChangeFolder, indentLevel, subFolders, expandedFolders, setExpandedFolders) {
+
+
 }
 
 
@@ -919,7 +949,7 @@ export function getColorButtonInt(callback, color, size, icon, index, iconColor)
 }
 
 export function getEraserIcon(callback, size, color, selected, key) {
-    return <View key={key} style={{alignItems:"center"}}><TouchableOpacity
+    return <View key={key} style={{ alignItems: "center" }}><TouchableOpacity
         activeOpacity={0.7}
         onPress={callback}
         style={{
@@ -932,8 +962,8 @@ export function getEraserIcon(callback, size, color, selected, key) {
     </TouchableOpacity>
         {selected ? <View
             style={{
-                width:"80%",
-                marginTop:2,
+                width: "80%",
+                marginTop: 2,
                 borderBottomColor: semanticColors.editPhotoButton,
                 borderBottomWidth: 6,
             }}

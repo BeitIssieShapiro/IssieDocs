@@ -326,15 +326,12 @@ export default class IssieSavePhoto extends React.Component {
       this.saveInProgress = true;
       let folder = this.state.folder;
 
-      let folderName = folder.name;
+      let folderID = folder.ID;
       let fileName = this.state.pageName;
 
-      if (!folderName || folderName === translate("DefaultFolder")) {
-        folderName = FileSystem.DEFAULT_FOLDER.name;
-      }
       try {
-        await FileSystem.main.addFolder(folderName, folder.icon, folder.color);
-        let targetFolder = FileSystem.main.basePath + folderName;
+        await FileSystem.main.addFolder(folder.name, folder.icon, folder.color, false, false, false, folder.parent?.ID);
+        let targetFolder = FileSystem.main.basePath + folder.path;
         let filePath = targetFolder + "/" + fileName;
 
         //add .jpg only if not rename or dup
@@ -378,9 +375,9 @@ export default class IssieSavePhoto extends React.Component {
 
 
         let returnFolderCallback = this.props.route.params.returnFolderCallback;
-        if (returnFolderCallback && folderName) {
-          trace("return to folder" + folderName)
-          returnFolderCallback(folderName);
+        if (returnFolderCallback && folderID) {
+          trace("return to folder" + folderID)
+          returnFolderCallback(folderID);
         }
 
         if (this.props.route.params.goHomeAndThenToEdit) {
@@ -524,12 +521,12 @@ export default class IssieSavePhoto extends React.Component {
     this.setState({ pdfPage: this.state.pdfPage + inc });
   }
 
-  saveNewFolder = async (newFolder, color, icon) => {
+  saveNewFolder = async (newFolder, color, icon, parentID) => {
     let saveNewFolder = this.props.route.params.saveNewFolder;
     if (!saveNewFolder) {
       return false;
     }
-    if (await saveNewFolder(newFolder, color, icon)) {
+    if (await saveNewFolder(newFolder, color, icon, parentID)) {
       let newFolderObj = { name: newFolder, color, icon }
       this.setState({ folder: newFolderObj, folders: [newFolderObj, ...this.state.folders] });
       return true;
@@ -636,7 +633,7 @@ export default class IssieSavePhoto extends React.Component {
             onChangeOrientation={(isLandscape) => this.setState({ orientationLandscape: isLandscape })}
             onChangeName={(text) => this.setState({ pageName: text })}
             onChangeFolder={(folder) => this.setState({ folder: folder })}
-            onSaveNewFolder={(name, color, icon) => this.saveNewFolder(name, color, icon)}
+            onSaveNewFolder={(name, color, icon, parentID) => this.saveNewFolder(name, color, icon, parentID)}
             navigation={this.props.navigation}
             isLandscape={this.state.windowSize.width > this.state.windowSize.height}
             isMobile={this.isScreenNarrow()}

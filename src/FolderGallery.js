@@ -220,7 +220,7 @@ export default class FolderGallery extends React.Component {
                         imageSource: SRC_FILE,
                         folder: this.state.currentFolder,
                         returnFolderCallback: (f) => this.setReturnFolder(f),
-                        saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
+                        saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID)
                     })
                 }
             }
@@ -272,7 +272,7 @@ export default class FolderGallery extends React.Component {
                     addToExistingPage,
                     folder: this.state.currentFolder,
                     returnFolderCallback: (f) => this.setReturnFolder(f),
-                    saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
+                    saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID)
 
                 })
             },
@@ -301,7 +301,7 @@ export default class FolderGallery extends React.Component {
                     addToExistingPage,
                     folder: this.state.currentFolder,
                     returnFolderCallback: (f) => this.setReturnFolder(f),
-                    saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
+                    saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID)
 
                 })
             },
@@ -333,7 +333,7 @@ export default class FolderGallery extends React.Component {
                 uri: res.uri,
                 folder: this.state.currentFolder,
                 returnFolderCallback: (f) => this.setReturnFolder(f),
-                saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
+                saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID)
 
             });
         }).catch(err => {
@@ -501,7 +501,7 @@ export default class FolderGallery extends React.Component {
 
             name: this.state.selected.name,
             returnFolderCallback: (f) => this.setReturnFolder(f),
-            saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false),
+            saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID),
             title: isRename ? translate("RenameFormTitle") : translate("MovePageFormTitle")
 
         });
@@ -523,7 +523,7 @@ export default class FolderGallery extends React.Component {
         //rename folder
         this.props.navigation.navigate('CreateFolder',
             {
-                saveNewFolder: (name, color, icon, currFolder, parentID) => this.saveNewFolder(name, color, icon, true, this.state.currentFolder.name, parentID),
+                saveNewFolder: (name, color, icon, parentID) => this.saveNewFolder(name, color, icon, true, this.state.currentFolder.ID, parentID),
                 isLandscape: this.isLandscape(),
                 isMobile: this.isMobile(),
                 currentFolderName: this.state.currentFolder.name,
@@ -550,30 +550,33 @@ export default class FolderGallery extends React.Component {
         })
     }
 
-    setReturnFolder = (folderName) => {
-        if (folderName === FileSystem.DEFAULT_FOLDER.name) {
+    setReturnFolder = (folderID) => {
+        if (folderID === FileSystem.DEFAULT_FOLDER.name) {
             this.unselectFolder();
         } else {
-            FileSystem.main.getRootFolders().then((folders) => {
-                let folder = folders.find(f => f.name == folderName);
-                if (folder) {
-                    this.selectFolder(folder);
-                }
-            });
+            const folder = FileSystem.main.findFolderByID(folderID);
+            if (folder) {
+                this.selectFolder(folder);
+            }
         }
     }
 
     saveNewFolder = async (newFolderName, newFolderColor, newFolderIcon,
-        setReturnFolder, originalFolderName, parentID) => {
+        setReturnFolder, originalFolderID, parentID) => {
 
         try {
-            if (!originalFolderName) {
+            if (!originalFolderID) {
                 console.log("add folder")
                 await FileSystem.main.addFolder(newFolderName, newFolderIcon, newFolderColor, true, false, false, parentID);
             } else {
-                console.log("rename folder")
-                // todo
-                await FileSystem.main.renameFolder(originalFolderName, newFolderName, newFolderIcon, newFolderColor);
+                console.log("rename folder", parentID, newFolderName)
+                let newID;
+                if (parentID) {
+                    newID = parentID + "/";
+                }
+                newID += newFolderName;
+                trace("newID", newID)
+                await FileSystem.main.renameFolder(originalFolderID, newID, newFolderIcon, newFolderColor);
 
             }
         } catch (e) {
@@ -628,7 +631,7 @@ export default class FolderGallery extends React.Component {
                 this.props.navigation.goBack();
             },
             returnFolderCallback: (f) => this.setReturnFolder(f),
-            saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false),
+            saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID),
             goHomeAndThenToEdit: (path, pIndex) => {
                 setTimeout(async () => {
                     this.props.navigation.dispatch(StackActions.popToTop());
@@ -682,7 +685,7 @@ export default class FolderGallery extends React.Component {
             skipConfirm: true,
             folder: this.state.currentFolder,
             returnFolderCallback: (f) => this.setReturnFolder(f),
-            saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
+            saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID)
         })
     }
 
@@ -695,7 +698,7 @@ export default class FolderGallery extends React.Component {
             addToExistingPage,
             folder: this.state.currentFolder,
             returnFolderCallback: (f) => this.setReturnFolder(f),
-            saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, false)
+            saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID)
         })
     }
 
