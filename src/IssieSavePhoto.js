@@ -334,7 +334,6 @@ export default class IssieSavePhoto extends React.Component {
       }
       try {
         await FileSystem.main.addFolder(folderName, folder.icon, folder.color);
-
         let targetFolder = FileSystem.main.basePath + folderName;
         let filePath = targetFolder + "/" + fileName;
 
@@ -391,6 +390,7 @@ export default class IssieSavePhoto extends React.Component {
         }
 
       } catch (e) {
+        trace("error save file", e)
         Alert.alert(e)
       }
     } finally {

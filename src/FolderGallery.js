@@ -48,6 +48,7 @@ import { trace } from './log.js';
 import { showMessage } from 'react-native-flash-message';
 import { LogBox } from 'react-native';
 import { FileContextMenu } from './file-context-menu.js';
+import { FolderPanel } from './folder-panel.js';
 
 const SORT_BY_NAME = 0;
 const SORT_BY_DATE = 1;
@@ -444,8 +445,15 @@ export default class FolderGallery extends React.Component {
             [
                 {
                     text: translate("BtnDelete"), onPress: () => {
-                        FileSystem.main.deleteFolder(this.state.currentFolder.name)
-                        this.unselectFolder();
+                        FileSystem.main.deleteFolder(this.state.currentFolder.ID)
+
+                        // try to go back on folder
+                        if (this.state.currentFolder.parent) {
+                            this.selectFolder(this.state.currentFolder.parent);
+                        } else {
+                            this.unselectFolder();
+                        }
+
                         this.toggleEditMode();
                     },
                     style: 'destructive'
@@ -515,12 +523,13 @@ export default class FolderGallery extends React.Component {
         //rename folder
         this.props.navigation.navigate('CreateFolder',
             {
-                saveNewFolder: (name, color, icon, currFolder) => this.saveNewFolder(name, color, icon, true, currFolder),
+                saveNewFolder: (name, color, icon, currFolder, parentID) => this.saveNewFolder(name, color, icon, true, this.state.currentFolder.name, parentID),
                 isLandscape: this.isLandscape(),
                 isMobile: this.isMobile(),
                 currentFolderName: this.state.currentFolder.name,
                 currentFolderColor: this.state.currentFolder.color,
                 currentFolderIcon: this.state.currentFolder.icon,
+                parentID: this.state.currentFolder.parent?.ID,
                 title: translate("RenameFormTitle")
             });
         this.toggleEditMode(false);
@@ -555,14 +564,15 @@ export default class FolderGallery extends React.Component {
     }
 
     saveNewFolder = async (newFolderName, newFolderColor, newFolderIcon,
-        setReturnFolder, originalFolderName) => {
+        setReturnFolder, originalFolderName, parentID) => {
 
         try {
             if (!originalFolderName) {
                 console.log("add folder")
-                await FileSystem.main.addFolder(newFolderName, newFolderIcon, newFolderColor, true);
+                await FileSystem.main.addFolder(newFolderName, newFolderIcon, newFolderColor, true, false, false, parentID);
             } else {
                 console.log("rename folder")
+                // todo
                 await FileSystem.main.renameFolder(originalFolderName, newFolderName, newFolderIcon, newFolderColor);
 
             }
@@ -766,9 +776,11 @@ export default class FolderGallery extends React.Component {
         let fIndex = 0;
         let items = [];
         let folders = this.state.folders?.filter(f => f.name !== "Default") || [];
+        let subFolders = undefined;
         let folderIsLoading = false;
         if (this.state.currentFolder) {
             items = this.state.currentFolder.items;
+            subFolders = this.state.currentFolder.folders;
             folderIsLoading = this.state.currentFolder.loading;
         } else if (this.state.folders) {
             if (this.state.filterFolders?.length > 0) {
@@ -803,6 +815,10 @@ export default class FolderGallery extends React.Component {
 
         let treeWidth = this.state.currentFolder ? (this.isLandscape() ? 220 : this.isMobile() ? 100 : 180) : 0;//.36 * this.state.windowSize.width;
         let pagesContainerWidth = this.state.windowSize.width - treeWidth;
+        if (this.state.currentFolder?.parent) {
+            // will show second folders panel
+            pagesContainerWidth -= treeWidth;
+        }
         let numColumnsForTiles = Math.floor(pagesContainerWidth / dimensions.tileWidth);
         let foldersCount = folders.length;
         let foldersHeightSize = (foldersCount + 1) * dimensions.folderHeight;
@@ -910,9 +926,10 @@ export default class FolderGallery extends React.Component {
                             getSvgIconButton(() => {
                                 this.props.navigation.navigate('CreateFolder',
                                     {
-                                        saveNewFolder: (newFolder, color, icon) => this.saveNewFolder(newFolder, color, icon, true),
+                                        saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, undefined, undefined, parentID),
                                         isLandscape: this.isLandscape(),
                                         isMobile: this.isMobile(),
+                                        parentID: this.state.currentFolder?.parent?.ID
                                     });
                             }, semanticColors.addButton, "new-folder", 45)
                         }
@@ -982,6 +999,7 @@ export default class FolderGallery extends React.Component {
                                     </View>
                                 </View>
                             :
+
                             <View style={{
                                 flexDirection: "column",
                                 width: pagesContainerWidth, left: 0, height: "100%",
@@ -1066,13 +1084,13 @@ export default class FolderGallery extends React.Component {
                                     }
 
 
-                                    {!this.state.currentFolder && <View
+                                    {(subFolders || !this.state.currentFolder) && <View
                                         style={{
                                             flexWrap: 'wrap', flexDirection: rowReverse,
                                             width: '100%', alignItems: 'center',
                                         }}
                                     >
-                                        {folders.map((item, index) => <FolderNew
+                                        {(subFolders || folders).map((item, index) => <FolderNew
                                             key={index.toString()}
                                             id={item.name}
                                             isOverview={true}
@@ -1094,7 +1112,7 @@ export default class FolderGallery extends React.Component {
                                         <View style={{
                                             flexDirection: asTiles ? rowReverse : 'column',
                                             flexWrap: 'wrap',
-                                            minWidth: "100%",
+                                            minWidth: "100%"
                                         }}>
                                             {this.sortFiles(items).map((item, i) => (<DraxView
                                                 key={i}
@@ -1143,98 +1161,43 @@ export default class FolderGallery extends React.Component {
 
                         }
                         {/* tree */}
-                        {!isEmptyApp && this.state.currentFolder &&
-                            <View style={{
+                        { /*SubFolders panel*/
+                            this.state.currentFolder?.parent &&
+                            <FolderPanel
 
-                                flexDirection: "column",
-                                top: 0,
-                                width: treeWidth,
-                                right: 0,
-                                height: "100%",
-                                backgroundColor: 'white'
-                            }}>
+                                treeWidth={treeWidth}
+                                folders={this.state.currentFolder.parent.folders}
+                                currentFolder={this.state.currentFolder}
+                                isScreenLow={this.isScreenLow()}
+                                isLandscape={this.isLandscape()}
+                                onUnselectFolder={() => this.unselectFolder()}
+                                onSelectFolder={(f) => this.selectFolder(f)}
+                                onRef={(ref => this.foldersTree = ref)}
+                                useColor={this.state.folderColor}
+                                editMode={false}
 
-                                <DraxView
-                                    onReceiveDragEnter={() => this.setState({ homeDragOver: true })}
-                                    onReceiveDragExit={() => this.setState({ homeDragOver: false })}
-                                    onReceiveDragDrop={({ dragged: { payload } }) => {
-                                        this.setState({ homeDragOver: false })
-                                        //trace(`received ${JSON.stringify(payload)}`);
-                                        trace("Drop on Folder", "from", payload.folder, "to", FileSystem.DEFAULT_FOLDER.name)
-                                        if (payload.folder === FileSystem.DEFAULT_FOLDER.name) {
-                                            trace("drop on same folder")
-                                            return;
-                                        }
-                                        FileSystem.main.movePage(payload.item, FileSystem.DEFAULT_FOLDER.name)
-                                            .then(() => showMessage({
-                                                message: fTranslate("SuccessfulMovePageMsg", payload.item.name, translate("DefaultFolder")),
-                                                type: "success",
-                                                animated: true,
-                                                duration: 5000,
+                            />
 
-                                            })
-                                            )
-                                    }}
-                                    style={{
-                                        height: this.isScreenLow() ? '17%' : '10%',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        backgroundColor: this.state.homeDragOver ? "lightblue" : "transparent"
-                                    }}>
-                                    <TouchableOpacity onPress={() => this.unselectFolder()}>
-
-
-                                        <SvgIcon name="home" size={40} color={"gray"} />
-                                    </TouchableOpacity>
-                                </DraxView>
-
-
-                                <SBDraxScrollView
-                                    rtl={rtl}
-                                    myRef={ref => this.foldersTree = ref}
-                                    scrollEnabled={true}
-                                    showsVerticalScrollIndicator={false}
-                                    style={{
-                                        flex: 1,
-                                        flexDirection: "column",
-                                        //height: (this.state.windowSize.height - dimensions.topView - dimensions.toolbarHeight ),
-                                        backgroundColor: 'white',
-                                        zIndex: 99999
-                                    }}
-                                    bounces={false}
-
-                                    contentContainerStyle={{
-                                        height: foldersHeightSize
-                                    }}>
-
-                                    {
-                                        folders.map((f, i, arr) => <FolderNew
-                                            key={i}
-                                            index={i}
-                                            isLast={i + 1 == arr.length}
-                                            useColors={this.state.folderColor}
-                                            id={f.name}
-                                            name={f.name}
-                                            color={f.color}
-                                            icon={f.icon}
-                                            editMode={this.state.editMode}
-                                            fixedFolder={f.name === FileSystem.DEFAULT_FOLDER.name}
-                                            //dragPanResponder={this._panResponder.panHandlers} 
-                                            current={(this.state.currentFolder && f.name == this.state.currentFolder.name)}
-                                            onPress={() => this.selectFolder(f)}
-                                            onLongPress={() => {
-                                                if (this.state.currentFolder && f.name == this.state.currentFolder.name)
-                                                    this.unselectFolder()
-                                            }}
-                                            onMoveUp={() => this.moveFolderUp(f)}
-                                            onMoveDown={() => this.moveFolderDown(f)}
-                                            isLandscape={this.isLandscape()}
-                                        />)
-
-                                    }
-                                </SBDraxScrollView>
-                            </View>
                         }
+                        {!isEmptyApp && this.state.currentFolder &&
+                            <FolderPanel
+                                showHome={true}
+                                treeWidth={treeWidth}
+                                folders={folders}
+                                currentFolder={this.state.currentFolder}
+                                isScreenLow={this.isScreenLow()}
+                                isLandscape={this.isLandscape()}
+                                onUnselectFolder={() => this.unselectFolder()}
+                                onSelectFolder={(f) => this.selectFolder(f)}
+                                onMoveFolderUp={(f) => this.moveFolderUp(f)}
+                                onMoveFolderDown={(f) => this.moveFolderDown(f)}
+                                onRef={(ref => this.foldersTree = ref)}
+                                useColor={this.state.folderColor}
+                                editMode={this.state.editMode}
+
+                            />
+                        }
+
                     </View>
                 </View>
             </DraxProvider>

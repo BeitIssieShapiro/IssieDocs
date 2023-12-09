@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Alert, Text, TouchableOpacity, PanResponder, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
-import { AppText, FolderIcon, getFontFamily, getSvgIconButton } from './elements.js'
+import { AppText, FolderIcon, RootFolderPicker, getFontFamily, getSvgIconButton } from './elements.js'
 import { Icon } from "./elements"
 import { getRowDirection, getRowDirections, translate } from './lang.js'
 
@@ -53,20 +53,28 @@ export default class IssieCreateFolder extends React.Component {
         });
 
         let name = '', icon = '', color = '';
-        let currentFolderName = props.route.params.currentFolderName;
-        name = currentFolderName;
         icon = props.route.params.currentFolderIcon;
         color = props.route.params.currentFolderColor;
+        name = props.route.params.currentFolderName
 
         this.state = {
             yOffset: 0,
             name,
             icon,
             color,
-            currentFolderName,
             windowSize: { height: 1000, width: 1000 },
             busy: false,
+            inFolder: undefined,
+            folders: [],
         };
+    }
+
+    componentDidMount = () => {
+        FileSystem.main.getRootFolders().then(folders => this.setState({
+            folders: folders.filter(f => f.name !== "Default"),
+            inFolder: this.props.route.params.parentID ? folders.find(f => f.ID === this.props.route.params.parentID) : undefined
+        }));
+
     }
 
     onLayout = () => {
@@ -93,7 +101,7 @@ export default class IssieCreateFolder extends React.Component {
             let success = true;
             let saveNewFolder = this.props.route.params.saveNewFolder;
             if (saveNewFolder) {
-                success = await saveNewFolder(this.state.name, this.state.color, this.state.icon, this.state.currentFolderName);
+                success = await saveNewFolder(this.state.name, this.state.color, this.state.icon, this.state.inFolder?.ID);
             }
             if (success) {
                 this.props.navigation.goBack();
@@ -137,7 +145,7 @@ export default class IssieCreateFolder extends React.Component {
     }
 
     render() {
-        const {row, rowReverse, flexEnd, textAlign, direction} = getRowDirections();
+        const { row, rowReverse, flexEnd, textAlign, direction } = getRowDirections();
         let actionButtons = <View style={{
             position: 'absolute',
             height: '100%',
@@ -168,7 +176,7 @@ export default class IssieCreateFolder extends React.Component {
                     justifyContent: 'space-between',
                     //backgroundColor: 'green'
                 }}>
-                <AppText style={[styles.titleText, {textAlign}]}>{translate("CaptionIcon")}</AppText>
+                <AppText style={[styles.titleText, { textAlign }]}>{translate("CaptionIcon")}</AppText>
 
                 {getRoundedButton(() => this.AddPhoto(),
                     'svg-new-image', translate("BtnAddPhoto"), 30, 30, { width: 250, height: 40 }, row, true)
@@ -180,7 +188,8 @@ export default class IssieCreateFolder extends React.Component {
                 backgroundColor: 'white',
                 flexDirection: rowReverse,
                 alignItems: 'center',
-                flexWrap: 'wrap'
+                flexWrap: 'wrap',
+
             }}>
                 <TouchableOpacity style={{ padding: 20 }} onPress={() => {
                     this.setState({ icon: "", yOffset: 0 })
@@ -197,6 +206,8 @@ export default class IssieCreateFolder extends React.Component {
                     ))
                 }
             </View>
+            <AppText style={[styles.titleText, { textAlign }]}>{translate("InFolderCaption")}</AppText>
+            <RootFolderPicker onChangeFolder={(folder) => this.setState({ inFolder: folder })} folders={this.state.folders} currentFolder={this.state.inFolder} />
         </View>
 
         let colorSelection = <View style={{
@@ -230,9 +241,9 @@ export default class IssieCreateFolder extends React.Component {
                 {/* Toolbar */}
                 <View style={{
                     zIndex: 5, width: '100%',
-                    height: dimensions.toolbarHeight, 
+                    height: dimensions.toolbarHeight,
                     backgroundColor: semanticColors.subTitle,
-                    flexDirection:row
+                    flexDirection: row
                 }} >
                     {actionButtons}
                 </View>
@@ -251,17 +262,17 @@ export default class IssieCreateFolder extends React.Component {
                         >
                             <View style={{ width: '100%', flexDirection: rowReverse, alignItems: 'center', justifyContent: 'flex-start' }}>
                                 <Icon name="folder" size={55} color={this.state.color ? this.state.color : 'gray'} />
-                                <AppText style={[styles.titleText, {textAlign}]}>{translate("CaptionFolderNameInput")}</AppText>
+                                <AppText style={[styles.titleText, { textAlign }]}>{translate("CaptionFolderNameInput")}</AppText>
                                 <View style={{ position: 'absolute', left: 10, top: 21 }}>
                                     {this.state.icon ? <FolderIcon name={this.state.icon} size={30} color='white' /> : null}
                                 </View>
                             </View>
 
 
-                            <TextInput style={[globalStyles.textInput, {direction, textAlign}, getFontFamily()]} value={this.state.name}
+                            <TextInput style={[globalStyles.textInput, { direction, textAlign }, getFontFamily()]} value={this.state.name}
                                 onChangeText={(txt) => this.setState({ name: txt })}
                             />
-                            <AppText style={[styles.titleText, {textAlign}]}>{translate("CaptionFolderColor")}</AppText>
+                            <AppText style={[styles.titleText, { textAlign }]}>{translate("CaptionFolderColor")}</AppText>
                             {colorSelection}
                         </View>
                         {this.isLandscape() ? <Spacer /> : null}
@@ -296,7 +307,7 @@ const styles = StyleSheet.create({
     titleText: {
         fontSize: 35,
         height: 70,
-        lineHeight:70,
+        lineHeight: 70,
         fontWeight: 'bold',
         color: semanticColors.titleText,
         backgroundColor: 'transparent'

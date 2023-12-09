@@ -429,6 +429,38 @@ export function OrientationPicker({
     </View>
 }
 
+export function RootFolderPicker({folders, currentFolder, onChangeFolder}) {
+    const [more, setMore] = useState(false);
+    const defFolder = { name: translate("DefaultFolder"), svgIcon: 'home', color: 'gray', hideName: true };
+
+
+    if (!currentFolder || currentFolder.name === FileSystem.DEFAULT_FOLDER.name || currentFolder.name === '') {
+        currentFolder = defFolder;
+    }
+
+    const {  flexStart, flexEnd } = getRowDirections();
+
+
+    return <View style={{
+        flex: 1, width: '100%',
+        flexDirection: 'column', alignContent: flexEnd
+    }}>
+        <View style={{ flex: 1, backgroundColor: semanticColors.listBackground, alignItems: flexStart }}>
+            {renderFolderLine(defFolder, -1, currentFolder, onChangeFolder)}
+            {folders.map((item, index) => renderFolderLine(item, index, currentFolder, onChangeFolder))}
+            {getIconButton(() => setMore(val => !val), semanticColors.titleText, more ? "expand-less" : "expand-more", 45)}
+            {more &&
+                getLocalizedFoldersAndIcons()
+                    .filter(f => folders.find(f2 => f2.name === f.text) == undefined)
+                    .map((itm, index) => ({ name: itm.text, icon: itm.icon, color: (availableColorPicker[index % availableColorPicker.length]) }))
+                    .map((item, index) => renderFolderLine(item, index, currentFolder, onChangeFolder))
+
+            }
+        </View>
+    </View>
+}
+
+
 export function FileNameDialog({
     name,
     folder, folders,
@@ -441,12 +473,6 @@ export function FileNameDialog({
     const { row, rowReverse, flexStart, flexEnd, textAlign, direction } = getRowDirections();
 
     const [more, setMore] = useState(false);
-    const defFolder = { name: translate("DefaultFolder"), svgIcon: 'home', color: 'gray', hideName: true };
-
-
-    if (!folder || folder.name === FileSystem.DEFAULT_FOLDER.name || folder.name === '') {
-        folder = defFolder;
-    }
 
     //let foldersWithDesktop = [defFolderName, ...folders];
     // getLocalizedFoldersAndIcons().forEach((itm, index) => {
@@ -494,23 +520,7 @@ export function FileNameDialog({
                         'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 250, height: 40 }, row, true)}
                 </View>
                 <Spacer />
-                <View style={{
-                    flex: 1, width: '100%',
-                    flexDirection: 'column', alignContent: flexEnd
-                }}>
-                    <View style={{ flex: 1, backgroundColor: semanticColors.listBackground, alignItems: flexStart }}>
-                        {renderFolderLine(defFolder, -1, folder, onChangeFolder)}
-                        {folders.map((item, index) => renderFolderLine(item, index, folder, onChangeFolder))}
-                        {getIconButton(() => setMore(val => !val), semanticColors.titleText, more ? "expand-less" : "expand-more", 45)}
-                        {more &&
-                            getLocalizedFoldersAndIcons()
-                                .filter(f => folders.find(f2 => f2.name === f.text) == undefined)
-                                .map((itm, index) => ({ name: itm.text, icon: itm.icon, color: (availableColorPicker[index % availableColorPicker.length]) }))
-                                .map((item, index) => renderFolderLine(item, index, folder, onChangeFolder))
-
-                        }
-                    </View>
-                </View>
+                <RootFolderPicker onChangeFolder={onChangeFolder} folders={folders} currentFolder={folder}/>
             </View>
 
 

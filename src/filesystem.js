@@ -77,14 +77,14 @@ export class FileSystem {
         return this._folders;
     }
 
-    
+
     async readFolder(fsFolder, parentFolder) {
         if (fsFolder.isDirectory()) {
             metadata = await this._readFolderMetaData(fsFolder.path)
             console.log("folder color :" + metadata.color)
             let fsf = new FileSystemFolder(fsFolder.name, parentFolder, this, metadata);
             if (parentFolder) {
-                parentFolder._folder.push(fsf);
+                parentFolder.folders.push(fsf);
             } else {
                 this._folders.push(fsf);
             }
@@ -124,12 +124,20 @@ export class FileSystem {
         }
     }
 
-    async deleteFolder(name) {
-        trace("Delete folder: ", name);
-        let folderPath = this._basePath + name;
-        await RNFS.unlink(folderPath)
-        this._folders = this._folders.filter(f => f.name != name);
-        this._notify();
+    async deleteFolder(ID) {
+        trace("Delete folder: ", ID);
+
+        const folder = this.findFolderByID(ID);
+        if (folder) {
+            let folderPath = this._basePath + folder.path;
+            await RNFS.unlink(folderPath)
+            if (folder.parent) {
+                folder.parent._folders = folder.parent._folders.filter(f => f.ID !== folder.ID);
+            } else {
+                this._folders = this._folders.filter(f => f.name != folder.name);
+            }
+            this._notify();
+        }
     }
 
     // only search pupolated folders
@@ -139,12 +147,14 @@ export class FileSystem {
     }
 
     findFolderByID(ID) {
+        if (!ID) return undefined;
+
         let parts = ID.split("/");
 
         let folders = this._folders;
         let folder
         for (let i = 0; i < parts.length; i++) {
-            folder = folders.find(f => f.name === parts[i])
+            folder = folders?.find(f => f.name === parts[i])
             folders = folder?.folders;
         }
         return folder;
@@ -153,6 +163,7 @@ export class FileSystem {
     // return FileSystemFolder obj
     // todo verify works also for deep folder (e.g. in imporr with preserve folders)
     async addFolder(name, icon, color, strictChecks, skipCreateMetadata, rename, parentID) {
+        trace("addFolder", arguments)
         const parent = this.findFolderByID(parentID);
         const parentPath = (parent ? parent.path + "/" + FileSystem.FOLDERS_PATH + "/" : "")
         console.log("add folder: " + name + ", color:" + color + ", icon=" + icon + ", in parent" + parentPath)
@@ -179,13 +190,15 @@ export class FileSystem {
             await RNFS.mkdir(folderPath);
             trace("Folder ", folderPath, " has been created")
             fsf = new FileSystemFolder(name, parent, this, { color, icon });
+            trace("FileSystemFolder created ", fsf)
             if (parent) {
-                parent._folders.push(fsf);
+                parent.folders.push(fsf);
             } else {
                 // add as root folder
                 this._folders.push(fsf);
             }
         }
+
         if (!skipCreateMetadata) {
             const newMetadata = await this._writeFolderMetaData(folderPath, color, icon);
 
@@ -332,6 +345,7 @@ export class FileSystem {
     };
 
     async saveFile(uri, filePath, isCopy) {
+        trace("saveFile", arguments)
         //asserts that the filePath is in this filesystem:
         if (filePath.indexOf(this._basePath) != 0) {
             throw "Attempt to write to wrong path of the filesystem: " + filePath
@@ -583,7 +597,8 @@ export class FileSystem {
     }
 
     async _writeFolderMetaData(folderPath, color, icon) {
-        let metaDataFilePath = this._basePath + folderPath + "/.metadata";
+        trace("_writeFolderMetaData", arguments)
+        let metaDataFilePath = folderPath + "/.metadata";
 
         let metadata = { color: color ? color : FileSystem.DEFAULT_FOLDER_METADATA.color, icon };
         return RNFS.writeFile(metaDataFilePath, JSON.stringify(metadata), 'utf8').then(
@@ -891,16 +906,30 @@ export class FileSystemFolder {
     _files = undefined;
     _loading = true;
 
+    isParentOf(childID) {
+        const IdWithSlash = this.ID + "/";
+        return childID.startsWith(IdWithSlash);
+    }
+
     constructor(name, parentFolder, fs, metadata) {
         this._metadata = metadata
         this._name = name;
         this._parent = parentFolder;
-        this._path = parentFolder ? parentFolder._path + "/" + FileSystem.FOLDERS_PATH + "/" + name : name;
+        this._path = parentFolder ? parentFolder.path + "/" + FileSystem.FOLDERS_PATH + "/" + name : name;
         this._fs = fs;
+        this._folders = [];
     }
 
     set metadata(md) {
         this._metadata = md
+    }
+
+    get parent () {
+        return this._parent;
+    }
+
+    get folders() {
+        return this._folders;
     }
 
     get name() {
@@ -908,7 +937,7 @@ export class FileSystemFolder {
     }
 
     get ID() {
-        return _parent ? this._parent + "/" + this._name : this._name;
+        return this._parent ? this._parent.ID + "/" + this._name : this._name;
     }
 
     get path() {
@@ -965,11 +994,12 @@ export class FileSystemFolder {
         this._folders = [];
         for (let fi of filesItems) {
             if (fi.name === FileSystem.FOLDERS_PATH) {
-                trace("read sub folders for ", fi.name);
                 const foldersBasePath = this._path + "/" + FileSystem.FOLDERS_PATH
+                trace("read sub folders for ", this.name, " in ", foldersBasePath);
                 const subFoldersItems = await RNFS.readDir(this._fs.basePath + foldersBasePath);
+                trace("found: ", subFoldersItems.length)
                 for (let sfi of subFoldersItems) {
-                    await FileSystem.readFolder(sfi, this);
+                    await FileSystem.main.readFolder(sfi, this);
                 }
             } else {
                 trace("read file", fi.name)
