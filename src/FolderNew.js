@@ -41,11 +41,11 @@ export default function FolderNew(props) {
                 setDragOver(false);
                 //trace(`received ${JSON.stringify(payload)}`);
                 trace("Drop on Folder", "from", payload.folder, "to", props.name)
-                if (payload.folder === props.name) {
+                if (payload.folderID === props.id) {
                     trace("drop on same folder")
                     return;
                 }
-                FileSystem.main.movePage(payload.item, props.name)
+                FileSystem.main.movePage(payload.item, props.id)
                     .then(() => showMessage({
                         message: fTranslate("SuccessfulMovePageMsg", payload.item.name, props.name),
                         type: "success",

@@ -7,6 +7,7 @@ import { FileSystem } from "./filesystem";
 import { showMessage } from "react-native-flash-message";
 import { useState } from "react";
 import { getRowDirections } from "./lang";
+import { trace } from "./log";
 
 export function FolderPanel({
     treeWidth,
@@ -103,9 +104,10 @@ export function FolderPanel({
                 folders.map((f, i, arr) => <FolderNew
                     key={i}
                     index={i}
+
                     isLast={i + 1 == arr.length}
                     useColors={useColor}
-                    id={f.name}
+                    id={f.ID}
                     name={f.name}
                     color={f.color}
                     icon={f.icon}

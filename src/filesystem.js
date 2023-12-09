@@ -114,13 +114,13 @@ export class FileSystem {
     }
 
     registerListener(callback) {
-        const id =  Math.floor(Math.random() * 100000);
-        this._listeners.push({id, callback});
+        const id = Math.floor(Math.random() * 100000);
+        this._listeners.push({ id, callback });
         return id
     }
 
     unregisterListener(id) {
-        this._listeners = this._listeners.filter(reg=>this.registerListener.id != id)
+        this._listeners = this._listeners.filter(reg => this.registerListener.id != id)
     }
 
     _notify(folderName) {
@@ -219,35 +219,47 @@ export class FileSystem {
                 folder.metadata = newMetadata;
             }
         }
-        trace("Folder ", name, " has been notified", parent ? "in" + parent.path : "")
+        trace("Folder ", name, " has been notified", parent ? " in " + parent.path : "")
         this._notify(name);
         return fsf;
     }
 
     async renameFolder(ID, newID, icon, color) {
         const newParts = newID.split("/");
-        let name = newParts.pop()
+        const parts = ID.split("/");
+        const newName = newParts.pop();
+        const name = parts.pop();
+
         let parentID = newParts.length && newParts.join("/");
 
-        await this.addFolder(name, icon, color, ID !== newID, false, true, parentID);
+        await this.addFolder(newName, icon, color, ID !== newID, false, true, parentID);
         //move all files and delete old folder
         if (ID !== newID) {
             const folder = this.findFolder(ID);
+            const newFolder = this.findFolder(newID);
 
-            await RNFS.readDir(this._basePath + folder.path).then(async (files) => {
+            try {
+                const files = await RNFS.readDir(this._basePath + folder.path);
                 for (let f of files) {
                     trace("iterate files", f)
                     if (f.name !== ".metadata") {
-                        //todo - check if moveFile works on folders
                         // skip meta data as it was created already
-                        await RNFS.moveFile(f.path, this._basePath + newName + "/" + f.name);
+                        trace("move files", f.name, newFolder.path + "/" + f.name)
+                        await RNFS.moveFile(f.path, this._basePath + newFolder.path + "/" + f.name);
                     }
                 }
-            });
+            } catch (e) {
+                trace("renameFolder", e)
+            }
+
             await this.deleteFolder(ID);
-            // todo check if root
-            await _renameFolderOrders(name, newName);
-            await _sortRootFolders(this._folders);
+
+            if (newParts.length == 1 && parts.length == 1) {
+                await _renameFolderOrders(name, newName);
+                await _sortRootFolders(this._folders);
+            } else if (parts.length == 1) {
+                await _renameFolderOrders(name);
+            }
             await this._reloadFolder(newID);
         }
         this._notify();
@@ -369,11 +381,25 @@ export class FileSystem {
         if (pathObj.isWorksheetInFolder && !this._validPathPart(pathObj.folders[pathObj.folders.length - 1])) {
             throw translate("IllegalCharacterInPageName");
         }
+        // folders/Default/file.jpg folders+2
+        // Default/fileFolder/file.jpg folders+3
+        // Folder1/file.jpg
+        // folder1/fileFolder/file.jpg
+        // Folder1/folders/Folder2/file.jpg
+        // Folder1/folders/Folder2/fileFolder.jpg
 
-        // todo change the validation to avoid / in file name or folder name
-        // if (pathObj.folders.length > 2) {
-        //     throw translate("IllegalCharacterInPageName");
-        // }
+        let count = 0;
+        trace("validatePath", pathObj)
+        for (let i = 0; i < pathObj.folders.length; i++) {
+            if (pathObj.folders[i] === FileSystem.FOLDERS_PATH) {
+                count = 0
+            } else {
+                count++
+            }
+            if (count >= 2) {
+                throw translate("IllegalCharacterInPageName");
+            }
+        }
 
         await this._verifyFolderExists(filePath);
 
@@ -439,12 +465,14 @@ export class FileSystem {
             }
         });
     }
-    async movePage(sheet, newFolder) {
-        trace("move page", sheet.path, newFolder);
+
+    async movePage(sheet, newFolderID) {
+        trace("move page", sheet.path, newFolderID);
 
         const isSourceIsFolder = sheet.path.endsWith(".jpg");
         // Constract target path:
-        const targetPath = this._basePath + newFolder;
+        const targetFolder = this.findFolderByID(newFolderID);
+        const targetPath = this._basePath + targetFolder.path;
         let targetFileName = targetPath + '/' + sheet.name;
         if (isSourceIsFolder) {
             targetFileName += ".jpg";
@@ -552,9 +580,9 @@ export class FileSystem {
     _parsePath(filePath) {
         let lastSlashPos = filePath.lastIndexOf('/');
         let fileName = filePath.substr(lastSlashPos + 1);
-        let isWorksheetInFolder = false;
+        let isWorksheetInFolder = true;
         if (fileName.endsWith(".jpg")) {
-            isWorksheetInFolder = true;
+            isWorksheetInFolder = false;
             fileName = fileName.substr(0, fileName.length - 4);
         }
 
@@ -577,13 +605,13 @@ export class FileSystem {
     }
 
     async deleteFile(filePath) {
-        let { folders } = this._parsePath(filePath);
-        let folderName = folders[0];
+        const { folderID } = this._parsePath(filePath);
+
         await RNFS.unlink(filePath).then(() => {
             RNFS.unlink(filePath + ".json").catch((e) => {/*do nothing*/ });
         });
-        await this._reloadFolder(folderName);
-        this._notify(folderName);
+        await this._reloadFolder(folderID);
+        this._notify(folderID);
     }
 
 
@@ -930,7 +958,7 @@ export class FileSystemFolder {
         this._metadata = md
     }
 
-    get parent () {
+    get parent() {
         return this._parent;
     }
 
@@ -1152,6 +1180,7 @@ async function pushFolderOrder(folderName) {
 
 }
 
+// to remove set toFolder to undefined
 async function _renameFolderOrders(fromFolder, toFolder) {
     let orderStr = '[]';
     try {
@@ -1165,7 +1194,11 @@ async function _renameFolderOrders(fromFolder, toFolder) {
     //verify this folderName is not in the array:
     let inx = order.findIndex(f => f === fromFolder)
     if (inx != -1) {
-        order[inx] = toFolder;
+        if (toFolder) {
+            order[inx] = toFolder;
+        } else {
+            order = order.splice(inx, 1);
+        }
 
         RNFS.writeFile(FileSystem.main.basePath + ORDER_FILE_NAME, JSON.stringify(order), 'utf8').then(
             //Success

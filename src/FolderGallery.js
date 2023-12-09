@@ -586,7 +586,8 @@ export default class FolderGallery extends React.Component {
         trace("save new folder ", newFolderName, "completed")
 
         if (setReturnFolder) {
-            this.setReturnFolder(newFolderName);
+
+            this.setReturnFolder((parentID ? parentID + "/" : "") + newFolderName);
         }
         return true;
     }
@@ -1030,7 +1031,7 @@ export default class FolderGallery extends React.Component {
                                     {this.state.currentFolder ? <FolderNew
                                         width={pagesContainerWidth - 90}
                                         index={fIndex}
-                                        id="1"
+                                        id={this.state.currentFolder.ID}
                                         useColors={this.state.folderColor}
                                         name={curFolderFullName}
                                         color={curFolderColor}
@@ -1095,7 +1096,7 @@ export default class FolderGallery extends React.Component {
                                     >
                                         {(subFolders || folders).map((item, index) => <FolderNew
                                             key={index.toString()}
-                                            id={item.name}
+                                            id={item.ID}
                                             isOverview={true}
                                             name={item.name}
                                             color={item.color}
@@ -1119,7 +1120,7 @@ export default class FolderGallery extends React.Component {
                                         }}>
                                             {this.sortFiles(items).map((item, i) => (<DraxView
                                                 key={i}
-                                                payload={{ item, folder: this.state.currentFolder?.name }}
+                                                payload={{ item, folder: this.state.currentFolder?.ID }}
                                                 numColumns={asTiles ? numColumnsForTiles : 1}
                                                 longPressDelay={700}
                                             >
