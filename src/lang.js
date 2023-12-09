@@ -112,6 +112,7 @@ var strings = {
         "CaptionFolderColor": "צבע התיקיה",
         "NoIcon": "ללא",
         "CaptionIcon": "סמל",
+        "InFolderCaption":"בתוך תיקיה",
 
         "ImportProgress": "מייבא עמוד {1} מתוך {2}",
         "ExportProgress": "מייצא עמוד {1} מתוך {2}",
@@ -325,6 +326,7 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "CaptionFolderColor": "Folder Color",
         "NoIcon": "None",
         "CaptionIcon": "Icon",
+        "InFolderCaption":"In Folder",
 
         "ImportProgress": "Import page {1} of {2}",
         "ExportProgress": "Export page {1} of {2}",

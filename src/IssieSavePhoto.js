@@ -622,7 +622,7 @@ export default class IssieSavePhoto extends React.Component {
         <Scroller
           height={this.state.windowSize.height}
           rtl={rtl}
-          onLayout={onLayoutHost}>
+          layoutHost={onLayoutHost}>
 
           <FileNameDialog
             name={this.state.pageName}

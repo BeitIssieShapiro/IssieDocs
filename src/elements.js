@@ -457,10 +457,10 @@ export function RootFolderPicker({ folders, currentFolder, onChangeFolder, showS
 
 
     return <View style={{
-        flex: 1, width: '100%',
+         width: '100%',
         flexDirection: 'column', alignContent: flexEnd
     }}>
-        <View style={{ flex: 1, backgroundColor: semanticColors.listBackground, alignItems: flexStart }}>
+        <View style={{  backgroundColor: semanticColors.listBackground, alignItems: flexStart }}>
             {renderFolderLine(defFolder, -1, currentFolder, onChangeFolder, false, 0)}
             {folders.map((item, index) => renderFolderLine(item, index, currentFolder, onChangeFolder, showSubFolders, 0, expandedFolders, setExpandedFolders))}
             {getIconButton(() => setMore(val => !val), semanticColors.titleText, more ? "expand-less" : "expand-more", 45)}

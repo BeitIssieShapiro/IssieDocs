@@ -23,8 +23,8 @@ export default function Scroller(props) {
         return props.children;
     }
 
-    if (props.onLayout) {
-        props.onLayout.onLayout = (e) => {
+    if (props.layoutHost) {
+        props.layoutHost.onLayout = (e) => {
             trace("scroller layout", e.nativeEvent.layout)
             setScrollState({ ...scrollState, childHeight: e.nativeEvent.layout.height });
         }
@@ -82,6 +82,7 @@ export default function Scroller(props) {
 
     let height = isNumber(props.height) ? props.height : 800;
     let limit = (childHeight > 0 && height < childHeight) ? height - childHeight : -100;
+    trace("scroll-limit", limit)
     let yOs = yOffset;
     
 

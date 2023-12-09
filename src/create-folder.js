@@ -15,6 +15,7 @@ import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import { getNewPage, SRC_GALLERY } from './newPage.js';
 import { trace } from './log.js';
 import { FileSystem } from './filesystem.js';
+import Scroller from './scroller.js';
 
 export default class IssieCreateFolder extends React.Component {
 
@@ -145,7 +146,7 @@ export default class IssieCreateFolder extends React.Component {
     }
 
     render() {
-        const { row, rowReverse, flexEnd, textAlign, direction } = getRowDirections();
+        const { rtl, row, rowReverse, flexEnd, textAlign, direction } = getRowDirections();
         let actionButtons = <View style={{
             position: 'absolute',
             height: '100%',
@@ -153,9 +154,6 @@ export default class IssieCreateFolder extends React.Component {
             flexDirection: row,
             alignItems: 'center'
         }}>
-
-
-
             {  //Cancel
                 getRoundedButton(() => this.props.navigation.goBack(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isMobile())
             }
@@ -167,30 +165,35 @@ export default class IssieCreateFolder extends React.Component {
 
 
 
-        let iconsSelection = <View style={{ flex: 1, width: '100%' }}>
+        let iconsSelection = <View style={{ width: this.isLandscape() ? '45%' : '100%', }}>
             <View
                 style={{
+
                     flexDirection: rowReverse,
                     //width:"80%",
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     //backgroundColor: 'green'
-                }}>
+                }}
+            >
                 <AppText style={[styles.titleText, { textAlign }]}>{translate("CaptionIcon")}</AppText>
 
                 {getRoundedButton(() => this.AddPhoto(),
                     'svg-new-image', translate("BtnAddPhoto"), 30, 30, { width: 250, height: 40 }, row, true)
                 }
             </View>
-            <View style={{
-                width: '100%',
-                borderRadius: 10,
-                backgroundColor: 'white',
-                flexDirection: rowReverse,
-                alignItems: 'center',
-                flexWrap: 'wrap',
+            <View
+                style={{
 
-            }}>
+                    width: "100%",
+                    borderRadius: 10,
+                    backgroundColor: 'white',
+                    flexDirection: rowReverse,
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+
+                }}
+            >
                 <TouchableOpacity style={{ padding: 20 }} onPress={() => {
                     this.setState({ icon: "", yOffset: 0 })
                 }}>
@@ -206,8 +209,6 @@ export default class IssieCreateFolder extends React.Component {
                     ))
                 }
             </View>
-            <AppText style={[styles.titleText, { textAlign }]}>{translate("InFolderCaption")}</AppText>
-            <RootFolderPicker onChangeFolder={(folder) => this.setState({ inFolder: folder })} folders={this.state.folders} currentFolder={this.state.inFolder} />
         </View>
 
         let colorSelection = <View style={{
@@ -215,7 +216,7 @@ export default class IssieCreateFolder extends React.Component {
             width: '100%', bottom: 0,
             justifyContent: 'space-between',
             alignItems: 'center',
-            flexWrap: 'wrap'
+            flexWrap: 'wrap',
         }}
         >
             {availableColorPicker.map((color, i) => (
@@ -225,7 +226,7 @@ export default class IssieCreateFolder extends React.Component {
                 </View>))
             }
         </View>
-
+        const layoutHost = {};
         return (
             <View style={styles.container}
                 ref={v => this.topView = v}
@@ -249,39 +250,51 @@ export default class IssieCreateFolder extends React.Component {
                 </View>
 
                 {/*Main view */}
-                <View style={{
-                    flexDirection: 'column', height: '100%',
-                    left: '5%', width: '90%'
-                }}
-                >
-                    <View style={[{ flexDirection: rowReverse },
-                    this.isLandscape() ? { height: '100%' } : {}]}>
-                        <View style={{
-                            flex: 1, flexDirection: 'column', width: '100%', alignItems: flexEnd
-                        }}
-                        >
-                            <View style={{ width: '100%', flexDirection: rowReverse, alignItems: 'center', justifyContent: 'flex-start' }}>
-                                <Icon name="folder" size={55} color={this.state.color ? this.state.color : 'gray'} />
-                                <AppText style={[styles.titleText, { textAlign }]}>{translate("CaptionFolderNameInput")}</AppText>
-                                <View style={{ position: 'absolute', left: 10, top: 21 }}>
-                                    {this.state.icon ? <FolderIcon name={this.state.icon} size={30} color='white' /> : null}
+                <Scroller
+                    height={this.state.windowSize.height - 140}
+                    childHeight={2000}
+                    rtl={rtl}
+                    layoutHost={layoutHost}>
+
+                    <View style={{
+                        flexDirection: 'column', height: '100%',
+                        left: '5%', width: '90%'
+                    }}
+                        onLayout={(e) => layoutHost.onLayout ? layoutHost.onLayout(e) : {}}
+                    >
+                        <View style={[{ flexDirection: rowReverse },
+                        this.isLandscape() ? { height: '100%' } : {}]}>
+                            <View style={{
+                                flex: 1, flexDirection: 'column', width: '100%', alignItems: flexEnd
+                            }}
+                            >
+                                <View style={{ width: '100%', flexDirection: rowReverse, alignItems: 'center', justifyContent: 'flex-start' }}>
+                                    <Icon name="folder" size={55} color={this.state.color ? this.state.color : 'gray'} />
+                                    <AppText style={[styles.titleText, { textAlign }]}>{translate("CaptionFolderNameInput")}</AppText>
+                                    <View style={{ position: 'absolute', left: 10, top: 21 }}>
+                                        {this.state.icon ? <FolderIcon name={this.state.icon} size={30} color='white' /> : null}
+                                    </View>
                                 </View>
+
+
+                                <TextInput style={[globalStyles.textInput, { direction, textAlign }, getFontFamily()]} value={this.state.name}
+                                    onChangeText={(txt) => this.setState({ name: txt })}
+                                />
+                                <AppText style={[styles.titleText, { textAlign }]}>{translate("CaptionFolderColor")}</AppText>
+                                {colorSelection}
+                                {!this.isLandscape() && iconsSelection}
+                                <AppText style={[styles.titleText, { textAlign }]}>{translate("InFolderCaption")}</AppText>
+                                <RootFolderPicker onChangeFolder={(folder) => this.setState({ inFolder: folder })} folders={this.state.folders} currentFolder={this.state.inFolder} />
+
                             </View>
+                            {this.isLandscape() ? <Spacer /> : null}
+                            {this.isLandscape() && iconsSelection}
 
-
-                            <TextInput style={[globalStyles.textInput, { direction, textAlign }, getFontFamily()]} value={this.state.name}
-                                onChangeText={(txt) => this.setState({ name: txt })}
-                            />
-                            <AppText style={[styles.titleText, { textAlign }]}>{translate("CaptionFolderColor")}</AppText>
-                            {colorSelection}
                         </View>
-                        {this.isLandscape() ? <Spacer /> : null}
-                        {this.isLandscape() ? iconsSelection : null}
                     </View>
-                    <Spacer />
-                    {this.isLandscape() ? null : iconsSelection}
-                </View>
-            </View>
+                </Scroller>
+
+            </View >
         );
     }
 }
@@ -292,17 +305,6 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         backgroundColor: semanticColors.mainAreaBG,
         opacity: 5
-    },
-    textInputView: {
-        position: 'absolute',
-        flex: 1,
-        flexDirection: 'column',
-        alignItems: "center",
-        justifyContent: "flex-end",
-        width: "60%",
-        right: "20%",
-        top: "3%",
-        backgroundColor: 'transparent'
     },
     titleText: {
         fontSize: 35,
