@@ -46,6 +46,7 @@ struct Paragraph {
     if (error) {
       NSLog(@"Error: %@", error);
     } else {
+      
       NSMutableArray *boundingBoxes = [[NSMutableArray alloc] init];
       
       cv::Mat cvImage;
@@ -100,6 +101,17 @@ struct Paragraph {
     }
     
   }];
+  
+  // Get the supported recognition languages
+  NSError *languagesError = nil;
+  NSArray<NSString *> *supportedLanguages = [request supportedRecognitionLanguagesAndReturnError:&languagesError];
+
+  if (languagesError) {
+      NSLog(@"Error getting supported languages: %@", languagesError);
+  } else {
+      NSLog(@"Supported languages: %@", supportedLanguages);
+  }
+  
   
   //request.recognitionLevel = VNRequestTrackingLevelAccurate;  // Use accurate for more precise results, but it's slower.
   request.usesLanguageCorrection = (BOOL)0;  // You may want to set this to false to avoid modifying the recognized text.
