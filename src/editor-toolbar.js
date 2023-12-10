@@ -261,13 +261,13 @@ function EditorToolbar({
 
     const extMenu = [
         <IconButton onPress={() => onModeButtonClick(Pickers.MARKER)} color={isMarkerMode ? color : semanticColors.editPhotoButton}
-            icon="marker" size={55} iconSize={45} selected={isMarkerMode} iconType="svg" />,
+            icon="marker" size={55} iconSize={45} selected={isMarkerMode} iconType="svg" ensureContrast={true}/>,
 
         <IconButton onPress={() => onModeButtonClick(Pickers.IMAGE)} color={semanticColors.editPhotoButton}
             icon={"image"} size={55} iconSize={45} selected={isImageMode} />,
 
         <IconButton onPress={() => onModeButtonClick(Pickers.TABLE)} color={isTableMode ? (Table ? Table.color : color) : semanticColors.editPhotoButton}
-            icon="table-chart" size={55} iconSize={45} selected={isTableMode} />,
+            icon="table-chart" size={55} iconSize={45} selected={isTableMode} ensureContrast={true}/>,
         // <IconButton onPress={() => onModeButtonClick(Pickers.VOICE)} color={semanticColors.editPhotoButton}
         //     icon="record-voice-over" size={55} iconSize={45} selected={isVoiceMode} />,
 
@@ -279,10 +279,10 @@ function EditorToolbar({
 
     const modesMenu = [
         <IconButton key={11} onPress={() => onModeButtonClick(Pickers.TEXT)} icon={translate("A")} isText={true} selected={isTextMode}
-            color={isTextMode ? color : semanticColors.editPhotoButton} size={55} iconSize={rtl ? 45 : 40}
+            color={isTextMode ? color : semanticColors.editPhotoButton} size={55} iconSize={rtl ? 45 : 40} ensureContrast={true}
         />,
         <IconButton key={13} onPress={() => onModeButtonClick(Pickers.BRUSH)} icon={"edit"} size={55}
-            color={isBrushMode ? color : semanticColors.editPhotoButton} iconSize={45} selected={isBrushMode} />,
+            color={isBrushMode ? color : semanticColors.editPhotoButton} iconSize={45} selected={isBrushMode} ensureContrast={true}/>,
         <IconButton onPress={() => onSelectButtonClick(Pickers.COLOR, true)} icon={"color-lens"}
             size={55} iconSize={45} color={semanticColors.editPhotoButton} />,
         <IconButton onPress={() => setShowExtMenu(currVal => !currVal)} icon={showExtMenu ? "expand-less" : "expand-more"}
@@ -532,7 +532,7 @@ function EditorToolbar({
             <View style={{ flexDirection: 'column', width: '20%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 <PushButton title={"Show"} onPress={() => {
                     if (Table) return;
-                    TableActions.addTable(tableCols, tableCols, color, 2);
+                    TableActions.addTable(tableRows, tableCols, color, 2);
                 }} isOn={Table !== undefined} />
 
                 <PushButton title={"Hide"} onPress={() => {

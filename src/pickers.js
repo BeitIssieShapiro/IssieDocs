@@ -73,6 +73,8 @@ export function MyColorPicker(props) {
 
     }, [composedColor, lastColors]);
 
+
+
     //trace("last colors", lastColors)
     //trace("color", props.color, "composed", composedColor)
     return <FadeInView height={height}

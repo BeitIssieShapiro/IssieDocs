@@ -12,6 +12,7 @@ import { getSvgIcon, SvgIcon } from './svg-icons.js'
 import { FileSystem } from './filesystem.js';
 import { trace } from './log.js';
 import { DraxScrollView } from 'react-native-drax';
+import { isTooWhite } from './utils.js';
 
 export const Icon = IconLocal;
 
@@ -303,7 +304,8 @@ export function IconButton({
     selected,
     iconType,
     notPressable,
-    fontWeight
+    fontWeight,
+    ensureContrast
 }) {
     iconType = iconType || "material";
     let isSvg = iconType === "svg";
@@ -315,6 +317,13 @@ export function IconButton({
         borderRadius: size / 2,
         justifyContent: 'center',
     }
+    let backgroundContrast = {}
+    let needContract = false
+    if (ensureContrast && isTooWhite(color)) {
+        backgroundContrast.backgroundColor = "lightgray";
+        needContract = true;
+    }
+
     const sizeToUse = iconSize ? iconSize : size;
 
     let viewContent = isText ?
@@ -330,7 +339,7 @@ export function IconButton({
             getSvgIcon(icon, sizeToUse, color) :
             <Icon name={icon} type={iconType} size={sizeToUse} color={color} />
 
-    return <View>
+    return <View style={backgroundContrast}> 
         {notPressable ?
             <View style={viewStyle}>
                 {viewContent}
@@ -345,7 +354,7 @@ export function IconButton({
             </TouchableOpacity>}
         {selected ? <View
             style={{
-                borderBottomColor: color,
+                borderBottomColor: needContract? semanticColors.addButton : color,
                 borderBottomWidth: 6,
             }}
         /> : null}
@@ -927,12 +936,17 @@ export function getColorButton(callback, color, size, selected, index) {
 }
 
 export function getColorButtonInt(callback, color, size, icon, index, iconColor) {
+    let borderStyle = {}
+    if (isTooWhite(color)) {
+        borderStyle = {borderWidth:1, borderColor:"gray"}
+    }
+
     return <TouchableOpacity
         onPress={callback}
         activeOpacity={0.7}
         key={"" + index}
     >
-        <View style={{
+        <View style={[{
             backgroundColor: color,
             borderRadius: size / 2,
             width: size,
@@ -940,7 +954,7 @@ export function getColorButtonInt(callback, color, size, icon, index, iconColor)
             alignItems: 'center',
             justifyContent: 'center'
 
-        }}
+        },borderStyle]}
         >
 
             {icon && <Icon color={iconColor || "white"} size={40} name={icon}></Icon>}
