@@ -268,8 +268,8 @@ function EditorToolbar({
 
         <IconButton onPress={() => onModeButtonClick(Pickers.TABLE)} color={isTableMode ? (Table ? Table.color : color) : semanticColors.editPhotoButton}
             icon="table-chart" size={55} iconSize={45} selected={isTableMode} />,
-        <IconButton onPress={() => onModeButtonClick(Pickers.VOICE)} color={semanticColors.editPhotoButton}
-            icon="record-voice-over" size={55} iconSize={45} selected={isVoiceMode} />,
+        // <IconButton onPress={() => onModeButtonClick(Pickers.VOICE)} color={semanticColors.editPhotoButton}
+        //     icon="record-voice-over" size={55} iconSize={45} selected={isVoiceMode} />,
 
         <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM)} color={semanticColors.editPhotoButton}
             icon="zoom-in" size={55} iconSize={45} />,

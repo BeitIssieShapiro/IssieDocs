@@ -41,7 +41,6 @@ import EditorToolbar from './editor-toolbar';
 import { getElementMovePanResponder } from './editors-panresponders';
 import Canvas from './canvas';
 import { FileContextMenu } from './file-context-menu';
-import { detectTexts } from '../textdetection';
 
 const shareTimeMs = 2000;
 
@@ -659,32 +658,7 @@ export default class IssieEditPhoto extends React.Component {
     }
   }
 
-  detectTextsInBackgroundImage = () => {
-
-    const lang = gCurrentLang.languageTag === "en" ? "eng" :
-      gCurrentLang.languageTag === "he" ? "heb" : "ara";
-
-    this.setState({ showBusy: true })
-    setTimeout(() =>
-      detectTexts(this.state.currentFile, lang, 50,
-        // success
-        (texts) => {
-          this.setState({ detectedTexts: texts, showBusy: false })
-          console.log("detected texts", JSON.stringify(texts.map(t => t.text)))
-        },
-        //error
-        (err) => {
-          console.log("detected texts", err)
-          this.setState({ detectedTexts: [], showBusy: false })
-        }
-
-        , 50))
-
-    // this.canvas.current?.canvas.current?.detectTextsInBackgroundImage((texts) => {
-    //   console.log("texts in image:", texts);
-    //   this.setState({detectedTexts:texts, showBusy: false})
-    // }), 50);
-  }
+  
 
   handleOnRevisionRendered = (revID) => {
     if (this.state.needExport && revID >= this.state.needExport.revision) {
@@ -1285,18 +1259,6 @@ export default class IssieEditPhoto extends React.Component {
     this.onEraserChange(true);
   }
 
-  onVoiceMode = () => {
-    this.setState({
-      showTextInput: false,
-      mode: Modes.VOICE,
-      eraseMode: false,
-      detectedTexts: []
-    });
-
-    this.detectTextsInBackgroundImage();
-
-    this.onEraserChange(true);
-  }
 
   onBrushSize = (size) => {
 
@@ -1377,7 +1339,7 @@ export default class IssieEditPhoto extends React.Component {
     }, () => {
       this.reflectWindowSizeAndImageSize(true);
 
-      this.Load().then(() => this.detectTextsInBackgroundImage());
+      this.Load();
 
     });
   }
