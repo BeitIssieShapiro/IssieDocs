@@ -810,39 +810,50 @@ export class FileSystem {
         const mdStr = JSON.stringify(folderMetaData);
         trace("add metadata file", mdStr)
         await FileSystem.main.writeFile(containingFolderInfoFileName, mdStr);
-
-
         return zip(files, (TemporaryDirectoryPath + name + ".zip"));
     }
 
 
-    async exportAllWorksheets(progressCB) {
-        const folderItemsAsync = [];
-        this._folders.forEach(folder => folderItemsAsync.push(folder.itemsAsync));
-        return Promise.all(folderItemsAsync).then(foldersItems => {
-
-            const exportedSheetsAsync = [];
-            foldersItems.forEach(folderItems => folderItems.forEach(
-                sheet => exportedSheetsAsync.push(this.exportWorksheet(sheet)))
-            );
-
-            return PromiseAllProgress(exportedSheetsAsync, progressCB).then(allZipPaths => {
-                trace("3")
-                //todo add backup metadata file
-                const backupMetadataPath = TemporaryDirectoryPath + "backup.metadata";
-                return FileSystem.main.writeFile(backupMetadataPath, "{\"backup\":true}").then(() => {
-                    allZipPaths.push(backupMetadataPath);
-
-                    const date = new Date()
-                    let fn = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + ' ' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2);
-
-                    return zip(allZipPaths, (TemporaryDirectoryPath + "backup-" + fn + ".zip"));
-                });
-            })
+    async exportAllWorksheets(folderIDs, progressCB) {
+        const exportedSheetsAsync = [];
+        folderIDs.forEach(folderID => {
+            const folder = this.findFolderByID(folderID);
+            if (folder) {
+                trace("add items to backup for folder ", folder.ID)
+                folder.items.forEach(sheet=>exportedSheetsAsync.push(this.exportWorksheet(sheet)));
+            }
         });
 
 
+        return PromiseAllProgress(exportedSheetsAsync, progressCB).then(allZipPaths => {
+            const backupMetadataPath = TemporaryDirectoryPath + "backup.metadata";
+            return FileSystem.main.writeFile(backupMetadataPath, "{\"backup\":true}").then(() => {
+                allZipPaths.push(backupMetadataPath);
+
+                const date = new Date()
+                let fn = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + ' ' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2);
+
+                return zip(allZipPaths, (TemporaryDirectoryPath + "backup-" + fn + ".zip"));
+            });
+        })
+
     }
+
+    async getFoldersDeep(folders) {
+        trace("getFoldersDeep", folders.length)
+        let foldersRes = folders.map(f => f.ID);
+        const subFoldersAsync = folders.map(f => f.reloadedIfNeeded());
+
+        return Promise.all(subFoldersAsync).then(subFoldersArray => {
+            const innerPromise = subFoldersArray.map(sf => this.getFoldersDeep(sf.folders))
+
+            return Promise.all(innerPromise).then((innerFolders) => {
+                innerFolders.forEach(innerFolders => foldersRes = foldersRes.concat(innerFolders))
+                return foldersRes;
+            })
+        });
+    }
+
 
     async extractZipInfo(zipPath, unzipInPath) {
         const unzipTargetPath = unzipInPath || RNFS.TemporaryDirectoryPath + "imported";
@@ -898,7 +909,7 @@ export class FileSystem {
 
         let targetPath = this._basePath
         const folderID = preserveFolder ? zipInfo.metadata.name : FileSystem.DEFAULT_FOLDER.name;
-        let folder = this.find(folderID);
+        let folder = this.findFolderByID(folderID);
         if (!folder) {
             const parts = folderID.split("/");
             const folderName = parts.pop();
@@ -937,8 +948,6 @@ export class FileSystem {
 }
 
 export class FileSystemFolder {
-    _files = undefined;
-    _loading = true;
 
     isParentOf(childID) {
         const IdWithSlash = this.ID + "/";
@@ -952,6 +961,9 @@ export class FileSystemFolder {
         this._path = parentFolder ? parentFolder.path + "/" + FileSystem.FOLDERS_PATH + "/" + name : name;
         this._fs = fs;
         this._folders = [];
+        this._files = [];
+        this._loaded = false;
+        this._loading = false;
     }
 
     set metadata(md) {
@@ -990,21 +1002,18 @@ export class FileSystemFolder {
     }
 
     get items() {
-        if (!this._files) {
-            this._loading = true;
-            this._files = [];
-            this.reload().then(() => this._fs._notify(this._name));
+        if (!this._loaded && !this._loading) {
+            trace("triger reload from items")
+            this.reload().then(() => this._fs._notify(this.ID));
         }
         return this._files;
     }
 
-    get itemsAsync() {
-        if (!this._files) {
-            this._loading = true;
-            this._files = [];
-            return this.reload().then(() => this._fs._notify(this._name)).then(() => this._files);
+    async reloadedIfNeeded() {
+        if (!this._loaded) {
+            await this.reload();
         }
-        return this._files;
+        return { files: this._files, folders: this._folders };
     }
 
     async getItem(name) {
@@ -1018,12 +1027,14 @@ export class FileSystemFolder {
     }
 
     async reload() {
+        if (this._loading) return;
+
+        this._loading = true;
         console.log("reload folder: " + this._path);
         const items = await RNFS.readDir(this._fs.basePath + this._path);
         const filesItems = items.filter(f => !f.name.endsWith(".json") && f.name !== ORDER_FILE_NAME &&
             f.name !== ".metadata" && !f.name.endsWith("thumbnail.jpg"));
 
-        this._loading = true;
         this._files = [];
         this._folders = [];
         for (let fi of filesItems) {
@@ -1076,6 +1087,7 @@ export class FileSystemFolder {
             }
         }
         this._loading = false;
+        this._loaded = true;
         this._fs._notify();
     }
 }

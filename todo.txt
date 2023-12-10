@@ -3,8 +3,7 @@ V- Document backup
 V- Marker
 - Table
 - Fonts?
-- folder in folder
-- read text
+V- folder in folder
 
 
 

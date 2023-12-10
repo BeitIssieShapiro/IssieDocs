@@ -23,6 +23,7 @@ import {
 } from './settings'
 import { Button } from 'react-native-elements';
 import { FileSystem } from './filesystem';
+import { trace } from './log';
 
 
 export default function SettingsMenu(props) {
@@ -193,7 +194,10 @@ export default function SettingsMenu(props) {
                         <View style={{ paddingStart: 40, paddingTop: 10 }}>
                             <Button title="Backup" onPress={() => {
                                 setBackupProgress(0);
-                                FileSystem.main.exportAllWorksheets((percent) => setBackupProgress(percent))
+                                FileSystem.main.getRootFolders().then(rootFolders=>FileSystem.main.getFoldersDeep(rootFolders).then(allFolders=>{
+                                    trace("all folders", allFolders);
+
+                                    FileSystem.main.exportAllWorksheets(allFolders, (percent) => setBackupProgress(percent))
                                     .then((backupZipPath) => {
                                         const shareOptions = {
                                             title: translate("ShareWithTitle"),
@@ -208,8 +212,9 @@ export default function SettingsMenu(props) {
                                     })
                                     .catch((err) => Alert.alert("Backup failed: " + err))
                                     .finally(() => setBackupProgress(undefined));
-
-
+                                }))
+                                    
+                                
                             }} />
                         </View>
                     </View>
