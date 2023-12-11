@@ -801,7 +801,6 @@
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-view-shot\"",
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/toolbar-android\"",
 					/usr/lib/swift,
-					"$(PROJECT_DIR)/../textdetection/lib/**",
 				);
 				MARKETING_VERSION = 1.4.5;
 				OTHER_CFLAGS = (
@@ -1006,18 +1005,31 @@
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-view-shot\"",
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/toolbar-android\"",
 					/usr/lib/swift,
-					"$(PROJECT_DIR)/../textdetection/lib/**",
 				);
 				MARKETING_VERSION = 1.4.5;
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/YogaKit/YogaKit.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTTypeSafety/RCTTypeSafety.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React/React-Core.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/ReactCommon/ReactCommon.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React_Codegen/React-Codegen.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/SSZipArchive/SSZipArchive.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/folly/RCT-Folly.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/yoga/Yoga.modulemap\"",
+					"$(inherited)",
+					"-DFOLLY_NO_CONFIG",
+					"-DFOLLY_MOBILE=1",
+					"-DFOLLY_USE_LIBCPP=1",
+					"-Wno-comma",
+					"-Wno-shorten-64-to-32",
+					"-DREACT_NATIVE_MINOR_VERSION=71",
+					"-DREANIMATED_VERSION=3.2.0",
+				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
-					"-ljpeg-ios",
-					"-llept-ios",
-					"-lpng16-ios",
-					"-ltesseract-ios",
-					"-ltiff-ios",
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"$(inherited)",

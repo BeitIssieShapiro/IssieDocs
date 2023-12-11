@@ -1127,7 +1127,8 @@ export default class FolderGallery extends React.Component {
                                                 {asTiles && <Spacer />}
                                                 {FileNew({
                                                     rtl,
-                                                    rowDir: rowReverse,
+                                                    rowRevDir: rowReverse,
+                                                    rowDir:row,
                                                     page: item,
                                                     asTile: asTiles,
                                                     name: item.name,

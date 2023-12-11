@@ -339,7 +339,7 @@ export function IconButton({
             getSvgIcon(icon, sizeToUse, color) :
             <Icon name={icon} type={iconType} size={sizeToUse} color={color} />
 
-    return <View style={backgroundContrast}> 
+    return <View style={backgroundContrast}>
         {notPressable ?
             <View style={viewStyle}>
                 {viewContent}
@@ -354,13 +354,23 @@ export function IconButton({
             </TouchableOpacity>}
         {selected ? <View
             style={{
-                borderBottomColor: needContract? semanticColors.addButton : color,
+                borderBottomColor: needContract ? semanticColors.addButton : color,
                 borderBottomWidth: 6,
             }}
         /> : null}
     </View>
 }
 
+export function PageImage({ src, multiPage, width, height }) {
+    return multiPage ?
+        // <View>
+            <Image source={{ uri: src }} style={{ width, height, resizeMode: "stretch" }} />
+            
+        // </View>
+        : <Image source={{ uri: src }} style={{ width, height, resizeMode: "stretch" }} />
+
+        {/* <Image source={{ uri: src }} style={{ width, height, resizeMode: "stretch", transform: [{ rotate: '15deg' }] }} /> */}
+}
 
 export function getFolderAndIcon(folderName) {
     let ret = { name: "", icon: "", color: "" };
@@ -466,10 +476,10 @@ export function RootFolderPicker({ folders, currentFolder, onChangeFolder, showS
 
 
     return <View style={{
-         width: '100%',
+        width: '100%',
         flexDirection: 'column', alignContent: flexEnd
     }}>
-        <View style={{  backgroundColor: semanticColors.listBackground, alignItems: flexStart }}>
+        <View style={{ backgroundColor: semanticColors.listBackground, alignItems: flexStart }}>
             {renderFolderLine(defFolder, -1, currentFolder, onChangeFolder, false, 0)}
             {folders.map((item, index) => renderFolderLine(item, index, currentFolder, onChangeFolder, showSubFolders, 0, expandedFolders, setExpandedFolders))}
             {getIconButton(() => setMore(val => !val), semanticColors.titleText, more ? "expand-less" : "expand-more", 45)}
@@ -938,7 +948,7 @@ export function getColorButton(callback, color, size, selected, index) {
 export function getColorButtonInt(callback, color, size, icon, index, iconColor) {
     let borderStyle = {}
     if (isTooWhite(color)) {
-        borderStyle = {borderWidth:1, borderColor:"gray"}
+        borderStyle = { borderWidth: 1, borderColor: "gray" }
     }
 
     return <TouchableOpacity
@@ -954,7 +964,7 @@ export function getColorButtonInt(callback, color, size, icon, index, iconColor)
             alignItems: 'center',
             justifyContent: 'center'
 
-        },borderStyle]}
+        }, borderStyle]}
         >
 
             {icon && <Icon color={iconColor || "white"} size={40} name={icon}></Icon>}

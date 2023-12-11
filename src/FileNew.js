@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Image, TouchableOpacity } from 'react-native';
-import {  MoreButton } from "./elements"
+import { MoreButton, PageImage } from "./elements"
 
 import {
     AppText, colors, semanticColors, dimensions
 } from './elements'
+import { getRowReverseDirection } from './lang';
 // import { translate } from './lang.js'
 
 // import {
@@ -57,10 +58,8 @@ export default function FileNew(props) {
                             </View>
                             : null} */}
                         <View style={{ flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
-
-
-                            <Image source={{ uri: imageSrc }} style={{ height: '80%', width: '100%', resizeMode: "stretch" }} />
-                            <View style={{ height: '20%', backgroundColor: '#a7a7a7', justifyContent: "space-between", alignItems:"center", width: '100%', flexDirection: "row" }} >
+                            <PageImage src={imageSrc} multiPage={props.count > 1} width={"100%"} height={"80%"} />
+                            <View style={{ height: '20%', backgroundColor: '#a7a7a7', justifyContent: "space-between", alignItems: "center", width: '100%', flexDirection: props.rowDir }} >
                                 <MoreButton onPress={props.onContextMenu} size={30} color={"white"} />
                                 <AppText style={{ fontSize: TILE_TEXT_HEIGHT, color: 'white', paddingRight: 15, lineHeight: TILE_TEXT_HEIGHT + 2 }}>
                                     {getFileName(props)}
@@ -71,22 +70,22 @@ export default function FileNew(props) {
                 </View>
                 :
                 <View style={{ alignContent: 'center', height: dimensions.lineHeight, borderWidth: 1.5, borderColor: "#D1CFCF", width: '100%', paddingRight: 5, paddingLeft: 5 }}>
-                    <View style={{ flexDirection: props.rowDir, alignItems: 'center', paddingTop: 3 }}>
+                    <View style={{ flexDirection: props.rowRevDir, alignItems: 'center', paddingTop: 3 }}>
                         <View style={{ borderWidth: .5, borderColor: colors.lightBlue }}>
-                            <Image source={{ uri: imageSrc }} style={{ width: 40, height: 50, resizeMode: "stretch" }} />
+                            <PageImage src={imageSrc} multiPage={props.count > 1} width={40} height={50} />
                         </View>
                         <AppText style={{ paddingRight: 20, paddingLeft: 20, fontSize: 25, color: semanticColors.titleText }}>
                             {getFileName(props)}
                         </AppText>
                         <View style={{
-                            position: 'absolute', flexDirection: props.rowDir,
+                            position: 'absolute', flexDirection: props.rowRevDir,
                             right: 0,
                             height: '100%', width: '100%', backgroundColor: 'transparent',
                             justifyContent: 'flex-end',
                             alignItems: 'center'
                         }}>
                             {/* {props.selected ? getActionButtons(props) : null} */}
-                            <MoreButton onPress={props.onContextMenu} size={30} color={semanticColors.titleText}/>
+                            <MoreButton onPress={props.onContextMenu} size={30} color={semanticColors.titleText} />
                         </View>
                     </View>
                 </View>}
@@ -145,14 +144,13 @@ export default function FileNew(props) {
 
 function getFileName(props) {
     let limit = props.asTile ? 12 : 35;
-    let suffix = props.count > 1 ? ' (' + props.count + ')' : '';
     if (props.count > 1) {
         limit -= 4;
     }
     if (props.name.length > limit) {
-        return props.name.substring(0, limit) + '...' + suffix;
+        return props.name.substring(0, limit) + '...' 
     }
-    return props.name + suffix;
+    return props.name 
 }
 
 // function getActionButtons(props) {
