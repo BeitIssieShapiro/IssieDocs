@@ -124,6 +124,13 @@ var strings = {
         "MissingCameraPermission": `לא ניתנה רשות לשימוש במצלמה לאפליקציה
         למתן רשות יש לגשת להגדרות -> פרטיות -> מצלמה, ולאפשר שימוש עבור IssieDocs`,
         "EditPhotoTitle": "עריכת תמונה",
+
+        "ShowTableCaption":"הראה טבלה",
+        "Yes":"כן",
+        "No":"לא",
+        "RowsCaption":"שורות",
+        "ColsCaption":"עמודות",
+
     },
     "ar": {
         "StartHere": "إضافة صفحات",
@@ -341,6 +348,12 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
 
         "MissingCameraPermission": `Missing Permission to use Camera.
 to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
+
+        "ShowTableCaption":"Show Table",
+        "Yes":"Yes",
+        "No":"No",
+        "RowsCaption":"Rows",
+        "ColsCaption":"Cols",
 
     },
 }

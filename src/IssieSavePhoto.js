@@ -162,9 +162,6 @@ export default class IssieSavePhoto extends React.Component {
     trace("Open SavePhoto with imageUri: ", imageUri)
 
     let folder = this.props.route.params.folder;
-    if (!folder) {
-      folder = FileSystem.DEFAULT_FOLDER;
-    }
     let pageName = this.props.route.params.name;
     let addToExistingPage = this.props.route.params.addToExistingPage;
     let onConfirm = this.props.route.params.onConfirm;
@@ -275,15 +272,21 @@ export default class IssieSavePhoto extends React.Component {
         //Current assumptions: only one page added (no pdf, no add multi page)
         let page = this.state.addToExistingPage;
         const newPathToAdd = await this.AdjustToOrientation(this.state.pathToSave);
-        await FileSystem.main.addPageToSheet(page, newPathToAdd);
-
-        if (this.props.route.params.goHomeAndThenToEdit) {
-          this.props.route.params.goHomeAndThenToEdit(page.path, this.props.route.params.pageIndex);
-        } else {
-          this.props.route.params.returnFolderCallback(this.state.folder.name);
-          this.props.navigation.dispatch(StackActions.popToTop());
-        }
-        return;
+        FileSystem.main.addPageToSheet(page, newPathToAdd).then(() => {
+          trace("page added successfully")
+          if (this.props.route.params.goHomeAndThenToEdit) {
+            trace("go to edit")
+            this.props.route.params.goHomeAndThenToEdit(page.path, this.props.route.params.pageIndex);
+          } else {
+            trace("go back to folder")
+            this.props.route.params.returnFolderCallback(this.state.folder?.ID || FileSystem.DEFAULT_FOLDER.name);
+            this.props.navigation.dispatch(StackActions.popToTop());
+          }
+          return;
+        }).catch(e => {
+          Alert.alert(e);
+          return
+        });
       }
       this.setState({ phase: PickName });
     } else if (this.state.phase == PickName) {
@@ -326,11 +329,23 @@ export default class IssieSavePhoto extends React.Component {
       this.saveInProgress = true;
       let folder = this.state.folder;
 
+      if (!folder) {
+        folder = FileSystem.main.findFolderByID(FileSystem.DEFAULT_FOLDER.name);
+      }
+
+      if (!folder) {
+        // add Default folder
+        await FileSystem.main.addFolder(FileSystem.DEFAULT_FOLDER.name, FileSystem.DEFAULT_FOLDER.icon, FileSystem.DEFAULT_FOLDER.color, false, false, false);
+        folder = FileSystem.main.findFolderByID(FileSystem.DEFAULT_FOLDER.name);
+      }
+
+
       let folderID = folder.ID;
+      trace("save to folder", folder.ID, folder.path)
       let fileName = this.state.pageName;
 
       try {
-        await FileSystem.main.addFolder(folder.name, folder.icon, folder.color, false, false, false, folder.parent?.ID);
+        await FileSystem.main.addFolder(folder.name, folder.icon, folder.color, false, false, false, folder?.parent?.ID);
         let targetFolder = FileSystem.main.basePath + folder.path;
         let filePath = targetFolder + "/" + fileName;
 
@@ -754,7 +769,7 @@ export default class IssieSavePhoto extends React.Component {
                 style={{
                   width: '100%',
                   height: '100%',
-                  backgroundColor:"white",
+                  backgroundColor: "white",
                 }}
 
                 imageStyle={{ resizeMode: 'contain' }}

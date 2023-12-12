@@ -6,6 +6,18 @@ V- Marker
 V- folder in folder
 
 
+Bugs:
+----
+V- when landscape, camera is 90deg offset
+V- in Zoom, table lines are not correct.
+- in iPhone the horizontal lines are not dragged - wrong offset
+- in a narrow iphone portrait the table menu is too densed
+- in zoom when start new zooming action it jumps to high zoom
+- in iPhone the V inside the color selector is too low
+V- from the main window, add a page is not saving it 
+V- new page from media does not work
+
+
 
 Comments from Nechama
 -------

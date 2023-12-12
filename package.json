@@ -21,7 +21,7 @@
     "react": "18.2.0",
     "react-native": "0.71.8",
     "react-native-blob-util": "^0.18.2",
-    "react-native-camera-kit": "^13.0.0",
+    "react-native-camera-kit": "^14.0.0-beta13",
     "react-native-document-picker": "^9.0.1",
     "react-native-drax": "^0.10.3",
     "react-native-elements": "^3.4.3",

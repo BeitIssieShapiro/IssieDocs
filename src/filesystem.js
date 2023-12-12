@@ -375,10 +375,12 @@ export class FileSystem {
             throw translate("MissingPageName");
         }
         if (!this._validPathPart(pathObj.fileName)) {
+            trace("1")
             throw translate("IllegalCharacterInPageName");
         }
 
         if (pathObj.isWorksheetInFolder && !this._validPathPart(pathObj.folders[pathObj.folders.length - 1])) {
+            trace("2")
             throw translate("IllegalCharacterInPageName");
         }
         // folders/Default/file.jpg folders+2
@@ -390,13 +392,14 @@ export class FileSystem {
 
         let count = 0;
         trace("validatePath", pathObj)
+        
         for (let i = 0; i < pathObj.folders.length; i++) {
             if (pathObj.folders[i] === FileSystem.FOLDERS_PATH) {
                 count = 0
             } else {
                 count++
             }
-            if (count >= 2) {
+            if (count > 2) {
                 throw translate("IllegalCharacterInPageName");
             }
         }
@@ -494,42 +497,36 @@ export class FileSystem {
         trace("add page to sheet: ", sheet.path, " - ", newPagePath);
         //check if the path is already a folder:
 
-        try {
-            let pathInfo = await RNFS.stat(sheet.path);
-            if (pathInfo.isDirectory()) {
-                //add file by page's Index
-                let lastPagePath = sheet.getPage(sheet.count - 1)
-                let basePathEnd = lastPagePath.lastIndexOf('/');
-                let fileNameEnd = lastPagePath.lastIndexOf('.');
-                let basePath = lastPagePath.substring(0, basePathEnd + 1);
-                let lastFileName = lastPagePath.substring(basePathEnd + 1, fileNameEnd);
-                let newFileName = basePath + (parseInt(lastFileName) + 1) + '.jpg'
-                console.log("add page: " + newFileName)
-                await FileSystem.main.saveFile(newPagePath, newFileName, false);
+        let pathInfo = await RNFS.stat(sheet.path);
+        if (pathInfo.isDirectory()) {
+            //add file by page's Index
+            let lastPagePath = sheet.getPage(sheet.count - 1)
+            let basePathEnd = lastPagePath.lastIndexOf('/');
+            let fileNameEnd = lastPagePath.lastIndexOf('.');
+            let basePath = lastPagePath.substring(0, basePathEnd + 1);
+            let lastFileName = lastPagePath.substring(basePathEnd + 1, fileNameEnd);
+            let newFileName = basePath + (parseInt(lastFileName) + 1) + '.jpg'
+            console.log("add page: " + newFileName)
+            await FileSystem.main.saveFile(newPagePath, newFileName, false);
 
-            } else {
-                //change to folder
-                assert(sheet.path.endsWith(".jpg"), "change to folder");
-                let basePath = sheet.path.substring(0, sheet.path.length - 4); //remove .jpg 
+        } else {
+            //change to folder
+            assert(sheet.path.endsWith(".jpg"), "change to folder");
+            let basePath = sheet.path.substring(0, sheet.path.length - 4); //remove .jpg 
 
-                await RNFS.mkdir(basePath);
-                await RNFS.moveFile(sheet.path, basePath + '/0.jpg');
-                try {
-                    await RNFS.moveFile(sheet.path + ".json", basePath + '/0.jpg.json');
-
-                } catch {
-                    //ignore missing json
-                }
-
-                FileSystem.main.saveFile(newPagePath, basePath + '/1.jpg', false);
-
+            await RNFS.mkdir(basePath);
+            await RNFS.moveFile(sheet.path, basePath + '/0.jpg');
+            try {
+                await RNFS.moveFile(sheet.path + ".json", basePath + '/0.jpg.json');
+            } catch {
+                //ignore missing json
             }
 
-            return await this._reloadBySheet(sheet);
+            FileSystem.main.saveFile(newPagePath, basePath + '/1.jpg', false);
 
-        } catch (e) {
-            console.log("error adding page to sheet: " + e);
         }
+
+        return await this._reloadBySheet(sheet);
     }
 
     //reload the folder of the sheet and notify and return new updated sheet
@@ -820,7 +817,7 @@ export class FileSystem {
             const folder = this.findFolderByID(folderID);
             if (folder) {
                 trace("add items to backup for folder ", folder.ID)
-                folder.items.forEach(sheet=>exportedSheetsAsync.push(this.exportWorksheet(sheet)));
+                folder.items.forEach(sheet => exportedSheetsAsync.push(this.exportWorksheet(sheet)));
             }
         });
 

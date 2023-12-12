@@ -551,6 +551,7 @@ export default class FolderGallery extends React.Component {
     }
 
     setReturnFolder = (folderID) => {
+        trace("setReturnFolder", folderID)
         if (folderID === FileSystem.DEFAULT_FOLDER.name) {
             this.unselectFolder();
         } else {

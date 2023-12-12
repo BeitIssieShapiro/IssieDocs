@@ -305,6 +305,7 @@ export function IconButton({
     iconType,
     notPressable,
     fontWeight,
+    backgroundColor,
     ensureContrast
 }) {
     iconType = iconType || "material";
@@ -317,9 +318,12 @@ export function IconButton({
         borderRadius: size / 2,
         justifyContent: 'center',
     }
+    if (backgroundColor) {
+        viewStyle.backgroundColor = backgroundColor;
+    }
     let backgroundContrast = {}
     let needContract = false
-    if (ensureContrast && isTooWhite(color)) {
+    if (ensureContrast && !backgroundColor && isTooWhite(color)) {
         backgroundContrast.backgroundColor = "lightgray";
         needContract = true;
     }
@@ -461,7 +465,7 @@ export function RootFolderPicker({ folders, currentFolder, onChangeFolder, showS
         });
 
         // expand current folder if needed
-        if (currentFolder.parent) {
+        if (currentFolder?.parent) {
             setExpandedFolders([currentFolder.parent.ID]);
         }
 
