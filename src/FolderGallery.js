@@ -375,6 +375,7 @@ export default class FolderGallery extends React.Component {
 
     }
     unselectFolder = () => {
+        trace("unselectFolder")
         this.setState({ currentFolder: undefined })
         setNavParam(this.props.navigation, 'showHome', undefined);
         this.setEditEnabled(false);
@@ -570,8 +571,8 @@ export default class FolderGallery extends React.Component {
                 console.log("add folder")
                 await FileSystem.main.addFolder(newFolderName, newFolderIcon, newFolderColor, true, false, false, parentID);
             } else {
-                console.log("rename folder", parentID, newFolderName)
-                let newID;
+                console.log("rename folder", originalFolderID, "to", parentID, newFolderName)
+                let newID = "";
                 if (parentID) {
                     newID = parentID + "/";
                 }
@@ -1096,7 +1097,7 @@ export default class FolderGallery extends React.Component {
                                         }}
                                     >
                                         {(subFolders || folders).map((item, index) => <FolderNew
-                                            key={index.toString()}
+                                            key={index}
                                             id={item.ID}
                                             isOverview={true}
                                             name={item.name}
@@ -1107,7 +1108,7 @@ export default class FolderGallery extends React.Component {
                                             fixedFolder={false}//item.name === DEFAULT_FOLDER_NAME}
                                             current={false}
                                             onPress={() => this.selectFolder(item)}
-
+                                            allowDropFolders={true}
                                             isLandscape={this.isLandscape()}
                                         />)}
 
@@ -1121,7 +1122,7 @@ export default class FolderGallery extends React.Component {
                                         }}>
                                             {this.sortFiles(items).map((item, i) => (<DraxView
                                                 key={i}
-                                                payload={{ item, folder: this.state.currentFolder?.ID }}
+                                                payload={{ item, folderID: this.state.currentFolder?.ID }}
                                                 numColumns={asTiles ? numColumnsForTiles : 1}
                                                 longPressDelay={700}
                                             >
@@ -1129,7 +1130,7 @@ export default class FolderGallery extends React.Component {
                                                 {FileNew({
                                                     rtl,
                                                     rowRevDir: rowReverse,
-                                                    rowDir:row,
+                                                    rowDir: row,
                                                     page: item,
                                                     asTile: asTiles,
                                                     name: item.name,
@@ -1170,7 +1171,7 @@ export default class FolderGallery extends React.Component {
                         { /*SubFolders panel*/
                             this.state.currentFolder?.parent &&
                             <FolderPanel
-
+                                allowDropFolders={false}
                                 treeWidth={treeWidth}
                                 folders={this.state.currentFolder.parent.folders}
                                 currentFolder={this.state.currentFolder}
@@ -1200,7 +1201,7 @@ export default class FolderGallery extends React.Component {
                                 onRef={(ref => this.foldersTree = ref)}
                                 useColor={this.state.folderColor}
                                 editMode={this.state.editMode}
-
+                                allowDropFolders={true}
                             />
                         }
 

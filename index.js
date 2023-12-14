@@ -7,6 +7,7 @@ import App from './src/App';
 import { name as appName } from './app.json';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { semanticColors } from './src/elements';
+import { trace } from './src/log';
 
 //import * as Sentry from "@sentry/react-native";
 
@@ -27,7 +28,6 @@ function SafeAppContainer() {
 
 function SafeApp() {
     const insets = useSafeAreaInsets();
-
     return <View style={{
         width: "100%",
         height: "100%",
@@ -38,7 +38,7 @@ function SafeApp() {
         paddingRight: insets.right,
         backgroundColor: semanticColors.header
       }}>
-        <App />
+        <App insets={insets}/>
     </View>
 
 }

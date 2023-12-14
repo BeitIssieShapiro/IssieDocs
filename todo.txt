@@ -10,14 +10,17 @@ Bugs:
 ----
 V- when landscape, camera is 90deg offset
 V- in Zoom, table lines are not correct.
-- in iPhone the horizontal lines are not dragged - wrong offset
-- in a narrow iphone portrait the table menu is too densed
+V- in iPhone the horizontal lines are not dragged - wrong offset
+V- in a narrow iphone portrait the table menu is too densed
 - in zoom when start new zooming action it jumps to high zoom
-- in iPhone the V inside the color selector is too low
+V- in iPhone the V inside the color selector is too low
 V- from the main window, add a page is not saving it 
 V- new page from media does not work
+V- eraser after marker is black
+V- move folder from inside folder to default adds undefined to name
+V- drag folder into a folder
 
-
+V- in home mode show drag over on folder
 
 Comments from Nechama
 -------

@@ -231,11 +231,35 @@ export class FileSystem {
         const name = parts.pop();
 
         let parentID = newParts.length && newParts.join("/");
+        const folder = this.findFolder(ID);
+
+        if (ID !== newID) {
+            // Verify that target folder is not level 2
+            const parts = newID.split("/")
+            if (parts.length >= 3) {
+                throw (translate("ErrMoveIntoTwoLevelFolder"));
+            }
+
+            // Verify target is not child of folderID
+
+            // Verify that the renamed folder does not contain a folder in it, to prevent 3 levels
+            const checkPath = this._basePath + folder.path + "/" + FileSystem.FOLDERS_PATH
+            let files = undefined;
+            try {
+                files = await RNFS.readDir(checkPath);
+            } catch (e) {
+                //intentioanlly ignored
+            }
+
+            if (files?.length > 0) {
+                throw (translate("ErrMoveFolderCOntainingFolders"));
+            }
+        }
+
 
         await this.addFolder(newName, icon, color, ID !== newID, false, true, parentID);
         //move all files and delete old folder
         if (ID !== newID) {
-            const folder = this.findFolder(ID);
             const newFolder = this.findFolder(newID);
 
             try {
@@ -392,7 +416,7 @@ export class FileSystem {
 
         let count = 0;
         trace("validatePath", pathObj)
-        
+
         for (let i = 0; i < pathObj.folders.length; i++) {
             if (pathObj.folders[i] === FileSystem.FOLDERS_PATH) {
                 count = 0

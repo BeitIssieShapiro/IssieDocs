@@ -134,7 +134,9 @@ function EditorToolbar({
     color = color || "black"
     windowSize = windowSize || { width: 500 }
 
-    isScreenNarrow = () => windowSize?.width < 500;
+    isScreenNarrow = () =>{
+        return windowSize?.width < 500;
+    } 
     isLandscape = () => windowSize?.width > windowSize?.height;
 
 
@@ -240,6 +242,9 @@ function EditorToolbar({
     const availablePickerWidth = windowSize ? windowSize.width - 2 * toolbarSideMargin : 500;
     let colorButtonsSize = windowSize ? (windowSize.width - 2 * toolbarSideMargin) / (availableColorPicker.length * 1.4) : 50;
 
+    if (isScreenNarrow()) {
+        colorButtonsSize *= 2;
+    }
 
     let previewFontSize = fontSize4Toolbar(fontSize);
     //trace("previewFontSize", previewFontSize, dimensions.toolbarHeight)
@@ -501,8 +506,8 @@ function EditorToolbar({
         {/*View for selecting Table options*/}
         <FadeInView height={showPickerType === Pickers.TABLE && showPicker ? 150 : 0} style={[styles.pickerView, { flexDirection:rowReverse ,top: toolbarHeight, left: 0, right: 0 , justifyContent:"space-evenly"}]}>
             <View style={{ flexDirection: 'column', width: '40%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center', backgroundColor:"#EBECEF", margin:4, marginEnd:10, borderRadius:10, paddingEnd:10}}>
-                <NumberSelector caption={translate("RowsCaption")} direction={rowReverse} value={tableRows} setValue={setRows} textIcon={<Icon name="table-rows" size={35} />} />
-                <NumberSelector caption={translate("ColsCaption")} direction={rowReverse} value={tableCols} setValue={setColumns} textIcon={<Icon name="table-rows" style={{ transform: [{ rotate: '90deg' }] }} size={35} />} />
+                <NumberSelector narrow={isScreenNarrow()} caption={translate("RowsCaption")} direction={rowReverse} value={tableRows} setValue={setRows} textIcon={<Icon name="table-rows" size={35} />} />
+                <NumberSelector narrow={isScreenNarrow()} caption={translate("ColsCaption")} direction={rowReverse} value={tableCols} setValue={setColumns} textIcon={<Icon name="table-rows" style={{ transform: [{ rotate: '90deg' }] }} size={35} isScreenNarrow={isScreenNarrow()}/>} />
             </View>
 
             <View style={{ flexDirection: 'column', width: '17%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center', backgroundColor:"#EBECEF", margin:4, borderRadius:10 }}>
@@ -530,7 +535,7 @@ function EditorToolbar({
 
             </View>
             <View style={{  width: '20%',  alignItems: 'center', backgroundColor:"#EBECEF", paddingTop:10, margin:4, borderRadius:10 }}>
-                <AppText style={{fontSize: 30}}>{translate("ShowTableCaption")}</AppText>
+                <AppText style={{fontSize: isScreenNarrow()?20:30}}>{translate("ShowTableCaption")}</AppText>
                 <PushButton2 titleOn={translate("Yes")} titleOff={translate("No")} onPressCallback={() => {
                     if (Table) {
                         TableActions.delete(Table.id);
@@ -545,11 +550,12 @@ function EditorToolbar({
 }
 
 
-function NumberSelector({ caption, value, setValue, textIcon, direction }) {
+function NumberSelector({ caption, value, setValue, textIcon, direction, narrow }) {
+    trace("NumberSelector", narrow)
     return (
         <View style={{ flexDirection: direction, width: '100%', alignItems: "center" }}>
-            {textIcon}
-            <AppText style={{ fontSize: 30, marginRight: 10, marginLeft: 10, width: 100, textAlign: "right" }}>{caption + ":"}</AppText>
+            {!narrow && textIcon}
+            {!narrow && <AppText style={{ fontSize: 30, marginRight: 10, marginLeft: 10, width: 100, textAlign: "right" }}>{caption + ":"}</AppText>}
             <IconButton icon="remove" backgroundColor={semanticColors.mainAreaBG} size={50} onPress={() => setValue(value - 1)} />
             <Text style={{ fontSize: 40, lineHeight: 55, height: 55, width: 55, textAlign: "center", justifyContent: "center" }}>
                 {value || 1}

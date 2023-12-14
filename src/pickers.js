@@ -50,7 +50,10 @@ export function MyColorPicker(props) {
         }
     }, [])
 
-    let colorButtonSize = (props.width) / ((availableColorPicker.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
+    let colorButtonSize = (props.width) / ((availableColorPicker.length + 1) *  1.4);
+    if (props.isScreenNarrow) {
+        colorButtonSize *= 2;
+    }
     let height = props.open ? colorButtonSize + 10 + (openMore ? 290 : 0) : 0;
 
     useEffect(() => {

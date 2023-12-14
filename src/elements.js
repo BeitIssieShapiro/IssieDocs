@@ -971,7 +971,7 @@ export function getColorButtonInt(callback, color, size, icon, index, iconColor)
         }, borderStyle]}
         >
 
-            {icon && <Icon color={iconColor || "white"} size={40} name={icon}></Icon>}
+            {icon && <Icon color={iconColor || "white"} size={size} name={icon}></Icon>}
         </View>
     </TouchableOpacity>
 }

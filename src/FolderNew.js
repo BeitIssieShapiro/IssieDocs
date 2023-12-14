@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Icon } from "./elements"
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, Alert } from 'react-native';
 import {
     normalizeTitle, semanticColors, FolderTextStyle,
     getEmbeddedButton, AppText, Spacer, dimensions, FolderIcon
@@ -9,7 +9,7 @@ import { DraxView } from 'react-native-drax';
 import { trace } from './log';
 import { FileSystem } from './filesystem';
 import { showMessage } from 'react-native-flash-message';
-import { fTranslate, getRowDirections } from './lang';
+import { fTranslate, getRowDirections, translate } from './lang';
 
 
 const dragOverColor = 'lightblue'
@@ -30,29 +30,48 @@ export default function FolderNew(props) {
     return (
         <DraxView
             key={props.index}
-            longPressDelay={100000}
+            longPressDelay={700}
+            payload={{ folderID: props.id, isFolder: true, icon:props.icon, color:props.color }}
+
+            onDragStart={()=>{
+                trace("start drag folder", props.id)
+            }}
             onReceiveDragEnter={() => {
                 trace("drag enter")
-                if (!props.asTitle)
+                if ( props.allowDropFolders)
                     setDragOver(true)
             }}
             onReceiveDragExit={() => setDragOver(false)}
             onReceiveDragDrop={({ dragged: { payload } }) => {
                 setDragOver(false);
-                //trace(`received ${JSON.stringify(payload)}`);
-                trace("Drop on Folder", "from", payload.folder, "to", props.name)
+                // trace(`received ${JSON.stringify(payload)}`);
+                trace("Drop on Folder", payload, "into", props.id)
                 if (payload.folderID === props.id) {
                     trace("drop on same folder")
                     return;
                 }
-                FileSystem.main.movePage(payload.item, props.id)
+
+                if (payload.isFolder) {
+                    const parts = payload.folderID.split("/");
+                    const targetFolderID = props.id + "/" + parts[parts.length-1];
+
+                    FileSystem.main.renameFolder(payload.folderID, targetFolderID, payload.icon, payload.color)
                     .then(() => showMessage({
-                        message: fTranslate("SuccessfulMovePageMsg", payload.item.name, props.name),
+                        message: translate("SuccessfulMoveFolderMsg"),
                         type: "success",
                         animated: true,
                         duration: 5000,
-                    })
-                    )
+                    })).catch(e=>Alert.alert(translate("ErrorMoveFolder"), e))
+                } else {
+                    FileSystem.main.movePage(payload.item, props.id)
+                        .then(() => showMessage({
+                            message: fTranslate("SuccessfulMovePageMsg", payload.item.name, props.name),
+                            type: "success",
+                            animated: true,
+                            duration: 5000,
+                        })
+                        )
+                }
             }}
             style={{
                 alignContent: 'center',
@@ -104,13 +123,15 @@ export default function FolderNew(props) {
                          */
                         <View
                             style={{
-                                flexDirection: rowReverse,                                
+                                flexDirection: rowReverse,
                             }}
                         >
-                            <View style={[{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', 
-                            paddingBottom: '5%', height: '100%'}, rtl? {paddingRight: 30}:{paddingLeft: 30}]}>
+                            <View style={[{
+                                alignContent: 'center', alignItems: 'center', justifyContent: 'center',
+                                paddingBottom: '5%', height: '100%'
+                            }, rtl ? { paddingRight: 30 } : { paddingLeft: 30 }]}>
                                 <Icon name="folder" size={45} color={props.color} />
-                                <View style={[{ position: 'absolute', top: 0, width: '100%', height: '100%' }, rtl?{left: 0}:{right:0}]}>
+                                <View style={[{ position: 'absolute', top: 0, width: '100%', height: '100%' }, rtl ? { left: 0 } : { right: 0 }]}>
                                     <View style={{
                                         width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', paddingTop: '7%',
                                         flexDirection: rowReverse
@@ -121,7 +142,7 @@ export default function FolderNew(props) {
                             </View>
 
                             <Spacer width={8} />
-                            {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: 32, lineHeight: 60}]}>{caption}</AppText>}
+                            {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: 32, lineHeight: 60 }]}>{caption}</AppText>}
                         </View> :
                         /**
                          * Side Panel View or overview
@@ -153,7 +174,7 @@ export default function FolderNew(props) {
             {
                 props.editMode && !props.fixedFolder && !props.asTitle && !props.isOverview ?
                     <View style={[
-                        { position: 'absolute',  top: 0, flexDirection: 'column', alignItems: 'center', marginTop: 10},
+                        { position: 'absolute', top: 0, flexDirection: 'column', alignItems: 'center', marginTop: 10 },
                         rtl ? { left: 0 } : { right: 0 }]}>
                         <Icon name={"expand-less"} size={55} color={props.index == 0 ? 'gray' : 'black'} onPress={props.index > 0 ? props.onMoveUp : undefined} />
                         <Icon name={"expand-more"} size={55} color={props.isLast ? 'gray' : 'black'} onPress={props.isLast ? undefined : props.onMoveDown} />

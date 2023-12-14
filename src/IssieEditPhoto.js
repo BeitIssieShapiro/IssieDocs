@@ -323,7 +323,7 @@ export default class IssieEditPhoto extends React.Component {
 
 
   screen2ViewPortX = (x) => (x - this.state.sideMargin) // this.state.zoom;
-  screen2ViewPortY = (y) => (y - this.state.toolbarHeight - dimensions.toolbarMargin - this.props.route.params.headerHeight) // this.state.zoom;
+  screen2ViewPortY = (y) => (y - this.state.toolbarHeight - dimensions.toolbarMargin - this.props.route.params.headerHeight - this.props.route.params.insets.top) // this.state.zoom;
 
   screen2NormX = (x) => this.viewPort2NormX(this.screen2ViewPortX(x));
   screen2NormY = (y) => this.viewPort2NormY(this.screen2ViewPortY(y));
@@ -1153,7 +1153,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   onEraserButton = () => {
-
+    trace("Eraser pressed")
     if (this.isImageMode()) return;
 
     if (!this.state.eraseMode && this.isTextMode()) {
@@ -1220,6 +1220,7 @@ export default class IssieEditPhoto extends React.Component {
   onEraserChange = (isOff) => {
     let eraserOn = isOff ? false : !this.state.eraseMode;
     this.setState({ eraseMode: eraserOn });
+    trace("onEraserChange, set to", eraserOn)
   }
 
   onBrushMode = () => {
@@ -2040,7 +2041,7 @@ export default class IssieEditPhoto extends React.Component {
         imageScale2Norm={this.imageScale2Norm}
         currentTextElemId={this.isTextMode() && this.state.showTextInput && this.state.currentTextElem?.id}
         strokeWidth={this.isBrushMode() ? strokeWidth : this.state.markerWidth}
-        color={this.isMarkerMode() ? color + MARKER_TRANSPARENCY_CONSTANT : color}
+        color={this.isMarkerMode() && !this.isEraserMode() ? color + MARKER_TRANSPARENCY_CONSTANT : color}
       />
 
     );

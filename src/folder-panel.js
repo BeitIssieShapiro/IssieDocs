@@ -1,4 +1,4 @@
-import { TouchableOpacity, View } from "react-native";
+import { Alert, TouchableOpacity, View } from "react-native";
 import { DraxView } from "react-native-drax";
 import { SvgIcon } from "./svg-icons";
 import { SBDraxScrollView, dimensions } from "./elements";
@@ -6,7 +6,7 @@ import FolderNew from "./FolderNew";
 import { FileSystem } from "./filesystem";
 import { showMessage } from "react-native-flash-message";
 import { useState } from "react";
-import { getRowDirections } from "./lang";
+import { getRowDirections, translate } from "./lang";
 import { trace } from "./log";
 
 export function FolderPanel({
@@ -23,6 +23,7 @@ export function FolderPanel({
     onRef,
     useColor,
     editMode,
+    allowDropFolders
 }) {
     const [homeDragOver, setHomeDragOver] = useState(false)
     const { rtl } = getRowDirections();
@@ -53,19 +54,33 @@ export function FolderPanel({
                     setHomeDragOver(false)
                     //trace(`received ${JSON.stringify(payload)}`);
                     trace("Drop on Folder", "from", payload.folder, "to", FileSystem.DEFAULT_FOLDER.name)
-                    if (payload.folder === FileSystem.DEFAULT_FOLDER.name) {
+                    if (payload.folderID === FileSystem.DEFAULT_FOLDER.name) {
                         trace("drop on same folder")
                         return;
                     }
-                    FileSystem.main.movePage(payload.item, FileSystem.DEFAULT_FOLDER.name)
-                        .then(() => showMessage({
-                            message: fTranslate("SuccessfulMovePageMsg", payload.item.name, translate("DefaultFolder")),
-                            type: "success",
-                            animated: true,
-                            duration: 5000,
 
-                        })
-                        )
+                    if (payload.isFolder) {
+                        const parts = payload.folderID.split("/");
+                        const targetFolderID = parts[parts.length - 1];
+
+                        FileSystem.main.renameFolder(payload.folderID, targetFolderID, payload.icon, payload.color)
+                            .then(() => showMessage({
+                                message: translate("SuccessfulMoveFolderMsg"),
+                                type: "success",
+                                animated: true,
+                                duration: 5000,
+                            })).catch(e => Alert.alert(translate("ErrorMoveFolder"), e))
+                    } else {
+                        FileSystem.main.movePage(payload.item, FileSystem.DEFAULT_FOLDER.name)
+                            .then(() => showMessage({
+                                message: fTranslate("SuccessfulMovePageMsg", payload.item.name, translate("DefaultFolder")),
+                                type: "success",
+                                animated: true,
+                                duration: 5000,
+
+                            })
+                            )
+                    }
                 }}
                 style={{
                     height: isScreenLow ? '17%' : '10%',
@@ -104,7 +119,7 @@ export function FolderPanel({
                 folders.map((f, i, arr) => <FolderNew
                     key={i}
                     index={i}
-
+                    allowDropFolders={allowDropFolders}
                     isLast={i + 1 == arr.length}
                     useColors={useColor}
                     id={f.ID}
@@ -115,10 +130,10 @@ export function FolderPanel({
                     fixedFolder={f.name === FileSystem.DEFAULT_FOLDER.name}
                     current={currentFolder && (f.ID == currentFolder.ID || f.isParentOf(currentFolder.ID))}
                     onPress={() => onSelectFolder(f)}
-                    onLongPress={() => {
-                        if (currentFolder && f.name == currentFolder.name)
-                            onUnselectFolder()
-                    }}
+                    // onLongPress={() => {
+                    //     if (currentFolder && f.name == currentFolder.name)
+                    //         onUnselectFolder()
+                    // }}
                     onMoveUp={() => onMoveFolderUp(f)}
                     onMoveDown={() => onMoveFolderDown(f)}
                     isLandscape={isLandscape}
