@@ -6,7 +6,8 @@ import { tableResizeDone } from './pinch';
 
 
 const DEFAULT_STROKE_WIDTH = 5;
-
+export const RESIZE_TABLE_BOX_SIZE = 10;
+export const RESIZE_TABLE_BOX_OFFSET = 2;
 function Canvas({
     revision,
     layoutReady,
@@ -114,7 +115,7 @@ function Canvas({
         return undefined;
     }, [texts, images, isImageMode]);
 
-    const canvasTexts = useCallback(() => texts,[texts]);
+    const canvasTexts = useCallback(() => texts, [texts]);
 
 
     useImperativeHandle(ref, () => ({
@@ -122,7 +123,7 @@ function Canvas({
         canvasTexts,
         canvas,
     }),
-        [findElementByLocation,canvasTexts]);
+        [findElementByLocation, canvasTexts]);
 
     // Canvas Update
     useEffect(() => {
@@ -225,6 +226,29 @@ function Canvas({
                     const dash = parseInt(styles[0] * tableWidth); //isTableMode ? 10 : 0;
                     const dashGap = parseInt(styles[1] * tableWidth) //isTableMode ? 5 :0 style[1];
 
+                    const addLine = (id, x1, y1, x2, y2, color, lWidth, d, dg, ph) => {
+                        canvas.current?.addPath(
+                            {
+                                path: {
+                                    id,
+                                    color,
+                                    width: lWidth,
+                                    data: [
+                                        "" + x1 + "," + y1,
+                                        "" + x2 + "," + y2,
+                                        "" + x2 + "," + y2,
+                                    ],
+                                    dash: d || 0, dashGap: dg || 0, phase: ph || 0
+
+                                },
+                                size
+                            }, width, height)
+                        const stat = idsStatus.find(idStat => idStat.id == id);
+                        if (stat) {
+                            stat.exists = true;
+                        }
+                    }
+
                     if (isTableMode) {
 
                         // if (!TableResizeState) {
@@ -241,55 +265,61 @@ function Canvas({
 
                     const addLength = table.width / 4;
                     for (let c = 0; c < table.verticalLines.length; c++) {
-                        let x = table.verticalLines[c] + addLength; 
-
-
-                        const path = {
-                            path: {
-                                id: table.id + 100 + c,
-                                color: table.color,
-                                width: tableWidth,
-                                data: [
-                                    (x + "," + (table.horizontalLines[0] - addLength)),
-                                    (x + "," + (table.horizontalLines[table.horizontalLines.length - 1] + addLength)),
-                                    (x + "," + (table.horizontalLines[table.horizontalLines.length - 1] + addLength)),
-                                ],
-                                dash, dashGap, phase: tablePhase
-                            },
-                            size
-                        }
-
-                        canvas.current?.addPath(path, width, height);
-                        const stat = idsStatus.find(idStat => idStat.id == path.path.id);
-                        if (stat) {
-                            stat.exists = true;
-                        }
+                        let x = table.verticalLines[c] + addLength;
+                        addLine(table.id + 100 + c,
+                            x, table.horizontalLines[0] - addLength,
+                            x, table.horizontalLines[table.horizontalLines.length - 1] + addLength,
+                            table.color, tableWidth, dash, dashGap, tablePhase);
                     }
 
                     for (let r = 0; r < table.horizontalLines.length; r++) {
-                        const y = table.horizontalLines[r]; 
+                        const y = table.horizontalLines[r];
+                        addLine(table.id + 200 + r, table.verticalLines[0], y, table.verticalLines[table.verticalLines.length - 1], y,
+                            table.color, tableWidth, dash, dashGap, tablePhase);
+                    }
 
-                        const path = {
-                            path: {
-                                id: table.id + 200 + r,
-                                color: table.color,
-                                width: tableWidth,
-                                data: [
-                                    (table.verticalLines[0] + "," + y),
-                                    (table.verticalLines[table.verticalLines.length - 1] + "," + y),
-                                    (table.verticalLines[table.verticalLines.length - 1] + "," + y)
-                                ],
-                                dash, dashGap, phase: tablePhase
-                            },
-                            size
-                        }
-                        canvas.current?.addPath(path, width, height);
-                        const stat = idsStatus.find(idStat => idStat.id == path.path.id);
-                        if (stat) {
-                            stat.exists = true;
-                        }
+                    //add resize indicators:
+                    const bs = RESIZE_TABLE_BOX_SIZE;
+                    const os = RESIZE_TABLE_BOX_OFFSET;
+
+                    const drawBox = (idStart, x1, y1, x2, y2, color, lWidth) => {
+                        addLine(idStart, x1, y1, x1, y2, color, lWidth);
+                        addLine(idStart + 1, x1, y2, x2, y2, color, lWidth);
+                        addLine(idStart + 2, x2, y2, x2, y1, color, lWidth);
+                        addLine(idStart + 3, x2, y1, x1, y1, color, lWidth);
+                    }
+
+                    const drawArrow = (idStart, x1, y1, color, lWidth, ns, ew,) => {
+                        const l = 2; //length
+                        //north
+                        addLine(idStart, x1 + ew * l, y1 + ew * l, x1 + ns * l, y1 + ns * l, color, lWidth);
+                        addLine(idStart + 1, x1 + ew * l, y1 - ew * l, x1 - ns * l, y1 + ns * l, color, lWidth);
+                    }
+
+
+                    if (isTableMode) {
+                        let x1 = table.verticalLines[table.verticalLines.length - 1] + os;
+                        let y1 = table.horizontalLines[table.horizontalLines.length - 1] + os;
+                        let x2 = x1 + bs;
+                        let y2 = y1 + bs;
+
+                        const c = "gray"
+                        drawBox(300, x1, y1, x2, y2, c, 1);
+                        x1 = table.verticalLines[0] - os - bs * 2;
+                        y1 = table.horizontalLines[0] - os - bs * 2;
+
+                        x2 = x1 + bs * 2;
+                        y2 = y1 + bs * 2;
+                        drawBox(304, x1, y1, x2, y2, c, 1);
+                        addLine(309, x1 + bs, y1 + 2, x1 + bs, y2 - 2, "black", 1);
+                        addLine(310, x1 + 2, y1 + bs, x2 - 2, y1 + bs, "black", 1);
+                        drawArrow(311, x1 + bs, y1 + 2, "black", 1, 1, 0);
+                        drawArrow(313, x1 + bs, y2 - 2, "black", 1, -1, 0);
+                        drawArrow(315, x1 + 2, y1 + bs, "black", 1, 0, 1);
+                        drawArrow(317, x2 - 2, y1 + bs, "black", 1, 0, -1);
                     }
                 }
+
 
                 // delete those paths who are no longer exists in the queue
                 idsStatus.filter(idStat => !idStat.exists).forEach(idStat => canvas.current?.deletePath(idStat.id));

@@ -368,12 +368,12 @@ export function IconButton({
 export function PageImage({ src, multiPage, width, height }) {
     return multiPage ?
         // <View>
-            <Image source={{ uri: src }} style={{ width, height, resizeMode: "stretch" }} />
-            
+        <Image source={{ uri: src }} style={{ width, height, resizeMode: "stretch" }} />
+
         // </View>
         : <Image source={{ uri: src }} style={{ width, height, resizeMode: "stretch" }} />
 
-        {/* <Image source={{ uri: src }} style={{ width, height, resizeMode: "stretch", transform: [{ rotate: '15deg' }] }} /> */}
+    {/* <Image source={{ uri: src }} style={{ width, height, resizeMode: "stretch", transform: [{ rotate: '15deg' }] }} /> */ }
 }
 
 export function getFolderAndIcon(folderName) {
@@ -471,7 +471,16 @@ export function RootFolderPicker({ folders, currentFolder, onChangeFolder, showS
         }
 
         return () => FileSystem.main.unregisterListener(regID);
-    }, [])
+    }, [currentFolder])
+
+    useEffect(() => {
+        expandedFolders.forEach(folderID=>{
+            const folder = FileSystem.main.findFolderByID(folderID);
+            if (folder) {
+                folder.reloadedIfNeeded()
+            }
+        })
+    }, [expandedFolders]);
 
     if (!currentFolder || currentFolder.name === '') {
         currentFolder = FileSystem.DEFAULT_FOLDER;
@@ -560,7 +569,7 @@ export function FileNameDialog({
 }
 
 function renderFolderLine(rowData, index, currentFolder, onChangeFolder, showSubFolders, indentLevel, expandedFolders, setExpandedFolders) {
-    const { row, rowReverse } = getRowDirections();
+    const { row, rowReverse, flexStart, flexEnd } = getRowDirections();
     const isHome = rowData.svgIcon === "home";
     const expanded = !!expandedFolders?.some(ef => ef == rowData.ID);
 
@@ -571,13 +580,13 @@ function renderFolderLine(rowData, index, currentFolder, onChangeFolder, showSub
 
     return [<TouchableOpacity key={index} style={{
         height: 65, width: '100%',
-        justifyContent: getFlexEnd()
+        justifyContent: flexEnd
     }}
         onPress={() => onChangeFolder(rowData)}>
 
         <View style={[globalStyles.textInput, {
             backgroundColor: currentFolder.ID === rowData.ID ? semanticColors.selectedListItem : semanticColors.listBackground,
-            alignContent: getFlexEnd(), justifyContent: getFlexEnd(),
+            //justifyContent: flexEnd,
             alignItems: 'center',
             flexDirection: rowReverse
         },

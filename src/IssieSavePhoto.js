@@ -542,8 +542,11 @@ export default class IssieSavePhoto extends React.Component {
       return false;
     }
     if (await saveNewFolder(newFolder, color, icon, parentID)) {
-      let newFolderObj = { name: newFolder, color, icon }
-      this.setState({ folder: newFolderObj, folders: [newFolderObj, ...this.state.folders] });
+      const newFolderID = (parentID ? parentID + "/" : "") + newFolder
+      const folder = FileSystem.main.findFolderByID(newFolderID);
+      const folders = await FileSystem.main.getRootFolders();
+      trace("new folder created". folder?.ID)
+      this.setState({ folder, folders });
       return true;
     }
     return false

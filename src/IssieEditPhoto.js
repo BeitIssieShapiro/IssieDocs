@@ -39,7 +39,7 @@ import { trace } from './log';
 import { calcDistance, pinchEnd, processPinch, processResize } from './pinch';
 import EditorToolbar from './editor-toolbar';
 import { getElementMovePanResponder } from './editors-panresponders';
-import Canvas from './canvas';
+import Canvas, { RESIZE_TABLE_BOX_SIZE } from './canvas';
 import { FileContextMenu } from './file-context-menu';
 
 const shareTimeMs = 2000;
@@ -60,7 +60,7 @@ const Modes = {
   VOICE: 7,
 }
 
-
+const TABLE_LINE_MARGIN = 20;
 
 /**
  * scaleRatio: affects the size of the viewPort which == pageRect if zoom=0
@@ -1270,13 +1270,15 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   onTableMode = () => {
+    const table = this.findTable();
     this.setState({
       showTextInput: false,
       mode: Modes.TABLE,
       eraseMode: false,
-      currentTable: this.findTable(),
+      currentTable: table,
     });
     this.onEraserChange(true);
+    return table !== undefined;
   }
 
 
@@ -2000,22 +2002,89 @@ export default class IssieEditPhoto extends React.Component {
   resizeTable = (table, tableResizeState, width, height, onlyIfChanged) => {
     const xFactor = width / table.size.width;
     const yFactor = height / table.size.height;
+    let found = false;
+    let retTable = { ...table };
+
+    const onLine = (line, isVertical) => {
+      const factor = isVertical ? xFactor : yFactor;
+      const initialValue = isVertical ? tableResizeState.initialX : tableResizeState.initialY;
+
+      return Math.abs(initialValue / factor - line) < 20;
+    }
+
+    const topStart = onLine(table.verticalLines[0] - RESIZE_TABLE_BOX_SIZE, true) && onLine(table.horizontalLines[0] - RESIZE_TABLE_BOX_SIZE, false);
+    const bottomEnd = onLine(table.verticalLines[table.verticalLines.length - 1] + RESIZE_TABLE_BOX_SIZE/2, true) &&
+      onLine(table.horizontalLines[table.horizontalLines.length - 1] + RESIZE_TABLE_BOX_SIZE/2, false);
+    let resizeFactorX, resizeFactorY
+
+    if (topStart || bottomEnd) {
+      retTable.verticalLines = [...table.verticalLines];
+      retTable.horizontalLines = [...table.horizontalLines];
+      found = true;
+      const tableCurrWidth = table.verticalLines[table.verticalLines.length - 1] - table.verticalLines[0];
+      const tableNewWidth = tableResizeState.currentX / xFactor - table.verticalLines[0];
+      resizeFactorX = tableNewWidth/tableCurrWidth;
+
+      const tableCurrHeight = table.horizontalLines[table.horizontalLines.length - 1] - table.horizontalLines[0];
+      const tableNewHeight = tableResizeState.currentY / yFactor - table.horizontalLines[0];
+      resizeFactorY = tableNewHeight/tableCurrHeight;
+    }
 
     for (let c = 0; c < table.verticalLines.length; c++) {
-      if (Math.abs(tableResizeState.initialX / xFactor - table.verticalLines[c]) < 20) {
-        let retTable = { ...table, verticalLines: [...table.verticalLines] };
+      if (topStart) {
         retTable.verticalLines[c] += tableResizeState.currentX / xFactor - tableResizeState.initialX / xFactor;
-        return retTable;
+      } else if (bottomEnd) {
+          // calculate the total new width:
+          retTable.verticalLines[c] = (retTable.verticalLines[c] - retTable.verticalLines[0]) * resizeFactorX + retTable.verticalLines[0];
+      } else {
+        if (onLine(table.verticalLines[c], true)) {
+          retTable.verticalLines = [...table.verticalLines]
+
+
+          retTable.verticalLines[c] += tableResizeState.currentX / xFactor - tableResizeState.initialX / xFactor;
+
+          // verify not passed another vertical line
+          if (c > 0) {
+            retTable.verticalLines[c] = Math.max(retTable.verticalLines[c], retTable.verticalLines[c - 1] + TABLE_LINE_MARGIN);
+          }
+
+          if (c < table.verticalLines.length - 1) {
+            retTable.verticalLines[c] = Math.min(retTable.verticalLines[c], retTable.verticalLines[c + 1] - TABLE_LINE_MARGIN);
+          }
+
+        }
+        found = true;
       }
     }
 
+
     for (let r = 0; r < table.horizontalLines.length; r++) {
-      if (Math.abs(tableResizeState.initialY / yFactor - table.horizontalLines[r]) < 20) {
-        let retTable = { ...table, horizontalLines: [...table.horizontalLines] };
+      if (topStart) {
         retTable.horizontalLines[r] += tableResizeState.currentY / yFactor - tableResizeState.initialY / yFactor;
-        return retTable;
+      } else if (bottomEnd) {
+        // calculate the total new width:
+        retTable.horizontalLines[r] = (retTable.horizontalLines[r] - retTable.horizontalLines[0]) * resizeFactorY + retTable.horizontalLines[0];
+
+      } else {
+        if (onLine(table.horizontalLines[r], false)) {
+          retTable.horizontalLines = [...table.horizontalLines];
+          retTable.horizontalLines[r] += tableResizeState.currentY / yFactor - tableResizeState.initialY / yFactor;
+
+          // verify not passed another horizental line
+          if (r > 0) {
+            retTable.horizontalLines[r] = Math.max(retTable.horizontalLines[r], retTable.horizontalLines[r - 1] + TABLE_LINE_MARGIN);
+          }
+
+          if (r < table.horizontalLines.length - 1) {
+            retTable.horizontalLines[r] = Math.min(retTable.horizontalLines[r], retTable.horizontalLines[r + 1] - TABLE_LINE_MARGIN);
+          }
+
+          found = true;
+        }
       }
     }
+
+    if (found) return retTable;
 
     return (onlyIfChanged ? undefined : table);
   }

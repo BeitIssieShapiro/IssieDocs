@@ -4,6 +4,7 @@ V- Marker
 - Table
 - Fonts?
 V- folder in folder
+- Search?
 
 
 Bugs:

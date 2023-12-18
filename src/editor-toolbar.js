@@ -134,9 +134,9 @@ function EditorToolbar({
     color = color || "black"
     windowSize = windowSize || { width: 500 }
 
-    isScreenNarrow = () =>{
+    isScreenNarrow = () => {
         return windowSize?.width < 500;
-    } 
+    }
     isLandscape = () => windowSize?.width > windowSize?.height;
 
 
@@ -188,8 +188,8 @@ function EditorToolbar({
                 if (isTableMode) {
                     if (!pickerTypeChanged) setShowPicker(oldVal => !oldVal);
                 } else {
-                    onTableMode();
-                    if (Table === undefined) {
+                    const tableExists = onTableMode();
+                    if (!tableExists) {
                         setShowPicker(true);
                     }
                 }
@@ -504,13 +504,13 @@ function EditorToolbar({
         </FadeInView>
 
         {/*View for selecting Table options*/}
-        <FadeInView height={showPickerType === Pickers.TABLE && showPicker ? 150 : 0} style={[styles.pickerView, { flexDirection:rowReverse ,top: toolbarHeight, left: 0, right: 0 , justifyContent:"space-evenly"}]}>
-            <View style={{ flexDirection: 'column', width: '40%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center', backgroundColor:"#EBECEF", margin:4, marginEnd:10, borderRadius:10, paddingEnd:10}}>
+        <FadeInView height={showPickerType === Pickers.TABLE && showPicker ? 150 : 0} style={[styles.pickerView, { flexDirection: rowReverse, top: toolbarHeight, left: 0, right: 0, justifyContent: "space-evenly" }]}>
+            <View style={{ flexDirection: 'column', width: '40%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center', backgroundColor: "#EBECEF", margin: 4, marginEnd: 10, borderRadius: 10, paddingEnd: 10 }}>
                 <NumberSelector narrow={isScreenNarrow()} caption={translate("RowsCaption")} direction={rowReverse} value={tableRows} setValue={setRows} textIcon={<Icon name="table-rows" size={35} />} />
-                <NumberSelector narrow={isScreenNarrow()} caption={translate("ColsCaption")} direction={rowReverse} value={tableCols} setValue={setColumns} textIcon={<Icon name="table-rows" style={{ transform: [{ rotate: '90deg' }] }} size={35} isScreenNarrow={isScreenNarrow()}/>} />
+                <NumberSelector narrow={isScreenNarrow()} caption={translate("ColsCaption")} direction={rowReverse} value={tableCols} setValue={setColumns} textIcon={<Icon name="table-rows" style={{ transform: [{ rotate: '90deg' }] }} size={35} isScreenNarrow={isScreenNarrow()} />} />
             </View>
 
-            <View style={{ flexDirection: 'column', width: '17%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center', backgroundColor:"#EBECEF", margin:4, borderRadius:10 }}>
+            <View style={{ flexDirection: 'column', width: '17%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center', backgroundColor: "#EBECEF", margin: 4, borderRadius: 10 }}>
                 {
                     [2, 5, 8].map((borderWidth, i) => (<LineWidthSelector
                         key={i}
@@ -522,7 +522,7 @@ function EditorToolbar({
                     />))
                 }
             </View>
-            <View style={{ flexDirection: 'column', width: '15%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center', backgroundColor:"#EBECEF", margin:4, borderRadius:10 }}>
+            <View style={{ flexDirection: 'column', width: '15%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center', backgroundColor: "#EBECEF", margin: 4, borderRadius: 10 }}>
                 {
                     ["0,0", "2,2", "4,2"].map((style, i) => (<LineStyleSelector
                         key={i}
@@ -534,8 +534,8 @@ function EditorToolbar({
                 }
 
             </View>
-            <View style={{  width: '20%',  alignItems: 'center', backgroundColor:"#EBECEF", paddingTop:10, margin:4, borderRadius:10 }}>
-                <AppText style={{fontSize: isScreenNarrow()?20:30}}>{translate("ShowTableCaption")}</AppText>
+            <View style={{ width: '20%', alignItems: 'center', backgroundColor: "#EBECEF", paddingTop: 10, margin: 4, borderRadius: 10 }}>
+                <AppText style={{ fontSize: isScreenNarrow() ? 20 : 30 }}>{translate("ShowTableCaption")}</AppText>
                 <PushButton2 titleOn={translate("Yes")} titleOff={translate("No")} onPressCallback={() => {
                     if (Table) {
                         TableActions.delete(Table.id);

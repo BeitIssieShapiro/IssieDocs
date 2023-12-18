@@ -192,7 +192,7 @@ export default function SettingsMenu(props) {
                     <View style={{ width: '100%', paddingTop: 25, paddingRight: 25, alignItems: getFlexEnd() }}>
                         <AppText style={styles.SettingsHeaderText}>{translate("BackupTitle") + ":"}</AppText>
                         <View style={{ paddingStart: 40, paddingTop: 10 }}>
-                            <Button title="Backup" onPress={() => {
+                            <Button title={translate("BackupBtn")} onPress={() => {
                                 setBackupProgress(0);
                                 FileSystem.main.getRootFolders().then(rootFolders=>FileSystem.main.getFoldersDeep(rootFolders).then(allFolders=>{
                                     trace("all folders", allFolders);
