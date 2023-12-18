@@ -457,7 +457,8 @@ export function RootFolderPicker({ folders, currentFolder, onChangeFolder, showS
     const [reload, setReload] = useState(0);
 
     const [expandedFolders, setExpandedFolders] = useState([]);
-    const defFolder = { name: translate("DefaultFolder"), svgIcon: 'home', color: 'gray', hideName: true };
+    const defFolder = FileSystem.DEFAULT_FOLDER;
+    //{ name: translate("DefaultFolder"), svgIcon: 'home', color: 'gray', hideName: true };
 
     useEffect(() => {
         const regID = FileSystem.main.registerListener((folder) => {
@@ -472,8 +473,8 @@ export function RootFolderPicker({ folders, currentFolder, onChangeFolder, showS
         return () => FileSystem.main.unregisterListener(regID);
     }, [])
 
-    if (!currentFolder || currentFolder.name === FileSystem.DEFAULT_FOLDER.name || currentFolder.name === '') {
-        currentFolder = defFolder;
+    if (!currentFolder || currentFolder.name === '') {
+        currentFolder = FileSystem.DEFAULT_FOLDER;
     }
 
     const { flexStart, flexEnd } = getRowDirections();

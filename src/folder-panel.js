@@ -2,7 +2,7 @@ import { Alert, TouchableOpacity, View } from "react-native";
 import { DraxView } from "react-native-drax";
 import { SvgIcon } from "./svg-icons";
 import { SBDraxScrollView, dimensions } from "./elements";
-import FolderNew from "./FolderNew";
+import FolderNew, { FolderDraxView } from "./FolderNew";
 import { FileSystem } from "./filesystem";
 import { showMessage } from "react-native-flash-message";
 import { useState } from "react";
@@ -47,56 +47,24 @@ export function FolderPanel({
 
     }}>
         {showHome &&
-            <DraxView
-                onReceiveDragEnter={() => setHomeDragOver(true)}
-                onReceiveDragExit={() => setHomeDragOver(false)}
-                onReceiveDragDrop={({ dragged: { payload } }) => {
-                    setHomeDragOver(false)
-                    //trace(`received ${JSON.stringify(payload)}`);
-                    trace("Drop on Folder", "from", payload.folder, "to", FileSystem.DEFAULT_FOLDER.name)
-                    if (payload.folderID === FileSystem.DEFAULT_FOLDER.name) {
-                        trace("drop on same folder")
-                        return;
-                    }
-
-                    if (payload.isFolder) {
-                        const parts = payload.folderID.split("/");
-                        const targetFolderID = parts[parts.length - 1];
-
-                        FileSystem.main.renameFolder(payload.folderID, targetFolderID, payload.icon, payload.color)
-                            .then(() => showMessage({
-                                message: translate("SuccessfulMoveFolderMsg"),
-                                type: "success",
-                                animated: true,
-                                duration: 5000,
-                            })).catch(e => Alert.alert(translate("ErrorMoveFolder"), e))
-                    } else {
-                        FileSystem.main.movePage(payload.item, FileSystem.DEFAULT_FOLDER.name)
-                            .then(() => showMessage({
-                                message: fTranslate("SuccessfulMovePageMsg", payload.item.name, translate("DefaultFolder")),
-                                type: "success",
-                                animated: true,
-                                duration: 5000,
-
-                            })
-                            )
-                    }
-                }}
+            <FolderDraxView
+                index={0}
+                id={FileSystem.DEFAULT_FOLDER.name}
+                icon={FileSystem.DEFAULT_FOLDER.icon}
+                color={FileSystem.DEFAULT_FOLDER.color}
+                setDragOver={(val) => setHomeDragOver(val)}
+                dragOver={homeDragOver}
+                allowDropFolders={true}
                 style={{
                     height: isScreenLow ? '17%' : '10%',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    backgroundColor: homeDragOver ? "lightblue" : "transparent"
                 }}>
 
                 <TouchableOpacity onPress={() => onUnselectFolder()}>
-
-
                     <SvgIcon name="home" size={40} color={"gray"} />
                 </TouchableOpacity>
-
-            </DraxView>}
-
+            </FolderDraxView>}
 
         <SBDraxScrollView
             rtl={rtl}

@@ -216,16 +216,19 @@ export default class IssieEditPhoto extends React.Component {
 
         if (touches.length == 1 && this.isTableMode()) {
           this._tableResize = true;
+          const x = this.viewPort2TableX(this.screen2ViewPortX(touches[0].pageX));
+          const y = this.viewPort2TableY(this.screen2ViewPortY(touches[0].pageY));
+
           //trace("resize table")
           const state = this.state.tableResizeState || {
-            initialX: this.screen2ViewPortX(touches[0].pageX) / this.state.zoom, //hack - need proper handling of zoom
-            initialY: this.screen2ViewPortY(touches[0].pageY) / this.state.zoom,
+            initialX: x,
+            initialY: y
           };
 
           const newState = {
             ...state,
-            currentX: this.screen2ViewPortX(touches[0].pageX) / this.state.zoom,
-            currentY: this.screen2ViewPortY(touches[0].pageY) / this.state.zoom,
+            currentX: x,
+            currentY: y,
           }
 
           trace("resize table new state", newState)
@@ -911,6 +914,10 @@ export default class IssieEditPhoto extends React.Component {
 
   viewPort2NormX = (x) => ((x - this.state.xOffset) / this.state.zoom) / this.state.scaleRatio;
   viewPort2NormY = (y) => ((y - this.state.yOffset) / this.state.zoom) / this.state.scaleRatio;
+
+  viewPort2TableX = (x) => ((x - this.state.xOffset) / this.state.zoom);
+  viewPort2TableY = (y) => ((y - this.state.yOffset) / this.state.zoom);
+
 
   norm2viewPortX = (x) => (x * this.state.scaleRatio * this.state.zoom + this.state.xOffset);
   norm2viewPortY = (y) => (y * this.state.scaleRatio * this.state.zoom + this.state.yOffset);

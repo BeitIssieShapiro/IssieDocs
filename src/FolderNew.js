@@ -28,59 +28,20 @@ export default function FolderNew(props) {
     const { row, rowReverse, rtl } = getRowDirections();
 
     return (
-        <DraxView
-            key={props.index}
-            longPressDelay={700}
-            payload={{ folderID: props.id, isFolder: true, icon:props.icon, color:props.color }}
+        <FolderDraxView
+            index={props.index}
+            id={props.id}
+            icon={props.icon}
+            color={props.color}
+            setDragOver={(val) => setDragOver(val)}
+            dragOver={dragOver}
+            allowDropFolders={props.allowDropFolders}
 
-            onDragStart={()=>{
-                trace("start drag folder", props.id)
-            }}
-            onReceiveDragEnter={() => {
-                trace("drag enter")
-                if ( props.allowDropFolders)
-                    setDragOver(true)
-            }}
-            onReceiveDragExit={() => setDragOver(false)}
-            onReceiveDragDrop={({ dragged: { payload } }) => {
-                setDragOver(false);
-                // trace(`received ${JSON.stringify(payload)}`);
-                trace("Drop on Folder", payload, "into", props.id)
-                if (payload.folderID === props.id) {
-                    trace("drop on same folder")
-                    return;
-                }
-
-                if (payload.isFolder) {
-                    const parts = payload.folderID.split("/");
-                    const targetFolderID = props.id + "/" + parts[parts.length-1];
-
-                    FileSystem.main.renameFolder(payload.folderID, targetFolderID, payload.icon, payload.color)
-                    .then(() => showMessage({
-                        message: translate("SuccessfulMoveFolderMsg"),
-                        type: "success",
-                        animated: true,
-                        duration: 5000,
-                    })).catch(e=>Alert.alert(translate("ErrorMoveFolder"), e))
-                } else {
-                    FileSystem.main.movePage(payload.item, props.id)
-                        .then(() => showMessage({
-                            message: fTranslate("SuccessfulMovePageMsg", payload.item.name, props.name),
-                            type: "success",
-                            animated: true,
-                            duration: 5000,
-                        })
-                        )
-                }
-            }}
             style={{
                 alignContent: 'center',
                 width: props.width || '100%',
                 height: props.asTitle ? dimensions.folderAsTitleHeight : dimensions.folderHeight,
-                //paddingTop: 10, paddingBottom: 10
                 borderRadius: 7,
-                backgroundColor: dragOver ? dragOverColor : undefined
-
             }}>
 
             {props.editMode && props.asTitle && !props.fixedFolder && props.name && props.name.length > 0 ?
@@ -181,6 +142,69 @@ export default function FolderNew(props) {
                     </View> :
                     <View />
             }
-        </DraxView>
+        </FolderDraxView>
     );
+}
+
+export function FolderDraxView(props) {
+    return <DraxView
+        key={props.index}
+        longPressDelay={700}
+        payload={{ folderID: props.id, isFolder: true, icon: props.icon, color: props.color }}
+
+        onDragStart={() => {
+            trace("start drag folder", props.id)
+        }}
+        onReceiveDragEnter={() => {
+            trace("folder drag enter")
+            if (props.allowDropFolders)
+                props.setDragOver(true)
+        }}
+        onReceiveDragExit={() => props.setDragOver(false)}
+        onReceiveDragDrop={({ dragged: { payload } }) => {
+            props.setDragOver(false);
+            trace("Drop on Folder:", payload.folderID, "into", props.id)
+            if (payload.folderID === props.id) {
+                trace("drop on the same folder")
+                return;
+            }
+
+            if (payload.isFolder) {
+                if (props.allowDropFolders) {
+                    const parts = payload.folderID.split("/");
+                    let targetFolderID = "";
+                    if (props.id !== FileSystem.DEFAULT_FOLDER.name) {
+                        targetFolderID += props.id + "/"
+                    }
+
+                    targetFolderID += parts[parts.length - 1];
+                    if (targetFolderID === payload.folderID) {
+                        trace("drop a folder on its parent")
+                        return;
+                    }
+
+                    FileSystem.main.renameFolder(payload.folderID, targetFolderID, payload.icon, payload.color)
+                        .then(() => showMessage({
+                            message: translate("SuccessfulMoveFolderMsg"),
+                            type: "success",
+                            animated: true,
+                            duration: 5000,
+                        })).catch(e => Alert.alert(translate("ErrorMoveFolder"), e))
+                }
+            } else {
+                FileSystem.main.movePage(payload.item, props.id)
+                    .then(() => showMessage({
+                        message: fTranslate("SuccessfulMovePageMsg", payload.item.name, props.name),
+                        type: "success",
+                        animated: true,
+                        duration: 5000,
+                    })
+                    )
+            }
+        }}
+        style={[props.style, {
+            backgroundColor: props.dragOver ? dragOverColor : undefined
+        }]}
+    >{props.children}
+    </DraxView>
 }

@@ -9,7 +9,7 @@ V- folder in folder
 Bugs:
 ----
 V- when landscape, camera is 90deg offset
-V- in Zoom, table lines are not correct.
+V- in offsets, table lines are not correct.
 V- in iPhone the horizontal lines are not dragged - wrong offset
 V- in a narrow iphone portrait the table menu is too densed
 - in zoom when start new zooming action it jumps to high zoom

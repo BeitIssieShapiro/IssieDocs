@@ -40,7 +40,7 @@ export class FileSystem {
     }
     static DEFAULT_FOLDER_METADATA = { icon: '', color: 'gray' };
     static FOLDERS_PATH = "folders";
-    static DEFAULT_FOLDER = { name: 'Default', color: 'gray', icon: '' };
+    static DEFAULT_FOLDER = { ID: 'Default', name: 'Default', color: 'gray', icon: '', svgIcon: 'home', hideName: true };
 
     _folders = [];
     _listeners = [];
@@ -638,7 +638,7 @@ export class FileSystem {
 
     async _readFolderMetaData(folderPath) {
         try {
-            trace("read folder metadata", folderPath)
+            //trace("read folder metadata", folderPath)
             let metaDataFilePath = folderPath + "/.metadata";
             let metadataString = await RNFS.readFile(metaDataFilePath, 'utf8');
 
@@ -1061,14 +1061,14 @@ export class FileSystemFolder {
         for (let fi of filesItems) {
             if (fi.name === FileSystem.FOLDERS_PATH) {
                 const foldersBasePath = this._path + "/" + FileSystem.FOLDERS_PATH
-                trace("read sub folders for ", this.name, " in ", foldersBasePath);
+                //trace("read sub folders for ", this.name, " in ", foldersBasePath);
                 const subFoldersItems = await RNFS.readDir(this._fs.basePath + foldersBasePath);
-                trace("found: ", subFoldersItems.length)
+                //trace("found: ", subFoldersItems.length)
                 for (let sfi of subFoldersItems) {
                     await FileSystem.main.readFolder(sfi, this);
                 }
             } else {
-                trace("read file", fi.name)
+                //trace("read file", fi.name)
                 const name = FileSystem.getFileNameFromPath(fi.name, true);
                 let sheet = new WorkSheet(fi.path, name);
                 let lastUpdate = Math.max(fi.mtime.valueOf(), fi.ctime.valueOf());

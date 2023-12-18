@@ -132,9 +132,9 @@ var strings = {
         "ColsCaption":"עמודות",
 
         "ErrMoveIntoTwoLevelFolder":"לא ניתן להעביר תיקיה לתוך תיקיה שבעצמה בתוך תיקיה",
-        "ErrMoveFolderCOntainingFolders":"לא ניתן לההעביר תיקיה שבעצמה מכילה תיקיות",
+        "ErrMoveFolderCOntainingFolders":"לא ניתן להעביר תיקיה שבעצמה מכילה תיקיות",
         "SuccessfulMoveFolderMsg":"תיקיה עברה בהצלחה ",
-        "ErrorMoveFolder":"Error Moving Folder"
+        "ErrorMoveFolder":"שגיאה בהעברת תיקיה"
 
     },
     "ar": {
@@ -415,6 +415,35 @@ const foldersAndIcons = {
 
 }
 
+function findMissing() {
+    let missing = ""
+    //English
+    console.log("Missing in English:")
+    Object.entries(strings.he).forEach(([key, value]) => {
+        if (!strings.en[key]) {
+            missing += "\"" + key + "\":" + "\"" + value + "\",\n";
+        }
+    })
+    console.log(missing);
+    missing = "";
+    console.log("\n\nMissing in Arabic:")
+    Object.entries(strings.he).forEach(([key, value]) => {
+        if (!strings.ar[key]) {
+            missing += "\"" + key + "\":" + "\"" + value + "\",\n";
+        }
+    })
+    console.log(missing);
+
+    missing = "";
+    console.log("\n\nMissing in Hebrew:")
+    Object.entries(strings.en).forEach(([key, value]) => {
+        if (!strings.he[key]) {
+            missing += "\"" + key + "\":" + "\"" + value + "\",\n";
+        }
+    })
+    console.log(missing);
+
+}
 
 let currStrings = strings[DEFAULT_LANG];
 
@@ -483,6 +512,8 @@ export function loadLanguage() {
     if (isSimulator()) {
         //gPrefix = "."
     }
+    //findMissing();
+
 }
 
 export function isRTL() {

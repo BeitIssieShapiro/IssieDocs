@@ -136,7 +136,7 @@ export default class FolderGallery extends React.Component {
 
             //load only the folders
             let folders = await FileSystem.main.getRootFolders();
-            trace("folders loaded", folders)
+            //trace("folders loaded", folders)
             FileSystem.main.registerListener(async () => {
                 let folders = await FileSystem.main.getRootFolders();
 
