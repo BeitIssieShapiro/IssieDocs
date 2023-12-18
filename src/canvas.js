@@ -314,7 +314,7 @@ function Canvas({
             canvasStyle={{ flex: 1, backgroundColor: 'transparent', zIndex: 1 }}
             localSourceImage={{ filename: imagePath, mode: 'AspectFit' }}
             onStrokeEnd={SketchEnd}
-            onSketchStart={SketchStart}
+            onStrokeStart={SketchStart}
             strokeColors={[{ color: colors.black }]}
             defaultStrokeIndex={0}
             defaultStrokeWidth={DEFAULT_STROKE_WIDTH}

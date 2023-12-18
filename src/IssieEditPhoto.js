@@ -197,6 +197,7 @@ export default class IssieEditPhoto extends React.Component {
       onPanResponderMove: (evt, gestureState) => {
         let touches = evt.nativeEvent.touches;
         if (touches.length == 2) {
+          trace("pinching")
           this._pinch = true;
           processPinch(this,
             touches[0].pageX, touches[0].pageY,
@@ -240,6 +241,8 @@ export default class IssieEditPhoto extends React.Component {
       },
 
       onPanResponderRelease: (evt, gestureState) => {
+        trace("skeching, table-resize, pinch - off")
+        this._sketching = false;
         if (this._tableResize) {
           this._tableResize = false;
           trace("resize table end")
@@ -504,7 +507,7 @@ export default class IssieEditPhoto extends React.Component {
     //trace("should pinch?");
     if (evt.nativeEvent.touches.length >= 2) {
       trace("would pinch");
-      return true;
+      return !this._sketching;
     } else if (this.isTextMode()) {
       if (this.state.showTextInput) {
         return true;
@@ -747,6 +750,8 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   SketchEnd = (p) => {
+    this._sketching = false;
+    trace("sketching - off")
     if (!this._pinch) {
       this.state.queue.pushPath(p);
       this.Save()
@@ -754,6 +759,13 @@ export default class IssieEditPhoto extends React.Component {
     this.setState({
       revision: this.state.revision + 1
     })
+
+  }
+  SketchStart = (p) => {
+    setTimeout(() => {
+      trace("Sketch Start")
+      this._sketching = true;
+    }, 300);
 
   }
 
@@ -1990,7 +2002,7 @@ export default class IssieEditPhoto extends React.Component {
     const yFactor = height / table.size.height;
 
     for (let c = 0; c < table.verticalLines.length; c++) {
-      if (Math.abs(tableResizeState.initialX / xFactor - table.verticalLines[c]) < 15) {
+      if (Math.abs(tableResizeState.initialX / xFactor - table.verticalLines[c]) < 20) {
         let retTable = { ...table, verticalLines: [...table.verticalLines] };
         retTable.verticalLines[c] += tableResizeState.currentX / xFactor - tableResizeState.initialX / xFactor;
         return retTable;
@@ -1998,7 +2010,7 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     for (let r = 0; r < table.horizontalLines.length; r++) {
-      if (Math.abs(tableResizeState.initialY / yFactor - table.horizontalLines[r]) < 15) {
+      if (Math.abs(tableResizeState.initialY / yFactor - table.horizontalLines[r]) < 20) {
         let retTable = { ...table, horizontalLines: [...table.horizontalLines] };
         retTable.horizontalLines[r] += tableResizeState.currentY / yFactor - tableResizeState.initialY / yFactor;
         return retTable;
