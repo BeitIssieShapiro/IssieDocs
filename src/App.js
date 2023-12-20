@@ -165,7 +165,7 @@ const App = (props) => {
           />
 
           <Stack.Screen name="EditPhoto" component={IssieEditPhoto}
-            initialParams={{ headerHeight: isMobile() ? dimensions.headerHeight : dimensions.thinHeaderHeight , insets:props.insets}}
+            initialParams={{ headerHeight: dimensions.headerHeight  , insets:props.insets}}
             options={(props) => {
               const page = props.route.params.page;
               let fileName = page.name;

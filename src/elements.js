@@ -857,14 +857,7 @@ export function TilesView({
 
 }
 export const globalStyles = StyleSheet.create({
-    headerStyle: {
-        backgroundColor: semanticColors.header,
-        height: dimensions.headerHeight
-    },
-    headerThinStyle: {
-        backgroundColor: semanticColors.header,
-        height: dimensions.thinHeaderHeight
-    },
+    
     headerTitleStyle: {
         width: '100%',
         fontSize: 30,

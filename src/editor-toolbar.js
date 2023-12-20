@@ -505,9 +505,9 @@ function EditorToolbar({
 
         {/*View for selecting Table options*/}
         <FadeInView height={showPickerType === Pickers.TABLE && showPicker ? 150 : 0} style={[styles.pickerView, { flexDirection: rowReverse, top: toolbarHeight, left: 0, right: 0, justifyContent: "space-evenly" }]}>
-            <View style={{ flexDirection: 'column', width: '40%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center', backgroundColor: "#EBECEF", margin: 4, marginEnd: 10, borderRadius: 10, paddingEnd: 10 }}>
-                <NumberSelector narrow={isScreenNarrow()} caption={translate("RowsCaption")} direction={rowReverse} value={tableRows} setValue={setRows} textIcon={<Icon name="table-rows" size={35} />} />
-                <NumberSelector narrow={isScreenNarrow()} caption={translate("ColsCaption")} direction={rowReverse} value={tableCols} setValue={setColumns} textIcon={<Icon name="table-rows" style={{ transform: [{ rotate: '90deg' }] }} size={35} isScreenNarrow={isScreenNarrow()} />} />
+            <View style={{ flexDirection: 'column', width: '30%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center', backgroundColor: "#EBECEF", margin: 4, marginEnd: 10, borderRadius: 10, paddingEnd: 10 }}>
+                <NumberSelector narrow={isScreenNarrow()} direction={rowReverse} value={tableRows} setValue={setRows} textIcon={<Icon name="table-rows" size={35} />} />
+                <NumberSelector narrow={isScreenNarrow()} direction={rowReverse} value={tableCols} setValue={setColumns} textIcon={<Icon name="table-rows" style={{ transform: [{ rotate: '90deg' }] }} size={35} isScreenNarrow={isScreenNarrow()} />} />
             </View>
 
             <View style={{ flexDirection: 'column', width: '17%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center', backgroundColor: "#EBECEF", margin: 4, borderRadius: 10 }}>
@@ -553,9 +553,10 @@ function EditorToolbar({
 function NumberSelector({ caption, value, setValue, textIcon, direction, narrow }) {
     trace("NumberSelector", narrow)
     return (
-        <View style={{ flexDirection: direction, width: '100%', alignItems: "center" }}>
+        <View style={{ flexDirection: direction, width: '100%', alignItems: "center", justifyContent:"center"}}>
             {!narrow && textIcon}
-            {!narrow && <AppText style={{ fontSize: 30, marginRight: 10, marginLeft: 10, width: 100, textAlign: "right" }}>{caption + ":"}</AppText>}
+            {!narrow && caption && <AppText style={{ fontSize: 30, marginRight: 10, marginLeft: 10, width: 100, textAlign: "right" }}>{caption + ":"}</AppText>}
+            {!caption && <Spacer/>}
             <IconButton icon="remove" backgroundColor={semanticColors.mainAreaBG} size={50} onPress={() => setValue(value - 1)} />
             <Text style={{ fontSize: 40, lineHeight: 55, height: 55, width: 55, textAlign: "center", justifyContent: "center" }}>
                 {value || 1}
