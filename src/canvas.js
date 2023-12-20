@@ -227,24 +227,24 @@ function Canvas({
 
             // Adjust cell's texts to current table size and location
             tableCellTexts.forEach(txtElem => {
+
                 // todo table margin
                 txtElem.width = (table.verticalLines[txtElem.tableCell.col + 1] - table.verticalLines[txtElem.tableCell.col] - table.width) * (width / table.size.width)
                 txtElem.normPosition = {
-                    x: (table.verticalLines[txtElem.tableCell.col] * (width / table.size.width)) / scaleRatio,
+                    x: (table.verticalLines[txtElem.tableCell.col + (txtElem.rtl?1:0)] * (width / table.size.width)) / scaleRatio,
                     y: (table.horizontalLines[txtElem.tableCell.row] * (height / table.size.height)) / scaleRatio
                 };
                 txtElem.position = {
                     x: txtElem.normPosition.x * scaleRatio,
                     y: txtElem.normPosition.y * scaleRatio
                 };
-                return true;
+                trace("table cell text", txtElem)
             });
         } else {
             tableCellTexts = [];
         }
 
         canvasTexts = tableCellTexts.concat(tableCellTexts);
-        trace("canvasTexts", canvasTexts)
 
         const waitFor = [
             new Promise((resolve) => canvas.current?.getImageIds((ids) => {

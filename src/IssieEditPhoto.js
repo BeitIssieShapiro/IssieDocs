@@ -2350,13 +2350,19 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     return (
-      <View style={{
+      <View style={[{
         //flex: 1,
         position: 'absolute',
         flexDirection: rowDir,
         left: x - (fixedSize ? 0 : (rtl ? textWidth / this.state.scaleRatio : DRAG_ICON_SIZE)),
         top: y, zIndex: 45,
-      }}>
+        // width: textWidth,
+        // height: inputTextHeight,
+
+      }, this.state.currentTextElem?.tableCell ? {
+        width: textWidth,
+        height: inputTextHeight
+      } : {}]}>
         {!fixedSize && <View {...this._panResponderElementMove.panHandlers}
           style={{ top: -5, zIndex: 25 }}>
           <Icon name='open-with' size={DRAG_ICON_SIZE} />
