@@ -65,7 +65,6 @@ function EditorToolbar({
     onVoiceMode,
     onZoomIn,
     onZoomOut,
-
     onSelectMarkerSize,
     onSelectBrushSize,
     onSelectColor,
@@ -553,10 +552,10 @@ function EditorToolbar({
 function NumberSelector({ caption, value, setValue, textIcon, direction, narrow }) {
     trace("NumberSelector", narrow)
     return (
-        <View style={{ flexDirection: direction, width: '100%', alignItems: "center", justifyContent:"center"}}>
+        <View style={{ flexDirection: direction, width: '100%', alignItems: "center", justifyContent: "center" }}>
             {!narrow && textIcon}
             {!narrow && caption && <AppText style={{ fontSize: 30, marginRight: 10, marginLeft: 10, width: 100, textAlign: "right" }}>{caption + ":"}</AppText>}
-            {!caption && <Spacer/>}
+            {!caption && <Spacer />}
             <IconButton icon="remove" backgroundColor={semanticColors.mainAreaBG} size={50} onPress={() => setValue(value - 1)} />
             <Text style={{ fontSize: 40, lineHeight: 55, height: 55, width: 55, textAlign: "center", justifyContent: "center" }}>
                 {value || 1}

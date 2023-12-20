@@ -22,7 +22,6 @@ function Canvas({
     SketchStart,
     AfterRender,
     TableResizeState,
-    Table,
     ResizeTable,
     queue,
     normFontSize2FontSize,
@@ -36,6 +35,7 @@ function Canvas({
     const [canvas, setCanvas] = useState(React.createRef(null));
     const [texts, setTexts] = useState([]);
     const [images, setImages] = useState([]);
+    const [tables, setTables] = useState([]);
     const [tablePhase, setTablePhase] = useState(0);
 
     useEffect(() => {
@@ -151,12 +151,14 @@ function Canvas({
     }, [texts, images, isImageMode]);
 
     const canvasTexts = useCallback(() => texts, [texts]);
+    const canvasTables = useCallback(() => tables, [tables]);
 
 
     useImperativeHandle(ref, () => ({
         findElementByLocation,
         canvasTexts,
         canvas,
+        canvasTables,
     }),
         [findElementByLocation, canvasTexts]);
 
@@ -170,6 +172,7 @@ function Canvas({
         let q = queue.getAll();
         let canvasTexts = [];
         let canvasImages = [];
+        let canvasTables = [];
         let tableCellTexts = [];
         let paths = [];
         let table = undefined;
@@ -209,18 +212,22 @@ function Canvas({
                     canvasImages.splice(elemIndex, 1);
                 }
             } else if (q[i].type === 'table') {
-                table = q[i].elem;
+                canvasTables = canvasTables.filter(t => t.id !== q[i].elem.id);
+                canvasTables.push(q[i].elem);
             } else if (q[i].type === 'tableDelete') {
-                table = undefined;
+                canvasTables = canvasTables.filter(t => t.id !== q[i].elemID);
                 // delete all cell text related
-                tableCellTexts = tableCellTexts.filter(tct=>tct.tableCell.tableID !== q[i].elemID)
+                tableCellTexts = tableCellTexts.filter(tct => tct.tableCell.tableID !== q[i].elemID)
             }
         }
 
-        if (table) {
-            if (isTableMode && TableResizeState) {
-                table = ResizeTable(table, TableResizeState, width, height);
-            }
+        if (isTableMode && TableResizeState) {
+            const updateTable = ResizeTable(TableResizeState, width, height);
+            canvasTables = canvasTables.filter(t => t.id !== TableResizeState.table.id);
+            canvasTables.push(updateTable);
+        }
+
+        canvasTables.forEach(table => {
             //verify the cell exists:
             tableCellTexts = tableCellTexts.filter(txtElem => txtElem.tableCell.col < table.verticalLines.length - 1 &&
                 txtElem.tableCell.row < table.horizontalLines.length - 1);
@@ -231,18 +238,15 @@ function Canvas({
                 // todo table margin
                 txtElem.width = (table.verticalLines[txtElem.tableCell.col + 1] - table.verticalLines[txtElem.tableCell.col] - table.width) * (width / table.size.width)
                 txtElem.normPosition = {
-                    x: (table.verticalLines[txtElem.tableCell.col + (txtElem.rtl?1:0)] * (width / table.size.width)) / scaleRatio,
+                    x: (table.verticalLines[txtElem.tableCell.col + (txtElem.rtl ? 1 : 0)] * (width / table.size.width)) / scaleRatio,
                     y: (table.horizontalLines[txtElem.tableCell.row] * (height / table.size.height)) / scaleRatio
                 };
                 txtElem.position = {
                     x: txtElem.normPosition.x * scaleRatio,
                     y: txtElem.normPosition.y * scaleRatio
                 };
-                trace("table cell text", txtElem)
             });
-        } else {
-            tableCellTexts = [];
-        }
+        });
 
         canvasTexts = tableCellTexts.concat(tableCellTexts);
 
@@ -282,7 +286,9 @@ function Canvas({
                     }
                 });
 
-                if (table) {
+                // Draw all tables
+                trace("draw tables", canvasTables)
+                canvasTables.forEach((table) => {
 
                     const size = table.size;
                     const tableWidth = table.width; // isTableMode ? table.width  : table.width;
@@ -314,26 +320,11 @@ function Canvas({
                         }
                     }
 
-                    if (isTableMode) {
-
-                        // if (!TableResizeState) {
-                        //     setTimeout(() => {
-                        //         setTablePhase(oldPhase => {
-                        //             if (oldPhase === 9) {
-                        //                 return 0.;
-                        //             }
-                        //             return oldPhase + 3;
-                        //         });
-                        //     }, 200);
-                        // }
-                    }
-
-                    const addLength = 0;//table.width / 4;
                     for (let c = 0; c < table.verticalLines.length; c++) {
-                        let x = table.verticalLines[c] + addLength;
+                        let x = table.verticalLines[c] ;
                         addLine(table.id + 100 + c,
-                            x, table.horizontalLines[0] - addLength,
-                            x, table.horizontalLines[table.horizontalLines.length - 1] + addLength,
+                            x, table.horizontalLines[0] ,
+                            x, table.horizontalLines[table.horizontalLines.length - 1],
                             table.color, tableWidth, dash, dashGap, tablePhase);
                     }
 
@@ -383,7 +374,7 @@ function Canvas({
                         drawArrow(315, x1 + 2, y1 + bs, "black", 1, 0, 1);
                         drawArrow(317, x2 - 2, y1 + bs, "black", 1, 0, -1);
                     }
-                }
+                });
 
 
                 // delete those paths who are no longer exists in the queue
@@ -395,7 +386,8 @@ function Canvas({
 
         setTexts(canvasTexts);
         setImages(canvasImages);
-    }, [revision, scaleRatio, currentTextElemId, width, height, isTableMode, tablePhase, TableResizeState, Table]);
+        setTables(canvasTables);
+    }, [revision, scaleRatio, currentTextElemId, width, height, isTableMode, tablePhase, TableResizeState]);
 
     return (
         <RNSketchCanvas

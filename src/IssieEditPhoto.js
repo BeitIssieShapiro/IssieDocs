@@ -62,6 +62,10 @@ const Modes = {
 
 const TABLE_LINE_MARGIN = 20;
 
+function genID() {
+  //return Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 5);
+  return Math.floor(Math.random() * 1000000000);
+}
 /**
  * scaleRatio: affects the size of the viewPort which == pageRect if zoom=0
  * once zoom is applied the scaleRatio is not a factor. viewPort may change, but pageRect stays untouched
@@ -217,15 +221,26 @@ export default class IssieEditPhoto extends React.Component {
 
         if (touches.length == 1 && this.isTableMode()) {
           this._tableResize = true;
-          const table = this.findTable()
+          const viewPortXY = {
+            x: this.screen2ViewPortX(touches[0].pageX),
+            y: this.screen2ViewPortY(touches[0].pageY)
+          }
+          let table = this.state.tableResizeState?.table;
+          if (!table) {
+            const findTableRes = this.findTable(viewPortXY);
+            table = findTableRes?.table;
+          }
+
           if (!table) return;
-          const x = this.viewPort2TableX(table, this.screen2ViewPortX(touches[0].pageX));
-          const y = this.viewPort2TableY(table, this.screen2ViewPortY(touches[0].pageY));
+
+          const x = this.viewPort2TableX(table, viewPortXY.x);
+          const y = this.viewPort2TableY(table, viewPortXY.y);
 
           trace("resizing table", x, y, table)
           const state = this.state.tableResizeState || {
             initialX: x,
-            initialY: y
+            initialY: y,
+            table
           };
 
           const newState = {
@@ -786,7 +801,7 @@ export default class IssieEditPhoto extends React.Component {
 
     if (this.isTextMode()) {
       this.SaveText();
-      const table = this.findTable();
+      const { table } = this.findTable({ x, y });
 
       let textElem = this.canvas.current.findElementByLocation({
         x: this.viewPort2NormX(x),
@@ -972,7 +987,7 @@ export default class IssieEditPhoto extends React.Component {
       newTextElem.tableCell = this.state.currentTextElem.tableCell;
     }
     if (!newTextElem.id) {
-      newTextElem.id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
+      newTextElem.id = genID();
     }
 
     if (!newTextElem.tableCell) {
@@ -1337,7 +1352,8 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   onTableMode = () => {
-    const table = this.findTable();
+    //todo multiple tables
+    const table = this.canvas.current?.canvasTables().length > 0 ? this.canvas.current?.canvasTables()[0] : undefined;
     this.setState({
       showTextInput: false,
       mode: Modes.TABLE,
@@ -1345,7 +1361,8 @@ export default class IssieEditPhoto extends React.Component {
       currentTable: table,
     });
     this.onEraserChange(true);
-    return table !== undefined;
+
+    return !!table;
   }
 
 
@@ -1546,19 +1563,30 @@ export default class IssieEditPhoto extends React.Component {
           onGoBack={() => this.props.navigation.goBack()}
           onUndo={() => {
             this.state.queue.undo();
+            const currTableID = this.state.currentTable?.id;
+
             this.setState({
               revision: this.state.revision + 1,
               currentImageElem: undefined,
-              currentTable: this.findTable()
-            });
+              currentTable: undefined,
+            }, this.state.currentTable ? () => this.setState({
+              currentTable: this.canvas.current?.canvasTables().find(t => t.id === currTableID)
+            }) : undefined);
             this.Save();
           }}
           canRedo={this.state.queue.canRedo()}
           onRedo={() => {
             this.state.queue.redo();
-            this.setState({ revision: this.state.revision + 1, currentTable: this.findTable() });
+            const currTableID = this.state.currentTable?.id;
+            this.setState({
+              revision: this.state.revision + 1,
+              currentTable: undefined
+            }, this.state.currentTable ? () => this.setState({
+              currentTable: this.canvas.current?.canvasTables().find(t => t.id === currTableID)
+            }) : undefined);
             this.Save();
           }}
+          Table={this.state.currentTable}
           fontSize4Toolbar={this.fontSize4Toolbar}
           onZoomOut={() => this.doZoom(-.5)}
           onZoomIn={() => this.doZoom(.5)}
@@ -1611,7 +1639,6 @@ export default class IssieEditPhoto extends React.Component {
           TableActions={this.TableActions}
 
           isTableMode={this.isTableMode()}
-          Table={this.state.currentTable}
           isMarkerMode={this.isMarkerMode()}
           isTextMode={this.isTextMode()}
           isImageMode={this.isImageMode()}
@@ -1933,29 +1960,21 @@ export default class IssieEditPhoto extends React.Component {
     </View>
   }
 
-  findTable = () => {
-    const queue = this.state.queue.getAll();
-    for (let i = queue.length - 1; i >= 0; i--) {
-      //trace("q elem", i, queue[i])
-      if (queue[i].type === "tableDelete") {
-        return;
-      }
-      if (queue[i].type === "table") {
-        return queue[i].elem;
-      }
-    }
-    return undefined;
+  findTable = (viewPortXY) => {
+    // todo find based on coordinates
+    const table = this.canvas.current?.canvasTables().length > 0 ? this.canvas.current?.canvasTables()[0] : undefined;
+    return { table };
   }
 
   TableActions = {
     delete: (id) => {
       this.state.queue.pushDeleteTable(id)
-      this.setState({ currentTable: undefined })
+      this.setState({ currentTable: undefined, revision: this.state.revision + 1 })
     },
     addTable: (cols, rows, color, borderWidth, style) => {
       trace("addTable")
       const newTable = {
-        id: 123, //for now hard coded
+        id: genID(),
         color: color + "FF",
         width: borderWidth,
         verticalLines: [],
@@ -1977,13 +1996,14 @@ export default class IssieEditPhoto extends React.Component {
       }
 
       this.state.queue.pushTable(newTable);
-      this.setState({ currentTable: newTable })
+      this.setState({ currentTable: newTable, revision: this.state.revision + 1 })
       this.Save();
+      trace("table added", newTable.id)
     },
     setRowsOrColumns: (newVal, isCols) => {
       if (newVal < 1) return;
 
-      const table = this.findTable();
+      const table = this.state.currentTable;
       if (table) {
         const newTable = { ...table };
         let array = isCols ? [...newTable.verticalLines] : [...newTable.horizontalLines];
@@ -2014,48 +2034,46 @@ export default class IssieEditPhoto extends React.Component {
           newTable.horizontalLines = array;
         }
         this.state.queue.pushTable(newTable);
-        this.setState({ currentTable: newTable })
+        this.setState({ currentTable: newTable, revision: this.state.revision + 1 })
         this.Save();
       }
     },
     setColor: (newColor) => {
-      const table = this.findTable();
+      const table = this.state.currentTable;
       if (table) {
         const newTable = { ...table };
         newTable.color = newColor + "FF";
         this.state.queue.pushTable(newTable);
-        this.setState({ currentTable: newTable })
+        this.setState({ currentTable: newTable, revision: this.state.revision + 1 })
         this.Save();
       }
     },
     setBorderWidth: (borderWidth) => {
-      const table = this.findTable();
+      const table = this.state.currentTable;
       if (table && table.width !== borderWidth) {
         const newTable = { ...table };
         newTable.width = borderWidth;
         this.state.queue.pushTable(newTable);
-        this.setState({ currentTable: newTable })
+        this.setState({ currentTable: newTable, revision: this.state.revision + 1 })
         this.Save();
       }
     },
     setBorderStyle: (borderStyle) => {
-      const table = this.findTable();
+      const table = this.state.currentTable;
       if (table && table.style !== borderStyle) {
         const newTable = { ...table };
         newTable.style = borderStyle;
         this.state.queue.pushTable(newTable);
-        this.setState({ currentTable: newTable })
+        this.setState({ currentTable: newTable, revision: this.state.revision + 1 })
         this.Save();
       }
     }
   }
 
   changeTable = (tableResizeState) => {
-    //find the table
-    const table = this.findTable();
 
-    if (table) {
-      const changedTable = this.resizeTable(table, tableResizeState,
+    if (tableResizeState) {
+      const changedTable = this.resizeTable(tableResizeState,
         this.state.pageRect.width, this.state.pageRect.height, true);
       if (changedTable) {
         this.state.queue.pushTable(changedTable);
@@ -2066,8 +2084,11 @@ export default class IssieEditPhoto extends React.Component {
   }
 
 
-  resizeTable = (table, tableResizeState, width, height, onlyIfChanged) => {
+  resizeTable = (tableResizeState, width, height, onlyIfChanged) => {
     let found = false;
+    const table = tableResizeState.table;
+    if (!table) return undefined;
+
     let retTable = { ...table };
 
     const onLine = (line, isVertical) => {
@@ -2325,7 +2346,8 @@ export default class IssieEditPhoto extends React.Component {
 
     if (this.state.currentTextElem?.tableCell) {
       const { tableID, col, row } = this.state.currentTextElem.tableCell;
-      const table = this.findTable();
+
+      const table = this.canvas.current?.canvasTables().find(t => t.id === tableID);
       if (table) {
         // todo table margin
 
