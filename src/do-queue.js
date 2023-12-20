@@ -10,6 +10,12 @@ export default class DoQueue {
       this._undoQueue = [];
     }
 
+    pushTableCellText(elem) {
+      this.add({ elem: elem, type: 'tableCellText' });
+      //once new item added redo is reset
+      this._undoQueue = [];
+
+    }
     pushImagePosition(elem) {
       this.add({ elem: elem, type: 'imagePosition' });
       this._undoQueue = [];

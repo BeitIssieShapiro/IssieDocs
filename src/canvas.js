@@ -57,33 +57,34 @@ function Canvas({
 
         scaleElem.fontSize = normFontSize2FontSize(scaleElem.normFontSize)
 
-        if (scaleElem.normWidth === undefined) {
-            scaleElem.normWidth = scaleElem.width * scaleElem.normFontSize / scaleElem.fontSize;
-        }
+        if (!scaleElem.tableCell) {
+            if (scaleElem.normWidth === undefined) {
+                scaleElem.normWidth = scaleElem.width * scaleElem.normFontSize / scaleElem.fontSize;
+            }
 
-        scaleElem.width = scaleElem.normWidth * scaleElem.fontSize / scaleElem.normFontSize;
-        scaleElem.position = {
-            x: scaleElem.normPosition.x * scaleRatio,
-            y: scaleElem.normPosition.y * scaleRatio,
-        };
+            scaleElem.width = scaleElem.normWidth * scaleElem.fontSize / scaleElem.normFontSize;
+            scaleElem.position = {
+                x: scaleElem.normPosition.x * scaleRatio,
+                y: scaleElem.normPosition.y * scaleRatio,
+            };
+        }
         return scaleElem;
     }, [scaleRatio]);
 
 
 
-    const findElementByLocation = useCallback((normXY, scaleRatio) => {
+    const findElementByLocation = useCallback((normXY, scaleRatio, table) => {
         let q = isImageMode ? images : texts;
-        //let posField = this.isImageMode() ? "position" : "normPosition";
         const margin = 5; //this.isTextMode() && this.state.fontSize > 60 ? 0 : 5 / scaleRatio
-
 
         for (let i = q.length - 1; i >= 0; i--) {
             const elem = isImageMode ? imageScale2Norm(q[i]) : q[i];
 
-            trace("findElementByLocation", elem.text)
-            trace("np", elem.normPosition.x, elem.normPosition.y)
-            trace("normXY", normXY.x, normXY.y)
-            trace("height", elem.height, "width", elem.width, elem.normWidth, scaleRatio)
+            if (!isImageMode && elem.tableCell) continue;
+            // trace("findElementByLocation", elem.text)
+            // trace("np", elem.normPosition.x, elem.normPosition.y)
+            // trace("normXY", normXY.x, normXY.y)
+            // trace("height", elem.height, "width", elem.width, elem.normWidth, scaleRatio)
 
             const elemY = elem.normPosition.y;
             const normHeight = elem.height;/// this.state.scaleRatio;
@@ -112,6 +113,40 @@ function Canvas({
             }
         }
 
+        if (!isImageMode && table) {
+            //locate table's cell:
+            const normToTableX = (x) => x * scaleRatio / (width / table.size.width);
+            const normToTableY = (y) => y * scaleRatio / (height / table.size.height);
+
+            const tX = normToTableX(normXY.x);
+            const tY = normToTableY(normXY.y);
+            trace("find table cell", tX, tY, table)
+            for (let c = 0; c < table.verticalLines.length - 1; c++) {
+                if (tX > table.verticalLines[c] && tX < table.verticalLines[c + 1]) {
+                    for (let r = 0; r < table.horizontalLines.length - 1; r++) {
+                        if (tY > table.horizontalLines[r] && tY < table.horizontalLines[r + 1]) {
+
+                            let tableCellElem = texts.find(elem => elem.tableCell?.tableID == table.id &&
+                                elem.tableCell?.col === c && elem.tableCell?.row === r);
+
+                            if (!tableCellElem) {
+                                //creates on the fly a tableCellText elem
+                                tableCellElem = {
+                                    tableCell: {
+                                        tableID: table.id,
+                                        col: c,
+                                        row: r,
+                                    }
+                                }
+                            }
+                            return tableCellElem;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
         return undefined;
     }, [texts, images, isImageMode]);
 
@@ -135,26 +170,28 @@ function Canvas({
         let q = queue.getAll();
         let canvasTexts = [];
         let canvasImages = [];
+        let tableCellTexts = [];
         let paths = [];
         let table = undefined;
 
         for (let i = 0; i < q.length; i++) {
-            if (q[i].type === 'text') {
+            if (q[i].type === 'text' || q[i].type === 'tableCellText') {
                 const txtElem = txtElemNorm2Scale(q[i].elem)
 
                 //first try to find same ID and replace, or add it
                 let found = false;
+                const textArray = q[i].type === 'text' ? canvasTexts : tableCellTexts;
 
-                for (let j = 0; j < canvasTexts.length; j++) {
-                    if (canvasTexts[j].id === txtElem.id) {
-                        canvasTexts[j] = txtElem;
+                for (let j = 0; j < textArray.length; j++) {
+                    if (textArray[j].id === txtElem.id) {
+                        textArray[j] = txtElem;
                         found = true;
                         break;
                     }
                 }
-                if (!found && txtElem.id != currentTextElemId) {
+                if (!found && txtElem.id !== currentTextElemId) {
                     //avoid showing the current edited text
-                    canvasTexts.push(txtElem);
+                    textArray.push(txtElem);
                 }
             } else if (q[i].type === 'path') {
                 paths.push(q[i].elem);
@@ -175,8 +212,39 @@ function Canvas({
                 table = q[i].elem;
             } else if (q[i].type === 'tableDelete') {
                 table = undefined;
+                // delete all cell text related
+                tableCellTexts = tableCellTexts.filter(tct=>tct.tableCell.tableID !== q[i].elemID)
             }
         }
+
+        if (table) {
+            if (isTableMode && TableResizeState) {
+                table = ResizeTable(table, TableResizeState, width, height);
+            }
+            //verify the cell exists:
+            tableCellTexts = tableCellTexts.filter(txtElem => txtElem.tableCell.col < table.verticalLines.length - 1 &&
+                txtElem.tableCell.row < table.horizontalLines.length - 1);
+
+            // Adjust cell's texts to current table size and location
+            tableCellTexts.forEach(txtElem => {
+                // todo table margin
+                txtElem.width = (table.verticalLines[txtElem.tableCell.col + 1] - table.verticalLines[txtElem.tableCell.col] - table.width) * (width / table.size.width)
+                txtElem.normPosition = {
+                    x: (table.verticalLines[txtElem.tableCell.col] * (width / table.size.width)) / scaleRatio,
+                    y: (table.horizontalLines[txtElem.tableCell.row] * (height / table.size.height)) / scaleRatio
+                };
+                txtElem.position = {
+                    x: txtElem.normPosition.x * scaleRatio,
+                    y: txtElem.normPosition.y * scaleRatio
+                };
+                return true;
+            });
+        } else {
+            tableCellTexts = [];
+        }
+
+        canvasTexts = tableCellTexts.concat(tableCellTexts);
+        trace("canvasTexts", canvasTexts)
 
         const waitFor = [
             new Promise((resolve) => canvas.current?.getImageIds((ids) => {
@@ -215,9 +283,6 @@ function Canvas({
                 });
 
                 if (table) {
-                    if (isTableMode && TableResizeState) {
-                        table = ResizeTable(table, TableResizeState, width, height);
-                    }
 
                     const size = table.size;
                     const tableWidth = table.width; // isTableMode ? table.width  : table.width;
@@ -263,7 +328,7 @@ function Canvas({
                         // }
                     }
 
-                    const addLength = table.width / 4;
+                    const addLength = 0;//table.width / 4;
                     for (let c = 0; c < table.verticalLines.length; c++) {
                         let x = table.verticalLines[c] + addLength;
                         addLine(table.id + 100 + c,

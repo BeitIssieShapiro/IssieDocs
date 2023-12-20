@@ -217,10 +217,12 @@ export default class IssieEditPhoto extends React.Component {
 
         if (touches.length == 1 && this.isTableMode()) {
           this._tableResize = true;
-          const x = this.viewPort2TableX(this.screen2ViewPortX(touches[0].pageX));
-          const y = this.viewPort2TableY(this.screen2ViewPortY(touches[0].pageY));
+          const table = this.findTable()
+          if (!table) return;
+          const x = this.viewPort2TableX(table, this.screen2ViewPortX(touches[0].pageX));
+          const y = this.viewPort2TableY(table, this.screen2ViewPortY(touches[0].pageY));
 
-          //trace("resize table")
+          trace("resizing table", x, y, table)
           const state = this.state.tableResizeState || {
             initialX: x,
             initialY: y
@@ -328,8 +330,8 @@ export default class IssieEditPhoto extends React.Component {
   }
 
 
-  screen2ViewPortX = (x) => (x - this.state.sideMargin) // this.state.zoom;
-  screen2ViewPortY = (y) => (y - this.state.toolbarHeight - dimensions.toolbarMargin - this.props.route.params.headerHeight - this.props.route.params.insets.top) // this.state.zoom;
+  screen2ViewPortX = (x) => (x - this.state.sideMargin);
+  screen2ViewPortY = (y) => (y - this.state.toolbarHeight - dimensions.toolbarMargin - this.props.route.params.headerHeight - this.props.route.params.insets.top);
 
   screen2NormX = (x) => this.viewPort2NormX(this.screen2ViewPortX(x));
   screen2NormY = (y) => this.viewPort2NormY(this.screen2ViewPortY(y));
@@ -773,22 +775,23 @@ export default class IssieEditPhoto extends React.Component {
   canvasClick = (ev) => {
     let x = this.screen2ViewPortX(ev.nativeEvent.pageX);
     let y = this.screen2ViewPortY(ev.nativeEvent.pageY);
-    trace("canvasClick x: ", x, ",y: ", y)
-    trace("yOffset", this.state.yOffset,
-      "zoom", this.state.zoom,
-      "scaleRatio", this.state.scaleRatio,
-      "toolbarHeight", this.state.toolbarHeight)
     this.toolbarRef.current.closePicker();
+
+    // trace("canvasClick x: ", x, ",y: ", y)
+    // trace("yOffset", this.state.yOffset,
+    //   "zoom", this.state.zoom,
+    //   "scaleRatio", this.state.scaleRatio,
+    //   "toolbarHeight", this.state.toolbarHeight)
 
 
     if (this.isTextMode()) {
-
       this.SaveText();
+      const table = this.findTable();
 
       let textElem = this.canvas.current.findElementByLocation({
         x: this.viewPort2NormX(x),
         y: this.viewPort2NormY(y)
-      }, this.state.scaleRatio);
+      }, this.state.scaleRatio, table);
 
       //in erase mode, only act on found texts
       if (!textElem && this.state.eraseMode) return;
@@ -798,28 +801,69 @@ export default class IssieEditPhoto extends React.Component {
       let fontColor = this.state.textColor;
       let inputTextWidth = 0;
       let inputTextHeight = this.normFontSize2FontSize(this.state.fontSize);
-      if (textElem) {
 
+      if (textElem) {
+        trace("Found existing text", textElem.text)
         //convert to rtl text:
         if (textElem.rtl == undefined || textElem.rtl !== isRTL()) {
-          trace("convert", textElem.normPosition)
-          const newNorm = { y: textElem.normPosition.y }
-          if (textElem.rtl == undefined) {
-            newNorm.x = textElem.normPosition.x + (isRTL() ? textElem.width : 0);
-          }
-          else {
-            newNorm.x = textElem.normPosition.x + (isRTL() ? textElem.width : -textElem.width);
-          }
-          textElem.normPosition = newNorm;
           textElem.rtl = isRTL();
+
+          if (!textElem.tableCell) {
+            const newNorm = { y: textElem.normPosition.y }
+            if (textElem.rtl == undefined) {
+              newNorm.x = textElem.normPosition.x + (isRTL() ? textElem.width : 0);
+            }
+            else {
+              newNorm.x = textElem.normPosition.x + (isRTL() ? textElem.width : -textElem.width);
+            }
+            textElem.normPosition = newNorm;
+          }
         }
 
-        initialText = textElem.text;
-        fontSize = textElem.normFontSize
-        fontColor = textElem.fontColor;
-        inputTextWidth = textElem.width;
-        inputTextHeight = textElem.height * this.state.scaleRatio;
+        if (textElem.text) {
+          initialText = textElem.text;
+        }
+
+        if (textElem.normFontSize) {
+          fontSize = textElem.normFontSize;
+        }
+
+        if (textElem.fontColor) {
+          fontColor = textElem.fontColor;
+        }
+
+        if (!textElem.tableCell) {
+          inputTextWidth = textElem.width;
+          inputTextHeight = textElem.height * this.state.scaleRatio;
+        }
       }
+
+      // if (!textElem || textElem.anchorToTable) {
+      //   // check if in a Table Cell
+
+      //   const table = this.findTable();
+      //   if (table) {
+      //     const tX = this.viewPort2TableX(table, x);
+      //     const tY = this.viewPort2TableY(table, y);
+
+      //     if (table) {
+      //       for (let c = 0; c < table.verticalLines.length - 1; c++) {
+      //         if (tX > table.verticalLines[c] && tX < table.verticalLines[c + 1]) {
+      //           for (let r = 0; r < table.horizontalLines.length - 1; r++) {
+      //             if (tY > table.horizontalLines[r] && tY < table.horizontalLines[r + 1]) {
+      //               // x = this.table2ViewPortX(table, table.verticalLines[c] + table.width);
+      //               // y = this.table2ViewPortY(table, table.horizontalLines[r] + table.width);
+      //               currentTableCell = { col: c, row: r, table }
+      //               trace("canvas click on table", c, r)
+      //               break;
+      //             }
+      //           }
+      //           break;
+      //         }
+      //       }
+      //     }
+      //   }
+      // }
 
       this.setState({
         showTextInput: !this.state.eraseMode,
@@ -829,8 +873,8 @@ export default class IssieEditPhoto extends React.Component {
         inputTextHeight,
         color: fontColor,
         currentTextElem: textElem,
-        xText: textElem ? this.norm2viewPortX(textElem.normPosition.x) : x,
-        yText: textElem ? this.norm2viewPortY(textElem.normPosition.y) : y,
+        xText: textElem && !textElem.tableCell ? this.norm2viewPortX(textElem.normPosition.x) : x,
+        yText: textElem && !textElem.tableCell ? this.norm2viewPortY(textElem.normPosition.y) : y
       }, () => {
 
         if (this.state.eraseMode) {
@@ -841,7 +885,7 @@ export default class IssieEditPhoto extends React.Component {
 
       let imgElem = this.canvas.current.findElementByLocation({
         x: this.viewPort2NormX(x),
-        y: this.viewPort2NormY(y)
+        y: this.viewPort2NormY(y), undefined,
       }, this.state.scaleRatio);
       if (imgElem) {
 
@@ -850,7 +894,7 @@ export default class IssieEditPhoto extends React.Component {
       }
       this.setState({
         currentImageElem: imgElem,
-        xText: x,
+        xText: x, tableCell,
         yText: y,
       });
     }
@@ -872,16 +916,22 @@ export default class IssieEditPhoto extends React.Component {
 
     if ((!text || text.length == 0) && origElem === undefined) return false;
 
-    let txtWidth = this.state.inputTextWidth * this.state.scaleRatio;
-    let txtHeight = this.state.inputTextHeight / this.state.scaleRatio;
+    let txtWidth = this.viewPort2NormX(this.state.inputTextWidth);
+    let txtHeight = this.viewPort2NormY(this.state.inputTextHeight);
 
     let newElem = this.getTextElement(text, txtWidth, txtHeight);
     if (origElem) {
       if (origElem.text == newElem.text &&
-        Math.abs(origElem.normPosition.x - newElem.normPosition.x) <= 5 &&
-        Math.abs(origElem.normPosition.y - newElem.normPosition.y) <= 5 &&
         origElem.normFontSize == newElem.normFontSize &&
-        origElem.fontColor == newElem.fontColor //&&
+        origElem.fontColor == newElem.fontColor &&
+        ((origElem.tableCell && origElem.tableCell.tableID == newElem.tableCell?.tableID &&
+          origElem.tableCell.col == newElem.tableCell?.col &&
+          origElem.tableCell.row == newElem.tableCell?.row
+        ) ||
+          (!origElem.tableCell &&
+            (Math.abs(origElem.normPosition.x - newElem.normPosition.x) <= 5 &&
+              Math.abs(origElem.normPosition.y - newElem.normPosition.y) <= 5)
+          ))
       ) {
         trace("SaveText no change");
 
@@ -889,10 +939,15 @@ export default class IssieEditPhoto extends React.Component {
       }
       trace("txt changed", origElem, newElem)
     }
+
     if (afterDrag)
       return;
 
-    this.state.queue.pushText(newElem);
+    if (newElem.tableCell) {
+      this.state.queue.pushTableCellText(newElem);
+    } else {
+      this.state.queue.pushText(newElem);
+    }
     this.setState({ revision: this.state.revision + 1 });
 
     this.Save();
@@ -901,38 +956,50 @@ export default class IssieEditPhoto extends React.Component {
 
 
 
-  getTextElement = (newText, width, height) => {
+  getTextElement = (text, width, height) => {
     const rtl = isRTL();
-    const newTextElem = { text: newText, width, height: height }
-    if (this.state.currentTextElem) {
-      newTextElem.id = this.state.currentTextElem.id;
-    } else {
-      newTextElem.id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
-    }
-
-    newTextElem.anchor = { x: 0, y: 0 };
-    newTextElem.normPosition = {
-      x: this.viewPort2NormX(this.state.xText),
-      y: this.viewPort2NormY(this.state.yText),
-    };
+    const newTextElem = { text, width, height }
     newTextElem.alignment = rtl ? 'Right' : 'Left';
     newTextElem.rtl = rtl;
     newTextElem.fontColor = this.state.textColor;
     newTextElem.normFontSize = this.state.fontSize;
-    newTextElem.normWidth = width * this.state.fontSize / this.normFontSize2FontSize(this.state.fontSize);
     newTextElem.font = getFont();
+
+
+
+    if (this.state.currentTextElem) {
+      newTextElem.id = this.state.currentTextElem.id;
+      newTextElem.tableCell = this.state.currentTextElem.tableCell;
+    }
+    if (!newTextElem.id) {
+      newTextElem.id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
+    }
+
+    if (!newTextElem.tableCell) {
+      newTextElem.anchor = { x: 0, y: 0 };
+      newTextElem.normPosition = {
+        x: this.viewPort2NormX(this.state.xText),
+        y: this.viewPort2NormY(this.state.yText),
+      };
+      newTextElem.normWidth = width * this.state.fontSize / this.normFontSize2FontSize(this.state.fontSize);
+    }
+
     return newTextElem;
   }
 
   viewPort2NormX = (x) => ((x - this.state.xOffset) / this.state.zoom) / this.state.scaleRatio;
   viewPort2NormY = (y) => ((y - this.state.yOffset) / this.state.zoom) / this.state.scaleRatio;
 
-  viewPort2TableX = (x) => ((x - this.state.xOffset) / this.state.zoom);
-  viewPort2TableY = (y) => ((y - this.state.yOffset) / this.state.zoom);
+  viewPort2TableX = (table, x) => ((x - this.state.xOffset) / this.state.zoom) / (this.state.viewPortRect.width / table.size.width);
+  viewPort2TableY = (table, y) => ((y - this.state.yOffset) / this.state.zoom) / (this.state.viewPortRect.height / table.size.height);
+
+  table2ViewPortX = (table, x) => (this.state.viewPortRect.width / table.size.width) * x * this.state.zoom + this.state.xOffset;
+  table2ViewPortY = (table, y) => (this.state.viewPortRect.height / table.size.height) * y * this.state.zoom + this.state.yOffset;
 
 
   norm2viewPortX = (x) => (x * this.state.scaleRatio * this.state.zoom + this.state.xOffset);
   norm2viewPortY = (y) => (y * this.state.scaleRatio * this.state.zoom + this.state.yOffset);
+
 
   getImageElement = (imageData, ratio) => {
     let newImageElem = {
@@ -2000,21 +2067,28 @@ export default class IssieEditPhoto extends React.Component {
 
 
   resizeTable = (table, tableResizeState, width, height, onlyIfChanged) => {
-    const xFactor = width / table.size.width;
-    const yFactor = height / table.size.height;
     let found = false;
     let retTable = { ...table };
 
     const onLine = (line, isVertical) => {
-      const factor = isVertical ? xFactor : yFactor;
       const initialValue = isVertical ? tableResizeState.initialX : tableResizeState.initialY;
 
-      return Math.abs(initialValue / factor - line) < 20;
+      return Math.abs(initialValue - line) < 20;
     }
 
+    //prevents out of bounds:
+    if (tableResizeState.currentX < RESIZE_TABLE_BOX_SIZE) {
+      tableResizeState.currentX = RESIZE_TABLE_BOX_SIZE;
+    }
+    if (tableResizeState.currentY < RESIZE_TABLE_BOX_SIZE) {
+      tableResizeState.currentY = RESIZE_TABLE_BOX_SIZE;
+    }
+
+
+
     const topStart = onLine(table.verticalLines[0] - RESIZE_TABLE_BOX_SIZE, true) && onLine(table.horizontalLines[0] - RESIZE_TABLE_BOX_SIZE, false);
-    const bottomEnd = onLine(table.verticalLines[table.verticalLines.length - 1] + RESIZE_TABLE_BOX_SIZE/2, true) &&
-      onLine(table.horizontalLines[table.horizontalLines.length - 1] + RESIZE_TABLE_BOX_SIZE/2, false);
+    const bottomEnd = onLine(table.verticalLines[table.verticalLines.length - 1] + RESIZE_TABLE_BOX_SIZE / 2, true) &&
+      onLine(table.horizontalLines[table.horizontalLines.length - 1] + RESIZE_TABLE_BOX_SIZE / 2, false);
     let resizeFactorX, resizeFactorY
 
     if (topStart || bottomEnd) {
@@ -2022,26 +2096,26 @@ export default class IssieEditPhoto extends React.Component {
       retTable.horizontalLines = [...table.horizontalLines];
       found = true;
       const tableCurrWidth = table.verticalLines[table.verticalLines.length - 1] - table.verticalLines[0];
-      const tableNewWidth = tableResizeState.currentX / xFactor - table.verticalLines[0];
-      resizeFactorX = tableNewWidth/tableCurrWidth;
+      const tableNewWidth = tableResizeState.currentX - table.verticalLines[0];
+      resizeFactorX = tableNewWidth / tableCurrWidth;
 
       const tableCurrHeight = table.horizontalLines[table.horizontalLines.length - 1] - table.horizontalLines[0];
-      const tableNewHeight = tableResizeState.currentY / yFactor - table.horizontalLines[0];
-      resizeFactorY = tableNewHeight/tableCurrHeight;
+      const tableNewHeight = tableResizeState.currentY - table.horizontalLines[0];
+      resizeFactorY = tableNewHeight / tableCurrHeight;
     }
 
     for (let c = 0; c < table.verticalLines.length; c++) {
       if (topStart) {
-        retTable.verticalLines[c] += tableResizeState.currentX / xFactor - tableResizeState.initialX / xFactor;
+        retTable.verticalLines[c] += tableResizeState.currentX - tableResizeState.initialX;
       } else if (bottomEnd) {
-          // calculate the total new width:
-          retTable.verticalLines[c] = (retTable.verticalLines[c] - retTable.verticalLines[0]) * resizeFactorX + retTable.verticalLines[0];
+        // calculate the total new width:
+        retTable.verticalLines[c] = (retTable.verticalLines[c] - retTable.verticalLines[0]) * resizeFactorX + retTable.verticalLines[0];
       } else {
         if (onLine(table.verticalLines[c], true)) {
           retTable.verticalLines = [...table.verticalLines]
 
 
-          retTable.verticalLines[c] += tableResizeState.currentX / xFactor - tableResizeState.initialX / xFactor;
+          retTable.verticalLines[c] += tableResizeState.currentX - tableResizeState.initialX;
 
           // verify not passed another vertical line
           if (c > 0) {
@@ -2060,7 +2134,7 @@ export default class IssieEditPhoto extends React.Component {
 
     for (let r = 0; r < table.horizontalLines.length; r++) {
       if (topStart) {
-        retTable.horizontalLines[r] += tableResizeState.currentY / yFactor - tableResizeState.initialY / yFactor;
+        retTable.horizontalLines[r] += tableResizeState.currentY - tableResizeState.initialY;
       } else if (bottomEnd) {
         // calculate the total new width:
         retTable.horizontalLines[r] = (retTable.horizontalLines[r] - retTable.horizontalLines[0]) * resizeFactorY + retTable.horizontalLines[0];
@@ -2068,7 +2142,7 @@ export default class IssieEditPhoto extends React.Component {
       } else {
         if (onLine(table.horizontalLines[r], false)) {
           retTable.horizontalLines = [...table.horizontalLines];
-          retTable.horizontalLines[r] += tableResizeState.currentY / yFactor - tableResizeState.initialY / yFactor;
+          retTable.horizontalLines[r] += tableResizeState.currentY - tableResizeState.initialY;
 
           // verify not passed another horizental line
           if (r > 0) {
@@ -2241,22 +2315,52 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getTextInput = (rtl, rowDir) => {
-    //this._handleInputTextLocationMovingPage();
 
-    trace("getTextInput",
-      "fontSize", (this.normalizeTextSize(this.state.fontSize) / this.state.scaleRatio), "sr", this.state.scaleRatio)
+    let x = this.state.xText;
+    let y = this.state.yText;
+    let inputTextWidth = this.state.inputTextWidth;
+    let inputTextHeight = this.state.inputTextHeight;
+    let fixedSize = false;
+    let textWidth = this.getTextWidth(x);
+
+    if (this.state.currentTextElem?.tableCell) {
+      const { tableID, col, row } = this.state.currentTextElem.tableCell;
+      const table = this.findTable();
+      if (table) {
+        // todo table margin
+
+        inputTextWidth = this.table2ViewPortX(table, table.verticalLines[col + 1] - table.verticalLines[col] - table.width * 2);
+        textWidth = inputTextWidth;
+        inputTextHeight = this.table2ViewPortY(table, table.horizontalLines[row + 1] - table.horizontalLines[row] - table.width * 2);
+        fixedSize = true;
+        x = this.table2ViewPortX(table, table.verticalLines[col] + table.width);
+        y = this.table2ViewPortY(table, table.horizontalLines[row] + table.width);
+
+        if (this.state.inputTextWidth !== inputTextWidth || this.state.inputTextHeight !== inputTextHeight ||
+          this.state.xText !== x || this.state.yText !== y) {
+          setTimeout(() =>
+            this.setState({
+              inputTextWidth,
+              inputTextHeight,
+              xText: x,
+              yText: y,
+            }), 10);
+        }
+      }
+    }
+
     return (
       <View style={{
         //flex: 1,
         position: 'absolute',
         flexDirection: rowDir,
-        left: this.state.xText - (rtl ? this.getTextWidth() / this.state.scaleRatio : DRAG_ICON_SIZE),
-        top: this.state.yText, zIndex: 45,
+        left: x - (fixedSize ? 0 : (rtl ? textWidth / this.state.scaleRatio : DRAG_ICON_SIZE)),
+        top: y, zIndex: 45,
       }}>
-        <View {...this._panResponderElementMove.panHandlers}
+        {!fixedSize && <View {...this._panResponderElementMove.panHandlers}
           style={{ top: -5, zIndex: 25 }}>
           <Icon name='open-with' size={DRAG_ICON_SIZE} />
-        </View>
+        </View>}
 
         <TextInput
           ref={textInput => this._textInput = textInput}
@@ -2264,14 +2368,16 @@ export default class IssieEditPhoto extends React.Component {
             this.setState({ inputTextValue: text });
           }}
           onContentSizeChange={(event) => {
-            let dim = event.nativeEvent.contentSize;
-            trace("onContentSizeChange", dim, this.state.inputTextWidth)
-            setTimeout(() =>
-              this.setState({
+            if (!fixedSize) {
+              let dim = event.nativeEvent.contentSize;
+              trace("onContentSizeChange", dim, this.state.inputTextWidth)
+              setTimeout(() =>
+                this.setState({
 
-                inputTextWidth: dim.width > 0 ? dim.width : this.state.inputTextWidth,
-                inputTextHeight: dim.height * this.state.scaleRatio || this.normalizeTextSize(this.state.fontSize)
-              }), 10);
+                  inputTextWidth: dim.width > 0 ? dim.width : this.state.inputTextWidth,
+                  inputTextHeight: dim.height * this.state.scaleRatio || this.normalizeTextSize(this.state.fontSize)
+                }), 10);
+            }
           }}
           autoCapitalize={'none'}
           autoCorrect={false}
@@ -2282,22 +2388,22 @@ export default class IssieEditPhoto extends React.Component {
             backgroundColor: 'transparent',
             direction: rtl ? 'rtl' : 'ltr',
             textAlign: rtl ? 'right' : 'left',
-            width: this.getTextWidth() / this.state.scaleRatio,
+            width: textWidth / this.state.scaleRatio,
 
-            height: this.state.inputTextHeight / this.state.scaleRatio,
+            height: inputTextHeight / this.state.scaleRatio,
             borderWidth: 0,
             fontSize: (this.normalizeTextSize(this.state.fontSize) / this.state.scaleRatio),
             color: this.getColorByMode(),
             fontFamily: getFont(),
             zIndex: 21,
-            transform: this.getTransform(this.getTextWidth() / this.state.scaleRatio, this.state.inputTextHeight / this.state.scaleRatio,
+            transform: this.getTransform(textWidth / this.state.scaleRatio, inputTextHeight / this.state.scaleRatio,
               this.state.scaleRatio * this.state.zoom, isRTL()),
           }}
           value={this.state.inputTextValue}
           onTouchStart={(ev) => {
             let x = this.screen2ViewPortX(ev.nativeEvent.pageX);
-            trace("click on text input", this.state.xText - x, this.state.inputTextWidth * this.state.scaleRatio * this.state.zoom)
-            if (Math.abs(this.state.xText - x) > this.state.inputTextWidth * this.state.scaleRatio * this.state.zoom + DRAG_ICON_SIZE / 2) {
+            trace("click on text input", x - x, inputTextWidth * this.state.scaleRatio * this.state.zoom)
+            if (Math.abs(this.state.xText - x) > inputTextWidth * this.state.scaleRatio * this.state.zoom + DRAG_ICON_SIZE / 2) {
               //treats it as if click outside the text input, delegates to canvasClick
               this.canvasClick(ev);
             }
@@ -2305,11 +2411,13 @@ export default class IssieEditPhoto extends React.Component {
 
         />
         <View style={{
-          position: 'absolute', left: (DRAG_ICON_SIZE - 2), top: 0,
-          width: Math.max(this.state.inputTextWidth + 10, 12),
-          height: this.state.inputTextHeight > 0 ? this.state.inputTextHeight / this.state.scaleRatio : 45 / this.state.scaleRatio,
+          position: 'absolute',
+          left: fixedSize ? 0 : (DRAG_ICON_SIZE - 2),
+          top: 0,
+          width: fixedSize ? textWidth / this.state.scaleRatio : Math.max(inputTextWidth + 10, 12),
+          height: inputTextHeight > 0 ? inputTextHeight / this.state.scaleRatio : 45 / this.state.scaleRatio,
           zIndex: 20,
-          transform: this.getTransform(this.state.inputTextWidth, this.state.inputTextHeight / this.state.scaleRatio,
+          transform: this.getTransform(inputTextWidth / this.state.scaleRatio, inputTextHeight / this.state.scaleRatio,
             this.state.scaleRatio * this.state.zoom, isRTL()),
           //lineHeight: this.normalizeTextSize(this.state.fontSize)* this.state.scaleRatio,
         }}
@@ -2325,8 +2433,8 @@ export default class IssieEditPhoto extends React.Component {
       return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2
     }
   }
-  getTextWidth = () => {
-    const width = isRTL() ? this.state.xText : this.state.viewPortRect.width - this.state.xText;
+  getTextWidth = (x) => {
+    const width = isRTL() ? x : this.state.viewPortRect.width - x;
     return Math.max(25, width);
   }
 }
