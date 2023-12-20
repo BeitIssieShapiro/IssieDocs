@@ -107,7 +107,7 @@ export function FileContextMenu({
                                 <Seperator />
                                 <OneMenu scale={scale} icon="share" onPress={callbackAndClose(onShareImgs)} text={translate("BtnShare")} />
                                 <Seperator />
-                                <OneMenu scale={scale} icon="share" onPress={callbackAndClose(onShareIssieDocs)} text={translate("BtnShareIssieDocs")} />
+                                <OneMenu scale={scale} icon="ios-share" onPress={callbackAndClose(onShareIssieDocs)} text={translate("BtnShareIssieDocs")} />
                             </React.Fragment>
                         }
                     </MenuGroup>
