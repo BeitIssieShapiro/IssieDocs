@@ -34,3 +34,7 @@ export function isTooWhite(color) {
   }
   return false;
 }
+
+export function arrLast(arr) {
+  return arr ? arr[arr.length - 1] : undefined
+}

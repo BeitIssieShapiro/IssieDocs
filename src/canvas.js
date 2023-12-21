@@ -3,6 +3,7 @@ import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useStat
 import { colors } from './elements';
 import { trace } from './log';
 import { tableResizeDone } from './pinch';
+import { arrLast } from './utils';
 
 
 const DEFAULT_STROKE_WIDTH = 5;
@@ -192,8 +193,9 @@ function Canvas({
                         break;
                     }
                 }
-                if (!found && txtElem.id !== currentTextElemId) {
-                    //avoid showing the current edited text
+                //avoid showing the current edited text for non table-cell text
+                if (!found && (txtElem.id !== currentTextElemId || q[i].type === 'tableCellText')) {
+                    trace("add txtElem", txtElem.id, found)
                     textArray.push(txtElem);
                 }
             } else if (q[i].type === 'path') {
@@ -227,28 +229,61 @@ function Canvas({
             canvasTables.push(updateTable);
         }
 
-        canvasTables.forEach(table => {
-            //verify the cell exists:
-            tableCellTexts = tableCellTexts.filter(txtElem => txtElem.tableCell.col < table.verticalLines.length - 1 &&
-                txtElem.tableCell.row < table.horizontalLines.length - 1);
+        // filter and mutate the cell size and the table's line
+        tableCellTexts = tableCellTexts.filter(txtElem => {
+            //verify the table exists:
+            let table = canvasTables.find(t => t.id == txtElem.tableCell.tableID);
+            if (!table) return false;
 
-            // Adjust cell's texts to current table size and location
-            tableCellTexts.forEach(txtElem => {
+            //verify the cell in the table exists:
+            if (txtElem.tableCell.col >= table.verticalLines.length - 1 &&
+                txtElem.tableCell.row >= table.horizontalLines.length - 1) return false;
 
-                // todo table margin
-                txtElem.width = (table.verticalLines[txtElem.tableCell.col + 1] - table.verticalLines[txtElem.tableCell.col] - table.width) * (width / table.size.width)
-                txtElem.normPosition = {
-                    x: (table.verticalLines[txtElem.tableCell.col + (txtElem.rtl ? 1 : 0)] * (width / table.size.width)) / scaleRatio,
-                    y: (table.horizontalLines[txtElem.tableCell.row] * (height / table.size.height)) / scaleRatio
-                };
-                txtElem.position = {
-                    x: txtElem.normPosition.x * scaleRatio,
-                    y: txtElem.normPosition.y * scaleRatio
-                };
-            });
+            // Adjust table rows to minHeight: 
+            const actualNormRowHeight = (table.horizontalLines[txtElem.tableCell.col + 1] - table.horizontalLines[txtElem.tableCell.col] - table.width); //* (height / table.size.height)
+            const needToEnlargeBy = txtElem.tableCell.minHeight - actualNormRowHeight;
+            if (needToEnlargeBy > 0) {
+                //resize the row:
+                const tableViewPortRatio = (height / table.size.height)
+                const maxAvailableRoomToResize = arrLast(table.horizontalLines) * tableViewPortRatio;
+                const resizeBy = Math.min(maxAvailableRoomToResize, needToEnlargeBy * tableViewPortRatio);
+
+                //push all lines 
+                // must clone to avoid persistance
+                canvasTables = canvasTables.filter(t => t.id != table.id);
+                const newTable = { ...table };
+                newTable.horizontalLines = [...table.horizontalLines];
+
+                canvasTables.push(newTable);
+
+
+                for (let row = txtElem.tableCell.row + 1; row < newTable.horizontalLines.length; row++) {
+                    newTable.horizontalLines[row] += resizeBy;
+                }
+                table = newTable
+            }
+
+            // Adjust cell's texts to current table size and location - todo margin
+            txtElem.width = (table.verticalLines[txtElem.tableCell.col + 1] - table.verticalLines[txtElem.tableCell.col] - table.width) * (width / table.size.width)
+            txtElem.height = (table.horizontalLines[txtElem.tableCell.row + 1] - table.horizontalLines[txtElem.tableCell.row] - table.width) * (height / table.size.height)
+            txtElem.normPosition = {
+                x: (table.verticalLines[txtElem.tableCell.col + (txtElem.rtl ? 1 : 0)] * (width / table.size.width)) / scaleRatio,
+                y: (table.horizontalLines[txtElem.tableCell.row] * (height / table.size.height)) / scaleRatio
+            };
+            txtElem.position = {
+                x: txtElem.normPosition.x * scaleRatio,
+                y: txtElem.normPosition.y * scaleRatio
+            };
+
+            return true;
+
         });
 
-        canvasTexts = tableCellTexts.concat(tableCellTexts);
+        canvasTexts = canvasTexts.concat(tableCellTexts.filter(tct => tct.id !== currentTextElemId));
+
+        setTexts(canvasTexts);
+        setImages(canvasImages);
+        setTables(canvasTables);
 
         const waitFor = [
             new Promise((resolve) => canvas.current?.getImageIds((ids) => {
@@ -321,16 +356,16 @@ function Canvas({
                     }
 
                     for (let c = 0; c < table.verticalLines.length; c++) {
-                        let x = table.verticalLines[c] ;
+                        let x = table.verticalLines[c];
                         addLine(table.id + 100 + c,
-                            x, table.horizontalLines[0] ,
-                            x, table.horizontalLines[table.horizontalLines.length - 1],
+                            x, table.horizontalLines[0],
+                            x, arrLast(table.horizontalLines),
                             table.color, tableWidth, dash, dashGap, tablePhase);
                     }
 
                     for (let r = 0; r < table.horizontalLines.length; r++) {
                         const y = table.horizontalLines[r];
-                        addLine(table.id + 200 + r, table.verticalLines[0], y, table.verticalLines[table.verticalLines.length - 1], y,
+                        addLine(table.id + 200 + r, table.verticalLines[0], y, arrLast(table.verticalLines), y,
                             table.color, tableWidth, dash, dashGap, tablePhase);
                     }
 
@@ -354,8 +389,8 @@ function Canvas({
 
 
                     if (isTableMode) {
-                        let x1 = table.verticalLines[table.verticalLines.length - 1] + os;
-                        let y1 = table.horizontalLines[table.horizontalLines.length - 1] + os;
+                        let x1 = arrLast(table.verticalLines) + os;
+                        let y1 = arrLast(table.horizontalLines) + os;
                         let x2 = x1 + bs;
                         let y2 = y1 + bs;
 
@@ -382,11 +417,10 @@ function Canvas({
                 resolve()
             }))
         ]
-        Promise.all(waitFor).then(() => AfterRender(revision));
+        Promise.all(waitFor).then(() => {
+            AfterRender(revision)
+        });
 
-        setTexts(canvasTexts);
-        setImages(canvasImages);
-        setTables(canvasTables);
     }, [revision, scaleRatio, currentTextElemId, width, height, isTableMode, tablePhase, TableResizeState]);
 
     return (

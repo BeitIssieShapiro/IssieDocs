@@ -933,15 +933,17 @@ export default class IssieEditPhoto extends React.Component {
 
     let txtWidth = this.viewPort2NormX(this.state.inputTextWidth);
     let txtHeight = this.viewPort2NormY(this.state.inputTextHeight);
+    let minTxtHeight = this.state.inputTextMinHeight ? this.viewPort2NormY(this.state.inputTextMinHeight) : 0;
 
-    let newElem = this.getTextElement(text, txtWidth, txtHeight);
+    let newElem = this.getTextElement(text, txtWidth, txtHeight, minTxtHeight);
     if (origElem) {
       if (origElem.text == newElem.text &&
         origElem.normFontSize == newElem.normFontSize &&
         origElem.fontColor == newElem.fontColor &&
         ((origElem.tableCell && origElem.tableCell.tableID == newElem.tableCell?.tableID &&
           origElem.tableCell.col == newElem.tableCell?.col &&
-          origElem.tableCell.row == newElem.tableCell?.row
+          origElem.tableCell.row == newElem.tableCell?.row &&
+          origElem.tableCell.minHeight == newElem.tableCell.minHeight
         ) ||
           (!origElem.tableCell &&
             (Math.abs(origElem.normPosition.x - newElem.normPosition.x) <= 5 &&
@@ -971,7 +973,7 @@ export default class IssieEditPhoto extends React.Component {
 
 
 
-  getTextElement = (text, width, height) => {
+  getTextElement = (text, width, height, minHeight) => {
     const rtl = isRTL();
     const newTextElem = { text, width, height }
     newTextElem.alignment = rtl ? 'Right' : 'Left';
@@ -990,7 +992,9 @@ export default class IssieEditPhoto extends React.Component {
       newTextElem.id = genID();
     }
 
-    if (!newTextElem.tableCell) {
+    if (newTextElem.tableCell) {
+      newTextElem.tableCell = {...newTextElem.tableCell, minHeight}
+    } else {
       newTextElem.anchor = { x: 0, y: 0 };
       newTextElem.normPosition = {
         x: this.viewPort2NormX(this.state.xText),
@@ -2222,7 +2226,7 @@ export default class IssieEditPhoto extends React.Component {
         normFontSize2FontSize={this.normFontSize2FontSize}
         imageNorm2Scale={this.imageNorm2Scale}
         imageScale2Norm={this.imageScale2Norm}
-        currentTextElemId={this.isTextMode() && this.state.showTextInput && this.state.currentTextElem?.id}
+        currentTextElemId={this.isTextMode() && this.state.showTextInput ? this.state.currentTextElem?.id : undefined}
         strokeWidth={this.isBrushMode() ? strokeWidth : this.state.markerWidth}
         color={this.isMarkerMode() && !this.isEraserMode() ? color + MARKER_TRANSPARENCY_CONSTANT : color}
       />
@@ -2366,6 +2370,7 @@ export default class IssieEditPhoto extends React.Component {
               inputTextHeight,
               xText: x,
               yText: y,
+              currentTable: table,
             }), 10);
         }
       }
@@ -2396,16 +2401,18 @@ export default class IssieEditPhoto extends React.Component {
             this.setState({ inputTextValue: text });
           }}
           onContentSizeChange={(event) => {
-            if (!fixedSize) {
-              let dim = event.nativeEvent.contentSize;
-              trace("onContentSizeChange", dim, this.state.inputTextWidth)
-              setTimeout(() =>
-                this.setState({
+            let dim = event.nativeEvent.contentSize;
+            trace("onContentSizeChange", dim, this.state.inputTextWidth)
+            const elemSizeState = fixedSize ?
+              {
+                inputTextMinHeight: dim.height * this.state.scaleRatio || this.normalizeTextSize(this.state.fontSize)
+              }
+              : {
+                inputTextWidth: dim.width > 0 ? dim.width : this.state.inputTextWidth,
+                inputTextHeight: dim.height * this.state.scaleRatio || this.normalizeTextSize(this.state.fontSize)
+              }
 
-                  inputTextWidth: dim.width > 0 ? dim.width : this.state.inputTextWidth,
-                  inputTextHeight: dim.height * this.state.scaleRatio || this.normalizeTextSize(this.state.fontSize)
-                }), 10);
-            }
+            setTimeout(() => this.setState(elemSizeState), 10);
           }}
           autoCapitalize={'none'}
           autoCorrect={false}
