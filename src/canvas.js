@@ -1,9 +1,9 @@
 import RNSketchCanvas from 'issie-sketch-canvas';
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
-import { colors } from './elements';
+import { colors, getFont } from './elements';
 import { trace } from './log';
 import { tableResizeDone } from './pinch';
-import { arrLast } from './utils';
+import { arrLast, genID } from './utils';
 
 
 const DEFAULT_STROKE_WIDTH = 5;
@@ -76,7 +76,7 @@ function Canvas({
 
     const findElementByLocation = useCallback((normXY, scaleRatio, table) => {
         let q = isImageMode ? images : texts;
-        const margin = 5; //this.isTextMode() && this.state.fontSize > 60 ? 0 : 5 / scaleRatio
+        const margin = 20; //this.isTextMode() && this.state.fontSize > 60 ? 0 : 5 / scaleRatio
 
         for (let i = q.length - 1; i >= 0; i--) {
             const elem = isImageMode ? imageScale2Norm(q[i]) : q[i];
@@ -93,8 +93,8 @@ function Canvas({
             //   "elemY < normXY.y + 10 + margin", (elemY < normXY.y + 10 + margin) ? true : false,
             //   elemY, normXY.y,
             //   "elemY + elem.height > normXY.y + 10 - margin", (elemY + elem.height > normXY.y + 10 - margin) ? true : false)
-            let foundY = elemY < normXY.y + 10 + margin && elemY + normHeight > normXY.y + 10 - margin;
-            trace("findElementByLocation eng", elem.text, foundY ? "foundY " + elem.text : "notFoundY")
+            let foundY = elemY < normXY.y + margin && elemY + normHeight > normXY.y - margin;
+            //trace("findElementByLocation eng", elem.text, "click at:", normXY, "elem at:", elem.normPosition, foundY ? "foundY " + elem.text : "notFoundY")
             const normWidth = elem.width / scaleRatio;
 
             if (elem.rtl) {
@@ -108,7 +108,7 @@ function Canvas({
                 if (elem.normPosition.x < normXY.x + margin &&
                     elem.normPosition.x + normWidth > normXY.x - margin
                     && foundY) {
-                    trace("findElementByLocation eng found!")
+                    //trace("findElementByLocation eng found!")
                     return q[i];
                 }
             }
@@ -133,6 +133,7 @@ function Canvas({
                             if (!tableCellElem) {
                                 //creates on the fly a tableCellText elem
                                 tableCellElem = {
+                                    font: getFont(),
                                     tableCell: {
                                         tableID: table.id,
                                         col: c,
@@ -184,18 +185,27 @@ function Canvas({
 
                 //first try to find same ID and replace, or add it
                 let found = false;
-                const textArray = q[i].type === 'text' ? canvasTexts : tableCellTexts;
+                let textArray = q[i].type === 'text' ? canvasTexts : tableCellTexts;
 
                 for (let j = 0; j < textArray.length; j++) {
                     if (textArray[j].id === txtElem.id) {
-                        textArray[j] = txtElem;
+                        if (txtElem.text?.length == 0) {
+                            textArray = textArray.filter(t=>t.id !== txtElem.id);
+                            if (q[i].type === 'text') {
+                                canvasTexts = textArray;
+                            } else {
+                                tableCellTexts = textArray;
+                            }
+                        } else {
+                            textArray[j] = txtElem;
+                        }
                         found = true;
                         break;
                     }
                 }
                 //avoid showing the current edited text for non table-cell text
                 if (!found && (txtElem.id !== currentTextElemId || q[i].type === 'tableCellText')) {
-                    trace("add txtElem", txtElem.id, found)
+                    //trace("add txtElem", txtElem.id, found)
                     textArray.push(txtElem);
                 }
             } else if (q[i].type === 'path') {
@@ -241,7 +251,7 @@ function Canvas({
 
             // Adjust table rows to minHeight: 
             const actualNormRowHeight = (table.horizontalLines[txtElem.tableCell.col + 1] - table.horizontalLines[txtElem.tableCell.col] - table.width); //* (height / table.size.height)
-            const needToEnlargeBy = txtElem.tableCell.minHeight - actualNormRowHeight;
+            const needToEnlargeBy = txtElem.minHeight - actualNormRowHeight;
             if (needToEnlargeBy > 0) {
                 //resize the row:
                 const tableViewPortRatio = (height / table.size.height)
@@ -322,7 +332,7 @@ function Canvas({
                 });
 
                 // Draw all tables
-                trace("draw tables", canvasTables)
+                //trace("draw tables", canvasTables)
                 canvasTables.forEach((table) => {
 
                     const size = table.size;

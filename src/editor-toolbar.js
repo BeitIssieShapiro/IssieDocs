@@ -550,7 +550,6 @@ function EditorToolbar({
 
 
 function NumberSelector({ caption, value, setValue, textIcon, direction, narrow }) {
-    trace("NumberSelector", narrow)
     return (
         <View style={{ flexDirection: direction, width: '100%', alignItems: "center", justifyContent: "center" }}>
             {!narrow && textIcon}

@@ -38,3 +38,8 @@ export function isTooWhite(color) {
 export function arrLast(arr) {
   return arr ? arr[arr.length - 1] : undefined
 }
+
+export function genID() {
+  //return Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 5);
+  return Math.floor(Math.random() * 1000000000);
+}

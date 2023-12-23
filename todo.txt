@@ -19,6 +19,9 @@ V- folder in folder
 
 
 Bugs:
+- in zoom, the bottom seperator and down move button - is wrongly placed
+
+
 ----
 V- when landscape, camera is 90deg offset
 V- in offsets, table lines are not correct.

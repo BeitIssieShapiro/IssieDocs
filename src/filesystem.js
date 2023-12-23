@@ -70,7 +70,7 @@ export class FileSystem {
     }
 
     async getRootFolders() {
-        trace("Load root folders")
+        //trace("Load root folders")
         if (!this._loaded) {
             await this._loadRootFolders();
         }

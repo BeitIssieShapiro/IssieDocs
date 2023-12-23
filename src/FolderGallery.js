@@ -751,11 +751,11 @@ export default class FolderGallery extends React.Component {
     }
 
     sortFiles = (items) => {
-        console.log("sort items", items?.length);
+        //trace("sort items", items?.length);
         const clone = [...items];
-        console.log(clone.map(item => item.name + ":" + item.lastUpdate % 1663000000000));
+        //console.log(clone.map(item => item.name + ":" + item.lastUpdate % 1663000000000));
         clone.sort(this.getSortFunction());
-        console.log(clone.map(item => item.name + ":" + item.lastUpdate % 1663000000000));
+        //console.log(clone.map(item => item.name + ":" + item.lastUpdate % 1663000000000));
 
         return clone;
     }
