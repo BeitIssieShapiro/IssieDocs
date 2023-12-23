@@ -31,8 +31,8 @@ function Canvas({
     imageScale2Norm,
     currentTextElemId,
     strokeWidth,
-    color
-
+    color,
+    onTableResizeDuringTextEdit
 }, ref) {
     const [canvas, setCanvas] = useState(React.createRef(null));
     const [texts, setTexts] = useState([]);
@@ -236,46 +236,71 @@ function Canvas({
             }
         }
 
+        // filter and mutate the cell size and the table's line
+        tableCellTexts = tableCellTexts
+            .sort((a, b) => a.tableCell.row - b.tableCell.row || a.tableCell.col - b.tableCell.col)
+            .filter(txtElem => {
+                //verify the table exists:
+                let table = canvasTables.find(t => t.id == txtElem.tableCell.tableID);
+                if (!table) return false;
+
+                if (!table.clone) {
+                    // must clone to avoid persistance
+                    table = {
+                        ...table,
+                        horizontalLines: [...table.horizontalLines],
+                        minHeights: table.horizontalLines.map(hl => -1),
+                        clone: true
+                    };
+
+                    canvasTables = canvasTables.filter(t => t.id != table.id);
+                    canvasTables.push(table);
+                    if (TableResizeState?.table?.id == table.id) {
+                        TableResizeState.table = table;
+                    }
+                }
+
+                //verify the cell in the table exists:
+                if (txtElem.tableCell.col >= table.verticalLines.length - 1 &&
+                    txtElem.tableCell.row >= table.horizontalLines.length - 1) return false;
+
+                // Adjust table rows to minHeight: 
+                const actualNormRowHeight = (table.horizontalLines[txtElem.tableCell.col + 1] - table.horizontalLines[txtElem.tableCell.col] - table.width); //* (height / table.size.height)
+                const needToEnlargeBy = txtElem.minHeight - actualNormRowHeight;
+                if (needToEnlargeBy > 0) {
+                    //resize the row:
+                    const tablePageRatio = (height / table.size.height)
+                    const maxAvailableRoomToResize = arrLast(table.horizontalLines) * tablePageRatio;
+                    const resizeBy = Math.min(maxAvailableRoomToResize, needToEnlargeBy * tablePageRatio);
+
+
+
+                    //push all lines 
+
+                    for (let row = txtElem.tableCell.row + 1; row < table.horizontalLines.length; row++) {
+                        table.horizontalLines[row] += resizeBy;
+                    }
+                    // set minHeight
+                    table.minHeights[txtElem.tableCell.row] = Math.max(table.minHeights[txtElem.tableCell.row], table.horizontalLines[txtElem.tableCell.row + 1] - table.horizontalLines[txtElem.tableCell.row])
+                } else {
+                    table.minHeights[txtElem.tableCell.row] = Math.max(table.minHeights[txtElem.tableCell.row], txtElem.minHeight);
+                }
+
+                // updates the element if in draft-mode
+                if (txtElem.draft) {
+                    setTimeout(onTableResizeDuringTextEdit, 10);
+                }
+                return true;
+            });
+
         if (isTableMode && TableResizeState) {
             const updateTable = ResizeTable(TableResizeState, width, height);
             canvasTables = canvasTables.filter(t => t.id !== TableResizeState.table.id);
             canvasTables.push(updateTable);
         }
 
-        // filter and mutate the cell size and the table's line
-        tableCellTexts = tableCellTexts.filter(txtElem => {
-            //verify the table exists:
-            let table = canvasTables.find(t => t.id == txtElem.tableCell.tableID);
-            if (!table) return false;
-
-            //verify the cell in the table exists:
-            if (txtElem.tableCell.col >= table.verticalLines.length - 1 &&
-                txtElem.tableCell.row >= table.horizontalLines.length - 1) return false;
-
-            // Adjust table rows to minHeight: 
-            const actualNormRowHeight = (table.horizontalLines[txtElem.tableCell.col + 1] - table.horizontalLines[txtElem.tableCell.col] - table.width); //* (height / table.size.height)
-            const needToEnlargeBy = txtElem.minHeight - actualNormRowHeight;
-            if (needToEnlargeBy > 0) {
-                //resize the row:
-                const tableViewPortRatio = (height / table.size.height)
-                const maxAvailableRoomToResize = arrLast(table.horizontalLines) * tableViewPortRatio;
-                const resizeBy = Math.min(maxAvailableRoomToResize, needToEnlargeBy * tableViewPortRatio);
-
-                //push all lines 
-                // must clone to avoid persistance
-                canvasTables = canvasTables.filter(t => t.id != table.id);
-                const newTable = { ...table };
-                newTable.horizontalLines = [...table.horizontalLines];
-
-                canvasTables.push(newTable);
-
-
-                for (let row = txtElem.tableCell.row + 1; row < newTable.horizontalLines.length; row++) {
-                    newTable.horizontalLines[row] += resizeBy;
-                }
-                table = newTable
-            }
-
+        tableCellTexts.forEach(txtElem => {
+            const table = canvasTables.find(t => t.id == txtElem.tableCell.tableID);
             // Adjust cell's texts to current table size and location - todo margin
             txtElem.width = (table.verticalLines[txtElem.tableCell.col + 1] - table.verticalLines[txtElem.tableCell.col] - table.width) * (width / table.size.width)
             txtElem.height = (table.horizontalLines[txtElem.tableCell.row + 1] - table.horizontalLines[txtElem.tableCell.row] - table.width) * (height / table.size.height)
@@ -287,9 +312,6 @@ function Canvas({
                 x: txtElem.normPosition.x * scaleRatio,
                 y: txtElem.normPosition.y * scaleRatio
             };
-
-            return true;
-
         });
 
         canvasTexts = canvasTexts.concat(tableCellTexts.filter(tct => tct.id !== currentTextElemId));

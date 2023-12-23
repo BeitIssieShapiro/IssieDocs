@@ -333,6 +333,7 @@ export default class IssieEditPhoto extends React.Component {
       yText: 0,
       keyboardHeight: 0,
       revision: 0,
+      textEditRevision: 0,
       sharing: false,
       openContextMenu: false,
     }
@@ -734,7 +735,7 @@ export default class IssieEditPhoto extends React.Component {
 
   Save = () => {
     let sketchState = this.state.queue.getAll();
-    const content = JSON.stringify(sketchState);
+    const content = JSON.stringify(sketchState, undefined, " ");
     FileSystem.main.writeFile(
       this.state.metaDataUri,
       content).then(
@@ -842,13 +843,21 @@ export default class IssieEditPhoto extends React.Component {
         fontColor = textElem.fontColor;
       }
 
+      const draftTxtElem = { ...textElem, draft: true };
+      if (draftTxtElem.tableCell) {
+        this.state.queue.pushTableCellText(draftTxtElem);
+      } else {
+        this.state.queue.pushText(draftTxtElem);
+      }
+
       this.setState({
         showTextInput: !this.state.eraseMode,
         fontSize,
         textColor: fontColor,
-        currentTextElem: textElem,
+        currentTextElem: draftTxtElem,
         xText: !textElem.tableCell ? this.norm2viewPortX(textElem.normPosition.x) : x,
-        yText: !textElem.tableCell ? this.norm2viewPortY(textElem.normPosition.y) : y
+        yText: !textElem.tableCell ? this.norm2viewPortY(textElem.normPosition.y) : y,
+        revision: this.state.revision + 1,
       }, () => {
         if (this.state.eraseMode) {
           this.SaveText();
@@ -873,23 +882,26 @@ export default class IssieEditPhoto extends React.Component {
     }
   }
 
+  incrementRevision = () => this.setState({ revision: this.state.revision + 1 });
+
   SaveText = (afterDrag) => {
     const elem = this.state.currentTextElem;
     if (!this.state.showTextInput || !elem) {
       trace("SaveText exit doing nothing")
+      this.state.queue.popDraft();
+
       return;
     }
 
     if (afterDrag) {
       trace("SaveText after drop - update normPosition", elem.text);
-      const newElem = {
-        ...elem, normPosition: {
-          x: this.viewPort2NormX(this.state.xText),
-          y: this.viewPort2NormY(this.state.yText),
-        },
-        modified: true,
-      }
-      this.setState({ currentTextElem: newElem });
+      elem.normPosition = {
+        x: this.viewPort2NormX(this.state.xText),
+        y: this.viewPort2NormY(this.state.yText),
+      };
+      elem.modified = true;
+
+      this.incrementRevision();
       //   (Math.abs(origElem.normPosition.x - newElem.normPosition.x) <= 5 &&
       //            Math.abs(origElem.normPosition.y - newElem.normPosition.y) <= 5)
       // todo check if moved and modify
@@ -899,28 +911,41 @@ export default class IssieEditPhoto extends React.Component {
 
     if (!elem.modified) {
       trace("text element not modified")
+      this.state.queue.popDraft();
+
       this.setState({ currentTextElem: undefined });
+      this.incrementRevision();
       // pop draft
       return;
     }
 
     if (!elem.id) {
       if (!elem.text || elem.text.length == 0) {
+        this.state.queue.popDraft();
+
         trace("empty new elem - ignore")
         this.setState({ currentTextElem: undefined });
+        this.incrementRevision();
         return;
       }
       elem.id = genID();
     }
 
+
+    this.state.queue.popDraft();
     delete elem.modified;
+    delete elem.draft;
+    delete elem.width;
+    delete elem.fontSize;
+
 
     if (elem.tableCell) {
       this.state.queue.pushTableCellText(elem);
     } else {
       this.state.queue.pushText(elem);
     }
-    this.setState({ revision: this.state.revision + 1, currentTextElem: undefined });
+    this.setState({ currentTextElem: undefined });
+    this.incrementRevision();
 
     this.Save();
     return true;
@@ -2042,8 +2067,6 @@ export default class IssieEditPhoto extends React.Component {
       tableResizeState.currentY = RESIZE_TABLE_BOX_SIZE;
     }
 
-
-
     const topStart = onLine(table.verticalLines[0] - RESIZE_TABLE_BOX_SIZE, true) && onLine(table.horizontalLines[0] - RESIZE_TABLE_BOX_SIZE, false);
     const bottomEnd = onLine(table.verticalLines[table.verticalLines.length - 1] + RESIZE_TABLE_BOX_SIZE / 2, true) &&
       onLine(table.horizontalLines[table.horizontalLines.length - 1] + RESIZE_TABLE_BOX_SIZE / 2, false);
@@ -2094,24 +2117,39 @@ export default class IssieEditPhoto extends React.Component {
       if (topStart) {
         retTable.horizontalLines[r] += tableResizeState.currentY - tableResizeState.initialY;
       } else if (bottomEnd) {
-        // calculate the total new width:
+        // calculate the total new height:
         retTable.horizontalLines[r] = (retTable.horizontalLines[r] - retTable.horizontalLines[0]) * resizeFactorY + retTable.horizontalLines[0];
 
       } else {
+        if (r == 0) continue; //ignore resize on top line
+
         if (onLine(table.horizontalLines[r], false)) {
           retTable.horizontalLines = [...table.horizontalLines];
-          retTable.horizontalLines[r] += tableResizeState.currentY - tableResizeState.initialY;
 
-          // verify not passed another horizental line
-          if (r > 0) {
-            retTable.horizontalLines[r] = Math.max(retTable.horizontalLines[r], retTable.horizontalLines[r - 1] + TABLE_LINE_MARGIN);
+          let delta = tableResizeState.currentY - tableResizeState.initialY;
+          const currentRowWidth = retTable.horizontalLines[r] - retTable.horizontalLines[r - 1];
+
+          if (currentRowWidth + delta < TABLE_LINE_MARGIN) {
+            delta = TABLE_LINE_MARGIN - currentRowWidth;
           }
 
-          if (r < table.horizontalLines.length - 1) {
-            retTable.horizontalLines[r] = Math.min(retTable.horizontalLines[r], retTable.horizontalLines[r + 1] - TABLE_LINE_MARGIN);
+          if (retTable.minHeights && retTable.minHeights[r - 1] > -1 && currentRowWidth + delta < retTable.minHeights[r - 1]) {
+            //limit the resize to 
+            delta = retTable.minHeights[r - 1] - currentRowWidth;
           }
 
+          // verify not passing end of page vertically:
+          if (arrLast(retTable.horizontalLines) + delta > height - RESIZE_TABLE_BOX_SIZE) {
+            delta =  height - RESIZE_TABLE_BOX_SIZE - arrLast(retTable.horizontalLines);
+          }
+
+          for (let r2 = r; r2 < retTable.horizontalLines.length; r2++) {
+            retTable.horizontalLines[r2] += delta;
+          }
           found = true;
+
+          break;
+
         }
       }
     }
@@ -2162,6 +2200,7 @@ export default class IssieEditPhoto extends React.Component {
         currentTextElemId={this.isTextMode() && this.state.showTextInput ? this.state.currentTextElem?.id : undefined}
         strokeWidth={this.isBrushMode() ? strokeWidth : this.state.markerWidth}
         color={this.isMarkerMode() && !this.isEraserMode() ? color + MARKER_TRANSPARENCY_CONSTANT : color}
+        onTableResizeDuringTextEdit={() => this.setState({ textEditRevision: this.state.textEditRevision + 1 })}
       />
 
     );
@@ -2276,7 +2315,7 @@ export default class IssieEditPhoto extends React.Component {
     if (!this.state.currentTextElem) return;
     const r = this.state.scaleRatio;
     const z = this.state.zoom;
-    const fontSize = this.normFontSize2FontSize(this.state.fontSize)
+    trace(this.state.fontSize, this.normFontSize2FontSize(this.state.fontSize))
 
     let elem = this.state.currentTextElem;
 
@@ -2319,16 +2358,13 @@ export default class IssieEditPhoto extends React.Component {
 
     if (elem.fontColor !== this.state.textColor || elem.normFontSize != normFontSize || elem.rtl != rtl) {
       trace("modify elem", elem.fontColor !== this.state.textColor, elem.normFontSize != normFontSize, elem.rtl != rtl)
-      const newElem = {
-        ...elem,
-        fontColor: this.state.textColor,
-        rtl,
-        normFontSize,
-        modified: true
-      }
 
-      modifiedState.currentTextElem = newElem;
-      elem = newElem;
+      elem.fontColor = this.state.textColor;
+      elem.rtl = rtl;
+      elem.normFontSize = normFontSize;
+      elem.modified = true;
+
+      modifiedState.revision = this.state.revision + 1;
     }
 
     if (Object.keys(modifiedState).length > 0) {
@@ -2360,31 +2396,41 @@ export default class IssieEditPhoto extends React.Component {
         <TextInput
           ref={textInput => this._textInput = textInput}
           onChangeText={(text) => {
-            trace("text change for elem", text)
-            const newElem = { ...elem, text, modified: true }
-            this.setState({ currentTextElem: newElem });
+            if (text !== this.state.currentTextElem.text) {
+              trace("text change for elem", text)
+              this.state.currentTextElem.text = text;
+              this.state.currentTextElem.modified = true;
+              this.incrementRevision();
+            }
           }}
           onContentSizeChange={(event) => {
+            const elem = this.state.currentTextElem;
             let dim = event.nativeEvent.contentSize;
             const newHeight = dim.height * this.state.scaleRatio || this.state.fontSize;
-            let newElem
+            let changed = false
             if (isTableCell) {
               if (newHeight != elem.minHeight) {
-                newElem = { ...elem };
-                newElem.minHeight = newHeight
-                newElem.modified = true;
+                trace("onContentSizeChange, minHeight", newHeight != elem.minHeight)
+
+                elem.minHeight = newHeight
+                elem.modified = true;
+                changed = true;
               }
-              // todo notify canvas
             } else {
               if (dim.width > 0 || newHeight != elem.height) {
-                newElem = { ...elem };
-                newElem.normWidth = this.width2NormWidth(dim.width, this.state.fontSize);
-                newElem.height = newHeight;
+                const newNormWidth = this.width2NormWidth(dim.width, this.state.fontSize);
+                if (elem.normWidth != newNormWidth || newHeight != elem.height) {
+                  trace("onContentSizeChange, width/height", elem.normWidth != newNormWidth, newHeight != elem.height)
+
+                  elem.normWidth = newNormWidth;
+                  elem.height = newHeight;
+                  elem.modified = true;
+                  changed = true;
+                }
               }
             }
-            if (newElem) {
-              trace("onContentSizeChange = modified")
-              setTimeout(() => this.setState({ currentTextElem: newElem }), 1);
+            if (changed) {
+              setTimeout(() => this.incrementRevision(), 1);
             }
           }}
           autoCapitalize={'none'}
@@ -2408,6 +2454,7 @@ export default class IssieEditPhoto extends React.Component {
             transform: this.getTransform(textWidth / r, inputTextHeight / r, z * r, isRTL() && !isTableCell),
             //            transform: this.getTransform(textWidth / r, inputTextHeight / r,              r * z, isRTL()),
             // backgroundColor: "blue"
+            // lineHeight: this.normalizeTextSize(this.state.fontSize)*1.1/r,
           }}
           value={elem.text}
           onTouchStart={(ev) => {

@@ -9,7 +9,7 @@ V- folder in folder
   V- while resizing table/moving - what happens to text in cells affected?
   V- if removing table? is the text gone with it?
   V- if removing row or col, text gone?
-  - while exiting a cell editing text, the text which is wrapped is organized differently
+  V- while exiting a cell editing text, the text which is wrapped is organized differently
   - add more than one table?
 - Text: while typing text and reaching page bottom?
 
