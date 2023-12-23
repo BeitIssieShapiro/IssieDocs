@@ -391,12 +391,12 @@ function EditorToolbar({
             </View>
         </View >
         {/** bottom toolbar */}
-        {showExtMenu && <View style={{
+        {showExtMenu && <View style={[{
             position: 'absolute',
             height: dimensions.toolbarHeight,
-            flexDirection: 'row', alignItems: 'center',
-            top: (isScreenNarrow() ? 2 : 1) * dimensions.toolbarHeight, left: 0
-        }} >
+            flexDirection: rowReverse, alignItems: 'center',
+            top: (isScreenNarrow() ? 2 : 1) * dimensions.toolbarHeight,
+        }, rtl ? { right: 0 } : { left: 0 }]} >
             {spread(extMenu)}
         </View>}
         {/**Side menu */}
