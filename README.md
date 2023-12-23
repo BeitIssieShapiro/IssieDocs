@@ -29,6 +29,19 @@ cd ..
   Workspace would be under `./IssieDocs/ios/IssieDocs4/` IssieDocs4.xcworkspace
 
 
+# temp fix over react native code: (first char is ignored in textInput)
+in `RCTBackedTextFieldDelegateAdapter.m`:
+- (void)textViewDidChange:(__unused UITextView *)textView
+{
+  if (_ignoreNextTextInputCall && [_lastStringStateWasUpdatedWith isEqual:_backedTextInputView.attributedText]) {
+    _ignoreNextTextInputCall = NO;
+    return;
+  }
+  _textDidChangeIsComing = NO;
+  [_backedTextInputView.textInputDelegate textInputDidChange];
+}
+
+
 
 if pod install fails on glog:
 https://stackoverflow.com/questions/50448717/os-pod-install-error-module-glog-cannot-be-installed

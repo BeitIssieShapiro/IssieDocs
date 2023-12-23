@@ -3,7 +3,8 @@ import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useStat
 import { colors, getFont } from './elements';
 import { trace } from './log';
 import { tableResizeDone } from './pinch';
-import { arrLast, genID } from './utils';
+import { arrLast } from './utils';
+import { isRTL } from './lang';
 
 
 const DEFAULT_STROKE_WIDTH = 5;
@@ -134,6 +135,8 @@ function Canvas({
                                 //creates on the fly a tableCellText elem
                                 tableCellElem = {
                                     font: getFont(),
+                                    rtl: isRTL(),
+                                    alignment: isRTL() ? 'Right' : 'Left',
                                     tableCell: {
                                         tableID: table.id,
                                         col: c,
@@ -190,7 +193,7 @@ function Canvas({
                 for (let j = 0; j < textArray.length; j++) {
                     if (textArray[j].id === txtElem.id) {
                         if (txtElem.text?.length == 0) {
-                            textArray = textArray.filter(t=>t.id !== txtElem.id);
+                            textArray = textArray.filter(t => t.id !== txtElem.id);
                             if (q[i].type === 'text') {
                                 canvasTexts = textArray;
                             } else {
