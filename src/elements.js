@@ -261,13 +261,13 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
             }}>
             {textExist ?
                 <AppText style={{
-                    position: 'absolute', paddingTop: 5, left: 0, width: '80%', fontSize: textSize, lineHeight: textSize + (isRTL() ? 5 : 0),
+                    position: 'absolute', paddingTop: 5, left: 0, width: icon?'80%':'100%', fontSize: textSize, lineHeight: textSize + (isRTL() ? 5 : 0),
                     color: dark ? "white" : semanticColors.titleText, textAlign: 'center'
                 }}>{text}</AppText> : null
             }
-            {icon.startsWith("svg-") ?
+            {icon?.startsWith("svg-") ?
                 <SvgIcon name={icon.substr(4)} size={iconSize} color={color} />
-                : <Icon name={icon} size={iconSize} color={color} />
+                : icon && <Icon name={icon} size={iconSize} color={color} />
             }
             {textExist ?
                 <Spacer width={5} /> : null

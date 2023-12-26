@@ -74,7 +74,6 @@ export default function IssieAbout(props) {
             <AppText style={textStyle}>Try out our other apps!</AppText>
             <AppText > </AppText>
             <AppText style={textStyle}>  · IssieBoard</AppText>
-            <AppText style={textStyle}>  · 2Talk - AAC</AppText>
             <AppText style={textStyle}>  · IssieDice</AppText>
             <AppText style={textStyle}>  · IssieSign</AppText>
             <AppText style={textStyle}>  · IssieCalc</AppText>

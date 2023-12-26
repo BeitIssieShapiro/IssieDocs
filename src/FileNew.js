@@ -5,7 +5,7 @@ import { MoreButton, PageImage } from "./elements"
 import {
     AppText, colors, semanticColors, dimensions
 } from './elements'
-import { getRowReverseDirection } from './lang';
+import { isRTL } from './lang';
 // import { translate } from './lang.js'
 
 // import {
@@ -17,7 +17,7 @@ import { getRowReverseDirection } from './lang';
 
 
 const TILE_PADDING = 30
-const TILE_TEXT_HEIGHT = 25
+const TILE_TEXT_HEIGHT = 22
 const TILE_BORDER_WIDTH = 1.5
 
 export default function FileNew(props) {
@@ -31,7 +31,7 @@ export default function FileNew(props) {
         >
             {props.asTile ?
                 <View style={{
-                    alignContent: 'center', paddingRight: TILE_PADDING,
+                    alignContent: 'center', paddingEnd: TILE_PADDING,
                     height: '100%', width: '100%',
                 }}>
                     <View
@@ -61,7 +61,15 @@ export default function FileNew(props) {
                             <PageImage src={imageSrc} multiPage={props.count > 1} width={"100%"} height={"80%"} />
                             <View style={{ height: '20%', backgroundColor: '#a7a7a7', justifyContent: "space-between", alignItems: "center", width: '100%', flexDirection: props.rowDir }} >
                                 <MoreButton onPress={props.onContextMenu} size={30} color={"white"} />
-                                <AppText style={{ fontSize: TILE_TEXT_HEIGHT, color: 'white', paddingRight: 15, lineHeight: TILE_TEXT_HEIGHT + 2 }}>
+                                <AppText style={{
+                                    paddingStart: 3,
+                                    paddingEnd: 3,
+                                    direction: isRTL() ? "rtl" : "ltr",
+                                    textAlign: "left",
+                                    maxWidth: dimensions.tileWidth - 30 - TILE_PADDING - 6,
+                                    width: dimensions.tileWidth - 30 - TILE_PADDING - 6,
+                                    fontSize: TILE_TEXT_HEIGHT, color: 'white', paddingEnd: 5, lineHeight: TILE_TEXT_HEIGHT + 2
+                                }}>
                                     {getFileName(props)}
                                 </AppText>
                             </View>
@@ -143,14 +151,14 @@ export default function FileNew(props) {
 
 
 function getFileName(props) {
-    let limit = props.asTile ? 12 : 35;
+    let limit = props.asTile ? 8 : 35;
     if (props.count > 1) {
-        limit -= 4;
+        ///limit -= 4;
     }
     if (props.name.length > limit) {
-        return props.name.substring(0, limit) + '...' 
+        return props.name.substring(0, limit) + '...'
     }
-    return props.name 
+    return props.name
 }
 
 // function getActionButtons(props) {

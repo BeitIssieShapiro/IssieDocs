@@ -1,13 +1,14 @@
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, Fragment, useState } from "react";
 import { View, StyleSheet, TouchableOpacity, Text, Button } from "react-native";
 import Svg, { Line } from "react-native-svg";
-import { AppText, availableColorPicker, dimensions, getEraserIcon, Icon, IconButton, semanticColors, Spacer, textSizes } from "./elements";
+import { AppText, availableColorPicker, dimensions, getEraserIcon, getIconButton, Icon, IconButton, semanticColors, Spacer, textSizes } from "./elements";
 import FadeInView from "./FadeInView";
 import { getRowDirections, translate } from "./lang";
 import { trace } from "./log";
 import { BrushSizePicker, MyColorPicker, TextSizePicker } from "./pickers";
 import { getSvgIcon, MarkerStroke, SvgIcon } from "./svg-icons";
 import PushButton2 from "./push-button";
+import { colors } from "react-native-elements";
 
 const Pickers = {
     NONE: 0,
@@ -534,14 +535,22 @@ function EditorToolbar({
 
             </View>
             <View style={{ width: '20%', alignItems: 'center', backgroundColor: "#EBECEF", paddingTop: 10, margin: 4, borderRadius: 10 }}>
-                <AppText style={{ fontSize: isScreenNarrow() ? 20 : 30 }}>{translate("ShowTableCaption")}</AppText>
-                <PushButton2 titleOn={translate("Yes")} titleOff={translate("No")} onPressCallback={() => {
+                <AppText style={{ fontSize: isScreenNarrow() ? 20 : 30 }}>{translate(Table ? "DeleteTableCaption" : "ShowTableCaption")}</AppText>
+                {/*<PushButton2 titleOn={translate("Yes")} titleOff={translate("No")} onPressCallback={() => {
                     if (Table) {
                         TableActions.delete(Table.id);
                     } else {
                         TableActions.addTable(tableRows, tableCols, color, 2);
                     }
                 }} isOn={Table !== undefined} />
+                 */}
+                {getIconButton(() => {
+                    if (Table) {
+                        TableActions.delete(Table.id);
+                    } else {
+                        TableActions.addTable(tableRows, tableCols, color, 2);
+                    }
+                }, colors.black, Table?"delete":"add", 75)}
             </View>
         </FadeInView>
 

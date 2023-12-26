@@ -1,3 +1,11 @@
+- Text: while typing text and reaching page bottom?
+- move icon
+- text alignment
+- folders?
+- add tag easy-docs
+- ruller tool
+
+
 Features:
 V- Document backup
 V- Marker
@@ -10,16 +18,19 @@ V- folder in folder
   V- if removing table? is the text gone with it?
   V- if removing row or col, text gone?
   V- while exiting a cell editing text, the text which is wrapped is organized differently
-  - add more than one table?
-- Text: while typing text and reaching page bottom?
-
+  - add more than one table? not now
+V- remove 2Talk - AAC
 
 - Fonts?
 - Search?
 
 
 Bugs:
-- in zoom, the bottom seperator and down move button - is wrongly placed
+V- when in text edit, selecting different font adds space
+V- in very large text size, the yellow is wrong and wrap the text after exiting
+
+
+V- in zoom, the bottom seperator and down move button - is wrongly placed
 
 
 ----

@@ -125,14 +125,15 @@ var strings = {
         למתן רשות יש לגשת להגדרות -> פרטיות -> מצלמה, ולאפשר שימוש עבור IssieDocs`,
         "EditPhotoTitle": "עריכת תמונה",
 
-        "ShowTableCaption":"הראה טבלה",
+        "ShowTableCaption":"הוספה",
+        "DeleteTableCaption": "מחיקה",
         "Yes":"כן",
         "No":"לא",
         "RowsCaption":"שורות",
         "ColsCaption":"עמודות",
 
         "BackupTitle":"גיבוי",
-        "BackupBtn":"גיבוי",
+        "BackupBtn":"גיבוי האפליקציה",
 
         "ErrMoveIntoTwoLevelFolder":"לא ניתן להעביר תיקיה לתוך תיקיה שבעצמה בתוך תיקיה",
         "ErrMoveFolderCOntainingFolders":"לא ניתן להעביר תיקיה שבעצמה מכילה תיקיות",
@@ -357,13 +358,14 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "MissingCameraPermission": `Missing Permission to use Camera.
 to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
 
-        "ShowTableCaption":"Show Table",
+        "ShowTableCaption":"Add",
+        "DeleteTableCaption": "Delete",
         "Yes":"Yes",
         "No":"No",
         "RowsCaption":"Rows",
         "ColsCaption":"Cols",
         "BackupTitle":"Backup",
-        "BackupBtn":"Backup",
+        "BackupBtn":"Backup Application",
 
         "ErrMoveIntoTwoLevelFolder":"Cannot move forder into a folder which is in another folder",
         "ErrMoveFolderCOntainingFolders":"Cannot move folder containing other folders into another folder",

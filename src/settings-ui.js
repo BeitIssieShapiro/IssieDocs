@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Icon } from "./elements"
+import { Icon, getRoundedButton } from "./elements"
 import {
     View, Alert, Text, TouchableOpacity, StyleSheet,
     Settings, ScrollView
@@ -85,6 +85,30 @@ export default function SettingsMenu(props) {
         setTextBtn(tb);
     }
 
+
+    const backup = () => {
+        setBackupProgress(0);
+        FileSystem.main.getRootFolders().then(rootFolders => FileSystem.main.getFoldersDeep(rootFolders).then(allFolders => {
+            trace("all folders", allFolders);
+
+            FileSystem.main.exportAllWorksheets(allFolders, (percent) => setBackupProgress(percent))
+                .then((backupZipPath) => {
+                    const shareOptions = {
+                        title: translate("ShareWithTitle"),
+                        subject: translate("ShareEmailSubject"),
+                        urls: [backupZipPath],
+                    };
+                    Share.open(shareOptions).then(() => {
+                        Alert.alert(translate("BackupSuccessful"));
+                    }).catch(err => {
+                        Alert.alert(translate("ActionCancelled"));
+                    });
+                })
+                .catch((err) => Alert.alert("Backup failed: " + err))
+                .finally(() => setBackupProgress(undefined));
+        }))
+    }
+
     return <TouchableOpacity onPress={props.onClose} style={{
         position: 'absolute',
         zIndex: 100, top: 0, width: '100%', height: '100%'
@@ -94,14 +118,14 @@ export default function SettingsMenu(props) {
             position: 'absolute', width: "100%", height: '100%', top: 0,
             zIndex: 1000, alignItems: "center", justifyContent: "center"
         }}>
-             <ProgressCircle
-                    radius={100}
-                    color="#3399FF"
-                    shadowColor="#999"
-                    bgColor="white"
-                    percent={backupProgress}
-                    borderWidth={5} >
-                  </ProgressCircle>
+            <ProgressCircle
+                radius={100}
+                color="#3399FF"
+                shadowColor="#999"
+                bgColor="white"
+                percent={backupProgress}
+                borderWidth={5} >
+            </ProgressCircle>
         </View>}
 
         <FadeInView
@@ -189,34 +213,17 @@ export default function SettingsMenu(props) {
                         },
                         editTitle == EDIT_TITLE.yes)}
 
-                    <View style={{ width: '100%', paddingTop: 25, paddingRight: 25, alignItems: getFlexEnd() }}>
-                        <AppText style={styles.SettingsHeaderText}>{translate("BackupTitle") + ":"}</AppText>
-                        <View style={{ paddingStart: 40, paddingTop: 10 }}>
-                            <Button title={translate("BackupBtn")} onPress={() => {
-                                setBackupProgress(0);
-                                FileSystem.main.getRootFolders().then(rootFolders=>FileSystem.main.getFoldersDeep(rootFolders).then(allFolders=>{
-                                    trace("all folders", allFolders);
 
-                                    FileSystem.main.exportAllWorksheets(allFolders, (percent) => setBackupProgress(percent))
-                                    .then((backupZipPath) => {
-                                        const shareOptions = {
-                                            title: translate("ShareWithTitle"),
-                                            subject: translate("ShareEmailSubject"),
-                                            urls: [backupZipPath],
-                                        };
-                                        Share.open(shareOptions).then(() => {
-                                            Alert.alert(translate("BackupSuccessful"));
-                                        }).catch(err => {
-                                            Alert.alert(translate("ActionCancelled"));
-                                        });
-                                    })
-                                    .catch((err) => Alert.alert("Backup failed: " + err))
-                                    .finally(() => setBackupProgress(undefined));
-                                }))
-                                    
-                                
-                            }} />
-                        </View>
+                    <View
+                        style={{
+                            width:"100%",
+                            marginTop: 4,
+                            borderBottomColor: 'gray',
+                            borderBottomWidth: 1,
+                        }}
+                    />
+                    <View style={{ width: '100%', paddingTop: 25, paddingRight: 25, alignItems: getFlexEnd() }}>
+                        {getRoundedButton(backup, undefined, translate("BackupBtn"), 30, 30, { width: 250, height: 40 }, row, true)}
                     </View>
 
 

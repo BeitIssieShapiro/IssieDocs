@@ -61,10 +61,11 @@ function Canvas({
 
         if (!scaleElem.tableCell) {
             if (scaleElem.normWidth === undefined) {
-                scaleElem.normWidth = scaleElem.width * scaleElem.normFontSize / scaleElem.fontSize;
+                scaleElem.normWidth = scaleElem.width * scaleElem.fontSize / scaleElem.normFontSize;
             }
 
-            scaleElem.width = scaleElem.normWidth * scaleElem.fontSize / scaleElem.normFontSize;
+            scaleElem.width = scaleElem.normWidth * scaleElem.normFontSize / scaleElem.fontSize;
+            trace("scaleElem.width", scaleElem.width)
             scaleElem.position = {
                 x: scaleElem.normPosition.x * scaleRatio,
                 y: scaleElem.normPosition.y * scaleRatio,
