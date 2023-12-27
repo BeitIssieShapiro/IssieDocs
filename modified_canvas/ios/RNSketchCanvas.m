@@ -221,8 +221,9 @@
             text.isAbsoluteCoordinate = ![@"Ratio" isEqualToString:property[@"coordinate"]];
             CGSize textSize = [text.text sizeWithAttributes:text.attribute];
             long width = property[@"width"] ? [property[@"width"] longValue] : -1;
-            if (width > 0 && width < textSize.width) {
-                textSize.height = (ceil(textSize.width/ width)+4) * textSize.height;
+            long height = property[@"height"] ? [property[@"height"] longValue] : -1;
+            if (width > 0) {
+                textSize.height = height > 0 ? height : (ceil(textSize.width/ width)+4) * textSize.height;
                 textSize.width = width + 5;
             } 
             CGPoint position = text.position;

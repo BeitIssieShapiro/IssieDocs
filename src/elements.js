@@ -342,7 +342,7 @@ export function IconButton({
         </AppText> :
         isSvg ?
             getSvgIcon(icon, sizeToUse, color) :
-            <Icon name={icon} type={iconType} size={sizeToUse} color={color} style={rotateDeg && { transform: [{ rotate: rotateDeg + 'deg' }] }}/>
+            <Icon  name={icon} type={iconType} size={sizeToUse} color={color} style={rotateDeg && { transform: [{ rotate: rotateDeg + 'deg' }] }}/>
 
 return <View style={backgroundContrast}>
     {notPressable ?

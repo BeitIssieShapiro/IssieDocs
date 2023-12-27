@@ -14,19 +14,13 @@ import Share from 'react-native-share';
 import DoQueue from './do-queue';
 
 import {
-  Spacer, getRoundedButton,
-  renderMenuOption, IDMenuOptionsStyle, globalStyles, getFont
+  getRoundedButton,
+  globalStyles, getFont
 } from './elements'
 import { getNewPage, SRC_CAMERA, SRC_FILE, SRC_GALLERY, SRC_RENAME } from './newPage';
 import ProgressCircle from 'react-native-progress-circle'
-import { fTranslate, getRowDirections, isRTL, gCurrentLang } from './lang.js'
+import { fTranslate, getRowDirections, isRTL } from './lang.js'
 
-import {
-  Menu,
-  MenuOptions,
-  MenuOption,
-  MenuTrigger,
-} from 'react-native-popup-menu';
 
 import {
   colors, getImageDimensions,
@@ -34,11 +28,11 @@ import {
   semanticColors, dimensions
 } from './elements'
 import { translate } from './lang';
-import { arrLast, genID, tableRowHeight, setNavParam, tableHeight } from './utils';
+import { arrLast, genID, tableRowHeight, setNavParam } from './utils';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
-import { calcDistance, pinchEnd, processPinch, processResize } from './pinch';
-import EditorToolbar from './editor-toolbar';
+import { pinchEnd, processPinch, processResize } from './pinch';
+import EditorToolbar, { TextAlignment } from './editor-toolbar';
 import { getElementMovePanResponder } from './editors-panresponders';
 import Canvas, { RESIZE_TABLE_BOX_SIZE } from './canvas';
 import { FileContextMenu } from './file-context-menu';
@@ -804,6 +798,7 @@ export default class IssieEditPhoto extends React.Component {
         y: this.viewPort2NormY(y)
       }, this.state.scaleRatio, table);
 
+      trace("found", textElem)
       //in erase mode, only act on found texts
       if (!textElem) {
         if (this.state.eraseMode) return;
@@ -821,21 +816,7 @@ export default class IssieEditPhoto extends React.Component {
       //trace("found elem", textElem)
       let fontSize = this.state.fontSize;
       let fontColor = this.state.textColor;
-
-      // // convert to rtl text:
-      // if (textElem.rtl == undefined || textElem.rtl !== isRTL()) {
-      //   textElem.rtl = isRTL();
-
-      //   if (!textElem.tableCell) {
-      //     const newNorm = { y: textElem.normPosition.y }
-      //     if (textElem.rtl == undefined) {
-      //       newNorm.x = textElem.normPosition.x + (isRTL() ? textElem.width : 0);
-      //     } else {
-      //       newNorm.x = textElem.normPosition.x + (isRTL() ? textElem.width : -textElem.width);
-      //     }
-      //     textElem.normPosition = newNorm;
-      //   }
-      // }
+      let textAlignment = this.state.textAlignment;
 
       if (textElem.normFontSize) {
         fontSize = textElem.normFontSize;
@@ -843,6 +824,10 @@ export default class IssieEditPhoto extends React.Component {
 
       if (textElem.fontColor) {
         fontColor = textElem.fontColor;
+      }
+
+      if (textElem.alignment) {
+        textAlignment = textElem.alignment;
       }
 
       const draftTxtElem = { ...textElem, draft: true };
@@ -856,6 +841,7 @@ export default class IssieEditPhoto extends React.Component {
         showTextInput: !this.state.eraseMode,
         fontSize,
         textColor: fontColor,
+        textAlignment,
         currentTextElem: draftTxtElem,
         xText: !textElem.tableCell ? this.norm2viewPortX(textElem.normPosition.x) : x,
         yText: !textElem.tableCell ? this.norm2viewPortY(textElem.normPosition.y) : y,
@@ -960,8 +946,8 @@ export default class IssieEditPhoto extends React.Component {
   generateTextElement = (text, normXY, width, height) => {
     const rtl = isRTL();
     const newTextElem = { text, height }
-    newTextElem.alignment = rtl ? 'Right' : 'Left';
-    newTextElem.rtl = rtl;
+    newTextElem.alignment = this.state.textAlignment || (rtl ? TextAlignment.RIGHT : TextAlignment.LEFT);
+    newTextElem.rtl = newTextElem.alignment == TextAlignment.RIGHT ? 'rtl' : 'ltr';
     newTextElem.fontColor = this.state.textColor;
     newTextElem.normFontSize = this.state.fontSize;
     newTextElem.fontSize = this.normFontSize2FontSize(this.state.fontSize);
@@ -1199,6 +1185,7 @@ export default class IssieEditPhoto extends React.Component {
 
 
   onTextMode = () => {
+    trace("set text mode")
     this.setState({
       showTextInput: false,
       mode: Modes.TEXT,
@@ -1214,6 +1201,13 @@ export default class IssieEditPhoto extends React.Component {
     });
     this.updateInputText();
     this.onEraserChange(true);
+  }
+
+  onTextAlignment = (textAlignment) => {
+    trace("set textAlignment", textAlignment)
+    this.setState({
+      textAlignment
+    });
   }
 
   onEraserButton = () => {
@@ -1606,6 +1600,8 @@ export default class IssieEditPhoto extends React.Component {
           isVoiceMode={this.isVoiceMode()}
           isBrushMode={this.isBrushMode()} //!this.isTextMode() && !this.isImageMode() && !this.isMarkerMode()}
           fontSize={this.state.fontSize}
+          textAlignment={this.state.textAlignment}
+          showCenterTextAlignment={this.state.currentTextElem?.tableCell}
           strokeWidth={this.state.strokeWidth}
           markerWidth={this.state.markerWidth}
           sideMargin={this.state.sideMargin}
@@ -1629,6 +1625,8 @@ export default class IssieEditPhoto extends React.Component {
           color={this.getColorByMode()}
 
           onSelectTextSize={(size) => this.onTextSize(size)}
+          onSelectTextAlignment={(newTextAlignment) => this.onTextAlignment(newTextAlignment)}
+
           onSelectBrushSize={(brushSize) => this.onBrushSize(brushSize)}
           onSelectMarkerSize={(markerSize) => this.onMarkerSize(markerSize)}
           onToolBarDimensionsChange={(height, floatingHeight) => {
@@ -1715,7 +1713,7 @@ export default class IssieEditPhoto extends React.Component {
                 </View>}
               {this.getCanvas(this.state.pageRect.width, this.state.pageRect.height)}
             </Animated.View>
-            {this.state.showTextInput && this.getTextInput(rtl, rowReverse)}
+            {this.state.showTextInput && this.getTextInput(rtl)}
 
             {/** Show Texts rectangles for voice reading */}
             {/* {
@@ -2077,7 +2075,7 @@ export default class IssieEditPhoto extends React.Component {
       tableResizeState.currentY = RESIZE_TABLE_BOX_SIZE;
     }
 
-    const topStart = onLine(table.verticalLines[0] - RESIZE_TABLE_BOX_SIZE, true) && onLine(table.horizontalLines[0] - RESIZE_TABLE_BOX_SIZE, false);
+    const topStart = onLine(table.verticalLines[0] - RESIZE_TABLE_BOX_SIZE, true) && onLine(table.horizontalLines[0] + RESIZE_TABLE_BOX_SIZE, false);
     const bottomEnd = onLine(table.verticalLines[table.verticalLines.length - 1] + RESIZE_TABLE_BOX_SIZE / 2, true) &&
       onLine(table.horizontalLines[table.horizontalLines.length - 1] + RESIZE_TABLE_BOX_SIZE / 2, false);
     let resizeFactorX, resizeFactorY
@@ -2278,9 +2276,8 @@ export default class IssieEditPhoto extends React.Component {
           height: DRAG_ICON_SIZE,
           zIndex: 25
         }}>
-        <Icon name='border-style' size={DRAG_ICON_SIZE}
-          style={{ transform: [{ rotate: '180deg' }] }}
-        />
+        
+        <Icon type="material-community" name="resize-bottom-right" size={DRAG_ICON_SIZE} color="gray"/>
       </View>
       <View
         style={{
@@ -2339,7 +2336,7 @@ export default class IssieEditPhoto extends React.Component {
     }
   }
 
-  getTextInput = (rtl, rowDir) => {
+  getTextInput = (defaultRTL) => {
     if (!this.state.currentTextElem) return;
     const r = this.state.scaleRatio;
     const z = this.state.zoom;
@@ -2351,11 +2348,19 @@ export default class IssieEditPhoto extends React.Component {
     let y = this.state.yText;
 
     const isTableCell = elem.tableCell;
-    let textWidth = isTableCell ? 0 : this.getTextWidth(x);
+    let textWidth = 0;
     let inputTextHeight = elem.height;
+    const direction = elem.alignment ? (elem.alignment == TextAlignment.RIGHT ? 'rtl' : 'ltr') : (defaultRTL ? 'rtl' : 'ltr');
     //let tableRatioX = 1;
+    const rtl = direction == 'rtl';
 
+    trace("rtl", elem.alignment, rtl, direction)
     const modifiedState = {}
+
+    if (!this.state.textAlignment) {
+      modifiedState.textAlignment = defaultRTL ? TextAlignment.RIGHT : TextAlignment.LEFT;
+    }
+
     if (isTableCell) {
       trace("text input table cell")
       const { tableID, col, row } = elem.tableCell;
@@ -2380,18 +2385,32 @@ export default class IssieEditPhoto extends React.Component {
           modifiedState.currentTable = table;
         }
       }
+    } else {
+      if (elem.alignment === TextAlignment.CENTER) {
+        modifiedState.textAlignment = defaultRTL ? TextAlignment.RIGHT : TextAlignment.LEFT;
+        elem.alignment = modifiedState.textAlignment;
+        elem.modified = true;
+      }
+      textWidth = this.getTextWidth(x, rtl);
     }
+
+
+
+
     const normFontSize = this.state.fontSize;
     const textActualWidth = isTableCell ? textWidth : this.normWidth2Width(elem.normWidth, this.state.fontSize)
     //const normWidth = isTableCell ? -1 : elem.width * this.state.fontSize / normFontSize;
 
-    if (elem.fontColor !== this.state.textColor || elem.normFontSize != normFontSize || elem.rtl != rtl) {
-      trace("modify elem", elem.fontColor !== this.state.textColor, elem.normFontSize != normFontSize, elem.rtl != rtl)
+    if (elem.fontColor !== this.state.textColor || elem.normFontSize != normFontSize || elem.rtl != rtl || (this.state.textAlignment && elem.alignment !== this.state.textAlignment)) {
+      trace("modify elem", elem.fontColor !== this.state.textColor, elem.normFontSize != normFontSize, elem.rtl != rtl, elem.alignment !== this.state.textAlignment)
 
       elem.fontColor = this.state.textColor;
       elem.rtl = rtl;
       elem.normFontSize = normFontSize;
       elem.fontSize = this.normFontSize2FontSize(this.state.fontSize);
+      if (this.state.textAlignment) {
+        elem.alignment = this.state.textAlignment;
+      }
       elem.modified = true;
 
       modifiedState.revision = this.state.revision + 1;
@@ -2402,28 +2421,24 @@ export default class IssieEditPhoto extends React.Component {
       this.setState(modifiedState);
     }
 
-    const left = x - (isTableCell ? rtl ? 0 : 0 : (rtl ? textWidth / r : DRAG_ICON_SIZE));
+    const left = x - (isTableCell ? 0 : (rtl ? textWidth / r : DRAG_ICON_SIZE));
 
 
-    trace("textWidth", textWidth)
+    
     return (
-      <View style={[{
-        //flex: 1,
+      <View style={{
         position: 'absolute',
-        flexDirection: rowDir,
+        flexDirection: direction == 'rtl' ? "row-reverse" : "row",
         left,
         top: y,
         zIndex: 45,
         // backgroundColor: "pink",
         // width: textWidth,
         // height: inputTextHeight,
-      }, elem?.tableCell ? {
-        //        width: textWidth ,
-        //        height: inputTextHeight
-      } : {}]}>
+      }}>
         {!isTableCell && <View {...this._panResponderElementMove.panHandlers}
           style={{ top: -5, zIndex: 25 }}>
-          <Icon name='open-with' size={DRAG_ICON_SIZE} />
+          <Icon type="material-community" name="arrow-all"  size={DRAG_ICON_SIZE} color="gray"/>
         </View>}
 
         <TextInput
@@ -2491,8 +2506,8 @@ export default class IssieEditPhoto extends React.Component {
           allowFontScaling={false}
           style={{
             backgroundColor: 'transparent',
-            direction: rtl ? 'rtl' : 'ltr',
-            textAlign: rtl ? 'right' : 'left',
+            direction,
+            textAlign: elem.alignment?.toLowerCase(),
             width: textWidth / r,
             height: inputTextHeight / r,
             borderWidth: 0,
@@ -2500,7 +2515,7 @@ export default class IssieEditPhoto extends React.Component {
             color: this.getColorByMode(),
             fontFamily: getFont(),
             zIndex: 21,
-            transform: this.getTransform(textWidth / r, inputTextHeight / r, z * r, isRTL() && !isTableCell),
+            transform: this.getTransform(textWidth / r, inputTextHeight / r, z * r, rtl && !isTableCell),
             // backgroundColor: "blue"
           }}
           value={elem.text}
@@ -2524,7 +2539,7 @@ export default class IssieEditPhoto extends React.Component {
           // width: isTableCell ? textActualWidth / r : Math.max(textActualWidth + 10, 12),
           height: inputTextHeight > 0 ? inputTextHeight / r : 45 / r,
           zIndex: 20,
-          transform: this.getTransform(textActualWidth / r, inputTextHeight / r, z * r, isRTL() && !isTableCell),
+          transform: this.getTransform(textActualWidth / r, inputTextHeight / r, z * r, rtl && !isTableCell),
           //lineHeight: this.normalizeTextSize(this.state.fontSize)* this.state.scaleRatio,
         }}
           backgroundColor={this.getColorByMode() === '#fee100' ? 'gray' : 'yellow'}
@@ -2539,8 +2554,8 @@ export default class IssieEditPhoto extends React.Component {
       return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2
     }
   }
-  getTextWidth = (x) => {
-    const width = isRTL() ? x : this.state.viewPortRect.width - x;
+  getTextWidth = (x, rtl) => {
+    const width = rtl ? x : this.state.viewPortRect.width - x;
     return Math.max(25, width);
   }
 }

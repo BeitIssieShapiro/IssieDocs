@@ -1,15 +1,19 @@
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, Fragment, useState } from "react";
-import { View, StyleSheet, TouchableOpacity, Text, Button } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text} from "react-native";
 import Svg, { Line } from "react-native-svg";
-import { AppText, availableColorPicker, dimensions, getEraserIcon, getIconButton, Icon, IconButton, semanticColors, Spacer, textSizes } from "./elements";
+import { AppText, availableColorPicker, dimensions, getEraserIcon, getIconButton, IconButton, semanticColors, Spacer, textSizes } from "./elements";
 import FadeInView from "./FadeInView";
 import { getRowDirections, translate } from "./lang";
 import { trace } from "./log";
 import { BrushSizePicker, MyColorPicker, TextSizePicker } from "./pickers";
-import { getSvgIcon, MarkerStroke, SvgIcon } from "./svg-icons";
-import PushButton2 from "./push-button";
-import { colors } from "react-native-elements";
+import { getSvgIcon, MarkerStroke } from "./svg-icons";
+import { Icon } from "react-native-elements";
 
+export const TextAlignment = {
+    RIGHT: "Right",
+    LEFT: "Left",
+    CENTER: "Center",
+}
 const Pickers = {
     NONE: 0,
     IMAGE: 1,
@@ -85,7 +89,10 @@ function EditorToolbar({
 
     sideMargin,
     maxFloatingHeight,
-    onToolBarDimensionsChange
+    onToolBarDimensionsChange,
+    onSelectTextAlignment,
+    textAlignment,
+    showCenterTextAlignment,
 
 }, ref) {
     const [showPicker, setShowPicker] = useState(false);
@@ -163,8 +170,9 @@ function EditorToolbar({
     onModeButtonClick = useCallback((type) => {
         let pickerTypeChanged = false;
         if (type !== showPickerType) {
+            pickerTypeChanged = (showPickerType != Pickers.NONE);
             setShowPickerType(type);
-            pickerTypeChanged = true;
+            //pickerTypeChanged = true;
         }
 
         switch (type) {
@@ -266,13 +274,14 @@ function EditorToolbar({
 
     const extMenu = [
         <IconButton onPress={() => onModeButtonClick(Pickers.MARKER)} color={isMarkerMode ? color : semanticColors.editPhotoButton}
-            icon="marker" size={55} iconSize={45} selected={isMarkerMode} iconType="svg" ensureContrast={true} />,
+        iconType="material-community" icon="marker" size={50} iconSize={45} selected={isMarkerMode}  ensureContrast={true} />,
 
         <IconButton onPress={() => onModeButtonClick(Pickers.IMAGE)} color={semanticColors.editPhotoButton}
             icon={"image"} size={55} iconSize={45} selected={isImageMode} />,
 
         <IconButton onPress={() => onModeButtonClick(Pickers.TABLE)} color={isTableMode ? (Table ? Table.color : color) : semanticColors.editPhotoButton}
-            icon="table-chart" size={55} iconSize={45} selected={isTableMode} ensureContrast={true} />,
+            iconType="font-awesome" icon="table" size={45} iconSize={45} selected={isTableMode} ensureContrast={true} />,
+
         // <IconButton onPress={() => onModeButtonClick(Pickers.VOICE)} color={semanticColors.editPhotoButton}
         //     icon="record-voice-over" size={55} iconSize={45} selected={isVoiceMode} />,
 
@@ -446,6 +455,9 @@ function EditorToolbar({
                 setTextMenuHeight(height)
             }}
             maxHeight={maxFloatingHeight}
+            onSelectTextAlignment={onSelectTextAlignment}
+            textAlignment={textAlignment}
+            showCenterTextAlignment={showCenterTextAlignment}
         />
 
         {/*View for selecting brush size*/}
@@ -504,16 +516,16 @@ function EditorToolbar({
         </FadeInView>
 
         {/*View for selecting Table options*/}
-        <FadeInView height={showPickerType === Pickers.TABLE && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, 
-            { flexDirection: rowReverse, top: toolbarHeight, left: 0, right: 0, justifyContent: "space-evenly", alignItems:"center" }]}>
-            <ToolbarGroup width={180} height={pickerMenuHeight-15}>
+        <FadeInView height={showPickerType === Pickers.TABLE && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView,
+        { flexDirection: rowReverse, top: toolbarHeight, left: 0, right: 0, justifyContent: "space-evenly", alignItems: "center" }]}>
+            <ToolbarGroup width={180} height={pickerMenuHeight - 15}>
                 <NumberSelector direction={rowReverse} value={tableRows} setValue={setRows} icon="table-rows" />
             </ToolbarGroup>
-            <ToolbarGroup width={180} height={pickerMenuHeight-15}>
+            <ToolbarGroup width={180} height={pickerMenuHeight - 15}>
                 <NumberSelector direction={rowReverse} value={tableCols} setValue={setColumns} icon="table-rows" rotateDeg={90} />
             </ToolbarGroup>
 
-            <ToolbarGroup width={100} height={pickerMenuHeight-15}>
+            <ToolbarGroup width={100} height={pickerMenuHeight - 15}>
                 {
                     [2, 5, 8].map((borderWidth, i) => (<LineWidthSelector
                         height={40}
@@ -527,7 +539,7 @@ function EditorToolbar({
                 }
             </ToolbarGroup>
 
-            <ToolbarGroup width={100} height={pickerMenuHeight-15}>
+            <ToolbarGroup width={100} height={pickerMenuHeight - 15}>
                 {
                     ["0,0", "2,2", "4,2"].map((style, i) => (<LineStyleSelector
                         height={40}
@@ -550,13 +562,13 @@ function EditorToolbar({
                     }
                 }} isOn={Table !== undefined} />
                  */}
-            <ToolbarGroup width={130} height={pickerMenuHeight-15} onPress={()=>{
-                    if (Table) {
-                        TableActions.delete(Table.id);
-                    } else {
-                        TableActions.addTable(tableRows, tableCols, color, 2);
-                    }
-                }}>
+            <ToolbarGroup width={130} height={pickerMenuHeight - 15} onPress={() => {
+                if (Table) {
+                    TableActions.delete(Table.id);
+                } else {
+                    TableActions.addTable(tableRows, tableCols, color, 2);
+                }
+            }}>
                 <AppText style={{ fontSize: 20, color: semanticColors.actionButton }}>{translate(Table ? "DeleteTableCaption" : "ShowTableCaption")}</AppText>
                 <Icon color={semanticColors.actionButton} name={Table ? "delete-forever" : "add"} size={35} />
 

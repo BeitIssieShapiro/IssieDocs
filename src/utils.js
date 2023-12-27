@@ -48,6 +48,10 @@ export function tableRowHeight(table, row) {
   return table.horizontalLines[row+1] - table.horizontalLines[row];
 }
 
+export function tableColWidth(table, col) {
+  return table.verticalLines[col+1] - table.verticalLines[col];
+}
+
 export function tableHeight(table) {
   return arrLast(table.horizontalLines) - table.horizontalLines[0];
 }

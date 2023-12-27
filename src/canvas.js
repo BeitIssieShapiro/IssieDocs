@@ -3,12 +3,12 @@ import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useStat
 import { colors, getFont } from './elements';
 import { trace } from './log';
 import { tableResizeDone } from './pinch';
-import { arrLast } from './utils';
+import { arrLast, tableColWidth, tableRowHeight } from './utils';
 import { isRTL } from './lang';
 
 
 const DEFAULT_STROKE_WIDTH = 5;
-export const RESIZE_TABLE_BOX_SIZE = 10;
+export const RESIZE_TABLE_BOX_SIZE = 22;
 export const RESIZE_TABLE_BOX_OFFSET = 2;
 function Canvas({
     revision,
@@ -136,8 +136,6 @@ function Canvas({
                                 //creates on the fly a tableCellText elem
                                 tableCellElem = {
                                     font: getFont(),
-                                    rtl: isRTL(),
-                                    alignment: isRTL() ? 'Right' : 'Left',
                                     tableCell: {
                                         tableID: table.id,
                                         col: c,
@@ -303,8 +301,8 @@ function Canvas({
         tableCellTexts.forEach(txtElem => {
             const table = canvasTables.find(t => t.id == txtElem.tableCell.tableID);
             // Adjust cell's texts to current table size and location - todo margin
-            txtElem.width = (table.verticalLines[txtElem.tableCell.col + 1] - table.verticalLines[txtElem.tableCell.col] - table.width) * (width / table.size.width)
-            txtElem.height = (table.horizontalLines[txtElem.tableCell.row + 1] - table.horizontalLines[txtElem.tableCell.row] - table.width) * (height / table.size.height)
+            txtElem.width = (tableColWidth(table, txtElem.tableCell.col) - table.width) * (width / table.size.width)
+            txtElem.height = (tableRowHeight(table, txtElem.tableCell.row) - table.width) * (height / table.size.height)
             txtElem.normPosition = {
                 x: (table.verticalLines[txtElem.tableCell.col + (txtElem.rtl ? 1 : 0)] * (width / table.size.width)) / scaleRatio,
                 y: (table.horizontalLines[txtElem.tableCell.row] * (height / table.size.height)) / scaleRatio
@@ -406,7 +404,7 @@ function Canvas({
                     }
 
                     //add resize indicators:
-                    const bs = RESIZE_TABLE_BOX_SIZE;
+                    const bs = RESIZE_TABLE_BOX_SIZE/2;
                     const os = RESIZE_TABLE_BOX_OFFSET;
 
                     const drawBox = (idStart, x1, y1, x2, y2, color, lWidth) => {
@@ -416,8 +414,7 @@ function Canvas({
                         addLine(idStart + 3, x2, y1, x1, y1, color, lWidth);
                     }
 
-                    const drawArrow = (idStart, x1, y1, color, lWidth, ns, ew,) => {
-                        const l = 2; //length
+                    const drawArrow = (idStart, x1, y1, color, lWidth, ns, ew, l) => {
                         //north
                         addLine(idStart, x1 + ew * l, y1 + ew * l, x1 + ns * l, y1 + ns * l, color, lWidth);
                         addLine(idStart + 1, x1 + ew * l, y1 - ew * l, x1 - ns * l, y1 + ns * l, color, lWidth);
@@ -425,25 +422,46 @@ function Canvas({
 
 
                     if (isTableMode) {
+                        const size = 44;
+                        const hsize = size/2;
+                        const lineW = 4;
+                        const color = "gray"
+                        const aSize = 7
+                        const rs = 8
+
+                        // resize box bottom/right
                         let x1 = arrLast(table.verticalLines) + os;
                         let y1 = arrLast(table.horizontalLines) + os;
-                        let x2 = x1 + bs;
-                        let y2 = y1 + bs;
 
-                        const c = "gray"
-                        drawBox(300, x1, y1, x2, y2, c, 1);
-                        x1 = table.verticalLines[0] - os - bs * 2;
-                        y1 = table.horizontalLines[0] - os - bs * 2;
+                        let x2 = x1+lineW/2
+                        let y2 = y1+lineW/2
+                        addLine(300, x1 , y1, x2,y2, color, lineW)
+                        x1+= rs, x2+= rs, y1+= rs, y2+= rs, 
+                        addLine(301, x1 , y1, x2,y2, color, lineW)
+                        y1-=rs,y2-=rs;
+                        addLine(302, x1 , y1, x2,y2, color, lineW)
+                        y1-=rs,y2-=rs;
+                        addLine(303, x1 , y1, x2,y2, color, lineW)
+                        y1+=2*rs,y2+=2*rs, x1-=rs,x2-=rs;
+                        addLine(304, x1 , y1, x2,y2, color, lineW)
+                         x1-=rs,x2-=rs;
+                        addLine(305, x1 , y1, x2,y2, color, lineW)
 
-                        x2 = x1 + bs * 2;
-                        y2 = y1 + bs * 2;
-                        drawBox(304, x1, y1, x2, y2, c, 1);
-                        addLine(309, x1 + bs, y1 + 2, x1 + bs, y2 - 2, "black", 1);
-                        addLine(310, x1 + 2, y1 + bs, x2 - 2, y1 + bs, "black", 1);
-                        drawArrow(311, x1 + bs, y1 + 2, "black", 1, 1, 0);
-                        drawArrow(313, x1 + bs, y2 - 2, "black", 1, -1, 0);
-                        drawArrow(315, x1 + 2, y1 + bs, "black", 1, 0, 1);
-                        drawArrow(317, x2 - 2, y1 + bs, "black", 1, 0, -1);
+                        // move arrows
+                        
+
+                        x1 = table.verticalLines[0] - os - size;
+                        y1 = table.horizontalLines[0] //- os - size;
+
+                        x2 = x1 + size;
+                        y2 = y1 + size;
+                        //drawBox(304, x1, y1, x2, y2, c, 1);
+                        addLine(309, x1 + hsize, y1 + 2, x1 + hsize, y2 - 2, color, lineW)
+                        addLine(310, x1 + 2, y1 + hsize, x2 - 2, y1 + hsize, color, lineW);
+                        drawArrow(311, x1 + hsize, y1 + 2, color, lineW, 1, 0, aSize);
+                        drawArrow(313, x1 + hsize, y2 - 2, color, lineW, -1, 0,aSize);
+                        drawArrow(315, x1 + 2, y1 + hsize, color, lineW, 0, 1, aSize);
+                        drawArrow(317, x2 - 2, y1 + hsize, color, lineW, 0, -1, aSize);
                     }
                 });
 

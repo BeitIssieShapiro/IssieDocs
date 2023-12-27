@@ -7,7 +7,9 @@ import {
 
 import {
     AppText,
-    availableColorPicker, getColorButton, getColorButtonInt, textSizes
+    IconButton,
+    Spacer,
+    availableColorPicker, getColorButton, getColorButtonInt, semanticColors, textSizes
 } from './elements'
 import FadeInView from './FadeInView';
 import ColorPicker from 'react-native-wheel-color-picker'
@@ -17,6 +19,7 @@ import { translate } from './lang';
 import { LAST_COLORS } from './settings';
 import { Icon } from "./elements"
 import Slider from '@react-native-community/slider';
+import { TextAlignment } from './editor-toolbar';
 
 
 const styles = StyleSheet.create({
@@ -50,7 +53,7 @@ export function MyColorPicker(props) {
         }
     }, [])
 
-    let colorButtonSize = (props.width) / ((availableColorPicker.length + 1) *  1.4);
+    let colorButtonSize = (props.width) / ((availableColorPicker.length + 1) * 1.4);
     if (props.isScreenNarrow) {
         colorButtonSize *= 2;
     }
@@ -188,6 +191,9 @@ export function TextSizePicker(props) {
 
     useEffect(() => props.onHeightChanged(height), [height]);
 
+    const textAlignment = props.textAlignment;
+    const onSelectTextAlignment = props.onSelectTextAlignment;
+
     const textSizesAct = textSizes
     let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
     const _height = buttonSize + 10 + (openMore ? 60 : 0)
@@ -214,19 +220,26 @@ export function TextSizePicker(props) {
                     props.onSelect(size)
                 }))}
 
-            {/* More button */}
-            {getColorButtonInt(() => setOpenMore(val => !val),
-                "white",
-                buttonSize,
-                openMore ? "expand-less" : "expand-more",
-                "",
-                "black"
-            )}
+            <View style={{ height: "100%", width: 100, flexDirection: "column", justifyContent: 'center', alignItems: "center" }}>
+                <Spacer />
+                <View style={{ flexDirection: "row", height: 40, justifyContent: "space-evenly" }}>
+                    <IconButton iconType="font-awesome" icon="align-left" size={25} color={semanticColors.editPhotoButton}
+                        selected={textAlignment == TextAlignment.LEFT} onPress={() => onSelectTextAlignment(TextAlignment.LEFT)} />
 
+                    {props.showCenterTextAlignment && <Spacer />}
+                    {props.showCenterTextAlignment && <IconButton iconType="font-awesome" icon="align-center" size={25} color={semanticColors.editPhotoButton}
+                        selected={textAlignment == TextAlignment.CENTER} onPress={() => onSelectTextAlignment(TextAlignment.CENTER)} />}
+                    <Spacer />
+                    <IconButton iconType="font-awesome" icon="align-right" size={25} color={semanticColors.editPhotoButton}
+                        selected={textAlignment == TextAlignment.RIGHT} onPress={() => onSelectTextAlignment(TextAlignment.RIGHT)} />
+                </View>
+                <IconButton onPress={() => setOpenMore(val => !val)} icon={openMore ? "expand-less" : "expand-more"} color="black" size={40} />
+            </View>
         </View>
+
         <View style={{
-            position:"absolute",
-            top:buttonSize+5,
+            position: "absolute",
+            top: buttonSize + 5,
             flex: 1,
             flexDirection: "row",
             alignItems: "center",
