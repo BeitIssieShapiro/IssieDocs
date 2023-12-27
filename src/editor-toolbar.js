@@ -504,15 +504,19 @@ function EditorToolbar({
         </FadeInView>
 
         {/*View for selecting Table options*/}
-        <FadeInView height={showPickerType === Pickers.TABLE && showPicker ? 150 : 0} style={[styles.pickerView, { flexDirection: rowReverse, top: toolbarHeight, left: 0, right: 0, justifyContent: "space-evenly" }]}>
-            <View style={{ flexDirection: 'column', width: '30%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center', backgroundColor: "#EBECEF", margin: 4, marginEnd: 10, borderRadius: 10, paddingEnd: 10 }}>
-                <NumberSelector narrow={isScreenNarrow()} direction={rowReverse} value={tableRows} setValue={setRows} textIcon={<Icon name="table-rows" size={35} />} />
-                <NumberSelector narrow={isScreenNarrow()} direction={rowReverse} value={tableCols} setValue={setColumns} textIcon={<Icon name="table-rows" style={{ transform: [{ rotate: '90deg' }] }} size={35} isScreenNarrow={isScreenNarrow()} />} />
-            </View>
+        <FadeInView height={showPickerType === Pickers.TABLE && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, 
+            { flexDirection: rowReverse, top: toolbarHeight, left: 0, right: 0, justifyContent: "space-evenly", alignItems:"center" }]}>
+            <ToolbarGroup width={180} height={pickerMenuHeight-15}>
+                <NumberSelector direction={rowReverse} value={tableRows} setValue={setRows} icon="table-rows" />
+            </ToolbarGroup>
+            <ToolbarGroup width={180} height={pickerMenuHeight-15}>
+                <NumberSelector direction={rowReverse} value={tableCols} setValue={setColumns} icon="table-rows" rotateDeg={90} />
+            </ToolbarGroup>
 
-            <View style={{ flexDirection: 'column', width: '17%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center', backgroundColor: "#EBECEF", margin: 4, borderRadius: 10 }}>
+            <ToolbarGroup width={100} height={pickerMenuHeight-15}>
                 {
                     [2, 5, 8].map((borderWidth, i) => (<LineWidthSelector
+                        height={40}
                         key={i}
                         borderWidth={borderWidth}
                         Table={Table}
@@ -521,10 +525,12 @@ function EditorToolbar({
                         color={Table ? Table.color : color}
                     />))
                 }
-            </View>
-            <View style={{ flexDirection: 'column', width: '15%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center', backgroundColor: "#EBECEF", margin: 4, borderRadius: 10 }}>
+            </ToolbarGroup>
+
+            <ToolbarGroup width={100} height={pickerMenuHeight-15}>
                 {
                     ["0,0", "2,2", "4,2"].map((style, i) => (<LineStyleSelector
+                        height={40}
                         key={i}
                         style={style}
                         Table={Table}
@@ -532,11 +538,11 @@ function EditorToolbar({
                         color={Table ? Table.color : color}
                     />))
                 }
+            </ToolbarGroup>
 
-            </View>
-            <View style={{ width: '20%', alignItems: 'center', backgroundColor: "#EBECEF", paddingTop: 10, margin: 4, borderRadius: 10 }}>
-                <AppText style={{ fontSize: isScreenNarrow() ? 20 : 30 }}>{translate(Table ? "DeleteTableCaption" : "ShowTableCaption")}</AppText>
-                {/*<PushButton2 titleOn={translate("Yes")} titleOff={translate("No")} onPressCallback={() => {
+            {/* <View style={{ width: '20%', alignItems: 'center', backgroundColor: "#EBECEF", paddingTop: 10, margin: 4, borderRadius: 10 }}>
+                <AppText style={{ fontSize: isScreenNarrow() ? 20 : 30 }}>{translate(Table ? "DeleteTableCaption" : "ShowTableCaption")}</AppText> */}
+            {/*<PushButton2 titleOn={translate("Yes")} titleOff={translate("No")} onPressCallback={() => {
                     if (Table) {
                         TableActions.delete(Table.id);
                     } else {
@@ -544,38 +550,62 @@ function EditorToolbar({
                     }
                 }} isOn={Table !== undefined} />
                  */}
-                {getIconButton(() => {
+            <ToolbarGroup width={130} height={pickerMenuHeight-15} onPress={()=>{
                     if (Table) {
                         TableActions.delete(Table.id);
                     } else {
                         TableActions.addTable(tableRows, tableCols, color, 2);
                     }
-                }, colors.black, Table?"delete":"add", 75)}
-            </View>
+                }}>
+                <AppText style={{ fontSize: 20, color: semanticColors.actionButton }}>{translate(Table ? "DeleteTableCaption" : "ShowTableCaption")}</AppText>
+                <Icon color={semanticColors.actionButton} name={Table ? "delete-forever" : "add"} size={35} />
+
+            </ToolbarGroup>
         </FadeInView>
 
     </View >
 }
 
 
-function NumberSelector({ caption, value, setValue, textIcon, direction, narrow }) {
+function NumberSelector({ value, setValue, icon, direction, rotateDeg }) {
     return (
         <View style={{ flexDirection: direction, width: '100%', alignItems: "center", justifyContent: "center" }}>
-            {!narrow && textIcon}
-            {!narrow && caption && <AppText style={{ fontSize: 30, marginRight: 10, marginLeft: 10, width: 100, textAlign: "right" }}>{caption + ":"}</AppText>}
-            {!caption && <Spacer />}
-            <IconButton icon="remove" backgroundColor={semanticColors.mainAreaBG} size={50} onPress={() => setValue(value - 1)} />
-            <Text style={{ fontSize: 40, lineHeight: 55, height: 55, width: 55, textAlign: "center", justifyContent: "center" }}>
-                {value || 1}
-            </Text>
-            <IconButton icon="add" backgroundColor={semanticColors.mainAreaBG} size={50} onPress={() => setValue(value + 1)} />
+            <IconButton icon="remove" size={45} onPress={() => setValue(value - 1)} color={semanticColors.actionButton} />
+            <Spacer width={5} />
+            <View>
+                <Text style={{ fontSize: 20, textAlign: "center", justifyContent: "center", color: semanticColors.actionButton }}>
+                    {value || 1}
+                </Text>
+                <Icon name={icon} size={35} color={semanticColors.actionButton} style={rotateDeg && { transform: [{ rotate: rotateDeg + 'deg' }] }} />
+                <Spacer height={7} />
+            </View>
+            <Spacer width={5} />
+            <IconButton icon="add" size={50} onPress={() => setValue(value + 1)} color={semanticColors.actionButton} />
         </View>
     )
-
 }
 
-function LineWidthSelector({ borderWidth, color, Table, TableActions, tableCols, tableRows }) {
-    return <TouchableOpacity style={styles.lineStyle} onPress={() => {
+function ToolbarGroup({ width, height, children, onPress }) {
+    const style = {
+        flexDirection: "row",
+        justifyContent: "space-evenly",
+        alignItems: "center",
+        backgroundColor: semanticColors.mainAreaBG,
+        borderRadius: 5,
+        width,
+        height,
+        //backgroundColor: "#EBECEF", 
+        margin: 4,
+        borderRadius: 10
+    }
+    if (onPress) {
+        return <TouchableOpacity style={style} onPress={onPress}>{children}</TouchableOpacity>
+    }
+    return <View style={style}>{children}</View>
+}
+
+function LineWidthSelector({ borderWidth, color, Table, TableActions, tableCols, tableRows, height }) {
+    return <TouchableOpacity style={{ height, width: 15 }} onPress={() => {
         //add table
         if (!Table) {
             TableActions.addTable(tableCols, tableRows, color, borderWidth, "0,0");
@@ -583,12 +613,12 @@ function LineWidthSelector({ borderWidth, color, Table, TableActions, tableCols,
             TableActions.setBorderWidth(borderWidth);
         }
     }}>
-        <View style={{ backgroundColor: color, height: borderWidth, width: 70 }} />
+        <View style={{ backgroundColor: color, height, width: borderWidth }} />
     </TouchableOpacity>
 }
 
-function LineStyleSelector({ tableCols, tableRows, style, Table, TableActions, color }) {
-    return <TouchableOpacity style={styles.lineStyle} onPress={() => {
+function LineStyleSelector({ tableCols, tableRows, style, Table, TableActions, color, height }) {
+    return <TouchableOpacity style={{ height, width: 15 }} onPress={() => {
         //add table
         if (!Table) {
             TableActions.addTable(tableCols, tableRows, color, 2, style);
@@ -596,8 +626,8 @@ function LineStyleSelector({ tableCols, tableRows, style, Table, TableActions, c
             TableActions.setBorderStyle(style);
         }
     }}>
-        <Svg viewBox="0 0 70 3">
-            <Line x1="0" y1="0" x2="70" y2="0" stroke={color} strokeWidth="3" strokeDasharray={style} />
+        <Svg viewBox={"0 0 3 " + height}>
+            <Line x1="0" y1="0" x2="0" y2={height + ""} stroke={color} strokeWidth="3" strokeDasharray={style} />
         </Svg>
     </TouchableOpacity>
 }
@@ -610,11 +640,7 @@ const styles = StyleSheet.create({
         left: 0,
         borderColor: 'gray',
         borderWidth: 1
-    },
-    lineStyle: {
-        height: 35, width: 70,
-        alignItems: "center", justifyContent: "center"
-    },
+    }
 }
 );
 
