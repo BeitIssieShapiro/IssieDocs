@@ -138,8 +138,9 @@ var strings = {
         "ErrMoveIntoTwoLevelFolder":"לא ניתן להעביר תיקיה לתוך תיקיה שבעצמה בתוך תיקיה",
         "ErrMoveFolderCOntainingFolders":"לא ניתן להעביר תיקיה שבעצמה מכילה תיקיות",
         "SuccessfulMoveFolderMsg":"תיקיה עברה בהצלחה ",
-        "ErrorMoveFolder":"שגיאה בהעברת תיקיה"
-
+        "ErrorMoveFolder":"שגיאה בהעברת תיקיה",
+        "FoldersDisplay":"תצוגת תיקיות",
+        "ReachedEndOfPage":"הגעת לסוף הדף",
     },
     "ar": {
         "StartHere": "إضافة صفحات",
@@ -370,8 +371,9 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "ErrMoveIntoTwoLevelFolder":"Cannot move forder into a folder which is in another folder",
         "ErrMoveFolderCOntainingFolders":"Cannot move folder containing other folders into another folder",
         "SuccessfulMoveFolderMsg":"Successfully moved folder",
-        "ErrorMoveFolder":"Error Moving Folder"
-
+        "ErrorMoveFolder":"Error Moving Folder",
+        "FoldersDisplay": "Folders Display",
+        "ReachedEndOfPage":"Reached End of Page",
     },
 }
 

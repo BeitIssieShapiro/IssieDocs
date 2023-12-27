@@ -12,6 +12,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@dashdoc/react-native-system-sounds": "^1.1.0",
     "@react-native-community/image-editor": "^2.3.0",
     "@react-native-community/slider": "^4.4.2",
     "@react-native-material/core": "^1.3.7",

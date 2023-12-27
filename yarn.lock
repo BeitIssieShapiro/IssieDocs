@@ -773,6 +773,11 @@
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+"@dashdoc/react-native-system-sounds@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.npmjs.org/@dashdoc/react-native-system-sounds/-/react-native-system-sounds-1.1.0.tgz"
+  integrity sha512-+7ShRLgA3vQsRvBqo7G3sm6SokVUXQDFy697TEERMgKcpM4VxxYFpB7E5bSiIU2o7xsXp1P8KNErzYN6LfN07g==
+
 "@egjs/hammerjs@^2.0.17":
   version "2.0.17"
   resolved "https://registry.npmjs.org/@egjs/hammerjs/-/hammerjs-2.0.17.tgz"

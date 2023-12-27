@@ -43,3 +43,11 @@ export function genID() {
   //return Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 5);
   return Math.floor(Math.random() * 1000000000);
 }
+
+export function tableRowHeight(table, row) {
+  return table.horizontalLines[row+1] - table.horizontalLines[row];
+}
+
+export function tableHeight(table) {
+  return arrLast(table.horizontalLines) - table.horizontalLines[0];
+}

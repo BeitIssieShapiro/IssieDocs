@@ -6,6 +6,7 @@ import {
   TouchableOpacity
 } from 'react-native';
 
+import { showMessage } from 'react-native-flash-message';
 
 import { Icon, MARKER_TRANSPARENCY_CONSTANT } from "./elements"
 import RNSketchCanvas from 'issie-sketch-canvas';
@@ -33,7 +34,7 @@ import {
   semanticColors, dimensions
 } from './elements'
 import { translate } from './lang';
-import { arrLast, genID, setNavParam } from './utils';
+import { arrLast, genID, tableRowHeight, setNavParam, tableHeight } from './utils';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { calcDistance, pinchEnd, processPinch, processResize } from './pinch';
@@ -41,6 +42,7 @@ import EditorToolbar from './editor-toolbar';
 import { getElementMovePanResponder } from './editors-panresponders';
 import Canvas, { RESIZE_TABLE_BOX_SIZE } from './canvas';
 import { FileContextMenu } from './file-context-menu';
+import RNSystemSounds from '@dashdoc/react-native-system-sounds';
 
 const shareTimeMs = 2000;
 
@@ -883,6 +885,8 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   incrementRevision = () => this.setState({ revision: this.state.revision + 1 });
+  incrementTextEdirRevision = () => this.setState({ textEditRevision: this.state.textEditRevision + 1 })
+  clearCurrentTextElement = () => this.setState({ currentTextElem: undefined, showTextInput: false, lastKnownGoodText: undefined });
 
   SaveText = (afterDrag) => {
     const elem = this.state.currentTextElem;
@@ -913,7 +917,7 @@ export default class IssieEditPhoto extends React.Component {
       trace("text element not modified")
       this.state.queue.popDraft();
 
-      this.setState({ currentTextElem: undefined });
+      this.clearCurrentTextElement()
       this.incrementRevision();
       // pop draft
       return;
@@ -924,7 +928,7 @@ export default class IssieEditPhoto extends React.Component {
         this.state.queue.popDraft();
 
         trace("empty new elem - ignore")
-        this.setState({ currentTextElem: undefined });
+        this.clearCurrentTextElement();
         this.incrementRevision();
         return;
       }
@@ -944,7 +948,7 @@ export default class IssieEditPhoto extends React.Component {
     } else {
       this.state.queue.pushText(elem);
     }
-    this.setState({ currentTextElem: undefined });
+    this.clearCurrentTextElement();
     this.incrementRevision();
 
     this.Save();
@@ -1288,12 +1292,10 @@ export default class IssieEditPhoto extends React.Component {
       this.SaveText();
     }
     this.setState({
-      showTextInput: false,
       yOffset: this.state.zoom == 1 ? 0 : this.state.yOffset,
-      currentTextElem: undefined,
       mode: Modes.BRUSH,
-
     })
+    this.clearCurrentTextElement()
     this.onEraserChange(true);
   }
 
@@ -1302,11 +1304,10 @@ export default class IssieEditPhoto extends React.Component {
       this.SaveText();
     }
     this.setState({
-      showTextInput: false,
       yOffset: this.state.zoom == 1 ? 0 : this.state.yOffset,
-      currentTextElem: undefined,
       mode: Modes.MARKER,
     })
+    this.clearCurrentTextElement();
     this.onEraserChange(true);
   }
 
@@ -2210,7 +2211,7 @@ export default class IssieEditPhoto extends React.Component {
         currentTextElemId={this.isTextMode() && this.state.showTextInput ? this.state.currentTextElem?.id : undefined}
         strokeWidth={this.isBrushMode() ? strokeWidth : this.state.markerWidth}
         color={this.isMarkerMode() && !this.isEraserMode() ? color + MARKER_TRANSPARENCY_CONSTANT : color}
-        onTableResizeDuringTextEdit={() => this.setState({ textEditRevision: this.state.textEditRevision + 1 })}
+        onTableResizeDuringTextEdit={() => this.incrementTextEdirRevision()}
       />
 
     );
@@ -2321,6 +2322,23 @@ export default class IssieEditPhoto extends React.Component {
     </View>
   }
 
+  revertTextChange = () => {
+    if (this.state.currentTextElem && this.state.lastKnownGoodText) {
+      // try revert last typing and 
+      this.state.currentTextElem.text = this.state.lastKnownGoodText;
+      this.state.currentTextElem.modified = true;
+      this.incrementTextEdirRevision();
+      RNSystemSounds.beep(RNSystemSounds.Beeps.Negative)
+      showMessage({
+        message: translate("ReachedEndOfPage"),
+        type: "warning",
+        animated: true,
+        duration: 5000,
+        position: "top"
+      })
+    }
+  }
+
   getTextInput = (rtl, rowDir) => {
     if (!this.state.currentTextElem) return;
     const r = this.state.scaleRatio;
@@ -2415,7 +2433,8 @@ export default class IssieEditPhoto extends React.Component {
               trace("text change for elem", text)
               this.state.currentTextElem.text = text;
               this.state.currentTextElem.modified = true;
-              this.incrementRevision();
+              this.incrementTextEdirRevision();
+              setTimeout(() => this.setState({ lastKnownGoodText: text }), 500)
             }
           }}
           onContentSizeChange={(event) => {
@@ -2423,31 +2442,48 @@ export default class IssieEditPhoto extends React.Component {
             let dim = event.nativeEvent.contentSize;
             const newHeight = dim.height * this.state.scaleRatio || this.state.fontSize;
             let changed = false
+
+
             if (isTableCell) {
-              if (newHeight != elem.minHeight) {
+              const minHeightDelta = elem.minHeight ? newHeight - elem.minHeight : newHeight;
+              if (minHeightDelta != 0) {
                 trace("onContentSizeChange, minHeight", newHeight != elem.minHeight)
 
-                elem.minHeight = newHeight
+                const table = elem.tableCell && this.canvas.current?.canvasTables().find(t => t.id === elem.tableCell.tableID);
+                // check that minHeight delta may case table out of page and that new minHeight is > current row height
+                if (minHeightDelta > 0 && tableRowHeight(table, elem.tableCell.row) < newHeight &&
+                  arrLast(table.horizontalLines) + minHeightDelta > this.state.pageRect.height) {
+                  this.revertTextChange();
+                  return;
+                }
+
+                elem.minHeight = newHeight;
                 elem.modified = true;
                 changed = true;
               }
             } else {
-              if (dim.width > 0 || newHeight != elem.height) {
-                const newNormWidth = this.width2NormWidth(dim.width, this.state.fontSize);
-                if (elem.normWidth != newNormWidth || newHeight != elem.height) {
-                  trace("onContentSizeChange, width/height", newNormWidth, elem.normWidth != newNormWidth, newHeight, newHeight != elem.height)
+              if (y + newHeight > this.state.pageRect.height) {
+                // new Text height is spilling out of page
+                this.revertTextChange()
+              } else {
+                if (dim.width > 0 || newHeight != elem.height) {
+                  const newNormWidth = this.width2NormWidth(dim.width, this.state.fontSize);
+                  if (elem.normWidth != newNormWidth || newHeight != elem.height) {
+                    trace("onContentSizeChange, width/height", newNormWidth, elem.normWidth != newNormWidth, newHeight, newHeight != elem.height)
 
-                  elem.normWidth = newNormWidth;
-                  elem.height = newHeight;
-                  elem.modified = true;
-                  changed = true;
+                    elem.normWidth = newNormWidth;
+                    elem.height = newHeight;
+                    elem.modified = true;
+                    changed = true;
+                  }
                 }
               }
             }
             if (changed) {
               setTimeout(() => this.incrementRevision(), 1);
             }
-          }}
+          }
+          }
           autoCapitalize={'none'}
           autoCorrect={false}
           multiline={true}
@@ -2484,7 +2520,7 @@ export default class IssieEditPhoto extends React.Component {
           left: isTableCell ? 0 : (DRAG_ICON_SIZE - 2),
           //left: x - (isTableCell ? 0 : (rtl ? textWidth / r : DRAG_ICON_SIZE)),
           top: 0,
-          width: textActualWidth/r,
+          width: textActualWidth / r,
           // width: isTableCell ? textActualWidth / r : Math.max(textActualWidth + 10, 12),
           height: inputTextHeight > 0 ? inputTextHeight / r : 45 / r,
           zIndex: 20,
