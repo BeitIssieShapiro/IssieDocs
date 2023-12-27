@@ -16,7 +16,7 @@ import * as RNFS from 'react-native-fs';
 import {
     registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage, gCurrentLang, getRowDirections,
 } from "./lang.js"
-import { USE_COLOR, getUseColorSetting, EDIT_TITLE, VIEW } from './settings.js'
+import { USE_COLOR, getUseColorSetting, EDIT_TITLE, VIEW, FOLDERS_VIEW } from './settings.js'
 import { setNavParam } from './utils'
 import {
     semanticColors,
@@ -29,6 +29,7 @@ import {
     getRoundedButton,
     IDMenuOptionsStyle,
     SBDraxScrollView,
+    RootFolderPicker,
 } from './elements'
 import {
     Menu,
@@ -812,16 +813,18 @@ export default class FolderGallery extends React.Component {
         fIndex = folders.findIndex(f => f.name == curFolderFullName);
 
         let viewStyle = Settings.get(VIEW.name);
-        let asTiles = viewStyle === VIEW.tiles;
+        const asTiles = viewStyle == View.tiles;
+        let foldersViewStyle = Settings.get(FOLDERS_VIEW.name);
+        const asTree = foldersViewStyle === FOLDERS_VIEW.tree;
 
         let editTitleSetting = Settings.get(EDIT_TITLE.name);
         if (editTitleSetting === undefined) {
             editTitleSetting = EDIT_TITLE.no;
         }
 
-        let treeWidth = this.state.currentFolder ? (this.isLandscape() ? 220 : this.isMobile() ? 100 : 180) : 0;//.36 * this.state.windowSize.width;
+        let treeWidth = this.state.currentFolder ? (this.isLandscape() ? 220 : this.isMobile() ? 100 : 220) : 0;//.36 * this.state.windowSize.width;
         let pagesContainerWidth = this.state.windowSize.width - treeWidth;
-        if (this.state.currentFolder?.parent) {
+        if (this.state.currentFolder?.parent && !asTree) {
             // will show second folders panel
             pagesContainerWidth -= treeWidth;
         }
@@ -885,6 +888,7 @@ export default class FolderGallery extends React.Component {
                             onAbout={() => this.gotoAbout()}
                             onClose={() => this.closeMenu()}
                             onViewChange={(style) => this.setState({ viewStyle: style })}
+                            onFoldersViewChange={(style) => this.setState({ foldersViewStyle: style })}
                             onLanguageChange={(lang) => {
                                 loadLanguage();
                                 setNavParam(this.props.navigation, "lang", gCurrentLang.languageTag)
@@ -1169,7 +1173,7 @@ export default class FolderGallery extends React.Component {
                         }
                         {/* tree */}
                         { /*SubFolders panel*/
-                            this.state.currentFolder?.parent &&
+                            !asTree && this.state.currentFolder?.parent &&
                             <FolderPanel
                                 allowDropFolders={false}
                                 treeWidth={treeWidth}
@@ -1178,11 +1182,13 @@ export default class FolderGallery extends React.Component {
                                 isScreenLow={this.isScreenLow()}
                                 isLandscape={this.isLandscape()}
                                 onUnselectFolder={() => this.unselectFolder()}
-                                onSelectFolder={(f) => this.selectFolder(f)}
+                                onSelectFolder={(id) => {
+                                    const fld = FileSystem.main.findFolderByID(id);
+                                    this.selectFolder(fld)
+                                }}
                                 onRef={(ref => this.foldersTree = ref)}
                                 useColor={this.state.folderColor}
                                 editMode={false}
-
                             />
 
                         }
@@ -1195,15 +1201,22 @@ export default class FolderGallery extends React.Component {
                                 isScreenLow={this.isScreenLow()}
                                 isLandscape={this.isLandscape()}
                                 onUnselectFolder={() => this.unselectFolder()}
-                                onSelectFolder={(f) => this.selectFolder(f)}
+                                onSelectFolder={(id) => {
+                                    const fld = FileSystem.main.findFolderByID(id);
+                                    this.selectFolder(fld)
+                                }}
                                 onMoveFolderUp={(f) => this.moveFolderUp(f)}
                                 onMoveFolderDown={(f) => this.moveFolderDown(f)}
                                 onRef={(ref => this.foldersTree = ref)}
                                 useColor={this.state.folderColor}
                                 editMode={this.state.editMode}
                                 allowDropFolders={true}
+                                asTree={asTree}
                             />
                         }
+
+                        {/* <RootFolderPicker onChangeFolder={(f) => this.selectFolder(f)} folders={folders} currentFolder={this.state.currentFolder} showSubFolders={true} /> */}
+
 
                     </View>
                 </View>

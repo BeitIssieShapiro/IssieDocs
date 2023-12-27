@@ -23,7 +23,8 @@ export function FolderPanel({
     onRef,
     useColor,
     editMode,
-    allowDropFolders
+    allowDropFolders,
+    asTree,
 }) {
     const [homeDragOver, setHomeDragOver] = useState(false)
     const { rtl } = getRowDirections();
@@ -34,7 +35,6 @@ export function FolderPanel({
         curFolderColor = currentFolder.color;
         curFolderIcon = currentFolder.icon;
     }
-
     return <View style={{
 
         flexDirection: "column",
@@ -91,20 +91,26 @@ export function FolderPanel({
                     isLast={i + 1 == arr.length}
                     useColors={useColor}
                     id={f.ID}
+                    asTree={asTree}
+                    subFolders={f.folders}
+                    hasChildren={f.hasChildren}
+                    hideEditButtons={true}
+                    fontSize={asTree ? 24 : 32}
                     name={f.name}
                     color={f.color}
                     icon={f.icon}
                     editMode={editMode}
                     fixedFolder={f.name === FileSystem.DEFAULT_FOLDER.name}
-                    current={currentFolder && (f.ID == currentFolder.ID || f.isParentOf(currentFolder.ID))}
-                    onPress={() => onSelectFolder(f)}
-                    // onLongPress={() => {
-                    //     if (currentFolder && f.name == currentFolder.name)
-                    //         onUnselectFolder()
-                    // }}
+                    currentID={currentFolder.ID}
+                    onPress={(id) => onSelectFolder(id)}
                     onMoveUp={() => onMoveFolderUp(f)}
                     onMoveDown={() => onMoveFolderDown(f)}
                     isLandscape={isLandscape}
+                    onCollapseExpand={(isExpand) => {
+                        if (isExpand) {
+                            f.reloadedIfNeeded();
+                        }
+                    }}
                 />)
 
             }

@@ -81,12 +81,27 @@ export class FileSystem {
     async readFolder(fsFolder, parentFolder) {
         if (fsFolder.isDirectory()) {
             metadata = await this._readFolderMetaData(fsFolder.path)
-            console.log("folder color :" + metadata.color)
+            console.log("readFolder color :" + metadata.color, parentFolder ? "child" : "root")
             let fsf = new FileSystemFolder(fsFolder.name, parentFolder, this, metadata);
             if (parentFolder) {
                 parentFolder.folders.push(fsf);
             } else {
                 this._folders.push(fsf);
+
+                // Verify of has child folders:
+                fsf.hasChildren = false;
+                const childrenPath = fsFolder.path + "/" + FileSystem.FOLDERS_PATH
+                trace("check children", childrenPath)
+                if (RNFS.exists(childrenPath).then((exists) => {
+                    if (exists) {
+                        RNFS.readDir(childrenPath).then(items => {
+                            if (items.length > 0) {
+                                fsf.hasChildren = true;
+                            }
+                        })
+                    }
+                }));
+
             }
         }
     }
@@ -1063,7 +1078,7 @@ export class FileSystemFolder {
                 const foldersBasePath = this._path + "/" + FileSystem.FOLDERS_PATH
                 //trace("read sub folders for ", this.name, " in ", foldersBasePath);
                 const subFoldersItems = await RNFS.readDir(this._fs.basePath + foldersBasePath);
-                //trace("found: ", subFoldersItems.length)
+                trace("found: ", subFoldersItems.length)
                 for (let sfi of subFoldersItems) {
                     await FileSystem.main.readFolder(sfi, this);
                 }

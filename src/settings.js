@@ -6,6 +6,13 @@ export const VIEW = {
     tiles: 2
 }
 
+export const FOLDERS_VIEW = {
+    name: 'foldersViewStyle',
+    column: 1,
+    tree: 2
+}
+
+
 export const LANGUAGE = {
     name: 'language',
     default: 1,

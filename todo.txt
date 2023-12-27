@@ -3,10 +3,10 @@
 - text alignment
 - folders?
 - add tag easy-docs
-- ruller tool
 
 
 Features:
+- ruller tool
 V- Document backup
 V- Marker
 V- folder in folder

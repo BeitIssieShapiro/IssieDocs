@@ -6,24 +6,6 @@
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>IssieDocs</string>
-	<key>UIApplicationSceneManifest</key>
-	<dict>
-		<key>UIApplicationSupportsMultipleScenes</key>
-		<false/>
-		<key>UISceneConfigurations</key>
-		<dict/>
-	</dict>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>IssieDocs</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>openissiedocs</string>
-			</array>
-		</dict>
-	</array>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -44,6 +26,17 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string></string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>IssieDocs</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>openissiedocs</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
@@ -66,7 +59,7 @@
 	<key>NSAppleMusicUsageDescription</key>
 	<string>Allow IssieDocs load images as IssieDocs pages and save pages as images</string>
 	<key>NSCameraUsageDescription</key>
-	<string>The Camera will be used to allow you capture photos that you&apos;ll embed in IssieDocs pages</string>
+	<string>The Camera will be used to allow you capture photos that you'll embed in IssieDocs pages</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Allow IssieDocs save pages as photos in the Photo Library</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -81,12 +74,21 @@
 		<string>Verdana.ttf</string>
 		<string>Verdana_Bold.ttf</string>
 	</array>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict/>
+	</dict>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen2</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>
 	</array>
+	<key>UIRequiresFullScreen</key>
+	<false/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

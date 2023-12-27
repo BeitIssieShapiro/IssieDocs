@@ -19,7 +19,7 @@ import { getFlexEnd, getRowDirection, getRowDirections, getRowReverseDirection, 
 
 import {
     VIEW, EDIT_TITLE, LANGUAGE, TEXT_BUTTON,
-    getSetting, getUseColorSetting
+    getSetting, getUseColorSetting, FOLDERS_VIEW
 } from './settings'
 import { Button } from 'react-native-elements';
 import { FileSystem } from './filesystem';
@@ -33,6 +33,9 @@ export default function SettingsMenu(props) {
 
     let viewStyleSetting = getSetting(VIEW.name, VIEW.list);
     const [viewStyle, setViewStyle] = useState(viewStyleSetting);
+
+    let foldersViewStyleSetting = getSetting(FOLDERS_VIEW.name, FOLDERS_VIEW.column);
+    const [foldersViewStyle, setFoldersViewStyle] = useState(foldersViewStyleSetting);
 
     let langSetting = getSetting(LANGUAGE.name, LANGUAGE.default);
     const [lang, setLang] = useState(langSetting);
@@ -52,6 +55,14 @@ export default function SettingsMenu(props) {
         Settings.set(obj)
         setViewStyle(view);
         props.onViewChange(view);
+    }
+
+    const setFoldersView = (view) => {
+        let obj = {}
+        obj[FOLDERS_VIEW.name] = view;
+        Settings.set(obj)
+        setFoldersViewStyle(view);
+        props.onFoldersViewChange(view);
     }
 
     const setLanguage = (lang) => {
@@ -194,6 +205,18 @@ export default function SettingsMenu(props) {
 
                     ])}
 
+                    {getGroup(props, translate("FoldersDisplay") + ":", [
+                        {
+                            icon: getIcon('view-column', 45), selected: foldersViewStyle == FOLDERS_VIEW.column,
+                            callback: () => setFoldersView(FOLDERS_VIEW.column)
+                        },
+                        {
+                            icon: getIcon('account-tree', 45), selected: foldersViewStyle == FOLDERS_VIEW.tree,
+                            callback: () => setFoldersView(FOLDERS_VIEW.tree)
+                        },
+
+                    ])}
+
                     {getGroup(props, translate("TextInButtons") + ":", [
                         {
                             icon: getButtonWithText(), selected: textBtnSetting === TEXT_BUTTON.yes,
@@ -216,7 +239,7 @@ export default function SettingsMenu(props) {
 
                     <View
                         style={{
-                            width:"100%",
+                            width: "100%",
                             marginTop: 4,
                             borderBottomColor: 'gray',
                             borderBottomWidth: 1,

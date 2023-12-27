@@ -261,7 +261,7 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
             }}>
             {textExist ?
                 <AppText style={{
-                    position: 'absolute', paddingTop: 5, left: 0, width: icon?'80%':'100%', fontSize: textSize, lineHeight: textSize + (isRTL() ? 5 : 0),
+                    position: 'absolute', paddingTop: 5, left: 0, width: icon ? '80%' : '100%', fontSize: textSize, lineHeight: textSize + (isRTL() ? 5 : 0),
                     color: dark ? "white" : semanticColors.titleText, textAlign: 'center'
                 }}>{text}</AppText> : null
             }
@@ -306,7 +306,8 @@ export function IconButton({
     notPressable,
     fontWeight,
     backgroundColor,
-    ensureContrast
+    ensureContrast,
+    rotateDeg,
 }) {
     iconType = iconType || "material";
     let isSvg = iconType === "svg";
@@ -341,28 +342,28 @@ export function IconButton({
         </AppText> :
         isSvg ?
             getSvgIcon(icon, sizeToUse, color) :
-            <Icon name={icon} type={iconType} size={sizeToUse} color={color} />
+            <Icon name={icon} type={iconType} size={sizeToUse} color={color} style={rotateDeg && { transform: [{ rotate: rotateDeg + 'deg' }] }}/>
 
-    return <View style={backgroundContrast}>
-        {notPressable ?
-            <View style={viewStyle}>
-                {viewContent}
-            </View>
-            :
-            <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={onPress}
-                style={viewStyle}
-            >
-                {viewContent}
-            </TouchableOpacity>}
-        {selected ? <View
-            style={{
-                borderBottomColor: needContract ? semanticColors.addButton : color,
-                borderBottomWidth: 6,
-            }}
-        /> : null}
-    </View>
+return <View style={backgroundContrast}>
+    {notPressable ?
+        <View style={viewStyle}>
+            {viewContent}
+        </View>
+        :
+        <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={onPress}
+            style={viewStyle}
+        >
+            {viewContent}
+        </TouchableOpacity>}
+    {selected ? <View
+        style={{
+            borderBottomColor: needContract ? semanticColors.addButton : color,
+            borderBottomWidth: 6,
+        }}
+    /> : null}
+</View>
 }
 
 export function PageImage({ src, multiPage, width, height }) {
@@ -474,7 +475,7 @@ export function RootFolderPicker({ folders, currentFolder, onChangeFolder, showS
     }, [currentFolder])
 
     useEffect(() => {
-        expandedFolders.forEach(folderID=>{
+        expandedFolders.forEach(folderID => {
             const folder = FileSystem.main.findFolderByID(folderID);
             if (folder) {
                 folder.reloadedIfNeeded()
@@ -857,7 +858,7 @@ export function TilesView({
 
 }
 export const globalStyles = StyleSheet.create({
-    
+
     headerTitleStyle: {
         width: '100%',
         fontSize: 30,

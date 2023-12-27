@@ -365,7 +365,7 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "RowsCaption":"Rows",
         "ColsCaption":"Cols",
         "BackupTitle":"Backup",
-        "BackupBtn":"Backup Application",
+        "BackupBtn":"Backup App",
 
         "ErrMoveIntoTwoLevelFolder":"Cannot move forder into a folder which is in another folder",
         "ErrMoveFolderCOntainingFolders":"Cannot move folder containing other folders into another folder",
