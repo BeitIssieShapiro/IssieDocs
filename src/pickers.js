@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useImperativeHandle } from 'react';
+import React, { useCallback, useEffect, useState, useImperativeHandle, Children } from 'react';
 import {
     View,
     StyleSheet,
@@ -220,18 +220,25 @@ export function TextSizePicker(props) {
                     props.onSelect(size)
                 }))}
 
-            <View style={{ height: "100%", width: 100, flexDirection: "column", justifyContent: 'center', alignItems: "center" }}>
+            <View style={{ height: "100%", width: 100, flexDirection: "column", justifyContent: 'center', alignItems: "flex-end" }}>
                 <Spacer />
                 <View style={{ flexDirection: "row", height: 40, justifyContent: "space-evenly" }}>
-                    <IconButton iconType="font-awesome" icon="align-left" size={25} color={semanticColors.editPhotoButton}
-                        selected={textAlignment == TextAlignment.LEFT} onPress={() => onSelectTextAlignment(TextAlignment.LEFT)} />
+                    <Spacer />
+                    <SelectedCircle selected={textAlignment == TextAlignment.LEFT} size={40}>
+                        <Icon type="font-awesome" name="align-left" size={25} color={props.color}
+                            onPress={() => onSelectTextAlignment(TextAlignment.LEFT)} />
+                    </SelectedCircle>
 
                     {props.showCenterTextAlignment && <Spacer />}
-                    {props.showCenterTextAlignment && <IconButton iconType="font-awesome" icon="align-center" size={25} color={semanticColors.editPhotoButton}
-                        selected={textAlignment == TextAlignment.CENTER} onPress={() => onSelectTextAlignment(TextAlignment.CENTER)} />}
+                    {props.showCenterTextAlignment && <SelectedCircle selected={textAlignment == TextAlignment.CENTER} size={40}>
+                        <Icon type="font-awesome" name="align-center" size={25} color={props.color}
+                            selected={textAlignment == TextAlignment.CENTER} onPress={() => onSelectTextAlignment(TextAlignment.CENTER)} /> </SelectedCircle>}
                     <Spacer />
-                    <IconButton iconType="font-awesome" icon="align-right" size={25} color={semanticColors.editPhotoButton}
-                        selected={textAlignment == TextAlignment.RIGHT} onPress={() => onSelectTextAlignment(TextAlignment.RIGHT)} />
+                    <SelectedCircle selected={textAlignment == TextAlignment.RIGHT} size={40}>
+                        <Icon type="font-awesome" name="align-right" size={25} color={props.color}
+                            onPress={() => onSelectTextAlignment(TextAlignment.RIGHT)} />
+                    </SelectedCircle>
+                    <Spacer />
                 </View>
                 <IconButton onPress={() => setOpenMore(val => !val)} icon={openMore ? "expand-less" : "expand-more"} color="black" size={40} />
             </View>
@@ -283,23 +290,28 @@ function getTextSizePicker(color, size, textSize, selected, index, fontSize4Tool
         activeOpacity={0.7}
         key={"" + index}
     >
-        <View style={{
-            backgroundColor: selected ? '#eeeded' : 'transparent',
-            borderRadius: size / 2,
-            width: size,
-            height: size,
-            justifyContent: 'center',
-            alignItems: 'center',
-            alignContent: 'center',
-        }}
-        >
+        <SelectedCircle selected={selected} size={size}>
             <AppText style={{
+                color,
                 fontSize: fontSize4Toolbar(textSize), //* rotateRatio, color: color,
                 textAlignVertical: 'center',
                 lineHeight: fontSize4Toolbar(textSize) + 4
             }}>{translate("A")}</AppText>
-        </View>
+        </SelectedCircle>
     </TouchableOpacity>
+}
+
+function SelectedCircle({ size, children, selected }) {
+    return <View style={{
+        backgroundColor: selected ? '#eeeded' : 'transparent',
+        borderRadius: size / 2,
+        width: size,
+        height: size,
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignContent: 'center',
+    }}
+    >{children}</View>
 }
 
 

@@ -58,6 +58,12 @@ export default class DoQueue {
     this._undoQueue = [];
   }
 
+  pushLine(elem) {
+    this.add({ elem: elem, type: 'line' });
+    this._undoQueue = [];
+
+  }
+
   add(queueElem) {
     this._doneQueue.push(queueElem);
   }
@@ -76,8 +82,8 @@ export default class DoQueue {
 
   popDraft() {
     if (this._doneQueue.length > 0 && arrLast(this._doneQueue).elem?.draft) {
-      trace("pop draft", arrLast(this._doneQueue).elem?.text)
-      this._doneQueue.pop();
+      trace("pop draft", arrLast(this._doneQueue).elem)
+      return this._doneQueue.pop();
     }
   }
 

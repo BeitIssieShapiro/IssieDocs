@@ -1043,6 +1043,7 @@ export default class FolderGallery extends React.Component {
                                         color={curFolderColor}
                                         icon={curFolderIcon}
                                         asTitle={true}
+                                        asTree={asTree}
                                         isLandscape={this.isLandscape()}
                                         editMode={this.state.editMode}
                                         onDelete={() => this.DeleteFolder()}

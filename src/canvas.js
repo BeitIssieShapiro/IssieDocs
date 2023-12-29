@@ -166,6 +166,7 @@ function Canvas({
     }),
         [findElementByLocation, canvasTexts]);
 
+
     // Canvas Update
     useEffect(() => {
         if (!canvas || !canvas.current || !layoutReady)
@@ -178,8 +179,8 @@ function Canvas({
         let canvasImages = [];
         let canvasTables = [];
         let tableCellTexts = [];
+        let canvasLines = []
         let paths = [];
-        let table = undefined;
 
         for (let i = 0; i < q.length; i++) {
             if (q[i].type === 'text' || q[i].type === 'tableCellText') {
@@ -212,6 +213,8 @@ function Canvas({
                 }
             } else if (q[i].type === 'path') {
                 paths.push(q[i].elem);
+            } else if (q[i].type === 'line') {
+                canvasLines.push(q[i].elem);
             } else if (q[i].type === 'image') {
                 canvasImages.push(imageNorm2Scale(q[i].elem, scaleRatio));
             } else if (q[i].type === 'imagePosition') {
@@ -234,6 +237,8 @@ function Canvas({
                 tableCellTexts = tableCellTexts.filter(tct => tct.tableCell.tableID !== q[i].elemID)
             }
         }
+
+        canvasLines
 
         // filter and mutate the cell size and the table's line
         tableCellTexts = tableCellTexts
@@ -345,7 +350,28 @@ function Canvas({
             })),
             new Promise((resolve) => canvas.current?.getPathIds((ids) => {
                 //trace("path ids :", JSON.stringify(ids))
-
+                const addLine = (id, x1, y1, x2, y2, color, lWidth, screenSize, d, dg, ph) => {
+                    canvas.current?.addPath(
+                        {
+                            path: {
+                                id,
+                                color,
+                                width: lWidth,
+                                data: [
+                                    "" + x1 + "," + y1,
+                                    "" + x2 + "," + y2,
+                                    "" + x2 + "," + y2,
+                                ],
+                                dash: d || 0, dashGap: dg || 0, phase: ph || 0
+            
+                            },
+                            size:screenSize,
+                        }, width, height)
+                    const stat = idsStatus.find(idStat => idStat.id == id);
+                    if (stat) {
+                        stat.exists = true;
+                    }
+                }
                 const idsStatus = ids ? ids.map(id => ({ id, exists: false })) : [];
                 paths.forEach(path => {
                     canvas.current?.addPath(path, width, height);
@@ -355,39 +381,21 @@ function Canvas({
                     }
                 });
 
+                
+                canvasLines.forEach(line=>addLine(line.id, line.x1, line.y1, line.x2, line.y2, line.color, line.width, line.screenSize));
+
                 // Draw all tables
                 //trace("draw tables", canvasTables)
                 canvasTables.forEach((table) => {
 
-                    const size = table.size;
+                    const tableSize = table.size;
                     const tableWidth = table.width; // isTableMode ? table.width  : table.width;
                     let style = table.style || "0,0";
                     const styles = style.split(",")
                     const dash = parseInt(styles[0] * tableWidth); //isTableMode ? 10 : 0;
                     const dashGap = parseInt(styles[1] * tableWidth) //isTableMode ? 5 :0 style[1];
 
-                    const addLine = (id, x1, y1, x2, y2, color, lWidth, d, dg, ph) => {
-                        canvas.current?.addPath(
-                            {
-                                path: {
-                                    id,
-                                    color,
-                                    width: lWidth,
-                                    data: [
-                                        "" + x1 + "," + y1,
-                                        "" + x2 + "," + y2,
-                                        "" + x2 + "," + y2,
-                                    ],
-                                    dash: d || 0, dashGap: dg || 0, phase: ph || 0
 
-                                },
-                                size
-                            }, width, height)
-                        const stat = idsStatus.find(idStat => idStat.id == id);
-                        if (stat) {
-                            stat.exists = true;
-                        }
-                    }
 
                     for (let c = 0; c < table.verticalLines.length; c++) {
                         let x = table.verticalLines[c];
@@ -404,26 +412,26 @@ function Canvas({
                     }
 
                     //add resize indicators:
-                    const bs = RESIZE_TABLE_BOX_SIZE/2;
+                    const bs = RESIZE_TABLE_BOX_SIZE / 2;
                     const os = RESIZE_TABLE_BOX_OFFSET;
 
-                    const drawBox = (idStart, x1, y1, x2, y2, color, lWidth) => {
-                        addLine(idStart, x1, y1, x1, y2, color, lWidth);
-                        addLine(idStart + 1, x1, y2, x2, y2, color, lWidth);
-                        addLine(idStart + 2, x2, y2, x2, y1, color, lWidth);
-                        addLine(idStart + 3, x2, y1, x1, y1, color, lWidth);
-                    }
+                    // const drawBox = (idStart, x1, y1, x2, y2, color, lWidth) => {
+                    //     addLine(idStart, x1, y1, x1, y2, color, lWidth);
+                    //     addLine(idStart + 1, x1, y2, x2, y2, color, lWidth);
+                    //     addLine(idStart + 2, x2, y2, x2, y1, color, lWidth);
+                    //     addLine(idStart + 3, x2, y1, x1, y1, color, lWidth);
+                    // }
 
-                    const drawArrow = (idStart, x1, y1, color, lWidth, ns, ew, l) => {
+                    const drawArrow = (idStart, x1, y1, color, lWidth, ns, ew, l, screenSize) => {
                         //north
-                        addLine(idStart, x1 + ew * l, y1 + ew * l, x1 + ns * l, y1 + ns * l, color, lWidth);
-                        addLine(idStart + 1, x1 + ew * l, y1 - ew * l, x1 - ns * l, y1 + ns * l, color, lWidth);
+                        addLine(idStart, x1 + ew * l, y1 + ew * l, x1 + ns * l, y1 + ns * l, color, lWidth, screenSize);
+                        addLine(idStart + 1, x1 + ew * l, y1 - ew * l, x1 - ns * l, y1 + ns * l, color, lWidth, screenSize);
                     }
 
 
                     if (isTableMode) {
                         const size = 44;
-                        const hsize = size/2;
+                        const hsize = size / 2;
                         const lineW = 4;
                         const color = "gray"
                         const aSize = 7
@@ -433,22 +441,22 @@ function Canvas({
                         let x1 = arrLast(table.verticalLines) + os;
                         let y1 = arrLast(table.horizontalLines) + os;
 
-                        let x2 = x1+lineW/2
-                        let y2 = y1+lineW/2
-                        addLine(300, x1 , y1, x2,y2, color, lineW)
-                        x1+= rs, x2+= rs, y1+= rs, y2+= rs, 
-                        addLine(301, x1 , y1, x2,y2, color, lineW)
-                        y1-=rs,y2-=rs;
-                        addLine(302, x1 , y1, x2,y2, color, lineW)
-                        y1-=rs,y2-=rs;
-                        addLine(303, x1 , y1, x2,y2, color, lineW)
-                        y1+=2*rs,y2+=2*rs, x1-=rs,x2-=rs;
-                        addLine(304, x1 , y1, x2,y2, color, lineW)
-                         x1-=rs,x2-=rs;
-                        addLine(305, x1 , y1, x2,y2, color, lineW)
+                        let x2 = x1 + lineW / 2
+                        let y2 = y1 + lineW / 2
+                        addLine(300, x1, y1, x2, y2, color, lineW, tableSize)
+                        x1 += rs, x2 += rs, y1 += rs, y2 += rs,
+                            addLine(301, x1, y1, x2, y2, color, lineW, tableSize)
+                        y1 -= rs, y2 -= rs;
+                        addLine(302, x1, y1, x2, y2, color, lineW, tableSize)
+                        y1 -= rs, y2 -= rs;
+                        addLine(303, x1, y1, x2, y2, color, lineW, tableSize)
+                        y1 += 2 * rs, y2 += 2 * rs, x1 -= rs, x2 -= rs;
+                        addLine(304, x1, y1, x2, y2, color, lineW, tableSize)
+                        x1 -= rs, x2 -= rs;
+                        addLine(305, x1, y1, x2, y2, color, lineW, tableSize)
 
                         // move arrows
-                        
+
 
                         x1 = table.verticalLines[0] - os - size;
                         y1 = table.horizontalLines[0] //- os - size;
@@ -456,12 +464,12 @@ function Canvas({
                         x2 = x1 + size;
                         y2 = y1 + size;
                         //drawBox(304, x1, y1, x2, y2, c, 1);
-                        addLine(309, x1 + hsize, y1 + 2, x1 + hsize, y2 - 2, color, lineW)
-                        addLine(310, x1 + 2, y1 + hsize, x2 - 2, y1 + hsize, color, lineW);
-                        drawArrow(311, x1 + hsize, y1 + 2, color, lineW, 1, 0, aSize);
-                        drawArrow(313, x1 + hsize, y2 - 2, color, lineW, -1, 0,aSize);
-                        drawArrow(315, x1 + 2, y1 + hsize, color, lineW, 0, 1, aSize);
-                        drawArrow(317, x2 - 2, y1 + hsize, color, lineW, 0, -1, aSize);
+                        addLine(309, x1 + hsize, y1 + 2, x1 + hsize, y2 - 2, color, lineW, tableSize)
+                        addLine(310, x1 + 2, y1 + hsize, x2 - 2, y1 + hsize, color, lineW, tableSize);
+                        drawArrow(311, x1 + hsize, y1 + 2, color, lineW, 1, 0, aSize, tableSize);
+                        drawArrow(313, x1 + hsize, y2 - 2, color, lineW, -1, 0, aSize, tableSize);
+                        drawArrow(315, x1 + 2, y1 + hsize, color, lineW, 0, 1, aSize, tableSize);
+                        drawArrow(317, x2 - 2, y1 + hsize, color, lineW, 0, -1, aSize, tableSize);
                     }
                 });
 

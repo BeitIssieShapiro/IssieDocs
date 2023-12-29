@@ -1,5 +1,5 @@
 V- Text: while typing text and reaching page bottom?
-- move icon
+V- move icon
 V- text alignment
 - folders - enlarge click area, bread cramb
 - add tag easy-docs

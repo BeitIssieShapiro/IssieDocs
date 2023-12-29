@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Icon, IconButton, getIconButton } from "./elements"
 import { View, TouchableOpacity, Alert } from 'react-native';
 import {
@@ -20,15 +20,33 @@ export default function FolderNew(props) {
 
     let caption = normalizeTitle(props.name);
     let captionLimit = props.isLandscape ? 12 : 9;
-    const asTitle = props.asTitle || props.asTree
+    const asTitle =  props.asTitle || props.asTree;
+    const locatedAtTitle = props.asTitle;
     const sidePadding = props.asTree ? 5 : 30;
     const isCurrent = props.currentID == props.id || (!props.asTree && props.currentID?.startsWith(props.id + "/"));
+    const isChild = props.id.includes("/");
+    const nonTreeTitle = (!locatedAtTitle || (locatedAtTitle && !props.asTree));
+
+    useEffect(() => {
+        //expand the current
+        if (props.asTree && props.currentID !== props.id && props.currentID?.startsWith(props.id + "/")) {
+            // it is a child of this
+            setExpanded(true)
+        }
+    }, [props.currentID]);
+
+
+    const expandTreeElement = () => {
+        props.onCollapseExpand(!expanded)
+        setExpanded(prev => !prev);
+    }
 
     if (!asTitle && caption.length > captionLimit) {
         caption = caption.substring(0, captionLimit) + '...';
     }
 
     const { row, rowReverse, rtl } = getRowDirections();
+    const height = asTitle ? dimensions.folderAsTitleHeight : dimensions.folderHeight
     return (
         <React.Fragment>
             <FolderDraxView
@@ -40,10 +58,11 @@ export default function FolderNew(props) {
                 dragOver={dragOver}
                 allowDropFolders={props.allowDropFolders}
 
+
                 style={{
                     alignContent: 'center',
                     width: props.width || '100%',
-                    height: asTitle ? dimensions.folderAsTitleHeight : dimensions.folderHeight,
+                    height,
                     borderRadius: 7,
                 }}>
 
@@ -91,14 +110,15 @@ export default function FolderNew(props) {
                                     alignItems: "center",
                                 }}
                             >
-                                {props.asTree && props.hasChildren ?
-                                    <IconButton onPress={() => {
-                                        props.onCollapseExpand(!expanded)
-                                        setExpanded(prev => !prev);
-                                    }}
-                                        color={semanticColors.titleText} icon="expand-more" size={25} rotateDeg={expanded ? undefined : -90} /> :
-                                    <Spacer width={25} />}
-                                <View style={[{
+                                {props.asTree &&
+                                    <TouchableOpacity style={{ height, width: 25, justifyContent: "center" }} onPress={expandTreeElement}>
+                                        {props.hasChildren && <IconButton onPress={expandTreeElement} color={semanticColors.titleText} icon="expand-more" size={25} rotateDeg={expanded ? undefined : -90} />}
+                                    </TouchableOpacity>
+                                }
+
+                                {props.asTree && nonTreeTitle && isChild && <Spacer/>}
+
+                                {nonTreeTitle && <View style={[{
                                     alignContent: 'center', alignItems: 'center', justifyContent: 'center',
                                     paddingBottom: '5%', height: '100%'
                                 }, rtl ? { paddingRight: sidePadding } : { paddingLeft: sidePadding }]}>
@@ -111,10 +131,10 @@ export default function FolderNew(props) {
                                             {props.icon && props.icon.length > 0 ? <FolderIcon name={props.icon} size={20} color={'white'} /> : null}
                                         </View>
                                     </View>
-                                </View>
+                                </View> }
 
                                 <Spacer width={8} />
-                                {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: props.fontSize || 32, lineHeight: 60 }]}>{caption}</AppText>}
+                                {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: props.fontSize || 32, lineHeight: 60 }]}>{nonTreeTitle ? caption:props.id.replace("/", " \\ ")}</AppText>}
                             </View> :
                             /**
                              * Side Panel View or overview
@@ -163,8 +183,8 @@ export default function FolderNew(props) {
                         isLast={i + 1 == arr.length}
                         useColors={props.useColors}
                         id={f.ID}
-                        asTree={false}
-                        asTitle={true}
+                        asTree={true}
+                        asTitle={false}
                         hideEditButtons={true}
                         fontSize={24}
                         name={f.name}

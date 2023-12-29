@@ -193,17 +193,6 @@ export default function SettingsMenu(props) {
                             callback: () => setLanguage(LANGUAGE.english)
                         }
                     ])}
-                    {getGroup(props, translate("Display") + ":", [
-                        {
-                            icon: getIcon('view-list', 45), selected: viewStyleSetting == VIEW.list,
-                            callback: () => setView(VIEW.list)
-                        },
-                        {
-                            icon: getIcon('view-module', 45), selected: viewStyleSetting == VIEW.tiles,
-                            callback: () => setView(VIEW.tiles)
-                        },
-
-                    ])}
 
                     {getGroup(props, translate("FoldersDisplay") + ":", [
                         {
@@ -216,6 +205,19 @@ export default function SettingsMenu(props) {
                         },
 
                     ])}
+
+                    {getGroup(props, translate("Display") + ":", [
+                        {
+                            icon: getIcon('view-list', 45), selected: viewStyleSetting == VIEW.list,
+                            callback: () => setView(VIEW.list)
+                        },
+                        {
+                            icon: getIcon('view-module', 45), selected: viewStyleSetting == VIEW.tiles,
+                            callback: () => setView(VIEW.tiles)
+                        },
+
+                    ])}
+
 
                     {getGroup(props, translate("TextInButtons") + ":", [
                         {

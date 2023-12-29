@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, Fragment, useState } from "react";
-import { View, StyleSheet, TouchableOpacity, Text} from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import Svg, { Line } from "react-native-svg";
 import { AppText, availableColorPicker, dimensions, getEraserIcon, getIconButton, IconButton, semanticColors, Spacer, textSizes } from "./elements";
 import FadeInView from "./FadeInView";
@@ -24,6 +24,7 @@ const Pickers = {
     ZOOM: 7,
     COLOR: 8,
     VOICE: 9,
+    RULER: 10,
 }
 
 const availableBrushSize = [
@@ -61,6 +62,7 @@ function EditorToolbar({
     onEraser,
     onTextMode,
     onImageMode,
+    onRulerMode,
     onAddImageFromCamera,
     onAddImageFromGallery,
     onMarkerMode,
@@ -81,6 +83,7 @@ function EditorToolbar({
     isMarkerMode,
     isTableMode,
     isVoiceMode,
+    isRulerMode,
     Table,
     fontSize,
     color,
@@ -221,6 +224,13 @@ function EditorToolbar({
                     onVoiceMode();
                 }
                 break;
+            case Pickers.RULER:
+                if (isRulerMode) {
+                    if (!pickerTypeChanged) setShowPicker(oldVal => !oldVal);
+                } else {
+                    onRulerMode();
+                }
+                break;
         }
     }, [isVoiceMode, isTextMode, isBrushMode, isTableMode, isImageMode, isMarkerMode, showPickerType, showPicker]);
 
@@ -274,7 +284,10 @@ function EditorToolbar({
 
     const extMenu = [
         <IconButton onPress={() => onModeButtonClick(Pickers.MARKER)} color={isMarkerMode ? color : semanticColors.editPhotoButton}
-        iconType="material-community" icon="marker" size={50} iconSize={45} selected={isMarkerMode}  ensureContrast={true} />,
+            iconType="material-community" icon="marker" size={50} iconSize={45} selected={isMarkerMode} ensureContrast={true} />,
+
+        <IconButton onPress={() => onModeButtonClick(Pickers.RULER)} color={isRulerMode ? color : semanticColors.editPhotoButton}
+            iconType="material-community" icon="ruler" size={50} iconSize={45} selected={isRulerMode} ensureContrast={true} />,
 
         <IconButton onPress={() => onModeButtonClick(Pickers.IMAGE)} color={semanticColors.editPhotoButton}
             icon={"image"} size={55} iconSize={45} selected={isImageMode} />,
@@ -461,7 +474,7 @@ function EditorToolbar({
         />
 
         {/*View for selecting brush size*/}
-        <FadeInView height={showPickerType === Pickers.BRUSH && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
+        <FadeInView height={(showPickerType === Pickers.BRUSH || showPickerType === Pickers.RULER) && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 {
                     availableBrushSize.map((size, i) => <BrushSizePicker

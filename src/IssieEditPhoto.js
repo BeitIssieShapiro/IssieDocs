@@ -54,6 +54,7 @@ const Modes = {
   MARKER: 5,
   TABLE: 6,
   VOICE: 7,
+  RULER: 8,
 }
 
 const TABLE_LINE_MARGIN = 20;
@@ -191,8 +192,19 @@ export default class IssieEditPhoto extends React.Component {
       onMoveShouldSetPanResponder: (evt, gestureState) => false, //this._shouldMove(evt, gestureState),
       onPanResponderTerminationRequest: (evt, gestureState) => !this._shouldMove(evt, gestureState),
       onShouldBlockNativeResponder: () => true,
+      onPanResponderStart: (evt, gestureState) => {
+        const touches = evt.nativeEvent.touches;
+        if (this.isRulerMode() && touches.length == 1 && !this._ruler) {
+
+          const x = Math.floor(this.screen2NormX(touches[0].pageX)*this.state.scaleRatio);
+          const y = Math.floor(this.screen2NormY(touches[0].pageY)*this.state.scaleRatio);
+          this.RulerStart(x, y);
+          this._ruler = true;
+          return;
+        }
+      },
       onPanResponderMove: (evt, gestureState) => {
-        let touches = evt.nativeEvent.touches;
+        const touches = evt.nativeEvent.touches;
         if (touches.length == 2) {
           trace("pinching")
           this._pinch = true;
@@ -248,6 +260,15 @@ export default class IssieEditPhoto extends React.Component {
             tableResizeState: newState
           });
         }
+
+        if (this.isRulerMode() && this._ruler) {
+          const x = Math.floor(this.screen2NormX(touches[0].pageX)*this.state.scaleRatio);
+          const y = Math.floor(this.screen2NormY(touches[0].pageY)*this.state.scaleRatio);
+
+
+          this.RulerMove(x, y);
+        }
+
       },
 
       onPanResponderRelease: (evt, gestureState) => {
@@ -263,6 +284,12 @@ export default class IssieEditPhoto extends React.Component {
 
           return;
         }
+
+        if (this._ruler) {
+          this._ruler = false;
+          this.SaveRuler()
+        }
+
 
         if (this._pinch) {
           this._pinch = false;
@@ -510,6 +537,7 @@ export default class IssieEditPhoto extends React.Component {
   isImageMode = () => this.state.mode === Modes.IMAGE;
   isVoiceMode = () => this.state.mode === Modes.VOICE;
   isEraserMode = () => this.state.eraseMode;
+  isRulerMode = () => this.state.mode === Modes.RULER;
 
 
   _shouldMove = (evt, gestureState) => {
@@ -522,7 +550,7 @@ export default class IssieEditPhoto extends React.Component {
         return true;
       }
       return !this.state.showTextInput;//
-    } else if (this.isImageMode() || this.isTableMode()) {
+    } else if (this.isImageMode() || this.isTableMode() || this.isRulerMode()) {
       return true;
     } else if (this.isBrushMode() || this.isMarkerMode()) {
       return false;
@@ -873,6 +901,55 @@ export default class IssieEditPhoto extends React.Component {
   incrementRevision = () => this.setState({ revision: this.state.revision + 1 });
   incrementTextEdirRevision = () => this.setState({ textEditRevision: this.state.textEditRevision + 1 })
   clearCurrentTextElement = () => this.setState({ currentTextElem: undefined, showTextInput: false, lastKnownGoodText: undefined });
+
+  RulerStart = (normX, normY) => {
+    trace("Ruler start")
+
+    const elem = {
+      draft: true,
+      id: genID(),
+      x1: normX, y1: normY,
+      x2: normX, y2: normY,
+      color: this.state.brushColor,
+      screenSize: this.state.pageRect,
+      //todo stroke-width
+      width: this.state.strokeWidth,
+    }
+
+    this.setState({
+      ruler: { initialNormX: normX, initialNormY: normY},
+      currentRulerElem: elem,
+    });
+
+    this.state.queue.pushLine(elem);
+  }
+
+  RulerMove = (normX, normY) => {
+    trace("RulerMove")
+    const elem = this.state.currentRulerElem;
+    if (elem) {
+      trace("RulerMove", normX, normY)
+      elem.x2 = normX, elem.y2 = normY;
+      this.incrementRevision();
+    }
+  }
+
+  SaveRuler = () => {
+    const elem = this.state.currentRulerElem;
+    this.state.queue.popDraft();
+    if (elem) {
+      this.setState({
+        ruler: undefined,
+        currentRulerElem: undefined,
+      });
+    }
+    delete elem.draft;
+    this.state.queue.pushLine(elem);
+    this.Save();
+    this.incrementRevision();
+    trace("save ruler")
+  }
+
 
   SaveText = (afterDrag) => {
     const elem = this.state.currentTextElem;
@@ -1281,16 +1358,20 @@ export default class IssieEditPhoto extends React.Component {
     trace("onEraserChange, set to", eraserOn)
   }
 
-  onBrushMode = () => {
+  onBrushMode = (isRuler) => {
     if (this.isTextMode()) {
       this.SaveText();
     }
     this.setState({
       yOffset: this.state.zoom == 1 ? 0 : this.state.yOffset,
-      mode: Modes.BRUSH,
+      mode: isRuler ? Modes.RULER : Modes.BRUSH,
     })
     this.clearCurrentTextElement()
     this.onEraserChange(true);
+  }
+
+  onRulerMode = () => {
+    this.onBrushMode(true);
   }
 
   onMarkerMode = () => {
@@ -1548,6 +1629,8 @@ export default class IssieEditPhoto extends React.Component {
           eraseMode={this.state.eraseMode}
           onEraser={() => this.onEraserButton()}
 
+          onRulerMode={() => this.onRulerMode()}
+          isRulerMode={this.isRulerMode()}
           onTextMode={() => this.onTextMode()}
           onImageMode={() => {
             if (this.isTextMode()) {
@@ -1610,7 +1693,7 @@ export default class IssieEditPhoto extends React.Component {
           onSelectColor={(color) => {
             trace("setColor", color, this.state.mode)
             const updateState = { eraseMode: false }
-            if (this.isBrushMode()) updateState.brushColor = color;
+            if (this.isBrushMode() || this.isRulerMode()) updateState.brushColor = color;
             if (this.isMarkerMode()) updateState.markerColor = color;
             this.updateInputText();
             if (this.isTableMode()) {
@@ -2168,11 +2251,19 @@ export default class IssieEditPhoto extends React.Component {
     return (onlyIfChanged ? undefined : table);
   }
 
-  getColorByMode = () => this.isBrushMode() ? this.state.brushColor :
-    this.isMarkerMode() ? this.state.markerColor :
-      this.isTableMode() ? this.state.tableColor :
-        this.state.textColor;
-
+  getColorByMode = () => {
+    switch (this.state.mode) {
+      case Modes.BRUSH:
+      case Modes.RULER:
+        return this.state.brushColor;
+      case Modes.MARKER:
+        return this.state.markerColor;
+      case Modes.TABLE:
+        return this.state.tableColor;
+      default:
+        return this.state.textColor;
+    }
+  }
 
 
 
@@ -2276,8 +2367,8 @@ export default class IssieEditPhoto extends React.Component {
           height: DRAG_ICON_SIZE,
           zIndex: 25
         }}>
-        
-        <Icon type="material-community" name="resize-bottom-right" size={DRAG_ICON_SIZE} color="gray"/>
+
+        <Icon type="material-community" name="resize-bottom-right" size={DRAG_ICON_SIZE} color="gray" />
       </View>
       <View
         style={{
@@ -2424,7 +2515,7 @@ export default class IssieEditPhoto extends React.Component {
     const left = x - (isTableCell ? 0 : (rtl ? textWidth / r : DRAG_ICON_SIZE));
 
 
-    
+
     return (
       <View style={{
         position: 'absolute',
@@ -2438,7 +2529,7 @@ export default class IssieEditPhoto extends React.Component {
       }}>
         {!isTableCell && <View {...this._panResponderElementMove.panHandlers}
           style={{ top: -5, zIndex: 25 }}>
-          <Icon type="material-community" name="arrow-all"  size={DRAG_ICON_SIZE} color="gray"/>
+          <Icon type="material-community" name="arrow-all" size={DRAG_ICON_SIZE} color="gray" />
         </View>}
 
         <TextInput

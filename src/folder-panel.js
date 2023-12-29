@@ -92,6 +92,7 @@ export function FolderPanel({
                     useColors={useColor}
                     id={f.ID}
                     asTree={asTree}
+                    asTitle={false}
                     subFolders={f.folders}
                     hasChildren={f.hasChildren}
                     hideEditButtons={true}
