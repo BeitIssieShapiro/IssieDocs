@@ -132,7 +132,8 @@ export function MyColorPicker(props) {
 
             <View style={{
                 position: "absolute",
-                top: 95, right: 65,
+                justifyContent:"flex-end",
+                top: 95, right: isScreenNarrow()?0:"15%",
                 //height: colorButtonSize * 3 + 30,
                 width: colorButtonSize * 2 + 30,
                 flexWrap: "wrap",
@@ -184,7 +185,7 @@ export function MyColorPicker(props) {
 
 const textSizeVolumeBarSize = 400;
 const dotSize = 30;
-
+const minTextSizePickerCollapsedSize = 80;
 export function TextSizePicker(props) {
     const [openMore, setOpenMore] = useState(false);
     const [height, setHeight] = useState(0);
@@ -196,22 +197,23 @@ export function TextSizePicker(props) {
 
     const textSizesAct = textSizes
     let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
-    const _height = buttonSize + 10 + (openMore ? 60 : 0)
-    const gap = props.maxHeight - _height;
+    const simpleToolbarHeight = Math.max(buttonSize + 10, minTextSizePickerCollapsedSize);
+    const totalHeight = simpleToolbarHeight + (openMore ? 60 : 0);
+
     useEffect(() => {
         if (props.open) {
-            setHeight(Math.min(_height, props.maxHeight))
+            setHeight(totalHeight)
         } else {
             setHeight(0);
         }
     }, [openMore, props.open]);
 
 
-    return <FadeInView height={props.open ? Math.min(_height, props.maxHeight) : 0}
+    return <FadeInView height={props.open ? Math.min(totalHeight, props.maxHeight) : 0}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
         <View
             style={{
-                flexDirection: 'row', width: '100%', height: buttonSize + 5,
+                flexDirection: 'row', width: '100%', height: simpleToolbarHeight,
                 justifyContent: 'space-evenly', alignContent: 'center'
             }}>
             {textSizesAct.map((size, i) => getTextSizePicker(props.color, buttonSize, size, size === props.size, i, props.fontSize4Toolbar,
@@ -232,7 +234,8 @@ export function TextSizePicker(props) {
                     {props.showCenterTextAlignment && <Spacer />}
                     {props.showCenterTextAlignment && <SelectedCircle selected={textAlignment == TextAlignment.CENTER} size={40}>
                         <Icon type="font-awesome" name="align-center" size={25} color={props.color}
-                            selected={textAlignment == TextAlignment.CENTER} onPress={() => onSelectTextAlignment(TextAlignment.CENTER)} /> </SelectedCircle>}
+                            selected={textAlignment == TextAlignment.CENTER} onPress={() => onSelectTextAlignment(TextAlignment.CENTER)} />
+                    </SelectedCircle>}
                     <Spacer />
                     <SelectedCircle selected={textAlignment == TextAlignment.RIGHT} size={40}>
                         <Icon type="font-awesome" name="align-right" size={25} color={props.color}
@@ -245,8 +248,9 @@ export function TextSizePicker(props) {
         </View>
 
         <View style={{
-            position: "absolute",
-            top: buttonSize + 5,
+            height: 80,
+            paddingTop:10,
+            paddingBottom:2,
             flex: 1,
             flexDirection: "row",
             alignItems: "center",

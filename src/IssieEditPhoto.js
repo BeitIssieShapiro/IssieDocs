@@ -196,8 +196,8 @@ export default class IssieEditPhoto extends React.Component {
         const touches = evt.nativeEvent.touches;
         if (this.isRulerMode() && touches.length == 1 && !this._ruler) {
 
-          const x = Math.floor(this.screen2NormX(touches[0].pageX)*this.state.scaleRatio);
-          const y = Math.floor(this.screen2NormY(touches[0].pageY)*this.state.scaleRatio);
+          const x = Math.floor(this.screen2NormX(touches[0].pageX) * this.state.scaleRatio);
+          const y = Math.floor(this.screen2NormY(touches[0].pageY) * this.state.scaleRatio);
           this.RulerStart(x, y);
           this._ruler = true;
           return;
@@ -262,8 +262,8 @@ export default class IssieEditPhoto extends React.Component {
         }
 
         if (this.isRulerMode() && this._ruler) {
-          const x = Math.floor(this.screen2NormX(touches[0].pageX)*this.state.scaleRatio);
-          const y = Math.floor(this.screen2NormY(touches[0].pageY)*this.state.scaleRatio);
+          const x = Math.floor(this.screen2NormX(touches[0].pageX) * this.state.scaleRatio);
+          const y = Math.floor(this.screen2NormY(touches[0].pageY) * this.state.scaleRatio);
 
 
           this.RulerMove(x, y);
@@ -917,7 +917,7 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     this.setState({
-      ruler: { initialNormX: normX, initialNormY: normY},
+      ruler: { initialNormX: normX, initialNormY: normY },
       currentRulerElem: elem,
     });
 
@@ -937,16 +937,25 @@ export default class IssieEditPhoto extends React.Component {
   SaveRuler = () => {
     const elem = this.state.currentRulerElem;
     this.state.queue.popDraft();
+
+
     if (elem) {
       this.setState({
         ruler: undefined,
         currentRulerElem: undefined,
       });
+      if (elem.x1 === elem.x2 && elem.y1 === elem.y2) {
+        trace("empty Ruler")
+        return;
+      }
+
+
+
+      delete elem.draft;
+      this.state.queue.pushLine(elem);
+      this.Save();
+      this.incrementRevision();
     }
-    delete elem.draft;
-    this.state.queue.pushLine(elem);
-    this.Save();
-    this.incrementRevision();
     trace("save ruler")
   }
 

@@ -350,22 +350,29 @@ function Canvas({
             })),
             new Promise((resolve) => canvas.current?.getPathIds((ids) => {
                 //trace("path ids :", JSON.stringify(ids))
-                const addLine = (id, x1, y1, x2, y2, color, lWidth, screenSize, d, dg, ph) => {
+                const addLine = (id, x1, y1, x2, y2, color, lWidth, screenSize, d, dg, ph, x3, y3) => {
+                    const data = [
+                        "" + x1 + "," + y1,
+                        "" + x2 + "," + y2,
+                    ]
+                    if (x3) {
+                        data.push("" + x3 + "," + y3);
+                        data.push("" + x3 + "," + y3);
+                    } else {
+                        data.push("" + x2 + "," + y2);
+                    }
+
                     canvas.current?.addPath(
                         {
                             path: {
                                 id,
                                 color,
                                 width: lWidth,
-                                data: [
-                                    "" + x1 + "," + y1,
-                                    "" + x2 + "," + y2,
-                                    "" + x2 + "," + y2,
-                                ],
+                                data,
                                 dash: d || 0, dashGap: dg || 0, phase: ph || 0
-            
+
                             },
-                            size:screenSize,
+                            size: screenSize,
                         }, width, height)
                     const stat = idsStatus.find(idStat => idStat.id == id);
                     if (stat) {
@@ -381,8 +388,8 @@ function Canvas({
                     }
                 });
 
-                
-                canvasLines.forEach(line=>addLine(line.id, line.x1, line.y1, line.x2, line.y2, line.color, line.width, line.screenSize));
+
+                canvasLines.forEach(line => addLine(line.id, line.x1, line.y1, line.x2, line.y2, line.color, line.width, line.screenSize));
 
                 // Draw all tables
                 //trace("draw tables", canvasTables)
@@ -402,13 +409,13 @@ function Canvas({
                         addLine(table.id + 100 + c,
                             x, table.horizontalLines[0],
                             x, arrLast(table.horizontalLines),
-                            table.color, tableWidth, dash, dashGap, tablePhase);
+                            table.color, tableWidth, tableSize, dash, dashGap, tablePhase);
                     }
 
                     for (let r = 0; r < table.horizontalLines.length; r++) {
                         const y = table.horizontalLines[r];
                         addLine(table.id + 200 + r, table.verticalLines[0], y, arrLast(table.verticalLines), y,
-                            table.color, tableWidth, dash, dashGap, tablePhase);
+                            table.color, tableWidth, tableSize, dash, dashGap, tablePhase);
                     }
 
                     //add resize indicators:
@@ -423,9 +430,16 @@ function Canvas({
                     // }
 
                     const drawArrow = (idStart, x1, y1, color, lWidth, ns, ew, l, screenSize) => {
-                        //north
-                        addLine(idStart, x1 + ew * l, y1 + ew * l, x1 + ns * l, y1 + ns * l, color, lWidth, screenSize);
-                        addLine(idStart + 1, x1 + ew * l, y1 - ew * l, x1 - ns * l, y1 + ns * l, color, lWidth, screenSize);
+                        if (ns != 0) {
+                        addLine(idStart, x1 + ns * l,  y1 + ns * l, x1 + ew * l, y1 + ew * l,color, lWidth, screenSize, 
+                            undefined, undefined,undefined,
+                            x1 - ns * l, y1 + ns * l);
+                        } else {
+                            addLine(idStart, x1 + ew * l, y1 + ew * l, x1, y1, color, lWidth, screenSize, 
+                                undefined, undefined,undefined,
+                                x1+ ew * l , y1 - ew * l);
+    
+                        }
                     }
 
 

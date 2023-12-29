@@ -1,15 +1,16 @@
 V- Text: while typing text and reaching page bottom?
 V- move icon
 V- text alignment
-- folders - enlarge click area, bread cramb
+V- folders - enlarge click area, bread cramb
 - add tag easy-docs
 
 
 Features:
-- ruller tool
+V- ruller tool
 V- Document backup
 V- Marker
 V- folder in folder
+V- text alignment
 
 - Table:
   - while type text in a cell and reaching the cell bottom: ?
@@ -26,6 +27,18 @@ V- remove 2Talk - AAC
 
 
 Bugs:
+V- In hebrew+tree and expand is wrong
+V- table is not drawing
+V- table icon is not nice
+
+- iPhone: 
+V- color selection too large
+V- expand in textsize is too low
+V- table toolbar is too large
+
+- 
+
+
 V- when in text edit, selecting different font adds space
 V- in very large text size, the yellow is wrong and wrap the text after exiting
 

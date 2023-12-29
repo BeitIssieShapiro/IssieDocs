@@ -20,7 +20,7 @@ export default function FolderNew(props) {
 
     let caption = normalizeTitle(props.name);
     let captionLimit = props.isLandscape ? 12 : 9;
-    const asTitle =  props.asTitle || props.asTree;
+    const asTitle = props.asTitle || props.asTree;
     const locatedAtTitle = props.asTitle;
     const sidePadding = props.asTree ? 5 : 30;
     const isCurrent = props.currentID == props.id || (!props.asTree && props.currentID?.startsWith(props.id + "/"));
@@ -112,11 +112,11 @@ export default function FolderNew(props) {
                             >
                                 {props.asTree &&
                                     <TouchableOpacity style={{ height, width: 25, justifyContent: "center" }} onPress={expandTreeElement}>
-                                        {props.hasChildren && <IconButton onPress={expandTreeElement} color={semanticColors.titleText} icon="expand-more" size={25} rotateDeg={expanded ? undefined : -90} />}
+                                        {props.hasChildren && <IconButton onPress={expandTreeElement} color={semanticColors.titleText} icon="expand-more" size={25} rotateDeg={expanded ? undefined : (rtl ? 90 : -90)} />}
                                     </TouchableOpacity>
                                 }
 
-                                {props.asTree && nonTreeTitle && isChild && <Spacer/>}
+                                {props.asTree && nonTreeTitle && isChild && <Spacer />}
 
                                 {nonTreeTitle && <View style={[{
                                     alignContent: 'center', alignItems: 'center', justifyContent: 'center',
@@ -131,10 +131,10 @@ export default function FolderNew(props) {
                                             {props.icon && props.icon.length > 0 ? <FolderIcon name={props.icon} size={20} color={'white'} /> : null}
                                         </View>
                                     </View>
-                                </View> }
+                                </View>}
 
                                 <Spacer width={8} />
-                                {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: props.fontSize || 32, lineHeight: 60 }]}>{nonTreeTitle ? caption:props.id.replace("/", " \\ ")}</AppText>}
+                                {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: props.fontSize || 32, lineHeight: 60 }]}>{nonTreeTitle ? caption : props.id.replace("/", " \\ ")}</AppText>}
                             </View> :
                             /**
                              * Side Panel View or overview

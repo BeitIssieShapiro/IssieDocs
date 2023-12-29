@@ -82,7 +82,7 @@ export default class DoQueue {
 
   popDraft() {
     if (this._doneQueue.length > 0 && arrLast(this._doneQueue).elem?.draft) {
-      trace("pop draft", arrLast(this._doneQueue).elem)
+      // trace("pop draft", arrLast(this._doneQueue).elem)
       return this._doneQueue.pop();
     }
   }

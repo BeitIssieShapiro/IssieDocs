@@ -529,8 +529,15 @@ function EditorToolbar({
         </FadeInView>
 
         {/*View for selecting Table options*/}
-        <FadeInView height={showPickerType === Pickers.TABLE && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView,
-        { flexDirection: rowReverse, top: toolbarHeight, left: 0, right: 0, justifyContent: "space-evenly", alignItems: "center" }]}>
+        <FadeInView
+            height={showPickerType === Pickers.TABLE && showPicker ? (isScreenNarrow() ? 2 * pickerMenuHeight : pickerMenuHeight) : 0}
+            style={[
+                styles.pickerView,
+                {
+                    flexDirection: rowReverse, top: toolbarHeight, left: 0, right: 0,
+                    justifyContent: "space-evenly", alignItems: "center", flexWrap: "wrap"
+                }
+            ]}>
             <ToolbarGroup width={180} height={pickerMenuHeight - 15}>
                 <NumberSelector direction={rowReverse} value={tableRows} setValue={setRows} icon="table-rows" />
             </ToolbarGroup>
