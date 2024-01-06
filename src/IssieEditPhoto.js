@@ -771,7 +771,7 @@ export default class IssieEditPhoto extends React.Component {
             //let fileName = FileSystem.getFileNameFromPath(filePath, true);
             let lastSlashPos = filePath.lastIndexOf('/');
             let folder = filePath.substring(0, lastSlashPos);
-            console.log("save thumbnail to folder", folder)
+            //console.log("save thumbnail to folder", folder)
             this.canvas.current?.canvas.current.export("jpg", { width: 80, height: 120 }, (err, path) => {
               console.log("save thumbnail", path)
               FileSystem.main.saveThumbnail(path, this.props.route.params.page);

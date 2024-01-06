@@ -3,6 +3,8 @@ V- move icon
 V- text alignment
 V- folders - enlarge click area, bread cramb
 - add tag easy-docs
+- after adding text, thumbnail is not Updated
+
 
 
 Features:

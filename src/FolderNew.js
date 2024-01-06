@@ -251,13 +251,15 @@ export function FolderDraxView(props) {
                 }
             } else {
                 FileSystem.main.movePage(payload.item, props.id)
-                    .then(() => showMessage({
-                        message: fTranslate("SuccessfulMovePageMsg", payload.item.name, props.name),
-                        type: "success",
-                        animated: true,
-                        duration: 5000,
+                    .then(() => {
+                        const intoName = props.id === FileSystem.DEFAULT_FOLDER.ID ? translate("DefaultFolder") : props.id;
+                        showMessage({
+                            message: fTranslate("SuccessfulMovePageMsg", payload.item.name, intoName),
+                            type: "success",
+                            animated: true,
+                            duration: 5000,
+                        })
                     })
-                    )
             }
         }}
         style={[props.style, {

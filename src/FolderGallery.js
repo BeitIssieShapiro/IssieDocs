@@ -813,7 +813,7 @@ export default class FolderGallery extends React.Component {
         fIndex = folders.findIndex(f => f.name == curFolderFullName);
 
         let viewStyle = Settings.get(VIEW.name);
-        const asTiles = viewStyle == View.tiles;
+        const asTiles = viewStyle == VIEW.tiles;
         let foldersViewStyle = Settings.get(FOLDERS_VIEW.name);
         const asTree = foldersViewStyle === FOLDERS_VIEW.tree;
 

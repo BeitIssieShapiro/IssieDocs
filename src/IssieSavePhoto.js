@@ -328,7 +328,6 @@ export default class IssieSavePhoto extends React.Component {
     try {
       this.saveInProgress = true;
       let folder = this.state.folder;
-
       if (!folder) {
         folder = FileSystem.main.findFolderByID(FileSystem.DEFAULT_FOLDER.name);
       }
@@ -338,7 +337,6 @@ export default class IssieSavePhoto extends React.Component {
         await FileSystem.main.addFolder(FileSystem.DEFAULT_FOLDER.name, FileSystem.DEFAULT_FOLDER.icon, FileSystem.DEFAULT_FOLDER.color, false, false, false);
         folder = FileSystem.main.findFolderByID(FileSystem.DEFAULT_FOLDER.name);
       }
-
 
       let folderID = folder.ID;
       trace("save to folder", folder.ID, folder.path)

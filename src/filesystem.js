@@ -40,7 +40,7 @@ export class FileSystem {
     }
     static DEFAULT_FOLDER_METADATA = { icon: '', color: 'gray' };
     static FOLDERS_PATH = "folders";
-    static DEFAULT_FOLDER = { ID: 'Default', name: 'Default', color: 'gray', icon: '', svgIcon: 'home', hideName: true };
+    static DEFAULT_FOLDER = { ID: 'Default', name: 'Default', path: 'Default', color: 'gray', icon: '', svgIcon: 'home', hideName: true };
 
     _folders = [];
     _listeners = [];
@@ -81,7 +81,7 @@ export class FileSystem {
     async readFolder(fsFolder, parentFolder) {
         if (fsFolder.isDirectory()) {
             metadata = await this._readFolderMetaData(fsFolder.path)
-            console.log("readFolder color :" + metadata.color, parentFolder ? "child" : "root")
+            console.log("readFolder", fsFolder.name, " color :" + metadata.color, parentFolder ? "child" : "root")
             let fsf = new FileSystemFolder(fsFolder.name, parentFolder, this, metadata);
             if (parentFolder) {
                 parentFolder.folders.push(fsf);
