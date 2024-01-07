@@ -381,12 +381,14 @@ export class FileSystem {
 
         // delete existing thumbnail
         try {
-            if (page && page.thumbnail.endsWith(THUMBNAIL_SUFFIX))
+            if (page && page.thumbnail.endsWith(THUMBNAIL_SUFFIX)) {
+                trace("delete prev. thumbnail", page.thumbnail)
                 await RNFS.unlink(page.thumbnail);
+            }
         } catch (e) { }
 
         if (!page) {
-            console.log("cp", uri, thumbnailPath);
+            console.log("copy thumbnail:", uri, thumbnailPath);
             return RNFS.copyFile(uri, thumbnailPath).then(() => {
                 this._notify(pathObj.folderId);
             });
@@ -1110,12 +1112,32 @@ export class FileSystemFolder {
                     }
                 }
 
-                //find thumbnail
-                let thumbnail = items.find(f => f.name.startsWith(name + ".") && f.name.endsWith(THUMBNAIL_SUFFIX));
+                //find the newest thumbnail
+                let thumbnails = items.filter(f => f.name.startsWith(name + ".") && f.name.endsWith(THUMBNAIL_SUFFIX));
+                let newestFile;
 
-                if (thumbnail) {
-                    sheet.setThumbnail(thumbnail.path);
+                if (thumbnails.length > 1) {
+                    let newestTS = -1;
+                    for (let tnfi of thumbnails) {
+                        if (tnfi.ctime.valueOf() > newestTS) {
+                            trace("thumbnail", tnfi.name, tnfi.ctime.valueOf(), newestTS)
+                            newestTS = tnfi.ctime.valueOf();
+                            newestFile = tnfi;
+                        }
+                    }
+                    // delete old thumbnails
+                    thumbnails.filter(tn => tn.name !== newestFile.name).forEach(tn => {
+                        trace("delete old thumbnail", tn.name);
+                        RNFS.unlink(tn.path)
+                    });
+
                     //console.log("found tn", thumbnail.path)
+                } else if (thumbnails.length == 1) {
+                    newestFile = thumbnails[0];
+                }
+                if (newestFile) {
+                    trace("selected thumbnail", newestFile.name)
+                    sheet.setThumbnail(newestFile.path);
                 }
                 sheet.lastUpdate = lastUpdate;
 
