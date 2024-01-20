@@ -4,7 +4,7 @@ V- text alignment
 V- folders - enlarge click area, bread cramb
 - add tag easy-docs
 - after adding text, thumbnail is not Updated
-
+- after removing one row from table and then undo the number stays as before undo
 
 
 Features:

@@ -293,7 +293,7 @@ function EditorToolbar({
             icon={"image"} size={55} iconSize={45} selected={isImageMode} />,
 
         <IconButton onPress={() => onModeButtonClick(Pickers.TABLE)} color={isTableMode ? (Table ? Table.color : color) : semanticColors.editPhotoButton}
-            iconType="font-awesome" icon="table" size={45} iconSize={45} selected={isTableMode} ensureContrast={true} />,
+            iconType="font-awesome" icon="table" size={42} iconSize={42} selected={isTableMode} ensureContrast={true} />,
 
         // <IconButton onPress={() => onModeButtonClick(Pickers.VOICE)} color={semanticColors.editPhotoButton}
         //     icon="record-voice-over" size={55} iconSize={45} selected={isVoiceMode} />,

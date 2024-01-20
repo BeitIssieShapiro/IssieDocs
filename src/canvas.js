@@ -179,7 +179,6 @@ function Canvas({
         let canvasImages = [];
         let canvasTables = [];
         let tableCellTexts = [];
-        let canvasLines = []
         let paths = [];
 
         for (let i = 0; i < q.length; i++) {
@@ -214,7 +213,7 @@ function Canvas({
             } else if (q[i].type === 'path') {
                 paths.push(q[i].elem);
             } else if (q[i].type === 'line') {
-                canvasLines.push(q[i].elem);
+                paths.push(q[i].elem);
             } else if (q[i].type === 'image') {
                 canvasImages.push(imageNorm2Scale(q[i].elem, scaleRatio));
             } else if (q[i].type === 'imagePosition') {
@@ -237,8 +236,6 @@ function Canvas({
                 tableCellTexts = tableCellTexts.filter(tct => tct.tableCell.tableID !== q[i].elemID)
             }
         }
-
-        canvasLines
 
         // filter and mutate the cell size and the table's line
         tableCellTexts = tableCellTexts
@@ -265,7 +262,7 @@ function Canvas({
                 }
 
                 //verify the cell in the table exists:
-                if (txtElem.tableCell.col >= table.verticalLines.length - 1 &&
+                if (txtElem.tableCell.col >= table.verticalLines.length - 1 ||
                     txtElem.tableCell.row >= table.horizontalLines.length - 1) return false;
 
                 // Adjust table rows to minHeight: 
@@ -381,15 +378,17 @@ function Canvas({
                 }
                 const idsStatus = ids ? ids.map(id => ({ id, exists: false })) : [];
                 paths.forEach(path => {
-                    canvas.current?.addPath(path, width, height);
-                    const stat = idsStatus.find(idStat => idStat.id == path.path.id);
-                    if (stat) {
-                        stat.exists = true;
+                    if (path.x1 > 0) { //temp way to know it is a line
+                        addLine(path.id, path.x1, path.y1, path.x2, path.y2, path.color, path.width, path.screenSize);
+                    } else {
+                        canvas.current?.addPath(path, width, height);
+                        const stat = idsStatus.find(idStat => idStat.id == path.path.id);
+                        if (stat) {
+                            stat.exists = true;
+                        }
                     }
                 });
 
-
-                canvasLines.forEach(line => addLine(line.id, line.x1, line.y1, line.x2, line.y2, line.color, line.width, line.screenSize));
 
                 // Draw all tables
                 //trace("draw tables", canvasTables)
@@ -431,14 +430,14 @@ function Canvas({
 
                     const drawArrow = (idStart, x1, y1, color, lWidth, ns, ew, l, screenSize) => {
                         if (ns != 0) {
-                        addLine(idStart, x1 + ns * l,  y1 + ns * l, x1 + ew * l, y1 + ew * l,color, lWidth, screenSize, 
-                            undefined, undefined,undefined,
-                            x1 - ns * l, y1 + ns * l);
+                            addLine(idStart, x1 + ns * l, y1 + ns * l, x1 + ew * l, y1 + ew * l, color, lWidth, screenSize,
+                                undefined, undefined, undefined,
+                                x1 - ns * l, y1 + ns * l);
                         } else {
-                            addLine(idStart, x1 + ew * l, y1 + ew * l, x1, y1, color, lWidth, screenSize, 
-                                undefined, undefined,undefined,
-                                x1+ ew * l , y1 - ew * l);
-    
+                            addLine(idStart, x1 + ew * l, y1 + ew * l, x1, y1, color, lWidth, screenSize,
+                                undefined, undefined, undefined,
+                                x1 + ew * l, y1 - ew * l);
+
                         }
                     }
 

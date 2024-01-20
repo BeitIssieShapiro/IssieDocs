@@ -133,7 +133,7 @@ export default class IssieEditPhoto extends React.Component {
         doMove(moveObj);
       },
       shouldMoveElement: () => {
-        const ret = (this.isTextMode() && this.state.showTextInput ||
+        const ret = (this.isTextMode() && this.state.showTextInput && this.state.currentTextElem ||
           this.isImageMode() && this.state.currentImageElem)
         return !!ret;
       },
@@ -154,8 +154,6 @@ export default class IssieEditPhoto extends React.Component {
         }
       },
       dragIconSize: DRAG_ICON_SIZE,
-      rtl: isRTL(),
-
     })
 
     this._panResponderElementResize = PanResponder.create({
@@ -902,7 +900,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   incrementRevision = () => this.setState({ revision: this.state.revision + 1 });
-  incrementTextEdirRevision = () => this.setState({ textEditRevision: this.state.textEditRevision + 1 })
+  incrementTextEditRevision = () => this.setState({ textEditRevision: this.state.textEditRevision + 1 })
   clearCurrentTextElement = () => this.setState({ currentTextElem: undefined, showTextInput: false, lastKnownGoodText: undefined });
 
   RulerStart = (normX, normY) => {
@@ -1598,41 +1596,51 @@ export default class IssieEditPhoto extends React.Component {
     this.changeZoomOrOffset({ zoom: newZoom, xOffset: this.state.xOffset, yOffset: this.state.yOffset });
   }
 
+  afterUndoRedo = () => {
+    const currTableID = this.state.currentTable?.id;
+    trace("after Undo-redo 1", currTableID)
+    this.setState({
+      revision: this.state.revision + 1,
+      currentImageElem: undefined,
+      currentTable: undefined,
+      showTextInput: false,
+    }, () => {
+      if (currTableID) {
+        setTimeout(() => {
+          const currentTable = this.canvas.current?.canvasTables().find(t => t.id === currTableID);
+          trace("after Undo-redo", currTableID, currentTable)
+          if (currentTable) {
+            this.setState({ currentTable });
+          }
+          trace("after Undo-redo", currTableID, currentTable)
+        });
+      }
+    })
+    this.Save();
+  }
+
+
+
   render() {
     const { row, rowReverse, flexEnd, textAlign, rtl, direction } = getRowDirections();
 
+    const warnningBackground = this.state.viewportBackgroundColor? {backgroundColor:this.state.viewportBackgroundColor }: {};
+
     return (
       <View style={styles.mainContainer}
-        onLayout={this.onLayout}>
+        onLayout={this.onLayout} >
         <EditorToolbar
           ref={this.toolbarRef}
           windowSize={this.state.windowSize}
           onGoBack={() => this.props.navigation.goBack()}
           onUndo={() => {
             this.state.queue.undo();
-            const currTableID = this.state.currentTable?.id;
-
-            this.setState({
-              revision: this.state.revision + 1,
-              currentImageElem: undefined,
-              currentTable: undefined,
-              showTextInput: false,
-            }, this.state.currentTable ? () => this.setState({
-              currentTable: this.canvas.current?.canvasTables().find(t => t.id === currTableID)
-            }) : undefined);
-            this.Save();
+            this.afterUndoRedo();
           }}
           canRedo={this.state.queue.canRedo()}
           onRedo={() => {
             this.state.queue.redo();
-            const currTableID = this.state.currentTable?.id;
-            this.setState({
-              revision: this.state.revision + 1,
-              currentTable: undefined
-            }, this.state.currentTable ? () => this.setState({
-              currentTable: this.canvas.current?.canvasTables().find(t => t.id === currTableID)
-            }) : undefined);
-            this.Save();
+            this.afterUndoRedo();
           }}
           Table={this.state.currentTable}
           fontSize4Toolbar={this.fontSize4Toolbar}
@@ -1747,26 +1755,30 @@ export default class IssieEditPhoto extends React.Component {
 
 
         {/** NavigationArea */}
-        <View style={styles.navigationArea}>
-          {this.state.showBusy &&
+        < View style={[styles.navigationArea, warnningBackground]} >
+          {
+            this.state.showBusy &&
             <View style={globalStyles.busy}>
               <ActivityIndicator size="large" /></View>
           }
           {/* page more menu */}
           {/* <View style={[{ position: 'absolute', top: 0 }, rtl ? { left: 0 } : { right: 0 }]}> */}
-          {this.getMoreMenu()}
+          {this.getMoreMenu()
+          }
           {/* </View> */}
-          {[
-            this.getArrow(LEFT),
-            this.getArrow(TOP),
-            this.getArrow(RIGHT),
-            this.getArrow(BOTTOM)
-          ]}
+          {
+            [
+              this.getArrow(LEFT),
+              this.getArrow(TOP),
+              this.getArrow(RIGHT),
+              this.getArrow(BOTTOM)
+            ]}
 
-          <View {...this._panResponderMove.panHandlers} style={[styles.leftMargin, {
-            width: this.state.sideMargin,
-          }]} />
-          <View {...this._panResponderMove.panHandlers} style={[styles.rightMargin, {
+          < View {...this._panResponderMove.panHandlers} style={
+            [styles.leftMargin, warnningBackground, {
+              width: this.state.sideMargin,
+            }]} />
+          <View {...this._panResponderMove.panHandlers} style={[styles.rightMargin, warnningBackground, {
             width: this.state.sideMargin,
           }]} />
 
@@ -1877,9 +1889,9 @@ export default class IssieEditPhoto extends React.Component {
               </View> :
               null
           }
-        </View>
+        </View >
         {/** Bottom Margin */}
-        <View style={styles.bottomMargin} />
+        < View style={[styles.bottomMargin, warnningBackground]} />
 
         {
           //debug only
@@ -2295,7 +2307,7 @@ export default class IssieEditPhoto extends React.Component {
         revision={this.state.revision}
         zoom={this.state.zoom} //important for path to be in correct size
         scaleRatio={this.state.scaleRatio}
-        isBrushMode={this.isBrushMode() || this.isMarkerMode()}
+        isBrushMode={this.isBrushMode() || this.isMarkerMode() || (this.isRulerMode && this.isEraserMode())}
         isImageMode={this.isImageMode()}
         isTableMode={this.isTableMode()}
         Table={this.state.currentTable}
@@ -2312,7 +2324,7 @@ export default class IssieEditPhoto extends React.Component {
         currentTextElemId={this.isTextMode() && this.state.showTextInput ? this.state.currentTextElem?.id : undefined}
         strokeWidth={this.isBrushMode() ? strokeWidth : this.state.markerWidth}
         color={this.isMarkerMode() && !this.isEraserMode() ? color + MARKER_TRANSPARENCY_CONSTANT : color}
-        onTableResizeDuringTextEdit={() => this.incrementTextEdirRevision()}
+        onTableResizeDuringTextEdit={() => this.incrementTextEditRevision()}
       />
 
     );
@@ -2423,19 +2435,21 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   revertTextChange = () => {
-    if (this.state.currentTextElem && this.state.lastKnownGoodText) {
+    if (this.state.currentTextElem) { // && this.state.lastKnownGoodText) {
       // try revert last typing and 
-      this.state.currentTextElem.text = this.state.lastKnownGoodText;
-      this.state.currentTextElem.modified = true;
-      this.incrementTextEdirRevision();
+      // this.state.currentTextElem.text = this.state.lastKnownGoodText;
+      // this.state.currentTextElem.modified = true;
+      // this.incrementTextEditRevision();
       RNSystemSounds.beep(RNSystemSounds.Beeps.Negative)
       showMessage({
         message: translate("ReachedEndOfPage"),
         type: "warning",
         animated: true,
         duration: 5000,
-        position: "top"
+        position: "center"
       })
+      this.setState({viewportBackgroundColor: "#F0AD4E"})
+      setTimeout(()=>this.setState({viewportBackgroundColor: undefined}), 5000)
     }
   }
 
@@ -2551,7 +2565,7 @@ export default class IssieEditPhoto extends React.Component {
               trace("text change for elem", text)
               this.state.currentTextElem.text = text;
               this.state.currentTextElem.modified = true;
-              this.incrementTextEdirRevision();
+              this.incrementTextEditRevision();
               setTimeout(() => this.setState({ lastKnownGoodText: text }), 500)
             }
           }}
@@ -2583,17 +2597,16 @@ export default class IssieEditPhoto extends React.Component {
               if (y + newHeight > this.state.pageRect.height) {
                 // new Text height is spilling out of page
                 this.revertTextChange()
-              } else {
-                if (dim.width > 0 || newHeight != elem.height) {
-                  const newNormWidth = this.width2NormWidth(dim.width, this.state.fontSize);
-                  if (elem.normWidth != newNormWidth || newHeight != elem.height) {
-                    trace("onContentSizeChange, width/height", newNormWidth, elem.normWidth != newNormWidth, newHeight, newHeight != elem.height)
+              }
+              if (dim.width > 0 || newHeight != elem.height) {
+                const newNormWidth = this.width2NormWidth(dim.width, this.state.fontSize);
+                if (elem.normWidth != newNormWidth || newHeight != elem.height) {
+                  trace("onContentSizeChange, width/height", newNormWidth, elem.normWidth != newNormWidth, newHeight, newHeight != elem.height)
 
-                    elem.normWidth = newNormWidth;
-                    elem.height = newHeight;
-                    elem.modified = true;
-                    changed = true;
-                  }
+                  elem.normWidth = newNormWidth;
+                  elem.height = newHeight;
+                  elem.modified = true;
+                  changed = true;
                 }
               }
             }

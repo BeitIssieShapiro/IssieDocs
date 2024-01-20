@@ -1,5 +1,6 @@
 import { PanResponder } from "react-native";
 import { trace } from "./log";
+import { isRTL } from "./lang";
 
 
 export function getElementMovePanResponder({
@@ -10,8 +11,6 @@ export function getElementMovePanResponder({
     screen2ViewPortY,
     onRelease,
     dragIconSize,
-    rtl,
-    textMode
 }) {
     return PanResponder.create({
         onStartShouldSetPanResponder: (evt, gestureState) => shouldMoveElement(evt, gestureState),
@@ -27,6 +26,11 @@ export function getElementMovePanResponder({
             let xOffset = getState().xOffset;
 
             let repeat = undefined;
+            const textElem = getState().currentTextElem;
+            const rtl = textElem?.rtl || isRTL();
+
+            const textWidth = textElem?.normWidth || 0;
+            const textHeight = textElem?.height || 0;
 
             // X -Axis
             const rightDiff = x - getState().viewPortRect.width;
@@ -37,17 +41,17 @@ export function getElementMovePanResponder({
                 repeat = { xOffset: -5 }
             }
 
-            trace("move left", "text width", getState().inputTextWidth * getState().scaleRatio)
+            trace("move left", "text width", textWidth * getState().scaleRatio)
             if (rtl &&
                 (
-                    xOffset < 0 && x - getState().inputTextWidth * getState().scaleRatio - 20 < 0 ||
+                    xOffset < 0 && x - textWidth * getState().scaleRatio - 20 < 0 ||
                     x < dragIconSize / 2
                 )) {
                 trace("move-elem hit left side", rightDiff)
                 if (xOffset < 0) {
                     xOffset += 5
                     repeat = { xOffset: 5 }
-                    x = getState().inputTextWidth * getState().scaleRatio + 20;
+                    x = textWidth * getState().scaleRatio + 20;
                 } else {
                     x = dragIconSize / 2;
                 }
@@ -64,9 +68,10 @@ export function getElementMovePanResponder({
             }
 
             // Y- Axis
-            const bottomDiff = y - getState().viewPortRect.height + getState().keyboardHeight + getState().inputTextHeight - dragIconSize / 2
+            const bottomDiff = y - getState().viewPortRect.height + getState().keyboardHeight + textHeight - dragIconSize / 2
+            trace("move bottomDiff", bottomDiff)
             if (bottomDiff > 0) {
-                //trace("move elem - hit bottom")
+                trace("move elem - hit bottom")
                 y -= bottomDiff;
                 yOffset -= 5;
                 repeat = { yOffset: -5 }
