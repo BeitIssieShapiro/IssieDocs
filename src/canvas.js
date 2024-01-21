@@ -32,7 +32,8 @@ function Canvas({
     currentTextElemId,
     strokeWidth,
     color,
-    onTableResizeDuringTextEdit
+    onTableResizeDuringTextEdit,
+    metaDataPath,
 }, ref) {
     const [canvas, setCanvas] = useState(React.createRef(null));
     const [texts, setTexts] = useState([]);
@@ -46,6 +47,10 @@ function Canvas({
             color,
         })
     }, [strokeWidth, color]);
+
+    useEffect(() => {
+        canvas.current?.clearImages();
+    }, [metaDataPath]);
 
     const txtElemNorm2Scale = useCallback((txtElem) => {
         const scaleElem = {

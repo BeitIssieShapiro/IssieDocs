@@ -5,8 +5,8 @@
 #import <React/RCTView.h>
 #import <React/UIView+React.h>
 #import "Utility.h"
-#import <AVFoundation/AVFoundation.h>
-#import <Vision/Vision.h>
+// #import <AVFoundation/AVFoundation.h>
+// #import <Vision/Vision.h>
 //#import "G8Tesseract.h"
 //#import "G8RecognizedBlock.h"
 
@@ -310,92 +310,93 @@
     return newArray;
 }
 
-- (NSArray<NSDictionary *> *)detectTextsInBackgroundImage {
-    if (_backgroundImage == nil) {
-        return @[];
-    }
-    
-    NSMutableArray<NSDictionary *> *textRectsAndStrings = [NSMutableArray array];
-    
-    // Create a request handler for the image
-    VNImageRequestHandler *handler = [[VNImageRequestHandler alloc] initWithCGImage:_backgroundImage.CGImage options:@{}];
-
-    VNRecognizeTextRequest *request = [[VNRecognizeTextRequest alloc] initWithCompletionHandler:^(VNRequest * _Nonnull request, NSError * _Nullable error) {
-        // Handle completion of the text recognition request
-        if (error) {
-            NSLog(@"Error recognizing text: %@", error);
-            return;
-        }
-
-        // Get the recognized text observation from the request
-        if (@available(iOS 13.0, *)) {
-            NSArray<VNRecognizedTextObservation *> *textObservations = request.results;
-
-            for (VNRecognizedTextObservation *observation in textObservations) {
-                CGRect convertedBoundingBox = CGRectMake(observation.boundingBox.origin.x, 1 - observation.boundingBox.origin.y - observation.boundingBox.size.height, observation.boundingBox.size.width, observation.boundingBox.size.height);
-                CGRect rect = VNImageRectForNormalizedRect(convertedBoundingBox, _backgroundImage.size.width, _backgroundImage.size.height);
-                // Extract the recognized text from the observation
-                NSString *recognizedText = [observation topCandidates:1].firstObject.string;
-                // Add the text and rect to the array
-                NSDictionary *rectDict = @{
-                    @"x": @(rect.origin.x),
-                    @"y": @(rect.origin.y),
-                    @"width": @(rect.size.width),
-                    @"height": @(rect.size.height)
-                };
-                NSDictionary *textRectDict = @{
-                    @"text": recognizedText,
-                    @"rect": rectDict
-                };
-                [textRectsAndStrings addObject:textRectDict];
-            }
-        } else {
-            // Fallback on earlier versions
-            NSLog(@"Error recognizing text - IOS version must be 13");
-            return;
-        }
-    }];
-    // Set the languages to prioritize
-    [request setRecognitionLanguages:@[@"en-US", @"he-IL", @"ar-SA"]];
-
-    //request.reportCharacterBoxes = YES;
-    request.recognitionLevel = VNRequestTextRecognitionLevelAccurate;
-    request.minimumTextHeight = 0.03;
-
-    // Perform the request
-    [handler performRequests:@[request] error:nil];
-    
-    return textRectsAndStrings;
-//    NSMutableArray *recognizedTextArray = [NSMutableArray array];
-//
-//     // Initialize Tesseract with English language
-//     G8Tesseract *tesseract = [[G8Tesseract alloc] initWithLanguage:@"heb"];
-//     tesseract.engineMode = G8OCREngineModeTesseractOnly;
-//     tesseract.pageSegmentationMode = G8PageSegmentationModeAuto;
-//
-//     // Process image with Tesseract
-//     [tesseract setImage:_backgroundImage];
-//     [tesseract recognize];
-//
-//     // Get recognized text and bounding boxes
-//    NSArray<G8RecognizedBlock*> *recognizedBlocks = [tesseract recognizedBlocksByIteratorLevel:G8PageIteratorLevelWord];
-//
-//     // Create an array of NSDictionary for each recognized text and its bounding box
-//     for (G8RecognizedBlock *recognizedBlock in recognizedBlocks) {
-//         NSString *text = recognizedBlock.text;
-//         CGRect rect = recognizedBlock.boundingBox;
-//         NSDictionary *textInfo = @{@"text": text, @"rect": @{@"x": @(rect.origin.x), @"y": @(rect.origin.y), @"width": @(rect.size.width), @"height": @(rect.size.height)}};
-//         [recognizedTextArray addObject:textInfo];
+// - (NSArray<NSDictionary *> *)detectTextsInBackgroundImage {
+//     if (_backgroundImage == nil) {
+//         return @[];
 //     }
-//
-//     //[tesseract clear];
-//     return recognizedTextArray;
-}
+    
+//     NSMutableArray<NSDictionary *> *textRectsAndStrings = [NSMutableArray array];
+    
+//     // Create a request handler for the image
+//     VNImageRequestHandler *handler = [[VNImageRequestHandler alloc] initWithCGImage:_backgroundImage.CGImage options:@{}];
+
+//     VNRecognizeTextRequest *request = [[VNRecognizeTextRequest alloc] initWithCompletionHandler:^(VNRequest * _Nonnull request, NSError * _Nullable error) {
+//         // Handle completion of the text recognition request
+//         if (error) {
+//             NSLog(@"Error recognizing text: %@", error);
+//             return;
+//         }
+
+//         // Get the recognized text observation from the request
+//         if (@available(iOS 13.0, *)) {
+//             NSArray<VNRecognizedTextObservation *> *textObservations = request.results;
+
+//             for (VNRecognizedTextObservation *observation in textObservations) {
+//                 CGRect convertedBoundingBox = CGRectMake(observation.boundingBox.origin.x, 1 - observation.boundingBox.origin.y - observation.boundingBox.size.height, observation.boundingBox.size.width, observation.boundingBox.size.height);
+//                 CGRect rect = VNImageRectForNormalizedRect(convertedBoundingBox, _backgroundImage.size.width, _backgroundImage.size.height);
+//                 // Extract the recognized text from the observation
+//                 NSString *recognizedText = [observation topCandidates:1].firstObject.string;
+//                 // Add the text and rect to the array
+//                 NSDictionary *rectDict = @{
+//                     @"x": @(rect.origin.x),
+//                     @"y": @(rect.origin.y),
+//                     @"width": @(rect.size.width),
+//                     @"height": @(rect.size.height)
+//                 };
+//                 NSDictionary *textRectDict = @{
+//                     @"text": recognizedText,
+//                     @"rect": rectDict
+//                 };
+//                 [textRectsAndStrings addObject:textRectDict];
+//             }
+//         } else {
+//             // Fallback on earlier versions
+//             NSLog(@"Error recognizing text - IOS version must be 13");
+//             return;
+//         }
+//     }];
+//     // Set the languages to prioritize
+//     [request setRecognitionLanguages:@[@"en-US", @"he-IL", @"ar-SA"]];
+
+//     //request.reportCharacterBoxes = YES;
+//     request.recognitionLevel = VNRequestTextRecognitionLevelAccurate;
+//     request.minimumTextHeight = 0.03;
+
+//     // Perform the request
+//     [handler performRequests:@[request] error:nil];
+    
+//     return textRectsAndStrings;
+// //    NSMutableArray *recognizedTextArray = [NSMutableArray array];
+// //
+// //     // Initialize Tesseract with English language
+// //     G8Tesseract *tesseract = [[G8Tesseract alloc] initWithLanguage:@"heb"];
+// //     tesseract.engineMode = G8OCREngineModeTesseractOnly;
+// //     tesseract.pageSegmentationMode = G8PageSegmentationModeAuto;
+// //
+// //     // Process image with Tesseract
+// //     [tesseract setImage:_backgroundImage];
+// //     [tesseract recognize];
+// //
+// //     // Get recognized text and bounding boxes
+// //    NSArray<G8RecognizedBlock*> *recognizedBlocks = [tesseract recognizedBlocksByIteratorLevel:G8PageIteratorLevelWord];
+// //
+// //     // Create an array of NSDictionary for each recognized text and its bounding box
+// //     for (G8RecognizedBlock *recognizedBlock in recognizedBlocks) {
+// //         NSString *text = recognizedBlock.text;
+// //         CGRect rect = recognizedBlock.boundingBox;
+// //         NSDictionary *textInfo = @{@"text": text, @"rect": @{@"x": @(rect.origin.x), @"y": @(rect.origin.y), @"width": @(rect.size.width), @"height": @(rect.size.height)}};
+// //         [recognizedTextArray addObject:textInfo];
+// //     }
+// //
+// //     //[tesseract clear];
+// //     return recognizedTextArray;
+// }
 
 
 
 - (void)addOrSetImageOnCanvas:(NSDictionary *)imageOnCanvas {
     if (_arrImages == nil) {
+        NSLog(@"Reinit arrImages");
         _arrImages = [NSMutableArray new];
     }
     

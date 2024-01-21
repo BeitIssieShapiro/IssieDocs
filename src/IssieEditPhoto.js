@@ -2301,6 +2301,7 @@ export default class IssieEditPhoto extends React.Component {
     return (
       <Canvas
         ref={this.canvas}
+        metaDataPath={this.state.metaDataUri}
         width={width}
         height={height}
         layoutReady={this.state.layoutReady}
