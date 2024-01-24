@@ -3,7 +3,7 @@ import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useStat
 import { colors, getFont } from './elements';
 import { trace } from './log';
 import { tableResizeDone } from './pinch';
-import { arrLast, tableColWidth, tableRowHeight } from './utils';
+import { arrLast, calculateTargetBox, isSameCell, normalizeBox, offsetTableBox, offsetTablePoints, tableBoxToPoints, tableColWidth, tableRowHeight } from './utils';
 import { isRTL } from './lang';
 
 
@@ -24,6 +24,8 @@ function Canvas({
     SketchStart,
     AfterRender,
     TableResizeState,
+    TableSelection,
+    TableSelectionMove,
     ResizeTable,
     queue,
     normFontSize2FontSize,
@@ -300,7 +302,7 @@ function Canvas({
             });
 
         if (isTableMode && TableResizeState) {
-            const updateTable = ResizeTable(TableResizeState, width, height);
+            const updateTable = ResizeTable(TableResizeState, width, height).table;
             canvasTables = canvasTables.filter(t => t.id !== TableResizeState.table.id);
             canvasTables.push(updateTable);
         }
@@ -406,8 +408,6 @@ function Canvas({
                     const dash = parseInt(styles[0] * tableWidth); //isTableMode ? 10 : 0;
                     const dashGap = parseInt(styles[1] * tableWidth) //isTableMode ? 5 :0 style[1];
 
-
-
                     for (let c = 0; c < table.verticalLines.length; c++) {
                         let x = table.verticalLines[c];
                         addLine(table.id + 100 + c,
@@ -421,17 +421,48 @@ function Canvas({
                         addLine(table.id + 200 + r, table.verticalLines[0], y, arrLast(table.verticalLines), y,
                             table.color, tableWidth, tableSize, dash, dashGap, tablePhase);
                     }
+                    // box: {from:[x1,y1], to: [x2,y2]}
+                    const drawBox = (idStart, boxPoints, color, lWidth, tableSize, dash, dashGap, tablePhase) => {
+                        const { x1, y1, x2, y2 } = boxPoints;
+
+                        addLine(idStart, x1, y1, x1, y2, color, lWidth, tableSize, dash, dashGap, tablePhase);
+                        addLine(idStart + 1, x1, y2, x2, y2, color, lWidth, tableSize, dash, dashGap, tablePhase);
+                        addLine(idStart + 2, x2, y2, x2, y1, color, lWidth, tableSize, dash, dashGap, tablePhase);
+                        addLine(idStart + 3, x2, y1, x1, y1, color, lWidth, tableSize, dash, dashGap, tablePhase);
+                    }
+
+                    // Table selection and moving cells:
+                    if (TableSelectionMove) {
+                        const normBox = normalizeBox(TableSelection);
+                        const targetBox = calculateTargetBox(table, normBox, TableSelectionMove.to);
+                        const targetPoints = tableBoxToPoints(table, targetBox, tableWidth);
+                        drawBox(table.id + 300, targetPoints, "orange", 4, tableSize, dash, dashGap, tablePhase);
+
+                        // if (!isSameCell(TableSelectionMove.from, TableSelectionMove.to)) {
+                        //     // ofset the selection
+
+                        //     drawBox(table.id + 310, boxPoints, "orange", 4, tableSize, dash, dashGap, tablePhase);
+                        // } else {
+                        //     const boxPoints = tableBoxToPoints(table, normalizeBox(TableSelection), tableWidth);
+                        //     drawBox(table.id + 300, boxPoints, "orange", 4, tableSize, dash, dashGap, tablePhase);    
+                        // }
+                        // draw dragged cells
+                        const origSelectionBoxPoints = tableBoxToPoints(table, normBox, 0);
+                        const dragBoxPoints = offsetTablePoints(origSelectionBoxPoints, TableSelectionMove.pixelDelta);
+                        trace("drag", origSelectionBoxPoints, dragBoxPoints)
+                        drawBox(table.id + 320, dragBoxPoints, "gray", 3, tableSize, 3, 3, tablePhase);
+
+                    } else if (TableSelection) {
+                        const boxPoints = tableBoxToPoints(table, normalizeBox(TableSelection), tableWidth);
+                        drawBox(table.id + 300, boxPoints, "orange", 4, tableSize, dash, dashGap, tablePhase);
+                    }
+
 
                     //add resize indicators:
                     const bs = RESIZE_TABLE_BOX_SIZE / 2;
                     const os = RESIZE_TABLE_BOX_OFFSET;
 
-                    // const drawBox = (idStart, x1, y1, x2, y2, color, lWidth) => {
-                    //     addLine(idStart, x1, y1, x1, y2, color, lWidth);
-                    //     addLine(idStart + 1, x1, y2, x2, y2, color, lWidth);
-                    //     addLine(idStart + 2, x2, y2, x2, y1, color, lWidth);
-                    //     addLine(idStart + 3, x2, y1, x1, y1, color, lWidth);
-                    // }
+
 
                     const drawArrow = (idStart, x1, y1, color, lWidth, ns, ew, l, screenSize) => {
                         if (ns != 0) {
@@ -501,7 +532,8 @@ function Canvas({
             AfterRender(revision)
         });
 
-    }, [revision, scaleRatio, currentTextElemId, width, height, isTableMode, tablePhase, TableResizeState]);
+    }, [revision, scaleRatio, currentTextElemId, width, height,
+        isTableMode, tablePhase, TableResizeState, TableSelection, TableSelectionMove]);
 
     return (
         <RNSketchCanvas

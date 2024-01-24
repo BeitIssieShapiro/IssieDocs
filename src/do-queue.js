@@ -17,8 +17,65 @@ export default class DoQueue {
     this.add({ elem: elem, type: 'tableCellText' });
     //once new item added redo is reset
     this._undoQueue = [];
-
   }
+
+  pushTableRangeMove(tableID, moves) {
+    const chagedCells = [];
+    moves.forEach((m) => {
+      // seach the last tableCell matching
+      for (let i = this._doneQueue.length - 1; i >= 0; i--) {
+        const { elem, type } = this._doneQueue[i];
+        if (type === 'tableCellText' &&
+          elem?.tableCell.tableID === tableID &&
+          elem?.tableCell.col === m.from[0] &&
+          elem?.tableCell.row === m.from[1] &&
+          elem.text !== "") {
+
+          let validCell = true;
+          // verify this textElem.id was not found higher in the queue
+          for (let j = this._doneQueue.length - 1; j > i; j--) {
+            if (this._doneQueue[j].elem.id === elem.id) {
+              // found, it means that the found cell has been moved before
+              validCell = false;
+              break;
+            }
+          }
+          if (validCell) {
+            m.elemIndexToMove = i;
+          }
+          break;
+        }
+      }
+    });
+
+    moves = moves.filter(m => m.elemIndexToMove !== undefined);
+
+    moves.forEach((m) => {
+      const { elem, type } = this._doneQueue[m.elemIndexToMove];
+      chagedCells.push({
+        type,
+        elem: { ...elem, tableCell: { tableID, col: m.to[0], row: m.to[1] } }
+      });
+
+    });
+
+    if (chagedCells.length > 0) {
+      trace("push many", chagedCells);
+      this.pushMany(chagedCells)
+    }
+  }
+
+
+  pushMany(elemArray) {
+    elemArray.forEach((elem, i) => {
+      if (i > 0) {
+        elem.withPrevious = true;
+      }
+      this.add(elem);
+    });
+    this._undoQueue = [];
+  }
+
   pushImagePosition(elem) {
     this.add({ elem: elem, type: 'imagePosition' });
     this._undoQueue = [];
@@ -70,13 +127,21 @@ export default class DoQueue {
 
   undo() {
     if (this._doneQueue.length > 0) {
-      this._undoQueue.push(this._doneQueue.pop());
+      const elem = this._doneQueue.pop();
+      if (elem.withPrevious) {
+        this.undo()
+      }
+      this._undoQueue.push(elem);
     }
   }
 
   redo() {
     if (this._undoQueue.length > 0) {
-      this._doneQueue.push(this._undoQueue.pop());
+      const elem = this._undoQueue.pop();
+      if (elem.withPrevious) {
+        this.redo()
+      }
+      this._doneQueue.push(elem);
     }
   }
 

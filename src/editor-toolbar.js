@@ -586,7 +586,7 @@ function EditorToolbar({
                 if (Table) {
                     TableActions.delete(Table.id);
                 } else {
-                    TableActions.addTable(tableRows, tableCols, color, 2);
+                    TableActions.addTable(tableCols, tableRows, color, 2);
                 }
             }}>
                 <AppText style={{ fontSize: 20, color: semanticColors.actionButton }}>{translate(Table ? "DeleteTableCaption" : "ShowTableCaption")}</AppText>

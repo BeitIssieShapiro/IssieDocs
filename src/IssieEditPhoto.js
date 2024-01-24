@@ -28,7 +28,7 @@ import {
   semanticColors, dimensions
 } from './elements'
 import { translate } from './lang';
-import { arrLast, genID, tableRowHeight, setNavParam } from './utils';
+import { arrLast, genID, tableRowHeight, setNavParam, isCellInBox, isSameCell, normalizeBox, calculateTargetBox, offsetTableCell } from './utils';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { pinchEnd, processPinch, processResize } from './pinch';
@@ -239,10 +239,11 @@ export default class IssieEditPhoto extends React.Component {
           const x = this.viewPort2TableX(table, viewPortXY.x);
           const y = this.viewPort2TableY(table, viewPortXY.y);
 
-          trace("resizing table", x, y, table)
+          //trace("resizing table", x, y, table)
           const state = this.state.tableResizeState || {
             initialX: x,
             initialY: y,
+            existingTableSelection: this.state.tableSelection,
             table
           };
 
@@ -252,7 +253,7 @@ export default class IssieEditPhoto extends React.Component {
             currentY: y,
           }
 
-          trace("resize table new state", newState)
+          //trace("resize table new state", newState)
 
           this.setState({
             tableResizeState: newState
@@ -274,20 +275,30 @@ export default class IssieEditPhoto extends React.Component {
         this._sketching = false;
         if (this._tableResize) {
           this._tableResize = false;
-          trace("resize table end")
           this.changeTable(this.state.tableResizeState);
           this.setState({
-            tableResizeState: undefined
+            tableResizeState: undefined, tableSelectionMove: undefined
           });
 
           return;
+        } else if (this.isTableMode() && this.state.currentTable) {
+          const viewPortXY = {
+            x: this.screen2ViewPortX(evt.nativeEvent.pageX),
+            y: this.screen2ViewPortY(evt.nativeEvent.pageY)
+          }
+          const x = this.viewPort2TableX(this.state.currentTable, viewPortXY.x);
+          const y = this.viewPort2TableY(this.state.currentTable, viewPortXY.y);
+
+          const clickedCell = this.findCell(this.state.currentTable, x, y);
+          if (clickedCell) {
+            this.setState({ tableSelection: { from: clickedCell, to: clickedCell } })
+          }
         }
 
         if (this._ruler) {
           this._ruler = false;
           this.SaveRuler()
         }
-
 
         if (this._pinch) {
           this._pinch = false;
@@ -1276,7 +1287,8 @@ export default class IssieEditPhoto extends React.Component {
     this.setState({
       showTextInput: false,
       mode: Modes.TEXT,
-      eraseMode: false
+      eraseMode: false,
+      tableSelection: undefined
     });
     this.onEraserChange(true);
   }
@@ -1299,7 +1311,7 @@ export default class IssieEditPhoto extends React.Component {
 
   onEraserButton = () => {
     trace("Eraser pressed")
-    if (this.isImageMode()) return;
+    if (this.isImageMode() || this.isTableMode()) return;
 
     if (!this.state.eraseMode && this.isTextMode()) {
       this.onBrushMode();
@@ -1374,7 +1386,7 @@ export default class IssieEditPhoto extends React.Component {
     }
     this.setState({
       yOffset: this.state.zoom == 1 ? 0 : this.state.yOffset,
-      mode: isRuler ? Modes.RULER : Modes.BRUSH,
+      mode: isRuler ? Modes.RULER : Modes.BRUSH, tableSelection: undefined
     })
     this.clearCurrentTextElement()
     this.onEraserChange(true);
@@ -1390,13 +1402,16 @@ export default class IssieEditPhoto extends React.Component {
     }
     this.setState({
       yOffset: this.state.zoom == 1 ? 0 : this.state.yOffset,
-      mode: Modes.MARKER,
+      mode: Modes.MARKER, tableSelection: undefined
     })
     this.clearCurrentTextElement();
     this.onEraserChange(true);
   }
 
   onTableMode = () => {
+    if (this.isTextMode()) {
+      this.SaveText();
+    }
     //todo multiple tables
     const table = this.canvas.current?.canvasTables().length > 0 ? this.canvas.current?.canvasTables()[0] : undefined;
     this.setState({
@@ -1624,7 +1639,7 @@ export default class IssieEditPhoto extends React.Component {
   render() {
     const { row, rowReverse, flexEnd, textAlign, rtl, direction } = getRowDirections();
 
-    const warnningBackground = this.state.viewportBackgroundColor? {backgroundColor:this.state.viewportBackgroundColor }: {};
+    const warnningBackground = this.state.viewportBackgroundColor ? { backgroundColor: this.state.viewportBackgroundColor } : {};
 
     return (
       <View style={styles.mainContainer}
@@ -1660,6 +1675,7 @@ export default class IssieEditPhoto extends React.Component {
               mode: Modes.IMAGE,
               showTextInput: false,
               currentTextElem: undefined,
+              tableSelection: undefined
             })
 
             // find image. if none - open sub menu. if only one, make current
@@ -2060,16 +2076,16 @@ export default class IssieEditPhoto extends React.Component {
         },
       }
       const bottomMargin = dimensions.toolbarHeight * 2;
-      const topMargin = 50;
+      const topMargin = dimensions.toolbarHeight * 1.2;
       const sideMargin = 50;
       const colWidth = Math.floor((newTable.size.width - sideMargin * 2) / cols);
       const rowHeight = Math.floor((newTable.size.height - topMargin - bottomMargin) / rows);
 
       for (let i = 0; i <= cols; i++) {
-        newTable.verticalLines.push(topMargin + i * colWidth);
+        newTable.verticalLines.push(sideMargin + i * colWidth);
       }
       for (let i = 0; i <= rows; i++) {
-        newTable.horizontalLines.push(sideMargin + i * rowHeight);
+        newTable.horizontalLines.push(topMargin + i * rowHeight);
       }
 
       this.state.queue.pushTable(newTable);
@@ -2083,32 +2099,64 @@ export default class IssieEditPhoto extends React.Component {
       const table = this.state.currentTable;
       if (table) {
         const newTable = { ...table };
-        let array = isCols ? [...newTable.verticalLines] : [...newTable.horizontalLines];
-        const lastLine = array[array.length - 1];
-        const lastElemSize = array[array.length - 1] - array[array.length - 2];
+        const changeAtBegining = isCols && isRTL();
+
+        const array = isCols ? [...newTable.verticalLines] : [...newTable.horizontalLines];
+        const newArray = [];
+        const lastElemSize = changeAtBegining ? array[1] - array[0] : arrLast(array) - array[array.length - 2];
         let isGrowing = true;
+        let begin = 0, end = -2;
         if (newVal < array.length - 1) {
-          array[array.length - 2] = array[array.length - 1];
-          array = array.slice(0, -1);
+
+          if (changeAtBegining) {
+            newArray.push(array[0]);
+            begin = 2, end = array.length;
+          }
+
+          newArray.push(...array.slice(begin, end));
+
+          if (!changeAtBegining) {
+            newArray.push(arrLast(array));
+          }
           isGrowing = false;
+
         } else if (newVal >= array.length) {
-          array.push(lastLine);
+          if (changeAtBegining) {
+            newArray.push(array[0]);
+          }
+          newArray.push(...array);
+
+          if (!changeAtBegining) {
+            newArray.push(arrLast(array));
+          }
         }
+
 
         // Adjust the other elements
         let accDelta = 0;
-        for (let i = 1; i < array.length - 1; i++) {
-          const elemSize = array[i] - array[i - 1];
-          accDelta = isGrowing ?
-            accDelta - (elemSize / (array.length)) :
-            accDelta + (lastElemSize / (array.length - 1))
-          array[i] += accDelta;
+        if (changeAtBegining) {
+          for (let i = newArray.length - 1; i > 1; i--) {
+            const elemSize = newArray[i] - newArray[i - 1];
+            accDelta = isGrowing ?
+              accDelta + (elemSize / newArray.length) :
+              accDelta - (lastElemSize / (newArray.length - 1))
+            trace("change ", i, accDelta)
+            newArray[i - 1] += accDelta;
+          }
+        } else {
+          for (let i = 1; i < newArray.length - 1; i++) {
+            const elemSize = newArray[i] - newArray[i - 1];
+            accDelta = isGrowing ?
+              accDelta - (elemSize / (newArray.length)) :
+              accDelta + (lastElemSize / (newArray.length - 1))
+            newArray[i] += accDelta;
+          }
         }
 
         if (isCols) {
-          newTable.verticalLines = array;
+          newTable.verticalLines = newArray;
         } else {
-          newTable.horizontalLines = array;
+          newTable.horizontalLines = newArray;
         }
         this.state.queue.pushTable(newTable);
         this.setState({ currentTable: newTable, revision: this.state.revision + 1 })
@@ -2150,19 +2198,81 @@ export default class IssieEditPhoto extends React.Component {
   changeTable = (tableResizeState) => {
 
     if (tableResizeState) {
-      const changedTable = this.resizeTable(tableResizeState,
+      const res = this.resizeTable(tableResizeState,
         this.state.pageRect.width, this.state.pageRect.height, true);
-      if (changedTable) {
-        this.state.queue.pushTable(changedTable);
-        this.setState({ currentTable: changedTable });
-        this.Save();
+      if (res.tableChanged) {
+        this.state.queue.pushTable(res.table);
+        this.setState({ currentTable: res.table });
       }
+
+
+      if (res.tableSelectionMove && this.state.tableSelection) {
+        const normBox = normalizeBox(this.state.tableSelection);
+        const targetBox = calculateTargetBox(res.table, normBox, res.tableSelectionMove.to);
+
+        if (!isSameCell(normBox.from, targetBox.from) || !isSameCell(normBox.to, targetBox.to)) {
+          trace(normBox, targetBox)
+          // swap table cells
+          // first move the original range
+          const moves = []
+          for (let x = normBox.from[0]; x <= normBox.to[0]; x++) {
+            for (let y = normBox.from[1]; y <= normBox.to[1]; y++) {
+              const from = [x, y];
+              const to = offsetTableCell(targetBox.from, [x - normBox.from[0], y - normBox.from[1]])
+
+              moves.push({ from, to });
+            }
+          }
+          // then move the overwritten back - ignoring overlap
+          for (let x = targetBox.from[0]; x <= targetBox.to[0]; x++) {
+            for (let y = targetBox.from[1]; y <= targetBox.to[1]; y++) {
+              const from = [x, y];
+              if (!isCellInBox(from, normBox)) {
+                let to = offsetTableCell(normBox.from, [x - targetBox.from[0], y - targetBox.from[1]]);
+
+                // check if to falls on the target box
+                if (isCellInBox(to, targetBox)) {
+                  const move = moves.find(m => isSameCell(m.to, to));
+                  if (move) {
+                    to = move.from;
+                  }
+                }
+                moves.push({ from, to });
+              }
+            }
+          }
+          trace("table range moved", moves)
+          this.state.queue.pushTableRangeMove(res.table.id, moves);
+        }
+        this.setState({ tableSelectionMove: undefined, tableSelection: targetBox });
+      }
+      this.Save();
     }
   }
 
+  findCell = (table, x, y) => {
+    let row = -1, col = -1;
+    for (let r = 0; r < table.horizontalLines.length - 1; r++) {
+      if (table.horizontalLines[r] < y && table.horizontalLines[r + 1] > y) {
+        row = r;
+        break;
+      }
+    }
+    for (let c = 0; c < table.verticalLines.length - 1; c++) {
+      if (table.verticalLines[c] < x && table.verticalLines[c + 1] > x) {
+        col = c;
+        break;
+      }
+    }
+    if (col >= 0 && row >= 0) {
+      return [col, row];
+    }
+    return undefined;
+  }
 
-  resizeTable = (tableResizeState, width, height, onlyIfChanged) => {
-    let found = false;
+
+  resizeTable = (tableResizeState, width, height) => {
+    let tableChanged = false;
     const table = tableResizeState.table;
     if (!table) return undefined;
 
@@ -2190,7 +2300,7 @@ export default class IssieEditPhoto extends React.Component {
     if (topStart || bottomEnd) {
       retTable.verticalLines = [...table.verticalLines];
       retTable.horizontalLines = [...table.horizontalLines];
-      found = true;
+      tableChanged = true;
       const tableCurrWidth = table.verticalLines[table.verticalLines.length - 1] - table.verticalLines[0];
       const tableNewWidth = tableResizeState.currentX - table.verticalLines[0];
       resizeFactorX = tableNewWidth / tableCurrWidth;
@@ -2222,10 +2332,10 @@ export default class IssieEditPhoto extends React.Component {
           if (c < table.verticalLines.length - 1) {
             retTable.verticalLines[c] = Math.min(retTable.verticalLines[c], retTable.verticalLines[c + 1] - TABLE_LINE_MARGIN);
           }
-
+          tableChanged = true;
         }
-        found = true;
       }
+
     }
 
 
@@ -2262,7 +2372,7 @@ export default class IssieEditPhoto extends React.Component {
           for (let r2 = r; r2 < retTable.horizontalLines.length; r2++) {
             retTable.horizontalLines[r2] += delta;
           }
-          found = true;
+          tableChanged = true;
 
           break;
 
@@ -2270,9 +2380,59 @@ export default class IssieEditPhoto extends React.Component {
       }
     }
 
-    if (found) return retTable;
 
-    return (onlyIfChanged ? undefined : table);
+
+    // Check if selection fits
+
+
+    let tableSelectionMove = this.state.tableSelectionMove;
+
+    if (!tableChanged) {
+
+      const from = this.findCell(retTable, tableResizeState.initialX, tableResizeState.initialY);
+      if (from) {
+        let to = this.findCell(retTable, tableResizeState.currentX, tableResizeState.currentY);
+        if (!to) {
+          to = from;
+        }
+
+        // Check if already some cells are selected, and draging started from them - them we are in move cells mode
+        if (tableResizeState.existingTableSelection && isCellInBox(from, tableResizeState.existingTableSelection)) {
+          const pixelDelta = [
+            tableResizeState.currentX - tableResizeState.initialX,
+            tableResizeState.currentY - tableResizeState.initialY
+          ];
+          if (!this.state.tableSelectionMove ||
+            !isSameCell(from, tableSelectionMove.from) ||
+            !isSameCell(to, tableSelectionMove.to) ||
+            !isSameCell(pixelDelta, tableSelectionMove.pixelDelta)) {
+            tableSelectionMove = {
+              from, to,
+              pixelDelta: [
+                tableResizeState.currentX - tableResizeState.initialX,
+                tableResizeState.currentY - tableResizeState.initialY
+              ]
+            }
+            this.setState({ tableSelectionMove });
+          }
+
+        } else {
+          // check for new selection
+          if (!this.state.tableSelection ||
+            !isSameCell(from, this.state.tableSelection.from) ||
+            !isSameCell(to, this.state.tableSelection.to)) {
+
+            this.setState({ tableSelection: { from, to }, tableSelectionMove: undefined });
+          }
+        }
+      }
+    }
+
+    return {
+      table,
+      tableChanged,
+      tableSelectionMove
+    };
   }
 
   getColorByMode = () => {
@@ -2313,6 +2473,8 @@ export default class IssieEditPhoto extends React.Component {
         isTableMode={this.isTableMode()}
         Table={this.state.currentTable}
         TableResizeState={this.state.tableResizeState}
+        TableSelection={this.state.tableSelection}
+        TableSelectionMove={this.state.tableSelectionMove}
         ResizeTable={this.resizeTable}
         imagePath={this.state.currentFile}
         SketchEnd={this.SketchEnd}
@@ -2449,8 +2611,8 @@ export default class IssieEditPhoto extends React.Component {
         duration: 5000,
         position: "center"
       })
-      this.setState({viewportBackgroundColor: "#F0AD4E"})
-      setTimeout(()=>this.setState({viewportBackgroundColor: undefined}), 5000)
+      this.setState({ viewportBackgroundColor: "#F0AD4E" })
+      setTimeout(() => this.setState({ viewportBackgroundColor: undefined }), 5000)
     }
   }
 
