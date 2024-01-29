@@ -329,13 +329,12 @@ export default class IssieSavePhoto extends React.Component {
       this.saveInProgress = true;
       let folder = this.state.folder;
       if (!folder) {
-        folder = FileSystem.main.findFolderByID(FileSystem.DEFAULT_FOLDER.name);
+        folder = FileSystem.main.findFolderByID(FileSystem.DEFAULT_FOLDER.ID);
       }
-
       if (!folder) {
         // add Default folder
         await FileSystem.main.addFolder(FileSystem.DEFAULT_FOLDER.name, FileSystem.DEFAULT_FOLDER.icon, FileSystem.DEFAULT_FOLDER.color, false, false, false);
-        folder = FileSystem.main.findFolderByID(FileSystem.DEFAULT_FOLDER.name);
+        folder = FileSystem.main.findFolderByID(FileSystem.DEFAULT_FOLDER.ID);
       }
 
       let folderID = folder.ID;

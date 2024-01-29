@@ -302,9 +302,12 @@ function Canvas({
             });
 
         if (isTableMode && TableResizeState) {
-            const updateTable = ResizeTable(TableResizeState, width, height).table;
-            canvasTables = canvasTables.filter(t => t.id !== TableResizeState.table.id);
-            canvasTables.push(updateTable);
+            const result = ResizeTable(TableResizeState, width, height);
+            trace("resize table", result)
+            if (result.tableChanged) {
+                canvasTables = canvasTables.filter(t => t.id !== TableResizeState.table.id);
+                canvasTables.push(result.table);
+            }
         }
 
         tableCellTexts.forEach(txtElem => {

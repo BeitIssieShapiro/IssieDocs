@@ -2429,7 +2429,7 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     return {
-      table,
+      table: retTable,
       tableChanged,
       tableSelectionMove
     };

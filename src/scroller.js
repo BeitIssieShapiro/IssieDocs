@@ -82,7 +82,7 @@ export default function Scroller(props) {
 
     let height = isNumber(props.height) ? props.height : 800;
     let limit = (childHeight > 0 && height < childHeight) ? height - childHeight : -100;
-    trace("scroll-limit", limit)
+    // trace("scroll-limit", limit)
     let yOs = yOffset;
     
 

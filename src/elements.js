@@ -577,7 +577,7 @@ function renderFolderLine(rowData, index, currentFolder, onChangeFolder, showSub
     if (expanded && rowData.loading)
         rowData.reload();
 
-    trace("pickerRenderRow", rowData.ID, expanded, expandedFolders)
+    // trace("pickerRenderRow", rowData.ID, expanded, expandedFolders)
 
     return [<TouchableOpacity key={index} style={{
         height: 65, width: '100%',

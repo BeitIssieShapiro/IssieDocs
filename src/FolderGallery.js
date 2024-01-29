@@ -189,7 +189,7 @@ export default class FolderGallery extends React.Component {
     }
 
     _handleOpenURL = (event) => {
-        console.log("_handleOpenURL event:", JSON.stringify(event));
+        // console.log("_handleOpenURL event:", JSON.stringify(event));
         let url = event.url
         if (url?.startsWith("openissiedocs")) {
             const urlPos = url.indexOf("url=");

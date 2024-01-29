@@ -691,20 +691,20 @@ export class FileSystem {
     async _verifyFolderExists(filePath) {
         let pathObj = this._parsePath(filePath)
         let currPath = this._basePath;
+
+        trace("_verifyFolderExists", pathObj, currPath)
         for (let i = 0; i < pathObj.folders.length; i++) {
             currPath += pathObj.folders[i] + '/';
             if (!await RNFS.exists(currPath)) {
-                if (i % 2) { //real IssieDocs folder
-                    await this.addFolder(pathObj.folders[i], FileSystem.DEFAULT_FOLDER_METADATA.icon, FileSystem.DEFAULT_FOLDER_METADATA.color)
-                } else {
-                    // either a folder that stores a multi-page worksheet or "folders" folder
+                // if (i % 2) { //real IssieDocs folder
+                //     await this.addFolder(pathObj.folders[i], FileSystem.DEFAULT_FOLDER_METADATA.icon, FileSystem.DEFAULT_FOLDER_METADATA.color)
+                // } else {
+                //     // either a folder that stores a multi-page worksheet or "folders" folder
                     await RNFS.mkdir(currPath);
-                }
+                // }
             }
         }
     }
-
-
 
     //assumed folder is there already
     async _copyDeep(src, dst) {
@@ -765,7 +765,7 @@ export class FileSystem {
 
     static getTempFileName(ext) {
         const date = new Date()
-        let fn = Math.random() + '-' + date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + ' ' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2);
+        let fn = Math.random() + '-' + date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + 'T' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2);
 
         return RNFS.TemporaryDirectoryPath + fn + "." + ext
     }
