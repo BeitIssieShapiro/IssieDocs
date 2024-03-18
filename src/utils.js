@@ -129,3 +129,37 @@ export function offsetTablePoints(boxPoints, pixelOffset) {
 export function isSameCell(cell1, cell2) {
   return cell1[0] === cell2[0] && cell1[1] === cell2[1];
 }
+
+export function pointOnContinuationOfLine(x1, y1, x2, y2, d, isAtStart) {
+  let dx = x2 - x1;
+  let dy = y2 - y1;
+  let angle = Math.atan2(dy, dx); // Calculate the angle of the line
+
+  let x, y;
+  if (isAtStart) {
+    // Calculate the point towards (x1, y1)
+    if (dx !== 0) {
+      // Line is not vertical
+      x = x1 - d * Math.cos(angle);
+      y = y1 - d * Math.sin(angle);
+    } else {
+      // Line is vertical
+      x = x1;
+      y = y1 - d;
+    }
+  } else {
+    // Calculate the point towards (x2, y2)
+    if (dx !== 0) {
+      // Line is not vertical
+      x = x2 + d * Math.cos(angle);
+      y = y2 + d * Math.sin(angle);
+    } else {
+      // Line is vertical
+      x = x2;
+      y = y2 + d;
+    }
+  }
+
+  return { x, y };
+}
+

@@ -3,7 +3,7 @@ import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useStat
 import { colors, getFont } from './elements';
 import { trace } from './log';
 import { tableResizeDone } from './pinch';
-import { arrLast, calculateTargetBox, isSameCell, normalizeBox, offsetTableBox, offsetTablePoints, tableBoxToPoints, tableColWidth, tableRowHeight } from './utils';
+import { arrLast, calculateTargetBox, isCellInBox, isSameCell, normalizeBox, offsetTableBox, offsetTablePoints, pointOnContinuationOfLine, tableBoxToPoints, tableColWidth, tableRowHeight } from './utils';
 import { isRTL } from './lang';
 
 
@@ -32,6 +32,7 @@ function Canvas({
     imageNorm2Scale,
     imageScale2Norm,
     currentTextElemId,
+    SelectedRulerElemId,
     strokeWidth,
     color,
     onTableResizeDuringTextEdit,
@@ -41,6 +42,7 @@ function Canvas({
     const [texts, setTexts] = useState([]);
     const [images, setImages] = useState([]);
     const [tables, setTables] = useState([]);
+    const [paths, setPaths] = useState([]);
     const [tablePhase, setTablePhase] = useState(0);
 
     useEffect(() => {
@@ -81,6 +83,39 @@ function Canvas({
         return scaleElem;
     }, [scaleRatio]);
 
+    const findRulerById = useCallback((id) => {
+        return paths.find(p => p.id === id);
+    }, [paths]);
+
+    const findRuler = useCallback((normXY, scaleRatio) => {
+
+        return paths.find(p => {
+            if (p.x1 == undefined) return false; //not a ruler
+
+            const { x1, y1, x2, y2 } = p;
+            const {x,y} = normXY;
+            const threshold = 10 / scaleRatio;
+
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const t = ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy);
+            const end1 = (Math.abs(x - x1) < threshold && Math.abs(y - y1) < threshold);
+            const end2 = (Math.abs(x - x2) < threshold && Math.abs(y - y2) < threshold);
+      
+            if (end1 || end2) return true;
+
+
+            if (t < 0 || t > 1) {
+                return false; // (x, y) is outside the segment defined by (x1, y1) and (x2, y2)
+            }
+            
+            let closestX = x1 + t * dx;
+            let closestY = y1 + t * dy;
+            let distance = Math.sqrt((x - closestX) ** 2 + (y - closestY) ** 2);
+            
+            return distance <= threshold;
+        })
+    }, [paths]);
 
 
     const findElementByLocation = useCallback((normXY, scaleRatio, table) => {
@@ -167,11 +202,13 @@ function Canvas({
 
     useImperativeHandle(ref, () => ({
         findElementByLocation,
+        findRuler,
+        findRulerById,
         canvasTexts,
         canvas,
         canvasTables,
     }),
-        [findElementByLocation, canvasTexts]);
+        [findElementByLocation, findRuler, canvasTexts]);
 
 
     // Canvas Update
@@ -186,7 +223,7 @@ function Canvas({
         let canvasImages = [];
         let canvasTables = [];
         let tableCellTexts = [];
-        let paths = [];
+        let canvasPaths = [];
 
         for (let i = 0; i < q.length; i++) {
             if (q[i].type === 'text' || q[i].type === 'tableCellText') {
@@ -218,9 +255,10 @@ function Canvas({
                     textArray.push(txtElem);
                 }
             } else if (q[i].type === 'path') {
-                paths.push(q[i].elem);
+                canvasPaths.push(q[i].elem);
             } else if (q[i].type === 'line') {
-                paths.push(q[i].elem);
+                canvasPaths = canvasPaths.filter(l => l.id !== q[i].elem.id);
+                canvasPaths.push(q[i].elem);
             } else if (q[i].type === 'image') {
                 canvasImages.push(imageNorm2Scale(q[i].elem, scaleRatio));
             } else if (q[i].type === 'imagePosition') {
@@ -330,6 +368,7 @@ function Canvas({
         setTexts(canvasTexts);
         setImages(canvasImages);
         setTables(canvasTables);
+        setPaths(canvasPaths)
 
         const waitFor = [
             new Promise((resolve) => canvas.current?.getImageIds((ids) => {
@@ -357,6 +396,9 @@ function Canvas({
             })),
             new Promise((resolve) => canvas.current?.getPathIds((ids) => {
                 //trace("path ids :", JSON.stringify(ids))
+
+                const idsStatus = ids ? ids.map(id => ({ id, exists: false })) : [];
+
                 const addLine = (id, x1, y1, x2, y2, color, lWidth, screenSize, d, dg, ph, x3, y3) => {
                     const data = [
                         "" + x1 + "," + y1,
@@ -386,10 +428,33 @@ function Canvas({
                         stat.exists = true;
                     }
                 }
-                const idsStatus = ids ? ids.map(id => ({ id, exists: false })) : [];
-                paths.forEach(path => {
-                    if (path.x1 > 0) { //temp way to know it is a line
+
+                // box: {from:[x1,y1], to: [x2,y2]}
+                const drawBox = (idStart, boxPoints, color, lWidth, tableSize, dash, dashGap, phase) => {
+                    const { x1, y1, x2, y2 } = boxPoints;
+
+                    addLine(idStart, x1, y1, x1, y2, color, lWidth, tableSize, dash, dashGap, phase);
+                    addLine(idStart + 1, x1, y2, x2, y2, color, lWidth, tableSize, dash, dashGap, phase);
+                    addLine(idStart + 2, x2, y2, x2, y1, color, lWidth, tableSize, dash, dashGap, phase);
+                    addLine(idStart + 3, x2, y1, x1, y1, color, lWidth, tableSize, dash, dashGap, phase);
+                }
+                canvasPaths.forEach(path => {
+                    if (path?.x1 > 0) { //temp way to know it is a line
+
                         addLine(path.id, path.x1, path.y1, path.x2, path.y2, path.color, path.width, path.screenSize);
+
+                        if (SelectedRulerElemId === path.id) {
+                            
+                            const { x1, y1, x2, y2 } = path;
+                            const width = Math.max(10, path.width * 2);
+
+                            const end1 = pointOnContinuationOfLine( x1 , y1, x2, y2, width, true);
+                            const end2 = pointOnContinuationOfLine( x1 , y1, x2, y2, width, false);
+
+                            addLine(path.id + 1, x1 , y1, end1.x, end1.y, "gray", width, path.screenSize);
+                            addLine(path.id + 2, x2 , y2, end2.x, end2.y, "gray", width, path.screenSize);
+                           
+                        }
                     } else {
                         canvas.current?.addPath(path, width, height);
                         const stat = idsStatus.find(idStat => idStat.id == path.path.id);
@@ -424,15 +489,7 @@ function Canvas({
                         addLine(table.id + 200 + r, table.verticalLines[0], y, arrLast(table.verticalLines), y,
                             table.color, tableWidth, tableSize, dash, dashGap, tablePhase);
                     }
-                    // box: {from:[x1,y1], to: [x2,y2]}
-                    const drawBox = (idStart, boxPoints, color, lWidth, tableSize, dash, dashGap, tablePhase) => {
-                        const { x1, y1, x2, y2 } = boxPoints;
 
-                        addLine(idStart, x1, y1, x1, y2, color, lWidth, tableSize, dash, dashGap, tablePhase);
-                        addLine(idStart + 1, x1, y2, x2, y2, color, lWidth, tableSize, dash, dashGap, tablePhase);
-                        addLine(idStart + 2, x2, y2, x2, y1, color, lWidth, tableSize, dash, dashGap, tablePhase);
-                        addLine(idStart + 3, x2, y1, x1, y1, color, lWidth, tableSize, dash, dashGap, tablePhase);
-                    }
 
                     // Table selection and moving cells:
                     if (TableSelectionMove) {
@@ -535,7 +592,7 @@ function Canvas({
             AfterRender(revision)
         });
 
-    }, [revision, scaleRatio, currentTextElemId, width, height,
+    }, [revision, scaleRatio, currentTextElemId, SelectedRulerElemId, width, height,
         isTableMode, tablePhase, TableResizeState, TableSelection, TableSelectionMove]);
 
     return (

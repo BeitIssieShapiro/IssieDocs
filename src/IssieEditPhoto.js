@@ -59,7 +59,12 @@ const Modes = {
 
 const TABLE_LINE_MARGIN = 20;
 
-
+const MODES_CLEANUP = {
+  showTextInput: false,
+  currentTextElem: undefined,
+  tableSelection: undefined,
+  selectedRulerElemId: undefined
+}
 /**
  * scaleRatio: affects the size of the viewPort which == pageRect if zoom=0
  * once zoom is applied the scaleRatio is not a factor. viewPort may change, but pageRect stays untouched
@@ -328,7 +333,7 @@ export default class IssieEditPhoto extends React.Component {
       fontSize: 25,
       mode: Modes.TEXT,
       eraseMode: false,
-      showTextInput: false,
+      ...MODES_CLEANUP,
       strokeWidth: DEFAULT_STROKE_WIDTH,
       markerWidth: DEFAULT_MARKER_WIDTH,
       queue: new DoQueue(),
@@ -916,32 +921,74 @@ export default class IssieEditPhoto extends React.Component {
 
   RulerStart = (normX, normY) => {
     trace("Ruler start")
+    let elem, selectedElem
+    let selectedRulerElemId = this.state.selectedRulerElemId
+    if (selectedRulerElemId) {
+      selectedElem = this.canvas.current.findRuler({
+        x: normX,
+        y: normY
+      }, this.state.scaleRatio);
 
-    const elem = {
-      draft: true,
-      id: genID(),
-      x1: normX, y1: normY,
-      x2: normX, y2: normY,
-      color: this.state.brushColor,
-      screenSize: this.state.pageRect,
-      //todo stroke-width
-      width: this.state.strokeWidth,
+      if (selectedElem?.id === selectedRulerElemId) {
+        elem = { ...selectedElem, draft: true };
+      }
     }
+    if (!elem) {
+      selectedRulerElemId = undefined;
+      elem = {
+        draft: true,
+        id: genID(),
+        x1: normX, y1: normY,
+        x2: normX, y2: normY,
+        color: this.state.brushColor,
+        screenSize: this.state.pageRect,
+        //todo stroke-width
+        width: this.state.strokeWidth,
+      }
+    }
+
+    elem.moveState = {
+      end1: (Math.abs(normX - elem.x1) < 10 && Math.abs(normY - elem.y1) < 10),
+      end2: (Math.abs(normX - elem.x2) < 10 && Math.abs(normY - elem.y2) < 10),
+      initialXY: { x: normX, y: normY },
+      lastDelta: { x: 0, y: 0 },
+    };
 
     this.setState({
       ruler: { initialNormX: normX, initialNormY: normY },
-      currentRulerElem: elem,
+      currentRulerElem: elem, selectedRulerElemId
     });
 
     this.state.queue.pushLine(elem);
   }
 
   RulerMove = (normX, normY) => {
-    trace("RulerMove")
+    //trace("RulerMove", normX, normY)
     const elem = this.state.currentRulerElem;
     if (elem) {
-      trace("RulerMove", normX, normY)
-      elem.x2 = normX, elem.y2 = normY;
+
+      if (this.state.selectedRulerElemId) {
+        const initX = elem.moveState.initialXY.x;
+        const initY = elem.moveState.initialXY.y;
+        // check if at startPoint
+        trace("RulerMove", Math.abs(initX - elem.x1))
+        if (elem.moveState.end1) {
+          elem.x1 = normX, elem.y1 = normY;
+        } else if (elem.moveState.end2) {
+          elem.x2 = normX, elem.y2 = normY;
+        } else {
+          const deltaX = initX - normX;
+          const deltaY = initY - normY;
+          elem.x1 -= deltaX - elem.moveState.lastDelta.x;
+          elem.y1 -= deltaY - elem.moveState.lastDelta.y;
+          elem.x2 -= deltaX - elem.moveState.lastDelta.x;
+          elem.y2 -= deltaY - elem.moveState.lastDelta.y;
+          elem.moveState.lastDelta = { x: deltaX, y: deltaY }
+        }
+      } else {
+        elem.x2 = normX, elem.y2 = normY;
+        elem.color = this.state.brushColor;
+      }
       this.incrementRevision();
     }
   }
@@ -955,15 +1002,26 @@ export default class IssieEditPhoto extends React.Component {
       this.setState({
         ruler: undefined,
         currentRulerElem: undefined,
+        selectedRulerElemId: elem?.id
       });
       if (elem.x1 === elem.x2 && elem.y1 === elem.y2) {
-        trace("empty Ruler")
+
+        // try to select an existing ruler
+        const rulerElem = this.canvas.current.findRuler({
+          x: elem.x1,
+          y: elem.y1
+        }, this.state.scaleRatio);
+
+        trace("set selected ruler", rulerElem?.id)
+        this.setState({ selectedRulerElemId: rulerElem?.id })
         return;
       }
 
 
 
       delete elem.draft;
+      delete elem.moveState;
+
       this.state.queue.pushLine(elem);
       this.Save();
       this.incrementRevision();
@@ -1285,10 +1343,9 @@ export default class IssieEditPhoto extends React.Component {
   onTextMode = () => {
     trace("set text mode")
     this.setState({
-      showTextInput: false,
       mode: Modes.TEXT,
       eraseMode: false,
-      tableSelection: undefined
+      ...MODES_CLEANUP
     });
     this.onEraserChange(true);
   }
@@ -1386,7 +1443,7 @@ export default class IssieEditPhoto extends React.Component {
     }
     this.setState({
       yOffset: this.state.zoom == 1 ? 0 : this.state.yOffset,
-      mode: isRuler ? Modes.RULER : Modes.BRUSH, tableSelection: undefined
+      mode: isRuler ? Modes.RULER : Modes.BRUSH, ...MODES_CLEANUP
     })
     this.clearCurrentTextElement()
     this.onEraserChange(true);
@@ -1402,7 +1459,7 @@ export default class IssieEditPhoto extends React.Component {
     }
     this.setState({
       yOffset: this.state.zoom == 1 ? 0 : this.state.yOffset,
-      mode: Modes.MARKER, tableSelection: undefined
+      mode: Modes.MARKER, ...MODES_CLEANUP
     })
     this.clearCurrentTextElement();
     this.onEraserChange(true);
@@ -1415,7 +1472,7 @@ export default class IssieEditPhoto extends React.Component {
     //todo multiple tables
     const table = this.canvas.current?.canvasTables().length > 0 ? this.canvas.current?.canvasTables()[0] : undefined;
     this.setState({
-      showTextInput: false,
+      ...MODES_CLEANUP,
       mode: Modes.TABLE,
       eraseMode: false,
       currentTable: table,
@@ -1673,9 +1730,7 @@ export default class IssieEditPhoto extends React.Component {
             }
             this.setState({
               mode: Modes.IMAGE,
-              showTextInput: false,
-              currentTextElem: undefined,
-              tableSelection: undefined
+              ...MODES_CLEANUP
             })
 
             // find image. if none - open sub menu. if only one, make current
@@ -1739,6 +1794,15 @@ export default class IssieEditPhoto extends React.Component {
 
             if (this.isTextMode()) updateState.textColor = color;
             this.setState(updateState);
+            if (this.isRulerMode() && this.state.selectedRulerElemId) {
+              const selectedElem = this.canvas.current.findRulerById(this.state.selectedRulerElemId);
+              if (selectedElem) {
+                const modifiedColor = {...selectedElem, color};
+                this.state.queue.pushLine(modifiedColor);
+                this.Save();
+                this.incrementRevision();
+              }
+            }
           }}
 
           color={this.getColorByMode()}
@@ -2475,6 +2539,7 @@ export default class IssieEditPhoto extends React.Component {
         TableResizeState={this.state.tableResizeState}
         TableSelection={this.state.tableSelection}
         TableSelectionMove={this.state.tableSelectionMove}
+        SelectedRulerElemId={this.state.selectedRulerElemId}
         ResizeTable={this.resizeTable}
         imagePath={this.state.currentFile}
         SketchEnd={this.SketchEnd}
