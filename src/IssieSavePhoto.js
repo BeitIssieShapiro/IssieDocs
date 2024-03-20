@@ -17,7 +17,7 @@ import {
   getPageNavigationButtons, FileNameDialog, semanticColors, getFolderAndIcon,
   Spacer, getRoundedButton, dimensions, validPathPart
 } from './elements'
-import ImageResizer from 'react-native-image-resizer';
+import ImageResizer from '@bam.tech/react-native-image-resizer';
 
 import { getNewPage, SRC_RENAME, SRC_DUPLICATE, SRC_FILE } from './newPage'
 

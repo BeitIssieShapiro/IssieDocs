@@ -7,7 +7,7 @@ import linesPage from './lines-page.png'
 import mockPage from './mock.jpg'
 import { WorkSheet } from './work-sheet';
 import { trace, assert } from './log'
-import ImageResizer from 'react-native-image-resizer';
+import ImageResizer from '@bam.tech/react-native-image-resizer';
 import { unzip, zip } from 'react-native-zip-archive';
 import { TemporaryDirectoryPath } from 'react-native-fs'
 import { PromiseAllProgress } from './utils';

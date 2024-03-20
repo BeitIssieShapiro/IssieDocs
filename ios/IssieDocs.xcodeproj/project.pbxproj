@@ -8,21 +8,19 @@
 
 /* Begin PBXBuildFile section */
 		00E356F31AD99517003FC87E /* IssieDocsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* IssieDocsTests.m */; };
-		0C80B921A6F3F58F76C31292 /* libPods-IssieDocs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-IssieDocs.a */; };
+		07DD276317B4DF2976FEDF5C /* libPods-IssieDocs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C9E25D98731EB99819BEB188 /* libPods-IssieDocs.a */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
-		6A288AC829DF52F9007BBAB9 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A288AC729DF52F9007BBAB9 /* ShareViewController.swift */; };
-		6A288ACB29DF52FA007BBAB9 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6A288AC929DF52F9007BBAB9 /* MainInterface.storyboard */; };
-		6A288ACF29DF52FA007BBAB9 /* OpenIssieDocs2.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6A288AC529DF52F9007BBAB9 /* OpenIssieDocs2.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		6A972F8528D24E040086BB05 /* Alef_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A972F8328D24E040086BB05 /* Alef_Bold.ttf */; };
-		6A972F8628D24E040086BB05 /* Alef_Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A972F8428D24E040086BB05 /* Alef_Regular.ttf */; };
-		6A972F8928D252660086BB05 /* DroidSans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A972F8828D252660086BB05 /* DroidSans.ttf */; };
-		6A972F8B28D253500086BB05 /* LaunchScreen2.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6A972F8A28D253500086BB05 /* LaunchScreen2.storyboard */; };
-		6A972F8D28D253CE0086BB05 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6A972F8C28D253CE0086BB05 /* Assets.xcassets */; };
-		6A972F9128D26BA10086BB05 /* Verdana_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A972F9028D26BA10086BB05 /* Verdana_Bold.ttf */; };
-		6A972F9328D26BBD0086BB05 /* Verdana.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A972F9228D26BBD0086BB05 /* Verdana.ttf */; };
-		6AE4893B2B30D5F800A34F23 /* hermes.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A972F8128D205560086BB05 /* hermes.xcframework */; };
-		7699B88040F8A987B510C191 /* libPods-IssieDocs-IssieDocsTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19F6CBCC0A4E27FBF8BF4A61 /* libPods-IssieDocs-IssieDocsTests.a */; };
+		6A0C1B532BA969DD00C79EA4 /* LaunchScreen2.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6A0C1B522BA969DD00C79EA4 /* LaunchScreen2.storyboard */; };
+		6A0C1B5F2BA96A1400C79EA4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6A0C1B5E2BA96A1400C79EA4 /* Assets.xcassets */; };
+		6A0C1B652BA96AF900C79EA4 /* Alef_Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A0C1B602BA96AF800C79EA4 /* Alef_Regular.ttf */; };
+		6A0C1B662BA96AF900C79EA4 /* Verdana.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A0C1B612BA96AF800C79EA4 /* Verdana.ttf */; };
+		6A0C1B672BA96AF900C79EA4 /* DroidSans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A0C1B622BA96AF800C79EA4 /* DroidSans.ttf */; };
+		6A0C1B682BA96AF900C79EA4 /* Alef_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A0C1B632BA96AF800C79EA4 /* Alef_Bold.ttf */; };
+		6A0C1B692BA96AF900C79EA4 /* Verdana_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A0C1B642BA96AF800C79EA4 /* Verdana_Bold.ttf */; };
+		6AD557C32BA9B5910076DC3C /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD557C22BA9B5910076DC3C /* ShareViewController.swift */; };
+		6AD557C62BA9B5910076DC3C /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 6AD557C52BA9B5910076DC3C /* Base */; };
+		6AD557CA2BA9B5910076DC3C /* OpenIssieDocs2.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6AD557C02BA9B5910076DC3C /* OpenIssieDocs2.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -33,23 +31,23 @@
 			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
 			remoteInfo = IssieDocs;
 		};
-		6A288ACD29DF52FA007BBAB9 /* PBXContainerItemProxy */ = {
+		6AD557C82BA9B5910076DC3C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 6A288AC429DF52F9007BBAB9;
+			remoteGlobalIDString = 6AD557BF2BA9B5910076DC3C;
 			remoteInfo = OpenIssieDocs2;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		6AB98BF929DF019C0097A0DE /* Embed Foundation Extensions */ = {
+		6AD557BB2BA9B43C0076DC3C /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				6A288ACF29DF52FA007BBAB9 /* OpenIssieDocs2.appex in Embed Foundation Extensions */,
+				6AD557CA2BA9B5910076DC3C /* OpenIssieDocs2.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -65,33 +63,21 @@
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = IssieDocs/AppDelegate.mm; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = IssieDocs/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = IssieDocs/main.m; sourceTree = "<group>"; };
-		19F6CBCC0A4E27FBF8BF4A61 /* libPods-IssieDocs-IssieDocsTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-IssieDocs-IssieDocsTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		3B4392A12AC88292D35C810B /* Pods-IssieDocs.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs.debug.xcconfig"; path = "Target Support Files/Pods-IssieDocs/Pods-IssieDocs.debug.xcconfig"; sourceTree = "<group>"; };
-		5709B34CF0A7D63546082F79 /* Pods-IssieDocs.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs.release.xcconfig"; path = "Target Support Files/Pods-IssieDocs/Pods-IssieDocs.release.xcconfig"; sourceTree = "<group>"; };
-		5B7EB9410499542E8C5724F5 /* Pods-IssieDocs-IssieDocsTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs-IssieDocsTests.debug.xcconfig"; path = "Target Support Files/Pods-IssieDocs-IssieDocsTests/Pods-IssieDocs-IssieDocsTests.debug.xcconfig"; sourceTree = "<group>"; };
-		5DCACB8F33CDC322A6C60F78 /* libPods-IssieDocs.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-IssieDocs.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		6A06F49B28D8A50900C65D5A /* IssieDocs.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = IssieDocs.entitlements; path = IssieDocs/IssieDocs.entitlements; sourceTree = "<group>"; };
-		6A288AB129DF5150007BBAB9 /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
-		6A288AC529DF52F9007BBAB9 /* OpenIssieDocs2.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OpenIssieDocs2.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		6A288AC729DF52F9007BBAB9 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
-		6A288ACA29DF52F9007BBAB9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
-		6A288ACC29DF52FA007BBAB9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		6A288AD329DF611C007BBAB9 /* OpenIssieDocs2.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenIssieDocs2.entitlements; sourceTree = "<group>"; };
-		6A972F8128D205560086BB05 /* hermes.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = hermes.xcframework; path = "Pods/hermes-engine/destroot/Library/Frameworks/universal/hermes.xcframework"; sourceTree = "<group>"; };
-		6A972F8328D24E040086BB05 /* Alef_Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Alef_Bold.ttf; sourceTree = "<group>"; };
-		6A972F8428D24E040086BB05 /* Alef_Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Alef_Regular.ttf; sourceTree = "<group>"; };
-		6A972F8728D251C00086BB05 /* IssieDocs.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = IssieDocs.entitlements; sourceTree = "<group>"; };
-		6A972F8828D252660086BB05 /* DroidSans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = DroidSans.ttf; sourceTree = "<group>"; };
-		6A972F8A28D253500086BB05 /* LaunchScreen2.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = LaunchScreen2.storyboard; sourceTree = "<group>"; };
-		6A972F8C28D253CE0086BB05 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		6A972F9028D26BA10086BB05 /* Verdana_Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Verdana_Bold.ttf; sourceTree = "<group>"; };
-		6A972F9228D26BBD0086BB05 /* Verdana.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Verdana.ttf; sourceTree = "<group>"; };
-		6AB4DEBF29FAEDE900353F32 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
-		6AB4DEC429FAF85500353F32 /* libc++.1.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.1.tbd"; path = "usr/lib/libc++.1.tbd"; sourceTree = SDKROOT; };
-		6AB4DEC629FAF89D00353F32 /* libc++experimental.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libc++experimental.a"; path = "usr/lib/libc++experimental.a"; sourceTree = SDKROOT; };
-		6AFD396629FDA7D6008AE5CE /* IssieDocs-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IssieDocs-Bridging-Header.h"; sourceTree = "<group>"; };
-		6AFD396C29FDADA7008AE5CE /* settings.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = settings.xcconfig; path = ../ocr/settings.xcconfig; sourceTree = "<group>"; };
-		89C6BE57DB24E9ADA2F236DE /* Pods-IssieDocs-IssieDocsTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs-IssieDocsTests.release.xcconfig"; path = "Target Support Files/Pods-IssieDocs-IssieDocsTests/Pods-IssieDocs-IssieDocsTests.release.xcconfig"; sourceTree = "<group>"; };
+		546480F13BE356AC56D59619 /* Pods-IssieDocs.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs.debug.xcconfig"; path = "Target Support Files/Pods-IssieDocs/Pods-IssieDocs.debug.xcconfig"; sourceTree = "<group>"; };
+		6A0C1B522BA969DD00C79EA4 /* LaunchScreen2.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = LaunchScreen2.storyboard; sourceTree = "<group>"; };
+		6A0C1B5E2BA96A1400C79EA4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = ../../Issie/IssieDocs/ios/Assets.xcassets; sourceTree = "<group>"; };
+		6A0C1B602BA96AF800C79EA4 /* Alef_Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Alef_Regular.ttf; path = ../../../.Trash/Alef_Regular.ttf; sourceTree = "<group>"; };
+		6A0C1B612BA96AF800C79EA4 /* Verdana.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Verdana.ttf; path = ../../../.Trash/Verdana.ttf; sourceTree = "<group>"; };
+		6A0C1B622BA96AF800C79EA4 /* DroidSans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = DroidSans.ttf; path = ../../../.Trash/DroidSans.ttf; sourceTree = "<group>"; };
+		6A0C1B632BA96AF800C79EA4 /* Alef_Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Alef_Bold.ttf; path = ../../../.Trash/Alef_Bold.ttf; sourceTree = "<group>"; };
+		6A0C1B642BA96AF800C79EA4 /* Verdana_Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Verdana_Bold.ttf; path = ../../../.Trash/Verdana_Bold.ttf; sourceTree = "<group>"; };
+		6AD557972BA99D290076DC3C /* IssieDocs-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IssieDocs-Bridging-Header.h"; sourceTree = "<group>"; };
+		6AD557C02BA9B5910076DC3C /* OpenIssieDocs2.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OpenIssieDocs2.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		6AD557C22BA9B5910076DC3C /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		6AD557C52BA9B5910076DC3C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
+		6AD557C72BA9B5910076DC3C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		91FED51A237EA4517F41BCB7 /* Pods-IssieDocs.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs.release.xcconfig"; path = "Target Support Files/Pods-IssieDocs/Pods-IssieDocs.release.xcconfig"; sourceTree = "<group>"; };
+		C9E25D98731EB99819BEB188 /* libPods-IssieDocs.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-IssieDocs.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -100,7 +86,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7699B88040F8A987B510C191 /* libPods-IssieDocs-IssieDocsTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -108,12 +93,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0C80B921A6F3F58F76C31292 /* libPods-IssieDocs.a in Frameworks */,
-				6AE4893B2B30D5F800A34F23 /* hermes.xcframework in Frameworks */,
+				07DD276317B4DF2976FEDF5C /* libPods-IssieDocs.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		6A288AC229DF52F9007BBAB9 /* Frameworks */ = {
+		6AD557BD2BA9B5910076DC3C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -143,21 +127,18 @@
 		13B07FAE1A68108700A75B9A /* IssieDocs */ = {
 			isa = PBXGroup;
 			children = (
-				6A06F49B28D8A50900C65D5A /* IssieDocs.entitlements */,
-				6A972F8328D24E040086BB05 /* Alef_Bold.ttf */,
-				6A972F8428D24E040086BB05 /* Alef_Regular.ttf */,
-				6A972F8828D252660086BB05 /* DroidSans.ttf */,
+				6A0C1B5E2BA96A1400C79EA4 /* Assets.xcassets */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
 				13B07FB01A68108700A75B9A /* AppDelegate.mm */,
-				6A972F9028D26BA10086BB05 /* Verdana_Bold.ttf */,
-				6A972F9228D26BBD0086BB05 /* Verdana.ttf */,
-				6A972F8C28D253CE0086BB05 /* Assets.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
-				6A972F8728D251C00086BB05 /* IssieDocs.entitlements */,
-				6A972F8A28D253500086BB05 /* LaunchScreen2.storyboard */,
+				6A0C1B522BA969DD00C79EA4 /* LaunchScreen2.storyboard */,
+				6A0C1B632BA96AF800C79EA4 /* Alef_Bold.ttf */,
+				6A0C1B602BA96AF800C79EA4 /* Alef_Regular.ttf */,
+				6A0C1B622BA96AF800C79EA4 /* DroidSans.ttf */,
+				6A0C1B642BA96AF800C79EA4 /* Verdana_Bold.ttf */,
+				6A0C1B612BA96AF800C79EA4 /* Verdana.ttf */,
 				13B07FB71A68108700A75B9A /* main.m */,
-				6AFD396629FDA7D6008AE5CE /* IssieDocs-Bridging-Header.h */,
-				6AFD396C29FDADA7008AE5CE /* settings.xcconfig */,
+				6AD557972BA99D290076DC3C /* IssieDocs-Bridging-Header.h */,
 			);
 			name = IssieDocs;
 			sourceTree = "<group>";
@@ -165,25 +146,18 @@
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				6AB4DEC629FAF89D00353F32 /* libc++experimental.a */,
-				6AB4DEC429FAF85500353F32 /* libc++.1.tbd */,
-				6AB4DEBF29FAEDE900353F32 /* libc++.tbd */,
-				6A972F8128D205560086BB05 /* hermes.xcframework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				5DCACB8F33CDC322A6C60F78 /* libPods-IssieDocs.a */,
-				19F6CBCC0A4E27FBF8BF4A61 /* libPods-IssieDocs-IssieDocsTests.a */,
-				6A288AB129DF5150007BBAB9 /* UniformTypeIdentifiers.framework */,
+				C9E25D98731EB99819BEB188 /* libPods-IssieDocs.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		6A288AC629DF52F9007BBAB9 /* OpenIssieDocs2 */ = {
+		6AD557C12BA9B5910076DC3C /* OpenIssieDocs2 */ = {
 			isa = PBXGroup;
 			children = (
-				6A288AD329DF611C007BBAB9 /* OpenIssieDocs2.entitlements */,
-				6A288AC729DF52F9007BBAB9 /* ShareViewController.swift */,
-				6A288AC929DF52F9007BBAB9 /* MainInterface.storyboard */,
-				6A288ACC29DF52FA007BBAB9 /* Info.plist */,
+				6AD557C22BA9B5910076DC3C /* ShareViewController.swift */,
+				6AD557C42BA9B5910076DC3C /* MainInterface.storyboard */,
+				6AD557C72BA9B5910076DC3C /* Info.plist */,
 			);
 			path = OpenIssieDocs2;
 			sourceTree = "<group>";
@@ -201,7 +175,7 @@
 				13B07FAE1A68108700A75B9A /* IssieDocs */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				00E356EF1AD99517003FC87E /* IssieDocsTests */,
-				6A288AC629DF52F9007BBAB9 /* OpenIssieDocs2 */,
+				6AD557C12BA9B5910076DC3C /* OpenIssieDocs2 */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -216,7 +190,7 @@
 			children = (
 				13B07F961A680F5B00A75B9A /* IssieDocs.app */,
 				00E356EE1AD99517003FC87E /* IssieDocsTests.xctest */,
-				6A288AC529DF52F9007BBAB9 /* OpenIssieDocs2.appex */,
+				6AD557C02BA9B5910076DC3C /* OpenIssieDocs2.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -224,10 +198,8 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				3B4392A12AC88292D35C810B /* Pods-IssieDocs.debug.xcconfig */,
-				5709B34CF0A7D63546082F79 /* Pods-IssieDocs.release.xcconfig */,
-				5B7EB9410499542E8C5724F5 /* Pods-IssieDocs-IssieDocsTests.debug.xcconfig */,
-				89C6BE57DB24E9ADA2F236DE /* Pods-IssieDocs-IssieDocsTests.release.xcconfig */,
+				546480F13BE356AC56D59619 /* Pods-IssieDocs.debug.xcconfig */,
+				91FED51A237EA4517F41BCB7 /* Pods-IssieDocs.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -239,12 +211,9 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "IssieDocsTests" */;
 			buildPhases = (
-				A55EABD7B0C7F3A422A6CC61 /* [CP] Check Pods Manifest.lock */,
 				00E356EA1AD99517003FC87E /* Sources */,
 				00E356EB1AD99517003FC87E /* Frameworks */,
 				00E356EC1AD99517003FC87E /* Resources */,
-				C59DA0FBD6956966B86A3779 /* [CP] Embed Pods Frameworks */,
-				F6A41C54EA430FDDC6A6ED99 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -260,33 +229,32 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "IssieDocs" */;
 			buildPhases = (
-				C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */,
-				FD10A7F022414F080027D42C /* Start Packager */,
+				E0D90B11CDD84F88A36D1828 /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
-				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
-				6AB98BF929DF019C0097A0DE /* Embed Foundation Extensions */,
+				542C5BFDE67F59A103ED4395 /* [CP] Embed Pods Frameworks */,
+				BC2D67A0D649909D8EB026DD /* [CP] Copy Pods Resources */,
+				6AD557BB2BA9B43C0076DC3C /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				6A288ACE29DF52FA007BBAB9 /* PBXTargetDependency */,
+				6AD557C92BA9B5910076DC3C /* PBXTargetDependency */,
 			);
 			name = IssieDocs;
 			productName = IssieDocs;
 			productReference = 13B07F961A680F5B00A75B9A /* IssieDocs.app */;
 			productType = "com.apple.product-type.application";
 		};
-		6A288AC429DF52F9007BBAB9 /* OpenIssieDocs2 */ = {
+		6AD557BF2BA9B5910076DC3C /* OpenIssieDocs2 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 6A288AD029DF52FA007BBAB9 /* Build configuration list for PBXNativeTarget "OpenIssieDocs2" */;
+			buildConfigurationList = 6AD557CB2BA9B5910076DC3C /* Build configuration list for PBXNativeTarget "OpenIssieDocs2" */;
 			buildPhases = (
-				6A288AC129DF52F9007BBAB9 /* Sources */,
-				6A288AC229DF52F9007BBAB9 /* Frameworks */,
-				6A288AC329DF52F9007BBAB9 /* Resources */,
+				6AD557BC2BA9B5910076DC3C /* Sources */,
+				6AD557BD2BA9B5910076DC3C /* Frameworks */,
+				6AD557BE2BA9B5910076DC3C /* Resources */,
 			);
 			buildRules = (
 			);
@@ -294,7 +262,7 @@
 			);
 			name = OpenIssieDocs2;
 			productName = OpenIssieDocs2;
-			productReference = 6A288AC529DF52F9007BBAB9 /* OpenIssieDocs2.appex */;
+			productReference = 6AD557C02BA9B5910076DC3C /* OpenIssieDocs2.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -303,19 +271,18 @@
 		83CBB9F71A601CBA00E9B192 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				BuildIndependentTargetsInParallel = YES;
-				LastSwiftUpdateCheck = 1420;
-				LastUpgradeCheck = 1430;
+				LastSwiftUpdateCheck = 1530;
+				LastUpgradeCheck = 1210;
 				TargetAttributes = {
 					00E356ED1AD99517003FC87E = {
 						CreatedOnToolsVersion = 6.2;
 						TestTargetID = 13B07F861A680F5B00A75B9A;
 					};
 					13B07F861A680F5B00A75B9A = {
-						LastSwiftMigration = 1430;
+						LastSwiftMigration = 1530;
 					};
-					6A288AC429DF52F9007BBAB9 = {
-						CreatedOnToolsVersion = 14.2;
+					6AD557BF2BA9B5910076DC3C = {
+						CreatedOnToolsVersion = 15.3;
 					};
 				};
 			};
@@ -334,7 +301,7 @@
 			targets = (
 				13B07F861A680F5B00A75B9A /* IssieDocs */,
 				00E356ED1AD99517003FC87E /* IssieDocsTests */,
-				6A288AC429DF52F9007BBAB9 /* OpenIssieDocs2 */,
+				6AD557BF2BA9B5910076DC3C /* OpenIssieDocs2 */,
 			);
 		};
 /* End PBXProject section */
@@ -351,21 +318,21 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6A972F8628D24E040086BB05 /* Alef_Regular.ttf in Resources */,
-				6A972F8B28D253500086BB05 /* LaunchScreen2.storyboard in Resources */,
-				6A972F9328D26BBD0086BB05 /* Verdana.ttf in Resources */,
-				6A972F8928D252660086BB05 /* DroidSans.ttf in Resources */,
-				6A972F8D28D253CE0086BB05 /* Assets.xcassets in Resources */,
-				6A972F8528D24E040086BB05 /* Alef_Bold.ttf in Resources */,
-				6A972F9128D26BA10086BB05 /* Verdana_Bold.ttf in Resources */,
+				6A0C1B662BA96AF900C79EA4 /* Verdana.ttf in Resources */,
+				6A0C1B532BA969DD00C79EA4 /* LaunchScreen2.storyboard in Resources */,
+				6A0C1B672BA96AF900C79EA4 /* DroidSans.ttf in Resources */,
+				6A0C1B5F2BA96A1400C79EA4 /* Assets.xcassets in Resources */,
+				6A0C1B652BA96AF900C79EA4 /* Alef_Regular.ttf in Resources */,
+				6A0C1B682BA96AF900C79EA4 /* Alef_Bold.ttf in Resources */,
+				6A0C1B692BA96AF900C79EA4 /* Verdana_Bold.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		6A288AC329DF52F9007BBAB9 /* Resources */ = {
+		6AD557BE2BA9B5910076DC3C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6A288ACB29DF52FA007BBAB9 /* MainInterface.storyboard in Resources */,
+				6AD557C62BA9B5910076DC3C /* Base in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -386,9 +353,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\n\nSOURCEMAP_FILE=\"$(pwd)/../main.jsbundle.map\";\nWITH_ENVIRONMENT=\"../node_modules/react-native/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"../node_modules/react-native/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
+			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"../node_modules/react-native/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"../node_modules/react-native/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
-		00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */ = {
+		542C5BFDE67F59A103ED4395 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -405,29 +372,24 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		A55EABD7B0C7F3A422A6CC61 /* [CP] Check Pods Manifest.lock */ = {
+		BC2D67A0D649909D8EB026DD /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
+			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-IssieDocs-IssieDocsTests-checkManifestLockResult.txt",
+				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
+		E0D90B11CDD84F88A36D1828 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -447,76 +409,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		C59DA0FBD6956966B86A3779 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs-IssieDocsTests/Pods-IssieDocs-IssieDocsTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs-IssieDocsTests/Pods-IssieDocs-IssieDocsTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-IssieDocs-IssieDocsTests/Pods-IssieDocs-IssieDocsTests-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		E235C05ADACE081382539298 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		F6A41C54EA430FDDC6A6ED99 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs-IssieDocsTests/Pods-IssieDocs-IssieDocsTests-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs-IssieDocsTests/Pods-IssieDocs-IssieDocsTests-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-IssieDocs-IssieDocsTests/Pods-IssieDocs-IssieDocsTests-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		FD10A7F022414F080027D42C /* Start Packager */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Start Packager";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "export RCT_METRO_PORT=\"${RCT_METRO_PORT:=8081}\"\necho \"export RCT_METRO_PORT=${RCT_METRO_PORT}\" > \"${SRCROOT}/../node_modules/react-native/scripts/.packager.env\"\nif [ -z \"${RCT_NO_LAUNCH_PACKAGER+xxx}\" ] ; then\n  if nc -w 5 -z localhost ${RCT_METRO_PORT} ; then\n    if ! curl -s \"http://localhost:${RCT_METRO_PORT}/status\" | grep -q \"packager-status:running\" ; then\n      echo \"Port ${RCT_METRO_PORT} already in use, packager is either not running or not running correctly\"\n      exit 2\n    fi\n  else\n    open \"$SRCROOT/../node_modules/react-native/scripts/launchPackager.command\" || echo \"Can't start packager automatically\"\n  fi\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -539,11 +431,11 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		6A288AC129DF52F9007BBAB9 /* Sources */ = {
+		6AD557BC2BA9B5910076DC3C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6A288AC829DF52F9007BBAB9 /* ShareViewController.swift in Sources */,
+				6AD557C32BA9B5910076DC3C /* ShareViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -555,19 +447,18 @@
 			target = 13B07F861A680F5B00A75B9A /* IssieDocs */;
 			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
 		};
-		6A288ACE29DF52FA007BBAB9 /* PBXTargetDependency */ = {
+		6AD557C92BA9B5910076DC3C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			platformFilter = ios;
-			target = 6A288AC429DF52F9007BBAB9 /* OpenIssieDocs2 */;
-			targetProxy = 6A288ACD29DF52FA007BBAB9 /* PBXContainerItemProxy */;
+			target = 6AD557BF2BA9B5910076DC3C /* OpenIssieDocs2 */;
+			targetProxy = 6AD557C82BA9B5910076DC3C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		6A288AC929DF52F9007BBAB9 /* MainInterface.storyboard */ = {
+		6AD557C42BA9B5910076DC3C /* MainInterface.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
-				6A288ACA29DF52F9007BBAB9 /* Base */,
+				6AD557C52BA9B5910076DC3C /* Base */,
 			);
 			name = MainInterface.storyboard;
 			sourceTree = "<group>";
@@ -577,25 +468,31 @@
 /* Begin XCBuildConfiguration section */
 		00E356F61AD99517003FC87E /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5B7EB9410499542E8C5724F5 /* Pods-IssieDocs-IssieDocsTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEAD_CODE_STRIPPING = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = IssieDocsTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(SDKROOT)/usr/lib/swift",
+					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
+					"$(inherited)",
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",
 					"-lc++",
 					"$(inherited)",
 				);
+				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IssieDocs.app/IssieDocs";
@@ -604,22 +501,28 @@
 		};
 		00E356F71AD99517003FC87E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 89C6BE57DB24E9ADA2F236DE /* Pods-IssieDocs-IssieDocsTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				INFOPLIST_FILE = IssieDocsTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(SDKROOT)/usr/lib/swift",
+					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
+					"$(inherited)",
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",
 					"-lc++",
 					"$(inherited)",
 				);
+				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IssieDocs.app/IssieDocs";
@@ -628,97 +531,18 @@
 		};
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-IssieDocs.debug.xcconfig */;
+			baseConfigurationReference = 546480F13BE356AC56D59619 /* Pods-IssieDocs.debug.xcconfig */;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "${inherited}";
+				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
-				CURRENT_PROJECT_VERSION = 31;
+				CURRENT_PROJECT_VERSION = 32;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				ENABLE_BITCODE = NO;
-				GCC_NO_COMMON_BLOCKS = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					"\"${PODS_ROOT}/Headers/Public\"",
-					"\"${PODS_ROOT}/Headers/Public/BVLinearGradient\"",
-					"\"${PODS_ROOT}/Headers/Public/CocoaAsyncSocket\"",
-					"\"${PODS_ROOT}/Headers/Public/DoubleConversion\"",
-					"\"${PODS_ROOT}/Headers/Public/FBLazyVector\"",
-					"\"${PODS_ROOT}/Headers/Public/Flipper\"",
-					"\"${PODS_ROOT}/Headers/Public/Flipper-Fmt\"",
-					"\"${PODS_ROOT}/Headers/Public/Flipper-Folly\"",
-					"\"${PODS_ROOT}/Headers/Public/Flipper-PeerTalk\"",
-					"\"${PODS_ROOT}/Headers/Public/Flipper-RSocket\"",
-					"\"${PODS_ROOT}/Headers/Public/FlipperKit\"",
-					"\"${PODS_ROOT}/Headers/Public/Permission-Camera\"",
-					"\"${PODS_ROOT}/Headers/Public/RCT-Folly\"",
-					"\"${PODS_ROOT}/Headers/Public/RCTRequired\"",
-					"\"${PODS_ROOT}/Headers/Public/RCTTypeSafety\"",
-					"\"${PODS_ROOT}/Headers/Public/RNCMaskedView\"",
-					"\"${PODS_ROOT}/Headers/Public/RNFS\"",
-					"\"${PODS_ROOT}/Headers/Public/RNGestureHandler\"",
-					"\"${PODS_ROOT}/Headers/Public/RNLocalize\"",
-					"$(SRCROOT)/../node_modules/react-native-splash-screen/ios",
-					"\"${PODS_ROOT}/Headers/Public/RNPermissions\"",
-					"\"${PODS_ROOT}/Headers/Public/RNReanimated\"",
-					"\"${PODS_ROOT}/Headers/Public/RNSVG\"",
-					"\"${PODS_ROOT}/Headers/Public/RNScreens\"",
-					"\"${PODS_ROOT}/Headers/Public/RNShare\"",
-					"\"${PODS_ROOT}/Headers/Public/RNSketchCanvas\"",
-					"\"${PODS_ROOT}/Headers/Public/RNVectorIcons\"",
-					"\"${PODS_ROOT}/Headers/Public/React-Codegen\"",
-					"\"${PODS_ROOT}/Headers/Public/React-Core\"",
-					"\"${PODS_ROOT}/Headers/Public/React-RCTAnimation\"",
-					"\"${PODS_ROOT}/Headers/Public/React-RCTBlob\"",
-					"\"${PODS_ROOT}/Headers/Public/React-RCTText\"",
-					"\"${PODS_ROOT}/Headers/Public/React-bridging\"",
-					"\"${PODS_ROOT}/Headers/Public/React-callinvoker\"",
-					"\"${PODS_ROOT}/Headers/Public/React-cxxreact\"",
-					"\"${PODS_ROOT}/Headers/Public/React-hermes\"",
-					"\"${PODS_ROOT}/Headers/Public/React-jsi\"",
-					"\"${PODS_ROOT}/Headers/Public/React-jsiexecutor\"",
-					"\"${PODS_ROOT}/Headers/Public/React-jsinspector\"",
-					"\"${PODS_ROOT}/Headers/Public/React-logger\"",
-					"\"${PODS_ROOT}/Headers/Public/React-perflogger\"",
-					"\"${PODS_ROOT}/Headers/Public/React-runtimeexecutor\"",
-					"\"${PODS_ROOT}/Headers/Public/ReactCommon\"",
-					"\"${PODS_ROOT}/Headers/Public/ReactNativeCameraKit\"",
-					"\"${PODS_ROOT}/Headers/Public/SocketRocket\"",
-					"\"${PODS_ROOT}/Headers/Public/Yoga\"",
-					"\"${PODS_ROOT}/Headers/Public/YogaKit\"",
-					"\"${PODS_ROOT}/Headers/Public/fmt\"",
-					"\"${PODS_ROOT}/Headers/Public/glog\"",
-					"\"${PODS_ROOT}/Headers/Public/hermes-engine\"",
-					"\"${PODS_ROOT}/Headers/Public/libevent\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-blob-util\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-document-picker\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-image-editor\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-image-picker\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-image-resizer\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-pdf\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-progress-view\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-safe-area-context\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-splash-screen\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-view-shot\"",
-					"\"${PODS_ROOT}/Headers/Public/toolbar-android\"",
-					"\"$(PODS_ROOT)/DoubleConversion\"",
-					"\"$(PODS_ROOT)/boost\"",
-					"\"$(PODS_ROOT)/boost\"",
-					"\"$(PODS_ROOT)/boost-for-react-native\"",
-					"\"$(PODS_ROOT)/glog\"",
-					"\"$(PODS_ROOT)/RCT-Folly\"",
-					"\"$(PODS_ROOT)/RCT-Folly\"",
-					"\"${PODS_ROOT}/Headers/Public/React-hermes\"",
-					"\"${PODS_ROOT}/Headers/Public/hermes-engine\"",
-					"\"$(PODS_ROOT)/Headers/Private/React-Core\"",
-					"$(SRCROOT)/../textdetection/include/**",
-					"\"$(PODS_TARGET_SRCROOT)/include/\"",
-				);
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "i386 arm64";
 				INFOPLIST_FILE = IssieDocs/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = IssieDocs;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -726,355 +550,134 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(SDKROOT)/usr/lib/swift",
+					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
 					"$(inherited)",
-					"\"${DT_TOOLCHAIN_DIR}/usr/lib/swift/${PLATFORM_NAME}\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/BVLinearGradient\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/CocoaAsyncSocket\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/DoubleConversion\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/Flipper\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/Flipper-Boost-iOSX\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/Flipper-Fmt\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/Flipper-Folly\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/Flipper-PeerTalk\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/Flipper-RSocket\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/FlipperKit\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/Permission-Camera\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RCT-Folly\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RCTTypeSafety\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNCMaskedView\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNFS\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNGestureHandler\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNLocalize\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNPermissions\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNReanimated\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNScreens\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNShare\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNSketchCanvas\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNVectorIcons\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-Codegen\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-Core\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-CoreModules\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTAnimation\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTBlob\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTImage\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTLinking\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTNetwork\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTSettings\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTText\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTVibration\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-bridging\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-hermes\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-jsi\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-jsiexecutor\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-jsinspector\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-logger\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-perflogger\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/ReactNativeCameraKit\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/SocketRocket\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/Yoga\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/YogaKit\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/fmt\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/glog\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/libevent\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-blob-util\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-document-picker\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-image-editor\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-image-picker\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-image-resizer\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-pdf\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-progress-view\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-safe-area-context\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-slider\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-view-shot\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/toolbar-android\"",
-					/usr/lib/swift,
 				);
 				MARKETING_VERSION = 1.4.5;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
-					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/YogaKit/YogaKit.modulemap\"",
-					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/FlipperKit/FlipperKit.modulemap\"",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/ReactNativeCameraKit/ReactNativeCameraKit.modulemap\"",
 					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTTypeSafety/RCTTypeSafety.modulemap\"",
-					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React/React-Core.modulemap\"",
-					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/ReactCommon/ReactCommon.modulemap\"",
-					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React_Codegen/React-Codegen.modulemap\"",
-					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/folly/RCT-Folly.modulemap\"",
-					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/yoga/Yoga.modulemap\"",
-					"$(inherited)",
-					"-DFOLLY_NO_CONFIG",
-					"-DFOLLY_MOBILE=1",
-					"-DFOLLY_USE_LIBCPP=1",
-					"-Wno-comma",
-					"-Wno-shorten-64-to-32",
-					"-DREACT_NATIVE_MINOR_VERSION=71",
-					"-DREANIMATED_VERSION=3.2.0",
-				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					"-ObjC",
-					"-lc++",
-				);
-				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
-					"$(inherited)",
-					"-ObjC",
-					"-lc++",
-				);
-				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = (
-					"$(inherited)",
-					"-ObjC",
-					"-lc++",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.issieshapiro.issiedoc.IssieDoc;
-				PRODUCT_NAME = IssieDocs;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
-				SWIFT_INCLUDE_PATHS = "$(inherited) \"${PODS_CONFIGURATION_BUILD_DIR}/YogaKit\" /Users/i022021/dev/Issie/tesseract-build/Root/include/**";
-				SWIFT_OBJC_BRIDGING_HEADER = "IssieDocs-Bridging-Header.h";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VERSIONING_SYSTEM = "apple-generic";
-			};
-			name = Debug;
-		};
-		13B07F951A680F5B00A75B9A /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-IssieDocs.release.xcconfig */;
-			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
-				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
-				CURRENT_PROJECT_VERSION = 31;
-				DEVELOPMENT_TEAM = SKNJT9TD9G;
-				GCC_NO_COMMON_BLOCKS = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					"\"${PODS_ROOT}/Headers/Public\"",
-					"\"${PODS_ROOT}/Headers/Public/BVLinearGradient\"",
-					"\"${PODS_ROOT}/Headers/Public/CocoaAsyncSocket\"",
-					"\"${PODS_ROOT}/Headers/Public/DoubleConversion\"",
-					"\"${PODS_ROOT}/Headers/Public/FBLazyVector\"",
-					"\"${PODS_ROOT}/Headers/Public/Flipper\"",
-					"\"${PODS_ROOT}/Headers/Public/Flipper-Fmt\"",
-					"\"${PODS_ROOT}/Headers/Public/Flipper-Folly\"",
-					"\"${PODS_ROOT}/Headers/Public/Flipper-PeerTalk\"",
-					"\"${PODS_ROOT}/Headers/Public/Flipper-RSocket\"",
-					"\"${PODS_ROOT}/Headers/Public/FlipperKit\"",
-					"\"${PODS_ROOT}/Headers/Public/Permission-Camera\"",
-					"\"${PODS_ROOT}/Headers/Public/RCT-Folly\"",
-					"\"${PODS_ROOT}/Headers/Public/RCTRequired\"",
-					"\"${PODS_ROOT}/Headers/Public/RCTTypeSafety\"",
-					"\"${PODS_ROOT}/Headers/Public/RNCMaskedView\"",
-					"\"${PODS_ROOT}/Headers/Public/RNFS\"",
-					"\"${PODS_ROOT}/Headers/Public/RNGestureHandler\"",
-					"\"${PODS_ROOT}/Headers/Public/RNLocalize\"",
-					"\"${PODS_ROOT}/Headers/Public/RNPermissions\"",
-					"\"${PODS_ROOT}/Headers/Public/RNReanimated\"",
-					"\"${PODS_ROOT}/Headers/Public/RNSVG\"",
-					"\"${PODS_ROOT}/Headers/Public/RNScreens\"",
-					"\"${PODS_ROOT}/Headers/Public/RNShare\"",
-					"\"${PODS_ROOT}/Headers/Public/RNSketchCanvas\"",
-					"\"${PODS_ROOT}/Headers/Public/RNVectorIcons\"",
-					"\"${PODS_ROOT}/Headers/Public/React-Codegen\"",
-					"\"${PODS_ROOT}/Headers/Public/React-Core\"",
-					"\"${PODS_ROOT}/Headers/Public/React-RCTAnimation\"",
-					"\"${PODS_ROOT}/Headers/Public/React-RCTBlob\"",
-					"\"${PODS_ROOT}/Headers/Public/React-RCTText\"",
-					"\"${PODS_ROOT}/Headers/Public/React-bridging\"",
-					"\"${PODS_ROOT}/Headers/Public/React-callinvoker\"",
-					"\"${PODS_ROOT}/Headers/Public/React-cxxreact\"",
-					"\"${PODS_ROOT}/Headers/Public/React-hermes\"",
-					"\"${PODS_ROOT}/Headers/Public/React-jsi\"",
-					"\"${PODS_ROOT}/Headers/Public/React-jsiexecutor\"",
-					"\"${PODS_ROOT}/Headers/Public/React-jsinspector\"",
-					"\"${PODS_ROOT}/Headers/Public/React-logger\"",
-					"\"${PODS_ROOT}/Headers/Public/React-perflogger\"",
-					"\"${PODS_ROOT}/Headers/Public/React-runtimeexecutor\"",
-					"\"${PODS_ROOT}/Headers/Public/ReactCommon\"",
-					"\"${PODS_ROOT}/Headers/Public/ReactNativeCameraKit\"",
-					"\"${PODS_ROOT}/Headers/Public/SocketRocket\"",
-					"\"${PODS_ROOT}/Headers/Public/Yoga\"",
-					"\"${PODS_ROOT}/Headers/Public/YogaKit\"",
-					"\"${PODS_ROOT}/Headers/Public/fmt\"",
-					"\"${PODS_ROOT}/Headers/Public/glog\"",
-					"\"${PODS_ROOT}/Headers/Public/hermes-engine\"",
-					"\"${PODS_ROOT}/Headers/Public/libevent\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-blob-util\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-document-picker\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-image-editor\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-image-picker\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-image-resizer\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-pdf\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-progress-view\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-safe-area-context\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-splash-screen\"",
-					"\"${PODS_ROOT}/Headers/Public/react-native-view-shot\"",
-					"\"${PODS_ROOT}/Headers/Public/toolbar-android\"",
-					"\"$(PODS_ROOT)/DoubleConversion\"",
-					"\"$(PODS_ROOT)/boost\"",
-					"\"$(PODS_ROOT)/boost\"",
-					"\"$(PODS_ROOT)/boost-for-react-native\"",
-					"\"$(PODS_ROOT)/glog\"",
-					"\"$(PODS_ROOT)/RCT-Folly\"",
-					"\"$(PODS_ROOT)/RCT-Folly\"",
-					"\"${PODS_ROOT}/Headers/Public/React-hermes\"",
-					"\"${PODS_ROOT}/Headers/Public/hermes-engine\"",
-					"\"$(PODS_ROOT)/Headers/Private/React-Core\"",
-					"\"$(PODS_TARGET_SRCROOT)/include/\"",
-					"$(SRCROOT)/../node_modules/react-native-splash-screen/ios",
-					"$(SRCROOT)/../textdetection/include/**",
-				);
-				INFOPLIST_FILE = IssieDocs/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = IssieDocs;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(SDKROOT)/usr/lib/swift",
-					"$(inherited)",
-					"\"${DT_TOOLCHAIN_DIR}/usr/lib/swift/${PLATFORM_NAME}\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/BVLinearGradient\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/CocoaAsyncSocket\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/DoubleConversion\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/Permission-Camera\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RCT-Folly\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RCTTypeSafety\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNCMaskedView\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNFS\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNGestureHandler\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNLocalize\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNPermissions\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNReanimated\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNScreens\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNShare\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNSketchCanvas\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/RNVectorIcons\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-Codegen\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-Core\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-CoreModules\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTAnimation\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTBlob\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTImage\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTLinking\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTNetwork\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTSettings\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTText\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-RCTVibration\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-bridging\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-hermes\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-jsi\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-jsiexecutor\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-jsinspector\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-logger\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/React-perflogger\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/ReactNativeCameraKit\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/SocketRocket\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/Yoga\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/YogaKit\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/fmt\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/glog\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/libevent\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-blob-util\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-document-picker\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-image-editor\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-image-picker\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-image-resizer\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-pdf\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-progress-view\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-safe-area-context\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-slider\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/react-native-view-shot\"",
-					"\"${PODS_CONFIGURATION_BUILD_DIR}/toolbar-android\"",
-					/usr/lib/swift,
-				);
-				MARKETING_VERSION = 1.4.5;
-				OTHER_CFLAGS = (
-					"$(inherited)",
-					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/YogaKit/YogaKit.modulemap\"",
-					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTTypeSafety/RCTTypeSafety.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RNReanimated/RNReanimated.modulemap\"",
 					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React/React-Core.modulemap\"",
 					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/ReactCommon/ReactCommon.modulemap\"",
 					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React_Codegen/React-Codegen.modulemap\"",
 					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/SSZipArchive/SSZipArchive.modulemap\"",
 					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/folly/RCT-Folly.modulemap\"",
 					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/yoga/Yoga.modulemap\"",
-					"$(inherited)",
 					"-DFOLLY_NO_CONFIG",
 					"-DFOLLY_MOBILE=1",
 					"-DFOLLY_USE_LIBCPP=1",
 					"-Wno-comma",
 					"-Wno-shorten-64-to-32",
 					"-DREACT_NATIVE_MINOR_VERSION=71",
-					"-DREANIMATED_VERSION=3.2.0",
+					"-DREANIMATED_VERSION=3.8.1",
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
+					"-v",
 				);
-				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
-					"$(inherited)",
-					"-ObjC",
-					"-lc++",
-				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D COCOAPODS -Xcc -fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/ReactNativeCameraKit/ReactNativeCameraKit.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTTypeSafety/RCTTypeSafety.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RNReanimated/RNReanimated.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React/React-Core.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/ReactCommon/ReactCommon.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React_Codegen/React-Codegen.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/SSZipArchive/SSZipArchive.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/folly/RCT-Folly.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/yoga/Yoga.modulemap\"";
+				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.issieshapiro.issiedoc.IssieDoc;
 				PRODUCT_NAME = IssieDocs;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
-				SWIFT_INCLUDE_PATHS = "$(inherited) \"${PODS_CONFIGURATION_BUILD_DIR}/YogaKit\" /Users/i022021/dev/Issie/tesseract-build/Root/include/**";
+				SWIFT_OBJC_BRIDGING_HEADER = "IssieDocs-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				USE_HEADERMAP = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		13B07F951A680F5B00A75B9A /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 91FED51A237EA4517F41BCB7 /* Pods-IssieDocs.release.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "${inherited}";
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CURRENT_PROJECT_VERSION = 32;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = SKNJT9TD9G;
+				INFOPLIST_FILE = IssieDocs/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(SDKROOT)/usr/lib/swift",
+					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
+					"$(inherited)",
+				);
+				MARKETING_VERSION = 1.4.5;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+					"-v",
+				);
+				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.issieshapiro.issiedoc.IssieDoc;
+				PRODUCT_NAME = IssieDocs;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "IssieDocs-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				USE_HEADERMAP = YES;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
 		};
-		6A288AD129DF52FA007BBAB9 /* Debug */ = {
+		6AD557CC2BA9B5910076DC3C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = OpenIssieDocs2/OpenIssieDocs2.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OpenIssieDocs2/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = OpenIssieDocs2;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(SDKROOT)/usr/lib/swift",
+					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
+					"$(inherited)",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
+				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.issieshapiro.issiedoc.IssieDoc.OpenIssieDocs2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SUPPORTS_MACCATALYST = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -1082,41 +685,48 @@
 			};
 			name = Debug;
 		};
-		6A288AD229DF52FA007BBAB9 /* Release */ = {
+		6AD557CD2BA9B5910076DC3C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = OpenIssieDocs2/OpenIssieDocs2.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OpenIssieDocs2/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = OpenIssieDocs2;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(SDKROOT)/usr/lib/swift",
+					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
+					"$(inherited)",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_FAST_MATH = YES;
+				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.issieshapiro.issiedoc.IssieDoc.OpenIssieDocs2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SUPPORTS_MACCATALYST = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -1171,7 +781,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -1183,14 +793,18 @@
 				);
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "$(inherited)";
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DFOLLY_NO_CONFIG",
 					"-DFOLLY_MOBILE=1",
 					"-DFOLLY_USE_LIBCPP=1",
+					"-DFOLLY_CFG_NO_COROUTINES=1",
 				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
+				USE_HERMES = true;
 			};
 			name = Debug;
 		};
@@ -1236,7 +850,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -1247,15 +861,18 @@
 					"\"$(inherited)\"",
 				);
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CFLAGS = "$(inherited)";
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DFOLLY_NO_CONFIG",
 					"-DFOLLY_MOBILE=1",
 					"-DFOLLY_USE_LIBCPP=1",
+					"-DFOLLY_CFG_NO_COROUTINES=1",
 				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
-				SWIFT_COMPILATION_MODE = wholemodule;
+				USE_HERMES = true;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -1281,11 +898,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		6A288AD029DF52FA007BBAB9 /* Build configuration list for PBXNativeTarget "OpenIssieDocs2" */ = {
+		6AD557CB2BA9B5910076DC3C /* Build configuration list for PBXNativeTarget "OpenIssieDocs2" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				6A288AD129DF52FA007BBAB9 /* Debug */,
-				6A288AD229DF52FA007BBAB9 /* Release */,
+				6AD557CC2BA9B5910076DC3C /* Debug */,
+				6AD557CD2BA9B5910076DC3C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

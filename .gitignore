@@ -5,10 +5,6 @@
 # Xcode
 #
 build/
-ios/Bundle
-ios/source-map
-
-
 *.pbxuser
 !default.pbxuser
 *.mode1v3
@@ -28,6 +24,7 @@ ios/.xcode.env.local
 
 # Android/IntelliJ
 #
+android
 build/
 .idea
 .gradle
@@ -35,18 +32,14 @@ local.properties
 *.iml
 *.hprof
 .cxx/
+*.keystore
+!debug.keystore
 
 # node.js
 #
 node_modules/
 npm-debug.log
 yarn-error.log
-
-# BUCK
-buck-out/
-\.buckd/
-*.keystore
-!debug.keystore
 
 # fastlane
 #
@@ -66,5 +59,9 @@ buck-out/
 # Ruby / CocoaPods
 /ios/Pods/
 /vendor/bundle/
-#exclude the Tesla camera. see https://github.com/teslamotors/react-native-camera-kit/issues/425
-!node_modules/react-native-camera-kit/ios/ReactNativeCameraKit/CKCamera.m
+
+# Temporary files created by Metro to check the health of the file watcher
+.metro-health-check*
+
+# testing
+/coverage

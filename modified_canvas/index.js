@@ -187,6 +187,10 @@ export default class RNSketchCanvas extends React.Component {
     this._sketchCanvas.detectTextsInBackgroundImage(callback);
   }
 
+  measureText(text, maxWidth, attributes) {
+    return this._sketchCanvas.measureText(text, maxWidth, attributes);
+  }
+
   readoutText(text) {
     this._sketchCanvas.readoutText(text);
   }

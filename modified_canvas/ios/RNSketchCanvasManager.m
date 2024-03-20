@@ -193,6 +193,21 @@ RCT_EXPORT_METHOD(detectTextsInBackgroundImage:(nonnull NSNumber *)reactTag :(RC
     }];
 }
 
+RCT_REMAP_METHOD(measureText,
+                 measureTextWithReactTag:(nonnull NSNumber *)reactTag
+                 text:(NSString *)text
+                 maxWidth:(CGFloat)maxWidth
+                 attributes:(NSDictionary *)attributes
+                 resolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+{
+    [self runCanvas:reactTag block:^(RNSketchCanvas *canvas) {
+        NSDictionary *size = [canvas measureText:text maxWidth:maxWidth attributes:attributes];
+        resolve(size);
+    }];
+}
+
+
 RCT_EXPORT_METHOD(readoutText:(nonnull NSString *) text)
 {
     if ([text length] > 0) {

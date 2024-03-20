@@ -178,6 +178,11 @@ class SketchCanvas extends React.Component {
     SketchCanvasManager.detectTextsInBackgroundImage(this._handle, callback);
   }
 
+  measureText(text, maxWidth, attributes) {
+    return SketchCanvasManager.measureText(this._handle, text, maxWidth, attributes);
+  }
+
+
   readoutText(text) {
     SketchCanvasManager.readoutText(text);
   }

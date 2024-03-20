@@ -213,6 +213,9 @@
             NSString *a = property[@"alignment"] ? property[@"alignment"] : @"Left";
             style.alignment = [alignments[a] integerValue];
             style.lineHeightMultiple = property[@"lineHeightMultiple"] ? [property[@"lineHeightMultiple"] floatValue] : 1.0;
+            style.minimumLineHeight = [property[@"fontSize"] floatValue] * 1.15;
+            style.maximumLineHeight = [property[@"fontSize"] floatValue] * 1.15;
+
             text.attribute = @{
                                NSFontAttributeName:font,
                                NSForegroundColorAttributeName:fontColor,
@@ -293,7 +296,6 @@
     [self setNeedsDisplay];
 }
 
-
 - (NSArray *)getImageIds {
     NSMutableArray *newArray = [NSMutableArray array];
     for (CanvasImage *img in _arrImages) {
@@ -301,6 +303,7 @@
     }
     return newArray;
 }
+
 - (NSArray *)getPathIds {
     NSMutableArray *newArray = [NSMutableArray array];
     for (RNSketchData *path in _paths) {
@@ -308,6 +311,49 @@
         [newArray addObject:anumber];
     }
     return newArray;
+}
+
+- (NSDictionary *)measureText:(NSString *)text maxWidth:(CGFloat)maxWidth attributes:(NSDictionary *)attributes {
+    UIFont *font = nil;
+    float fontSize = attributes[@"fontSize"] == nil ? 12 : [attributes[@"fontSize"] floatValue];
+    
+    if (attributes[@"font"]) {
+        font = [UIFont fontWithName: attributes[@"font"] size: fontSize];
+        font = font == nil ? [UIFont systemFontOfSize: fontSize] : font;
+    } else if (attributes[@"fontSize"]) {
+        font = [UIFont systemFontOfSize: [attributes[@"fontSize"] floatValue]];
+    } else {
+        font = [UIFont systemFontOfSize: 12];
+    }
+
+    NSMutableParagraphStyle *style = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+    style.lineHeightMultiple = attributes[@"lineHeightMultiple"] ? [attributes[@"lineHeightMultiple"] floatValue] : 1.0;
+    style.minimumLineHeight = [attributes[@"fontSize"] floatValue] * 1.15;
+    style.maximumLineHeight = [attributes[@"fontSize"] floatValue] * 1.15;
+    
+    NSDictionary *textAttributes = @{
+        NSFontAttributeName:font,
+        NSForegroundColorAttributeName:[UIColor blackColor],
+        NSParagraphStyleAttributeName:style
+        };
+    
+    NSAttributedString *attributedText = [[NSAttributedString alloc] initWithString:text attributes:textAttributes];
+    
+    CGSize constraintBox = CGSizeMake(maxWidth, CGFLOAT_MAX);
+    
+    CGRect boundingRect = [attributedText boundingRectWithSize:constraintBox
+                                                       options:NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading
+                                                       context:nil];
+    
+    CGFloat width = CGRectGetWidth(boundingRect);
+    CGFloat height = CGRectGetHeight(boundingRect);
+    
+    //return @[@(width), @(height)];
+    
+    return @{
+       @"width": @(width),
+       @"height": @(height)
+    };
 }
 
 // - (NSArray<NSDictionary *> *)detectTextsInBackgroundImage {
