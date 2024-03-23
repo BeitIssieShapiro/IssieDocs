@@ -2790,8 +2790,8 @@ export default class IssieEditPhoto extends React.Component {
             }
           } else {
             const nWidth = this.width2NormWidth(size.width, this.state.fontSize);
-            if (elem.height !== size.height / r || elem.normWidth !== nWidth) {
-              elem.height = size.height / r;
+            if (elem.height !== size.height  || elem.normWidth !== nWidth) {
+              elem.height = size.height ;
               elem.normWidth = nWidth;
               trace("change elem size", elem.normWidth, elem.height)
               elem.change = true;
@@ -2859,7 +2859,7 @@ export default class IssieEditPhoto extends React.Component {
               console.log("Text size", size, "y", y, "pageRect", this.state.pageRect.height, "r", r)
 
               if (isTableCell) {
-                const newHeight = size.height * r || this.state.fontSize;
+                const newHeight = size.height || this.state.fontSize;
                 const minHeightDelta = elem.minHeight ? newHeight - elem.minHeight : newHeight;
                 if (minHeightDelta != 0) {
                   const table = elem.tableCell && this.canvas.current?.canvasTables().find(t => t.id === elem.tableCell.tableID);
@@ -2873,16 +2873,16 @@ export default class IssieEditPhoto extends React.Component {
                 }
               }
 
-              if (y + size.height / r > this.state.pageRect.height) {
+              if (y + size.height > this.state.pageRect.height) {
                 this.warnEndOfPage();
               }
 
               const newNormWidth = this.width2NormWidth(size.width, this.state.fontSize);
-              if ((elem.normWidth != newNormWidth || size.height / r != elem.height) && size.width > 0) {
+              if ((elem.normWidth != newNormWidth || size.height != elem.height) && size.width > 0) {
 
                 elem.normWidth = newNormWidth;
-                if (size.height / r != elem.height) {
-                  elem.height = size.height / r;
+                if (size.height != elem.height) {
+                  elem.height = size.height;
                   this._handleInputTextLocationMovingPage();
                 }
 

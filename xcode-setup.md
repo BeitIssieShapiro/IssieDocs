@@ -27,6 +27,9 @@ get ViewPropTypes(): $FlowFixMe {
     return require('deprecated-react-native-prop-types').ViewPropTypes;
   },
 ```
+## add linking
+follow: `https://reactnative.dev/docs/linking`
+
 
 ## change to RCTLinkingManager.mm:
 line 17:
