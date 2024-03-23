@@ -2674,7 +2674,7 @@ export default class IssieEditPhoto extends React.Component {
     </View>
   }
 
-  warnEndOfPage = (table) => {
+  warnEndOfPage = () => {
     if (this.state.currentTextElem) {
       RNSystemSounds.beep(RNSystemSounds.Beeps.Negative)
       Alert.alert(translate('ReachedEndOfPage'), undefined,
@@ -2697,9 +2697,6 @@ export default class IssieEditPhoto extends React.Component {
 
               this.forceUpdate();
               this.movePage(1);
-              // if (table) {
-              //   setTimeout(()=>this.state.queue.pushTable(table), 100);
-              // }
             }
 
           },
@@ -2870,7 +2867,7 @@ export default class IssieEditPhoto extends React.Component {
 
                   if (minHeightDelta > 0 && tableRowHeight(table, elem.tableCell.row) < newHeight &&
                     arrLast(table.horizontalLines) + minHeightDelta > this.state.pageRect.height) {
-                    this.warnEndOfPage(table);
+                    this.warnEndOfPage();
                     return;
                   }
                 }

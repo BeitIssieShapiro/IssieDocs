@@ -416,12 +416,10 @@ export class FileSystem {
             throw translate("MissingPageName");
         }
         if (!this._validPathPart(pathObj.fileName)) {
-            trace("1")
             throw translate("IllegalCharacterInPageName");
         }
 
         if (pathObj.isWorksheetInFolder && !this._validPathPart(pathObj.folders[pathObj.folders.length - 1])) {
-            trace("2")
             throw translate("IllegalCharacterInPageName");
         }
         // folders/Default/file.jpg folders+2
@@ -1148,7 +1146,7 @@ export class FileSystemFolder {
                     newestFile = thumbnails[0];
                 }
                 if (newestFile) {
-                    trace("selected thumbnail", newestFile.name)
+                    //trace("selected thumbnail", newestFile.name)
                     sheet.setThumbnail(newestFile.path);
                 }
                 sheet.lastUpdate = lastUpdate;

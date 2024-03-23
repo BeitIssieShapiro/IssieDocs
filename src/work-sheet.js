@@ -55,7 +55,6 @@ export class WorkSheet {
             getNumber = (elem)=>{
                 let ls = elem.lastIndexOf('/');
                 ls = elem.substring(ls+1, elem.length - 4)
-                console.log(ls)
                 return parseInt(ls);
             }
             return getNumber(a) - getNumber(b);
