@@ -681,6 +681,7 @@ export default class FolderGallery extends React.Component {
         //     Alert.alert("error finding newly created file")
         // }
         let uri = await FileSystem.main.getStaticPageTempFile(type);
+        
         this.props.navigation.navigate('SavePhoto', {
             uri,
             isBlank: true,

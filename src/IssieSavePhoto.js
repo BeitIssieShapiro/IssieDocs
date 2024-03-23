@@ -314,7 +314,16 @@ export default class IssieSavePhoto extends React.Component {
       offset: { x: 0, y: 0 },
       size: { width, height }
     };
-    return ImageEditor.cropImage(uri, cropData);
+
+    if (!uri.startsWith("file")) {
+      uri = "file://" + uri;
+    }
+
+    return ImageEditor.cropImage(uri, cropData).then(cropRes => {
+      trace("crop", cropRes);
+      return cropRes.path
+    });
+    //return cropImage(uri, 0, 0, width, height);
   }
 
 
@@ -488,12 +497,18 @@ export default class IssieSavePhoto extends React.Component {
       },
       resizeMode: 'stretch'
     };
-    ImageEditor.cropImage(this.state.imageUri, cropData).then(
+
+    let uri = this.state.imageUri;
+    if (!uri.startsWith("file")) {
+      uri = "file://" + uri;
+    }
+
+    ImageEditor.cropImage(uri, cropData).then(
       //success: 
-      (newImageUri) => {
+      (cropRes) => {
         //assumes that only last page is cropped
-        trace("crop", newImageUri)
-        this.replaceLast(newImageUri);
+        trace("crop", cropRes.path)
+        this.replaceLast(cropRes.path);
       },
       //failure: 
       (error) => Alert.alert("Failed to crop:" + error)
@@ -542,7 +557,7 @@ export default class IssieSavePhoto extends React.Component {
       const newFolderID = (parentID ? parentID + "/" : "") + newFolder
       const folder = FileSystem.main.findFolderByID(newFolderID);
       const folders = await FileSystem.main.getRootFolders();
-      trace("new folder created". folder?.ID)
+      trace("new folder created".folder?.ID)
       this.setState({ folder, folders });
       return true;
     }

@@ -12,9 +12,9 @@
 
 - (instancetype)init {
     self = [super init];
-    if (self) {
-        _speechSynthesizer = [[AVSpeechSynthesizer alloc] init];
-    }
+//    if (self) {
+//        _speechSynthesizer = [[AVSpeechSynthesizer alloc] init];
+//    }
     return self;
 }
 

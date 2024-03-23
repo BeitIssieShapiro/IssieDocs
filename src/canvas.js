@@ -74,7 +74,7 @@ function Canvas({
             }
 
             scaleElem.width = scaleElem.normWidth * scaleElem.normFontSize / scaleElem.fontSize;
-            trace("scaleElem.width", scaleElem.width)
+            //trace("scaleElem.width", scaleElem.width)
             scaleElem.position = {
                 x: scaleElem.normPosition.x * scaleRatio,
                 y: scaleElem.normPosition.y * scaleRatio,
@@ -311,7 +311,7 @@ function Canvas({
                     txtElem.tableCell.row >= table.horizontalLines.length - 1) return false;
 
                 // Adjust table rows to minHeight: 
-                const actualNormRowHeight = (table.horizontalLines[txtElem.tableCell.col + 1] - table.horizontalLines[txtElem.tableCell.col] - table.width); //* (height / table.size.height)
+                const actualNormRowHeight = (table.horizontalLines[txtElem.tableCell.row + 1] - table.horizontalLines[txtElem.tableCell.row] - table.width); //* (height / table.size.height)
                 const needToEnlargeBy = txtElem.minHeight - actualNormRowHeight;
                 if (needToEnlargeBy > 0) {
                     //resize the row:
@@ -319,10 +319,7 @@ function Canvas({
                     const maxAvailableRoomToResize = arrLast(table.horizontalLines) * tablePageRatio;
                     const resizeBy = Math.min(maxAvailableRoomToResize, needToEnlargeBy * tablePageRatio);
 
-
-
                     //push all lines 
-
                     for (let row = txtElem.tableCell.row + 1; row < table.horizontalLines.length; row++) {
                         table.horizontalLines[row] += resizeBy;
                     }
@@ -352,7 +349,7 @@ function Canvas({
             const table = canvasTables.find(t => t.id == txtElem.tableCell.tableID);
             // Adjust cell's texts to current table size and location - todo margin
             txtElem.width = (tableColWidth(table, txtElem.tableCell.col) - table.width) * (width / table.size.width)
-            txtElem.height = (tableRowHeight(table, txtElem.tableCell.row) - table.width) * (height / table.size.height)
+            txtElem.height = ((tableRowHeight(table, txtElem.tableCell.row) - table.width) * (height / table.size.height))/scaleRatio;
             txtElem.normPosition = {
                 x: (table.verticalLines[txtElem.tableCell.col + (txtElem.rtl ? 1 : 0)] * (width / table.size.width)) / scaleRatio,
                 y: (table.horizontalLines[txtElem.tableCell.row] * (height / table.size.height)) / scaleRatio

@@ -534,19 +534,31 @@ export class FileSystem {
         return FileSystem.main.renameOrDuplicateThumbnail(srcPath, targetFileName, false);
     }
 
-    async addPageToSheet(sheet, newPagePath) {
+    async addPageToSheet(sheet, newPagePath, addAtIndex) {
         trace("add page to sheet: ", sheet.path, " - ", newPagePath);
         //check if the path is already a folder:
 
         let pathInfo = await RNFS.stat(sheet.path);
         if (pathInfo.isDirectory()) {
             //add file by page's Index
-            let lastPagePath = sheet.getPage(sheet.count - 1)
+            let lastPagePath = sheet.getPage(0)
             let basePathEnd = lastPagePath.lastIndexOf('/');
-            let fileNameEnd = lastPagePath.lastIndexOf('.');
+
             let basePath = lastPagePath.substring(0, basePathEnd + 1);
-            let lastFileName = lastPagePath.substring(basePathEnd + 1, fileNameEnd);
-            let newFileName = basePath + (parseInt(lastFileName) + 1) + '.jpg'
+            if (addAtIndex >= 0 && addAtIndex < sheet.count) {
+                // push all pages to make room to this new page
+                for (let i = sheet.count - 1; i >= addAtIndex; i--) {
+                    const fileAtI = basePath + (i ) + '.jpg';
+                    const fileAtIPlus1 = basePath + (i + 1) + '.jpg';
+                    await RNFS.moveFile(fileAtI, fileAtIPlus1);
+                    try {
+                        await RNFS.moveFile(fileAtI + ".json", fileAtIPlus1 + ".json");
+                    } catch (e) {/*ignore as json may not exist*/ }
+                }
+            }
+
+            let newFileName = basePath + (!!addAtIndex ? addAtIndex : sheet.count) + '.jpg'
+
             console.log("add page: " + newFileName)
             await FileSystem.main.saveFile(newPagePath, newFileName, false);
 
@@ -700,7 +712,7 @@ export class FileSystem {
                 //     await this.addFolder(pathObj.folders[i], FileSystem.DEFAULT_FOLDER_METADATA.icon, FileSystem.DEFAULT_FOLDER_METADATA.color)
                 // } else {
                 //     // either a folder that stores a multi-page worksheet or "folders" folder
-                    await RNFS.mkdir(currPath);
+                await RNFS.mkdir(currPath);
                 // }
             }
         }

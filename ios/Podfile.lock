@@ -274,7 +274,7 @@ PODS:
     - React-Core
   - react-native-document-picker (9.1.1):
     - React-Core
-  - react-native-image-editor (4.1.0):
+  - react-native-image-editor (4.2.0):
     - RCT-Folly (= 2021.07.22.00)
     - React-Core
     - React-RCTImage
@@ -626,7 +626,7 @@ SPEC CHECKSUMS:
   React-logger: 342f358b8decfbf8f272367f4eacf4b6154061be
   react-native-blob-util: c5430d091e011b7fc57f888c356da2a2ff8dc8ad
   react-native-document-picker: 3599b238843369026201d2ef466df53f77ae0452
-  react-native-image-editor: ad8248fc404d17b697b531d692b9b1ca2d1c0896
+  react-native-image-editor: a60c74bc79f6101b7863c092aa53726e9e40a327
   react-native-image-picker: 3269f75c251cdcd61ab51b911dd30d6fff8c6169
   react-native-image-resizer: 681f7607418b97c084ba2d0999b153b103040d8a
   react-native-pdf: 79aa75e39a80c1d45ffe58aa500f3cf08f267a2e

@@ -595,8 +595,9 @@ export default class IssieEditPhoto extends React.Component {
     // if keyboard hides the textInput, scroll the window
     if (this.state.showTextInput && this.state.currentTextElem) {
       // positive means overlap
-      let diffFromKB = (this.state.yText + this.state.currentTextElem.height) - this.state.keyboardTop + this.state.yOffset;
+      let diffFromKB = (this.state.yText + this.state.currentTextElem.height) - this.state.keyboardTop;
 
+      trace("_handleInputTextLocationMovingPage", this.state.yText, diffFromKB, this.state.keyboardTop, this.state.yOffset, this.state.currentTextElem.height)
       if (this.state.keyboardTop > 0 && diffFromKB > 0) {
         trace("scroll up due to keyboard", this.state.currentTextElem.height + this.state.yText, this.state.keyboardTop, this.state.yOffset)
         this.changeZoomOrOffset({
@@ -1797,7 +1798,7 @@ export default class IssieEditPhoto extends React.Component {
             if (this.isRulerMode() && this.state.selectedRulerElemId) {
               const selectedElem = this.canvas.current.findRulerById(this.state.selectedRulerElemId);
               if (selectedElem) {
-                const modifiedColor = {...selectedElem, color};
+                const modifiedColor = { ...selectedElem, color };
                 this.state.queue.pushLine(modifiedColor);
                 this.Save();
                 this.incrementRevision();
@@ -1898,6 +1899,17 @@ export default class IssieEditPhoto extends React.Component {
                     <Text style={{ zIndex: 100, fontSize: 25 }}>{fTranslate("ExportProgress", this.state.shareProgressPage, (this.state.page.count > 0 ? this.state.page.count : 1))}</Text>
                   </ProgressCircle>
                 </View>}
+
+              {/* {this.state.endOfPage &&
+                <View style={{ position: 'absolute', top: '25%', left: 0, width: this.state.viewPortRect.width/3, zIndex: 1000, backgroundColor: 'gray', alignItems: 'center' }}>
+
+                  <Text>{translate("ReachedEndOfPage")}</Text>
+                  <View>
+                    {getRoundedButton(() => this.setState({ endOfPage: undefined }), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
+                  </View>
+                </View>
+              } */}
+
               {this.getCanvas(this.state.pageRect.width, this.state.pageRect.height)}
             </Animated.View>
             {this.state.showTextInput && this.getTextInput(rtl)}
@@ -2275,7 +2287,7 @@ export default class IssieEditPhoto extends React.Component {
         const targetBox = calculateTargetBox(res.table, normBox, res.tableSelectionMove.to);
 
         if (!isSameCell(normBox.from, targetBox.from) || !isSameCell(normBox.to, targetBox.to)) {
-          trace(normBox, targetBox)
+          //trace(normBox, targetBox)
           // swap table cells
           // first move the original range
           const moves = []
@@ -2662,22 +2674,48 @@ export default class IssieEditPhoto extends React.Component {
     </View>
   }
 
-  revertTextChange = () => {
-    if (this.state.currentTextElem) { // && this.state.lastKnownGoodText) {
-      // try revert last typing and 
-      // this.state.currentTextElem.text = this.state.lastKnownGoodText;
-      // this.state.currentTextElem.modified = true;
-      // this.incrementTextEditRevision();
+  warnEndOfPage = (table) => {
+    if (this.state.currentTextElem) {
       RNSystemSounds.beep(RNSystemSounds.Beeps.Negative)
-      showMessage({
-        message: translate("ReachedEndOfPage"),
-        type: "warning",
-        animated: true,
-        duration: 5000,
-        position: "center"
-      })
-      this.setState({ viewportBackgroundColor: "#F0AD4E" })
-      setTimeout(() => this.setState({ viewportBackgroundColor: undefined }), 5000)
+      Alert.alert(translate('ReachedEndOfPage'), undefined,
+        [
+          {
+            text: translate("BtnCancel"),
+            onPress: () => { },
+            style: 'cancel',
+          },
+          {
+            text: translate("AddPageMenuTitle"),
+            onPress: async () => {
+              trace("addPageToSheet", this.state.currentFile)
+              this.SaveText();
+              const updatedSheet = await FileSystem.main.cloneToTemp(this.state.currentFile).then(newUri =>
+                FileSystem.main.addPageToSheet(this.state.page, newUri, this.state.currentIndex + 1));
+
+              this.setState({ page: updatedSheet });
+
+
+              this.forceUpdate();
+              this.movePage(1);
+              // if (table) {
+              //   setTimeout(()=>this.state.queue.pushTable(table), 100);
+              // }
+            }
+
+          },
+        ]);
+
+
+      this.setState({ endOfPage: true });
+      // showMessage({
+      //   message: translate("ReachedEndOfPage"),
+      //   type: "warning",
+      //   animated: true,
+      //   duration: 5000,
+      //   position: "center"
+      // })
+      // this.setState({ viewportBackgroundColor: "#F0AD4E" })
+      // setTimeout(() => this.setState({ viewportBackgroundColor: undefined }), 5000)
     }
   }
 
@@ -2685,7 +2723,7 @@ export default class IssieEditPhoto extends React.Component {
     if (!this.state.currentTextElem) return;
     const r = this.state.scaleRatio;
     const z = this.state.zoom;
-    trace(this.state.fontSize, this.normFontSize2FontSize(this.state.fontSize))
+    //trace(this.state.fontSize, this.normFontSize2FontSize(this.state.fontSize))
 
     let elem = this.state.currentTextElem;
 
@@ -2699,7 +2737,7 @@ export default class IssieEditPhoto extends React.Component {
     //let tableRatioX = 1;
     const rtl = direction == 'rtl';
 
-    trace("rtl", elem.alignment, rtl, direction)
+    //trace("rtl", elem.alignment, rtl, direction)
     const modifiedState = {}
 
     if (!this.state.textAlignment) {
@@ -2739,11 +2777,38 @@ export default class IssieEditPhoto extends React.Component {
       textWidth = this.getTextWidth(x, rtl);
     }
 
-
-
+    // calculates the height:
+    const fSize = this.normalizeTextSize(this.state.fontSize);
+    if (elem.text?.length > 0) {
+      this.canvas.current?.canvas.current?.measureText(elem.text, textWidth, {
+        font: getFont(),
+        fontSize: fSize
+      }).then(size => {
+        if (size.height > 0) {
+          if (isTableCell) {
+            if (elem.minHeight !== size.height ) {
+              elem.minHeight = size.height;
+              elem.modified = true;
+              this.incrementRevision();
+            }
+          } else {
+            const nWidth = this.width2NormWidth(size.width, this.state.fontSize);
+            if (elem.height !== size.height / r || elem.normWidth !== nWidth) {
+              elem.height = size.height / r;
+              elem.normWidth = nWidth;
+              trace("change elem size", elem.normWidth, elem.height)
+              elem.change = true;
+              this.incrementRevision();
+            } else {
+              trace("elem size", elem.normWidth, elem.height)
+            }
+          }
+        }
+      });
+    }
 
     const normFontSize = this.state.fontSize;
-    const textActualWidth = isTableCell ? textWidth : this.normWidth2Width(elem.normWidth, this.state.fontSize)
+    const textActualWidth = isTableCell ? textWidth : this.normWidth2Width(elem.normWidth, this.state.fontSize) + 13;
     //const normWidth = isTableCell ? -1 : elem.width * this.state.fontSize / normFontSize;
 
     if (elem.fontColor !== this.state.textColor || elem.normFontSize != normFontSize || elem.rtl != rtl || (this.state.textAlignment && elem.alignment !== this.state.textAlignment)) {
@@ -2768,18 +2833,15 @@ export default class IssieEditPhoto extends React.Component {
 
     const left = x - (isTableCell ? 0 : (rtl ? textWidth / r : DRAG_ICON_SIZE));
 
-
-
+    trace("elem.height", elem.height)
+    const textOffset = isTableCell ? 2 : 0;
     return (
       <View style={{
         position: 'absolute',
         flexDirection: direction == 'rtl' ? "row-reverse" : "row",
-        left,
-        top: y,
+        left: left + textOffset,
+        top: y - 4 - textOffset, // why 4 ? trial and error
         zIndex: 45,
-        // backgroundColor: "pink",
-        // width: textWidth,
-        // height: inputTextHeight,
       }}>
         {!isTableCell && <View {...this._panResponderElementMove.panHandlers}
           style={{ top: -5, zIndex: 25 }}>
@@ -2789,60 +2851,61 @@ export default class IssieEditPhoto extends React.Component {
         <TextInput
           ref={textInput => this._textInput = textInput}
           onChangeText={(text) => {
+            trace("onChangeText", text)
+            const origText = elem.text;
+            const origChanged = elem.changed;
+
+            this.canvas.current?.canvas.current?.measureText(text, textWidth, {
+              font: getFont(),
+              fontSize: fSize
+            }).then(size => {
+              console.log("Text size", size, "y", y, "pageRect", this.state.pageRect.height, "r", r)
+
+              if (isTableCell) {
+                const newHeight = size.height * r || this.state.fontSize;
+                const minHeightDelta = elem.minHeight ? newHeight - elem.minHeight : newHeight;
+                if (minHeightDelta != 0) {
+                  const table = elem.tableCell && this.canvas.current?.canvasTables().find(t => t.id === elem.tableCell.tableID);
+                  // check that minHeight delta may case table out of page and that new minHeight is > current row height
+
+                  if (minHeightDelta > 0 && tableRowHeight(table, elem.tableCell.row) < newHeight &&
+                    arrLast(table.horizontalLines) + minHeightDelta > this.state.pageRect.height) {
+                    this.warnEndOfPage(table);
+                    return;
+                  }
+                }
+              }
+
+              if (y + size.height / r > this.state.pageRect.height) {
+                this.warnEndOfPage();
+              }
+
+              const newNormWidth = this.width2NormWidth(size.width, this.state.fontSize);
+              if ((elem.normWidth != newNormWidth || size.height / r != elem.height) && size.width > 0) {
+
+                elem.normWidth = newNormWidth;
+                if (size.height / r != elem.height) {
+                  elem.height = size.height / r;
+                  this._handleInputTextLocationMovingPage();
+                }
+
+                elem.modified = true;
+                this.incrementRevision()
+              }
+
+            });
+
             if (text !== this.state.currentTextElem.text) {
-              trace("text change for elem", text)
+              //trace("text change for elem", text, this.state.currentTextElem.text + "x")
               this.state.currentTextElem.text = text;
               this.state.currentTextElem.modified = true;
-              this.incrementTextEditRevision();
-              setTimeout(() => this.setState({ lastKnownGoodText: text }), 500)
+
             }
+            this.incrementTextEditRevision();
+
+
           }}
-          onContentSizeChange={(event) => {
-            const elem = this.state.currentTextElem;
-            let dim = event.nativeEvent.contentSize;
-            const newHeight = dim.height * this.state.scaleRatio || this.state.fontSize;
-            let changed = false
 
-
-            if (isTableCell) {
-              const minHeightDelta = elem.minHeight ? newHeight - elem.minHeight : newHeight;
-              if (minHeightDelta != 0) {
-                trace("onContentSizeChange, minHeight", newHeight != elem.minHeight)
-
-                const table = elem.tableCell && this.canvas.current?.canvasTables().find(t => t.id === elem.tableCell.tableID);
-                // check that minHeight delta may case table out of page and that new minHeight is > current row height
-                if (minHeightDelta > 0 && tableRowHeight(table, elem.tableCell.row) < newHeight &&
-                  arrLast(table.horizontalLines) + minHeightDelta > this.state.pageRect.height) {
-                  this.revertTextChange();
-                  return;
-                }
-
-                elem.minHeight = newHeight;
-                elem.modified = true;
-                changed = true;
-              }
-            } else {
-              if (y + newHeight > this.state.pageRect.height) {
-                // new Text height is spilling out of page
-                this.revertTextChange()
-              }
-              if (dim.width > 0 || newHeight != elem.height) {
-                const newNormWidth = this.width2NormWidth(dim.width, this.state.fontSize);
-                if (elem.normWidth != newNormWidth || newHeight != elem.height) {
-                  trace("onContentSizeChange, width/height", newNormWidth, elem.normWidth != newNormWidth, newHeight, newHeight != elem.height)
-
-                  elem.normWidth = newNormWidth;
-                  elem.height = newHeight;
-                  elem.modified = true;
-                  changed = true;
-                }
-              }
-            }
-            if (changed) {
-              setTimeout(() => this.incrementRevision(), 1);
-            }
-          }
-          }
           autoCapitalize={'none'}
           autoCorrect={false}
           multiline={true}
@@ -2855,17 +2918,20 @@ export default class IssieEditPhoto extends React.Component {
             width: textWidth / r,
             height: inputTextHeight / r,
             borderWidth: 0,
-            fontSize: (this.normalizeTextSize(this.state.fontSize) / r),
+            fontSize: (fSize / r),
             color: this.getColorByMode(),
             fontFamily: getFont(),
             zIndex: 21,
             transform: this.getTransform(textWidth / r, inputTextHeight / r, z * r, rtl && !isTableCell),
-            // backgroundColor: "blue"
+            //backgroundColor: "#00B800",
+            padding: 0,
+            borderStyle: "solid",
+            textAlignVertical: 'center',
+            lineHeight: fSize * 1.15 / r,
           }}
           value={elem.text}
           onTouchStart={(ev) => {
             let x = this.screen2ViewPortX(ev.nativeEvent.pageX);
-            //trace("click on text input", x - x, textWidth * this.state.scaleRatio * this.state.zoom)
             if (Math.abs(this.state.xText - x) > textWidth * this.state.scaleRatio * this.state.zoom + DRAG_ICON_SIZE / 2) {
               //treats it as if click outside the text input, delegates to canvasClick
               this.canvasClick(ev);
@@ -2875,32 +2941,34 @@ export default class IssieEditPhoto extends React.Component {
         />
         <View style={{
           position: 'absolute',
-          // left: isTableCell ? 0 : (DRAG_ICON_SIZE + 2),
-          left: isTableCell ? 0 : (DRAG_ICON_SIZE - 2),
-          //left: x - (isTableCell ? 0 : (rtl ? textWidth / r : DRAG_ICON_SIZE)),
-          top: 0,
+          left: isTableCell ? textOffset : (DRAG_ICON_SIZE - 2),
+          top: 4 + textOffset,
           width: textActualWidth / r,
-          // width: isTableCell ? textActualWidth / r : Math.max(textActualWidth + 10, 12),
           height: inputTextHeight > 0 ? inputTextHeight / r : 45 / r,
           zIndex: 20,
           transform: this.getTransform(textActualWidth / r, inputTextHeight / r, z * r, rtl && !isTableCell),
-          //lineHeight: this.normalizeTextSize(this.state.fontSize)* this.state.scaleRatio,
+          lineHeight: fSize * 1.15 / r
         }}
           backgroundColor={this.getColorByMode() === '#fee100' ? 'gray' : 'yellow'}
         />
       </View >);
   }
   normalizeTextSize = (size) => {
-    const newSize = this.normFontSize2FontSize(size)
-    if (Platform.OS === 'ios') {
-      return Math.round(PixelRatio.roundToNearestPixel(newSize))
-    } else {
-      return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2
-    }
+    return this.normFontSize2FontSize(size);
+    // const newSize = this.normFontSize2FontSize(size)
+    // if (Platform.OS === 'ios') {
+    //   return Math.round(PixelRatio.roundToNearestPixel(newSize))
+    // } else {
+    //   return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2
+    // }
   }
   getTextWidth = (x, rtl) => {
-    const width = rtl ? x : this.state.viewPortRect.width - x;
-    return Math.max(25, width);
+    let width = x - this.state.xOffset;
+    if (!rtl) {
+      width = this.state.pageRect.width * this.state.zoom - width;
+    }
+    width /= this.state.zoom;
+    return Math.max(25 * this.state.zoom, width);
   }
 }
 
