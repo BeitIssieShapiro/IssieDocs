@@ -1,3 +1,5 @@
+V- recreating with same name, thumbnail is old
+  - delete thumnail on delete
 V- Text: while typing text and reaching page bottom?
 V- move icon
 V- text alignment

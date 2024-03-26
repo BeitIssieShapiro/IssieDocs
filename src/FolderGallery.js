@@ -477,8 +477,10 @@ export default class FolderGallery extends React.Component {
             [
                 {
                     text: translate("BtnDelete"), onPress: () => {
-                        let selectedPath = page.path;
-                        FileSystem.main.deleteFile(selectedPath);
+                        FileSystem.main.deleteFile(page.path);
+                        try {
+                            FileSystem.main.deleteFile(page.thumbnail);
+                        } catch { } // tollerant to not having thumbnail
 
                         this.setState({ selected: undefined });
                     },
@@ -681,7 +683,7 @@ export default class FolderGallery extends React.Component {
         //     Alert.alert("error finding newly created file")
         // }
         let uri = await FileSystem.main.getStaticPageTempFile(type);
-        
+
         this.props.navigation.navigate('SavePhoto', {
             uri,
             isBlank: true,

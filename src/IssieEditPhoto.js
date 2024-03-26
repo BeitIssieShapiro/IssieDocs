@@ -1085,6 +1085,7 @@ export default class IssieEditPhoto extends React.Component {
     delete elem.width;
     //delete elem.fontSize;
 
+    trace("SaveText: saving", elem);
 
     if (elem.tableCell) {
       this.state.queue.pushTableCellText(elem);
@@ -2689,14 +2690,12 @@ export default class IssieEditPhoto extends React.Component {
             onPress: async () => {
               trace("addPageToSheet", this.state.currentFile)
               this.SaveText();
-              const updatedSheet = await FileSystem.main.cloneToTemp(this.state.currentFile).then(newUri =>
-                FileSystem.main.addPageToSheet(this.state.page, newUri, this.state.currentIndex + 1));
+              FileSystem.main.cloneToTemp(this.state.currentFile).then(newUri =>
+                FileSystem.main.addPageToSheet(this.state.page, newUri, this.state.currentIndex + 1)).then((updatedSheet)=>{
+                  trace('add page at end of file', updatedSheet)
+                  this.setState({ page: updatedSheet, currentFile: updatedSheet.defaultSrc }, ()=> this.movePage(1));                 
+                });
 
-              this.setState({ page: updatedSheet });
-
-
-              this.forceUpdate();
-              this.movePage(1);
             }
 
           },
@@ -2776,33 +2775,32 @@ export default class IssieEditPhoto extends React.Component {
 
     // calculates the height:
     const fSize = this.normalizeTextSize(this.state.fontSize);
-    if (elem.text?.length > 0) {
-      this.canvas.current?.canvas.current?.measureText(elem.text, textWidth, {
-        font: getFont(),
-        fontSize: fSize
-      }).then(size => {
-        if (size.height > 0) {
-          if (isTableCell) {
-            if (elem.minHeight !== size.height ) {
-              elem.minHeight = size.height;
-              elem.modified = true;
-              this.incrementRevision();
-            }
+    this.canvas.current?.canvas.current?.measureText(elem.text?.length > 0 ? elem.text : "a", textWidth, {
+      font: getFont(),
+      fontSize: fSize
+    }).then(size => {
+      if (size.height > 0) {
+        if (isTableCell) {
+          if (elem.minHeight !== Math.ceil(size.height)) {
+            elem.minHeight = Math.ceil(size.height);
+            elem.modified = true;
+            this.incrementRevision();
+          }
+        } else {
+          const nWidth = this.width2NormWidth(size.width, this.state.fontSize);
+          if (elem.height !== Math.ceil(size.height) || elem.normWidth !== nWidth) {
+            elem.height = Math.ceil(size.height);
+            elem.normWidth = nWidth;
+            trace("change elem size", elem.normWidth, elem.height)
+            elem.change = true;
+            this.incrementRevision();
           } else {
-            const nWidth = this.width2NormWidth(size.width, this.state.fontSize);
-            if (elem.height !== size.height  || elem.normWidth !== nWidth) {
-              elem.height = size.height ;
-              elem.normWidth = nWidth;
-              trace("change elem size", elem.normWidth, elem.height)
-              elem.change = true;
-              this.incrementRevision();
-            } else {
-              trace("elem size", elem.normWidth, elem.height)
-            }
+            trace("elem size", elem.normWidth, elem.height)
           }
         }
-      });
-    }
+      }
+    });
+
 
     const normFontSize = this.state.fontSize;
     const textActualWidth = isTableCell ? textWidth : this.normWidth2Width(elem.normWidth, this.state.fontSize) + 13;
@@ -2873,16 +2871,21 @@ export default class IssieEditPhoto extends React.Component {
                 }
               }
 
-              if (y + size.height > this.state.pageRect.height) {
+              if (y - this.state.yOffset + size.height > this.state.pageRect.height) {
+                trace("end of page!")
                 this.warnEndOfPage();
+              } else {
+                trace("end of page?", y - this.state.yOffset , "+", size.height, ">", this.state.pageRect.height, this.state.yOffset)
               }
 
               const newNormWidth = this.width2NormWidth(size.width, this.state.fontSize);
               if ((elem.normWidth != newNormWidth || size.height != elem.height) && size.width > 0) {
 
                 elem.normWidth = newNormWidth;
-                if (size.height != elem.height) {
-                  elem.height = size.height;
+                if (size.height != Math.ceil(elem.height)) {
+                  console.log("change height size", size.height)
+
+                  elem.height = Math.ceil(size.height);
                   this._handleInputTextLocationMovingPage();
                 }
 
@@ -2922,6 +2925,8 @@ export default class IssieEditPhoto extends React.Component {
             transform: this.getTransform(textWidth / r, inputTextHeight / r, z * r, rtl && !isTableCell),
             //backgroundColor: "#00B800",
             padding: 0,
+            paddingLeft:isTableCell?1:0,
+            paddingRight:isTableCell?1:0,
             borderStyle: "solid",
             textAlignVertical: 'center',
             lineHeight: fSize * 1.15 / r,
@@ -2939,7 +2944,7 @@ export default class IssieEditPhoto extends React.Component {
         <View style={{
           position: 'absolute',
           left: isTableCell ? textOffset : (DRAG_ICON_SIZE - 2),
-          top: 4 + textOffset,
+          top: isTableCell ? 6 : 0,
           width: textActualWidth / r,
           height: inputTextHeight > 0 ? inputTextHeight / r : 45 / r,
           zIndex: 20,

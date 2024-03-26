@@ -559,7 +559,7 @@ export class FileSystem {
 
             console.log("add page: " + newFileName)
             await FileSystem.main.saveFile(newPagePath, newFileName, false);
-
+            return await this._reloadBySheet(sheet);
         } else {
             //change to folder
             assert(sheet.path.endsWith(".jpg"), "change to folder");
@@ -573,22 +573,26 @@ export class FileSystem {
                 //ignore missing json
             }
 
-            FileSystem.main.saveFile(newPagePath, basePath + '/1.jpg', false);
-
+            await FileSystem.main.saveFile(newPagePath, basePath + '/1.jpg', false);
+            let pathObj = this._parsePath(basePath + '/1.jpg');
+            return await this._reloadByFolderID(pathObj.folderID, sheet.name);
         }
-
-        return await this._reloadBySheet(sheet);
     }
 
     //reload the folder of the sheet and notify and return new updated sheet
     async _reloadBySheet(sheet) {
         let pathObj = this._parsePath(sheet.path);
         trace("reload by sheet: ", sheet.path, JSON.stringify(pathObj))
-        let folder = this.findFolderByID(pathObj.folderID);
+        return await this._reloadByFolderID(pathObj.folderID, sheet.name)
+    }
+
+    async _reloadByFolderID(folderID, pageName) {
+        let folder = this.findFolderByID(folderID);
 
         await folder.reload();
-        this._notify(pathObj.folderID);
-        return await folder.getItem(sheet.name);
+        this._notify(folderID);
+        return await folder.getItem(pageName);
+
     }
 
     //return an updated sheet
