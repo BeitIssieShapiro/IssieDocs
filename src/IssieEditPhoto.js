@@ -6,9 +6,9 @@ import {
   TouchableOpacity
 } from 'react-native';
 
-import { showMessage } from 'react-native-flash-message';
+import { hideMessage, showMessage } from 'react-native-flash-message';
 
-import { Icon, MARKER_TRANSPARENCY_CONSTANT } from "./elements"
+import { Icon, IconButton, MARKER_TRANSPARENCY_CONSTANT, Spacer } from "./elements"
 import RNSketchCanvas from 'issie-sketch-canvas';
 import Share from 'react-native-share';
 import DoQueue from './do-queue';
@@ -594,12 +594,16 @@ export default class IssieEditPhoto extends React.Component {
   _handleInputTextLocationMovingPage = () => {
     // if keyboard hides the textInput, scroll the window
     if (this.state.showTextInput && this.state.currentTextElem) {
+      const minHeight = this.state.currentTextElem.tableCell ?
+        this.state.currentTextElem.minHeight || this.state.fontSize * 1.2 :
+        this.state.currentTextElem.height;
+
       // positive means overlap
-      let diffFromKB = (this.state.yText + this.state.currentTextElem.height) - this.state.keyboardTop;
+      let diffFromKB = (this.state.yText + minHeight) - this.state.keyboardTop;
 
       trace("_handleInputTextLocationMovingPage", this.state.yText, diffFromKB, this.state.keyboardTop, this.state.yOffset, this.state.currentTextElem.height)
       if (this.state.keyboardTop > 0 && diffFromKB > 0) {
-        trace("scroll up due to keyboard", this.state.currentTextElem.height + this.state.yText, this.state.keyboardTop, this.state.yOffset)
+        trace("scroll up due to keyboard", minHeight, this.state.currentTextElem.height + this.state.yText, this.state.keyboardTop, this.state.yOffset)
         this.changeZoomOrOffset({
           yOffset: this.state.yOffset - diffFromKB,
         }, true);
@@ -1083,6 +1087,7 @@ export default class IssieEditPhoto extends React.Component {
     delete elem.modified;
     delete elem.draft;
     delete elem.width;
+    delete elem.supressEndOfPage;
     //delete elem.fontSize;
 
     trace("SaveText: saving", elem);
@@ -1586,82 +1591,87 @@ export default class IssieEditPhoto extends React.Component {
   reflectWindowSizeAndImageSize = (remeasure, windowSize) => {
 
     const onImageDimensions = (imageSize, windowSize) => {
-
-      const winSize = windowSize ? windowSize : this.state.windowSize;
-      const sideMargin = Math.max(dimensions.minSideMargin, Math.floor(winSize.width * .05))
-
-
-      const maxWidth = winSize.width - sideMargin * 2;
-      const maxHeight = winSize.height - this.state.toolbarHeight - 2 * dimensions.toolbarMargin;
-
-      // Need to calculate the layout that has lower ratio.
-      const ratioX = maxWidth / imageSize.w;
-      const ratioY = maxHeight / imageSize.h;
+      return new Promise((resolve, reject) => {
+        const winSize = windowSize ? windowSize : this.state.windowSize;
+        const sideMargin = Math.max(dimensions.minSideMargin, Math.floor(winSize.width * .05))
 
 
-      let ratio = Math.min(ratioX, ratioY);
+        const maxWidth = winSize.width - sideMargin * 2;
+        const maxHeight = winSize.height - this.state.toolbarHeight - 2 * dimensions.toolbarMargin;
 
-      ratio = Math.floor((ratio + Number.EPSILON) * 100) / 100;
+        // Need to calculate the layout that has lower ratio.
+        const ratioX = maxWidth / imageSize.w;
+        const ratioY = maxHeight / imageSize.h;
 
-      let xOffset = this.state.xOffset;
-      let yOffset = this.state.yOffset;
-      if (ratio != this.state.scaleRatio) {
-        xOffset = xOffset / this.state.scaleRatio * ratio;
-        yOffset = yOffset / this.state.scaleRatio * ratio;
-      }
 
-      //trace("getImageDimensions", this.state.currentFile, "imageSize", imageSize, "ratio", ratio)
+        let ratio = Math.min(ratioX, ratioY);
 
-      const sideMarginFinal = (winSize.width - imageSize.w * ratio) / 2
-      //trace("sideMargin", sideMargin);
-      const viewPortRect = {
-        top: 0,
-        left: sideMarginFinal,
-        width: imageSize.w * ratio,
-        height: imageSize.h * ratio
-      }
+        ratio = Math.floor((ratio + Number.EPSILON) * 100) / 100;
 
-      trace("onImageDimensions", imageSize, winSize, viewPortRect, sideMarginFinal, sideMargin)
-
-      // translate locations that bound to scaleRatio:
-      let xText = this.state.xText;
-      let yText = this.state.yText;
-      let imgElem = this.state.currentImageElem;
-      if (this.state.scaleRatio) {
-        if (imgElem) {
-          const normElem = this.imageScale2Norm(imgElem);
-          imgElem = this.imageNorm2Scale(normElem, ratio);
+        let xOffset = this.state.xOffset;
+        let yOffset = this.state.yOffset;
+        if (ratio != this.state.scaleRatio) {
+          xOffset = xOffset / this.state.scaleRatio * ratio;
+          yOffset = yOffset / this.state.scaleRatio * ratio;
         }
-        xText = (xText / this.state.scaleRatio) * ratio;
-        yText = (yText / this.state.scaleRatio) * ratio;
 
-      } else {
-        imgElem = undefined
-      }
+        //trace("getImageDimensions", this.state.currentFile, "imageSize", imageSize, "ratio", ratio)
 
-      this.setState({
-        layoutReady: true,
-        windowSize: winSize,
-        imageSize,
-        viewPortRect,
-        pageRect: viewPortRect,
-        sideMargin: sideMarginFinal,
-        scaleRatio: ratio,
-        xText, yText,
-        currentImageElem: imgElem,
-        //zoom: this.state.zoom, xOffset, yOffset
-      }, () => this.changeZoomOrOffset({ zoom: this.state.zoom, xOffset, yOffset })
-      );
-      //trace("on Layout end", new Date().toISOString())
+        const sideMarginFinal = (winSize.width - imageSize.w * ratio) / 2
+        //trace("sideMargin", sideMargin);
+        const viewPortRect = {
+          top: 0,
+          left: sideMarginFinal,
+          width: imageSize.w * ratio,
+          height: imageSize.h * ratio
+        }
+
+        trace("onImageDimensions", imageSize, winSize, viewPortRect, sideMarginFinal, sideMargin)
+
+        // translate locations that bound to scaleRatio:
+        let xText = this.state.xText;
+        let yText = this.state.yText;
+        let imgElem = this.state.currentImageElem;
+        if (this.state.scaleRatio) {
+          if (imgElem) {
+            const normElem = this.imageScale2Norm(imgElem);
+            imgElem = this.imageNorm2Scale(normElem, ratio);
+          }
+          xText = (xText / this.state.scaleRatio) * ratio;
+          yText = (yText / this.state.scaleRatio) * ratio;
+
+        } else {
+          imgElem = undefined
+        }
+
+        this.setState({
+          layoutReady: true,
+          windowSize: winSize,
+          imageSize,
+          viewPortRect,
+          pageRect: viewPortRect,
+          sideMargin: sideMarginFinal,
+          scaleRatio: ratio,
+          xText, yText,
+          currentImageElem: imgElem,
+          //zoom: this.state.zoom, xOffset, yOffset
+        }, () => {
+          if (xOffset !== this.state.xOffset || yOffset !== this.state.yOffset) {
+            this.changeZoomOrOffset({ zoom: this.state.zoom, xOffset, yOffset })
+          }
+          resolve();
+        }
+        );
+      });
 
     }
 
     if (remeasure || !this.state.imageSize) {
-      getImageDimensions(this.state.currentFile, windowSize)
+      return getImageDimensions(this.state.currentFile, windowSize)
         .then((newSize) => onImageDimensions(newSize, windowSize))
         .catch(err => Alert.alert("Error measuring image dimension:" + err.message))
     } else {
-      onImageDimensions(this.state.imageSize, windowSize);
+      return onImageDimensions(this.state.imageSize, windowSize);
     }
   }
 
@@ -1824,9 +1834,10 @@ export default class IssieEditPhoto extends React.Component {
             this.setState(change,
               //move Text Input if needed
               () => {
-                if (this.state.yOffset > 0) {
-                  this.changeZoomOrOffset({ yOffset: 0 }, true);
-                }
+                this.reflectWindowSizeAndImageSize(false)
+                // if (this.state.yOffset > 0) {
+                //   this.changeZoomOrOffset({ yOffset: 0 }, true);
+                // }
               }
             );
           }}
@@ -1901,15 +1912,6 @@ export default class IssieEditPhoto extends React.Component {
                   </ProgressCircle>
                 </View>}
 
-              {/* {this.state.endOfPage &&
-                <View style={{ position: 'absolute', top: '25%', left: 0, width: this.state.viewPortRect.width/3, zIndex: 1000, backgroundColor: 'gray', alignItems: 'center' }}>
-
-                  <Text>{translate("ReachedEndOfPage")}</Text>
-                  <View>
-                    {getRoundedButton(() => this.setState({ endOfPage: undefined }), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
-                  </View>
-                </View>
-              } */}
 
               {this.getCanvas(this.state.pageRect.width, this.state.pageRect.height)}
             </Animated.View>
@@ -2354,6 +2356,8 @@ export default class IssieEditPhoto extends React.Component {
     if (!table) return undefined;
 
     let retTable = { ...table };
+    const tvPageRectX = this.viewPort2TableX(table, this.state.pageRect.width)
+    const tvPageRectY = this.viewPort2TableY(table, this.state.pageRect.height)
 
     const onLine = (line, isVertical) => {
       const initialValue = isVertical ? tableResizeState.initialX : tableResizeState.initialY;
@@ -2361,18 +2365,48 @@ export default class IssieEditPhoto extends React.Component {
       return Math.abs(initialValue - line) < 20;
     }
 
+
     //prevents out of bounds:
+    // too much left?
     if (tableResizeState.currentX < RESIZE_TABLE_BOX_SIZE) {
       tableResizeState.currentX = RESIZE_TABLE_BOX_SIZE;
     }
+
+    // too much top?
     if (tableResizeState.currentY < RESIZE_TABLE_BOX_SIZE) {
       tableResizeState.currentY = RESIZE_TABLE_BOX_SIZE;
     }
+
+    // too much right?
+    if (tableResizeState.currentX > tvPageRectX - RESIZE_TABLE_BOX_SIZE / 2) {
+      tableResizeState.currentX = tvPageRectX - RESIZE_TABLE_BOX_SIZE / 2;
+    }
+
+
+    // too much bottom
+    if (tableResizeState.currentY > tvPageRectY - RESIZE_TABLE_BOX_SIZE / 2) {
+      tableResizeState.currentY = tvPageRectY - RESIZE_TABLE_BOX_SIZE / 2;
+    }
+
+
 
     const topStart = onLine(table.verticalLines[0] - RESIZE_TABLE_BOX_SIZE, true) && onLine(table.horizontalLines[0] + RESIZE_TABLE_BOX_SIZE, false);
     const bottomEnd = onLine(table.verticalLines[table.verticalLines.length - 1] + RESIZE_TABLE_BOX_SIZE / 2, true) &&
       onLine(table.horizontalLines[table.horizontalLines.length - 1] + RESIZE_TABLE_BOX_SIZE / 2, false);
     let resizeFactorX, resizeFactorY
+
+    if (topStart) {
+      // table will overflow to the right?
+      const deltaX = tableResizeState.currentX - tableResizeState.initialX;
+      if (arrLast(table.verticalLines) + deltaX > tvPageRectX - RESIZE_TABLE_BOX_SIZE / 2) {
+        tableResizeState.currentX = tableResizeState.initialX - arrLast(table.verticalLines) + tvPageRectX - RESIZE_TABLE_BOX_SIZE / 2;
+      }
+      const deltaY = tableResizeState.currentY - tableResizeState.initialY;
+      if (arrLast(table.horizontalLines) + deltaY > tvPageRectY - RESIZE_TABLE_BOX_SIZE / 2) {
+        tableResizeState.currentY = tableResizeState.initialY - arrLast(table.horizontalLines) + tvPageRectY - RESIZE_TABLE_BOX_SIZE / 2;
+      }
+    }
+
 
     if (topStart || bottomEnd) {
       retTable.verticalLines = [...table.verticalLines];
@@ -2678,40 +2712,45 @@ export default class IssieEditPhoto extends React.Component {
   warnEndOfPage = () => {
     if (this.state.currentTextElem) {
       RNSystemSounds.beep(RNSystemSounds.Beeps.Negative)
-      Alert.alert(translate('ReachedEndOfPage'), undefined,
-        [
-          {
-            text: translate("BtnCancel"),
-            onPress: () => { },
-            style: 'cancel',
-          },
-          {
-            text: translate("AddPageMenuTitle"),
-            onPress: async () => {
-              trace("addPageToSheet", this.state.currentFile)
-              this.SaveText();
-              FileSystem.main.cloneToTemp(this.state.currentFile).then(newUri =>
-                FileSystem.main.addPageToSheet(this.state.page, newUri, this.state.currentIndex + 1)).then((updatedSheet)=>{
-                  trace('add page at end of file', updatedSheet)
-                  this.setState({ page: updatedSheet, currentFile: updatedSheet.defaultSrc }, ()=> this.movePage(1));                 
-                });
 
-            }
+      showMessage({
+        message: translate("ReachedEndOfPage"),
+        type: "warning",
+        animated: true,
+        duration: 10000,
+        position: "center",
+        titleStyle: { lineHeight: 35, fontSize: 25, height: 100, textAlign: "center", margin: 15, color: "black" },
+        style: { width: 450, height: 250 },
 
-          },
-        ]);
+        renderAfterContent: (opt) => {
+          return <View style={{ flexDirection: "row", height: 50, width: "100%", justifyContent: 'center' }}>
+            {getRoundedButton(
+              async () => {
+                trace("addPageToSheet", this.state.currentFile)
+                hideMessage()
+                this.SaveText();
+                FileSystem.main.cloneToTemp(this.state.currentFile).then(newUri =>
+                  FileSystem.main.addPageToSheet(this.state.page, newUri, this.state.currentIndex + 1)).then((updatedSheet) => {
+                    trace('add page at end of file', updatedSheet)
+                    this.setState({ page: updatedSheet, currentFile: updatedSheet.defaultSrc }, () => this.movePage(1));
+                  });
+              },
+              "add",
+              translate("AddPageMenuTitle"),
+              25, 35, { width: 180 })}
+            <Spacer />
+            {getRoundedButton(
+              () => { hideMessage() },
+              "cancel",
+              translate("BtnCancel"),
+              25, 35, { width: 180 })}
 
+          </View>
 
-      this.setState({ endOfPage: true });
-      // showMessage({
-      //   message: translate("ReachedEndOfPage"),
-      //   type: "warning",
-      //   animated: true,
-      //   duration: 5000,
-      //   position: "center"
-      // })
-      // this.setState({ viewportBackgroundColor: "#F0AD4E" })
-      // setTimeout(() => this.setState({ viewportBackgroundColor: undefined }), 5000)
+        }
+      })
+      //this.setState({ viewportBackgroundColor: "#F0AD4E" })
+      //setTimeout(() => this.setState({ viewportBackgroundColor: undefined }), 5000)
     }
   }
 
@@ -2784,6 +2823,7 @@ export default class IssieEditPhoto extends React.Component {
           if (elem.minHeight !== Math.ceil(size.height)) {
             elem.minHeight = Math.ceil(size.height);
             elem.modified = true;
+            this._handleInputTextLocationMovingPage();
             this.incrementRevision();
           }
         } else {
@@ -2863,19 +2903,18 @@ export default class IssieEditPhoto extends React.Component {
                   const table = elem.tableCell && this.canvas.current?.canvasTables().find(t => t.id === elem.tableCell.tableID);
                   // check that minHeight delta may case table out of page and that new minHeight is > current row height
 
-                  if (minHeightDelta > 0 && tableRowHeight(table, elem.tableCell.row) < newHeight &&
+                  if (!elem.supressEndOfPage && minHeightDelta > 0 && tableRowHeight(table, elem.tableCell.row) < newHeight &&
                     arrLast(table.horizontalLines) + minHeightDelta > this.state.pageRect.height) {
                     this.warnEndOfPage();
+                    elem.supressEndOfPage = true;
                     return;
                   }
                 }
               }
 
-              if (y - this.state.yOffset + size.height > this.state.pageRect.height) {
-                trace("end of page!")
+              if (!elem.supressEndOfPage && y - this.state.yOffset + size.height > this.state.pageRect.height) {
                 this.warnEndOfPage();
-              } else {
-                trace("end of page?", y - this.state.yOffset , "+", size.height, ">", this.state.pageRect.height, this.state.yOffset)
+                elem.supressEndOfPage = true;
               }
 
               const newNormWidth = this.width2NormWidth(size.width, this.state.fontSize);
@@ -2925,8 +2964,8 @@ export default class IssieEditPhoto extends React.Component {
             transform: this.getTransform(textWidth / r, inputTextHeight / r, z * r, rtl && !isTableCell),
             //backgroundColor: "#00B800",
             padding: 0,
-            paddingLeft:isTableCell?1:0,
-            paddingRight:isTableCell?1:0,
+            paddingLeft: isTableCell ? 1 : 0,
+            paddingRight: isTableCell ? 1 : 0,
             borderStyle: "solid",
             textAlignVertical: 'center',
             lineHeight: fSize * 1.15 / r,

@@ -159,7 +159,7 @@ export default class IssieSavePhoto extends React.Component {
       }
       pathToSave = decodeURI(this.props.route.params.uri);
     }
-    trace("Open SavePhoto with imageUri: ", imageUri)
+    trace("Open SavePhoto with imageUri: ", imageUri, "pdf?", pdf)
 
     let folder = this.props.route.params.folder;
     let pageName = this.props.route.params.name;
@@ -182,7 +182,7 @@ export default class IssieSavePhoto extends React.Component {
     if (this.isRename() || this.isDuplicate()) {
       setTimeout(() => this.setState({ phase: PickName }), 50);
     }
-    this.onLayout();
+    this.onLayout(pdf);
   }
 
   isRename = () => this.props.route.params.imageSource === SRC_RENAME;
@@ -225,11 +225,13 @@ export default class IssieSavePhoto extends React.Component {
     //}, 50);
   }
 
-  onLayout = async () => {
+  onLayout = async (pdf) => {
     const measure = this.topView.measure.bind(this.topView);
 
     setTimeout(measure, 50, (fx, fy, width, height, px, py) => {
-      this.setState({ topView: py, windowWidth: width }, () => this.updateImageDimension());
+      this.setState({ topView: py, windowWidth: width }, () => {
+        if (!pdf) this.updateImageDimension();
+      });
     });
   }
 
@@ -565,6 +567,7 @@ export default class IssieSavePhoto extends React.Component {
   }
 
   verifyFilePrefix = (url) => {
+    
     if (url && url.startsWith("/")) {
       return "file://" + url;
     }
@@ -741,7 +744,7 @@ export default class IssieSavePhoto extends React.Component {
                 flex: 1, position: 'absolute', width: this.state.pdfWidth, height: this.state.pdfHeight
               }}>
               <Pdf
-                source={{ uri: this.verifyFilePrefix(this.state.imageUri) }}
+                source={{ uri: this.verifyFilePrefix(this.state.imageUri), path:  this.verifyFilePrefix(this.state.imageUri) }}
                 page={this.state.pdfPage}
                 style={{ flex: 1 }}
                 onLoadComplete={(numberOfPages, filePath, dim) => {

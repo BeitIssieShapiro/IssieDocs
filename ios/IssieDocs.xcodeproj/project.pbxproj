@@ -84,6 +84,8 @@
 		6AD557C22BA9B5910076DC3C /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		6AD557C52BA9B5910076DC3C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
 		6AD557C72BA9B5910076DC3C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		6AF0262C2BC1932C00EEF6C1 /* IssieDocs.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; name = IssieDocs.entitlements; path = ../resources/ios/IssieDocs.entitlements; sourceTree = "<group>"; };
+		6AF0262D2BC1948C00EEF6C1 /* IssieDocs.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = IssieDocs.entitlements; path = IssieDocs/IssieDocs.entitlements; sourceTree = "<group>"; };
 		91FED51A237EA4517F41BCB7 /* Pods-IssieDocs.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs.release.xcconfig"; path = "Target Support Files/Pods-IssieDocs/Pods-IssieDocs.release.xcconfig"; sourceTree = "<group>"; };
 		C9E25D98731EB99819BEB188 /* libPods-IssieDocs.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-IssieDocs.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -135,10 +137,12 @@
 		13B07FAE1A68108700A75B9A /* IssieDocs */ = {
 			isa = PBXGroup;
 			children = (
+				6AF0262D2BC1948C00EEF6C1 /* IssieDocs.entitlements */,
 				6A0C1B5E2BA96A1400C79EA4 /* Assets.xcassets */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
 				13B07FB01A68108700A75B9A /* AppDelegate.mm */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
+				6AF0262C2BC1932C00EEF6C1 /* IssieDocs.entitlements */,
 				6A0C1B522BA969DD00C79EA4 /* LaunchScreen2.storyboard */,
 				6A0C1B632BA96AF800C79EA4 /* Alef_Bold.ttf */,
 				6A0C1B602BA96AF800C79EA4 /* Alef_Regular.ttf */,
@@ -553,7 +557,8 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 35;
+				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
+				CURRENT_PROJECT_VERSION = 36;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				ENABLE_BITCODE = NO;
@@ -618,7 +623,8 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 35;
+				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
+				CURRENT_PROJECT_VERSION = 36;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				INFOPLIST_FILE = IssieDocs/Info.plist;

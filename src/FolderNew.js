@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Icon, IconButton, getIconButton } from "./elements"
+import { Icon, IconButton, getIconButton, hierarchicalName } from "./elements"
 import { View, TouchableOpacity, Alert } from 'react-native';
 import {
     normalizeTitle, semanticColors, FolderTextStyle,
@@ -134,7 +134,9 @@ export default function FolderNew(props) {
                                 </View>}
 
                                 <Spacer width={8} />
-                                {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: props.fontSize || 32, lineHeight: 60 }]}>{nonTreeTitle ? caption : props.id.replace("/", " \\ ")}</AppText>}
+                                {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: props.fontSize || 32, lineHeight: 60 }]}>
+                                    {nonTreeTitle ? caption : hierarchicalName(props.id, rtl)}
+                                    </AppText>}
                             </View> :
                             /**
                              * Side Panel View or overview

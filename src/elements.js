@@ -342,28 +342,28 @@ export function IconButton({
         </AppText> :
         isSvg ?
             getSvgIcon(icon, sizeToUse, color) :
-            <Icon  name={icon} type={iconType} size={sizeToUse} color={color} style={rotateDeg && { transform: [{ rotate: rotateDeg + 'deg' }] }}/>
+            <Icon name={icon} type={iconType} size={sizeToUse} color={color} style={rotateDeg && { transform: [{ rotate: rotateDeg + 'deg' }] }} />
 
-return <View style={backgroundContrast}>
-    {notPressable ?
-        <View style={viewStyle}>
-            {viewContent}
-        </View>
-        :
-        <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={onPress}
-            style={viewStyle}
-        >
-            {viewContent}
-        </TouchableOpacity>}
-    {selected ? <View
-        style={{
-            borderBottomColor: needContract ? semanticColors.addButton : color,
-            borderBottomWidth: 6,
-        }}
-    /> : null}
-</View>
+    return <View style={backgroundContrast}>
+        {notPressable ?
+            <View style={viewStyle}>
+                {viewContent}
+            </View>
+            :
+            <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={onPress}
+                style={viewStyle}
+            >
+                {viewContent}
+            </TouchableOpacity>}
+        {selected ? <View
+            style={{
+                borderBottomColor: needContract ? semanticColors.addButton : color,
+                borderBottomWidth: 6,
+            }}
+        /> : null}
+    </View>
 }
 
 export function PageImage({ src, multiPage, width, height }) {
@@ -413,6 +413,15 @@ export function normalizeTitle(title) {
         return translate("DefaultFolder");
     }
     return title;
+}
+
+export function hierarchicalName(name, rtl) {
+    if (!rtl) return name.replace("/", " \\ ");
+
+    const parts = name.split("/");
+    parts.reverse();
+    return parts.join(' / ');
+
 }
 
 
@@ -701,16 +710,14 @@ function pickerRenderRow(rowData, currentFolder, onChangeFolder, indentLevel, su
 
 
 export async function getImageDimensions(uri) {
-    return new Promise(
-        (resolve, reject) => {
-            Image.getSize(uri, (width, height) => {
-                resolve({ w: width, h: height });
-            },
-                (err) => {
-                    reject(err)
-                });
-        }
-    );
+    return new Promise((resolve, reject) => {
+        Image.getSize(uri, (width, height) => {
+            resolve({ w: width, h: height });
+        },
+            (err) => {
+                reject(err)
+            });
+    });
 }
 
 export function IDMenuOptionsStyle(props) {

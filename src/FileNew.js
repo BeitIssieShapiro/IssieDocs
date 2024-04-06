@@ -17,7 +17,7 @@ import { isRTL } from './lang';
 
 
 const TILE_PADDING = 30
-const TILE_TEXT_HEIGHT = 22
+const TILE_TEXT_HEIGHT = 25
 const TILE_BORDER_WIDTH = 1.5
 
 export default function FileNew(props) {

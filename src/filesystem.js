@@ -801,7 +801,10 @@ export class FileSystem {
     }
 
     async cloneToTemp(uri) {
-        let tempFileName = FileSystem.getTempFileName("jpg");
+
+        // find file extension:
+        const ext = uri.split('.').pop();
+        let tempFileName = FileSystem.getTempFileName(ext);
         await RNFS.copyFile(uri, tempFileName);
         return tempFileName;
     }

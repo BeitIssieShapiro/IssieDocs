@@ -7,6 +7,8 @@ material.ttf
 info.plist
 IssieDocs.entitlements
 
+verify AppGroup capability and issiedocs capability is checked
+
 # Launch screen
 
 # Camera kit:

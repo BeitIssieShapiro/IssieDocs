@@ -4,7 +4,6 @@ import { SvgIcon } from "./svg-icons";
 import { SBDraxScrollView, dimensions } from "./elements";
 import FolderNew, { FolderDraxView } from "./FolderNew";
 import { FileSystem } from "./filesystem";
-import { showMessage } from "react-native-flash-message";
 import { useState } from "react";
 import { getRowDirections, translate } from "./lang";
 import { trace } from "./log";
