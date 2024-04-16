@@ -1503,6 +1503,18 @@ export default class IssieEditPhoto extends React.Component {
     this.setState({
       strokeWidth: newStrokeWidth
     })
+
+    if (this.isRulerMode() && this.state.selectedRulerElemId) {
+      const selectedElem = this.canvas.current.findRulerById(this.state.selectedRulerElemId);
+      if (selectedElem) {
+        const modifiedWidth = { ...selectedElem, width: newStrokeWidth };
+        this.state.queue.pushLine(modifiedWidth);
+        this.Save();
+        this.incrementRevision();
+      }
+    }
+    
+
   }
 
   onMarkerSize = (size) => {
