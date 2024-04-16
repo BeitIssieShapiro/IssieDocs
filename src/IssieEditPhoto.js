@@ -58,6 +58,7 @@ const Modes = {
 }
 
 const TABLE_LINE_MARGIN = 20;
+const PAGE_MARGIN = RESIZE_TABLE_BOX_SIZE * 2;
 
 const MODES_CLEANUP = {
   showTextInput: false,
@@ -669,7 +670,13 @@ export default class IssieEditPhoto extends React.Component {
   pageTitleAddition = (count, index) => count > 1 ? " - " + (index + 1) + "/" + count : ""
 
   Load = async () => {
-    this.setState({ showBusy: true }, () => this.LoadInternal().finally(() => this.setState({ showBusy: false })));
+    return new Promise((resolve) => {
+      this.setState({ showBusy: true }, () => this.LoadInternal().finally(() => {
+        this.setState({ showBusy: false })
+        resolve();
+      }));
+
+    });
   }
 
   LoadInternal = async () => {
@@ -1513,7 +1520,7 @@ export default class IssieEditPhoto extends React.Component {
         this.incrementRevision();
       }
     }
-    
+
 
   }
 
@@ -1554,35 +1561,37 @@ export default class IssieEditPhoto extends React.Component {
 
   movePage = (inc) => {
 
-    this.SaveText()
+    return new Promise((resolve, reject) => {
 
-    let currentIndex = -1;
-    for (let i = 0; i < this.state.page.count; i++) {
-      if (this.state.page.getPage(i) == this.state.currentFile) {
-        currentIndex = i;
-        break;
+      this.SaveText()
+
+      let currentIndex = -1;
+      for (let i = 0; i < this.state.page.count; i++) {
+        if (this.state.page.getPage(i) == this.state.currentFile) {
+          currentIndex = i;
+          break;
+        }
       }
-    }
-    currentIndex += inc;
-    if (currentIndex < 0)
-      currentIndex = 0;
+      currentIndex += inc;
+      if (currentIndex < 0)
+        currentIndex = 0;
 
-    if (currentIndex >= this.state.page.count) return;
+      if (currentIndex >= this.state.page.count) return;
 
 
-    setNavParam(this.props.navigation, 'pageTitleAddition', this.pageTitleAddition(this.state.page.count, currentIndex));
+      setNavParam(this.props.navigation, 'pageTitleAddition', this.pageTitleAddition(this.state.page.count, currentIndex));
 
-    const currentFile = this.state.page.getPage(currentIndex);
-    const metaDataUri = currentFile + ".json";
-    this.setState({
-      currentFile, currentIndex, metaDataUri: metaDataUri,
-      zoom: 1, xOffset: 0, yOffset: 0, showTextInput: false, inputTextValue: '', currentImageElem: undefined,
-      detectedTexts: []
-    }, () => {
-      this.reflectWindowSizeAndImageSize(true);
+      const currentFile = this.state.page.getPage(currentIndex);
+      const metaDataUri = currentFile + ".json";
+      this.setState({
+        currentFile, currentIndex, metaDataUri: metaDataUri,
+        zoom: 1, xOffset: 0, yOffset: 0, showTextInput: false, inputTextValue: '', currentImageElem: undefined,
+        detectedTexts: []
+      }, () => {
+        this.reflectWindowSizeAndImageSize(true);
 
-      this.Load();
-
+        this.Load().then(() => resolve());
+      });
     });
   }
 
@@ -2376,46 +2385,57 @@ export default class IssieEditPhoto extends React.Component {
 
       return Math.abs(initialValue - line) < 20;
     }
-
-
-    //prevents out of bounds:
-    // too much left?
-    if (tableResizeState.currentX < RESIZE_TABLE_BOX_SIZE) {
-      tableResizeState.currentX = RESIZE_TABLE_BOX_SIZE;
-    }
-
-    // too much top?
-    if (tableResizeState.currentY < RESIZE_TABLE_BOX_SIZE) {
-      tableResizeState.currentY = RESIZE_TABLE_BOX_SIZE;
-    }
-
-    // too much right?
-    if (tableResizeState.currentX > tvPageRectX - RESIZE_TABLE_BOX_SIZE / 2) {
-      tableResizeState.currentX = tvPageRectX - RESIZE_TABLE_BOX_SIZE / 2;
-    }
-
-
-    // too much bottom
-    if (tableResizeState.currentY > tvPageRectY - RESIZE_TABLE_BOX_SIZE / 2) {
-      tableResizeState.currentY = tvPageRectY - RESIZE_TABLE_BOX_SIZE / 2;
-    }
-
-
+    
 
     const topStart = onLine(table.verticalLines[0] - RESIZE_TABLE_BOX_SIZE, true) && onLine(table.horizontalLines[0] + RESIZE_TABLE_BOX_SIZE, false);
     const bottomEnd = onLine(table.verticalLines[table.verticalLines.length - 1] + RESIZE_TABLE_BOX_SIZE / 2, true) &&
       onLine(table.horizontalLines[table.horizontalLines.length - 1] + RESIZE_TABLE_BOX_SIZE / 2, false);
+
+    let alignX = 0, alignY = 0;
+    // align to the corner
+    if (topStart) {
+      alignX = tableResizeState.initialX - table.verticalLines[0];
+      alignY = tableResizeState.initialY - table.horizontalLines[0];
+    }
+
+    if (bottomEnd) {
+      alignX =  arrLast(table.verticalLines) - tableResizeState.initialX;
+      alignY = arrLast(tableResizeState.initialY);
+    }
+
+    //prevents out of bounds:
+    // too much left?
+    if (tableResizeState.currentX - alignX < PAGE_MARGIN) {
+      tableResizeState.currentX = PAGE_MARGIN + alignX;
+    }
+
+    // too much top?
+    if (tableResizeState.currentY - alignY < PAGE_MARGIN) {
+      tableResizeState.currentY = PAGE_MARGIN + alignY;
+    }
+
+    // too much right?
+    if (tableResizeState.currentX > tvPageRectX - PAGE_MARGIN) {
+      tableResizeState.currentX = tvPageRectX - PAGE_MARGIN;
+    }
+
+
+    // too much bottom
+    if (tableResizeState.currentY > tvPageRectY - PAGE_MARGIN) {
+      tableResizeState.currentY = tvPageRectY - PAGE_MARGIN;
+    }
+
     let resizeFactorX, resizeFactorY
 
     if (topStart) {
       // table will overflow to the right?
       const deltaX = tableResizeState.currentX - tableResizeState.initialX;
-      if (arrLast(table.verticalLines) + deltaX > tvPageRectX - RESIZE_TABLE_BOX_SIZE / 2) {
-        tableResizeState.currentX = tableResizeState.initialX - arrLast(table.verticalLines) + tvPageRectX - RESIZE_TABLE_BOX_SIZE / 2;
+      if (arrLast(table.verticalLines) + deltaX > tvPageRectX - PAGE_MARGIN) {
+        tableResizeState.currentX = tableResizeState.initialX - arrLast(table.verticalLines) + tvPageRectX - PAGE_MARGIN;
       }
       const deltaY = tableResizeState.currentY - tableResizeState.initialY;
-      if (arrLast(table.horizontalLines) + deltaY > tvPageRectY - RESIZE_TABLE_BOX_SIZE / 2) {
-        tableResizeState.currentY = tableResizeState.initialY - arrLast(table.horizontalLines) + tvPageRectY - RESIZE_TABLE_BOX_SIZE / 2;
+      if (arrLast(table.horizontalLines) + deltaY > tvPageRectY - PAGE_MARGIN) {
+        tableResizeState.currentY = tableResizeState.initialY - arrLast(table.horizontalLines) + tvPageRectY - PAGE_MARGIN;
       }
     }
 
@@ -2488,8 +2508,8 @@ export default class IssieEditPhoto extends React.Component {
           }
 
           // verify not passing end of page vertically:
-          if (arrLast(retTable.horizontalLines) + delta > height - RESIZE_TABLE_BOX_SIZE) {
-            delta = height - RESIZE_TABLE_BOX_SIZE - arrLast(retTable.horizontalLines);
+          if (arrLast(retTable.horizontalLines) + delta > height - PAGE_MARGIN) {
+            delta = height - PAGE_MARGIN - arrLast(retTable.horizontalLines);
           }
 
           for (let r2 = r; r2 < retTable.horizontalLines.length; r2++) {
@@ -2721,7 +2741,7 @@ export default class IssieEditPhoto extends React.Component {
     </View>
   }
 
-  warnEndOfPage = () => {
+  warnEndOfPage = (table) => {
     if (this.state.currentTextElem) {
       RNSystemSounds.beep(RNSystemSounds.Beeps.Negative)
 
@@ -2744,8 +2764,18 @@ export default class IssieEditPhoto extends React.Component {
                 FileSystem.main.cloneToTemp(this.state.currentFile).then(newUri =>
                   FileSystem.main.addPageToSheet(this.state.page, newUri, this.state.currentIndex + 1)).then((updatedSheet) => {
                     trace('add page at end of file', updatedSheet)
-                    this.setState({ page: updatedSheet, currentFile: updatedSheet.defaultSrc }, () => this.movePage(1));
-                  });
+                    this.setState({ page: updatedSheet, currentFile: updatedSheet.defaultSrc }, () => {
+
+                      // after page is added, move to it, and if was in editing table, copy the table into the new page:
+                      this.movePage(1).then(() => {
+                        if (table) {
+                          this.state.queue.pushTable({ ...table });
+                          this.Save();
+                          this.incrementRevision();
+                        }
+                      });
+                    });
+                  })
               },
               "add",
               translate("AddPageMenuTitle"),
@@ -2913,18 +2943,20 @@ export default class IssieEditPhoto extends React.Component {
                 const minHeightDelta = elem.minHeight ? newHeight - elem.minHeight : newHeight;
                 if (minHeightDelta != 0) {
                   const table = elem.tableCell && this.canvas.current?.canvasTables().find(t => t.id === elem.tableCell.tableID);
-                  // check that minHeight delta may case table out of page and that new minHeight is > current row height
+                  const tvPageRectY = this.viewPort2TableY(table, this.state.pageRect.height)
 
+                  // check that minHeight delta may case table out of page and that new minHeight is > current row height
+                  trace("XXX", minHeightDelta, tableRowHeight(table, elem.tableCell.row), newHeight, arrLast(table.horizontalLines) + minHeightDelta, tvPageRectY - PAGE_MARGIN)
                   if (!elem.supressEndOfPage && minHeightDelta > 0 && tableRowHeight(table, elem.tableCell.row) < newHeight &&
-                    arrLast(table.horizontalLines) + minHeightDelta > this.state.pageRect.height) {
-                    this.warnEndOfPage();
+                    arrLast(table.horizontalLines) + minHeightDelta > tvPageRectY - PAGE_MARGIN) {
+                    this.warnEndOfPage(table);
                     elem.supressEndOfPage = true;
                     return;
                   }
                 }
               }
 
-              if (!elem.supressEndOfPage && y - this.state.yOffset + size.height > this.state.pageRect.height) {
+              if (!elem.supressEndOfPage && y - this.state.yOffset + size.height > this.state.pageRect.height - PAGE_MARGIN/2) {
                 this.warnEndOfPage();
                 elem.supressEndOfPage = true;
               }

@@ -13,12 +13,12 @@
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		6A0C1B532BA969DD00C79EA4 /* LaunchScreen2.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6A0C1B522BA969DD00C79EA4 /* LaunchScreen2.storyboard */; };
 		6A0C1B5F2BA96A1400C79EA4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6A0C1B5E2BA96A1400C79EA4 /* Assets.xcassets */; };
-		6A0C1B652BA96AF900C79EA4 /* Alef_Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A0C1B602BA96AF800C79EA4 /* Alef_Regular.ttf */; };
-		6A0C1B662BA96AF900C79EA4 /* Verdana.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A0C1B612BA96AF800C79EA4 /* Verdana.ttf */; };
-		6A0C1B672BA96AF900C79EA4 /* DroidSans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A0C1B622BA96AF800C79EA4 /* DroidSans.ttf */; };
-		6A0C1B682BA96AF900C79EA4 /* Alef_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A0C1B632BA96AF800C79EA4 /* Alef_Bold.ttf */; };
-		6A0C1B692BA96AF900C79EA4 /* Verdana_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A0C1B642BA96AF800C79EA4 /* Verdana_Bold.ttf */; };
 		6ABD3B882BAF61D700EFEDB2 /* OpenIssieDocs2.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6AD557C02BA9B5910076DC3C /* OpenIssieDocs2.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		6AC33AC02BCD9C2800A1DE81 /* DroidSans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6AC33ABB2BCD9C2800A1DE81 /* DroidSans.ttf */; };
+		6AC33AC12BCD9C2800A1DE81 /* Verdana_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6AC33ABC2BCD9C2800A1DE81 /* Verdana_Bold.ttf */; };
+		6AC33AC22BCD9C2800A1DE81 /* Verdana.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6AC33ABD2BCD9C2800A1DE81 /* Verdana.ttf */; };
+		6AC33AC32BCD9C2800A1DE81 /* Alef_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6AC33ABE2BCD9C2800A1DE81 /* Alef_Bold.ttf */; };
+		6AC33AC42BCD9C2800A1DE81 /* Alef_Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6AC33ABF2BCD9C2800A1DE81 /* Alef_Regular.ttf */; };
 		6AD557C32BA9B5910076DC3C /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD557C22BA9B5910076DC3C /* ShareViewController.swift */; };
 		6AD557C62BA9B5910076DC3C /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 6AD557C52BA9B5910076DC3C /* Base */; };
 /* End PBXBuildFile section */
@@ -73,12 +73,12 @@
 		546480F13BE356AC56D59619 /* Pods-IssieDocs.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs.debug.xcconfig"; path = "Target Support Files/Pods-IssieDocs/Pods-IssieDocs.debug.xcconfig"; sourceTree = "<group>"; };
 		6A0C1B522BA969DD00C79EA4 /* LaunchScreen2.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = LaunchScreen2.storyboard; sourceTree = "<group>"; };
 		6A0C1B5E2BA96A1400C79EA4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = ../../Issie/IssieDocs/ios/Assets.xcassets; sourceTree = "<group>"; };
-		6A0C1B602BA96AF800C79EA4 /* Alef_Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Alef_Regular.ttf; path = ../../../.Trash/Alef_Regular.ttf; sourceTree = "<group>"; };
-		6A0C1B612BA96AF800C79EA4 /* Verdana.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Verdana.ttf; path = ../../../.Trash/Verdana.ttf; sourceTree = "<group>"; };
-		6A0C1B622BA96AF800C79EA4 /* DroidSans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = DroidSans.ttf; path = ../../../.Trash/DroidSans.ttf; sourceTree = "<group>"; };
-		6A0C1B632BA96AF800C79EA4 /* Alef_Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Alef_Bold.ttf; path = ../../../.Trash/Alef_Bold.ttf; sourceTree = "<group>"; };
-		6A0C1B642BA96AF800C79EA4 /* Verdana_Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Verdana_Bold.ttf; path = ../../../.Trash/Verdana_Bold.ttf; sourceTree = "<group>"; };
 		6ABD3B8C2BAF888A00EFEDB2 /* OpenIssieDocs2.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenIssieDocs2.entitlements; sourceTree = "<group>"; };
+		6AC33ABB2BCD9C2800A1DE81 /* DroidSans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = DroidSans.ttf; path = ../../Issie/IssieDocs/resources/ios/DroidSans.ttf; sourceTree = "<group>"; };
+		6AC33ABC2BCD9C2800A1DE81 /* Verdana_Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Verdana_Bold.ttf; path = ../../Issie/IssieDocs/resources/ios/Verdana_Bold.ttf; sourceTree = "<group>"; };
+		6AC33ABD2BCD9C2800A1DE81 /* Verdana.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Verdana.ttf; path = ../../Issie/IssieDocs/resources/ios/Verdana.ttf; sourceTree = "<group>"; };
+		6AC33ABE2BCD9C2800A1DE81 /* Alef_Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Alef_Bold.ttf; path = ../../Issie/IssieDocs/resources/ios/Alef_Bold.ttf; sourceTree = "<group>"; };
+		6AC33ABF2BCD9C2800A1DE81 /* Alef_Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Alef_Regular.ttf; path = ../../Issie/IssieDocs/resources/ios/Alef_Regular.ttf; sourceTree = "<group>"; };
 		6AD557972BA99D290076DC3C /* IssieDocs-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IssieDocs-Bridging-Header.h"; sourceTree = "<group>"; };
 		6AD557C02BA9B5910076DC3C /* OpenIssieDocs2.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OpenIssieDocs2.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		6AD557C22BA9B5910076DC3C /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
@@ -144,13 +144,13 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				6AF0262C2BC1932C00EEF6C1 /* IssieDocs.entitlements */,
 				6A0C1B522BA969DD00C79EA4 /* LaunchScreen2.storyboard */,
-				6A0C1B632BA96AF800C79EA4 /* Alef_Bold.ttf */,
-				6A0C1B602BA96AF800C79EA4 /* Alef_Regular.ttf */,
-				6A0C1B622BA96AF800C79EA4 /* DroidSans.ttf */,
-				6A0C1B642BA96AF800C79EA4 /* Verdana_Bold.ttf */,
-				6A0C1B612BA96AF800C79EA4 /* Verdana.ttf */,
 				13B07FB71A68108700A75B9A /* main.m */,
 				6AD557972BA99D290076DC3C /* IssieDocs-Bridging-Header.h */,
+				6AC33ABE2BCD9C2800A1DE81 /* Alef_Bold.ttf */,
+				6AC33ABF2BCD9C2800A1DE81 /* Alef_Regular.ttf */,
+				6AC33ABB2BCD9C2800A1DE81 /* DroidSans.ttf */,
+				6AC33ABC2BCD9C2800A1DE81 /* Verdana_Bold.ttf */,
+				6AC33ABD2BCD9C2800A1DE81 /* Verdana.ttf */,
 			);
 			name = IssieDocs;
 			sourceTree = "<group>";
@@ -332,13 +332,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6A0C1B662BA96AF900C79EA4 /* Verdana.ttf in Resources */,
+				6AC33AC22BCD9C2800A1DE81 /* Verdana.ttf in Resources */,
+				6AC33AC42BCD9C2800A1DE81 /* Alef_Regular.ttf in Resources */,
 				6A0C1B532BA969DD00C79EA4 /* LaunchScreen2.storyboard in Resources */,
-				6A0C1B672BA96AF900C79EA4 /* DroidSans.ttf in Resources */,
+				6AC33AC12BCD9C2800A1DE81 /* Verdana_Bold.ttf in Resources */,
 				6A0C1B5F2BA96A1400C79EA4 /* Assets.xcassets in Resources */,
-				6A0C1B652BA96AF900C79EA4 /* Alef_Regular.ttf in Resources */,
-				6A0C1B682BA96AF900C79EA4 /* Alef_Bold.ttf in Resources */,
-				6A0C1B692BA96AF900C79EA4 /* Verdana_Bold.ttf in Resources */,
+				6AC33AC02BCD9C2800A1DE81 /* DroidSans.ttf in Resources */,
+				6AC33AC32BCD9C2800A1DE81 /* Alef_Bold.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -558,7 +558,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
-				CURRENT_PROJECT_VERSION = 36;
+				CURRENT_PROJECT_VERSION = 37;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				ENABLE_BITCODE = NO;
@@ -624,7 +624,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
-				CURRENT_PROJECT_VERSION = 36;
+				CURRENT_PROJECT_VERSION = 37;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				INFOPLIST_FILE = IssieDocs/Info.plist;
