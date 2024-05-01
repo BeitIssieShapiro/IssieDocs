@@ -338,7 +338,7 @@ function Canvas({
 
         if (isTableMode && TableResizeState) {
             const result = ResizeTable(TableResizeState, width, height);
-            trace("resize table", result)
+            // trace("resize table", result)
             if (result.tableChanged) {
                 canvasTables = canvasTables.filter(t => t.id !== TableResizeState.table.id);
                 canvasTables.push(result.table);

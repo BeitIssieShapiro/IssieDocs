@@ -66,6 +66,14 @@ const MODES_CLEANUP = {
   tableSelection: undefined,
   selectedRulerElemId: undefined
 }
+
+function printRect(rect) {
+  return "{ top:"+Math.floor(rect.top)+
+         ", left:"+Math.floor(rect.left) +
+         ", width:"+Math.floor(rect.width) +
+         ", hight:"+Math.floor(rect.height)+" }"
+}
+
 /**
  * scaleRatio: affects the size of the viewPort which == pageRect if zoom=0
  * once zoom is applied the scaleRatio is not a factor. viewPort may change, but pageRect stays untouched
@@ -288,12 +296,8 @@ export default class IssieEditPhoto extends React.Component {
 
           return;
         } else if (this.isTableMode() && this.state.currentTable) {
-          const viewPortXY = {
-            x: this.screen2ViewPortX(evt.nativeEvent.pageX),
-            y: this.screen2ViewPortY(evt.nativeEvent.pageY)
-          }
-          const x = this.viewPort2TableX(this.state.currentTable, viewPortXY.x);
-          const y = this.viewPort2TableY(this.state.currentTable, viewPortXY.y);
+          const x = this.viewPort2TableX(this.state.currentTable, this.screen2ViewPortX(evt.nativeEvent.pageX));
+          const y = this.viewPort2TableY(this.state.currentTable, this.screen2ViewPortY(evt.nativeEvent.pageY));
 
           const clickedCell = this.findCell(this.state.currentTable, x, y);
           if (clickedCell) {
@@ -595,14 +599,21 @@ export default class IssieEditPhoto extends React.Component {
   _handleInputTextLocationMovingPage = () => {
     // if keyboard hides the textInput, scroll the window
     if (this.state.showTextInput && this.state.currentTextElem) {
-      const minHeight = this.state.currentTextElem.tableCell ?
-        this.state.currentTextElem.minHeight || this.state.fontSize * 1.2 :
-        this.state.currentTextElem.height;
+      let minHeight;
+      if (this.state.currentTextElem.tableCell) {
+        const { table } = this.findTable();
+
+        minHeight = this.state.currentTextElem.minHeight || this.state.fontSize * 1.2;
+        minHeight = this.table2PageY(table, minHeight);
+      } else {
+        minHeight = this.state.currentTextElem.height;
+      }
+
 
       // positive means overlap
       let diffFromKB = (this.state.yText + minHeight) - this.state.keyboardTop;
 
-      trace("_handleInputTextLocationMovingPage", this.state.yText, diffFromKB, this.state.keyboardTop, this.state.yOffset, this.state.currentTextElem.height)
+      trace("_handleInputTextLocationMovingPage", this.state.yText, diffFromKB, this.state.keyboardTop, this.state.yOffset, minHeight)
       if (this.state.keyboardTop > 0 && diffFromKB > 0) {
         trace("scroll up due to keyboard", minHeight, this.state.currentTextElem.height + this.state.yText, this.state.keyboardTop, this.state.yOffset)
         this.changeZoomOrOffset({
@@ -1134,6 +1145,14 @@ export default class IssieEditPhoto extends React.Component {
 
   viewPort2TableX = (table, x) => ((x - this.state.xOffset) / this.state.zoom) / (this.state.pageRect.width / table.size.width);
   viewPort2TableY = (table, y) => ((y - this.state.yOffset) / this.state.zoom) / (this.state.pageRect.height / table.size.height);
+
+  page2TableX = (table, x) => x / (this.state.pageRect.width / table.size.width);
+  page2TableY = (table, y) => y / (this.state.pageRect.height / table.size.height);
+
+  table2PageY = (table, y) => y * (this.state.pageRect.height / table.size.height);
+
+  viewPort2pageX = (x) => ((x - this.state.xOffset) / this.state.zoom);
+  viewPort2pageY = (y) => ((y - this.state.yOffset) / this.state.zoom);
 
   norm2viewPortX = (x) => (x * this.state.scaleRatio * this.state.zoom + this.state.xOffset);
   norm2viewPortY = (y) => (y * this.state.scaleRatio * this.state.zoom + this.state.yOffset);
@@ -1867,7 +1886,6 @@ export default class IssieEditPhoto extends React.Component {
         {/** Top Margin */}
         <View style={styles.topMargin} />
 
-
         {/** NavigationArea */}
         < View style={[styles.navigationArea, warnningBackground]} >
           {
@@ -1895,6 +1913,18 @@ export default class IssieEditPhoto extends React.Component {
           <View {...this._panResponderMove.panHandlers} style={[styles.rightMargin, warnningBackground, {
             width: this.state.sideMargin,
           }]} />
+
+          {/** DEBUG COORDINATES */}
+          <View style={{ position: "absolute", top: 0, left: 0, width: 350, height: 250, zIndex: 1000 }}>
+            <Text>viewPort: {printRect(this.state.viewPortRect)}</Text>
+            <Text>ScaleRatio: {this.state.scaleRatio}</Text>
+            <Text>x,y: {Math.floor(this.state.xText) + ","+Math.floor(this.state.yText)}</Text>
+            <Text>page: {printRect(this.state.pageRect)}</Text>
+            {this.state.currentTextElem?.tableCell &&<Text>textElem: minHeight:{this.state.currentTextElem.minHeight}</Text>}
+            {this.state.currentTextElem?.height &&<Text>textElem: height:{this.state.currentTextElem.height}</Text>}
+            {this.state.tableResizeState && <Text>TableResize: init x,y {Math.floor(this.state.tableResizeState.initialX) + "," + Math.floor(this.state.tableResizeState.initialY)}</Text>}
+          </View>
+
 
           <View style={[styles.viewPort, {
             top: this.state.viewPortRect.top,
@@ -2377,15 +2407,17 @@ export default class IssieEditPhoto extends React.Component {
     if (!table) return undefined;
 
     let retTable = { ...table };
-    const tvPageRectX = this.viewPort2TableX(table, this.state.pageRect.width)
-    const tvPageRectY = this.viewPort2TableY(table, this.state.pageRect.height)
+    const tvPageRectX = this.page2TableX(table, this.state.pageRect.width)
+    const tvPageRectY = this.page2TableY(table, this.state.pageRect.height)
 
     const onLine = (line, isVertical) => {
       const initialValue = isVertical ? tableResizeState.initialX : tableResizeState.initialY;
 
       return Math.abs(initialValue - line) < 20;
     }
-    
+
+    //trace("ResizeTable", tableResizeState.initialY, table.horizontalLines )
+
 
     const topStart = onLine(table.verticalLines[0] - RESIZE_TABLE_BOX_SIZE, true) && onLine(table.horizontalLines[0] + RESIZE_TABLE_BOX_SIZE, false);
     const bottomEnd = onLine(table.verticalLines[table.verticalLines.length - 1] + RESIZE_TABLE_BOX_SIZE / 2, true) &&
@@ -2399,7 +2431,7 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     if (bottomEnd) {
-      alignX =  arrLast(table.verticalLines) - tableResizeState.initialX;
+      alignX = arrLast(table.verticalLines) - tableResizeState.initialX;
       alignY = arrLast(tableResizeState.initialY);
     }
 
@@ -2462,6 +2494,7 @@ export default class IssieEditPhoto extends React.Component {
       } else {
         if (c == 0) continue;
         if (onLine(table.verticalLines[c], true)) {
+
           retTable.verticalLines = [...table.verticalLines]
 
 
@@ -2508,8 +2541,8 @@ export default class IssieEditPhoto extends React.Component {
           }
 
           // verify not passing end of page vertically:
-          if (arrLast(retTable.horizontalLines) + delta > height - PAGE_MARGIN) {
-            delta = height - PAGE_MARGIN - arrLast(retTable.horizontalLines);
+          if (arrLast(retTable.horizontalLines) + delta > this.page2TableY(retTable, height) - PAGE_MARGIN) {
+            delta = this.page2TableY(retTable, height) - PAGE_MARGIN - arrLast(retTable.horizontalLines);
           }
 
           for (let r2 = r; r2 < retTable.horizontalLines.length; r2++) {
@@ -2750,7 +2783,7 @@ export default class IssieEditPhoto extends React.Component {
         type: "warning",
         animated: true,
         duration: 10000,
-        position: "center",
+        position: this.state.windowSize.height < this.state.windowSize.width ? { left: this.state.windowSize.width / 2 - 225, top: 50 } : "center",
         titleStyle: { lineHeight: 35, fontSize: 25, height: 100, textAlign: "center", margin: 15, color: "black" },
         style: { width: 450, height: 250 },
 
@@ -2808,6 +2841,13 @@ export default class IssieEditPhoto extends React.Component {
     let y = this.state.yText;
 
     const isTableCell = elem.tableCell;
+    let table;
+    if (isTableCell) {
+      const { tableID, col, row } = elem.tableCell;
+      table = this.canvas.current?.canvasTables().find(t => t.id === tableID);
+    }
+
+
     let textWidth = 0;
     let inputTextHeight = elem.height;
     const direction = elem.alignment ? (elem.alignment == TextAlignment.RIGHT ? 'rtl' : 'ltr') : (defaultRTL ? 'rtl' : 'ltr');
@@ -2822,15 +2862,15 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     if (isTableCell) {
+
+      const { col, row } = elem.tableCell;
       trace("text input table cell")
-      const { tableID, col, row } = elem.tableCell;
-      const table = this.canvas.current?.canvasTables().find(t => t.id === tableID);
       if (table) {
         // todo table margin
         const tableRatioX = (this.state.pageRect.width / table.size.width);
         const tableRatioY = (this.state.pageRect.height / table.size.height);
 
-        trace("measures: vp:", this.state.viewPortRect, "table", table.size, tableRatioX, tableRatioY)
+        // trace("measures: vp:", this.state.viewPortRect, "table", table.size, tableRatioX, tableRatioY)
 
         x = (table.verticalLines[col] + table.width) * tableRatioX * z + this.state.xOffset;
         y = (table.horizontalLines[row] + table.width) * tableRatioY * z + this.state.yOffset;
@@ -2862,8 +2902,10 @@ export default class IssieEditPhoto extends React.Component {
     }).then(size => {
       if (size.height > 0) {
         if (isTableCell) {
-          if (elem.minHeight !== Math.ceil(size.height)) {
-            elem.minHeight = Math.ceil(size.height);
+          const newTvCellHeight = Math.ceil(this.page2TableY(table, (size.height)));
+          //const newTvCellHeight = (Math.ceil(size.height) + table.width) / this.state.scaleRatio;
+          if (elem.minHeight !== newTvCellHeight) {
+            elem.minHeight = newTvCellHeight;
             elem.modified = true;
             this._handleInputTextLocationMovingPage();
             this.incrementRevision();
@@ -2929,37 +2971,38 @@ export default class IssieEditPhoto extends React.Component {
           ref={textInput => this._textInput = textInput}
           onChangeText={(text) => {
             trace("onChangeText", text)
-            const origText = elem.text;
-            const origChanged = elem.changed;
 
             this.canvas.current?.canvas.current?.measureText(text, textWidth, {
               font: getFont(),
               fontSize: fSize
             }).then(size => {
-              console.log("Text size", size, "y", y, "pageRect", this.state.pageRect.height, "r", r)
+              //console.log("Text size", size, "y", y, "pageRect", this.state.pageRect.height, "r", r)
+              //trace("xxx", elem.supressEndOfPage, !(elem.supressEndOfPage > 0))
 
+              let table;
               if (isTableCell) {
-                const newHeight = size.height || this.state.fontSize;
+                table = this.findTable()?.table;
+
+                const newHeight = this.page2TableY(table, (size.height || this.state.fontSize) + table.width);
                 const minHeightDelta = elem.minHeight ? newHeight - elem.minHeight : newHeight;
                 if (minHeightDelta != 0) {
-                  const table = elem.tableCell && this.canvas.current?.canvasTables().find(t => t.id === elem.tableCell.tableID);
-                  const tvPageRectY = this.viewPort2TableY(table, this.state.pageRect.height)
+                  const tvPageRectY = this.page2TableY(table, this.state.pageRect.height)
 
                   // check that minHeight delta may case table out of page and that new minHeight is > current row height
-                  trace("XXX", minHeightDelta, tableRowHeight(table, elem.tableCell.row), newHeight, arrLast(table.horizontalLines) + minHeightDelta, tvPageRectY - PAGE_MARGIN)
-                  if (!elem.supressEndOfPage && minHeightDelta > 0 && tableRowHeight(table, elem.tableCell.row) < newHeight &&
+                  if (!(elem.supressEndOfPage > 0) && minHeightDelta > 0 && tableRowHeight(table, elem.tableCell.row) < newHeight &&
                     arrLast(table.horizontalLines) + minHeightDelta > tvPageRectY - PAGE_MARGIN) {
                     this.warnEndOfPage(table);
-                    elem.supressEndOfPage = true;
+                    elem.supressEndOfPage = text.length;
                     return;
                   }
                 }
-              }
-
-              if (!elem.supressEndOfPage && y - this.state.yOffset + size.height > this.state.pageRect.height - PAGE_MARGIN/2) {
+              } else {
+                const pageEndOfText = this.viewPort2pageY(y) + size.height;
+                if (!(elem.supressEndOfPage > 0) && pageEndOfText > this.state.pageRect.height - PAGE_MARGIN / 2) {
                 this.warnEndOfPage();
-                elem.supressEndOfPage = true;
+                elem.supressEndOfPage = text.length;
               }
+            }
 
               const newNormWidth = this.width2NormWidth(size.width, this.state.fontSize);
               if ((elem.normWidth != newNormWidth || size.height != elem.height) && size.width > 0) {
@@ -2994,6 +3037,7 @@ export default class IssieEditPhoto extends React.Component {
           multiline={true}
           autoFocus
           allowFontScaling={false}
+          maxLength={elem.supressEndOfPage}
           style={{
             backgroundColor: 'transparent',
             direction,
