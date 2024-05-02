@@ -28,7 +28,7 @@ import {
   semanticColors, dimensions
 } from './elements'
 import { translate } from './lang';
-import { arrLast, genID, tableRowHeight, setNavParam, isCellInBox, isSameCell, normalizeBox, calculateTargetBox, offsetTableCell } from './utils';
+import { arrLast, genID, tableRowHeight, setNavParam, isCellInBox, isSameCell, normalizeBox, calculateTargetBox, offsetTableCell, tableColWidth } from './utils';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { pinchEnd, processPinch, processResize } from './pinch';
@@ -68,10 +68,10 @@ const MODES_CLEANUP = {
 }
 
 function printRect(rect) {
-  return "{ top:"+Math.floor(rect.top)+
-         ", left:"+Math.floor(rect.left) +
-         ", width:"+Math.floor(rect.width) +
-         ", hight:"+Math.floor(rect.height)+" }"
+  return "{ top:" + Math.floor(rect.top) +
+    ", left:" + Math.floor(rect.left) +
+    ", width:" + Math.floor(rect.width) +
+    ", hight:" + Math.floor(rect.height) + " }"
 }
 
 /**
@@ -560,7 +560,7 @@ export default class IssieEditPhoto extends React.Component {
 
 
   _shouldMove = (evt, gestureState) => {
-    //trace("should pinch?");
+    trace("should pinch?");
     if (evt.nativeEvent.touches.length >= 2) {
       trace("would pinch");
       return !this._sketching;
@@ -604,9 +604,9 @@ export default class IssieEditPhoto extends React.Component {
         const { table } = this.findTable();
 
         minHeight = this.state.currentTextElem.minHeight || this.state.fontSize * 1.2;
-        minHeight = this.table2PageY(table, minHeight);
+        minHeight = this.table2PageY(table, minHeight) * this.state.zoom;
       } else {
-        minHeight = this.state.currentTextElem.height;
+        minHeight = this.state.currentTextElem.height * this.state.zoom;
       }
 
 
@@ -850,7 +850,7 @@ export default class IssieEditPhoto extends React.Component {
     let y = this.screen2ViewPortY(ev.nativeEvent.pageY);
     this.toolbarRef.current.closePicker();
 
-    // trace("canvasClick x: ", x, ",y: ", y)
+    trace("canvasClick x: ", x, ",y: ", y)
     // trace("yOffset", this.state.yOffset,
     //   "zoom", this.state.zoom,
     //   "scaleRatio", this.state.scaleRatio,
@@ -1140,22 +1140,37 @@ export default class IssieEditPhoto extends React.Component {
     return newTextElem;
   }
 
-  viewPort2NormX = (x) => ((x - this.state.xOffset) / this.state.zoom) / this.state.scaleRatio;
-  viewPort2NormY = (y) => ((y - this.state.yOffset) / this.state.zoom) / this.state.scaleRatio;
-
-  viewPort2TableX = (table, x) => ((x - this.state.xOffset) / this.state.zoom) / (this.state.pageRect.width / table.size.width);
-  viewPort2TableY = (table, y) => ((y - this.state.yOffset) / this.state.zoom) / (this.state.pageRect.height / table.size.height);
-
-  page2TableX = (table, x) => x / (this.state.pageRect.width / table.size.width);
-  page2TableY = (table, y) => y / (this.state.pageRect.height / table.size.height);
-
-  table2PageY = (table, y) => y * (this.state.pageRect.height / table.size.height);
+  /**  Explanation:
+      ViewPort - the visible area of the page (sensitive to zoom and move). in zoom 0 and no offsets eq to page
+      Page - the scaled down/up size of the original image to fit the screen dimensions (agnositic to zoom and move)
+      Table - table coordinates are initialized as the page, then need to be adjusted according to ratioof current page's h/w vs. table-initial h/w 
+      Norm - original size of image
+  */
 
   viewPort2pageX = (x) => ((x - this.state.xOffset) / this.state.zoom);
   viewPort2pageY = (y) => ((y - this.state.yOffset) / this.state.zoom);
 
-  norm2viewPortX = (x) => (x * this.state.scaleRatio * this.state.zoom + this.state.xOffset);
-  norm2viewPortY = (y) => (y * this.state.scaleRatio * this.state.zoom + this.state.yOffset);
+  page2ViewPortX = (x) => x * this.state.zoom + this.state.xOffset;
+  page2ViewPortY = (y) => y * this.state.zoom + this.state.yOffset;
+
+  viewPort2NormX = (x) => this.viewPort2pageX(x) / this.state.scaleRatio;
+  viewPort2NormY = (y) => this.viewPort2pageY(y) / this.state.scaleRatio;
+
+  norm2viewPortX = (x) => this.page2ViewPortX(x * this.state.scaleRatio);
+  norm2viewPortY = (y) => this.page2ViewPortY(y * this.state.scaleRatio);
+
+
+  viewPort2TableX = (table, x) => this.page2TableX(table, this.viewPort2pageX(x));
+  viewPort2TableY = (table, y) => this.page2TableY(table, this.viewPort2pageY(y));
+
+
+  page2TableX = (table, x) => x / (this.state.pageRect.width / table.size.width);
+  page2TableY = (table, y) => y / (this.state.pageRect.height / table.size.height);
+
+  table2PageX = (table, x) => x * (this.state.pageRect.width / table.size.width);
+  table2PageY = (table, y) => y * (this.state.pageRect.height / table.size.height);
+
+
   normWidth2Width = (w, fontSize) => w * fontSize / this.normFontSize2FontSize(fontSize);
   width2NormWidth = (w, fontSize) => w * this.normFontSize2FontSize(fontSize) / fontSize;
 
@@ -1689,7 +1704,7 @@ export default class IssieEditPhoto extends React.Component {
           windowSize: winSize,
           imageSize,
           viewPortRect,
-          pageRect: viewPortRect,
+          pageRect: {...viewPortRect, top:0, left:0},
           sideMargin: sideMarginFinal,
           scaleRatio: ratio,
           xText, yText,
@@ -1906,31 +1921,33 @@ export default class IssieEditPhoto extends React.Component {
               this.getArrow(BOTTOM)
             ]}
 
-          < View {...this._panResponderMove.panHandlers} style={
-            [styles.leftMargin, warnningBackground, {
+          < View //{...this._panResponderMove.panHandlers} 
+            style={
+              [styles.leftMargin, warnningBackground, {
+                width: this.state.sideMargin,
+              }]} />
+          <View //{...this._panResponderMove.panHandlers} 
+            style={[styles.rightMargin, warnningBackground, {
               width: this.state.sideMargin,
             }]} />
-          <View {...this._panResponderMove.panHandlers} style={[styles.rightMargin, warnningBackground, {
-            width: this.state.sideMargin,
-          }]} />
 
-          {/** DEBUG COORDINATES */}
+          {/* * DEBUG COORDINATES
           <View style={{ position: "absolute", top: 0, left: 0, width: 350, height: 250, zIndex: 1000 }}>
             <Text>viewPort: {printRect(this.state.viewPortRect)}</Text>
             <Text>ScaleRatio: {this.state.scaleRatio}</Text>
-            <Text>x,y: {Math.floor(this.state.xText) + ","+Math.floor(this.state.yText)}</Text>
+            <Text>x,y: {Math.floor(this.state.xText) + "," + Math.floor(this.state.yText)}</Text>
             <Text>page: {printRect(this.state.pageRect)}</Text>
-            {this.state.currentTextElem?.tableCell &&<Text>textElem: minHeight:{this.state.currentTextElem.minHeight}</Text>}
-            {this.state.currentTextElem?.height &&<Text>textElem: height:{this.state.currentTextElem.height}</Text>}
+            {this.state.currentTextElem?.tableCell && <Text>textElem: minHeight:{this.state.currentTextElem.minHeight}</Text>}
+            {this.state.currentTextElem?.height && <Text>textElem: height:{this.state.currentTextElem.height}</Text>}
             {this.state.tableResizeState && <Text>TableResize: init x,y {Math.floor(this.state.tableResizeState.initialX) + "," + Math.floor(this.state.tableResizeState.initialY)}</Text>}
-          </View>
+          </View> */}
 
 
           <View style={[styles.viewPort, {
             top: this.state.viewPortRect.top,
             height: this.state.viewPortRect.height,
             width: this.state.viewPortRect.width, //Math.max(this.state.viewPortRect.width * this.state.zoom, this.state.windowSize.width),
-            left: this.state.sideMargin,
+            left: this.state.viewPortRect.left //this.state.sideMargin
           }, {
           }]}  {...this._panResponderMove.panHandlers} >
             <Animated.View
@@ -1964,7 +1981,9 @@ export default class IssieEditPhoto extends React.Component {
                 </View>}
 
 
-              {this.getCanvas(this.state.pageRect.width, this.state.pageRect.height)}
+              {
+                this.getCanvas(this.state.pageRect.width, this.state.pageRect.height)
+              }
             </Animated.View>
             {this.state.showTextInput && this.getTextInput(rtl)}
 
@@ -2851,7 +2870,6 @@ export default class IssieEditPhoto extends React.Component {
     let textWidth = 0;
     let inputTextHeight = elem.height;
     const direction = elem.alignment ? (elem.alignment == TextAlignment.RIGHT ? 'rtl' : 'ltr') : (defaultRTL ? 'rtl' : 'ltr');
-    //let tableRatioX = 1;
     const rtl = direction == 'rtl';
 
     //trace("rtl", elem.alignment, rtl, direction)
@@ -2864,19 +2882,15 @@ export default class IssieEditPhoto extends React.Component {
     if (isTableCell) {
 
       const { col, row } = elem.tableCell;
-      trace("text input table cell")
+
       if (table) {
         // todo table margin
-        const tableRatioX = (this.state.pageRect.width / table.size.width);
-        const tableRatioY = (this.state.pageRect.height / table.size.height);
 
-        // trace("measures: vp:", this.state.viewPortRect, "table", table.size, tableRatioX, tableRatioY)
+        x = this.page2ViewPortX(this.table2PageX(table, table.verticalLines[col] + table.width / 2));
+        y = this.page2ViewPortY(this.table2PageY(table, table.horizontalLines[row] + table.width / 2));
 
-        x = (table.verticalLines[col] + table.width) * tableRatioX * z + this.state.xOffset;
-        y = (table.horizontalLines[row] + table.width) * tableRatioY * z + this.state.yOffset;
-
-        textWidth = (table.verticalLines[col + 1] - table.verticalLines[col] - table.width * 2) * tableRatioX;
-        inputTextHeight = (table.horizontalLines[row + 1] - table.horizontalLines[row] - table.width * 2) * tableRatioX;
+        textWidth = this.table2PageX(table, tableColWidth(table, col) - table.width);
+        inputTextHeight = this.table2PageY(table, tableRowHeight(table, row) - table.width);
 
         if (this.state.xText !== x || this.state.yText !== y || this.state.currentTable != table) {
           trace("changes", this.state.xText !== x, this.state.yText !== y, this.state.currentTable != table)
@@ -2946,20 +2960,18 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     if (Object.keys(modifiedState).length > 0) {
-      trace("getTextInput setState", modifiedState, elem.color !== this.state.textColor, elem.normFontSize != normFontSize)
+      // trace("getTextInput setState", modifiedState, elem.color !== this.state.textColor, elem.normFontSize != normFontSize)
       this.setState(modifiedState);
     }
 
     const left = x - (isTableCell ? 0 : (rtl ? textWidth / r : DRAG_ICON_SIZE));
 
-    trace("elem.height", elem.height)
-    const textOffset = isTableCell ? 2 : 0;
     return (
       <View style={{
         position: 'absolute',
         flexDirection: direction == 'rtl' ? "row-reverse" : "row",
-        left: left + textOffset,
-        top: y - 4 - textOffset, // why 4 ? trial and error
+        left: left,
+        top: y,
         zIndex: 45,
       }}>
         {!isTableCell && <View {...this._panResponderElementMove.panHandlers}
@@ -2999,10 +3011,10 @@ export default class IssieEditPhoto extends React.Component {
               } else {
                 const pageEndOfText = this.viewPort2pageY(y) + size.height;
                 if (!(elem.supressEndOfPage > 0) && pageEndOfText > this.state.pageRect.height - PAGE_MARGIN / 2) {
-                this.warnEndOfPage();
-                elem.supressEndOfPage = text.length;
+                  this.warnEndOfPage();
+                  elem.supressEndOfPage = text.length;
+                }
               }
-            }
 
               const newNormWidth = this.width2NormWidth(size.width, this.state.fontSize);
               if ((elem.normWidth != newNormWidth || size.height != elem.height) && size.width > 0) {
@@ -3070,8 +3082,8 @@ export default class IssieEditPhoto extends React.Component {
         />
         <View style={{
           position: 'absolute',
-          left: isTableCell ? textOffset : (DRAG_ICON_SIZE - 2),
-          top: isTableCell ? 6 : 0,
+          left: isTableCell ? 0 : (DRAG_ICON_SIZE - 2),
+          top: 0,
           width: textActualWidth / r,
           height: inputTextHeight > 0 ? inputTextHeight / r : 45 / r,
           zIndex: 20,
@@ -3135,7 +3147,7 @@ const styles = StyleSheet.create({
     flex: 1, height: "100%",
     left: 0,
     top: 0,
-    zIndex: 25,
+    zIndex: 15,
     backgroundColor: semanticColors.mainAreaBG
   },
   rightMargin: {

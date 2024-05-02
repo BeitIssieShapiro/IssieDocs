@@ -93,7 +93,7 @@ function Canvas({
             if (p.x1 == undefined) return false; //not a ruler
 
             const { x1, y1, x2, y2 } = p;
-            const {x,y} = normXY;
+            const { x, y } = normXY;
             const threshold = 10 / scaleRatio;
 
             const dx = x2 - x1;
@@ -101,18 +101,18 @@ function Canvas({
             const t = ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy);
             const end1 = (Math.abs(x - x1) < threshold && Math.abs(y - y1) < threshold);
             const end2 = (Math.abs(x - x2) < threshold && Math.abs(y - y2) < threshold);
-      
+
             if (end1 || end2) return true;
 
 
             if (t < 0 || t > 1) {
                 return false; // (x, y) is outside the segment defined by (x1, y1) and (x2, y2)
             }
-            
+
             let closestX = x1 + t * dx;
             let closestY = y1 + t * dy;
             let distance = Math.sqrt((x - closestX) ** 2 + (y - closestY) ** 2);
-            
+
             return distance <= threshold;
         })
     }, [paths]);
@@ -165,27 +165,30 @@ function Canvas({
 
             const tX = normToTableX(normXY.x);
             const tY = normToTableY(normXY.y);
-            trace("find table cell", tX, tY, table)
             for (let c = 0; c < table.verticalLines.length - 1; c++) {
-                if (tX > table.verticalLines[c] && tX < table.verticalLines[c + 1]) {
+                if (tX >= table.verticalLines[c] + table.width  && tX < table.verticalLines[c + 1]) {
                     for (let r = 0; r < table.horizontalLines.length - 1; r++) {
-                        if (tY > table.horizontalLines[r] && tY < table.horizontalLines[r + 1]) {
+                        if (tY >= table.horizontalLines[r] + table.width && tY < table.horizontalLines[r + 1]) {
 
-                            let tableCellElem = texts.find(elem => elem.tableCell?.tableID == table.id &&
-                                elem.tableCell?.col === c && elem.tableCell?.row === r);
-
-                            if (!tableCellElem) {
-                                //creates on the fly a tableCellText elem
-                                tableCellElem = {
-                                    font: getFont(),
-                                    tableCell: {
-                                        tableID: table.id,
-                                        col: c,
-                                        row: r,
-                                    }
+                            // search the last matching cell:
+                            for (let i = texts.length - 1; i >= 0; i--) {
+                                if (!q[i].tableCell) continue;
+                                if (q[i].tableCell.tableID === table.id &&
+                                    q[i].tableCell.col === c &&
+                                    q[i].tableCell.row === r) {
+                                    return q[i];
                                 }
                             }
-                            return tableCellElem;
+
+                            //creates on the fly a tableCellText elem
+                            return {
+                                font: getFont(),
+                                tableCell: {
+                                    tableID: table.id,
+                                    col: c,
+                                    row: r,
+                                }
+                            };
                         }
                     }
                     break;
@@ -250,10 +253,9 @@ function Canvas({
                     }
                 }
                 //avoid showing the current edited text for non table-cell text
-                if (!found && (txtElem.id !== currentTextElemId || q[i].type === 'tableCellText')) {
-                    //trace("add txtElem", txtElem.id, found)
+                if (!found && txtElem.id !== currentTextElemId) {
                     textArray.push(txtElem);
-                }
+                } 
             } else if (q[i].type === 'path') {
                 canvasPaths.push(q[i].elem);
             } else if (q[i].type === 'line') {
@@ -349,10 +351,10 @@ function Canvas({
             const table = canvasTables.find(t => t.id == txtElem.tableCell.tableID);
             // Adjust cell's texts to current table size and location - todo margin
             txtElem.width = (tableColWidth(table, txtElem.tableCell.col) - table.width) * (width / table.size.width)
-            txtElem.height = ((tableRowHeight(table, txtElem.tableCell.row) - table.width) * (height / table.size.height))/scaleRatio;
+            txtElem.height = ((tableRowHeight(table, txtElem.tableCell.row) - table.width) * (height / table.size.height)) / scaleRatio;
             txtElem.normPosition = {
-                x: (table.verticalLines[txtElem.tableCell.col + (txtElem.rtl ? 1 : 0)] * (width / table.size.width)) / scaleRatio,
-                y: (table.horizontalLines[txtElem.tableCell.row] * (height / table.size.height)) / scaleRatio
+                x: ((table.verticalLines[txtElem.tableCell.col + (txtElem.rtl ? 1 : 0)] - table.width/2) * (width / table.size.width)) / scaleRatio,
+                y: ((table.horizontalLines[txtElem.tableCell.row] + table.width/2) * (height / table.size.height)) / scaleRatio
             };
             txtElem.position = {
                 x: txtElem.normPosition.x * scaleRatio,
@@ -441,16 +443,16 @@ function Canvas({
                         addLine(path.id, path.x1, path.y1, path.x2, path.y2, path.color, path.width, path.screenSize);
 
                         if (SelectedRulerElemId === path.id) {
-                            
+
                             const { x1, y1, x2, y2 } = path;
                             const width = Math.max(10, path.width * 2);
 
-                            const end1 = pointOnContinuationOfLine( x1 , y1, x2, y2, width, true);
-                            const end2 = pointOnContinuationOfLine( x1 , y1, x2, y2, width, false);
+                            const end1 = pointOnContinuationOfLine(x1, y1, x2, y2, width, true);
+                            const end2 = pointOnContinuationOfLine(x1, y1, x2, y2, width, false);
 
-                            addLine(path.id + 1, x1 , y1, end1.x, end1.y, "gray", width, path.screenSize);
-                            addLine(path.id + 2, x2 , y2, end2.x, end2.y, "gray", width, path.screenSize);
-                           
+                            addLine(path.id + 1, x1, y1, end1.x, end1.y, "gray", width, path.screenSize);
+                            addLine(path.id + 2, x2, y2, end2.x, end2.y, "gray", width, path.screenSize);
+
                         }
                     } else {
                         canvas.current?.addPath(path, width, height);
