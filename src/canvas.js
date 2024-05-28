@@ -253,7 +253,7 @@ function Canvas({
                     }
                 }
                 //avoid showing the current edited text for non table-cell text
-                if (!found && txtElem.id !== currentTextElemId) {
+                if (!found && (txtElem.id !== currentTextElemId || q[i].type === 'tableCellText')) {
                     textArray.push(txtElem);
                 } 
             } else if (q[i].type === 'path') {
@@ -283,11 +283,12 @@ function Canvas({
                 tableCellTexts = tableCellTexts.filter(tct => tct.tableCell.tableID !== q[i].elemID)
             }
         }
-
+        trace("calc txt elem", tableCellTexts.length)
         // filter and mutate the cell size and the table's line
         tableCellTexts = tableCellTexts
             .sort((a, b) => a.tableCell.row - b.tableCell.row || a.tableCell.col - b.tableCell.col)
             .filter(txtElem => {
+                
                 //verify the table exists:
                 let table = canvasTables.find(t => t.id == txtElem.tableCell.tableID);
                 if (!table) return false;
@@ -540,10 +541,10 @@ function Canvas({
                     if (isTableMode) {
                         const size = 44;
                         const hsize = size / 2;
-                        const lineW = 4;
-                        const color = "gray"
+                        const lineW = 5;
+                        const color = "#5B748A"
                         const aSize = 7
-                        const rs = 8
+                        const rs = RESIZE_TABLE_BOX_SIZE / 1.5;
 
                         // resize box bottom/right
                         let x1 = arrLast(table.verticalLines) + os;
@@ -564,8 +565,6 @@ function Canvas({
                         addLine(305, x1, y1, x2, y2, color, lineW, tableSize)
 
                         // move arrows
-
-
                         x1 = table.verticalLines[0] - os - size;
                         y1 = table.horizontalLines[0] //- os - size;
 

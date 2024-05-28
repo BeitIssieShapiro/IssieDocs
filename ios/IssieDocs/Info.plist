@@ -39,6 +39,8 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
@@ -59,7 +61,7 @@
 	<key>NSAppleMusicUsageDescription</key>
 	<string>Allow IssieDocs load images as IssieDocs pages and save pages as images</string>
 	<key>NSCameraUsageDescription</key>
-	<string>The Camera will be used to allow you capture photos that you&apos;ll embed in IssieDocs pages</string>
+	<string>The Camera will be used to allow you capture photos that you'll embed in IssieDocs pages</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Allow IssieDocs save pages as photos in the Photo Library</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -78,12 +80,12 @@
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 		<key>UISceneConfigurations</key>
 		<dict/>
-		<key>NSAllowsLocalNetworking</key>
-		<true/>	
 	</dict>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen2</string>

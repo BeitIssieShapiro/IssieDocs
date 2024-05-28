@@ -2919,6 +2919,7 @@ export default class IssieEditPhoto extends React.Component {
           const newTvCellHeight = Math.ceil(this.page2TableY(table, (size.height)));
           //const newTvCellHeight = (Math.ceil(size.height) + table.width) / this.state.scaleRatio;
           if (elem.minHeight !== newTvCellHeight) {
+            trace("minHeight change", elem, newTvCellHeight)
             elem.minHeight = newTvCellHeight;
             elem.modified = true;
             this._handleInputTextLocationMovingPage();
@@ -2988,7 +2989,7 @@ export default class IssieEditPhoto extends React.Component {
               font: getFont(),
               fontSize: fSize
             }).then(size => {
-              //console.log("Text size", size, "y", y, "pageRect", this.state.pageRect.height, "r", r)
+              console.log("Text size", size, "y", y, "pageRect", this.state.pageRect.height, "r", r)
               //trace("xxx", elem.supressEndOfPage, !(elem.supressEndOfPage > 0))
 
               let table;
