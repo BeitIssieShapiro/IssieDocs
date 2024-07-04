@@ -46,6 +46,7 @@ import FlashMessage from "react-native-flash-message";
 import { OpenLink } from './parental-gate';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TopHeader } from './header';
+import { TestCmp } from './test.js';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -97,6 +98,10 @@ const App = (props) => {
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
+
+
+  //return <TestCmp/>
+
 
   return (
     <MenuProvider>

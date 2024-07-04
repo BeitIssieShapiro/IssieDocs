@@ -549,9 +549,7 @@ export class FileSystem {
                     const fileAtI = basePath + (i ) + '.jpg';
                     const fileAtIPlus1 = basePath + (i + 1) + '.jpg';
                     await RNFS.moveFile(fileAtI, fileAtIPlus1);
-                    try {
-                        await RNFS.moveFile(fileAtI + ".json", fileAtIPlus1 + ".json");
-                    } catch (e) {/*ignore as json may not exist*/ }
+                    await RNFS.moveFile(fileAtI + ".json", fileAtIPlus1 + ".json").catch (e=> {/*ignore as json may not exist*/ })
                 }
             }
 
@@ -659,9 +657,9 @@ export class FileSystem {
     async deleteFile(filePath) {
         const { folderID } = this._parsePath(filePath);
 
-        await RNFS.unlink(filePath).then(() => {
-            RNFS.unlink(filePath + ".json").catch((e) => {/*do nothing*/ });
-        });
+        await RNFS.unlink(filePath)
+        await RNFS.unlink(filePath + ".json").catch((e) => {/*do nothing as file may have no .json*/ });
+
         await this._reloadFolder(folderID);
         this._notify(folderID);
     }

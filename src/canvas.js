@@ -166,7 +166,7 @@ function Canvas({
             const tX = normToTableX(normXY.x);
             const tY = normToTableY(normXY.y);
             for (let c = 0; c < table.verticalLines.length - 1; c++) {
-                if (tX >= table.verticalLines[c] + table.width  && tX < table.verticalLines[c + 1]) {
+                if (tX >= table.verticalLines[c] + table.width && tX < table.verticalLines[c + 1]) {
                     for (let r = 0; r < table.horizontalLines.length - 1; r++) {
                         if (tY >= table.horizontalLines[r] + table.width && tY < table.horizontalLines[r + 1]) {
 
@@ -219,6 +219,9 @@ function Canvas({
         if (!canvas || !canvas.current || !layoutReady)
             return;
 
+
+        trace("Canvas updated", revision)
+
         //trace("New UpdateCanvas", "ratio", scaleRatio, "zoom", zoom)
 
         let q = queue.getAll();
@@ -255,7 +258,7 @@ function Canvas({
                 //avoid showing the current edited text for non table-cell text
                 if (!found && (txtElem.id !== currentTextElemId || q[i].type === 'tableCellText')) {
                     textArray.push(txtElem);
-                } 
+                }
             } else if (q[i].type === 'path') {
                 canvasPaths.push(q[i].elem);
             } else if (q[i].type === 'line') {
@@ -283,12 +286,11 @@ function Canvas({
                 tableCellTexts = tableCellTexts.filter(tct => tct.tableCell.tableID !== q[i].elemID)
             }
         }
-        trace("calc txt elem", tableCellTexts.length)
         // filter and mutate the cell size and the table's line
         tableCellTexts = tableCellTexts
             .sort((a, b) => a.tableCell.row - b.tableCell.row || a.tableCell.col - b.tableCell.col)
             .filter(txtElem => {
-                
+
                 //verify the table exists:
                 let table = canvasTables.find(t => t.id == txtElem.tableCell.tableID);
                 if (!table) return false;
@@ -350,12 +352,13 @@ function Canvas({
 
         tableCellTexts.forEach(txtElem => {
             const table = canvasTables.find(t => t.id == txtElem.tableCell.tableID);
+
             // Adjust cell's texts to current table size and location - todo margin
             txtElem.width = (tableColWidth(table, txtElem.tableCell.col) - table.width) * (width / table.size.width)
             txtElem.height = ((tableRowHeight(table, txtElem.tableCell.row) - table.width) * (height / table.size.height)) / scaleRatio;
             txtElem.normPosition = {
-                x: ((table.verticalLines[txtElem.tableCell.col + (txtElem.rtl ? 1 : 0)] - table.width/2) * (width / table.size.width)) / scaleRatio,
-                y: ((table.horizontalLines[txtElem.tableCell.row] + table.width/2) * (height / table.size.height)) / scaleRatio
+                x: ((table.verticalLines[txtElem.tableCell.col + (txtElem.rtl ? 1 : 0)] + table.width * (txtElem.rtl ? -1 : 1)) * (width / table.size.width)) / scaleRatio,
+                y: ((table.horizontalLines[txtElem.tableCell.row] + table.width) * (height / table.size.height)) / scaleRatio
             };
             txtElem.position = {
                 x: txtElem.normPosition.x * scaleRatio,
@@ -468,7 +471,6 @@ function Canvas({
                 // Draw all tables
                 //trace("draw tables", canvasTables)
                 canvasTables.forEach((table) => {
-
                     const tableSize = table.size;
                     const tableWidth = table.width; // isTableMode ? table.width  : table.width;
                     let style = table.style || "0,0";

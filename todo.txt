@@ -1,3 +1,10 @@
+
+
+- when in imageMode cannot move to eraser
+-align in table - margin from lines
+
+
+- when moving between pages with tables in both, the toolbar is not changed to reflect the table rows/cols
 V- recreating with same name, thumbnail is old
   - delete thumnail on delete
 V- Text: while typing text and reaching page bottom?

@@ -51,3 +51,6 @@ at application:openURL:options
     // if event was missed, save it for later firing
     savedEvent = URL.absoluteString;
 ```
+
+## apply fix to multiline textInput
+https://github.com/facebook/react-native/pull/37958/files

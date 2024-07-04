@@ -86,6 +86,7 @@ export default class IssieEditPhoto extends React.Component {
 
     this.Load = this.Load.bind(this);
     this.canvas = React.createRef(null);
+    this.inputRef = React.createRef()
 
     this.toolbarRef = React.createRef(null);
 
@@ -797,24 +798,24 @@ export default class IssieEditPhoto extends React.Component {
   Save = () => {
     let sketchState = this.state.queue.getAll();
     const content = JSON.stringify(sketchState, undefined, " ");
-    FileSystem.main.writeFile(
+    return FileSystem.main.writeFile(
       this.state.metaDataUri,
       content).then(
         //success
         () => {
           // Save thumbnail
           if (this.canvas && this.state.page.count === 1 || this.state.currentIndex === 0) {
-            let filePath = FileSystem.getTempFileName("jpg");
+            //let filePath = FileSystem.getTempFileName("jpg");
             //let fileName = FileSystem.getFileNameFromPath(filePath, true);
-            let lastSlashPos = filePath.lastIndexOf('/');
-            let folder = filePath.substring(0, lastSlashPos);
+            //let lastSlashPos = filePath.lastIndexOf('/');
+            //let folder = filePath.substring(0, lastSlashPos);
             //console.log("save thumbnail to folder", folder)
 
             //create a delay before exporting canvas, so the changes are rendered.
             setTimeout(() =>
               this.canvas.current?.canvas.current.export("jpg", { width: 80, height: 120 }, (err, path) => {
                 console.log("save thumbnail", path)
-                FileSystem.main.saveThumbnail(path, this.props.route.params.page);
+                FileSystem.main.saveThumbnail(path, this.state.page);
               }), 500);
 
           }
@@ -881,44 +882,8 @@ export default class IssieEditPhoto extends React.Component {
         );
       }
 
-      //trace("found elem", textElem)
-      let fontSize = this.state.fontSize;
-      let fontColor = this.state.textColor;
-      let textAlignment = this.state.textAlignment;
 
-      if (textElem.normFontSize) {
-        fontSize = textElem.normFontSize;
-      }
-
-      if (textElem.fontColor) {
-        fontColor = textElem.fontColor;
-      }
-
-      if (textElem.alignment) {
-        textAlignment = textElem.alignment;
-      }
-
-      const draftTxtElem = { ...textElem, draft: true };
-      if (draftTxtElem.tableCell) {
-        this.state.queue.pushTableCellText(draftTxtElem);
-      } else {
-        this.state.queue.pushText(draftTxtElem);
-      }
-
-      this.setState({
-        showTextInput: !this.state.eraseMode,
-        fontSize,
-        textColor: fontColor,
-        textAlignment,
-        currentTextElem: draftTxtElem,
-        xText: !textElem.tableCell ? this.norm2viewPortX(textElem.normPosition.x) : x,
-        yText: !textElem.tableCell ? this.norm2viewPortY(textElem.normPosition.y) : y,
-        revision: this.state.revision + 1,
-      }, () => {
-        if (this.state.eraseMode) {
-          this.SaveText();
-        }
-      });
+      this.editTextElement(textElem, x, y);
     } else if (this.isImageMode()) {
 
       let imgElem = this.canvas.current.findElementByLocation({
@@ -936,6 +901,56 @@ export default class IssieEditPhoto extends React.Component {
         yText: y,
       });
     }
+  }
+
+  editTextElement = (textElem, x, y) => {
+
+    let fontSize = this.state.fontSize;
+    let fontColor = this.state.textColor;
+    let textAlignment = this.state.textAlignment;
+
+    if (textElem.normFontSize) {
+      fontSize = textElem.normFontSize;
+    }
+
+    if (textElem.fontColor) {
+      fontColor = textElem.fontColor;
+    }
+
+    if (textElem.alignment) {
+      textAlignment = textElem.alignment;
+    }
+
+    const draftTxtElem = { ...textElem, draft: true };
+    if (draftTxtElem.tableCell) {
+      this.state.queue.pushTableCellText(draftTxtElem);
+    } else {
+      this.state.queue.pushText(draftTxtElem);
+    }
+
+
+    // work arround sync issue with multi-line textInput
+    if (this.inputRef.current) {
+      const text = draftTxtElem.text || ""
+      this.inputRef.current.setNativeProps({ text })
+      setTimeout(() => this.inputRef.current?.setNativeProps({ text }), 70);
+    }
+
+
+    this.setState({
+      showTextInput: !this.state.eraseMode,
+      fontSize,
+      textColor: fontColor,
+      textAlignment,
+      currentTextElem: draftTxtElem,
+      xText: !textElem.tableCell ? this.norm2viewPortX(textElem.normPosition.x) : x,
+      yText: !textElem.tableCell ? this.norm2viewPortY(textElem.normPosition.y) : y,
+      revision: this.state.revision + 1,
+    }, () => {
+      if (this.state.eraseMode) {
+        this.SaveText();
+      }
+    });
   }
 
   incrementRevision = () => this.setState({ revision: this.state.revision + 1 });
@@ -1416,7 +1431,9 @@ export default class IssieEditPhoto extends React.Component {
 
   onEraserButton = () => {
     trace("Eraser pressed")
-    if (this.isImageMode() || this.isTableMode()) return;
+    if (this.isImageMode() || this.isTableMode()) {
+      this.setState({ mode: Modes.BRUSH });
+    }
 
     if (!this.state.eraseMode && this.isTextMode()) {
       this.onBrushMode();
@@ -1704,7 +1721,7 @@ export default class IssieEditPhoto extends React.Component {
           windowSize: winSize,
           imageSize,
           viewPortRect,
-          pageRect: {...viewPortRect, top:0, left:0},
+          pageRect: { ...viewPortRect, top: 0, left: 0 },
           sideMargin: sideMarginFinal,
           scaleRatio: ratio,
           xText, yText,
@@ -2070,6 +2087,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getTransform = (width, height, scale, isRtl) => {
+
     const neg = isRtl ? -1 : 1;
     return [
       { scale: scale },
@@ -2793,12 +2811,15 @@ export default class IssieEditPhoto extends React.Component {
     </View>
   }
 
-  warnEndOfPage = (table) => {
-    if (this.state.currentTextElem) {
+  warnEndOfPage = (table, elem, tooLargeText, isFontChange) => {
+    if (elem || isFontChange) {
       RNSystemSounds.beep(RNSystemSounds.Beeps.Negative)
+      const tableOverflow = table && elem.tableCell?.row < table.horizontalLines.length - 2;
 
       showMessage({
-        message: translate("ReachedEndOfPage"),
+        message: tableOverflow ? translate("TableOverflowsPage") : 
+        (isFontChange?  translate("FontChangeOverflowsPage"):
+           translate("ReachedEndOfPage")),
         type: "warning",
         animated: true,
         duration: 10000,
@@ -2808,23 +2829,72 @@ export default class IssieEditPhoto extends React.Component {
 
         renderAfterContent: (opt) => {
           return <View style={{ flexDirection: "row", height: 50, width: "100%", justifyContent: 'center' }}>
-            {getRoundedButton(
+            {!tableOverflow && !isFontChange && getRoundedButton(
               async () => {
                 trace("addPageToSheet", this.state.currentFile)
                 hideMessage()
+
+                // take the last line - after NL
+                let text = ""
+                text = tooLargeText
+                let nlPos = text.lastIndexOf("\n");
+                if (nlPos === text.length - 1) {
+                  nlPos = text.lastIndexOf("\n", nlPos - 1);
+                }
+
+                if (nlPos >= 0) {
+                  text = text.substring(nlPos + 1);
+                  elem.text = tooLargeText.substr(0, nlPos);
+                } else {
+                  elem.text = "";
+                }
+
                 this.SaveText();
-                FileSystem.main.cloneToTemp(this.state.currentFile).then(newUri =>
+
+                const currIndex = this.state.currentIndex;
+
+                FileSystem.main.cloneToTemp(this.state.currentFile).then((newUri) =>
                   FileSystem.main.addPageToSheet(this.state.page, newUri, this.state.currentIndex + 1)).then((updatedSheet) => {
                     trace('add page at end of file', updatedSheet)
                     this.setState({ page: updatedSheet, currentFile: updatedSheet.defaultSrc }, () => {
 
                       // after page is added, move to it, and if was in editing table, copy the table into the new page:
-                      this.movePage(1).then(() => {
+                      trace("push new page ",currIndex + 1)
+                      this.movePage(currIndex + 1).then(async () => {
+                        let txtElem
                         if (table) {
                           this.state.queue.pushTable({ ...table });
-                          this.Save();
-                          this.incrementRevision();
+                          txtElem = {
+                            ...elem,
+                            minHeight: undefined,
+                            text,
+                            tableCell: {
+                              tableID: table.id,
+                              col: elem.tableCell.col,
+                              row: 0,
+                            }
+                          }
+
+                          this.state.queue.pushTableCellText(
+                            txtElem
+                          );
+                        } else {
+                          txtElem = {
+                            ...elem,
+                            text,
+                            normPosition: {
+                              x: this.viewPort2NormX(this.state.xText),
+                              y: 0
+                            }
+                          };
+
+                          this.state.queue.pushText(
+                            txtElem
+                          );
                         }
+                        trace("save new page after overflow")
+                        await this.Save();
+                        this.editTextElement(txtElem, 1, 1);
                       });
                     });
                   })
@@ -2836,7 +2906,7 @@ export default class IssieEditPhoto extends React.Component {
             {getRoundedButton(
               () => { hideMessage() },
               "cancel",
-              translate("BtnCancel"),
+              tableOverflow || isFontChange ? translate("BtnOK") :translate("BtnCancel"),
               25, 35, { width: 180 })}
 
           </View>
@@ -2852,7 +2922,6 @@ export default class IssieEditPhoto extends React.Component {
     if (!this.state.currentTextElem) return;
     const r = this.state.scaleRatio;
     const z = this.state.zoom;
-    //trace(this.state.fontSize, this.normFontSize2FontSize(this.state.fontSize))
 
     let elem = this.state.currentTextElem;
 
@@ -2868,11 +2937,10 @@ export default class IssieEditPhoto extends React.Component {
 
 
     let textWidth = 0;
-    let inputTextHeight = elem.height;
+    let inputTextHeight = elem.height || 0;
     const direction = elem.alignment ? (elem.alignment == TextAlignment.RIGHT ? 'rtl' : 'ltr') : (defaultRTL ? 'rtl' : 'ltr');
     const rtl = direction == 'rtl';
 
-    //trace("rtl", elem.alignment, rtl, direction)
     const modifiedState = {}
 
     if (!this.state.textAlignment) {
@@ -2908,50 +2976,55 @@ export default class IssieEditPhoto extends React.Component {
       textWidth = this.getTextWidth(x, rtl);
     }
 
-    // calculates the height:
-    const fSize = this.normalizeTextSize(this.state.fontSize);
-    this.canvas.current?.canvas.current?.measureText(elem.text?.length > 0 ? elem.text : "a", textWidth, {
-      font: getFont(),
-      fontSize: fSize
-    }).then(size => {
-      if (size.height > 0) {
-        if (isTableCell) {
-          const newTvCellHeight = Math.ceil(this.page2TableY(table, (size.height)));
-          //const newTvCellHeight = (Math.ceil(size.height) + table.width) / this.state.scaleRatio;
-          if (elem.minHeight !== newTvCellHeight) {
-            trace("minHeight change", elem, newTvCellHeight)
-            elem.minHeight = newTvCellHeight;
-            elem.modified = true;
-            this._handleInputTextLocationMovingPage();
-            this.incrementRevision();
-          }
+    // calculates the width/height:
+
+    this.measureText(isTableCell && table, elem.text || "a", elem, textWidth, y).then(({ eop, size, newTvCellHeight, minHeightDelta }) => {
+      const newNormWidth = this.width2NormWidth(size.width, this.state.fontSize);
+
+      if (isTableCell) {
+        if (minHeightDelta !== 0) {
+          elem.minHeight = newTvCellHeight;
+          elem.modified = true;
+          this._handleInputTextLocationMovingPage();
+          this.incrementRevision();
+        }
+      }
+
+      if ((elem.normWidth != newNormWidth || Math.ceil(size.height) != elem.height) && size.width > 0) {
+        trace("text input, width or height changed", newNormWidth, size.height)
+        elem.normWidth = newNormWidth;
+        if (elem.height != Math.ceil(size.height)) {
+          console.log("change height size", size.height)
+
+          elem.height = Math.ceil(size.height);
+          this._handleInputTextLocationMovingPage();
+        }
+        elem.modified = true;
+        this.incrementRevision()
+      }
+
+      if (elem.normFontSize !== this.state.fontSize) {
+        if (eop) {
+          // revert font change:
+          this.setState({ fontSize: elem.normFontSize });
+          this.warnEndOfPage(undefined, undefined, undefined, true);
         } else {
-          const nWidth = this.width2NormWidth(size.width, this.state.fontSize);
-          if (elem.height !== Math.ceil(size.height) || elem.normWidth !== nWidth) {
-            elem.height = Math.ceil(size.height);
-            elem.normWidth = nWidth;
-            trace("change elem size", elem.normWidth, elem.height)
-            elem.change = true;
-            this.incrementRevision();
-          } else {
-            trace("elem size", elem.normWidth, elem.height)
-          }
+          elem.normFontSize = this.state.fontSize;
+          elem.fontSize = this.normFontSize2FontSize(this.state.fontSize);
+          elem.modified = true;
+          this.incrementRevision()
         }
       }
     });
 
+    const fSize = this.normalizeTextSize(this.state.fontSize);
 
-    const normFontSize = this.state.fontSize;
-    const textActualWidth = isTableCell ? textWidth : this.normWidth2Width(elem.normWidth, this.state.fontSize) + 13;
-    //const normWidth = isTableCell ? -1 : elem.width * this.state.fontSize / normFontSize;
-
-    if (elem.fontColor !== this.state.textColor || elem.normFontSize != normFontSize || elem.rtl != rtl || (this.state.textAlignment && elem.alignment !== this.state.textAlignment)) {
-      trace("modify elem", elem.fontColor !== this.state.textColor, elem.normFontSize != normFontSize, elem.rtl != rtl, elem.alignment !== this.state.textAlignment)
+    // handle change of color/alignment
+    if (elem.fontColor !== this.state.textColor || elem.rtl != rtl || (this.state.textAlignment && elem.alignment !== this.state.textAlignment)) {
+      trace("modify elem", elem.fontColor !== this.state.textColor, elem.rtl != rtl, elem.alignment !== this.state.textAlignment)
 
       elem.fontColor = this.state.textColor;
       elem.rtl = rtl;
-      elem.normFontSize = normFontSize;
-      elem.fontSize = this.normFontSize2FontSize(this.state.fontSize);
       if (this.state.textAlignment) {
         elem.alignment = this.state.textAlignment;
       }
@@ -2960,12 +3033,16 @@ export default class IssieEditPhoto extends React.Component {
       modifiedState.revision = this.state.revision + 1;
     }
 
+
+
     if (Object.keys(modifiedState).length > 0) {
-      // trace("getTextInput setState", modifiedState, elem.color !== this.state.textColor, elem.normFontSize != normFontSize)
+      trace("textInput modify state", modifiedState)
       this.setState(modifiedState);
     }
 
+    const textActualWidth = isTableCell ? textWidth : this.normWidth2Width(elem.normWidth, this.state.fontSize) + 13;
     const left = x - (isTableCell ? 0 : (rtl ? textWidth / r : DRAG_ICON_SIZE));
+
 
     return (
       <View style={{
@@ -2981,69 +3058,26 @@ export default class IssieEditPhoto extends React.Component {
         </View>}
 
         <TextInput
-          ref={textInput => this._textInput = textInput}
+          ref={this.inputRef}
+          value={elem.text}
           onChangeText={(text) => {
-            trace("onChangeText", text)
-
-            this.canvas.current?.canvas.current?.measureText(text, textWidth, {
-              font: getFont(),
-              fontSize: fSize
-            }).then(size => {
-              console.log("Text size", size, "y", y, "pageRect", this.state.pageRect.height, "r", r)
-              //trace("xxx", elem.supressEndOfPage, !(elem.supressEndOfPage > 0))
-
-              let table;
-              if (isTableCell) {
-                table = this.findTable()?.table;
-
-                const newHeight = this.page2TableY(table, (size.height || this.state.fontSize) + table.width);
-                const minHeightDelta = elem.minHeight ? newHeight - elem.minHeight : newHeight;
-                if (minHeightDelta != 0) {
-                  const tvPageRectY = this.page2TableY(table, this.state.pageRect.height)
-
-                  // check that minHeight delta may case table out of page and that new minHeight is > current row height
-                  if (!(elem.supressEndOfPage > 0) && minHeightDelta > 0 && tableRowHeight(table, elem.tableCell.row) < newHeight &&
-                    arrLast(table.horizontalLines) + minHeightDelta > tvPageRectY - PAGE_MARGIN) {
-                    this.warnEndOfPage(table);
-                    elem.supressEndOfPage = text.length;
-                    return;
-                  }
+            trace("onTextChange", text)
+            const origText = elem.text;
+            if (text !== elem.text) {
+              this.measureText(isTableCell && table, text, elem, textWidth, y).then(({ eop }) => {
+                if (eop) {
+                  this.warnEndOfPage(table, elem, text)
+                  elem.text = origText
+                  this.incrementTextEditRevision();
                 }
-              } else {
-                const pageEndOfText = this.viewPort2pageY(y) + size.height;
-                if (!(elem.supressEndOfPage > 0) && pageEndOfText > this.state.pageRect.height - PAGE_MARGIN / 2) {
-                  this.warnEndOfPage();
-                  elem.supressEndOfPage = text.length;
-                }
-              }
+              })
 
-              const newNormWidth = this.width2NormWidth(size.width, this.state.fontSize);
-              if ((elem.normWidth != newNormWidth || size.height != elem.height) && size.width > 0) {
-
-                elem.normWidth = newNormWidth;
-                if (size.height != Math.ceil(elem.height)) {
-                  console.log("change height size", size.height)
-
-                  elem.height = Math.ceil(size.height);
-                  this._handleInputTextLocationMovingPage();
-                }
-
-                elem.modified = true;
-                this.incrementRevision()
-              }
-
-            });
-
-            if (text !== this.state.currentTextElem.text) {
-              //trace("text change for elem", text, this.state.currentTextElem.text + "x")
-              this.state.currentTextElem.text = text;
-              this.state.currentTextElem.modified = true;
-
+              elem.text = text;
+              elem.modified = true;
+              this.incrementTextEditRevision();
             }
-            this.incrementTextEditRevision();
-
-
           }}
+
 
           autoCapitalize={'none'}
           autoCorrect={false}
@@ -3065,16 +3099,17 @@ export default class IssieEditPhoto extends React.Component {
             transform: this.getTransform(textWidth / r, inputTextHeight / r, z * r, rtl && !isTableCell),
             //backgroundColor: "#00B800",
             padding: 0,
-            paddingLeft: isTableCell ? 1 : 0,
-            paddingRight: isTableCell ? 1 : 0,
+            // paddingLeft: isTableCell ? 1 : 0,
+            // paddingRight: isTableCell ? 1 : 0,
             borderStyle: "solid",
             textAlignVertical: 'center',
             lineHeight: fSize * 1.15 / r,
           }}
-          value={elem.text}
           onTouchStart={(ev) => {
             let x = this.screen2ViewPortX(ev.nativeEvent.pageX);
-            if (Math.abs(this.state.xText - x) > textWidth * this.state.scaleRatio * this.state.zoom + DRAG_ICON_SIZE / 2) {
+
+
+            if (elem.normWidth && Math.abs(this.state.xText - x) > elem.normWidth * this.state.scaleRatio * this.state.zoom + DRAG_ICON_SIZE) {
               //treats it as if click outside the text input, delegates to canvasClick
               this.canvasClick(ev);
             }
@@ -3095,6 +3130,31 @@ export default class IssieEditPhoto extends React.Component {
         />
       </View >);
   }
+
+
+  measureText = (table, text, elem, textWidth, y) => {
+    return this.canvas.current?.canvas.current?.measureText(text, textWidth, {
+      font: getFont(),
+      fontSize: this.normalizeTextSize(this.state.fontSize)
+    }).then(size => {
+      let newTvCellHeight, minHeightDelta
+      let eop
+      if (table) {
+        newTvCellHeight = Math.ceil(this.page2TableY(table, (size.height || this.state.fontSize) + table.width));
+        minHeightDelta = elem.minHeight ? newTvCellHeight - elem.minHeight : newTvCellHeight;
+
+        // check that minHeight delta may case table out of page and that new minHeight is > current row height
+        const tvPageRectY = this.page2TableY(table, this.state.pageRect.height)
+        eop = (minHeightDelta > 0 && tableRowHeight(table, elem.tableCell.row) < newTvCellHeight &&
+          arrLast(table.horizontalLines) + minHeightDelta > tvPageRectY);
+      } else {
+        const pageEndOfText = this.viewPort2pageY(y) + size.height;
+        eop = (pageEndOfText > this.state.pageRect.height);
+      }
+      return { eop, size, newTvCellHeight, minHeightDelta };
+    });
+  }
+
   normalizeTextSize = (size) => {
     return this.normFontSize2FontSize(size);
     // const newSize = this.normFontSize2FontSize(size)
