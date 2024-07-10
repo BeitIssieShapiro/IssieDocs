@@ -40,7 +40,7 @@ export default function TitleEdit(props) {
     return <View
         style={[{
 
-            flexDirection: 'row', width: '70%',
+            flexDirection: 'row', width: '80%',
             marginLeft: '15%',
             marginRight: '15%',
             marginBottom: 5,
@@ -72,13 +72,13 @@ export default function TitleEdit(props) {
         />
         <View style={
             [
-                { position: 'absolute',  top: -7,  flexDirection: 'row', alignItems: 'center' },
-                isRTL()?{left:-25}:{right:-25}
+                { position: 'absolute',  top: 0,  flexDirection: 'row', alignItems: 'center' },
+                isRTL()?{left:-25}:{right:-30}
             ]}>
             {props.editMode ? getIconButton(() => {
                 setEditedTitle("")
                 props.onSaveCallback.getTitleToSave = () => ""
-            }, "white", "close", 40) : null}
+            }, "white", "close", 30) : null}
         </View>
         
     </View>

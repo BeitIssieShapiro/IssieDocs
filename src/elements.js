@@ -530,8 +530,8 @@ export function FileNameDialog({
 
     const { row, rowReverse, flexStart, flexEnd, textAlign, direction } = getRowDirections();
 
-    const [more, setMore] = useState(false);
-
+    //const [more, setMore] = useState(false);
+    trace("FileNameDialog",folders, folder, name)
     return (
         <View style={[styles.textInputView, isLandscape ? { flexDirection: rowReverse } : {}]} onLayout={onLayout}>
             <View style={{ flex: 1, width: '100%' }}>

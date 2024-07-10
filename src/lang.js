@@ -144,6 +144,7 @@ var strings = {
         "ReachedEndOfPage": "הגעת לסוף הדף",
         "TableOverflowsPage": "הטבלה גולשת מעבר לסוף הדף",
         "FontChangeOverflowsPage": "שינוי גופן גורם לגלישה מעבר לסוף הדף",
+        "BackupSuccessful": "גיבוי הסתיים בהצלחה",
     },
     "ar": {
         "StartHere": "إضافة صفحات",
@@ -272,8 +273,8 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "FoldersDisplay": "عرض المجلدات",
         "ReachedEndOfPage": "وصلت إلى نهاية الصفحة",
         "TableOverflowsPage": "الجدول يتجاوز نهاية الصفحة",
-        "FontChangeOverflowsPage": "تغيير الخط يتسبب في تجاوز الصفحة"
-
+        "FontChangeOverflowsPage": "تغيير الخط يتسبب في تجاوز الصفحة",
+        "BackupSuccessful": "تم النسخ الاحتياطي بنجاح",
     },
     "en": {
         "StartHere": "Add worksheets",
@@ -407,7 +408,7 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "ReachedEndOfPage": "Reached End of Page",
         "TableOverflowsPage": "The table overflows beyond the end of the page",
         "FontChangeOverflowsPage": "Font change cause text to overflow beyond the end of the page",
-
+        "BackupSuccessful": "Backup successful",
     },
 }
 

@@ -19,10 +19,12 @@ V- after removing one row from table and then undo the number stays as before un
 
 Features:
 V- ruller tool
-V- Document backup
+V- Document sharing
+V- Backup and restore
 V- Marker
 V- folder in folder
 V- text alignment
+V- Table
 
 - Table:
   - while type text in a cell and reaching the cell bottom: ?

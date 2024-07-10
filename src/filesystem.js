@@ -249,6 +249,8 @@ export class FileSystem {
         const folder = this.findFolder(ID);
 
         if (ID !== newID) {
+            trace("rename folder", ID, newID)
+
             // Verify that target folder is not level 2
             const parts = newID.split("/")
             if (parts.length >= 3) {
@@ -257,17 +259,20 @@ export class FileSystem {
 
             // Verify target is not child of folderID
 
-            // Verify that the renamed folder does not contain a folder in it, to prevent 3 levels
-            const checkPath = this._basePath + folder.path + "/" + FileSystem.FOLDERS_PATH
-            let files = undefined;
-            try {
-                files = await RNFS.readDir(checkPath);
-            } catch (e) {
-                //intentioanlly ignored
-            }
 
-            if (files?.length > 0) {
-                throw (translate("ErrMoveFolderCOntainingFolders"));
+            if (parts.length > 1) {
+                // Verify that the renamed folder does not contain a folder in it, to prevent 3 levels
+                const checkPath = this._basePath + folder.path + "/" + FileSystem.FOLDERS_PATH
+                let files = undefined;
+                try {
+                    files = await RNFS.readDir(checkPath);
+                } catch (e) {
+                    //intentioanlly ignored
+                }
+
+                if (files?.length > 0) {
+                    throw (translate("ErrMoveFolderCOntainingFolders"));
+                }
             }
         }
 
@@ -546,10 +551,12 @@ export class FileSystem {
             if (addAtIndex >= 0 && addAtIndex < sheet.count) {
                 // push all pages to make room to this new page
                 for (let i = sheet.count - 1; i >= addAtIndex; i--) {
-                    const fileAtI = basePath + (i ) + '.jpg';
+                    const fileAtI = basePath + (i) + '.jpg';
                     const fileAtIPlus1 = basePath + (i + 1) + '.jpg';
                     await RNFS.moveFile(fileAtI, fileAtIPlus1);
-                    await RNFS.moveFile(fileAtI + ".json", fileAtIPlus1 + ".json").catch (e=> {/*ignore as json may not exist*/ })
+                    try {
+                        await RNFS.moveFile(fileAtI + ".json", fileAtIPlus1 + ".json")
+                    } catch (e) {/*ignore as json may not exist*/ }
                 }
             }
 
@@ -655,10 +662,13 @@ export class FileSystem {
     }
 
     async deleteFile(filePath) {
+        trace("deleteFile", filePath)
         const { folderID } = this._parsePath(filePath);
 
         await RNFS.unlink(filePath)
-        await RNFS.unlink(filePath + ".json").catch((e) => {/*do nothing as file may have no .json*/ });
+        try {
+            await RNFS.unlink(filePath + ".json")
+        } catch (e) {/*do nothing as file may have no .json*/ }
 
         await this._reloadFolder(folderID);
         this._notify(folderID);
@@ -886,7 +896,7 @@ export class FileSystem {
                 const date = new Date()
                 let fn = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + ' ' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2);
 
-                return zip(allZipPaths, (TemporaryDirectoryPath + "backup-" + fn + ".zip"));
+                return zip(allZipPaths, (TemporaryDirectoryPath + "IssieDocs Backup-" + fn + ".zip"));
             });
         })
 

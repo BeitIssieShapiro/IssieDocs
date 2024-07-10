@@ -92,7 +92,7 @@ export default function Scroller(props) {
             
             flexDirection: props.rtl ? 'row' : 'row-reverse',
             width: '100%', height:'100%',
-            justifyContent: 'flex-end'
+            justifyContent: 'flex-end',
         }, props.top && { top: props.top }]}
         {...panResponder.panHandlers}
     >

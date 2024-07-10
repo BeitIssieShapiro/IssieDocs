@@ -328,15 +328,17 @@ export default class FolderGallery extends React.Component {
         DocumentPicker.pick({
             type: [DocumentPicker.types.images, DocumentPicker.types.pdf]
         }).then(res => {
-            this.props.navigation.navigate('SavePhoto', {
-                imageSource: SRC_FILE,
+            if (res.length > 0) {
+                this.props.navigation.navigate('SavePhoto', {
+                    imageSource: SRC_FILE,
 
-                uri: res.uri,
-                folder: this.state.currentFolder,
-                returnFolderCallback: (f) => this.setReturnFolder(f),
-                saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID)
+                    uri: res[0].uri,
+                    folder: this.state.currentFolder,
+                    returnFolderCallback: (f) => this.setReturnFolder(f),
+                    saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID)
 
-            });
+                });
+            }
         }).catch(err => {
             if (!DocumentPicker.isCancel(err)) {
                 Alert.alert(err);
@@ -413,6 +415,10 @@ export default class FolderGallery extends React.Component {
                 page: this.state.selected,
                 folder: this.state.currentFolder,
                 share: true,
+                goHome: () => {
+                    this.unselectFolder();
+                    this.props.navigation.goBack();
+                },
             })
     }
 

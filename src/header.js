@@ -12,11 +12,11 @@ export function TopHeader({ actions, title, titleText, nav }) {
         backgroundColor: semanticColors.header,
 
     }}>
-        <View style={{ padding: 5, width: '20%', height: 40, alignItems: 'center' }}>{actions}</View>
-        <View style={{ width: '60%', height: 40, alignItems: 'center' }}>
+        <View style={{ padding: 5, width: '15%', height: 40, alignItems: 'center' }}>{actions}</View>
+        <View style={{ width: '70%', height: 40, alignItems: 'center'}}>
             {titleText && <Text style={[globalStyles.headerThinTitleStyle, getFontFamily()]}>{titleText}</Text>}
             {title}
         </View>
-        <View style={{ padding: 5, flexDirection: getRowDirection(), width: '20%', height: 40, alignItems: 'center', justifyContent: "flex-start" }}>{nav}</View>
+        <View style={{ padding: 5, flexDirection: getRowDirection(), width: '15%', height: 40, alignItems: 'center', justifyContent: "flex-start" }}>{nav}</View>
     </View>
 }

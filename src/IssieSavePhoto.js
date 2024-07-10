@@ -169,8 +169,6 @@ export default class IssieSavePhoto extends React.Component {
     let folders = await FileSystem.main.getRootFolders();
     folders = folders.filter(f => f.name !== FileSystem.DEFAULT_FOLDER.name);
 
-
-
     this.setState({
       imageUri, pathToSave, pdf, pdfPage: 1,
       folders, folder, pageName, addToExistingPage, multiPage, pages, onConfirm, phase: skipConfirm ? PickName : OK_Cancel,
@@ -192,6 +190,7 @@ export default class IssieSavePhoto extends React.Component {
 
 
   updateImageDimension = async () => {
+    trace("updateImageDimension", this.state.imageUri)
     //setTimeout(async () => {
     try {
       let imgSize =
@@ -248,12 +247,13 @@ export default class IssieSavePhoto extends React.Component {
         return
       }
       if (this.state.pdf) {
+        trace("PDF: OK", this.state.pdfPageCount)
         if (this.state.pdfPageCount > 0) {
           let pages = [];
           for (let i = 0; i < this.state.pdfPageCount; i++) {
             this.setState({ pdfInProcess: i })
             let savedPdfPageUri = await this.exportPdfPage(i);
-
+            trace("PDF: export", i, savedPdfPageUri)
             pages.push(savedPdfPageUri);
             this.setState({ pdfInProcess: i + 1 })
           }
@@ -261,8 +261,9 @@ export default class IssieSavePhoto extends React.Component {
           this.setState({
             pdfInProcess: undefined,
             imageUri: pages[0], pages,
+            pathToSave: pages[0],
             pdf: false,
-            multiPage: true
+            multiPage: pages.length > 1
           });
 
         }
@@ -710,6 +711,8 @@ export default class IssieSavePhoto extends React.Component {
       </View>
     }
 
+
+    trace("SAVE: phase", this.state.phase)
     return (
       <View style={styles.container}
         ref={v => this.topView = v}
@@ -765,7 +768,7 @@ export default class IssieSavePhoto extends React.Component {
           <View style={[{
             justifyContent: flexStart,
             alignItems: 'center',
-            top: dimensions.toolbarHeight
+            top: dimensions.toolbarHeight,
           },
           this.state.phase == OK_Cancel ?
 
@@ -774,8 +777,8 @@ export default class IssieSavePhoto extends React.Component {
               height: (this.state.imgSize.h * this.state.scale)
             } :
             {
-              width: this.state.windowSize.width,
-              height: this.state.windowSize.height,
+               width: '100%',
+               height: '100%',
             }
           ]}>
             {this.isBlankPage() && this.state.addToExistingPage && <OrientationPicker

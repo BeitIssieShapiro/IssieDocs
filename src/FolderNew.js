@@ -41,9 +41,9 @@ export default function FolderNew(props) {
         setExpanded(prev => !prev);
     }
 
-    if (!asTitle && caption.length > captionLimit) {
+    //if (!asTitle && caption.length > captionLimit) {
         caption = caption.substring(0, captionLimit) + '...';
-    }
+    //}
 
     const { row, rowReverse, rtl } = getRowDirections();
     const height = asTitle ? dimensions.folderAsTitleHeight : dimensions.folderHeight
