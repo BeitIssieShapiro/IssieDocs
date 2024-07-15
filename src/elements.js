@@ -408,6 +408,19 @@ export function getFolderAndIcon(folderName) {
     return ret;
 }
 
+
+export function LimitedText({ text, style }) {
+    return (
+        <Text
+            style={style}
+            numberOfLines={1} // Limit the text to one line
+            ellipsizeMode="tail" // Use ellipsis at the end of the text
+        >
+            {text}
+        </Text>
+    );
+}
+
 export function normalizeTitle(title) {
     if (title == FileSystem.DEFAULT_FOLDER.name) {
         return translate("DefaultFolder");
@@ -531,7 +544,7 @@ export function FileNameDialog({
     const { row, rowReverse, flexStart, flexEnd, textAlign, direction } = getRowDirections();
 
     //const [more, setMore] = useState(false);
-    trace("FileNameDialog",folders, folder, name)
+    trace("FileNameDialog", folders, folder, name)
     return (
         <View style={[styles.textInputView, isLandscape ? { flexDirection: rowReverse } : {}]} onLayout={onLayout}>
             <View style={{ flex: 1, width: '100%' }}>
@@ -944,6 +957,12 @@ export function FolderIcon(props) {
 }
 
 export function AppText(props) {
+
+    const moreProps = props.ellipsizeMode ? {
+        numberOfLines: 1,
+        ellipsizeMode: "tail"
+    } : {}
+
     return (
         <Text style={[{
             fontFamily: getFont(),
@@ -952,6 +971,8 @@ export function AppText(props) {
 
         }, props.style]}
             onPress={props.onPress}
+
+        {...moreProps}
         >{props.children}</Text>
     );
 }

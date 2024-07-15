@@ -831,7 +831,7 @@ export default class FolderGallery extends React.Component {
             editTitleSetting = EDIT_TITLE.no;
         }
 
-        let treeWidth = this.state.currentFolder ? (this.isLandscape() ? 220 : this.isMobile() ? 100 : 220) : 0;//.36 * this.state.windowSize.width;
+        let treeWidth = this.state.currentFolder ? (this.isLandscape() ? 220 : this.isMobile() ? 100 : 220) : 0;
         let pagesContainerWidth = this.state.windowSize.width - treeWidth;
         if (this.state.currentFolder?.parent && !asTree) {
             // will show second folders panel
@@ -867,6 +867,7 @@ export default class FolderGallery extends React.Component {
                 <View style={styles.container}
                     onLayout={this.onLayout}>
                     <FileContextMenu
+                        width={this.state.windowSize.width*.75}
                         inFoldersMode={true}
                         isLandscape={this.isLandscape()}
                         item={this.state.selected}
@@ -1111,13 +1112,14 @@ export default class FolderGallery extends React.Component {
                                         }}
                                     >
                                         {(subFolders || folders).map((item, index) => <FolderNew
+                                            //width={treeWidth}
                                             key={index}
                                             id={item.ID}
                                             isOverview={true}
                                             name={item.name}
                                             color={item.color}
                                             icon={item.icon}
-                                            width={this.isLandscape() ? '20%' : '25%'}
+                                            width={this.state.windowSize.width *(this.isLandscape() ? .2:.25)}
                                             editMode={this.state.editMode}
                                             fixedFolder={false}//item.name === DEFAULT_FOLDER_NAME}
                                             current={false}

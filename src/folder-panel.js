@@ -84,6 +84,7 @@ export function FolderPanel({
 
             {
                 folders.map((f, i, arr) => <FolderNew
+                    width={treeWidth}
                     key={i}
                     index={i}
                     allowDropFolders={allowDropFolders}

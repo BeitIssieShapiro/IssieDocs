@@ -9,7 +9,7 @@ import { DraxView } from 'react-native-drax';
 import { trace } from './log';
 import { FileSystem } from './filesystem';
 import { showMessage } from 'react-native-flash-message';
-import { fTranslate, getRowDirections, translate } from './lang';
+import { fTranslate, getRowDirections, isRTL, translate } from './lang';
 
 
 const dragOverColor = 'lightblue'
@@ -19,7 +19,6 @@ export default function FolderNew(props) {
     const [expanded, setExpanded] = useState(false);
 
     let caption = normalizeTitle(props.name);
-    let captionLimit = props.isLandscape ? 12 : 9;
     const asTitle = props.asTitle || props.asTree;
     const locatedAtTitle = props.asTitle;
     const sidePadding = props.asTree ? 5 : 30;
@@ -41,12 +40,9 @@ export default function FolderNew(props) {
         setExpanded(prev => !prev);
     }
 
-    //if (!asTitle && caption.length > captionLimit) {
-        caption = caption.substring(0, captionLimit) + '...';
-    //}
-
     const { row, rowReverse, rtl } = getRowDirections();
-    const height = asTitle ? dimensions.folderAsTitleHeight : dimensions.folderHeight
+    const height = asTitle ? dimensions.folderAsTitleHeight : dimensions.folderHeight;
+    const textWidth = props.width - (6+45+5+25) - (isChild?20:0)
     return (
         <React.Fragment>
             <FolderDraxView
@@ -57,7 +53,6 @@ export default function FolderNew(props) {
                 setDragOver={(val) => setDragOver(val)}
                 dragOver={dragOver}
                 allowDropFolders={props.allowDropFolders}
-
 
                 style={{
                     alignContent: 'center',
@@ -133,10 +128,18 @@ export default function FolderNew(props) {
                                     </View>
                                 </View>}
 
-                                <Spacer width={8} />
-                                {props.hideTitle ? null : <AppText style={[FolderTextStyle, { fontSize: props.fontSize || 32, lineHeight: 60 }]}>
+                                <Spacer width={6} />
+                                
+                                {props.hideTitle ? null : <AppText
+                                    style={[FolderTextStyle, {
+                                        fontSize: props.fontSize || 32, lineHeight: 60,
+                                        width: textWidth,
+                                        textAlign: isRTL() ? "right" : "left"
+                                    }]}
+                                    ellipsizeMode={true}
+                                >
                                     {nonTreeTitle ? caption : hierarchicalName(props.id, rtl)}
-                                    </AppText>}
+                                </AppText>}
                             </View> :
                             /**
                              * Side Panel View or overview
@@ -158,7 +161,7 @@ export default function FolderNew(props) {
 
                                 </View>
                                 <View style={{ flexDirection: rowReverse, width: '100%' }}>
-                                    <AppText style={[FolderTextStyle,
+                                    <AppText ellipsizeMode={true} style={[FolderTextStyle,
                                         { width: '100%', lineHeight: 28, textAlign: 'center' }]} >{caption}</AppText>
                                 </View>
                             </View>}
@@ -179,6 +182,7 @@ export default function FolderNew(props) {
             {props.asTree && expanded && props.subFolders?.length > 0 &&
                 props.subFolders.map((f, i, arr) => (
                     <FolderNew
+                        width={props.width}
                         key={i}
                         index={i}
                         allowDropFolders={false}

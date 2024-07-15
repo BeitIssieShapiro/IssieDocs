@@ -9,6 +9,7 @@ import React, { useCallback } from "react";
 import { trace } from "./log";
 
 export function FileContextMenu({
+    width,
     item,
     height,
     isLandscape,
@@ -56,7 +57,7 @@ export function FileContextMenu({
             bottom: 0,
             backgroundColor: "white",
             zIndex: 1000,
-            width: "75%",
+            width,
             left: "12.5%",
             shadowColor: '#171717',
             shadowOffset: { width: 3, height: -5 },
@@ -81,7 +82,7 @@ export function FileContextMenu({
                 <View style={{ flexDirection: getRowReverseDirection(), alignItems: "center", padding: 15 }}>
                     <Image source={{ uri: item.thumbnail }} style={{ height: 70, width: 50, resizeMode: "stretch", borderColor: "gray", borderWidth: 1 }} />
                     <Spacer width={10} />
-                    <AppText style={{ fontSize: 35 }}>{item.name}</AppText>
+                    <AppText style={{ fontSize: 35, width: width - 100 }}>{item.name}</AppText>
                 </View>
 
                 <Seperator />

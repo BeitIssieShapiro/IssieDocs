@@ -22,12 +22,13 @@ const TILE_BORDER_WIDTH = 1.5
 
 export default function FileNew(props) {
     let imageSrc = props.page.thumbnail;
+    const width = props.asTile ? dimensions.tileWidth : props.rowWidth;
     return (
         <TouchableOpacity
             key={props.name}
             onPress={props.onPress}
             activeOpacity={0.8}
-            style={{ width: props.asTile ? dimensions.tileWidth : props.rowWidth, height: props.asTile ? dimensions.tileHeight : dimensions.lineHeight }}
+            style={{ width, height: props.asTile ? dimensions.tileHeight : dimensions.lineHeight }}
         >
             {props.asTile ?
                 <View style={{
@@ -44,19 +45,6 @@ export default function FileNew(props) {
 
                         }}>
 
-                        {/* <View style={{
-                            position: 'absolute', top: 0,
-                            right: -30, width: '100%', height: '100%',
-                            zIndex: 100, alignItems: 'flex-end'
-
-                        }}>
-                            <MoreButton onPress={props.onSelect}  size={30} />
-                        </View> */}
-                        {/* {props.selected ?
-                            <View style={{ position: 'absolute', top: 0, right: '2%', width: '96%', zIndex: 100, height: '85%' }}>
-                                {getActionButtons(props)}
-                            </View>
-                            : null} */}
                         <View style={{ flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
                             <PageImage src={imageSrc} multiPage={props.count > 1} width={"100%"} height={"80%"} />
                             <View style={{ height: '20%', backgroundColor: '#a7a7a7', justifyContent: "space-between", alignItems: "center", width: '100%', flexDirection: props.rowDir }} >
@@ -68,9 +56,12 @@ export default function FileNew(props) {
                                     textAlign: "left",
                                     maxWidth: dimensions.tileWidth - 30 - TILE_PADDING - 6,
                                     width: dimensions.tileWidth - 30 - TILE_PADDING - 6,
-                                    fontSize: TILE_TEXT_HEIGHT, color: 'white', paddingEnd: 5, lineHeight: TILE_TEXT_HEIGHT + 2
-                                }}>
-                                    {getFileName(props)}
+                                    fontSize: TILE_TEXT_HEIGHT, color: 'white', paddingEnd: 5, lineHeight: TILE_TEXT_HEIGHT + 2,
+
+                                }}
+                                    ellipsizeMode={true}
+                                >
+                                    {props.name}
                                 </AppText>
                             </View>
                         </View>
@@ -82,8 +73,13 @@ export default function FileNew(props) {
                         <View style={{ borderWidth: .5, borderColor: colors.lightBlue }}>
                             <PageImage src={imageSrc} multiPage={props.count > 1} width={40} height={50} />
                         </View>
-                        <AppText style={{ paddingRight: 20, paddingLeft: 20, fontSize: 25, color: semanticColors.titleText }}>
-                            {getFileName(props)}
+                        <AppText
+                            style={{ paddingRight: 20, paddingLeft: 20, fontSize: 25, color: semanticColors.titleText ,
+                                width: width - 80
+                            }}
+                            ellipsizeMode={true}
+                        >
+                            {props.name}
                         </AppText>
                         <View style={{
                             position: 'absolute', flexDirection: props.rowRevDir,
@@ -101,116 +97,3 @@ export default function FileNew(props) {
     );
 }
 
-
-// function getButton(index, props) {
-//     switch (index) {
-//         case 0: return getEmbeddedButton(props.onRename, 'edit', 40, 1);
-//         case 1: return getEmbeddedButton(props.onDelete, 'delete-forever', 40, 2);
-//         case 2: return getEmbeddedButton(props.onMove, 'folder-move', 40, 3, 'material-community');
-//         case 3: return getEmbeddedButton(props.onDuplicate, 'file-multiple', 30, 4, 'material-community');
-//         case 4: return getEmbeddedButton(props.onShare, 'share', 35, 5);
-//         case 5: return (
-//             <Menu ref={(ref) => this.menu = ref} key="6">
-//                 <MenuTrigger >
-//                     {getEmbeddedButton(() => {
-//                         //   
-//                         this.menu.open()
-
-//                     }, 'add', 35)}
-//                 </MenuTrigger>
-//                 <MenuOptions
-//                     optionsContainerStyle={{
-//                         backgroundColor: 'white', width: 250, borderRadius: 10,
-//                         alignItems: 'center', justifyContent: 'center', alignContent: 'center'
-//                     }}                    >
-//                     <MenuOption onSelect={props.onAddFromCamera} >
-//                         {renderMenuOption(translate("MenuFromCamera"), "new-camera", "svg", props.rtl)}
-//                     </MenuOption>
-//                     <MenuOption onSelect={props.onAddFromMediaLib} >
-//                         {renderMenuOption(translate("MenuFromMediaLib"), "new-image", "svg", props.rtl)}
-//                     </MenuOption>
-//                     <MenuOption onSelect={props.onBlankPage} >
-//                         {renderMenuOption(translate("MenuNewPageEmpty"), "page-empty", "svg", props.rtl)}
-//                     </MenuOption>
-//                     <MenuOption onSelect={props.onLinesPage} >
-//                         {renderMenuOption(translate("MenuNewPageLines"), "page-lines", "svg", props.rtl)}
-//                     </MenuOption>
-//                     <MenuOption onSelect={props.onMathPage} >
-//                         {renderMenuOption(translate("MenuNewPageMath"), "page-math", "svg", props.rtl)}
-//                     </MenuOption>
-//                     <Spacer />
-//                     {getRoundedButton(() => this.menu.close(), 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
-//                     <Spacer width={5} />
-//                 </MenuOptions>
-
-//             </Menu>)
-
-//     };
-
-// }
-
-
-function getFileName(props) {
-    let limit = props.asTile ? 8 : 35;
-    if (props.count > 1) {
-        ///limit -= 4;
-    }
-    if (props.name.length > limit) {
-        return props.name.substring(0, limit) + '...'
-    }
-    return props.name
-}
-
-// function getActionButtons(props) {
-//     if (props.asTile) {
-//         return <View style={{
-//             width: '100%',
-//             flexDirection: 'column',
-//             backgroundColor: semanticColors.mainAreaBG,
-//             alignItems: 'center'
-//         }}>
-//             <View style={{
-//                 flexDirection: 'row',
-//                 backgroundColor: semanticColors.mainAreaBG,
-//                 alignItems: 'center',
-//                 justifyContent: 'center',
-//                 height: '60%'
-//                 // height: (dimensions.tileHeight - TILE_PADDING) * .4 - TILE_BORDER_WIDTH,
-//                 // width: dimensions.tileWidth - 2 * TILE_PADDING - TILE_BORDER_WIDTH * 2
-//             }}>
-//                 {getButton(0, props)}
-//                 <Spacer width={15} key={10} />
-//                 {getButton(1, props)}
-//                 <Spacer width={15} key={11} />
-//                 {getButton(2, props)}
-//             </View>
-//             <View style={{
-//                 flexDirection: 'row',
-//                 backgroundColor: semanticColors.mainAreaBG,
-//                 // height: (dimensions.tileHeight - TILE_PADDING) * .4 - TILE_BORDER_WIDTH,
-//                 // width: dimensions.tileWidth - 2 * TILE_PADDING - 2 * TILE_BORDER_WIDTH,
-//                 height: '40%',
-//                 justifyContent: 'space-between'
-//             }}>
-//                 {getButton(3, props)}
-//                 <Spacer width={9} key={12} />
-//                 {getButton(4, props)}
-//                 <Spacer width={9} key={13} />
-//                 {getButton(5, props)}
-//             </View>
-//         </View>
-//     } else {
-//         return <View style={{
-//             flexDirection: 'row',
-//             backgroundColor: semanticColors.mainAreaBG,
-//             alignItems: 'center',
-//             alignContent: 'center'
-//         }}>
-//             {[0, 1, 2, 3, 4, 5].map((item, i) =>
-//                 [getButton(item, props),
-//                 <Spacer width={i == 2 ? 19 : 15} key={i + 10} />]
-//             )}
-//         </View>
-//     }
-
-// }
