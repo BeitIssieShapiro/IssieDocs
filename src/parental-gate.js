@@ -4,7 +4,7 @@ import { Alert, Linking, View } from "react-native";
 import { Button, TextInput } from "react-native";
 import { AppText, getRoundedButton, Spacer } from "./elements";
 import { translate } from "./lang";
-const disabled = true;
+const disabled = false;
 
 export function OpenLink({ navigation, route }) {
     const [val, setVal] = useState("")
