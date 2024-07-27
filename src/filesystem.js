@@ -83,11 +83,9 @@ export class FileSystem {
             metadata = await this._readFolderMetaData(fsFolder.path)
             console.log("readFolder", fsFolder.name, " color :" + metadata.color, parentFolder ? "child" : "root")
             let fsf = new FileSystemFolder(fsFolder.name, parentFolder, this, metadata);
-            if (parentFolder) {
-                parentFolder.folders.push(fsf);
-            } else {
-                this._folders.push(fsf);
-
+            this.pushFolder(fsf, parentFolder && parentFolder.ID);
+            
+            if (!parentFolder) {
                 // Verify of has child folders:
                 fsf.hasChildren = false;
                 const childrenPath = fsFolder.path + "/" + FileSystem.FOLDERS_PATH
@@ -135,11 +133,10 @@ export class FileSystem {
     }
 
     unregisterListener(id) {
-        this._listeners = this._listeners.filter(reg => this.registerListener.id != id)
+        this._listeners = this._listeners.filter(reg => reg.id != id)
     }
 
     _notify(folderName) {
-
         for (let i = 0; i < this._listeners.length; i++) {
             this._listeners[i].callback(folderName);
         }
@@ -181,6 +178,33 @@ export class FileSystem {
         return folder;
     }
 
+
+    pushFolder(fsf, parentID, ignoreIfExists) {
+        if (parentID) {
+            const parentFolder = this.findFolderByID(parentID);
+            if (parentFolder) {
+                // Ensure the folder is not already added to parent
+                if (parentFolder.folders.some(folder => folder.name === fsf.name)) {
+                    if (ignoreIfExists) return;
+                    parentFolder._folders = parentFolder.folders.filter(folder => folder.name !== fsf.name);
+                    trace("dup1", fsf.name, parentFolder._folders.map(f=>f.name))
+                }
+                parentFolder.folders.push(fsf);
+            }
+        } else {
+            // add as root folder
+            // Ensure the folder is not already added to root folders
+            if (this._folders.some(folder => folder.name === fsf.name)) {
+                if (ignoreIfExists) return;
+                this._folders = this._folders.filter(folder => folder.name !== fsf.name)
+                trace("dup2", fsf.name, this._folders.map(f=>f.name))
+            }
+            this._folders.push(fsf);
+        }
+    }
+
+
+
     // return FileSystemFolder obj
     // todo verify works also for deep folder (e.g. in imporr with preserve folders)
     async addFolder(name, icon, color, strictChecks, skipCreateMetadata, rename, parentID) {
@@ -206,32 +230,30 @@ export class FileSystem {
             }
             newFolder = false;
             fsf = this.findFolder(name, parentID);
+            if (!fsf) {
+                trace("unexpected not finding folder:", name, parentID)
+            }
         } else {
             trace("Folder ", name, " is about to be created")
             await RNFS.mkdir(folderPath);
             trace("Folder ", folderPath, " has been created")
             fsf = new FileSystemFolder(name, parent, this, { color, icon });
-            trace("FileSystemFolder created ", fsf)
-            if (parent) {
-                parent.folders.push(fsf);
-            } else {
-                // add as root folder
-                this._folders.push(fsf);
-            }
+            trace("FileSystemFolder created ", name, parentID)
+
+            this.pushFolder(fsf, parentID, skipCreateMetadata)
         }
 
         if (!skipCreateMetadata) {
+
             const newMetadata = await this._writeFolderMetaData(folderPath, color, icon);
 
             if (!parent && name !== FileSystem.DEFAULT_FOLDER.name && !rename) {
                 await pushFolderOrder(name)
                 await _sortRootFolders(this._folders)
             }
-
             if (!newFolder) {
                 //update existing color/icon
-                const folder = this.findFolder(name, parentID);
-                folder.metadata = newMetadata;
+                fsf.metadata = newMetadata;
             }
         }
         trace("Folder ", name, " has been notified", parent ? " in " + parent.path : "")
@@ -839,10 +861,18 @@ export class FileSystem {
         }
     }
 
-    async exportWorksheet(sheet) {
-        const name = sheet.name;
-        const pathObj = this._parsePath(sheet.defaultSrc);
-        const folder = this.findFolderByID(pathObj.folderID);
+    async exportWorksheet(sheet, folderObj) {
+        let folder;
+        let name;
+        if (sheet) {
+            const pathObj = this._parsePath(sheet.defaultSrc);
+            folder = this.findFolderByID(pathObj.folderID);
+            name = pathObj.folderID + "/" + sheet.name;
+        } else {
+            folder = folderObj;
+            name = folder.ID;
+        }
+        name = name.replaceAll("/", "_");
 
         const folderMetaData = {
             name: folder.ID,
@@ -855,17 +885,19 @@ export class FileSystem {
 
         files.push(containingFolderInfoFileName);
 
-        if (sheet.path.endsWith(".jpg")) {
-            files.push(sheet.defaultSrc);
-            const jsonFileName = sheet.defaultSrc + ".json";
-            if (await RNFS.exists(jsonFileName)) {
-                files.push(jsonFileName);
-            }
-        } else {
-            folderMetaData.subFolder = sheet.name;
-            const items = await RNFS.readDir(sheet.path);
-            for (let fi of items) {
-                files.push(fi.path);
+        if (sheet) {
+            if (sheet.path.endsWith(".jpg")) {
+                files.push(sheet.defaultSrc);
+                const jsonFileName = sheet.defaultSrc + ".json";
+                if (await RNFS.exists(jsonFileName)) {
+                    files.push(jsonFileName);
+                }
+            } else {
+                folderMetaData.subFolder = sheet.name;
+                const items = await RNFS.readDir(sheet.path);
+                for (let fi of items) {
+                    files.push(fi.path);
+                }
             }
         }
 
@@ -884,6 +916,10 @@ export class FileSystem {
             if (folder) {
                 trace("add items to backup for folder ", folder.ID)
                 folder.items.forEach(sheet => exportedSheetsAsync.push(this.exportWorksheet(sheet)));
+                if (!folder.items?.length > 0) {
+                    // empty folder
+                    exportedSheetsAsync.push(this.exportWorksheet(undefined, folder));
+                }
             }
         });
 
@@ -969,19 +1005,29 @@ export class FileSystem {
     async importWorhsheetWithInfo(zipInfo, preserveFolder) {
 
         const items = await RNFS.readDir(zipInfo.unzipPath);
-
         let targetPath = this._basePath
         const folderID = preserveFolder ? zipInfo.metadata.name : FileSystem.DEFAULT_FOLDER.name;
+        trace("Importing a worksheet", zipInfo, preserveFolder, "folderID", folderID)
+
         let folder = this.findFolderByID(folderID);
         if (!folder) {
             const parts = folderID.split("/");
             const folderName = parts.pop();
-            const parentID = parts.length && parts.join("/");
-
+            let parentID = "";
+            if (parts.length) {
+                parentID = parts.join("/");
+                // verify parent exists:
+                const parentFolder = this.findFolderByID(parentID);
+                if (!parentFolder) {
+                    trace("importWorhsheetWithInfo - addFolder", parentID)
+                    await this.addFolder(parentID, FileSystem.DEFAULT_FOLDER_METADATA.icon, FileSystem.DEFAULT_FOLDER_METADATA.color, false, true, true);
+                }
+            }
 
             const icon = preserveFolder ? zipInfo.metadata.icon : FileSystem.DEFAULT_FOLDER_METADATA.icon;
             const color = preserveFolder ? zipInfo.metadata.color : FileSystem.DEFAULT_FOLDER_METADATA.color;
-            folder = await this.addFolder(folderName, icon, color, parentID);
+            trace("importWorhsheetWithInfo2 - addFolder", folderName, parentID)
+            folder = await this.addFolder(folderName, icon, color, false, false, false, parentID);
         }
         targetPath += folder.path + "/";
 

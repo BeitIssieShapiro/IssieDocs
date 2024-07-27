@@ -5,6 +5,7 @@ import {
     TextInput,
     ActivityIndicator
 } from 'react-native';
+import ProgressCircle from 'react-native-progress-circle'
 import Search from './search.js'
 import SettingsMenu from './settings-ui'
 import Share from 'react-native-share';
@@ -84,6 +85,7 @@ export default class FolderGallery extends React.Component {
             startTime: new Date(),
             sortBy: SORT_BY_NAME,
             reload: 0,
+            progress: undefined
         }
 
         // this._panResponder = PanResponder.create({
@@ -197,13 +199,21 @@ export default class FolderGallery extends React.Component {
                 url = url.substr(urlPos + 4);
                 url = decodeURI(url);
 
-                const handleDoneMessage = (msg) => Alert.alert(msg);
+                const handleDoneMessage = (msg) => {
+                    this.setState({ progress: undefined });
+                    Alert.alert(msg);
+                }
 
                 if (url.endsWith(".zip")) {
                     FileSystem.main.extractZipInfo(url).then(zipInfo => {
                         if (zipInfo.metadata.backup) {
-                            FileSystem.main.RestoreFromBackup(zipInfo, (progress) => { trace("restore progress" + progress) })
-                                .then(handleDoneMessage);
+                            this.setState({ progress: { percent: 0, message: translate("RestoreBackup") } });
+                            FileSystem.main.RestoreFromBackup(zipInfo, (progress) => {
+                                trace("restore progress" + progress)
+                                this.setState({ progress: { percent: progress, message: translate("RestoreBackup") } });
+                            })
+                                .then(handleDoneMessage)
+                                .finally(() => this.setState({ progress: undefined }));
                         } else {
                             // ask if to preserve folder
                             const title = fTranslate("ImportQuestionTitle", zipInfo.name);
@@ -867,7 +877,7 @@ export default class FolderGallery extends React.Component {
                 <View style={styles.container}
                     onLayout={this.onLayout}>
                     <FileContextMenu
-                        width={this.state.windowSize.width*.75}
+                        width={this.state.windowSize.width * .75}
                         inFoldersMode={true}
                         isLandscape={this.isLandscape()}
                         item={this.state.selected}
@@ -974,6 +984,21 @@ export default class FolderGallery extends React.Component {
                         } */}
                         </View>
                     </View>
+
+                    {/** Progress */}
+                    {this.state.progress && <View style={{ position: 'absolute', top: '25%', left: 0, width: '100%', zIndex: 1000, alignItems: 'center' }}>
+                        <ProgressCircle
+                            radius={150}
+                            color="#3399FF"
+                            shadowColor="#999"
+                            bgColor="white"
+                            percent={this.state.progress.percent}
+                            borderWidth={5} >
+                            {this.state.progress.message && <Text style={{ zIndex: 100, fontSize: 25 }}>{this.state.progress.message}</Text>}
+                        </ProgressCircle>
+                    </View>}
+
+
 
                     {/* MainExplorer*/}
                     <View style={{
@@ -1119,7 +1144,7 @@ export default class FolderGallery extends React.Component {
                                             name={item.name}
                                             color={item.color}
                                             icon={item.icon}
-                                            width={this.state.windowSize.width *(this.isLandscape() ? .2:.25)}
+                                            width={this.state.windowSize.width * (this.isLandscape() ? .2 : .25)}
                                             editMode={this.state.editMode}
                                             fixedFolder={false}//item.name === DEFAULT_FOLDER_NAME}
                                             current={false}

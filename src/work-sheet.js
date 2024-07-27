@@ -6,7 +6,7 @@ export class WorkSheet {
     _name;
     _path;
     _thumbnail;
-    lastUpdated;
+    lastUpdate;
 
     constructor(path, name) {
         this._name = name;
