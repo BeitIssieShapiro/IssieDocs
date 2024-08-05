@@ -84,13 +84,13 @@ export function calculateTargetBox(table, normBox, moveToCell) {
   let offsetX = moveToCell[0] - normBox.from[0];
   let offsetY = moveToCell[1] - normBox.from[1];
   // cap with table size
-  if (offsetX + normBox.from[0] + boxCols > table.verticalLines.length-1) {
+  if (offsetX + normBox.from[0] + boxCols > table.verticalLines.length - 1) {
     offsetX = table.verticalLines.length - normBox.from[0] - boxCols - 1;
   } else if (offsetX + normBox.from[0] < 0) {
     offsetX = -normBox.from[0];
   }
 
-  if (offsetY + normBox.from[1] + boxRows > table.horizontalLines.length-1) {
+  if (offsetY + normBox.from[1] + boxRows > table.horizontalLines.length - 1) {
     offsetY = table.horizontalLines.length - normBox.from[1] - boxRows - 1;
   } else if (offsetY + normBox.from[1] < 0) {
     offsetY = -normBox.from[1];
@@ -101,7 +101,7 @@ export function calculateTargetBox(table, normBox, moveToCell) {
 }
 
 export function offsetTableCell(cell, cellDelta) {
-  return [cell[0]+cellDelta[0], cell[1]+cellDelta[1]]
+  return [cell[0] + cellDelta[0], cell[1] + cellDelta[1]]
 }
 
 export function offsetTableBox(box, cellDelta) {
@@ -163,3 +163,17 @@ export function pointOnContinuationOfLine(x1, y1, x2, y2, d, isAtStart) {
   return { x, y };
 }
 
+export function getRulerDeleteMidPoint(x1, y1, x2, y2) {
+  const sizeX = 10;
+  const sizeY = 12;
+  return {
+    x: Math.min(x1, x2) + Math.abs(x2 - x1) / 2 + sizeX * (x1 > x2 ? -1.2 : 1.2),
+    y: Math.min(y1, y2) + Math.abs(y2 - y1) / 2 - sizeY * (y1 > y2 ? -1.2 : 1.2),
+    sizeX,sizeY
+  }
+
+}
+
+export function nearPoint(p, pGiven, range) {
+  return Math.abs(p-pGiven) <= range;
+}

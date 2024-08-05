@@ -118,7 +118,11 @@ export default class DoQueue {
   pushLine(elem) {
     this.add({ elem: elem, type: 'line' });
     this._undoQueue = [];
+  }
 
+  pushDeleteLine(id) {
+    this.add({ elemID: id, type: 'lineDelete' });
+    this._undoQueue = [];
   }
 
   add(queueElem) {

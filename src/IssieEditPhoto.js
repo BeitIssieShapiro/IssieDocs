@@ -28,7 +28,7 @@ import {
   semanticColors, dimensions
 } from './elements'
 import { translate } from './lang';
-import { arrLast, genID, tableRowHeight, setNavParam, isCellInBox, isSameCell, normalizeBox, calculateTargetBox, offsetTableCell, tableColWidth } from './utils';
+import { arrLast, genID, tableRowHeight, setNavParam, isCellInBox, isSameCell, normalizeBox, calculateTargetBox, offsetTableCell, tableColWidth, getRulerDeleteMidPoint, nearPoint } from './utils';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { pinchEnd, processPinch, processResize } from './pinch';
@@ -958,14 +958,15 @@ export default class IssieEditPhoto extends React.Component {
   clearCurrentTextElement = () => this.setState({ currentTextElem: undefined, showTextInput: false, lastKnownGoodText: undefined });
 
   RulerStart = (normX, normY) => {
-    trace("Ruler start")
+    trace("Ruler start", normX, normY)
     let elem, selectedElem
     let selectedRulerElemId = this.state.selectedRulerElemId
     if (selectedRulerElemId) {
       selectedElem = this.canvas.current.findRuler({
         x: normX,
-        y: normY
-      }, this.state.scaleRatio);
+        y: normY,
+
+      }, this.state.pageRect, selectedRulerElemId);
 
       if (selectedElem?.id === selectedRulerElemId) {
         elem = { ...selectedElem, draft: true };
@@ -985,9 +986,14 @@ export default class IssieEditPhoto extends React.Component {
       }
     }
 
+    const { x1, y1, x2, y2 } = elem;
+    const { x: delX, y: delY, sizeX, sizeY } = getRulerDeleteMidPoint(x1, y1, x2, y2);
+
+
     elem.moveState = {
-      end1: (Math.abs(normX - elem.x1) < 10 && Math.abs(normY - elem.y1) < 10),
-      end2: (Math.abs(normX - elem.x2) < 10 && Math.abs(normY - elem.y2) < 10),
+      end1: nearPoint(normX, x1, 10) && nearPoint(normY, y1, 10),
+      end2: nearPoint(normX, x2, 10) && nearPoint(normY, y2, 10),
+      onTrash: nearPoint(normX, delX, sizeX * 1.5) && nearPoint(normY, delY, sizeY * 1.5),
       initialXY: { x: normX, y: normY },
       lastDelta: { x: 0, y: 0 },
     };
@@ -1004,10 +1010,13 @@ export default class IssieEditPhoto extends React.Component {
     //trace("RulerMove", normX, normY)
     const elem = this.state.currentRulerElem;
     if (elem) {
+      const initX = elem.moveState.initialXY.x;
+      const initY = elem.moveState.initialXY.y;
+      const deltaX = initX - normX;
+      const deltaY = initY - normY;
 
       if (this.state.selectedRulerElemId) {
-        const initX = elem.moveState.initialXY.x;
-        const initY = elem.moveState.initialXY.y;
+
         // check if at startPoint
         trace("RulerMove", Math.abs(initX - elem.x1))
         if (elem.moveState.end1) {
@@ -1015,18 +1024,17 @@ export default class IssieEditPhoto extends React.Component {
         } else if (elem.moveState.end2) {
           elem.x2 = normX, elem.y2 = normY;
         } else {
-          const deltaX = initX - normX;
-          const deltaY = initY - normY;
           elem.x1 -= deltaX - elem.moveState.lastDelta.x;
           elem.y1 -= deltaY - elem.moveState.lastDelta.y;
           elem.x2 -= deltaX - elem.moveState.lastDelta.x;
           elem.y2 -= deltaY - elem.moveState.lastDelta.y;
-          elem.moveState.lastDelta = { x: deltaX, y: deltaY }
         }
       } else {
+        trace("RulerMove - change end point", normX, normY)
         elem.x2 = normX, elem.y2 = normY;
         elem.color = this.state.brushColor;
       }
+      elem.moveState.lastDelta = { x: deltaX, y: deltaY }
       this.incrementRevision();
     }
   }
@@ -1042,20 +1050,34 @@ export default class IssieEditPhoto extends React.Component {
         currentRulerElem: undefined,
         selectedRulerElemId: elem?.id
       });
+      trace("end ruler", elem)
       if (elem.x1 === elem.x2 && elem.y1 === elem.y2) {
 
-        // try to select an existing ruler
+        // seems to be only click - try to select an existing ruler
         const rulerElem = this.canvas.current.findRuler({
           x: elem.x1,
           y: elem.y1
-        }, this.state.scaleRatio);
+        }, elem.screenSize);
 
         trace("set selected ruler", rulerElem?.id)
         this.setState({ selectedRulerElemId: rulerElem?.id })
         return;
       }
-
-
+      else if (elem.moveState && elem.moveState.lastDelta.x == 0 && elem.moveState.lastDelta.y == 0) {
+        // check if click the delete
+        trace("click on line", elem.moveState.onTrash);
+        if (elem.moveState.onTrash) {
+          trace("Line deleted")
+          this.state.queue.pushDeleteLine(elem.id);
+          this.Save();
+          this.incrementRevision();
+          this.setState({ selectedRulerElemId: undefined });
+          return;
+        }
+        trace("click on line - no change");
+        this.setState({ selectedRulerElemId: elem.id })
+        return;
+      }
 
       delete elem.draft;
       delete elem.moveState;
@@ -2817,9 +2839,9 @@ export default class IssieEditPhoto extends React.Component {
       const tableOverflow = table && elem.tableCell?.row < table.horizontalLines.length - 2;
 
       showMessage({
-        message: tableOverflow ? translate("TableOverflowsPage") : 
-        (isFontChange?  translate("FontChangeOverflowsPage"):
-           translate("ReachedEndOfPage")),
+        message: tableOverflow ? translate("TableOverflowsPage") :
+          (isFontChange ? translate("FontChangeOverflowsPage") :
+            translate("ReachedEndOfPage")),
         type: "warning",
         animated: true,
         duration: 10000,
@@ -2859,7 +2881,7 @@ export default class IssieEditPhoto extends React.Component {
                     this.setState({ page: updatedSheet, currentFile: updatedSheet.defaultSrc }, () => {
 
                       // after page is added, move to it, and if was in editing table, copy the table into the new page:
-                      trace("push new page ",currIndex + 1)
+                      trace("push new page ", currIndex + 1)
                       this.movePage(currIndex + 1).then(async () => {
                         let txtElem
                         if (table) {
@@ -2906,7 +2928,7 @@ export default class IssieEditPhoto extends React.Component {
             {getRoundedButton(
               () => { hideMessage() },
               "cancel",
-              tableOverflow || isFontChange ? translate("BtnOK") :translate("BtnCancel"),
+              tableOverflow || isFontChange ? translate("BtnOK") : translate("BtnCancel"),
               25, 35, { width: 180 })}
 
           </View>

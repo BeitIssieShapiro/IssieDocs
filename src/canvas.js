@@ -3,7 +3,7 @@ import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useStat
 import { colors, getFont } from './elements';
 import { trace } from './log';
 import { tableResizeDone } from './pinch';
-import { arrLast, calculateTargetBox, isCellInBox, isSameCell, normalizeBox, offsetTableBox, offsetTablePoints, pointOnContinuationOfLine, tableBoxToPoints, tableColWidth, tableRowHeight } from './utils';
+import { arrLast, calculateTargetBox, getRulerDeleteMidPoint, isCellInBox, isSameCell, nearPoint, normalizeBox, offsetTableBox, offsetTablePoints, pointOnContinuationOfLine, tableBoxToPoints, tableColWidth, tableRowHeight } from './utils';
 import { isRTL } from './lang';
 
 
@@ -87,14 +87,23 @@ function Canvas({
         return paths.find(p => p.id === id);
     }, [paths]);
 
-    const findRuler = useCallback((normXY, scaleRatio) => {
+    const findRuler = useCallback((normXY, currSize, selectedID) => {
 
         return paths.find(p => {
             if (p.x1 == undefined) return false; //not a ruler
 
-            const { x1, y1, x2, y2 } = p;
-            const { x, y } = normXY;
-            const threshold = 10 / scaleRatio;
+            const { x1, y1, x2, y2, screenSize } = p;
+            let { x, y } = normXY;
+            const { x: delX, y: delY, sizeX, sizeY } = getRulerDeleteMidPoint(x1, y1, x2, y2);
+
+
+            //return `${coor[0] * this._screenScale * width / data.size.width},${coor[1] * this._screenScale * height / data.size.height}`;
+
+            x = x * (screenSize.width / currSize.width);
+            y = y * (screenSize.height / currSize.height);
+            // trace("look at ruler", x1, x, y1, y, screenSize, currSize)
+
+            const threshold = 10;
 
             const dx = x2 - x1;
             const dy = y2 - y1;
@@ -103,6 +112,13 @@ function Canvas({
             const end2 = (Math.abs(x - x2) < threshold && Math.abs(y - y2) < threshold);
 
             if (end1 || end2) return true;
+            trace("xxx", p.id, selectedID)
+            if (p.id == selectedID) {
+                trace("on trash?", x,y,delX, delY)
+            }
+            if (p.id == selectedID && nearPoint(x, delX, sizeX*1.5) && nearPoint(y, delY, sizeY*1.5)) {
+                return true;
+            }
 
 
             if (t < 0 || t > 1) {
@@ -264,6 +280,8 @@ function Canvas({
             } else if (q[i].type === 'line') {
                 canvasPaths = canvasPaths.filter(l => l.id !== q[i].elem.id);
                 canvasPaths.push(q[i].elem);
+            } else if (q[i].type === 'lineDelete') {
+                canvasPaths = canvasPaths.filter(l => l.id !== q[i].elemID);
             } else if (q[i].type === 'image') {
                 canvasImages.push(imageNorm2Scale(q[i].elem, scaleRatio));
             } else if (q[i].type === 'imagePosition') {
@@ -456,6 +474,24 @@ function Canvas({
 
                             addLine(path.id + 1, x1, y1, end1.x, end1.y, "gray", width, path.screenSize);
                             addLine(path.id + 2, x2, y2, end2.x, end2.y, "gray", width, path.screenSize);
+
+
+
+                            // draw ruler trush for delete
+
+                            const delWidth = 3;
+
+                            const { x: delX, y: delY, sizeX, sizeY } = getRulerDeleteMidPoint(x1, y1, x2, y2);
+
+                            addLine(path.id + 3, delX - sizeX, delY - sizeY, delX - sizeX + 3, delY + sizeY, "black", delWidth, path.screenSize);
+                            addLine(path.id + 4, delX + sizeX, delY - sizeY, delX + sizeX - 3, delY + sizeY, "black", delWidth, path.screenSize);
+                            addLine(path.id + 5, delX - sizeX + 3, delY + sizeY, delX + sizeX - 3, delY + sizeY, "black", delWidth, path.screenSize);
+                            addLine(path.id + 6, delX - sizeX, delY - sizeY, delX + sizeX, delY - sizeY, "black", delWidth, path.screenSize);
+                            // the cap
+                            addLine(path.id + 7, delX - sizeX + 3, delY - sizeY - 3, delX + sizeX - 3, delY - sizeY - 3, "black", delWidth, path.screenSize);
+                            // the X
+                            addLine(path.id + 8, delX - sizeX / 2, delY - sizeY / 2, delX + sizeX / 2, delY + sizeY / 2, "black", delWidth, path.screenSize);
+                            addLine(path.id + 9, delX + sizeX / 2, delY - sizeY / 2, delX - sizeX / 2, delY + sizeY / 2, "black", delWidth, path.screenSize);
 
                         }
                     } else {

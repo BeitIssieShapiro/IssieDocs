@@ -1,8 +1,7 @@
 import React from 'react';
 import {
-    Image, StyleSheet, View, YellowBox,
-    TouchableOpacity, Button, ScrollView, Alert, Text, Dimensions, Linking, Settings,
-    TextInput,
+     StyleSheet, View,
+     Alert, Text, Dimensions, Linking, Settings,
     ActivityIndicator
 } from 'react-native';
 import ProgressCircle from 'react-native-progress-circle'

@@ -282,14 +282,17 @@ function EditorToolbar({
         // getEraserIcon(onEraser, 42, eraseMode ? 'black' : semanticColors.editPhotoButton, eraseMode, 25)
     ]
 
+    const rullerBtn = <IconButton onPress={() => onModeButtonClick(Pickers.RULER)} color={isRulerMode ? color : semanticColors.editPhotoButton}
+        iconType="material-community" icon="ruler" size={50} iconSize={45} selected={isRulerMode} ensureContrast={true} />;
+
     const extMenu = [
         <IconButton onPress={() => onModeButtonClick(Pickers.MARKER)} color={isMarkerMode ? color : semanticColors.editPhotoButton}
             iconType="material-community" icon="marker" size={50} iconSize={45} selected={isMarkerMode} ensureContrast={true} />,
 
-        <IconButton onPress={() => onModeButtonClick(Pickers.RULER)} color={isRulerMode ? color : semanticColors.editPhotoButton}
-            iconType="material-community" icon="ruler" size={50} iconSize={45} selected={isRulerMode} ensureContrast={true} />,
+        isScreenNarrow() && rullerBtn,
 
-        <IconButton onPress={() => onModeButtonClick(Pickers.IMAGE)} color={semanticColors.editPhotoButton}
+        < IconButton onPress={() => onModeButtonClick(Pickers.IMAGE)
+        } color={semanticColors.editPhotoButton}
             icon={"image"} size={55} iconSize={45} selected={isImageMode} />,
 
         <IconButton onPress={() => onModeButtonClick(Pickers.TABLE)} color={isTableMode ? (Table ? Table.color : color) : semanticColors.editPhotoButton}
@@ -345,7 +348,8 @@ function EditorToolbar({
             <IconButton onPress={onUndo} color={semanticColors.editPhotoButton} icon={rtl ? "undo" : "redo"} size={55} />
             <Spacer width={23} />
             <IconButton onPress={onRedo} color={canRedo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} icon={rtl ? "redo" : "undo"} size={55} />
-
+            <Spacer width={23} />
+            {!isScreenNarrow() && rullerBtn}
 
             { /* text size preview */}
             <View style={{

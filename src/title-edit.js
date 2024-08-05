@@ -60,6 +60,7 @@ export default function TitleEdit(props) {
 
         <TextInput
             ref={inputEl}
+            allowFontScaling={false}
             value={props.editMode ? editedTitle : props.title}
             style={titleStyle}
             readonly={props.editMode ? true : false}
