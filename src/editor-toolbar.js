@@ -43,7 +43,7 @@ function spread(btns) {
     return (<Fragment>
         <ButtonSpacer />
         {btns.map((item, i) => (
-            <Fragment key={i}>
+            item && <Fragment key={i}>
                 {item}
                 <ButtonSpacer width={isScreenNarrow() ? 15 : 23} />
             </Fragment>
@@ -283,27 +283,30 @@ function EditorToolbar({
     ]
 
     const rullerBtn = <IconButton onPress={() => onModeButtonClick(Pickers.RULER)} color={isRulerMode ? color : semanticColors.editPhotoButton}
-        iconType="material-community" icon="ruler" size={50} iconSize={45} selected={isRulerMode} ensureContrast={true} />;
+        iconType="material-community" icon="ruler" size={49} iconSize={45} selected={isRulerMode} ensureContrast={true} />;
+
+    const eraserBtn = getEraserIcon(onEraser, 50, eraseMode ? 'black' : semanticColors.editPhotoButton, eraseMode, 25);
 
     const extMenu = [
         <IconButton onPress={() => onModeButtonClick(Pickers.MARKER)} color={isMarkerMode ? color : semanticColors.editPhotoButton}
             iconType="material-community" icon="marker" size={50} iconSize={45} selected={isMarkerMode} ensureContrast={true} />,
 
-        isScreenNarrow() && rullerBtn,
+        isScreenNarrow() && eraserBtn,
 
         < IconButton onPress={() => onModeButtonClick(Pickers.IMAGE)
         } color={semanticColors.editPhotoButton}
-            icon={"image"} size={55} iconSize={45} selected={isImageMode} />,
+            icon={"image"} size={47} iconSize={45} selected={isImageMode} />,
 
         <IconButton onPress={() => onModeButtonClick(Pickers.TABLE)} color={isTableMode ? (Table ? Table.color : color) : semanticColors.editPhotoButton}
-            iconType="font-awesome" icon="table" size={42} iconSize={42} selected={isTableMode} ensureContrast={true} />,
+            iconType="font-awesome" icon="table" size={47} iconSize={42} selected={isTableMode} ensureContrast={true} />,
 
+        rullerBtn,
+        <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM)} color={semanticColors.editPhotoButton}
+            icon="zoom-in" size={50} iconSize={45} />,
         // <IconButton onPress={() => onModeButtonClick(Pickers.VOICE)} color={semanticColors.editPhotoButton}
         //     icon="record-voice-over" size={55} iconSize={45} selected={isVoiceMode} />,
 
-        <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM)} color={semanticColors.editPhotoButton}
-            icon="zoom-in" size={55} iconSize={45} />,
-        getEraserIcon(onEraser, 55, eraseMode ? 'black' : semanticColors.editPhotoButton, eraseMode, 25)
+
 
     ]
 
@@ -349,7 +352,7 @@ function EditorToolbar({
             <Spacer width={23} />
             <IconButton onPress={onRedo} color={canRedo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} icon={rtl ? "redo" : "undo"} size={55} />
             <Spacer width={23} />
-            {!isScreenNarrow() && rullerBtn}
+            {!isScreenNarrow() && eraserBtn}
 
             { /* text size preview */}
             <View style={{
@@ -423,7 +426,9 @@ function EditorToolbar({
             height: dimensions.toolbarHeight,
             flexDirection: rowReverse, alignItems: 'center',
             top: (isScreenNarrow() ? 2 : 1) * dimensions.toolbarHeight,
+           
         }, rtl ? { right: 0 } : { left: 0 }]} >
+            {/* <View style={{position:"absolute",  borderBottomWidth:1,bottom:12,left:0,width:"100%"}}/> */}
             {spread(extMenu)}
         </View>}
         {/**Side menu */}
