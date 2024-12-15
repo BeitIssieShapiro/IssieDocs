@@ -21,7 +21,8 @@ import ImageResizer from '@bam.tech/react-native-image-resizer';
 
 import { getNewPage, SRC_RENAME, SRC_DUPLICATE, SRC_FILE } from './newPage'
 
-import ProgressCircle from 'react-native-progress-circle'
+import * as Progress from 'react-native-progress';
+
 import { fTranslate } from './lang';
 import Scroller from './scroller';
 
@@ -568,7 +569,7 @@ export default class IssieSavePhoto extends React.Component {
   }
 
   verifyFilePrefix = (url) => {
-    
+
     if (url && url.startsWith("/")) {
       return "file://" + url;
     }
@@ -732,7 +733,7 @@ export default class IssieSavePhoto extends React.Component {
           <View style={styles.bgImage}>
             {this.state.pdfInProcess ?
               <View style={{ position: 'absolute', top: '25%', left: 0, width: '100%', zIndex: 1000, alignItems: 'center' }}>
-                <ProgressCircle
+                {/* <ProgressCircle
                   radius={150}
                   color="#3399FF"
                   shadowColor="#999"
@@ -740,14 +741,36 @@ export default class IssieSavePhoto extends React.Component {
                   percent={this.state.pdfInProcess * 100 / this.state.pdfPageCount}
                   borderWidth={5} >
                   <Text style={{ zIndex: 100, fontSize: 25 }}>{fTranslate("ImportProgress", this.state.pdfInProcess, this.state.pdfPageCount)}</Text>
-                </ProgressCircle>
+                </ProgressCircle> */}
+                <Progress.Circle
+                  size={300} // Diameter (2 * radius)
+                  progress={percent} // Value between 0 and 1
+                  color="#3399FF"
+                  unfilledColor="#999999" // Equivalent to shadowColor
+                  borderWidth={5}
+                  thickness={8} // Adjust thickness as needed
+                  showsText={false} // We'll add custom text
+                  animated={true} // Enable animation if desired
+                >
+                  {this.state.progress.message && (
+                    <View style={styles.textContainer}>
+                      <Text style={styles.text}>
+                        {fTranslate(
+                          "ImportProgress",
+                          this.state.pdfInProcess,
+                          this.state.pdfPageCount > 0 ? this.state.pdfPageCount : 1
+                        )}
+                      </Text>
+                    </View>
+                  )}
+                </Progress.Circle>
               </View> : null}
             <ViewShot ref="viewShot" options={{ format: "jpg", quality: 0.9 }}
               style={{
                 flex: 1, position: 'absolute', width: this.state.pdfWidth, height: this.state.pdfHeight
               }}>
               <Pdf
-                source={{ uri: this.verifyFilePrefix(this.state.imageUri), path:  this.verifyFilePrefix(this.state.imageUri) }}
+                source={{ uri: this.verifyFilePrefix(this.state.imageUri), path: this.verifyFilePrefix(this.state.imageUri) }}
                 page={this.state.pdfPage}
                 style={{ flex: 1 }}
                 onLoadComplete={(numberOfPages, filePath, dim) => {
@@ -777,8 +800,8 @@ export default class IssieSavePhoto extends React.Component {
               height: (this.state.imgSize.h * this.state.scale)
             } :
             {
-               width: '100%',
-               height: '100%',
+              width: '100%',
+              height: '100%',
             }
           ]}>
             {this.isBlankPage() && this.state.addToExistingPage && <OrientationPicker

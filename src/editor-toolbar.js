@@ -8,6 +8,7 @@ import { trace } from "./log";
 import { BrushSizePicker, MyColorPicker, TextSizePicker } from "./pickers";
 import { getSvgIcon, MarkerStroke } from "./svg-icons";
 import { Icon } from "react-native-elements";
+import { RecordButton } from "./recording";
 
 export const TextAlignment = {
     RIGHT: "Right",
@@ -25,6 +26,7 @@ const Pickers = {
     COLOR: 8,
     VOICE: 9,
     RULER: 10,
+    AUDIO: 11,
 }
 
 const availableBrushSize = [
@@ -62,6 +64,7 @@ function EditorToolbar({
     onEraser,
     onTextMode,
     onImageMode,
+    onAudioMode,
     onRulerMode,
     onAddImageFromCamera,
     onAddImageFromGallery,
@@ -79,6 +82,7 @@ function EditorToolbar({
 
     isTextMode,
     isImageMode,
+    isAudioMode,
     isBrushMode,
     isMarkerMode,
     isTableMode,
@@ -109,6 +113,8 @@ function EditorToolbar({
     const [brushMenuHeight, setBrushMenuHeight] = useState(0);
     const [zoomMenuHeight, setZoomMenuHeight] = useState(0);
     const [imageMenuHeight, setImageMenuHeight] = useState(0);
+
+    const [currAudio, setCurrAudio] = useState("");
 
     const [tableCols, setTableCols] = useState(Table ? Table.verticalLines.length - 1 : 3);
     const [tableRows, setTableRows] = useState(Table ? Table.horizontalLines.length - 1 : 3);
@@ -219,6 +225,13 @@ function EditorToolbar({
                     onImageMode();
                 }
                 break;
+            case Pickers.AUDIO:
+                if (isAudioMode) {
+                    if (!pickerTypeChanged) setShowPicker(oldVal => !oldVal);
+                } else {
+                    onAudioMode();
+                }
+                break;
             case Pickers.VOICE:
                 if (!isVoiceMode) {
                     onVoiceMode();
@@ -232,7 +245,7 @@ function EditorToolbar({
                 }
                 break;
         }
-    }, [isVoiceMode, isTextMode, isBrushMode, isTableMode, isImageMode, isMarkerMode, showPickerType, showPicker]);
+    }, [isVoiceMode, isTextMode, isBrushMode, isTableMode, isImageMode, isAudioMode, isMarkerMode, showPickerType, showPicker]);
 
 
     onSelectButtonClick = useCallback((type, preservePrevious) => {
@@ -250,7 +263,7 @@ function EditorToolbar({
     }, [showPickerType, showPicker]);
 
 
-    const { row, rowReverse, flexEnd, textAlign, rtl, direction } = getRowDirections();
+    const { row, rowReverse, rtl } = getRowDirections();
 
     let toolbarSideMargin = sideMargin > 70 ? 70 : sideMargin;
     if (windowSize && windowSize.width - 2 * toolbarSideMargin < 300) {
@@ -293,9 +306,13 @@ function EditorToolbar({
 
         isScreenNarrow() && eraserBtn,
 
-        < IconButton onPress={() => onModeButtonClick(Pickers.IMAGE)
+        <IconButton onPress={() => onModeButtonClick(Pickers.IMAGE)
         } color={semanticColors.editPhotoButton}
             icon={"image"} size={47} iconSize={45} selected={isImageMode} />,
+
+        <IconButton onPress={() => onModeButtonClick(Pickers.AUDIO)
+        } color={semanticColors.editPhotoButton}
+            iconType="material-community" icon={"microphone"} size={47} iconSize={45} selected={isAudioMode} />,
 
         <IconButton onPress={() => onModeButtonClick(Pickers.TABLE)} color={isTableMode ? (Table ? Table.color : color) : semanticColors.editPhotoButton}
             iconType="font-awesome" icon="table" size={47} iconSize={42} selected={isTableMode} ensureContrast={true} />,
@@ -343,8 +360,9 @@ function EditorToolbar({
             height: dimensions.toolbarHeight,
             left: 0,
             right: 0,
-            flexDirection: row,
+            flexDirection: "row",
             alignItems: 'center',
+            //justifyContent:"flex-end"
         }}>
             <IconButton onPress={onGoBack} color={semanticColors.editPhotoButton} icon="folder" size={55} iconSize={45} />
             <Spacer width={45} />
@@ -413,9 +431,9 @@ function EditorToolbar({
                 position: 'absolute',
                 height: dimensions.toolbarHeight,
                 flexDirection: rowReverse, alignItems: 'center',
-            }, isScreenNarrow() ?
-                { top: dimensions.toolbarHeight, left: 0 } :
-                { top: 0, right: 0 }
+            }, //isScreenNarrow() ?
+            //{ top: dimensions.toolbarHeight, left: 0 } //:
+            { top: 0, right: 0 }
             ]} >
                 {spread(modesMenu)}
             </View>
@@ -426,7 +444,7 @@ function EditorToolbar({
             height: dimensions.toolbarHeight,
             flexDirection: rowReverse, alignItems: 'center',
             top: (isScreenNarrow() ? 2 : 1) * dimensions.toolbarHeight,
-           
+
         }, rtl ? { right: 0 } : { left: 0 }]} >
             {/* <View style={{position:"absolute",  borderBottomWidth:1,bottom:12,left:0,width:"100%"}}/> */}
             {spread(extMenu)}
@@ -514,6 +532,13 @@ function EditorToolbar({
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 <IconButton onPress={onAddImageFromGallery} icon={"new-image"} size={55} iconSize={45} iconType="svg" color="black" />
                 <IconButton onPress={onAddImageFromCamera} icon={"new-camera"} size={55} iconSize={45} iconType="svg" color="black" />
+            </View>
+        </FadeInView>
+
+        {/*View for Audio*/}
+        <FadeInView height={showPickerType === Pickers.AUDIO && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
+            <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
+                <RecordButton audioB64={currAudio} size={45} backgroundColor="red" height={40} revision={1} onNewAudioFile={(b64)=>setCurrAudio(b64)}/>
             </View>
         </FadeInView>
 

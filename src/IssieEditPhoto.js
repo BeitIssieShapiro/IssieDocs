@@ -2,14 +2,13 @@ import React, { useRef } from 'react';
 import {
   AppRegistry, StyleSheet, TextInput, View,
   Text, Alert, PanResponder, Keyboard, PixelRatio, Dimensions, ActivityIndicator,
-  Animated,
-  TouchableOpacity
+  Animated
 } from 'react-native';
+import * as Progress from 'react-native-progress';
 
 import { hideMessage, showMessage } from 'react-native-flash-message';
 
-import { Icon, IconButton, MARKER_TRANSPARENCY_CONSTANT, Spacer } from "./elements"
-import RNSketchCanvas from 'issie-sketch-canvas';
+import { Icon, MARKER_TRANSPARENCY_CONSTANT, Spacer } from "./elements"
 import Share from 'react-native-share';
 import DoQueue from './do-queue';
 
@@ -18,7 +17,6 @@ import {
   globalStyles, getFont
 } from './elements'
 import { getNewPage, SRC_CAMERA, SRC_FILE, SRC_GALLERY, SRC_RENAME } from './newPage';
-import ProgressCircle from 'react-native-progress-circle'
 import { fTranslate, getRowDirections, isRTL } from './lang.js'
 
 
@@ -55,6 +53,7 @@ const Modes = {
   TABLE: 6,
   VOICE: 7,
   RULER: 8,
+  AUDIO: 9,
 }
 
 const TABLE_LINE_MARGIN = 20;
@@ -555,6 +554,7 @@ export default class IssieEditPhoto extends React.Component {
   isMarkerMode = () => this.state.mode === Modes.MARKER;
   isTableMode = () => this.state.mode === Modes.TABLE;
   isImageMode = () => this.state.mode === Modes.IMAGE;
+  isAudioMode = () => this.state.mode === Modes.AUDIO;
   isVoiceMode = () => this.state.mode === Modes.VOICE;
   isEraserMode = () => this.state.eraseMode;
   isRulerMode = () => this.state.mode === Modes.RULER;
@@ -1435,6 +1435,16 @@ export default class IssieEditPhoto extends React.Component {
     this.onEraserChange(true);
   }
 
+  onAudioMode = ()=>{
+    if (this.isTextMode()) {
+      this.SaveText()
+    }
+    this.setState({
+      mode: Modes.AUDIO,
+      ...MODES_CLEANUP
+    });
+  }
+
   onTextSize = (size) => {
     trace("set text size", size)
     this.setState({
@@ -1865,6 +1875,7 @@ export default class IssieEditPhoto extends React.Component {
             }
           }
           }
+          onAudioMode={()=>this.onAudioMode()}
           onAddImageFromGallery={() => this.onAddImage(SRC_GALLERY)}
           onAddImageFromCamera={() => this.onAddImage(SRC_CAMERA)}
           onBrushMode={() => this.onBrushMode()}
@@ -1876,6 +1887,7 @@ export default class IssieEditPhoto extends React.Component {
           isTableMode={this.isTableMode()}
           isMarkerMode={this.isMarkerMode()}
           isTextMode={this.isTextMode()}
+          isAudioMode={this.isAudioMode()}
           isImageMode={this.isImageMode()}
           isVoiceMode={this.isVoiceMode()}
           isBrushMode={this.isBrushMode()} //!this.isTextMode() && !this.isImageMode() && !this.isMarkerMode()}
@@ -2008,7 +2020,7 @@ export default class IssieEditPhoto extends React.Component {
               {this.state.sharing &&
                 <View style={{ position: 'absolute', top: '25%', left: 0, width: this.state.viewPortRect.width, zIndex: 1000, backgroundColor: 'white', alignItems: 'center' }}>
 
-                  <ProgressCircle
+                  {/* <ProgressCircle
                     radius={150}
                     color="#3399FF"
                     shadowColor="#999"
@@ -2016,7 +2028,27 @@ export default class IssieEditPhoto extends React.Component {
                     percent={this.state.shareProgress}
                     borderWidth={5} >
                     <Text style={{ zIndex: 100, fontSize: 25 }}>{fTranslate("ExportProgress", this.state.shareProgressPage, (this.state.page.count > 0 ? this.state.page.count : 1))}</Text>
-                  </ProgressCircle>
+                  </ProgressCircle> */}
+                  <Progress.Circle
+                    size={300} // Diameter (2 * radius)
+                    progress={shareProgress / 100} // Convert to 0-1 range
+                    color="#3399FF"
+                    unfilledColor="#999999" // Equivalent to shadowColor
+                    borderWidth={5}
+                    thickness={8} // Adjust thickness as needed
+                    showsText={false} // We'll add custom text
+                    animated={true} // Enable animation if desired
+                  >
+                    <View style={styles.textContainer}>
+                      <Text style={styles.text}>
+                        {fTranslate(
+                          "ExportProgress",
+                          shareProgressPage,
+                          page.count > 0 ? page.count : 1
+                        )}
+                      </Text>
+                    </View>
+                  </Progress.Circle>
                 </View>}
 
 

@@ -11,7 +11,6 @@ import {
     AppText
 } from './elements'
 import Share from 'react-native-share';
-import ProgressCircle from 'react-native-progress-circle'
 
 
 import FadeInView from './FadeInView'

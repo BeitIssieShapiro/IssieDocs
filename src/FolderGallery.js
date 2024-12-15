@@ -1,10 +1,11 @@
 import React from 'react';
 import {
-     StyleSheet, View,
-     Alert, Text, Dimensions, Linking, Settings,
+    StyleSheet, View,
+    Alert, Text, Dimensions, Linking, Settings,
     ActivityIndicator
 } from 'react-native';
-import ProgressCircle from 'react-native-progress-circle'
+import * as Progress from 'react-native-progress';
+
 import Search from './search.js'
 import SettingsMenu from './settings-ui'
 import Share from 'react-native-share';
@@ -986,7 +987,7 @@ export default class FolderGallery extends React.Component {
 
                     {/** Progress */}
                     {this.state.progress && <View style={{ position: 'absolute', top: '25%', left: 0, width: '100%', zIndex: 1000, alignItems: 'center' }}>
-                        <ProgressCircle
+                        {/* <ProgressCircle
                             radius={150}
                             color="#3399FF"
                             shadowColor="#999"
@@ -994,7 +995,22 @@ export default class FolderGallery extends React.Component {
                             percent={this.state.progress.percent}
                             borderWidth={5} >
                             {this.state.progress.message && <Text style={{ zIndex: 100, fontSize: 25 }}>{this.state.progress.message}</Text>}
-                        </ProgressCircle>
+                        </ProgressCircle> */}
+                        <Progress.Circle
+                            size={300} // Diameter (2 * radius)
+                            progress={percent / 100} // Convert to 0-1 range
+                            color="#3399FF"
+                            unfilledColor="#999999" // Shadow color equivalent
+                            borderWidth={5}
+                            thickness={8}
+                            showsText={false} // We'll add custom text
+                        >
+                            {message && (
+                                <View style={styles.textContainer}>
+                                    <Text style={styles.text}>{message}</Text>
+                                </View>
+                            )}
+                        </Progress.Circle>
                     </View>}
 
 

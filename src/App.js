@@ -31,6 +31,8 @@ import {
   View, LogBox, Alert,
   TouchableOpacity, Settings, useWindowDimensions, Text
 } from 'react-native';
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+
 
 import { EDIT_TITLE } from './settings'
 
@@ -77,6 +79,7 @@ Text.defaultProps.maxFontSizeMultiplier = 1;
 TextInput.defaultProps = {};
 TextInput.defaultProps.maxFontSizeMultiplier = 1;
 
+export const audioRecorderPlayer = new AudioRecorderPlayer();
 
 
 const App = (props) => {
