@@ -77,6 +77,7 @@ function checkFilter(filter, name) {
 export default class FolderGallery extends React.Component {
 
     constructor(props) {
+        LogBox.ignoreLogs(["ref.measureLayout must be called"])
         super(props);
         this.state = {
             windowSize: { width: 500, height: 1024 },

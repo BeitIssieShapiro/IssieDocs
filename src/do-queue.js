@@ -92,6 +92,22 @@ export default class DoQueue {
     this._undoQueue = [];
   }
 
+  pushAudioPosition(elem) {
+    this.add({ elem: elem, type: 'audioPosition' });
+    this._undoQueue = [];
+  }
+
+  pushDeleteAudio(elem) {
+    this.add({ elem: elem, type: 'audioDelete' });
+    this._undoQueue = [];
+
+  }
+
+  pushAudio(elem) {
+    this.add({ elem: elem, type: 'audio' });
+    this._undoQueue = [];
+  }
+
   pushPath(elem) {
     this.add({ elem: elem, type: 'path' });
     this._undoQueue = [];

@@ -79,6 +79,7 @@ function EditorToolbar({
     onSelectBrushSize,
     onSelectColor,
     onSelectTextSize,
+    onAddAudio,
 
     isTextMode,
     isImageMode,
@@ -230,6 +231,7 @@ function EditorToolbar({
                     if (!pickerTypeChanged) setShowPicker(oldVal => !oldVal);
                 } else {
                     onAudioMode();
+                    setShowPicker(true);
                 }
                 break;
             case Pickers.VOICE:
@@ -538,7 +540,10 @@ function EditorToolbar({
         {/*View for Audio*/}
         <FadeInView height={showPickerType === Pickers.AUDIO && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
-                <RecordButton audioB64={currAudio} size={45} backgroundColor="red" height={40} revision={1} onNewAudioFile={(b64)=>setCurrAudio(b64)}/>
+                <RecordButton audioB64={currAudio} size={45} backgroundColor="red" height={55} revision={1} onNewAudioFile={(b64)=>{
+                    setCurrAudio(b64);
+                    onAddAudio(b64);
+                }}/>
             </View>
         </FadeInView>
 

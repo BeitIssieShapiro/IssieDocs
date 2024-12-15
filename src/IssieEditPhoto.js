@@ -2,7 +2,8 @@ import React, { useRef } from 'react';
 import {
   AppRegistry, StyleSheet, TextInput, View,
   Text, Alert, PanResponder, Keyboard, PixelRatio, Dimensions, ActivityIndicator,
-  Animated
+  Animated,
+  TouchableOpacity
 } from 'react-native';
 import * as Progress from 'react-native-progress';
 
@@ -35,6 +36,7 @@ import { getElementMovePanResponder } from './editors-panresponders';
 import Canvas, { RESIZE_TABLE_BOX_SIZE } from './canvas';
 import { FileContextMenu } from './file-context-menu';
 import RNSystemSounds from '@dashdoc/react-native-system-sounds';
+import { AudioElement } from './audio-elem.js';
 
 const shareTimeMs = 2000;
 
@@ -58,7 +60,7 @@ const Modes = {
 
 const TABLE_LINE_MARGIN = 20;
 const PAGE_MARGIN = RESIZE_TABLE_BOX_SIZE * 2;
-
+const audioImgSize = 80;
 const MODES_CLEANUP = {
   showTextInput: false,
   currentTextElem: undefined,
@@ -795,6 +797,13 @@ export default class IssieEditPhoto extends React.Component {
       });
   }
 
+  UpdateQueue = (updateQueueCallback) => {
+    if (updateQueueCallback(this.state.queue)) {
+      this.setState({ revision: this.state.revision + 1 });
+      this.Save();
+    }
+  }
+
   Save = () => {
     let sketchState = this.state.queue.getAll();
     const content = JSON.stringify(sketchState, undefined, " ");
@@ -1435,7 +1444,7 @@ export default class IssieEditPhoto extends React.Component {
     this.onEraserChange(true);
   }
 
-  onAudioMode = ()=>{
+  onAudioMode = () => {
     if (this.isTextMode()) {
       this.SaveText()
     }
@@ -1508,6 +1517,21 @@ export default class IssieEditPhoto extends React.Component {
       });
   }
 
+  onAddAudio = (b64Audio) => {
+    const audioElem = {
+      id: Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 5),
+      normPosition: {
+        x: (this.state.viewPortRect.width / 2 - this.state.xOffset - audioImgSize / 2) / this.state.zoom,
+        y: (this.state.viewPortRect.height / 2 - this.state.yOffset - audioImgSize / 2) / this.state.zoom,
+      },
+      audioData: b64Audio,
+    }
+
+    this.state.queue.pushAudio(audioElem);
+    this.Save();
+    this.incrementRevision();
+  }
+
   onAddNewPage = async (src) => {
     getNewPage(src, (uri) => this.addNewPage(uri, src, false), undefined, (err) => { }, this.props.navigation);
   }
@@ -1567,7 +1591,7 @@ export default class IssieEditPhoto extends React.Component {
       this.SaveText();
     }
     //todo multiple tables
-    const table = this.canvas.current?.canvasTables().length > 0 ? this.canvas.current?.canvasTables()[0] : undefined;
+    const table = this.state.canvasTables?.length > 0 ? this.state.canvasTables[0] : undefined;
     this.setState({
       ...MODES_CLEANUP,
       mode: Modes.TABLE,
@@ -1795,7 +1819,7 @@ export default class IssieEditPhoto extends React.Component {
     }, () => {
       if (currTableID) {
         setTimeout(() => {
-          const currentTable = this.canvas.current?.canvasTables().find(t => t.id === currTableID);
+          const currentTable = this.state.canvasTables?.find(t => t.id === currTableID);
           trace("after Undo-redo", currTableID, currentTable)
           if (currentTable) {
             this.setState({ currentTable });
@@ -1875,9 +1899,12 @@ export default class IssieEditPhoto extends React.Component {
             }
           }
           }
-          onAudioMode={()=>this.onAudioMode()}
+          onAudioMode={() => this.onAudioMode()}
           onAddImageFromGallery={() => this.onAddImage(SRC_GALLERY)}
           onAddImageFromCamera={() => this.onAddImage(SRC_CAMERA)}
+
+          onAddAudio={(b64) => this.onAddAudio(b64)}
+
           onBrushMode={() => this.onBrushMode()}
           onMarkerMode={() => this.onMarkerMode()}
           onVoiceMode={() => this.onVoiceMode()}
@@ -2055,8 +2082,21 @@ export default class IssieEditPhoto extends React.Component {
               {
                 this.getCanvas(this.state.pageRect.width, this.state.pageRect.height)
               }
+              {
+                this.state.canvasAudio?.map(elem => (
+                  <AudioElement key={elem.id} audioElem={elem}
+                    isAudioMode={this.isAudioMode()}
+                    scaleRatio={this.state.scaleRatio} zoom={this.state.zoom}
+                    xOffset={this.state.xOffset} yOffset={this.state.yOffset}
+                    UpdateQueue={(callback) => this.UpdateQueue(callback)}
+                    size={audioImgSize}
+                  />
+                ))
+              }
+
             </Animated.View>
             {this.state.showTextInput && this.getTextInput(rtl)}
+
 
             {/** Show Texts rectangles for voice reading */}
             {/* {
@@ -2188,7 +2228,8 @@ export default class IssieEditPhoto extends React.Component {
       item={this.state.page}
       isLandscape={this.state.windowSize.height < this.state.windowSize.width}
       open={this.state.openContextMenu}
-      height={Math.min(700, this.state.windowSize.height * .7)}
+      height={this.state.windowSize.height * .7}
+      width={this.state.windowSize.width * .75}
       onClose={() => {
         this.setState({ openContextMenu: false })
       }}
@@ -2274,7 +2315,7 @@ export default class IssieEditPhoto extends React.Component {
 
   findTable = (viewPortXY) => {
     // todo find based on coordinates
-    const table = this.canvas.current?.canvasTables().length > 0 ? this.canvas.current?.canvasTables()[0] : undefined;
+    const table = this.state.canvasTables?.length > 0 ? this.state.canvasTables[0] : undefined;
     return { table };
   }
 
@@ -2756,6 +2797,10 @@ export default class IssieEditPhoto extends React.Component {
         strokeWidth={this.isBrushMode() ? strokeWidth : this.state.markerWidth}
         color={this.isMarkerMode() && !this.isEraserMode() ? color + MARKER_TRANSPARENCY_CONSTANT : color}
         onTableResizeDuringTextEdit={() => this.incrementTextEditRevision()}
+        updateState={(newState) => {
+          trace("Canvas updates state", Object.keys(newState).map(key => newState[key].map(e => e.normPosition)))
+          this.setState(newState)
+        }}
       />
 
     );
@@ -2972,6 +3017,7 @@ export default class IssieEditPhoto extends React.Component {
     }
   }
 
+
   getTextInput = (defaultRTL) => {
     if (!this.state.currentTextElem) return;
     const r = this.state.scaleRatio;
@@ -2986,7 +3032,7 @@ export default class IssieEditPhoto extends React.Component {
     let table;
     if (isTableCell) {
       const { tableID, col, row } = elem.tableCell;
-      table = this.canvas.current?.canvasTables().find(t => t.id === tableID);
+      table = this.state.canvasTables?.find(t => t.id === tableID);
     }
 
 

@@ -95,7 +95,7 @@ export function RecordButton({ audioB64, backgroundColor, size, height, revision
                     const b64 = await RNFS.readFile(filePath, "base64")
                     onNewAudioFile(b64);
                 } catch (e) {
-                    console.log("error readin file", e)
+                    console.log("error reading audio file", e)
                 }
             })
             .catch((err) => {

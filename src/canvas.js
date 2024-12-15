@@ -37,11 +37,13 @@ function Canvas({
     color,
     onTableResizeDuringTextEdit,
     metaDataPath,
+    updateState,
 }, ref) {
     const [canvas, setCanvas] = useState(React.createRef(null));
     const [texts, setTexts] = useState([]);
     const [images, setImages] = useState([]);
     const [tables, setTables] = useState([]);
+    const [audio, setAudio] = useState([]);
     const [paths, setPaths] = useState([]);
     const [tablePhase, setTablePhase] = useState(0);
 
@@ -114,9 +116,9 @@ function Canvas({
             if (end1 || end2) return true;
             trace("xxx", p.id, selectedID)
             if (p.id == selectedID) {
-                trace("on trash?", x,y,delX, delY)
+                trace("on trash?", x, y, delX, delY)
             }
-            if (p.id == selectedID && nearPoint(x, delX, sizeX*1.5) && nearPoint(y, delY, sizeY*1.5)) {
+            if (p.id == selectedID && nearPoint(x, delX, sizeX * 1.5) && nearPoint(y, delY, sizeY * 1.5)) {
                 return true;
             }
 
@@ -215,19 +217,18 @@ function Canvas({
         return undefined;
     }, [texts, images, isImageMode]);
 
-    const canvasTexts = useCallback(() => texts, [texts]);
-    const canvasTables = useCallback(() => tables, [tables]);
 
 
     useImperativeHandle(ref, () => ({
         findElementByLocation,
         findRuler,
         findRulerById,
-        canvasTexts,
         canvas,
-        canvasTables,
+        // canvasTexts,
+        // canvasTables,
+        // canvasAudio,
     }),
-        [findElementByLocation, findRuler, canvasTexts]);
+        [findElementByLocation, findRuler]);
 
 
     // Canvas Update
@@ -246,6 +247,7 @@ function Canvas({
         let canvasTables = [];
         let tableCellTexts = [];
         let canvasPaths = [];
+        let canvasAudio = [];
 
         for (let i = 0; i < q.length; i++) {
             if (q[i].type === 'text' || q[i].type === 'tableCellText') {
@@ -302,6 +304,16 @@ function Canvas({
                 canvasTables = canvasTables.filter(t => t.id !== q[i].elemID);
                 // delete all cell text related
                 tableCellTexts = tableCellTexts.filter(tct => tct.tableCell.tableID !== q[i].elemID)
+            } else if (q[i].type === 'audio') {
+                canvasAudio.push(q[i].elem);
+            } else if (q[i].type === 'audioDelete') {
+                canvasAudio = canvasAudio.filter(t => t.id !== q[i].elem.id);
+            } else if (q[i].type === 'audioPosition') {
+                const elemIndex = canvasAudio.findIndex(ci => ci.id === q[i].elem.id);
+                if (elemIndex >= 0) {
+                    const updatedAudio = { ...canvasAudio[elemIndex], ...q[i].elem }
+                    canvasAudio[elemIndex] = updatedAudio;
+                }
             }
         }
         // filter and mutate the cell size and the table's line
@@ -389,7 +401,10 @@ function Canvas({
         setTexts(canvasTexts);
         setImages(canvasImages);
         setTables(canvasTables);
-        setPaths(canvasPaths)
+        setPaths(canvasPaths);
+        setAudio(canvasAudio);
+
+        updateState({ canvasTables, canvasAudio });
 
         const waitFor = [
             new Promise((resolve) => canvas.current?.getImageIds((ids) => {
