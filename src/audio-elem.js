@@ -7,6 +7,7 @@ import { playRecording } from './recording'; // Ensure correct import path
 const zeroPos = { x0: 0, y0: 0, dx: 0, dy: 0 }
 
 export function AudioElement({
+    basePath,
     audioElem,
     scaleRatio,
     zoom,
@@ -86,7 +87,7 @@ export function AudioElement({
             <View
                 style={{
                     backgroundColor: "gray",
-                    
+
                     borderRadius: 10,
                     width: '100%',
                     height: '100%',
@@ -95,13 +96,13 @@ export function AudioElement({
                 }}
 
             >
-                {isAudioMode && <Icon name="trash" style={{position:"absolute", left:5, top:5}} color="white" size={25} onPress={() => {
+                {isAudioMode && <Icon name="trash" style={{ position: "absolute", left: 5, top: 5 }} color="white" size={25} onPress={() => {
                     UpdateQueue((queue) => {
                         queue.pushDeleteAudio({ id: audioElem.id });
                         return true;
                     });
                 }} />}
-                <Icon name="play" color="white" size={size * zoom * 0.4} onPress={() => playRecording(audioElem.audioData)} />
+                <Icon name="play" color="white" size={size * zoom * 0.4} onPress={() => playRecording(basePath + audioElem.file)} />
             </View>
         </View>
     );

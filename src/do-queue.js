@@ -2,21 +2,31 @@ import { trace } from "./log";
 import { arrLast } from "./utils";
 
 export default class DoQueue {
-  constructor(name, level) {
+  constructor(onAttachmentRemove, name, level) {
     this._doneQueue = []
     this._undoQueue = []
+    this._onAttachmentRemove = onAttachmentRemove;
+  }
+
+  async clearUndo() {
+    this._undoQueue.forEach(async (elem) => {
+      console.log("clear undo", elem)
+      if (elem.elem?.file) {
+        await this._onAttachmentRemove(elem.elem?.file);
+      }
+    })
+
+    this._undoQueue = [];
   }
 
   pushText(elem) {
     this.add({ elem: elem, type: 'text' });
-    //once new item added redo is reset
-    this._undoQueue = [];
+    this.clearUndo();
   }
 
   pushTableCellText(elem) {
     this.add({ elem: elem, type: 'tableCellText' });
-    //once new item added redo is reset
-    this._undoQueue = [];
+    this.clearUndo();
   }
 
   pushTableRangeMove(tableID, moves) {
@@ -61,7 +71,8 @@ export default class DoQueue {
 
     if (chagedCells.length > 0) {
       trace("push many", chagedCells);
-      this.pushMany(chagedCells)
+      this.pushMany(chagedCells);
+      this.clearUndo();
     }
   }
 
@@ -73,44 +84,43 @@ export default class DoQueue {
       }
       this.add(elem);
     });
-    this._undoQueue = [];
+    this.clearUndo();
   }
 
   pushImagePosition(elem) {
     this.add({ elem: elem, type: 'imagePosition' });
-    this._undoQueue = [];
+    this.clearUndo();
   }
 
   pushDeleteImage(elem) {
     this.add({ elem: elem, type: 'imageDelete' });
-    this._undoQueue = [];
-
+    this.clearUndo();
   }
 
   pushImage(elem) {
     this.add({ elem: elem, type: 'image' });
-    this._undoQueue = [];
+    this.clearUndo();
   }
 
   pushAudioPosition(elem) {
     this.add({ elem: elem, type: 'audioPosition' });
-    this._undoQueue = [];
+    this.clearUndo();
   }
 
   pushDeleteAudio(elem) {
     this.add({ elem: elem, type: 'audioDelete' });
-    this._undoQueue = [];
+    this.clearUndo();
 
   }
 
   pushAudio(elem) {
     this.add({ elem: elem, type: 'audio' });
-    this._undoQueue = [];
+    this.clearUndo();
   }
 
   pushPath(elem) {
     this.add({ elem: elem, type: 'path' });
-    this._undoQueue = [];
+    this.clearUndo();
   }
 
   pushTable(elem) {
@@ -118,27 +128,27 @@ export default class DoQueue {
     delete elem.clone;
 
     this.add({ elem: elem, type: 'table' });
-    this._undoQueue = [];
+    this.clearUndo();
   }
 
   pushColumnWidth(id, colIndex, width) {
     this.add({ elemID: id, type: 'tableColWidth', colIndex, width });
-    this._undoQueue = [];
+    this.clearUndo();
   }
 
   pushDeleteTable(id) {
     this.add({ elemID: id, type: 'tableDelete' });
-    this._undoQueue = [];
+    this.clearUndo();
   }
 
   pushLine(elem) {
     this.add({ elem: elem, type: 'line' });
-    this._undoQueue = [];
+    this.clearUndo();
   }
 
   pushDeleteLine(id) {
     this.add({ elemID: id, type: 'lineDelete' });
-    this._undoQueue = [];
+    this.clearUndo();
   }
 
   add(queueElem) {
@@ -181,6 +191,6 @@ export default class DoQueue {
   }
   clear() {
     this._doneQueue = []
-    this._undoQueue = []
+    this.clearUndo();
   }
 }

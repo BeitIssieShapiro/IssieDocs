@@ -386,10 +386,14 @@ export default class IssieSavePhoto extends React.Component {
           //single existing file
           try {
             await FileSystem.main.saveFile(newPathToSave + ".json", filePath + ".json", this.isDuplicate());
-            // todo move thumbnail too
           } catch (e) {
             //ignore, as maybe json is missing
           }
+
+          // rename/move attachments
+          await FileSystem.main._iterateAttachments(newPathToSave, async (srcAttachmentPath, attachmentName) => {
+            await FileSystem.main.saveFile(srcAttachmentPath, filePath + FileSystem.ATACHMENT_PREFIX + attachmentName, this.isDuplicate());
+          })
 
         }
 

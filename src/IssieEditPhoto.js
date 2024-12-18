@@ -343,7 +343,11 @@ export default class IssieEditPhoto extends React.Component {
       ...MODES_CLEANUP,
       strokeWidth: DEFAULT_STROKE_WIDTH,
       markerWidth: DEFAULT_MARKER_WIDTH,
-      queue: new DoQueue(),
+      queue: new DoQueue(async (attachName)=>{
+        // attachment being evicted from queue
+        console.log("File Evicted from queue")
+        await FileSystem.main.deleteAttachedFile(this.state.page, this.state.currentIndex, attachName)
+      }),
       toolbarHeight: 0,
       sideMargin: 0,
       windowSize,
@@ -678,6 +682,7 @@ export default class IssieEditPhoto extends React.Component {
     }
 
     trace("save before exit")
+    this.state.queue.clearUndo();
     this.SaveText();
   }
 
@@ -1517,14 +1522,15 @@ export default class IssieEditPhoto extends React.Component {
       });
   }
 
-  onAddAudio = (b64Audio) => {
+  onAddAudio = async (audioFilePath) => {
+    
     const audioElem = {
       id: Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 5),
       normPosition: {
         x: (this.state.viewPortRect.width / 2 - this.state.xOffset - audioImgSize / 2) / this.state.zoom,
         y: (this.state.viewPortRect.height / 2 - this.state.yOffset - audioImgSize / 2) / this.state.zoom,
       },
-      audioData: b64Audio,
+      file: await FileSystem.main.attachedFileToPage(audioFilePath, this.state.page, this.state.currentIndex, "m4a"),
     }
 
     this.state.queue.pushAudio(audioElem);
@@ -2084,7 +2090,9 @@ export default class IssieEditPhoto extends React.Component {
               }
               {
                 this.state.canvasAudio?.map(elem => (
-                  <AudioElement key={elem.id} audioElem={elem}
+                  <AudioElement key={elem.id} 
+                    basePath={FileSystem.main.getAttachmentBase(this.state.page, this.state.currentIndex)}
+                    audioElem={elem}
                     isAudioMode={this.isAudioMode()}
                     scaleRatio={this.state.scaleRatio} zoom={this.state.zoom}
                     xOffset={this.state.xOffset} yOffset={this.state.yOffset}

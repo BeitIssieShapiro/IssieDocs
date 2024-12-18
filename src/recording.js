@@ -12,15 +12,16 @@ import { audioRecorderPlayer } from "./App";
 
 export const BTN_BACK_COLOR = "#C8572A";
 
-export async function playRecording(b64, playbackListener) {
+export async function playRecording(audioFile, playbackListener) {
 
     try {
-        const filePath = `file://${RNFS.DocumentDirectoryPath}/tmp.m4a`;
-        await RNFS.writeFile(filePath, b64, "base64");
+        // const filePath = `file://${RNFS.DocumentDirectoryPath}/tmp.m4a`;
+        // await RNFS.writeFile(filePath, b64, "base64");
 
         // Start player and handle potential errors
-        await audioRecorderPlayer.startPlayer(filePath);
-        console.log('Player started', filePath);
+        await audioRecorderPlayer.stopPlayer();
+        await audioRecorderPlayer.startPlayer("file://" + audioFile);
+        console.log('Player started', audioFile);
 
         // Add playback listener if provided
         if (playbackListener) {
@@ -35,7 +36,7 @@ export async function playRecording(b64, playbackListener) {
     }
 }
 
-export function RecordButton({ audioB64, backgroundColor, size, height, revision, onNewAudioFile }) {
+export function RecordButton({ audioFile, backgroundColor, size, height, revision, onNewAudioFile }) {
     const [recordProgress, setRecordProgress] = useState(0);
     const [_, setRecordProgressInterval] = useState(undefined);
     const [state, setState] = useState({ recordSecs: 0 })
@@ -50,8 +51,8 @@ export function RecordButton({ audioB64, backgroundColor, size, height, revision
 
 
     useEffect(() => {
-        setRecordingExists(audioB64?.length > 0);
-    }, [revision, audioB64])
+        setRecordingExists(audioFile?.length > 0);
+    }, [revision, audioFile])
 
     const onStartRecord = async () => {
         console.log("about to start recording")
@@ -67,7 +68,7 @@ export function RecordButton({ audioB64, backgroundColor, size, height, revision
                 console.log("Failed to start recording...", err);
             });
 
-        
+
 
         setRecordProgressInterval((prevInterval) => {
             if (prevInterval) clearInterval(prevInterval);
@@ -92,8 +93,8 @@ export function RecordButton({ audioB64, backgroundColor, size, height, revision
             .then(async (filePath) => {
                 try {
                     console.log("save audio file", filePath)
-                    const b64 = await RNFS.readFile(filePath, "base64")
-                    onNewAudioFile(b64);
+                    //const b64 = await RNFS.readFile(filePath, "base64")
+                    onNewAudioFile(filePath);
                 } catch (e) {
                     console.log("error reading audio file", e)
                 }
@@ -225,7 +226,7 @@ export function RecordButton({ audioB64, backgroundColor, size, height, revision
                     }
 
                     console.log("Starting new playback...");
-                    const success = await playRecording(audioB64, playbackListener);
+                    const success = await playRecording(audioFile, playbackListener);
                     if (success) {
                         setPlaying(true);
                         console.log("Playback started successfully");

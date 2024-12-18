@@ -11,8 +11,11 @@ import ImageResizer from '@bam.tech/react-native-image-resizer';
 import { unzip, zip } from 'react-native-zip-archive';
 import { TemporaryDirectoryPath } from 'react-native-fs'
 import { PromiseAllProgress } from './utils';
+import uuid from 'react-native-uuid';
 
 const THUMBNAIL_SUFFIX = ".thumbnail.jpg";
+
+const ignore = () => { };
 
 /**
  * Filesystem:
@@ -40,6 +43,8 @@ export class FileSystem {
     }
     static DEFAULT_FOLDER_METADATA = { icon: '', color: 'gray' };
     static FOLDERS_PATH = "folders";
+    static ATACHMENT_PREFIX = ".attach.";
+
     static DEFAULT_FOLDER = { ID: 'Default', name: 'Default', path: 'Default', color: 'gray', icon: '', svgIcon: 'home', hideName: true };
 
     _folders = [];
@@ -84,7 +89,7 @@ export class FileSystem {
             console.log("readFolder", fsFolder.name, " color :" + metadata.color, parentFolder ? "child" : "root")
             let fsf = new FileSystemFolder(fsFolder.name, parentFolder, this, metadata);
             this.pushFolder(fsf, parentFolder && parentFolder.ID);
-            
+
             if (!parentFolder) {
                 // Verify of has child folders:
                 fsf.hasChildren = false;
@@ -187,7 +192,7 @@ export class FileSystem {
                 if (parentFolder.folders.some(folder => folder.name === fsf.name)) {
                     if (ignoreIfExists) return;
                     parentFolder._folders = parentFolder.folders.filter(folder => folder.name !== fsf.name);
-                    trace("dup1", fsf.name, parentFolder._folders.map(f=>f.name))
+                    trace("dup1", fsf.name, parentFolder._folders.map(f => f.name))
                 }
                 parentFolder.folders.push(fsf);
             }
@@ -197,7 +202,7 @@ export class FileSystem {
             if (this._folders.some(folder => folder.name === fsf.name)) {
                 if (ignoreIfExists) return;
                 this._folders = this._folders.filter(folder => folder.name !== fsf.name)
-                trace("dup2", fsf.name, this._folders.map(f=>f.name))
+                trace("dup2", fsf.name, this._folders.map(f => f.name))
             }
             this._folders.push(fsf);
         }
@@ -538,23 +543,23 @@ export class FileSystem {
     async movePage(sheet, newFolderID) {
         trace("move page", sheet.path, newFolderID);
 
-        const isSourceIsFolder = sheet.path.endsWith(".jpg");
+        const isSourceNotFolder = sheet.path.endsWith(".jpg");
         // Constract target path:
         const targetFolder = this.findFolderByID(newFolderID);
         const targetPath = this._basePath + targetFolder.path;
         let targetFileName = targetPath + '/' + sheet.name;
-        if (isSourceIsFolder) {
+        if (isSourceNotFolder) {
             targetFileName += ".jpg";
         }
 
         const srcPath = decodeURI(sheet.path);
         await FileSystem.main.saveFile(srcPath, targetFileName, false);
-        if (isSourceIsFolder)
-            try {
-                await FileSystem.main.saveFile(srcPath + ".json", targetFileName + ".json", false);
-            } catch (e) {
-                //ignore, as maybe json is missing
-            }
+        if (isSourceNotFolder) {
+            await FileSystem.main.saveFile(srcPath + ".json", targetFileName + ".json", false).catch(ignore);
+            await this._iterateAttachments(srcPath, async (srcAttachmentPath, attachmentName) => {
+                await FileSystem.main.saveFile(srcAttachmentPath, targetFileName + FileSystem.ATACHMENT_PREFIX + attachmentName, false);
+            });
+        }
 
         return FileSystem.main.renameOrDuplicateThumbnail(srcPath, targetFileName, false);
     }
@@ -576,9 +581,10 @@ export class FileSystem {
                     const fileAtI = basePath + (i) + '.jpg';
                     const fileAtIPlus1 = basePath + (i + 1) + '.jpg';
                     await RNFS.moveFile(fileAtI, fileAtIPlus1);
-                    try {
-                        await RNFS.moveFile(fileAtI + ".json", fileAtIPlus1 + ".json")
-                    } catch (e) {/*ignore as json may not exist*/ }
+                    await RNFS.moveFile(fileAtI + ".json", fileAtIPlus1 + ".json").catch(ignore);
+                    await this._iterateAttachments(fileAtI, async (srcAttachmentPath, attachmentName) => {
+                        await FileSystem.main.saveFile(srcAttachmentPath, fileAtIPlus1 + FileSystem.ATACHMENT_PREFIX + attachmentName);
+                    });
                 }
             }
 
@@ -594,11 +600,10 @@ export class FileSystem {
 
             await RNFS.mkdir(basePath);
             await RNFS.moveFile(sheet.path, basePath + '/0.jpg');
-            try {
-                await RNFS.moveFile(sheet.path + ".json", basePath + '/0.jpg.json');
-            } catch {
-                //ignore missing json
-            }
+            await RNFS.moveFile(sheet.path + ".json", basePath + "/0.jpg.json").catch(ignore);
+            await this._iterateAttachments(sheet.path, async (srcAttachmentPath, attachmentName) => {
+                await FileSystem.main.saveFile(srcAttachmentPath, basePath + "/0.jpg" + FileSystem.ATACHMENT_PREFIX + attachmentName);
+            });
 
             await FileSystem.main.saveFile(newPagePath, basePath + '/1.jpg', false);
             let pathObj = this._parsePath(basePath + '/1.jpg');
@@ -622,6 +627,28 @@ export class FileSystem {
 
     }
 
+    getAttachmentBase(sheet, pageIndex) {
+        let pagePath = sheet.getPage(pageIndex);
+        return pagePath + FileSystem.ATACHMENT_PREFIX;
+    }
+
+    async attachedFileToPage(origFile, sheet, pageIndex, ext) {
+        let pagePath = sheet.getPage(pageIndex);
+        const guid = uuid.v4();
+        const targetPath = pagePath + FileSystem.ATACHMENT_PREFIX + guid + "." + ext;
+        await RNFS.moveFile(origFile, targetPath);
+        console.log("attachedFileToPage", pagePath);
+        return guid + "." + ext;
+    }
+
+    async deleteAttachedFile(sheet, pageIndex, attachedFile) {
+        let pagePath = sheet.getPage(pageIndex);
+        const targetPath = pagePath + FileSystem.ATACHMENT_PREFIX + attachedFile;
+        trace("deleteAttachedFile", targetPath);
+        await RNFS.unlink(targetPath);
+    }
+
+
     //return an updated sheet
     async deletePageInSheet(sheet, deleteIndex) {
         if (sheet.count < 2) {
@@ -633,11 +660,10 @@ export class FileSystem {
 
         //delete file
         await RNFS.unlink(pagePath)
-        try {
-            await RNFS.unlink(pagePath + ".json");
-        } catch {
-            //ignore as maybe no json file
-        }
+        await RNFS.unlink(pagePath + ".json").catch(ignore);
+        await this._iterateAttachments(pagePath, async (srcAttachmentPath) => {
+            await RNFS.unlink(srcAttachmentPath);
+        });
 
         //fix file names
         // let basePathEnd = pagePath.lastIndexOf('/');
@@ -646,11 +672,10 @@ export class FileSystem {
         for (let i = deleteIndex + 1; i < sheet.count; i++) {
 
             await RNFS.moveFile(basePath + '/' + i + ".jpg", basePath + '/' + (i - 1) + ".jpg")
-            try {
-                await RNFS.moveFile(basePath + '/' + i + ".jpg.json", basePath + '/' + (i - 1) + ".jpg.json")
-            } catch {
-                //ignore as json may be missing
-            }
+            await RNFS.moveFile(basePath + '/' + i + ".jpg.json", basePath + '/' + (i - 1) + ".jpg.json").catch(ignore);
+            await this._iterateAttachments(basePath + '/' + i + ".jpg", async (srcAttachmentPath, attachmentName) => {
+                await RNFS.moveFile(srcAttachmentPath, basePath + '/' + (i - 1) + ".jpg" + FileSystem.ATACHMENT_PREFIX + attachmentName);
+            });
         }
 
         return await this._reloadBySheet(sheet);
@@ -688,14 +713,26 @@ export class FileSystem {
         const { folderID } = this._parsePath(filePath);
 
         await RNFS.unlink(filePath)
-        try {
-            await RNFS.unlink(filePath + ".json")
-        } catch (e) {/*do nothing as file may have no .json*/ }
+        await RNFS.unlink(filePath + ".json").catch(ignore)
+        await this._iterateAttachments(filePath, async (srcAttachmentPath) => {
+            await RNFS.unlink(srcAttachmentPath);
+        });
 
         await this._reloadFolder(folderID);
         this._notify(folderID);
     }
 
+    async _iterateAttachments(filePrefix, callback) {
+        const slashPos = filePrefix.lastIndexOf("/");
+        const files = await RNFS.readDir(filePrefix.substring(0, slashPos));
+        const filesToIterate = files.filter(file => file.path.startsWith(filePrefix));
+        const donePromises = filesToIterate.map(file => {
+            const name = file.path.substring(filePrefix.length + FileSystem.ATACHMENT_PREFIX.length);
+            return callback(file.path, name);
+        });
+        return Promise.all(donePromises);
+
+    }
 
     async _readFolderMetaData(folderPath) {
         try {
@@ -892,6 +929,8 @@ export class FileSystem {
                 if (await RNFS.exists(jsonFileName)) {
                     files.push(jsonFileName);
                 }
+                await this._iterateAttachments(sheet.defaultSrc, (srcAttachmentPath) => files.push(srcAttachmentPath));
+
             } else {
                 folderMetaData.subFolder = sheet.name;
                 const items = await RNFS.readDir(sheet.path);
@@ -1141,7 +1180,7 @@ export class FileSystemFolder {
         this._loading = true;
         console.log("reload folder: " + this._path);
         const items = await RNFS.readDir(this._fs.basePath + this._path);
-        const filesItems = items.filter(f => !f.name.endsWith(".json") && f.name !== ORDER_FILE_NAME &&
+        const filesItems = items.filter(f => !f.name.endsWith(".json") && !f.name.includes(FileSystem.ATACHMENT_PREFIX) && f.name !== ORDER_FILE_NAME &&
             f.name !== ".metadata" && !f.name.endsWith("thumbnail.jpg"));
 
         this._files = [];
@@ -1168,8 +1207,7 @@ export class FileSystemFolder {
                     for (let i = 0; i < pages.length; i++) {
                         lastUpdate = Math.max(lastUpdate, pages[i].mtime.valueOf(), pages[i].ctime.valueOf());
 
-                        if (!pages[i].name.endsWith(".json")) {
-
+                        if (!pages[i].name.endsWith(".json") && !pages[i].name.includes(FileSystem.ATACHMENT_PREFIX)) {
                             sheet.addPage(pages[i].path);
                         }
                     }
@@ -1223,7 +1261,7 @@ export class FileSystemFolder {
 
 //todo check with deep folders
 //sort.js
-const ORDER_FILE_NAME = 'order.json'
+const ORDER_FILE_NAME = "order.json"
 
 export async function saveFolderOrder(folders) {
     return new Promise((resolve) => {
