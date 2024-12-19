@@ -227,11 +227,11 @@ function EditorToolbar({
                 }
                 break;
             case Pickers.AUDIO:
-                if (isAudioMode) {
-                    if (!pickerTypeChanged) setShowPicker(oldVal => !oldVal);
-                } else {
+                if (!isAudioMode) {
+                    //     if (!pickerTypeChanged) setShowPicker(oldVal => !oldVal);
+                    // } else {
                     onAudioMode();
-                    setShowPicker(true);
+                    //  setShowPicker(true);
                 }
                 break;
             case Pickers.VOICE:
@@ -265,7 +265,7 @@ function EditorToolbar({
     }, [showPickerType, showPicker]);
 
 
-    const { row, rowReverse, rtl } = getRowDirections();
+    const { rtl } = getRowDirections();
 
     let toolbarSideMargin = sideMargin > 70 ? 70 : sideMargin;
     if (windowSize && windowSize.width - 2 * toolbarSideMargin < 300) {
@@ -280,22 +280,11 @@ function EditorToolbar({
     }
 
     let previewFontSize = fontSize4Toolbar(fontSize);
-    //trace("previewFontSize", previewFontSize, dimensions.toolbarHeight)
     let previewFontSizePlus = false;
     if (previewFontSize > dimensions.toolbarHeight - 5) {
         previewFontSizePlus = true;
         previewFontSize = dimensions.toolbarHeight - 5;
     }
-
-    const sideMenu = [
-        // <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM)} color={semanticColors.editPhotoButton}
-        //     icon="zoom-in" size={42} iconSize={42}/>,
-        //     <ButtonSpacer/>,
-        // <IconButton onPress={() => onSelectButtonClick(Pickers.COLOR, true)} icon={"color-lens"}
-        //     size={42} color={semanticColors.editPhotoButton} />,
-        //     <ButtonSpacer/>,
-        // getEraserIcon(onEraser, 42, eraseMode ? 'black' : semanticColors.editPhotoButton, eraseMode, 25)
-    ]
 
     const rullerBtn = <IconButton onPress={() => onModeButtonClick(Pickers.RULER)} color={isRulerMode ? color : semanticColors.editPhotoButton}
         iconType="material-community" icon="ruler" size={49} iconSize={45} selected={isRulerMode} ensureContrast={true} />;
@@ -362,7 +351,7 @@ function EditorToolbar({
             height: dimensions.toolbarHeight,
             left: 0,
             right: 0,
-            flexDirection: "row",
+            flexDirection: rtl ? "row" : "row-reverse",
             alignItems: 'center',
             //justifyContent:"flex-end"
         }}>
@@ -431,8 +420,9 @@ function EditorToolbar({
             {/** right side top toolbar */}
             <View style={[{
                 position: 'absolute',
+                [rtl ? "right" : "left"]: 0,
                 height: dimensions.toolbarHeight,
-                flexDirection: rowReverse, alignItems: 'center',
+                flexDirection: rtl ? "row-reverse" : "row", alignItems: 'center',
             }, //isScreenNarrow() ?
             //{ top: dimensions.toolbarHeight, left: 0 } //:
             { top: 0, right: 0 }
@@ -441,13 +431,14 @@ function EditorToolbar({
             </View>
         </View >
         {/** bottom toolbar */}
-        {showExtMenu && <View style={[{
+        {showExtMenu && <View style={{
             position: 'absolute',
+            [rtl ? "right" : "left"]: 0,
             height: dimensions.toolbarHeight,
-            flexDirection: rowReverse, alignItems: 'center',
+            flexDirection: rtl ? "row-reverse" : "row", alignItems: 'center',
             top: (isScreenNarrow() ? 2 : 1) * dimensions.toolbarHeight,
 
-        }, rtl ? { right: 0 } : { left: 0 }]} >
+        }} >
             {/* <View style={{position:"absolute",  borderBottomWidth:1,bottom:12,left:0,width:"100%"}}/> */}
             {spread(extMenu)}
         </View>}
@@ -455,7 +446,6 @@ function EditorToolbar({
         < View style={[{ position: "absolute", flexDirection: "column", top: 250, width: 45 },
         rtl ? { right: 0 } : { left: 0 }]
         }>
-            {sideMenu}
         </View >
 
         <MyColorPicker
@@ -538,14 +528,14 @@ function EditorToolbar({
         </FadeInView>
 
         {/*View for Audio*/}
-        <FadeInView height={showPickerType === Pickers.AUDIO && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
+        {/* <FadeInView height={showPickerType === Pickers.AUDIO && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 <RecordButton audioFile={currAudio} size={45} backgroundColor="red" height={55} revision={1} onNewAudioFile={(filePath)=>{
                     setCurrAudio(filePath);
                     onAddAudio(filePath);
                 }}/>
             </View>
-        </FadeInView>
+        </FadeInView> */}
 
         {/*View for selecting marker size*/}
         <FadeInView height={showPickerType === Pickers.MARKER && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
@@ -573,15 +563,15 @@ function EditorToolbar({
             style={[
                 styles.pickerView,
                 {
-                    flexDirection: rowReverse, top: toolbarHeight, left: 0, right: 0,
+                    flexDirection: "row-reverse", top: toolbarHeight, left: 0, right: 0,
                     justifyContent: "space-evenly", alignItems: "center", flexWrap: "wrap"
                 }
             ]}>
             <ToolbarGroup width={180} height={pickerMenuHeight - 15}>
-                <NumberSelector direction={rowReverse} value={tableRows} setValue={setRows} icon="table-rows" />
+                <NumberSelector direction={"row-reverse"} value={tableRows} setValue={setRows} icon="table-rows" />
             </ToolbarGroup>
             <ToolbarGroup width={180} height={pickerMenuHeight - 15}>
-                <NumberSelector direction={rowReverse} value={tableCols} setValue={setColumns} icon="table-rows" rotateDeg={90} />
+                <NumberSelector direction={"row-reverse"} value={tableCols} setValue={setColumns} icon="table-rows" rotateDeg={90} />
             </ToolbarGroup>
 
             <ToolbarGroup width={100} height={pickerMenuHeight - 15}>

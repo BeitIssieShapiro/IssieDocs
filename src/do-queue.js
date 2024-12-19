@@ -162,7 +162,9 @@ export default class DoQueue {
         this.undo()
       }
       this._undoQueue.push(elem);
+      return true;
     }
+    return false;
   }
 
   redo() {
@@ -172,7 +174,9 @@ export default class DoQueue {
         this.redo()
       }
       this._doneQueue.push(elem);
+      return true;
     }
+    return false;
   }
 
   popDraft() {

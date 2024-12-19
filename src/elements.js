@@ -255,23 +255,25 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
                 borderRadius: 25,
                 alignItems: 'center',
                 alignContent: 'center',
+                padding: 5,
                 justifyContent: textExist ? 'flex-end' : 'center',
                 backgroundColor: dark ? '#808080' : '#eeeded',
                 flexDirection: direction ? direction : getRowDirection()
             }}>
             {textExist ?
                 <AppText style={{
-                    position: 'absolute', paddingTop: 5, left: 0, width: icon ? '80%' : '100%', fontSize: textSize, lineHeight: textSize + (isRTL() ? 5 : 0),
-                    color: dark ? "white" : semanticColors.titleText, textAlign: 'center'
+                    marginEnd: (isRTL() ? 5 : 0), marginStart: (isRTL() ? 0 : 5),
+                    width: icon ? '80%' : '100%', fontSize: textSize, lineHeight: textSize + (isRTL() ? 5 : 0),
+                    color: dark ? "white" : semanticColors.titleText, textAlign: icon ? (isRTL() ? 'right' : 'left') : "center"
                 }}>{text}</AppText> : null
             }
             {icon?.startsWith("svg-") ?
                 <SvgIcon name={icon.substr(4)} size={iconSize} color={color} />
                 : icon && <Icon name={icon} size={iconSize} color={color} />
             }
-            {textExist ?
+            {/* {textExist ?
                 <Spacer width={5} /> : null
-            }
+            } */}
         </View>
     </TouchableOpacity>
 }
@@ -580,7 +582,7 @@ export function FileNameDialog({
                     <AppText style={[styles.titleText, { textAlign }, { width: isLandscape ? '40%' : '30%' }]}>{translate("CaptionFolderNameList")}</AppText>
                     {getRoundedButton(() => navigation.navigate('CreateFolder',
                         { saveNewFolder: onSaveNewFolder, isMobile }),
-                        'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 250, height: 40 }, row, true)}
+                        'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 220, height: 40 }, row, true)}
                 </View>
                 <Spacer />
                 <RootFolderPicker onChangeFolder={onChangeFolder} folders={folders} currentFolder={folder} showSubFolders={true} />
@@ -972,7 +974,7 @@ export function AppText(props) {
         }, props.style]}
             onPress={props.onPress}
 
-        {...moreProps}
+            {...moreProps}
         >{props.children}</Text>
     );
 }

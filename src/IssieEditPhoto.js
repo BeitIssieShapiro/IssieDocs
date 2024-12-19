@@ -163,9 +163,9 @@ export default class IssieEditPhoto extends React.Component {
           clearInterval(this.repeatMovement)
           this.repeatMovement = undefined;
         }
-        if (this.isTextMode()) {
-          this.SaveText(true);
-        } else if (this.isImageMode()) {
+        this.SaveCurrentEdits(true);
+
+        if (this.isImageMode()) {
           this.SaveImageAfterMove();
         }
       },
@@ -343,7 +343,7 @@ export default class IssieEditPhoto extends React.Component {
       ...MODES_CLEANUP,
       strokeWidth: DEFAULT_STROKE_WIDTH,
       markerWidth: DEFAULT_MARKER_WIDTH,
-      queue: new DoQueue(async (attachName)=>{
+      queue: new DoQueue(async (attachName) => {
         // attachment being evicted from queue
         console.log("File Evicted from queue")
         await FileSystem.main.deleteAttachedFile(this.state.page, this.state.currentIndex, attachName)
@@ -576,7 +576,7 @@ export default class IssieEditPhoto extends React.Component {
         return true;
       }
       return !this.state.showTextInput;//
-    } else if (this.isImageMode() || this.isTableMode() || this.isRulerMode()) {
+    } else if (this.isImageMode() || this.isTableMode() || this.isRulerMode() || this.isAudioMode()) {
       return true;
     } else if (this.isBrushMode() || this.isMarkerMode()) {
       return false;
@@ -632,19 +632,21 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   _keyboardDidHide = (e) => {
-    this.SaveText();
-    this.setState({
-      keyboardTop: -1, keyboardHeight: 0,
-      showTextInput: false,
-      currentTextElem: undefined,
-      yOffset: this.state.zoom === 1 ? 0 : this.state.yOffset
-    });
+    // this.SaveCurrentEdits();
+    // this.setState({
+    //   keyboardTop: -1, keyboardHeight: 0,
+    //   showTextInput: false,
+    //   currentTextElem: undefined,
+    //   yOffset: this.state.zoom === 1 ? 0 : this.state.yOffset
+    // });
 
-    Animated.timing(this.state.viewPortYOffset, {
-      toValue: this.state.zoom === 1 ? 0 : this.state.yOffset,
-      duration: 1000,
-      useNativeDriver: false,
-    }).start();
+    // Animated.timing(this.state.viewPortYOffset, {
+    //   toValue: this.state.zoom === 1 ? 0 : this.state.yOffset,
+    //   duration: 1000,
+    //   useNativeDriver: false,
+    // }).start();
+
+
   }
 
   componentDidMount = async () => {
@@ -672,7 +674,7 @@ export default class IssieEditPhoto extends React.Component {
       });
   }
 
-  componentWillUnmount = () => {
+  componentWillUnmount = async () => {
     this._mounted = false;
     if (this.keyboardDidShowListener) {
       this.keyboardDidShowListener.remove()
@@ -683,7 +685,7 @@ export default class IssieEditPhoto extends React.Component {
 
     trace("save before exit")
     this.state.queue.clearUndo();
-    this.SaveText();
+    await this.SaveCurrentEdits();
   }
 
   pageTitleAddition = (count, index) => count > 1 ? " - " + (index + 1) + "/" + count : ""
@@ -860,7 +862,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
 
-  canvasClick = (ev) => {
+  canvasClick = async (ev) => {
     let x = this.screen2ViewPortX(ev.nativeEvent.pageX);
     let y = this.screen2ViewPortY(ev.nativeEvent.pageY);
     this.toolbarRef.current.closePicker();
@@ -871,9 +873,9 @@ export default class IssieEditPhoto extends React.Component {
     //   "scaleRatio", this.state.scaleRatio,
     //   "toolbarHeight", this.state.toolbarHeight)
 
+    await this.SaveCurrentEdits();
 
     if (this.isTextMode()) {
-      this.SaveText();
       const { table } = this.findTable({ x, y });
 
       let textElem = this.canvas.current.findElementByLocation({
@@ -911,6 +913,17 @@ export default class IssieEditPhoto extends React.Component {
       }
       this.setState({
         currentImageElem: imgElem,
+        xText: x,
+        yText: y,
+      });
+    } else if (this.isAudioMode()) {
+      const audioElem = {
+        id: Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 5),
+      }
+
+      this.setState({
+        showAudioRecorder: true,
+        currAudioElem: audioElem,
         xText: x,
         yText: y,
       });
@@ -970,7 +983,7 @@ export default class IssieEditPhoto extends React.Component {
   incrementRevision = () => this.setState({ revision: this.state.revision + 1 });
   incrementTextEditRevision = () => this.setState({ textEditRevision: this.state.textEditRevision + 1 })
   clearCurrentTextElement = () => this.setState({ currentTextElem: undefined, showTextInput: false, lastKnownGoodText: undefined });
-
+  clearCurrentAudioElement = () => this.setState({ currAudioElem: undefined, showAudioRecorder: false });
   RulerStart = (normX, normY) => {
     trace("Ruler start", normX, normY)
     let elem, selectedElem
@@ -1101,6 +1114,40 @@ export default class IssieEditPhoto extends React.Component {
       this.incrementRevision();
     }
     trace("save ruler")
+  }
+
+  SaveCurrentEdits = (afterDrag) => {
+    if (this.isTextMode()) {
+      return this.SaveText(afterDrag);
+    }
+    if (this.isAudioMode()) {
+      return this.SaveAudio();
+    }
+  }
+
+  SaveAudio = async () => {
+    if (this.state.currAudioElem && this.state.currAudioElem.file) {
+      const audioFile = await FileSystem.main.attachedFileToPage(this.state.currAudioElem.file, this.state.page, this.state.currentIndex, "m4a");
+      const elem = {
+        ...this.state.currAudioElem,
+        file: audioFile,
+        normPosition: {
+          x: this.state.xText,
+          y: this.state.yText
+        }
+      }
+
+      console.log("SaveAudio", elem)
+      this.state.queue.pushAudio(elem);
+      this.clearCurrentAudioElement();
+      this.incrementRevision();
+
+      this.Save();
+      return true;
+    }
+    this.clearCurrentAudioElement();
+    return false;
+
   }
 
 
@@ -1440,7 +1487,7 @@ export default class IssieEditPhoto extends React.Component {
 
 
   onTextMode = () => {
-    trace("set text mode")
+    this.SaveCurrentEdits();
     this.setState({
       mode: Modes.TEXT,
       eraseMode: false,
@@ -1450,9 +1497,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   onAudioMode = () => {
-    if (this.isTextMode()) {
-      this.SaveText()
-    }
+    this.SaveCurrentEdits();
     this.setState({
       mode: Modes.AUDIO,
       ...MODES_CLEANUP
@@ -1522,22 +1567,6 @@ export default class IssieEditPhoto extends React.Component {
       });
   }
 
-  onAddAudio = async (audioFilePath) => {
-    
-    const audioElem = {
-      id: Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 5),
-      normPosition: {
-        x: (this.state.viewPortRect.width / 2 - this.state.xOffset - audioImgSize / 2) / this.state.zoom,
-        y: (this.state.viewPortRect.height / 2 - this.state.yOffset - audioImgSize / 2) / this.state.zoom,
-      },
-      file: await FileSystem.main.attachedFileToPage(audioFilePath, this.state.page, this.state.currentIndex, "m4a"),
-    }
-
-    this.state.queue.pushAudio(audioElem);
-    this.Save();
-    this.incrementRevision();
-  }
-
   onAddNewPage = async (src) => {
     getNewPage(src, (uri) => this.addNewPage(uri, src, false), undefined, (err) => { }, this.props.navigation);
   }
@@ -1565,9 +1594,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   onBrushMode = (isRuler) => {
-    if (this.isTextMode()) {
-      this.SaveText();
-    }
+    this.SaveCurrentEdits();
     this.setState({
       yOffset: this.state.zoom == 1 ? 0 : this.state.yOffset,
       mode: isRuler ? Modes.RULER : Modes.BRUSH, ...MODES_CLEANUP
@@ -1581,9 +1608,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   onMarkerMode = () => {
-    if (this.isTextMode()) {
-      this.SaveText();
-    }
+    this.SaveCurrentEdits();
     this.setState({
       yOffset: this.state.zoom == 1 ? 0 : this.state.yOffset,
       mode: Modes.MARKER, ...MODES_CLEANUP
@@ -1593,9 +1618,7 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   onTableMode = () => {
-    if (this.isTextMode()) {
-      this.SaveText();
-    }
+    this.SaveCurrentEdits();
     //todo multiple tables
     const table = this.state.canvasTables?.length > 0 ? this.state.canvasTables[0] : undefined;
     this.setState({
@@ -1674,9 +1697,9 @@ export default class IssieEditPhoto extends React.Component {
 
   movePage = (inc) => {
 
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
 
-      this.SaveText()
+      await this.SaveCurrentEdits();
 
       let currentIndex = -1;
       for (let i = 0; i < this.state.page.count; i++) {
@@ -1852,13 +1875,15 @@ export default class IssieEditPhoto extends React.Component {
           windowSize={this.state.windowSize}
           onGoBack={() => this.props.navigation.goBack()}
           onUndo={() => {
-            this.state.queue.undo();
-            this.afterUndoRedo();
+            if (this.state.queue.undo()) {
+              this.afterUndoRedo();
+            }
           }}
           canRedo={this.state.queue.canRedo()}
           onRedo={() => {
-            this.state.queue.redo();
-            this.afterUndoRedo();
+            if (this.state.queue.redo()) {
+              this.afterUndoRedo();
+            }
           }}
           Table={this.state.currentTable}
           fontSize4Toolbar={this.fontSize4Toolbar}
@@ -1871,9 +1896,7 @@ export default class IssieEditPhoto extends React.Component {
           isRulerMode={this.isRulerMode()}
           onTextMode={() => this.onTextMode()}
           onImageMode={() => {
-            if (this.isTextMode()) {
-              this.SaveText()
-            }
+            this.SaveCurrentEdits();
             this.setState({
               mode: Modes.IMAGE,
               ...MODES_CLEANUP
@@ -2090,16 +2113,49 @@ export default class IssieEditPhoto extends React.Component {
               }
               {
                 this.state.canvasAudio?.map(elem => (
-                  <AudioElement key={elem.id} 
+                  <AudioElement key={elem.id}
                     basePath={FileSystem.main.getAttachmentBase(this.state.page, this.state.currentIndex)}
-                    audioElem={elem}
-                    isAudioMode={this.isAudioMode()}
+                    audioFile={elem.file}
+                    normX={elem.normPosition.x}
+                    normY={elem.normPosition.y}
+                    showDelete={this.isAudioMode()}
                     scaleRatio={this.state.scaleRatio} zoom={this.state.zoom}
                     xOffset={this.state.xOffset} yOffset={this.state.yOffset}
-                    UpdateQueue={(callback) => this.UpdateQueue(callback)}
+                    onDelete={() => {
+                      this.state.queue.pushDeleteAudio({ id: elem.id });
+                      this.Save();
+                      this.incrementRevision();
+                    }}
+
+                    onMove={(normX, normY) => {
+                      this.state.queue.pushAudioPosition({ ...elem, normPosition: { x: normX, y: normY } })
+                      this.Save();
+                      this.incrementRevision();
+                    }}
                     size={audioImgSize}
                   />
                 ))
+              }
+              {
+                this.isAudioMode() && this.state.showAudioRecorder &&
+                <AudioElement
+                  basePath=""//{FileSystem.main.getAttachmentBase(this.state.page, this.state.currentIndex)}
+                  editMode={true}
+                  audioFile={this.state.currAudioElem.file}
+                  onUpdateAudioFile={(filePath) => this.setState({ currAudioElem: { ...this.state.currAudioElem, file: filePath } })}
+                  //       file: await FileSystem.main.attachedFileToPage(audioFilePath, this.state.page, this.state.currentIndex, "m4a"),
+
+                  normX={this.state.xText}
+                  normY={this.state.yText}
+                  scaleRatio={this.state.scaleRatio}
+                  zoom={this.state.zoom}
+                  xOffset={this.state.xOffset}
+                  yOffset={this.state.yOffset}
+                  onMove={(normX, normY) => {
+                    this.setState({ xText: normX, yText: normY });
+                  }}
+                  size={audioImgSize * 2}
+                />
               }
 
             </Animated.View>
@@ -3226,7 +3282,7 @@ export default class IssieEditPhoto extends React.Component {
         />
         <View style={{
           position: 'absolute',
-          left: isTableCell ? 0 : (DRAG_ICON_SIZE - 2),
+          [rtl ? "right" : "left"]: isTableCell ? 0 : (DRAG_ICON_SIZE - 2),
           top: 0,
           width: textActualWidth / r,
           height: inputTextHeight > 0 ? inputTextHeight / r : 45 / r,

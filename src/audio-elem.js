@@ -2,35 +2,42 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { PanResponder, View } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { playRecording } from './recording'; // Ensure correct import path
+import { playRecording, RecordButton } from './recording'; // Ensure correct import path
+import { trace } from './log';
 
 const zeroPos = { x0: 0, y0: 0, dx: 0, dy: 0 }
 
 export function AudioElement({
     basePath,
-    audioElem,
+    audioFile,
     scaleRatio,
     zoom,
+    normX,
+    normY,
     xOffset,
     yOffset,
-    UpdateQueue,
+    onDelete,
+    onMove,
+    onUpdateAudioFile,
     size,
-    isAudioMode
+    showDelete,
+    editMode,
 }) {
     const [moveState, setMoveState] = useState(zeroPos);
 
+    const x = normX * scaleRatio / zoom + xOffset;
+    const y = normY * scaleRatio / zoom + yOffset;
 
-    const x = audioElem.normPosition.x * scaleRatio * zoom + xOffset;
-    const y = audioElem.normPosition.y * scaleRatio * zoom + yOffset;
-    console.log("render audio", x, y, moveState)
-
-    const positionRef = useRef({ x, y });
+    const positionRef = useRef({ x, y, zoom, xOffset, yOffset, scaleRatio });
 
     // Update the ref whenever x or y changes
     useEffect(() => {
-        positionRef.current = { x, y };
+        const x = normX * scaleRatio / zoom + xOffset;
+        const y = normY * scaleRatio / zoom + yOffset;
+
+        positionRef.current = { x, y, zoom, xOffset, yOffset, scaleRatio }
         setMoveState(zeroPos);
-    }, [audioElem.normPosition.x, audioElem.normPosition.y, scaleRatio, zoom, xOffset, yOffset]);
+    }, [normX, normY, scaleRatio, zoom, xOffset, yOffset]);
 
     // PanResponder to handle drag gestures
     const panResponder = useRef(
@@ -45,7 +52,7 @@ export function AudioElement({
 
                 setMoveState(prev => {
                     const newState = {
-                        dx: newX - prev.x0, dy: newY - prev.y0, x0: prev.x0, y0: prev.y0,
+                        ...prev, dx: (newX - prev.x0), dy: (newY - prev.y0),
                     }
                     //console.log("move audio", newState, newX, newY, prev)
                     return newState
@@ -54,19 +61,18 @@ export function AudioElement({
             },
 
             onPanResponderRelease: () => {
+                trace("onPanResponderRelease")
                 setMoveState(ms => {
-                    const { x: currentX, y: currentY } = positionRef.current;
-
+                    const { x: currentX, y: currentY, zoom, xOffset, yOffset, scaleRatio } = positionRef.current;
+                    const x = currentX + ms.dx / zoom;
+                    const y = currentY + ms.dy / zoom;
                     // Calculate normalized position based on scaleRatio and zoom
-                    const normalizedX = (currentX + ms.dx - xOffset) / (zoom * scaleRatio);
-                    const normalizedY = (currentY + ms.dy - yOffset) / (zoom * scaleRatio);
+                    const normalizedX = ((x - xOffset)) * zoom / scaleRatio;
+                    const normalizedY = ((y - yOffset)) * zoom / scaleRatio;
 
-                    UpdateQueue((queue) => {
-                        queue.pushAudioPosition({ id: audioElem.id, normPosition: { x: normalizedX, y: normalizedY } })
-                        return true;
-                    });
-                    return { ...ms }
-
+                    onMove(normalizedX, normalizedY);
+                    positionRef.current = { x, y }
+                    return zeroPos;
                 })
             },
         })
@@ -77,10 +83,10 @@ export function AudioElement({
             {...panResponder.panHandlers}
             style={{
                 position: 'absolute',
-                left: x + moveState.dx,
-                top: y + moveState.dy,
-                width: size * zoom,
-                height: size * zoom,
+                left: x + moveState.dx / zoom,
+                top: y + moveState.dy / zoom,
+                width: size/zoom,
+                height: size/zoom,
                 zIndex: 1000, // Ensure it's above other elements
             }}
         >
@@ -96,13 +102,24 @@ export function AudioElement({
                 }}
 
             >
-                {isAudioMode && <Icon name="trash" style={{ position: "absolute", left: 5, top: 5 }} color="white" size={25} onPress={() => {
-                    UpdateQueue((queue) => {
-                        queue.pushDeleteAudio({ id: audioElem.id });
-                        return true;
-                    });
+                {showDelete && <Icon name="trash" style={{ position: "absolute", left: 5, top: 5 }} color="white" size={25} onPress={() => {
+                    if (onDelete) onDelete();
+                    // UpdateQueue((queue) => {
+                    //     queue.pushDeleteAudio({ id: audioElem.id });
+                    //     return true;
+                    // });
                 }} />}
-                <Icon name="play" color="white" size={size * zoom * 0.4} onPress={() => playRecording(basePath + audioElem.file)} />
+                {
+                    editMode ?
+                        <RecordButton audioFile={audioFile} size={45} backgroundColor="red" height={55} revision={1} onNewAudioFile={(filePath) => {
+                            //audioElem.file = filePath;
+                            //setRevision(prev=>prev+1);
+                            //onAddAudio(filePath);
+                            onUpdateAudioFile(filePath)
+                        }} /> :
+                        <Icon name="play" color="white" size={size * zoom * 0.4} onPress={() => playRecording(basePath + audioFile)} />
+                }
+
             </View>
         </View>
     );
