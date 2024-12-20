@@ -2118,6 +2118,8 @@ export default class IssieEditPhoto extends React.Component {
                     audioFile={elem.file}
                     normX={elem.normPosition.x}
                     normY={elem.normPosition.y}
+                    width={80}
+                    height={80}
                     showDelete={this.isAudioMode()}
                     scaleRatio={this.state.scaleRatio} zoom={this.state.zoom}
                     xOffset={this.state.xOffset} yOffset={this.state.yOffset}
@@ -2139,14 +2141,16 @@ export default class IssieEditPhoto extends React.Component {
               {
                 this.isAudioMode() && this.state.showAudioRecorder &&
                 <AudioElement
-                  basePath=""//{FileSystem.main.getAttachmentBase(this.state.page, this.state.currentIndex)}
+                  basePath=""
                   editMode={true}
                   audioFile={this.state.currAudioElem.file}
                   onUpdateAudioFile={(filePath) => this.setState({ currAudioElem: { ...this.state.currAudioElem, file: filePath } })}
-                  //       file: await FileSystem.main.attachedFileToPage(audioFilePath, this.state.page, this.state.currentIndex, "m4a"),
-
+                  showDelete={this.state.currAudioElem.file != undefined}
                   normX={this.state.xText}
                   normY={this.state.yText}
+                  width={80}
+                  height={80}
+
                   scaleRatio={this.state.scaleRatio}
                   zoom={this.state.zoom}
                   xOffset={this.state.xOffset}

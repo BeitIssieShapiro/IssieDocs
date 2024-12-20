@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 //import { AnimatedButton } from "./animatedButton";
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-import * as RNFS from 'react-native-fs';
 import { TouchableOpacity, View, Text } from "react-native";
 import { AudioWaveForm } from "./audio-progress";
 
@@ -35,6 +34,7 @@ export async function playRecording(audioFile, playbackListener) {
         return false;
     }
 }
+
 
 export function RecordButton({ audioFile, backgroundColor, size, height, revision, onNewAudioFile }) {
     const [recordProgress, setRecordProgress] = useState(0);
