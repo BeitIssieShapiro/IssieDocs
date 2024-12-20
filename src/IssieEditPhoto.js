@@ -2335,24 +2335,36 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getArrow = (location, func) => {
+    //trace("getArrow", location)
     let style = { flex: 1, position: 'absolute', zIndex: 10000 }
-    const sidesTop = Math.min(this.state.viewPortRect.height / 2 - 35, this.state.viewPortRect.height - this.state.keyboardHeight - 95)
+    let disabled = false;
+    const sidesTop = Math.min(this.state.viewPortRect.height / 2 - 35, this.state.viewPortRect.height - this.state.keyboardHeight - 95);
     const upDownLeft = this.state.windowSize.width / 2 - 35;
+    const verticalMovePossible = this.state.viewPortRect.height - this.state.yOffset - this.state.keyboardHeight < this.state.pageRect.height * this.state.zoom;
+    const horizMovePossible = this.state.viewPortRect.width - this.state.xOffset < this.state.pageRect.width * this.state.zoom;
 
     let deg = 0;
-    if (location == TOP && this.state.yOffset < 0 && this.state.keyboardHeight == 0) {
-      style.top = this.state.floatingMenuHeight, style.left = 100, deg = -90;
-      style.left = upDownLeft;
-    } else if (location == RIGHT && this.state.zoom > 1 &&
-      this.state.viewPortRect.width - this.state.xOffset < this.state.pageRect.width * this.state.zoom) {
+    if (location == TOP && (verticalMovePossible || this.state.yOffset < 0)) {
+      if (this.state.yOffset == 0) {
+        disabled = true;
+      }
+      style.top = this.state.floatingMenuHeight+5;
+      deg = -90;
+      style.left = upDownLeft + 50;
+    } else if (location == RIGHT && (horizMovePossible || this.state.xOffset < 0)) {
+      if (!horizMovePossible) {
+        disabled = true;
+      }
       style.top = sidesTop;
       style.right = 5, deg = 0;
-    } else if (location == BOTTOM && this.state.keyboardHeight == 0 &&
-      this.state.viewPortRect.height - this.state.yOffset - this.state.keyboardHeight < this.state.pageRect.height * this.state.zoom) {
-      //todo - arrow goes down too much in zoom
-      style.top = this.state.viewPortRect.height * this.state.zoom - 60 - this.state.keyboardHeight, deg = 90;
-      style.left = upDownLeft;
-    } else if (location == LEFT && this.state.xOffset < 0) {
+    } else if (location == BOTTOM && (verticalMovePossible || this.state.yOffset < 0)) {
+      style.top = this.state.floatingMenuHeight;//this.state.viewPortRect.height * this.state.zoom - 60 - this.state.keyboardHeight;
+      deg = 90;
+      style.left = upDownLeft - 50;
+    } else if (location == LEFT && (horizMovePossible || this.state.xOffset < 0)) {
+      if (this.state.xOffset == 0) {
+        disabled = true;
+      }
       style.top = sidesTop;
       style.left = 5, deg = 180;
     } else {
@@ -2362,7 +2374,7 @@ export default class IssieEditPhoto extends React.Component {
 
     return <View style={style} key={location}>
       <Icon
-        onPress={() => {
+        onPress={disabled ? undefined : () => {
           switch (location) {
             case TOP:
               return this.changeZoomOrOffset({ yOffset: this.state.yOffset + 50 }, true)
@@ -2376,7 +2388,7 @@ export default class IssieEditPhoto extends React.Component {
         }}
         name='play-arrow'
         size={70}
-        color={semanticColors.moveInZoomButton}
+        color={disabled ? semanticColors.moveInZoomButtonDisabled : semanticColors.moveInZoomButton}
       />
     </View>
   }
@@ -2866,7 +2878,6 @@ export default class IssieEditPhoto extends React.Component {
         color={this.isMarkerMode() && !this.isEraserMode() ? color + MARKER_TRANSPARENCY_CONSTANT : color}
         onTableResizeDuringTextEdit={() => this.incrementTextEditRevision()}
         updateState={(newState) => {
-          trace("Canvas updates state", Object.keys(newState).map(key => newState[key].map(e => e.normPosition)))
           this.setState(newState)
         }}
       />

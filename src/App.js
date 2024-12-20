@@ -127,7 +127,7 @@ const App = (props) => {
                 let title = titleSetting;
                 let titleSavedCallback = { getTitleToSave: undefined };
                 const header = (() => <TopHeader
-                  actions={<View style={{ width: "100%", flexDirection: getRowDirection(), justifyContent: "flex-end" }}>
+                  actions={<View style={{ width: "100%", flexDirection: getRowDirection(), justifyContent: "flex-end", zIndex:2000 }}>
                     {
                       props.route && props.route.params ?
                         getIconButton(() => {
@@ -180,6 +180,7 @@ const App = (props) => {
               let multiPageTitleAddition = props.route.params.pageTitleAddition || "";
 
               const header = () => <TopHeader
+                style={{zIndex:2000}}
                 actions={<View />}
                 titleText={fileName + multiPageTitleAddition}
                 nav={<View style={{ flex: 1, flexDirection: getRowDirection() }}>

@@ -9,7 +9,6 @@ import { isRTL } from "./lang";
 import { audioRecorderPlayer } from "./App";
 
 
-export const BTN_BACK_COLOR = "#C8572A";
 
 export async function playRecording(audioFile, playbackListener) {
 

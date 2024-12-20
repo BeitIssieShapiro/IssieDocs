@@ -69,6 +69,7 @@ export const semanticColors = {
     folderIcons: '#27b0ff', //colors.navyBlue,
     selectedCheck: "#4630EB",
     moveInZoomButton: "#D16F28",
+    moveInZoomButtonDisabled: "#BFA28F",
     header: '#183d72',
     header2: 'white',
     mainAreaBG: '#f1f2f4',

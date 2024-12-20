@@ -1,8 +1,6 @@
-
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { playRecording, RecordButton } from './recording'; // Ensure correct import path
 import { audioRecorderPlayer } from "./App";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 
@@ -15,12 +13,31 @@ import Animated, {
     Easing,
     useAnimatedReaction,
     interpolateColor,
-    interpolate,
-    Extrapolation,
 } from 'react-native-reanimated';
 
 const zeroPos = { x0: 0, y0: 0, dx: 0, dy: 0 }
 export const BTN_BACK_COLOR = "#C8572A";
+
+async function playRecording(audioFile, playbackListener) {
+
+    try {
+        // Start player and handle potential errors
+        await audioRecorderPlayer.stopPlayer();
+        await audioRecorderPlayer.startPlayer("file://" + audioFile);
+        console.log('Player started', audioFile);
+
+        // Add playback listener if provided
+        if (playbackListener) {
+            console.log('Adding playback listener');
+            audioRecorderPlayer.addPlayBackListener(playbackListener);
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Error in playRecording:", error);
+        return false;
+    }
+}
 
 export function AudioElement({
     basePath,
@@ -43,68 +60,56 @@ export function AudioElement({
     const [recording, setRecording] = useState(false);
     const [recordingState, setRecordingState] = useState();
 
-
-    const x = normX * scaleRatio / zoom + xOffset;
-    const y = normY * scaleRatio / zoom + yOffset;
-
-    const positionRef = useRef({ x, y, zoom, xOffset, yOffset, scaleRatio });
+    const positionRef = useRef({
+        normX,
+        normY,
+        zoom, scaleRatio
+    });
 
     // Update the ref whenever x or y changes
     useEffect(() => {
-        const x = normX * scaleRatio / zoom + xOffset;
-        const y = normY * scaleRatio / zoom + yOffset;
 
-        positionRef.current = { x, y, zoom, xOffset, yOffset, scaleRatio }
+        positionRef.current = { normX, normY, zoom, scaleRatio }
+        console.log("update pos ref", positionRef.current)
         setMoveState(zeroPos);
     }, [normX, normY, scaleRatio, zoom, xOffset, yOffset]);
 
     // PanResponder to handle drag gestures
     const panResponder = useRef(
         PanResponder.create({
-            onStartShouldSetPanResponder: () => true, // Allows the responder to handle touch
-            onPanResponderGrant: (e) => {
-                setMoveState({ x0: e.nativeEvent.pageX, y0: e.nativeEvent.pageY, dx: 0, dy: 0 })
+            onStartShouldSetPanResponder: () => false, // Do not activate on touch start
+            onMoveShouldSetPanResponder: (evt, gestureState) => {
+                const threshold = 5; // Minimum movement in pixels to activate drag
+                return Math.abs(gestureState.dx) > threshold || Math.abs(gestureState.dy) > threshold;
             },
-            onPanResponderMove: (e) => {
-                const newX = e.nativeEvent.pageX;
-                const newY = e.nativeEvent.pageY;
-
-                setMoveState(prev => {
-                    const newState = {
-                        ...prev, dx: (newX - prev.x0), dy: (newY - prev.y0),
-                    }
-                    //console.log("move audio", newState, newX, newY, prev)
-                    return newState
-
+            onPanResponderGrant: (e) => {
+                setMoveState({
+                    dx: 0, dy: 0
                 });
             },
-
-            onPanResponderRelease: () => {
-                trace("onPanResponderRelease")
-                setMoveState(ms => {
-                    const { x: currentX, y: currentY, zoom, xOffset, yOffset, scaleRatio } = positionRef.current;
-                    const x = currentX + ms.dx / zoom;
-                    const y = currentY + ms.dy / zoom;
-                    // Calculate normalized position based on scaleRatio and zoom
-                    const normalizedX = ((x - xOffset)) * zoom / scaleRatio;
-                    const normalizedY = ((y - yOffset)) * zoom / scaleRatio;
-
-                    onMove(normalizedX, normalizedY);
-                    positionRef.current = { x, y }
-                    return zeroPos;
-                })
+            onPanResponderMove: (e, gestureState) => {
+                setMoveState({
+                    dx: gestureState.dx,
+                    dy: gestureState.dy,
+                });
+            },
+            onPanResponderRelease: (e, gestureState) => {
+                const { normX, normY, zoom, scaleRatio } = positionRef.current;
+                const newNormX = normX + gestureState.dx / zoom;
+                const newNormY = normY + gestureState.dy / zoom;
+                onMove(newNormX, newNormY);
+                positionRef.current = { normX: newNormX, normY: newNormY, zoom, scaleRatio };
+                setMoveState(zeroPos)
             },
         })
     ).current;
 
-    //const recordingProgress = ((recordingState?.currentPosition || 0) / 1000).toFixed(1);
+    trace("audio elem", zoom, positionRef.current.x + moveState.dx / zoom - xOffset)
     return (
         <View style={{
             position: 'absolute',
-            left: x + moveState.dx / zoom - 25,
-            top: y + moveState.dy / zoom,
-
-            backgroundColor: "green"
+            left: (positionRef.current.normX + moveState.dx / zoom) * scaleRatio + xOffset - 25,
+            top: (positionRef.current.normY + moveState.dy / zoom) * scaleRatio + yOffset
         }}>
             <View
                 {...panResponder.panHandlers}
@@ -113,25 +118,29 @@ export function AudioElement({
                     display: "flex",
                     flexDirection: "column",
                     backgroundColor: "#DCDCDC",
-                    borderRadius: 15,
+                    borderRadius: 15 / zoom,
                     left: 25,
+                    top: 0,
                     width: width / zoom,
                     height: height / zoom,
                     justifyContent: 'center',
                     alignItems: 'center',
-
-
                     zIndex: 1000, // Ensure it's above other elements
+
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: 0.35,
+                    shadowRadius: 3.84,
                 }}
             >
-                {showDelete && <Icon name="trash" style={{ position: "absolute", left: -15, top: -5, zIndex: 1000 }} color={styles.container.backgroundColor} size={25} onPress={() => {
+                {showDelete && <Icon name="trash" style={{ position: "absolute", left: -15, top: -5, zIndex: 1000, transform: [{ scale: 1 / zoom }] }} color={styles.container.backgroundColor} size={25} onPress={() => {
                     if (onDelete) onDelete();
                 }} />}
                 {
                     editMode && !audioFile ?
-                        <RecordButton2 
+                        <RecordButton2
                             size={60}
-
+                            zoom={zoom}
                             recordingProgressCallback={(state) => {
                                 console.log("recording state", state);
                                 setRecordingState(state);
@@ -143,21 +152,20 @@ export function AudioElement({
                             }}
                             onNewAudio={(filePath) => onUpdateAudioFile(filePath)}
                         /> :
-                        <PlayButton 
-                        size={60}
-                        zoom={zoom}
-                         audioFile={basePath + audioFile} />
+                        <PlayButton
+                            size={60}
+                            zoom={zoom}
+                            audioFile={basePath + audioFile}
+                        />
                 }
-
-            </View >
+            </View>
         </View>
-
     );
 }
 
-
 export const RecordButton2 = ({
     size,
+    zoom = 1,
     onNewAudio,
     recordingProgressCallback,
     onStartRecord,
@@ -277,15 +285,18 @@ export const RecordButton2 = ({
     return (
         <Pressable
             onPress={_onPress}
-            style={[
-                styles.circle,
-                {
-                    width: size,
-                    height: size,
-                    borderRadius: size / 2,
-                },
-            ]}
-        >
+            style={{
+                transform: [{ scale: 1 / zoom }],
+                alignItems: "center",
+                justifyContent: "center",
+            }}>
+            <View style={[styles.circle, {
+                position: "absolute",
+                width: size,
+                height: size,
+                borderRadius: size / 2,
+            }]} />
+
             <Animated.View style={[animatedCircleStyle]}>
                 <Animated.View
                     style={[
@@ -373,11 +384,10 @@ export const PlayButton = ({
         }
     }, [pausing, playing]);
 
-    console.log("play progress", progress)
 
     return (
         <Pressable onPress={onPress}>
-            <View style={[styles.container, { width: size, height: size, transform:[{ scale: 1/zoom }] }]}>
+            <View style={[styles.container, { width: size, height: size, transform: [{ scale: 1 / zoom }] }]}>
                 {(pausing || playing) && <AnimatedCircularProgress
                     style={{ position: "absolute", top: 0, left: 0, width: size, height: size }}
                     duration={progRate}
@@ -389,13 +399,7 @@ export const PlayButton = ({
                     onAnimationComplete={() => console.log('onAnimationComplete')}
                     backgroundColor={styles.container.backgroundColor}
                 />}
-                {/* <Icon
-                    style={styles.playIcon}
-                    name={isPlaying.value ? 'pause' : 'play'}
-                    size={size / 3}
-                    color="navyblue"
-                />
-                 */}
+
                 {!playing && <View style={styles.triangle} />}
                 {playing && <View style={styles.pause} />}
             </View>
@@ -405,12 +409,10 @@ export const PlayButton = ({
 
 const styles = StyleSheet.create({
     circle: {
-        // Static styles for the outer Pressable component
         backgroundColor: "black",
-        alignItems: "center",
-        justifyContent: "center",
         borderWidth: 5,
         borderColor: "white",
+
     },
     square: {
         backgroundColor: "red",

@@ -250,9 +250,16 @@ function EditorToolbar({
     }, [isVoiceMode, isTextMode, isBrushMode, isTableMode, isImageMode, isAudioMode, isMarkerMode, showPickerType, showPicker]);
 
 
-    onSelectButtonClick = useCallback((type, preservePrevious) => {
+    onSelectButtonClick = useCallback((type, preservePrevious, setMenuHeight, height) => {
         if (showPickerType === type) {
-            setShowPicker(oldVal => !oldVal);
+            setShowPicker(oldVal => {
+                if (setMenuHeight) {
+                    trace("set menu height", oldVal ? 0 : height)
+                    setMenuHeight(oldVal ? 0 : height)
+                }
+                return !oldVal
+            });
+
         } else {
             if (preservePrevious && showPicker) {
                 setPreviousPickerType(showPickerType);
@@ -261,6 +268,9 @@ function EditorToolbar({
             }
             setShowPickerType(type);
             setShowPicker(true);
+            if (setMenuHeight) {
+                setMenuHeight( height)
+            }
         }
     }, [showPickerType, showPicker]);
 
@@ -309,7 +319,7 @@ function EditorToolbar({
             iconType="font-awesome" icon="table" size={47} iconSize={42} selected={isTableMode} ensureContrast={true} />,
 
         rullerBtn,
-        <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM)} color={semanticColors.editPhotoButton}
+        <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM, undefined, setZoomMenuHeight, 55)} color={semanticColors.editPhotoButton}
             icon="zoom-in" size={50} iconSize={45} />,
         // <IconButton onPress={() => onModeButtonClick(Pickers.VOICE)} color={semanticColors.editPhotoButton}
         //     icon="record-voice-over" size={55} iconSize={45} selected={isVoiceMode} />,
@@ -512,7 +522,7 @@ function EditorToolbar({
         </FadeInView>
 
         {/*View for zoom*/}
-        <FadeInView height={showPickerType === Pickers.ZOOM && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
+        <FadeInView height={showPickerType === Pickers.ZOOM && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%', height: zoomMenuHeight }]}>
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 <IconButton onPress={onZoomOut} icon={"zoom-out"} size={55} iconSize={45} />
                 <IconButton onPress={onZoomIn} icon={"zoom-in"} size={55} iconSize={45} />
