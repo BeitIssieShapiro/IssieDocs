@@ -1120,14 +1120,14 @@ export default class IssieEditPhoto extends React.Component {
     if (this.isTextMode()) {
       return this.SaveText(afterDrag);
     }
-    if (this.isAudioMode()) {
-      return this.SaveAudio();
-    }
+    // if (this.isAudioMode()) {
+    //   return this.SaveAudio();
+    // }
   }
 
-  SaveAudio = async () => {
-    if (this.state.currAudioElem && this.state.currAudioElem.file) {
-      const audioFile = await FileSystem.main.attachedFileToPage(this.state.currAudioElem.file, this.state.page, this.state.currentIndex, "m4a");
+  SaveAudio = async (filePath) => {
+    if (this.state.currAudioElem) {
+      const audioFile = await FileSystem.main.attachedFileToPage(filePath, this.state.page, this.state.currentIndex, "m4a");
       const elem = {
         ...this.state.currAudioElem,
         file: audioFile,
@@ -2144,7 +2144,7 @@ export default class IssieEditPhoto extends React.Component {
                   basePath=""
                   editMode={true}
                   audioFile={this.state.currAudioElem.file}
-                  onUpdateAudioFile={(filePath) => this.setState({ currAudioElem: { ...this.state.currAudioElem, file: filePath } })}
+                  onUpdateAudioFile={(filePath) => this.SaveAudio(filePath)}
                   showDelete={this.state.currAudioElem.file != undefined}
                   normX={this.state.xText}
                   normY={this.state.yText}
