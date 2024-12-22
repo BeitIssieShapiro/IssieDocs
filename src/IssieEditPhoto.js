@@ -37,6 +37,7 @@ import Canvas, { RESIZE_TABLE_BOX_SIZE } from './canvas';
 import { FileContextMenu } from './file-context-menu';
 import RNSystemSounds from '@dashdoc/react-native-system-sounds';
 import { AudioElement } from './audio-elem.js';
+import { generatePDF } from './pdf.js';
 
 const shareTimeMs = 2000;
 
@@ -65,7 +66,9 @@ const MODES_CLEANUP = {
   showTextInput: false,
   currentTextElem: undefined,
   tableSelection: undefined,
-  selectedRulerElemId: undefined
+  selectedRulerElemId: undefined,
+  currAudioElem: undefined,
+  showAudioRecorder: false,
 }
 
 function printRect(rect) {
@@ -730,18 +733,35 @@ export default class IssieEditPhoto extends React.Component {
       this.setState({ sharing: false });
       //avoid reshare again
       setNavParam(this.props.navigation, 'share', false);
+      trace("about to share", dataUrls.length)
 
-      const shareOptions = {
-        title: translate("ShareWithTitle"),
-        subject: translate("ShareEmailSubject"),
-        urls: dataUrls
-      };
-      //Alert.alert(JSON.stringify(dataUrls))
-      Share.open(shareOptions).then(() => {
-        Alert.alert(translate("ShareSuccessful"));
-      }).catch(err => {
-        //Alert.alert(translate("ActionCancelled"));
-      });
+      const shareUrl = dataUrls.length > 1 ?
+        "file://" + (await generatePDF(dataUrls)) :
+        dataUrls[0];
+      trace("share", shareUrl)
+      if (shareUrl) {
+        // Define share options
+        const shareOptions = {
+          title: translate("ShareWithTitle"),
+          subject: translate("ShareEmailSubject"),
+          url: shareUrl,
+          type: 'application/pdf',
+        };
+
+        // Share the PDF
+        Share.open(shareOptions)
+          .then(() => {
+            Alert.alert(translate("ShareSuccessful"));
+          })
+          .catch(err => {
+            if (err && err.error !== 'User did not share') {
+              Alert.alert("Error sharing PDF");
+            }
+            // Handle other errors or user cancellations if necessary
+          });
+      } else {
+        Alert.alert("Failed to generate PDF for sharing.");
+      }
 
     }
   }
@@ -1272,7 +1292,7 @@ export default class IssieEditPhoto extends React.Component {
   normWidth2Width = (w, fontSize) => w * fontSize / this.normFontSize2FontSize(fontSize);
   width2NormWidth = (w, fontSize) => w * this.normFontSize2FontSize(fontSize) / fontSize;
 
-  getImageElement = (imageData, ratio) => {
+  getImageElement = (imageFile, ratio) => {
     let newImageElem = {
       id: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5)
     };
@@ -1282,7 +1302,7 @@ export default class IssieEditPhoto extends React.Component {
       x: (this.state.viewPortRect.width / 2 / this.state.scaleRatio - initialImageSizeScaled / 2 - this.state.xOffset) / this.state.zoom,
       y: (this.state.viewPortRect.height / 2 / this.state.scaleRatio - initialImageSizeScaled / 2 - this.state.yOffset) / this.state.zoom,
     };
-    newImageElem.imageData = imageData
+    newImageElem.file = imageFile
     newImageElem.width = Math.round(initialImageSizeScaled * ratio);
     newImageElem.height = initialImageSizeScaled;
     return newImageElem;
@@ -1541,10 +1561,10 @@ export default class IssieEditPhoto extends React.Component {
         getImageDimensions(uri).then((imgSize) => {
           const ratio = imgSize.w / imgSize.h;
           FileSystem.main.resizeImage(uri, Math.round(this.state.viewPortRect.width / 1.5), this.state.viewPortRect.height / 1.5)
-            .then(uri2 => FileSystem.main.convertImageToBase64(uri2))
-            .then(imgBase64 => {
+            .then(uri2 => FileSystem.main.attachedFileToPage(uri2, this.state.page, this.state.currentIndex, "jpeg"))
+            .then(imageAttachmentFile => {
 
-              const img = this.getImageElement(imgBase64, ratio)
+              const img = this.getImageElement(imageAttachmentFile, ratio)
               this.state.queue.pushImage(img)
               const scaleImg = this.imageNorm2Scale(img)
               this.setState({
@@ -2060,6 +2080,7 @@ export default class IssieEditPhoto extends React.Component {
             <Animated.View
               style={{
                 zIndex: 1,
+                overflow:"hidden",
                 // left: this.state.xOffset,
                 // top: this.state.yOffset,
                 left: this.state.viewPortXOffset,
@@ -2087,7 +2108,7 @@ export default class IssieEditPhoto extends React.Component {
                   </ProgressCircle> */}
                   <Progress.Circle
                     size={300} // Diameter (2 * radius)
-                    progress={shareProgress / 100} // Convert to 0-1 range
+                    progress={this.state.shareProgress / 100} // Convert to 0-1 range
                     color="#3399FF"
                     unfilledColor="#999999" // Equivalent to shadowColor
                     borderWidth={5}
@@ -2099,8 +2120,8 @@ export default class IssieEditPhoto extends React.Component {
                       <Text style={styles.text}>
                         {fTranslate(
                           "ExportProgress",
-                          shareProgressPage,
-                          page.count > 0 ? page.count : 1
+                          this.state.shareProgressPage,
+                          this.state.page.count > 0 ? this.state.page.count : 1
                         )}
                       </Text>
                     </View>
@@ -2348,7 +2369,7 @@ export default class IssieEditPhoto extends React.Component {
       if (this.state.yOffset == 0) {
         disabled = true;
       }
-      style.top = this.state.floatingMenuHeight+5;
+      style.top = this.state.floatingMenuHeight + 5;
       deg = -90;
       style.left = upDownLeft + 50;
     } else if (location == RIGHT && (horizMovePossible || this.state.xOffset < 0)) {
@@ -2849,6 +2870,7 @@ export default class IssieEditPhoto extends React.Component {
     return (
       <Canvas
         ref={this.canvas}
+        basePath={this.state.page && FileSystem.main.getAttachmentBase(this.state.page, this.state.currentIndex)}
         metaDataPath={this.state.metaDataUri}
         width={width}
         height={height}

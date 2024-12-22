@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { audioRecorderPlayer } from "./App";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 
@@ -14,6 +14,7 @@ import Animated, {
     useAnimatedReaction,
     interpolateColor,
 } from 'react-native-reanimated';
+import { semanticColors } from './elements';
 
 const zeroPos = { x0: 0, y0: 0, dx: 0, dy: 0 }
 export const BTN_BACK_COLOR = "#C8572A";
@@ -108,8 +109,8 @@ export function AudioElement({
     return (
         <View style={{
             position: 'absolute',
-            left: (positionRef.current.normX + moveState.dx / zoom) * scaleRatio + xOffset - 25,
-            top: (positionRef.current.normY + moveState.dy / zoom) * scaleRatio + yOffset
+            left: (positionRef.current.normX + moveState.dx / zoom) * scaleRatio  - 25,
+            top: (positionRef.current.normY  + moveState.dy / zoom) * scaleRatio
         }}>
             <View
                 {...panResponder.panHandlers}
@@ -133,7 +134,7 @@ export function AudioElement({
                     shadowRadius: 3.84,
                 }}
             >
-                {showDelete && <Icon name="trash" style={{ position: "absolute", left: -15, top: -5, zIndex: 1000, transform: [{ scale: 1 / zoom }] }} color={styles.container.backgroundColor} size={25} onPress={() => {
+                {showDelete && <Icon name="delete-forever" style={{ position: "absolute", left: -35, top: -5, zIndex: 1000, transform: [{ scale: 1 / zoom }] }} color={"black"} size={40} onPress={() => {
                     if (onDelete) onDelete();
                 }} />}
                 {
@@ -389,11 +390,11 @@ export const PlayButton = ({
         <Pressable onPress={onPress}>
             <View style={[styles.container, { width: size, height: size, transform: [{ scale: 1 / zoom }] }]}>
                 {(pausing || playing) && <AnimatedCircularProgress
-                    style={{ position: "absolute", top: 0, left: 0, width: size, height: size }}
+                    style={{ position: "absolute", top: 2, left: 2 }}
                     duration={progRate}
                     rotation={0}
-                    size={size}
-                    width={7}
+                    size={size - 4}
+                    width={3}
                     fill={progress * 100}
                     tintColor={"white"}
                     onAnimationComplete={() => console.log('onAnimationComplete')}
@@ -446,7 +447,7 @@ const styles = StyleSheet.create({
         color: "white"
     },
     container: {
-        backgroundColor: "#173D73",
+        backgroundColor: semanticColors.actionButton, //"#173D73",
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: "50%",

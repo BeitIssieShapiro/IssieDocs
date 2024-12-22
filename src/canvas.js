@@ -11,6 +11,7 @@ const DEFAULT_STROKE_WIDTH = 5;
 export const RESIZE_TABLE_BOX_SIZE = 22;
 export const RESIZE_TABLE_BOX_OFFSET = 2;
 function Canvas({
+    basePath,
     revision,
     layoutReady,
     width, height,
@@ -285,7 +286,13 @@ function Canvas({
             } else if (q[i].type === 'lineDelete') {
                 canvasPaths = canvasPaths.filter(l => l.id !== q[i].elemID);
             } else if (q[i].type === 'image') {
-                canvasImages.push(imageNorm2Scale(q[i].elem, scaleRatio));
+                // translate the relative path to full path:
+                let elem = q[i].elem;
+                if (elem.file) {
+                    elem = { ...elem, file: basePath + elem.file }
+                }
+
+                canvasImages.push(imageNorm2Scale(elem, scaleRatio));
             } else if (q[i].type === 'imagePosition') {
                 const elemIndex = canvasImages.findIndex(ci => ci.id === q[i].elem.id);
                 if (elemIndex >= 0) {
@@ -654,8 +661,8 @@ function Canvas({
             scale={zoom} //important for path when being drawn to be in correct size
             touchEnabled={isBrushMode}
             text={texts}
-            containerStyle={{ flex: 1, backgroundColor: 'transparent', zIndex: 1 }}
-            canvasStyle={{ flex: 1, backgroundColor: 'transparent', zIndex: 1 }}
+            containerStyle={{ flex: 1, backgroundColor: 'transparent', zIndex: 1, overflow: "hidden" }}
+            canvasStyle={{ flex: 1, backgroundColor: 'transparent', zIndex: 1, overflow: "hidden" }}
             localSourceImage={{ filename: imagePath, mode: 'AspectFit' }}
             onStrokeEnd={SketchEnd}
             onStrokeStart={SketchStart}

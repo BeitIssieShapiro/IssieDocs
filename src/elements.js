@@ -967,7 +967,8 @@ export function AppText(props) {
     } : {}
 
     return (
-        <Text style={[{
+        <Text allowFontScaling={false}
+        style={[{
             fontFamily: getFont(),
             fontSize: 24,
             textAlign: isRTL() ? 'right' : 'left',

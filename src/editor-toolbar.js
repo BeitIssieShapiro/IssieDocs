@@ -269,7 +269,7 @@ function EditorToolbar({
             setShowPickerType(type);
             setShowPicker(true);
             if (setMenuHeight) {
-                setMenuHeight( height)
+                setMenuHeight(height)
             }
         }
     }, [showPickerType, showPicker]);
@@ -299,13 +299,12 @@ function EditorToolbar({
     const rullerBtn = <IconButton onPress={() => onModeButtonClick(Pickers.RULER)} color={isRulerMode ? color : semanticColors.editPhotoButton}
         iconType="material-community" icon="ruler" size={49} iconSize={45} selected={isRulerMode} ensureContrast={true} />;
 
-    const eraserBtn = getEraserIcon(onEraser, 50, eraseMode ? 'black' : semanticColors.editPhotoButton, eraseMode, 25);
+
 
     const extMenu = [
         <IconButton onPress={() => onModeButtonClick(Pickers.MARKER)} color={isMarkerMode ? color : semanticColors.editPhotoButton}
             iconType="material-community" icon="marker" size={50} iconSize={45} selected={isMarkerMode} ensureContrast={true} />,
 
-        isScreenNarrow() && eraserBtn,
 
         <IconButton onPress={() => onModeButtonClick(Pickers.IMAGE)
         } color={semanticColors.editPhotoButton}
@@ -371,7 +370,7 @@ function EditorToolbar({
             <Spacer width={23} />
             <IconButton onPress={onRedo} color={canRedo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} icon={rtl ? "redo" : "undo"} size={55} />
             <Spacer width={23} />
-            {!isScreenNarrow() && eraserBtn}
+            {getEraserIcon(onEraser, 50, eraseMode ? 'black' : semanticColors.editPhotoButton, eraseMode, 25)}
 
             { /* text size preview */}
             <View style={{
@@ -433,9 +432,9 @@ function EditorToolbar({
                 [rtl ? "right" : "left"]: 0,
                 height: dimensions.toolbarHeight,
                 flexDirection: rtl ? "row-reverse" : "row", alignItems: 'center',
-            }, //isScreenNarrow() ?
-            //{ top: dimensions.toolbarHeight, left: 0 } //:
-            { top: 0, right: 0 }
+            }, isScreenNarrow() ?
+                { top: dimensions.toolbarHeight, left: 0 } :
+                { top: 0, right: 0 }
             ]} >
                 {spread(modesMenu)}
             </View>
@@ -644,7 +643,7 @@ function NumberSelector({ value, setValue, icon, direction, rotateDeg }) {
             <IconButton icon="remove" size={45} onPress={() => setValue(value - 1)} color={semanticColors.actionButton} />
             <Spacer width={5} />
             <View>
-                <Text style={{ fontSize: 20, textAlign: "center", justifyContent: "center", color: semanticColors.actionButton }}>
+                <Text allowFontScaling={false} style={{ fontSize: 20, textAlign: "center", justifyContent: "center", color: semanticColors.actionButton }}>
                     {value || 1}
                 </Text>
                 <Icon name={icon} size={35} color={semanticColors.actionButton} style={rotateDeg && { transform: [{ rotate: rotateDeg + 'deg' }] }} />
