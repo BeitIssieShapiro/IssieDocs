@@ -1,28 +1,72 @@
-import { useState } from "react";
-import { Text } from "react-native";
-import { View, TextInput, Button } from "react-native";
+import React, { useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { DDProvider, DDView } from './dragdrop';
+import { trace } from './log';
 
 
+export function TestCmp() {
+    const [dropHover, setDropHover] = useState(false)
 
 
+    return (
+        <DDProvider>
+            <View style={{ flex: 1, margin:120, padding: 10 }}>
+                {/* Draggable View */}
+                <DDView
+                    id="drag1"
+                    dragState={{ payload: 'abc' }}
+                    onStartDrag={() => console.log('Start draggin')}
+                    onDrop={(state) => false}
+                    style={{ width: 100, height: 100, backgroundColor: 'blue' }}
+                >
+                    <Text>Drag Me</Text>
+                </DDView>
 
-export function TestCmp(props) {
-    const [val, setVal] = useState("")
+                {/* Drop Target */}
+                <DDView
+                    id="drop1"
+                    isTarget
+                    onDrop={(state) => {
+                        console.log('Dropped onto me:', state)
+                        return true;
+                    }}
+                    onDragEnter={()=>{
+                        setDropHover(true)
+                        trace("Drag enter")
+                    }}
+                    onDragExit={()=>{
+                        setDropHover(false)
+                        trace("Drag exit")
+                    }}
 
-    const handleTextChange = (newText) => {
-        console.log("Text change", newText)
-        setVal(newText)
-    }
-    return <View style={{width:"100%", height:"100%", alignItems:"center", justifyContent:"center"}}>
-        {/* <TextInput 
-            onChangeText={handleTextChange}
-            style={{width:100, height:50, backgroundColor:"yellow"}}
-            value={val}
-            multiline={true}
-            autoFocus
-        
-        /> */}
-       {/* <SpecialText text="This is a very long text" style={{width:150, fontSize:26}}></SpecialText> */}
-        {/* <Button onPress={()=>setVal("abc")} title="Reset"></Button> */}
-    </View>
+                    style={{ width: 150, height: 150, backgroundColor: dropHover?'green':'gray' }}
+                >
+                    <Text>Drop Here</Text>
+                </DDView>
+            </View>
+        </DDProvider>
+    );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5',
+    },
+    box: {
+        width: 100,
+        height: 100,
+        backgroundColor: 'blue',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    target: {
+        width: 150,
+        height: 150,
+        backgroundColor: 'gray',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+});

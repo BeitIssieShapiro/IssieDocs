@@ -38,7 +38,6 @@ import {
     MenuOption,
     MenuTrigger,
 } from 'react-native-popup-menu';
-import { DraxProvider, DraxView } from 'react-native-drax';
 
 
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
@@ -51,6 +50,7 @@ import { showMessage } from 'react-native-flash-message';
 import { LogBox } from 'react-native';
 import { FileContextMenu } from './file-context-menu.js';
 import { FolderPanel } from './folder-panel.js';
+import { DDProvider, DDView } from './dragdrop.js';
 
 const SORT_BY_NAME = 0;
 const SORT_BY_DATE = 1;
@@ -870,7 +870,8 @@ export default class FolderGallery extends React.Component {
 
 
         return (
-            <DraxProvider>
+            <DDProvider>
+            
 
                 <View style={styles.container}
                     onLayout={this.onLayout}>
@@ -1174,10 +1175,11 @@ export default class FolderGallery extends React.Component {
                                             flexWrap: 'wrap',
                                             minWidth: "100%"
                                         }}>
-                                            {this.sortFiles(items).map((item, i) => (<DraxView
+                                            {this.sortFiles(items).map((item, i) => (<DDView
                                                 onDragStart={(e)=>trace("File drag starts",e)}
                                                 key={i}
-                                                payload={{ item, folderID: this.state.currentFolder?.ID }}
+                                                id={item.name}
+                                                dragState={{ item, folderID: this.state.currentFolder?.ID }}
                                                 numColumns={asTiles ? numColumnsForTiles : 1}
                                                 longPressDelay={700}
                                             >
@@ -1196,7 +1198,7 @@ export default class FolderGallery extends React.Component {
                                                     onContextMenu: () => this.setSelected(item),
                                                     count: item.count
                                                 })}
-                                            </DraxView>))
+                                            </DDView>))
                                             }
                                         </View>
 
@@ -1271,7 +1273,7 @@ export default class FolderGallery extends React.Component {
 
                     </View>
                 </View>
-            </DraxProvider>
+            </DDProvider>
         );
     }
 }

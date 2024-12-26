@@ -9,7 +9,7 @@ import * as Progress from 'react-native-progress';
 
 import { hideMessage, showMessage } from 'react-native-flash-message';
 
-import { Icon, MARKER_TRANSPARENCY_CONSTANT, Spacer } from "./elements"
+import { Icon, Spacer } from "./elements"
 import Share from 'react-native-share';
 import DoQueue from './do-queue';
 
@@ -38,6 +38,7 @@ import { FileContextMenu } from './file-context-menu';
 import RNSystemSounds from '@dashdoc/react-native-system-sounds';
 import { AudioElement } from './audio-elem.js';
 import { generatePDF } from './pdf.js';
+import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons.js';
 
 const shareTimeMs = 2000;
 

@@ -33,8 +33,6 @@ export const dimensions = {
 
 }
 
-export const MARKER_TRANSPARENCY_CONSTANT = "40";
-
 
 export function getFont() {
     return isRTL() ? 'Alef' : 'Verdana';
@@ -811,7 +809,7 @@ export function SBDraxScrollView({
         : 0;
 
     return (
-        <DraxScrollView
+        <View
             ref={myRef}
             scrollEventThrottle={5}
             showsVerticalScrollIndicator={false}
@@ -831,7 +829,7 @@ export function SBDraxScrollView({
                     opacity: 0.6,
                 }, rtl ? { left: 4 } : { right: 4 }]}
             />
-        </DraxScrollView>
+        </View>
     );
 }
 
