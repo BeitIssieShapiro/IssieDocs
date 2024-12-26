@@ -1,16 +1,27 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { DDProvider, DDView } from './dragdrop';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { DDProvider, DDScrollView, DDView } from './dragdrop';
 import { trace } from './log';
+import { Touchable } from 'react-native';
 
 
 export function TestCmp() {
-    const [dropHover, setDropHover] = useState(false)
 
 
     return (
         <DDProvider>
-            <View style={{ flex: 1, margin:120, padding: 10 }}>
+            <DDView
+                id="drag0"
+                dragState={{ payload: 'xyz' }}
+                onStartDrag={() => console.log('Start draggin outer')}
+                onDrop={(state) => false}
+                style={{ width: 100, height: 100, backgroundColor: 'red' }}
+            >
+                <TouchableOpacity style={{ width: 100, height: 100, backgroundColor: 'brown' }}>
+                    <Text>Drag Me</Text>
+                </TouchableOpacity>
+            </DDView>
+            <DDScrollView style={{ flex: 1, margin: 120, padding: 10, backgroundColor: "yellow" }}>
                 {/* Draggable View */}
                 <DDView
                     id="drag1"
@@ -19,33 +30,48 @@ export function TestCmp() {
                     onDrop={(state) => false}
                     style={{ width: 100, height: 100, backgroundColor: 'blue' }}
                 >
-                    <Text>Drag Me</Text>
+                    <TouchableOpacity style={{ width: 100, height: 100, backgroundColor: 'brown' }}
+                    onPress={()=>console.log("onPress")}
+                    
+                    >
+                        <Text>Drag Me</Text>
+                    </TouchableOpacity>
+
                 </DDView>
 
-                {/* Drop Target */}
-                <DDView
-                    id="drop1"
-                    isTarget
-                    onDrop={(state) => {
-                        console.log('Dropped onto me:', state)
-                        return true;
-                    }}
-                    onDragEnter={()=>{
-                        setDropHover(true)
-                        trace("Drag enter")
-                    }}
-                    onDragExit={()=>{
-                        setDropHover(false)
-                        trace("Drag exit")
-                    }}
 
-                    style={{ width: 150, height: 150, backgroundColor: dropHover?'green':'gray' }}
-                >
-                    <Text>Drop Here</Text>
-                </DDView>
-            </View>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
+                    <TestDrop key={i} i={i} />
+                ))}
+
+            </DDScrollView>
         </DDProvider>
     );
+}
+
+
+function TestDrop({ i }) {
+    const [dropHover, setDropHover] = useState(false)
+    return <DDView
+        key={i}
+        isTarget
+        onDrop={(state) => {
+            console.log('Dropped onto me:', i, state)
+            return true;
+        }}
+        onDragEnter={() => {
+            setDropHover(true)
+            trace("Drag enter")
+        }}
+        onDragExit={() => {
+            setDropHover(false)
+            trace("Drag exit")
+        }}
+
+        style={{ width: 150, height: 150, backgroundColor: dropHover ? 'green' : 'gray' }}
+    >
+        <Text>Drop Here {i}</Text>
+    </DDView>
 }
 
 const styles = StyleSheet.create({

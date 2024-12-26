@@ -53,6 +53,7 @@ export default function FolderNew(props) {
                 setDragOver={(val) => setDragOver(val)}
                 dragOver={dragOver}
                 allowDropFolders={props.allowDropFolders}
+                dragable={!locatedAtTitle}
 
                 style={{
                     alignContent: 'center',
@@ -115,7 +116,8 @@ export default function FolderNew(props) {
 
                                 {nonTreeTitle && <View style={[{
                                     alignContent: 'center', alignItems: 'center', justifyContent: 'center',
-                                    paddingBottom: '5%', height: '100%'
+                                    paddingBottom: 5, 
+                                    height: '100%'
                                 }, rtl ? { paddingRight: sidePadding } : { paddingLeft: sidePadding }]}>
                                     <Icon name="folder" size={45} color={props.color} />
                                     <View style={[{ position: 'absolute', top: 0, width: '100%', height: '100%' }, rtl ? { left: 0 } : { right: 0 }]}>
@@ -215,10 +217,9 @@ export function FolderDraxView(props) {
         key={props.index}
         id={props.id}
         longPressDelay={700}
-        dragSource={{ folderID: props.id, isFolder: true, icon: props.icon, color: props.color }}
+        dragState={{ folderID: props.id, isFolder: true, icon: props.icon, color: props.color }}
         isTarget
-
-
+        isDragSource={!!props.dragable}
         onDragStart={() => {
             trace("start drag folder", props.id)
         }}

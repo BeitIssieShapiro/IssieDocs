@@ -29,8 +29,6 @@ import {
     renderMenuOption,
     getRoundedButton,
     IDMenuOptionsStyle,
-    SBDraxScrollView,
-    RootFolderPicker,
 } from './elements'
 import {
     Menu,
@@ -50,7 +48,7 @@ import { showMessage } from 'react-native-flash-message';
 import { LogBox } from 'react-native';
 import { FileContextMenu } from './file-context-menu.js';
 import { FolderPanel } from './folder-panel.js';
-import { DDProvider, DDView } from './dragdrop.js';
+import { DDProvider, DDScrollView, DDView } from './dragdrop.js';
 
 const SORT_BY_NAME = 0;
 const SORT_BY_DATE = 1;
@@ -1118,7 +1116,7 @@ export default class FolderGallery extends React.Component {
                                 </View>}
 
 
-                                <SBDraxScrollView
+                                <DDScrollView
                                     rtl={rtl}
                                     scrollEnabled={true}
                                     showsVerticalScrollIndicator={false}
@@ -1220,7 +1218,7 @@ export default class FolderGallery extends React.Component {
                                         )
 
                                     }
-                                </SBDraxScrollView>
+                                </DDScrollView>
                             </View>
 
                         }

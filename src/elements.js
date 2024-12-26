@@ -11,7 +11,6 @@ import { getUseTextSetting } from './settings.js'
 import { getSvgIcon, SvgIcon } from './svg-icons.js'
 import { FileSystem } from './filesystem.js';
 import { trace } from './log.js';
-import { DraxScrollView } from 'react-native-drax';
 import { isTooWhite } from './utils.js';
 
 export const Icon = IconLocal;
@@ -794,44 +793,44 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
 }
 
 
-export function SBDraxScrollView({
-    persistentScrollbar = false,
-    children,
-    myRef,
-    rtl,
-    ...other
-}) {
-    const [nativeEvent, setNativeEvent] = useState();
-    const top = nativeEvent
-        ? nativeEvent.contentOffset.y +
-        (nativeEvent.contentOffset.y / nativeEvent.contentSize.height) *
-        nativeEvent.layoutMeasurement.height
-        : 0;
+// export function SBDraxScrollView({
+//     persistentScrollbar = false,
+//     children,
+//     myRef,
+//     rtl,
+//     ...other
+// }) {
+//     const [nativeEvent, setNativeEvent] = useState();
+//     const top = nativeEvent
+//         ? nativeEvent.contentOffset.y +
+//         (nativeEvent.contentOffset.y / nativeEvent.contentSize.height) *
+//         nativeEvent.layoutMeasurement.height
+//         : 0;
 
-    return (
-        <View
-            ref={myRef}
-            scrollEventThrottle={5}
-            showsVerticalScrollIndicator={false}
-            onScroll={event => setNativeEvent(event.nativeEvent)}
-            {...other}>
-            {children}
+//     return (
+//         <View
+//             ref={myRef}
+//             scrollEventThrottle={5}
+//             showsVerticalScrollIndicator={false}
+//             onScroll={event => setNativeEvent(event.nativeEvent)}
+//             {...other}>
+//             {children}
 
-            <View
-                style={[{
-                    position: 'absolute',
-                    top,
+//             <View
+//                 style={[{
+//                     position: 'absolute',
+//                     top,
 
-                    height: 200,
-                    width: 4,
-                    borderRadius: 20,
-                    backgroundColor: 'gray',
-                    opacity: 0.6,
-                }, rtl ? { left: 4 } : { right: 4 }]}
-            />
-        </View>
-    );
-}
+//                     height: 200,
+//                     width: 4,
+//                     borderRadius: 20,
+//                     backgroundColor: 'gray',
+//                     opacity: 0.6,
+//                 }, rtl ? { left: 4 } : { right: 4 }]}
+//             />
+//         </View>
+//     );
+// }
 
 export function TilesView({
     children,
