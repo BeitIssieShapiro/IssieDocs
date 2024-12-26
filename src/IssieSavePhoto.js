@@ -43,6 +43,8 @@ export default class IssieSavePhoto extends React.Component {
   constructor() {
     super();
 
+    this.viewShotRef = null;
+
     this._panResponderMove = PanResponder.create({
       onStartShouldSetPanResponder: (evt, gestureState) => Math.abs(gestureState.dy) > 5,
       onStartShouldSetPanResponderCapture: (evt, gestureState) => Math.abs(gestureState.dy) > 5,
@@ -76,8 +78,8 @@ export default class IssieSavePhoto extends React.Component {
       phase: OK_Cancel,
       cropping: false,
       topView: 0,
-      pdfWidth: '100%',
-      pdfHeight: '100%',
+      pdfWidth: "100%",
+      pdfHeight: "100%",
       pdfPageCount: 0,
       yOffset: 0,
       windowSize: { width: 0, height: 0 },
@@ -429,13 +431,14 @@ export default class IssieSavePhoto extends React.Component {
       this.setState({ pdfPage: page + 1 });
       setTimeout(
         () => {
-          let viewShot = this.refs.viewShot;
-          viewShot.capture().then(
-            uri => FileSystem.main.cloneToTemp(uri).then(newUri => resolve(newUri)),
-            err => {
-              reject(err)
-            }
-          );
+          if (this.viewShotRef) {
+            this.viewShotRef.capture().then(
+              uri => FileSystem.main.cloneToTemp(uri).then(newUri => resolve(newUri)),
+              err => {
+                reject(err)
+              }
+            );
+          }
         }, 1000);
     }
     );
@@ -616,7 +619,7 @@ export default class IssieSavePhoto extends React.Component {
           { //Add page
             this.state.phase == OK_Cancel && !this.state.pdf && !this.state.addToExistingPage ?
               <Spacer width={10} /> : null}
-          {this.state.phase == OK_Cancel && !this.state.onConfirm && !this.state.pdf && !this.state.addToExistingPage ?
+          {this.state.phase == OK_Cancel && !this.state.onConfirm && !this.state.pdf && !this.state.addToExistingPage && !this.isFile() ?
             getRoundedButton(this.AddPage, 'add', translate("BtnAddPage"), 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isScreenNarrow()) :
             null
           }
@@ -718,6 +721,7 @@ export default class IssieSavePhoto extends React.Component {
 
 
     trace("SAVE: phase", this.state.phase)
+    trace("PDF: size", this.state.pdfWidth, this.state.pdfHeight)
     return (
       <View style={styles.container}
         ref={v => this.topView = v}
@@ -748,7 +752,7 @@ export default class IssieSavePhoto extends React.Component {
                 </ProgressCircle> */}
                 <Progress.Circle
                   size={300} // Diameter (2 * radius)
-                  progress={percent} // Value between 0 and 1
+                  progress={this.state.pdfInProcess * 100 / this.state.pdfPageCount} // Value between 0 and 1
                   color="#3399FF"
                   unfilledColor="#999999" // Equivalent to shadowColor
                   borderWidth={5}
@@ -756,7 +760,7 @@ export default class IssieSavePhoto extends React.Component {
                   showsText={false} // We'll add custom text
                   animated={true} // Enable animation if desired
                 >
-                  {this.state.progress.message && (
+                  {this.state.pdfInProcess && (
                     <View style={styles.textContainer}>
                       <Text style={styles.text}>
                         {fTranslate(
@@ -769,17 +773,28 @@ export default class IssieSavePhoto extends React.Component {
                   )}
                 </Progress.Circle>
               </View> : null}
-            <ViewShot ref="viewShot" options={{ format: "jpg", quality: 0.9 }}
+            <ViewShot
+              ref={(ref) => {
+                this.viewShotRef = ref;
+              }}
+              options={{ format: "jpg", quality: 0.9 }}
               style={{
                 flex: 1, position: 'absolute', width: this.state.pdfWidth, height: this.state.pdfHeight
               }}>
               <Pdf
+                style={{ flex: 1, width: this.state.pdfWidth, height: this.state.pdfHeight }}
                 source={{ uri: this.verifyFilePrefix(this.state.imageUri), path: this.verifyFilePrefix(this.state.imageUri) }}
                 page={this.state.pdfPage}
-                style={{ flex: 1 }}
                 onLoadComplete={(numberOfPages, filePath, dim) => {
+                  trace("PDF: onLoadComplete", dim)
                   if (!this.state.pdfWidthOnce) {
-                    this.setState({ pdfWidthOnce: true, pdfPageCount: numberOfPages, pdfWidth: dim.width, pdfHeight: dim.height });
+                    // setTimeout(()=>this.movePage(1), 200)
+                    setTimeout(() => this.setState({ pdfPage: 1 }), 200)
+                    this.setState({
+                      pdfWidthOnce: true,
+                      pdfPage: numberOfPages,
+                      pdfPageCount: numberOfPages, pdfWidth: dim.width, pdfHeight: dim.height
+                    })
                   }
                 }}
 
@@ -828,14 +843,17 @@ export default class IssieSavePhoto extends React.Component {
 
             {cropFrame}
             {PageNameInput}
-          </View>}
-        {this.state.PickName || this.state.pdf && this.state.pdfPageCount < 2 || !this.state.pdf ?
-          null :
-          getPageNavigationButtons(0, '100%',
-            this.state.pdfPage == 1, //isFirst
-            this.state.pdfPage == this.state.pdfPageCount, //isLast
-            (inc) => this.movePage(inc))}
-      </View>
+          </View>
+        }
+        {
+          this.state.PickName || this.state.pdf && this.state.pdfPageCount < 2 || !this.state.pdf ?
+            null :
+            getPageNavigationButtons(0, '100%',
+              this.state.pdfPage == 1, //isFirst
+              this.state.pdfPage == this.state.pdfPageCount, //isLast
+              (inc) => this.movePage(inc))
+        }
+      </View >
     );
   };
 
@@ -853,6 +871,11 @@ const styles = StyleSheet.create({
     height: '100%',
     top: dimensions.toolbarHeight + dimensions.toolbarMargin,
     alignItems: 'center'
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   }
 
 });

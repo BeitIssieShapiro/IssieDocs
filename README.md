@@ -47,7 +47,7 @@ if pod install fails on glog:
 https://stackoverflow.com/questions/50448717/os-pod-install-error-module-glog-cannot-be-installed
 
 
-hack solution to header staying on top:
+hack solution to issieDocs' header staying on top (in IssieEditPhoto, scroll down in zoom mode):
 /Users/i022021/dev/Issie/IssieDocs/node_modules/@react-navigation/stack/lib/commonjs/views/Stack/CardContainer.js
 ...
 header: {zIndex:2000}

@@ -191,52 +191,49 @@ export default class FolderGallery extends React.Component {
 
     }
 
-    _handleOpenURL = (event) => {
-        //console.log("_handleOpenURL event:", JSON.stringify(event));
+    _handleOpenURL = async (event) => {
+        console.log("_handleOpenURL event:", JSON.stringify(event));
         let url = event.url
-        if (url?.startsWith("openissiedocs")) {
-            const urlPos = url.indexOf("url=");
-            if (urlPos > 0) {
-                url = url.substr(urlPos + 4);
-                url = decodeURI(url);
+        url = decodeURI(url);
 
-                const handleDoneMessage = (msg) => {
-                    this.setState({ progress: undefined });
-                    Alert.alert(msg);
-                }
-
-                if (url.endsWith(".zip")) {
-                    FileSystem.main.extractZipInfo(url).then(zipInfo => {
-                        if (zipInfo.metadata.backup) {
-                            this.setState({ progress: { percent: 0, message: translate("RestoreBackup") } });
-                            FileSystem.main.RestoreFromBackup(zipInfo, (progress) => {
-                                trace("restore progress" + progress)
-                                this.setState({ progress: { percent: progress, message: translate("RestoreBackup") } });
-                            })
-                                .then(handleDoneMessage)
-                                .finally(() => this.setState({ progress: undefined }));
-                        } else {
-                            // ask if to preserve folder
-                            const title = fTranslate("ImportQuestionTitle", zipInfo.name);
-                            const buttons = [
-                                { text: fTranslate("BtnPreserveImportFolder", zipInfo.metadata.name), onPress: () => FileSystem.main.importWorhsheetWithInfo(zipInfo, true).then(handleDoneMessage) },
-                                { text: translate("BtnIgnoreImportFolder"), onPress: () => FileSystem.main.importWorhsheetWithInfo(zipInfo, false).then(handleDoneMessage) },
-                                { text: translate("BtnCancel"), type: 'cancel' },
-                            ];
-                            Alert.alert(title, undefined, buttons);
-                        }
-                    });
-                } else {
-                    this.props.navigation.navigate('SavePhoto', {
-                        uri: url,
-                        imageSource: SRC_FILE,
-                        folder: this.state.currentFolder,
-                        returnFolderCallback: (f) => this.setReturnFolder(f),
-                        saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID)
-                    })
-                }
-            }
+        const handleDoneMessage = (msg) => {
+            this.setState({ progress: undefined });
+            Alert.alert(msg);
         }
+
+        if (url.endsWith(".zip")) {
+            FileSystem.main.extractZipInfo(url).then(zipInfo => {
+                if (zipInfo.metadata.backup) {
+                    this.setState({ progress: { percent: 0, message: translate("RestoreBackup") } });
+                    FileSystem.main.RestoreFromBackup(zipInfo, (progress) => {
+                        trace("restore progress" + progress)
+                        this.setState({ progress: { percent: progress, message: translate("RestoreBackup") } });
+                    })
+                        .then(handleDoneMessage)
+                        .finally(() => this.setState({ progress: undefined }));
+                } else {
+                    // ask if to preserve folder
+                    const title = fTranslate("ImportQuestionTitle", zipInfo.name);
+                    const buttons = [
+                        { text: fTranslate("BtnPreserveImportFolder", zipInfo.metadata.name), onPress: () => FileSystem.main.importWorhsheetWithInfo(zipInfo, true).then(handleDoneMessage) },
+                        { text: translate("BtnIgnoreImportFolder"), onPress: () => FileSystem.main.importWorhsheetWithInfo(zipInfo, false).then(handleDoneMessage) },
+                        { text: translate("BtnCancel"), type: 'cancel' },
+                    ];
+                    Alert.alert(title, undefined, buttons);
+                }
+            });
+        } else {
+            const tempUrl = await FileSystem.main.cloneToTemp(url);
+            trace("openURL", url, tempUrl)
+            this.props.navigation.navigate('SavePhoto', {
+                uri: tempUrl,
+                imageSource: SRC_FILE,
+                folder: this.state.currentFolder,
+                returnFolderCallback: (f) => this.setReturnFolder(f),
+                saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID)
+            })
+        }
+
     }
 
     // refresh = async (folderName, callback) => {
@@ -1178,6 +1175,7 @@ export default class FolderGallery extends React.Component {
                                             minWidth: "100%"
                                         }}>
                                             {this.sortFiles(items).map((item, i) => (<DraxView
+                                                onDragStart={(e)=>trace("File drag starts",e)}
                                                 key={i}
                                                 payload={{ item, folderID: this.state.currentFolder?.ID }}
                                                 numColumns={asTiles ? numColumnsForTiles : 1}

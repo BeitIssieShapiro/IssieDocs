@@ -20,13 +20,16 @@ export default function CameraOverlay(props) {
     const [captureInProgress, setCaptureInProgress] = useState(false);
     const [permission, setPermission] = useState(false);
 
+    trace("open camera")
+
     useEffect(() => {
+        trace("attempt get camera permission")
         request(Platform.OS === 'ios' ? PERMISSIONS.IOS.CAMERA : PERMISSIONS.ANDROID.CAMERA).then((result) => {
             if (result === RESULTS.GRANTED || result == RESULTS.LIMITED) {
                 setPermission(true);
             }
             trace("camera permission", result);
-        });
+        }).catch(e=>trace("no cam perm", e));
     }, [])
     const takePicture = async () => {
         if (captureInProgress)

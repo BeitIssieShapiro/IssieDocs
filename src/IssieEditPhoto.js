@@ -61,7 +61,6 @@ const Modes = {
 
 const TABLE_LINE_MARGIN = 20;
 const PAGE_MARGIN = RESIZE_TABLE_BOX_SIZE * 2;
-const audioImgSize = 80;
 const MODES_CLEANUP = {
   showTextInput: false,
   currentTextElem: undefined,
@@ -735,10 +734,13 @@ export default class IssieEditPhoto extends React.Component {
       setNavParam(this.props.navigation, 'share', false);
       trace("about to share", dataUrls.length)
 
-      const shareUrl = dataUrls.length > 1 ?
-        "file://" + (await generatePDF(dataUrls)) :
-        dataUrls[0];
-      trace("share", shareUrl)
+      // const shareUrl = dataUrls.length > 1 ?
+      //   "file://" + (await generatePDF(dataUrls)) :
+      //   dataUrls[0];
+
+      // Always create PDF file
+      const shareUrl = "file://" + (await generatePDF(dataUrls));
+
       if (shareUrl) {
         // Define share options
         const shareOptions = {
@@ -2080,7 +2082,7 @@ export default class IssieEditPhoto extends React.Component {
             <Animated.View
               style={{
                 zIndex: 1,
-                overflow:"hidden",
+                overflow: "hidden",
                 // left: this.state.xOffset,
                 // top: this.state.yOffset,
                 left: this.state.viewPortXOffset,
@@ -2155,7 +2157,6 @@ export default class IssieEditPhoto extends React.Component {
                       this.Save();
                       this.incrementRevision();
                     }}
-                    size={audioImgSize}
                   />
                 ))
               }
@@ -2179,7 +2180,6 @@ export default class IssieEditPhoto extends React.Component {
                   onMove={(normX, normY) => {
                     this.setState({ xText: normX, yText: normY });
                   }}
-                  size={audioImgSize * 2}
                 />
               }
 

@@ -243,6 +243,8 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
     }
 
     let textExist = text && text.length > 0;
+    const activeDirection = direction ? direction : getRowDirection();
+    const textAlign = icon? (activeDirection == "row"? "right":"left") : (isRTL()?"right":"left");
 
     return <TouchableOpacity
         activeOpacity={0.7}
@@ -259,13 +261,13 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
                 padding: 5,
                 justifyContent: textExist ? 'flex-end' : 'center',
                 backgroundColor: dark ? '#808080' : '#eeeded',
-                flexDirection: direction ? direction : getRowDirection()
+                flexDirection: activeDirection,
             }}>
             {textExist ?
                 <AppText style={{
                     marginEnd: (isRTL() ? 5 : 0), marginStart: (isRTL() ? 0 : 5),
                     width: icon ? '80%' : '100%', fontSize: textSize, lineHeight: textSize + (isRTL() ? 5 : 0),
-                    color: dark ? "white" : semanticColors.titleText, textAlign: icon ? (isRTL() ? 'right' : 'left') : "center"
+                    color: dark ? "white" : semanticColors.titleText, textAlign
                 }}>{text}</AppText> : null
             }
             {icon?.startsWith("svg-") ?

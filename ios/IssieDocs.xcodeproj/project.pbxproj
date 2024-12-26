@@ -18,9 +18,6 @@
 		6A8D789C2C3AA6D600DBE101 /* Verdana.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A8D78972C3AA6D600DBE101 /* Verdana.ttf */; };
 		6A8D789D2C3AA6D600DBE101 /* DroidSans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A8D78982C3AA6D600DBE101 /* DroidSans.ttf */; };
 		6A8D789F2C3AA75C00DBE101 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6A8D789E2C3AA75C00DBE101 /* Assets.xcassets */; };
-		6ABD3B882BAF61D700EFEDB2 /* OpenIssieDocs2.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6AD557C02BA9B5910076DC3C /* OpenIssieDocs2.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		6AD557C32BA9B5910076DC3C /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD557C22BA9B5910076DC3C /* ShareViewController.swift */; };
-		6AD557C62BA9B5910076DC3C /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 6AD557C52BA9B5910076DC3C /* Base */; };
 		7F723473E6686C0EF0699865 /* libPods-IssieDocs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 973AB13662CD7FEA7602D9C9 /* libPods-IssieDocs.a */; };
 /* End PBXBuildFile section */
 
@@ -31,13 +28,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
 			remoteInfo = IssieDocs;
-		};
-		6ABD3B862BAF61C400EFEDB2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 6AD557BF2BA9B5910076DC3C;
-			remoteInfo = OpenIssieDocs2;
 		};
 		6ABD3B892BAF61D700EFEDB2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -55,7 +45,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				6ABD3B882BAF61D700EFEDB2 /* OpenIssieDocs2.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -82,7 +71,6 @@
 		6A8D789E2C3AA75C00DBE101 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6ABD3B8C2BAF888A00EFEDB2 /* OpenIssieDocs2.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenIssieDocs2.entitlements; sourceTree = "<group>"; };
 		6AD557972BA99D290076DC3C /* IssieDocs-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IssieDocs-Bridging-Header.h"; sourceTree = "<group>"; };
-		6AD557C02BA9B5910076DC3C /* OpenIssieDocs2.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OpenIssieDocs2.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		6AD557C22BA9B5910076DC3C /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		6AD557C52BA9B5910076DC3C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
 		6AD557C72BA9B5910076DC3C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -106,13 +94,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				7F723473E6686C0EF0699865 /* libPods-IssieDocs.a in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		6AD557BD2BA9B5910076DC3C /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -206,7 +187,6 @@
 			children = (
 				13B07F961A680F5B00A75B9A /* IssieDocs.app */,
 				00E356EE1AD99517003FC87E /* IssieDocsTests.xctest */,
-				6AD557C02BA9B5910076DC3C /* OpenIssieDocs2.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -257,30 +237,12 @@
 			buildRules = (
 			);
 			dependencies = (
-				6ABD3B872BAF61C400EFEDB2 /* PBXTargetDependency */,
 				6ABD3B8A2BAF61D700EFEDB2 /* PBXTargetDependency */,
 			);
 			name = IssieDocs;
 			productName = IssieDocs;
 			productReference = 13B07F961A680F5B00A75B9A /* IssieDocs.app */;
 			productType = "com.apple.product-type.application";
-		};
-		6AD557BF2BA9B5910076DC3C /* OpenIssieDocs2 */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 6AD557CB2BA9B5910076DC3C /* Build configuration list for PBXNativeTarget "OpenIssieDocs2" */;
-			buildPhases = (
-				6AD557BC2BA9B5910076DC3C /* Sources */,
-				6AD557BD2BA9B5910076DC3C /* Frameworks */,
-				6AD557BE2BA9B5910076DC3C /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = OpenIssieDocs2;
-			productName = OpenIssieDocs2;
-			productReference = 6AD557C02BA9B5910076DC3C /* OpenIssieDocs2.appex */;
-			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -297,9 +259,6 @@
 					};
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1530;
-					};
-					6AD557BF2BA9B5910076DC3C = {
-						CreatedOnToolsVersion = 15.3;
 					};
 				};
 			};
@@ -318,7 +277,6 @@
 			targets = (
 				13B07F861A680F5B00A75B9A /* IssieDocs */,
 				00E356ED1AD99517003FC87E /* IssieDocsTests */,
-				6AD557BF2BA9B5910076DC3C /* OpenIssieDocs2 */,
 			);
 		};
 /* End PBXProject section */
@@ -343,14 +301,6 @@
 				6A8D789A2C3AA6D600DBE101 /* Alef_Regular.ttf in Resources */,
 				6A8D78992C3AA6D600DBE101 /* Alef_Bold.ttf in Resources */,
 				5119913DB58616D0EA8EC2CC /* PrivacyInfo.xcprivacy in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		6AD557BE2BA9B5910076DC3C /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				6AD557C62BA9B5910076DC3C /* Base in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -449,14 +399,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		6AD557BC2BA9B5910076DC3C /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				6AD557C32BA9B5910076DC3C /* ShareViewController.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -465,14 +407,8 @@
 			target = 13B07F861A680F5B00A75B9A /* IssieDocs */;
 			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
 		};
-		6ABD3B872BAF61C400EFEDB2 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 6AD557BF2BA9B5910076DC3C /* OpenIssieDocs2 */;
-			targetProxy = 6ABD3B862BAF61C400EFEDB2 /* PBXContainerItemProxy */;
-		};
 		6ABD3B8A2BAF61D700EFEDB2 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 6AD557BF2BA9B5910076DC3C /* OpenIssieDocs2 */;
 			targetProxy = 6ABD3B892BAF61D700EFEDB2 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -562,7 +498,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 7;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				ENABLE_BITCODE = NO;
@@ -610,7 +546,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 7;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				EXCLUDED_ARCHS = "";
@@ -644,103 +580,6 @@
 				TVOS_DEPLOYMENT_TARGET = 16.6;
 				USE_HEADERMAP = YES;
 				VERSIONING_SYSTEM = "apple-generic";
-			};
-			name = Release;
-		};
-		6AD557CC2BA9B5910076DC3C /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = OpenIssieDocs2/OpenIssieDocs2.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = SKNJT9TD9G;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = OpenIssieDocs2/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = OpenIssieDocs2;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(SDKROOT)/usr/lib/swift",
-					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
-					"$(inherited)",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.issieshapiro.issiedoc.IssieDoc.OpenIssieDocs2;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		6AD557CD2BA9B5910076DC3C /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = OpenIssieDocs2/OpenIssieDocs2.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = SKNJT9TD9G;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = OpenIssieDocs2/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = OpenIssieDocs2;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(SDKROOT)/usr/lib/swift",
-					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
-					"$(inherited)",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				MTL_FAST_MATH = YES;
-				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.issieshapiro.issiedoc.IssieDoc.OpenIssieDocs2;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -909,15 +748,6 @@
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
 				13B07F951A680F5B00A75B9A /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		6AD557CB2BA9B5910076DC3C /* Build configuration list for PBXNativeTarget "OpenIssieDocs2" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				6AD557CC2BA9B5910076DC3C /* Debug */,
-				6AD557CD2BA9B5910076DC3C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

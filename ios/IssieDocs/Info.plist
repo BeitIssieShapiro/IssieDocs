@@ -2,6 +2,30 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+	<dict>
+		<key>CFBundleTypeName</key>
+		<string>My Supported Documents</string>
+		<key>LSItemContentTypes</key>
+		<array>
+		<!-- PDF -->
+		<string>com.adobe.pdf</string>
+		<!-- PNG -->
+		<string>public.png</string>
+		<!-- JPEG -->
+		<string>public.jpeg</string>
+		<!-- ZIP -->
+		<string>public.zip-archive</string>
+		<!-- Potentially for file URL references -->
+        <string>public.file-url</string>
+        <!-- Potentially for direct web links -->
+        <string>public.url</string>
+		</array>
+		<key>LSHandlerRank</key>
+    	<string>Alternate</string>
+	</dict>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>

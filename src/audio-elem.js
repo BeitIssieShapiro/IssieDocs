@@ -96,8 +96,8 @@ export function AudioElement({
             },
             onPanResponderRelease: (e, gestureState) => {
                 const { normX, normY, zoom, scaleRatio } = positionRef.current;
-                const newNormX = normX + gestureState.dx / zoom;
-                const newNormY = normY + gestureState.dy / zoom;
+                const newNormX = normX + (gestureState.dx / zoom) / scaleRatio;
+                const newNormY = normY + (gestureState.dy / zoom) / scaleRatio;
                 onMove(newNormX, newNormY);
                 positionRef.current = { normX: newNormX, normY: newNormY, zoom, scaleRatio };
                 setMoveState(zeroPos)
@@ -109,8 +109,8 @@ export function AudioElement({
     return (
         <View style={{
             position: 'absolute',
-            left: (positionRef.current.normX + moveState.dx / zoom) * scaleRatio  - 25,
-            top: (positionRef.current.normY  + moveState.dy / zoom) * scaleRatio
+            left: (positionRef.current.normX) * scaleRatio + moveState.dx / zoom - 25,
+            top: (positionRef.current.normY) * scaleRatio + moveState.dy / zoom
         }}>
             <View
                 {...panResponder.panHandlers}
