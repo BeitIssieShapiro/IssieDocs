@@ -2357,13 +2357,14 @@ export default class IssieEditPhoto extends React.Component {
   }
 
   getArrow = (location, func) => {
-    //trace("getArrow", location)
     let style = { flex: 1, position: 'absolute', zIndex: 10000 }
     let disabled = false;
     const sidesTop = Math.min(this.state.viewPortRect.height / 2 - 35, this.state.viewPortRect.height - this.state.keyboardHeight - 95);
     const upDownLeft = this.state.windowSize.width / 2 - 35;
-    const verticalMovePossible = this.state.viewPortRect.height - this.state.yOffset - this.state.keyboardHeight < this.state.pageRect.height * this.state.zoom;
+    const verticalMovePossible = this.state.viewPortRect.height - this.state.yOffset  < this.state.pageRect.height * this.state.zoom;
     const horizMovePossible = this.state.viewPortRect.width - this.state.xOffset < this.state.pageRect.width * this.state.zoom;
+
+    trace("vert pos", verticalMovePossible, "h",this.state.viewPortRect.height, "offset", this.state.yOffset, "kb", this.state.keyboardHeight, "pageH", this.state.pageRect.height, "z", this.state.zoom)
 
     let deg = 0;
     if (location == TOP && (verticalMovePossible || this.state.yOffset < 0)) {
@@ -2390,6 +2391,7 @@ export default class IssieEditPhoto extends React.Component {
       style.top = sidesTop;
       style.left = 5, deg = 180;
     } else {
+      trace("no arrow", location)
       return;
     }
     style.transform = [{ rotate: deg + 'deg' }]
