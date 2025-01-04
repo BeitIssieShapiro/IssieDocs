@@ -1,5 +1,5 @@
 // utils.ts
-import { SketchPoint, SketchTable, SketchText } from "./types";
+import { ElementBase, SketchPoint, SketchTable, SketchText } from "./types";
 
 /** Joins a list of SketchPoints into an SVG path string. */
 export function joinPath(points: SketchPoint[], ratio: number): string {
@@ -134,4 +134,26 @@ export function calcEffectiveHorizontalLines(table: SketchTable, texts?: SketchT
         result.push(table.horizontalLines[i] + dy);
     }
     return result;
+}
+
+
+export function cloneElem(elem:any):any {
+    return JSON.parse(JSON.stringify(elem));
+}
+
+export function backupElement(elem: ElementBase) {
+    console.log("backupElement", elem)
+    elem.backup = JSON.stringify(elem);
+}
+
+export function restoreElement(elem: ElementBase): ElementBase {
+    if (!elem.backup) return elem;
+    const backupCopy = JSON.parse(elem.backup);
+    delete elem.backup;
+
+    const currentClone = cloneElem(elem);
+    Object.assign(elem, backupCopy);
+  
+    console.log("restore to", currentClone)
+    return currentClone;
 }

@@ -18,6 +18,7 @@ export enum ElementTypes {
 export interface ElementBase {
     id: string;
     editMode?: boolean;
+    backup?:any;
 }
 
 export interface SketchPath extends ElementBase {

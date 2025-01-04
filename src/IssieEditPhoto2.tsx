@@ -17,6 +17,7 @@ import { dimensions, semanticColors } from './elements';
 import EditorToolbar from './editor-toolbar';
 import { SRC_CAMERA, SRC_GALLERY } from './newPage';
 import { EditModes, RootStackParamList } from './types';
+import { backupElement, cloneElem, restoreElement } from './canvas/utils';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -31,6 +32,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [texts, setTexts] = useState<SketchText[]>([]);
     const [images, setImages] = useState<SketchImage[]>([]);
     const [tables, setTables] = useState<SketchTable[]>([]);
+
     const [windowSize, setWindowSize] = useState<ImageSize>({ width: 500, height: 500 });
     const [zoom, setZoom] = useState<number>(1);
     const [status, setStatus] = useState<string>("");
@@ -51,7 +53,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     const modeRef = useRef<EditModes>(EditModes.Brush);
 
-    const [fontSize, setFontSize] = useState<number>(25);
+    const [fontSize, setFontSize] = useState<number>(35);
     const [textAlignment, setTextAlignment] = useState<string>("left");
     const [strokeWidth, setStrokeWidth] = useState<number>(2);
     const [markerWidth, setMarkerWidth] = useState<number>(5);
@@ -62,6 +64,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     // Corresponding Refs
     const linesRef = useRef(lines);
     const pathsRef = useRef(paths);
+    const textsRef = useRef(texts);
+    const imagesRef = useRef(images);
+    const tablesRef = useRef(tables);
+
 
 
     const fontSizeRef = useRef(fontSize);
@@ -77,13 +83,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //                          EFFECTS
     // -------------------------------------------------------------------------
 
-    useEffect(() => {
-        pathsRef.current = paths
-        linesRef.current = lines;
-    }, [paths, lines]);
+    // useEffect(() => {
+    //     pathsRef.current = paths
+    //     linesRef.current = lines;
+    // }, [paths, lines]);
 
 
     useEffect(() => {
+        trace("Refs change", mode)
         modeRef.current = mode;
         fontSizeRef.current = fontSize;
         textAlignmentRef.current = textAlignment;
@@ -132,7 +139,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     const queue2state = () => {
         let q = queue.current.getAll();
-        console.log("queue:", q)
+
+        //console.log("Queue:", q.map(elem=>`${elem.type}: ${elem.elem.from+","+elem.elem.to}\n`))
+
         let _texts = [] as SketchText[];
         let _images = [] as SketchImage[];
         let _tables = [] as SketchTable[]
@@ -142,7 +151,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         for (let i = 0; i < q.length; i++) {
             if (q[i].type === 'text') {
-                const txtElem = q[i].elem
+                const txtElem = cloneElem(q[i].elem);
 
                 //first try to find same ID and replace, or add it
                 let found = false;
@@ -159,16 +168,19 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         break;
                     }
                 }
+                if (!found) {
+                    _texts.push(txtElem);
+                }
             } else if (q[i].type === 'path') {
                 _paths.push(q[i].elem);
             } else if (q[i].type === 'line') {
                 _rulers = _rulers.filter(l => l.id !== q[i].elem.id);
-                _rulers.push(q[i].elem);
+                _rulers.push(cloneElem(q[i].elem));
             } else if (q[i].type === 'lineDelete') {
                 _rulers = _rulers.filter(l => l.id !== q[i].elemID);
             } else if (q[i].type === 'image') {
                 // translate the relative path to full path:
-                let elem = q[i].elem;
+                let elem = cloneElem(q[i].elem);
                 if (elem.file) {
                     elem = {
                         ...elem, src: { uri: FileSystem.main.getAttachmentBase(pageRef.current, currPageIndexRef.current) + elem.file }
@@ -206,11 +218,18 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 }
             }
         }
+
+        pathsRef.current = _paths;
+        textsRef.current = _texts;
+        linesRef.current = _rulers;
+        imagesRef.current = _images;
+        tablesRef.current = _tables;
+
         setPaths(_paths);
         setTexts(_texts);
         setLines(_rulers);
-        // TODO
-
+        setImages(_images);
+        setTables(_tables);
     }
 
     // -------------------------------------------------------------------------
@@ -218,11 +237,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     // -------------------------------------------------------------------------
     function handleSketchStart(p: SketchPoint) {
         //console.log("Sketch Start", modeRef.current, p);
-        if (isBrushMode()) {
+        if (isBrushMode() || isMarkerMode()) {
             const newPath: SketchPath = {
                 id: "S" + Math.random() * 10000,
                 points: [p],
-                color: brushColorRef.current,
+                color: brushColorRef.current, // todo handle brush color and width
                 strokeWidth: strokeWidthRef.current,
             };
 
@@ -244,7 +263,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     function handleSketchStep(p: SketchPoint) {
-        //trace("Sketch Step",  p);
         if (isBrushMode() || isMarkerMode()) {
 
             const lastPath = arrLast(pathsRef.current);
@@ -253,7 +271,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 setPaths([...pathsRef.current]);
                 trace("Sketch Step update", pathsRef.current.map(p => p.id));
             }
-
         } else if (isRulerMode()) {
             const lastLine = arrLast(linesRef.current);
             if (lastLine) {
@@ -281,88 +298,102 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     // -------------------------------------------------------------------------
     //                          TEXT HANDLERS
     // -------------------------------------------------------------------------
-    function handleTextChanged(id: string, newText: string) {
-        setTexts((currTexts) =>
-            currTexts.map((t) => (t.id === id ? { ...t, text: newText } : t))
-        );
+
+    function saveText() {
+        const textElem = textsRef.current.find(t => t.editMode);
+        if (textElem) {
+            // todo verify text elem has changed
+            delete textElem.editMode;
+            queue.current.pushText(restoreElement(textElem));
+            queue2state();
+            save();
+        }
     }
 
     function handleCanvasClick(p: SketchPoint, elem: ElementBase | TableContext | undefined) {
-        if (modeRef.current === EditModes.Text) {
-            setTexts((currTexts) => {
-                let clickedId: string | undefined;
-                if (elem && 'id' in elem) {
-                    clickedId = elem.id; // e.g. clicked existing text
-                }
+        if (isTextMode()) {
+            saveText();
 
-                let foundExisting = false;
-                // Close all open text edits; if we clicked an existing text, re-open it
-                const newTexts = currTexts.map((t) => {
-                    if (t.editMode) {
-                        return { ...t, editMode: undefined };
-                    } else if (clickedId === t.id) {
-                        foundExisting = true;
-                        return { ...t, editMode: true };
-                    }
-                    return t;
-                });
-
-                // If none found, create new text
-                if (!foundExisting) {
-                    const newTextElem: SketchText = {
-                        id: "T" + Math.random() * 10000,
-                        text: "",
-                        color: brushColorRef.current,
-                        rtl: false,
-                        fontSize: 25,
-                        editMode: true,
-                        x: p[0],
-                        y: p[1],
-                    };
-                    newTexts.push(newTextElem);
+            if (elem && 'id' in elem) {
+                // click on existing
+                const textElem = textsRef.current.find(t => t.id == elem.id);
+                if (textElem) {
+                    backupElement(textElem);
+                    textElem.editMode = true;
                 }
-                return newTexts;
-            });
+            } else {
+                const newTextElem: SketchText = {
+                    id: "T" + Math.random() * 10000,
+                    text: "",
+                    color: brushColorRef.current,
+                    rtl: false,
+                    fontSize: fontSizeRef.current,
+                    editMode: true,
+                    x: p[0],
+                    y: p[1],
+                };
+                textsRef.current.push(newTextElem);
+            }
+
+            setTexts([...textsRef.current]);
         } else if (modeRef.current === EditModes.Ruler && elem) {
             console.log("Line clicked", elem);
-            setLines((currLines) =>
-                currLines.map((line) =>
-                    line.id === (elem as SketchLine).id
-                        ? { ...line, editMode: true }
-                        : { ...line, editMode: false }
-                )
-            );
         }
+    }
+
+    function handleTextChanged(id: string, newText: string) {
+        const textElem = textsRef.current.find(t => t.id == id);
+        if (textElem) {
+            textElem.text = newText;
+        }
+        setTexts([...textsRef.current]);
     }
 
     // -------------------------------------------------------------------------
     //                          MOVE / DRAG HANDLERS
     // -------------------------------------------------------------------------
     function handleMove(type: MoveTypes, id: string, p: SketchPoint) {
-        console.log("Move", type, id, p);
+        trace("Move elem", type, id, p)
         if (type === MoveTypes.Text) {
-            setStatus("Move Text:" + p[0] + "," + p[1]);
-            setTexts((currTexts) =>
-                currTexts.map((t) => (t.id === id ? { ...t, x: p[0], y: p[1] } : t))
-            );
-        } else if (type === MoveTypes.LineStart || type === MoveTypes.LineEnd) {
-            setLines((currLines) =>
-                currLines.map((line) => {
-                    if (line.id === id) {
-                        if (type === MoveTypes.LineStart) {
-                            line.from = [p[0], p[1]];
-                        } else {
-                            line.to = [p[0], p[1]];
-                        }
-                    }
-                    return line;
-                })
-            );
+            const textElem = textsRef.current.find(t => t.id === id);
+            trace("Move text", textElem, textsRef.current)
+            if (textElem) {
+                textElem.x = p[0];
+                textElem.y = p[1];
+                setTexts([...textsRef.current]);
+            }
+        } else if (type === MoveTypes.LineStart || type === MoveTypes.LineEnd || type === MoveTypes.LineMove) {
+            const line = linesRef.current.find(line => line.id == id);
+            if (line) {
+                if (!line.backup) {
+                    backupElement(line)
+                }
+                if (type === MoveTypes.LineStart) {
+                    line.from = [p[0], p[1]];
+                } else if (type === MoveTypes.LineEnd) {
+                    line.to = [p[0], p[1]];
+                } else {
+                    const dx = line.to[0] - line.from[0];
+                    const dy = line.to[1] - line.from[1];
+                    line.from = [p[0], p[1]];
+                    line.to = [p[0] + dx, p[1] + dy];
+                }
+                setLines([...linesRef.current]);
+            }
+
         }
     }
 
     function handleMoveEnd(type: MoveTypes, id: string) {
-        console.log("Move end", type, id);
+        if (type === MoveTypes.LineStart || type === MoveTypes.LineEnd || type === MoveTypes.LineMove) {
+            console.log("Move end", linesRef.current);
+            const line = linesRef.current.find(line => line.id == id);
+            if (line) {
+                queue.current.pushLine(restoreElement(line));
+                save();
+                queue2state();
+            }
+        }
     }
 
     function handleMoveTablePart(p: SketchPoint, tableContext: TableContext) {
@@ -379,9 +410,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     // -------------------------------------------------------------------------
     function handleDelete(type: ElementTypes, id: string) {
         if (type === ElementTypes.Line) {
-            setLines((currLines) => currLines.filter((l) => l.id !== id));
+            queue.current.pushDeleteLine(id);
+            save();
+            queue2state();
         }
-        // Add more logic for other element types as needed
     }
 
     // -------------------------------------------------------------------------
@@ -395,7 +427,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //                          TOOLBAR OR MODE HANDLERS
     // -------------------------------------------------------------------------
     function afterUndoRedo() {
-        // For do-queue undo/redo if needed
+        queue2state()
+        save();
     }
 
     // NEW OR UPDATED: placeholders or stubs for these missing handlers
@@ -542,7 +575,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 eraseMode={eraseMode}
                 onEraser={handleEraserPressed}
                 onRulerMode={handleRulerMode}
-                isRulerMode={mode === EditModes.Ruler}
                 onTextMode={handleTextMode}
                 onImageMode={handleImageMode}
                 onAudioMode={handleAudioMode}
@@ -554,13 +586,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onVoiceMode={onVoiceMode}
                 onTableMode={onTableMode}
                 TableActions={TableActions}
-                isTableMode={isTableMode()}
+                isRulerMode={mode === EditModes.Ruler}
+                isTableMode={mode === EditModes.Table}
                 isMarkerMode={isMarkerMode()}
-                isTextMode={isTextMode()}
-                isAudioMode={isAudioMode()}
-                isImageMode={isImageMode()}
-                isVoiceMode={isVoiceMode()}
-                isBrushMode={isBrushMode()}
+                isTextMode={mode === EditModes.Text}
+                isAudioMode={false} // todo
+                isImageMode={mode === EditModes.Image}
+                isVoiceMode={false}
+                isBrushMode={mode === EditModes.Brush}
                 fontSize={fontSize}
                 textAlignment={textAlignment}
                 showCenterTextAlignment={false} // or some logic

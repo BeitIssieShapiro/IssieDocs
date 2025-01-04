@@ -474,9 +474,8 @@ export function Canvas({
             ))}
 
             {/* Lines in edit mode */}
-            {lines
-                ?.filter((l) => l.editMode)
-                .map((line) => {
+            {currentElementType == ElementTypes.Line && lines?.
+                map((line) => {
                     const angle = calculateLineAngle(line.from, line.to);
                     const trashPos = calculateLineTrashPoint(line.from, line.to, (angle + 90) % 360, 8);
 
