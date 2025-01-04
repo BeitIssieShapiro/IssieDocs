@@ -13,11 +13,11 @@ import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { arrLast, pageTitleAddition, setNavParam } from './utils';
-import { colors, dimensions, semanticColors } from './elements';
+import { colors, dimensions, getImageDimensions, semanticColors } from './elements';
 import EditorToolbar from './editor-toolbar';
-import { SRC_CAMERA, SRC_GALLERY } from './newPage';
+import { getNewPage, SRC_CAMERA, SRC_GALLERY } from './newPage';
 import { EditModes, RootStackParamList } from './types';
-import { backupElement, cloneElem, restoreElement } from './canvas/utils';
+import { backupElement, cloneElem, getId, restoreElement } from './canvas/utils';
 import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
@@ -44,7 +44,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [eraseMode, setEraseMode] = useState<boolean>(false);
     const [openContextMenu, setOpenContextMenu] = useState<boolean>(false);
     const [currentFile, setCurrentFile] = useState<string>(page.defaultSrc);
-
+    const [busy, setBusy] = useState<boolean>(false);
 
     const pageRef = useRef(page);
     const metaDataUri = useRef("");
@@ -200,38 +200,39 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         ...elem, src: { uri: FileSystem.main.getAttachmentBase(pageRef.current, currPageIndexRef.current) + elem.file }
                     }
                     _images.push(elem);
-                    // } else if (q[i].type === 'imagePosition') {
-                    //     const elemIndex = canvasImages.findIndex(ci => ci.id === q[i].elem.id);
-                    //     if (elemIndex >= 0) {
-                    //         const updatedImage = { ...canvasImages[elemIndex], ...q[i].elem }
-                    //         canvasImages[elemIndex] = imageNorm2Scale(updatedImage)
-                    //     }
-                    // } else if (q[i].type === 'imageDelete') {
-                    //     const elemIndex = canvasImages.findIndex(ci => ci.id === q[i].elem.id);
-                    //     if (elemIndex >= 0) {
-                    //         canvasImages.splice(elemIndex, 1);
-                    //     }
-                    // } else if (q[i].type === 'table') {
-                    //     canvasTables = canvasTables.filter(t => t.id !== q[i].elem.id);
-                    //     canvasTables.push(q[i].elem);
-                    // } else if (q[i].type === 'tableDelete') {
-                    //     canvasTables = canvasTables.filter(t => t.id !== q[i].elemID);
-                    //     // delete all cell text related
-                    //     tableCellTexts = tableCellTexts.filter(tct => tct.tableCell.tableID !== q[i].elemID)
-                    // } else if (q[i].type === 'audio') {
-                    //     canvasAudio.push(q[i].elem);
-                    // } else if (q[i].type === 'audioDelete') {
-                    //     canvasAudio = canvasAudio.filter(t => t.id !== q[i].elem.id);
-                    // } else if (q[i].type === 'audioPosition') {
-                    //     const elemIndex = canvasAudio.findIndex(ci => ci.id === q[i].elem.id);
-                    //     if (elemIndex >= 0) {
-                    //         const updatedAudio = { ...canvasAudio[elemIndex], ...q[i].elem }
-                    //         canvasAudio[elemIndex] = updatedAudio;
-                    //     }
-                    // }
                 }
+            } else if (q[i].type === 'imagePosition') {
+                const elemIndex = _images.findIndex(ci => ci.id === q[i].elem.id);
+                if (elemIndex >= 0) {
+                    const updatedImage = { ..._images[elemIndex], ...q[i].elem }
+                    _images[elemIndex] = updatedImage;
+                }
+            } else if (q[i].type === 'imageDelete') {
+                const elemIndex = _images.findIndex(ci => ci.id === q[i].elem.id);
+                if (elemIndex >= 0) {
+                    _images.splice(elemIndex, 1);
+                }
+                // } else if (q[i].type === 'table') {
+                //     canvasTables = canvasTables.filter(t => t.id !== q[i].elem.id);
+                //     canvasTables.push(q[i].elem);
+                // } else if (q[i].type === 'tableDelete') {
+                //     canvasTables = canvasTables.filter(t => t.id !== q[i].elemID);
+                //     // delete all cell text related
+                //     tableCellTexts = tableCellTexts.filter(tct => tct.tableCell.tableID !== q[i].elemID)
+                // } else if (q[i].type === 'audio') {
+                //     canvasAudio.push(q[i].elem);
+                // } else if (q[i].type === 'audioDelete') {
+                //     canvasAudio = canvasAudio.filter(t => t.id !== q[i].elem.id);
+                // } else if (q[i].type === 'audioPosition') {
+                //     const elemIndex = canvasAudio.findIndex(ci => ci.id === q[i].elem.id);
+                //     if (elemIndex >= 0) {
+                //         const updatedAudio = { ...canvasAudio[elemIndex], ...q[i].elem }
+                //         canvasAudio[elemIndex] = updatedAudio;
+                //     }
+                // }
             }
         }
+
 
         pathsRef.current = _paths;
         textsRef.current = _texts;
@@ -264,7 +265,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             }
 
             const newPath: SketchPath = {
-                id: "S" + Math.random() * 10000,
+                id: getId("S"),
                 points: [p],
                 color,
                 strokeWidth,
@@ -275,7 +276,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         } else if (modeRef.current === EditModes.Ruler) {
             const newLine: SketchLine = {
-                id: "L" + Math.random() * 10000,
+                id: getId("L"),
                 from: p,
                 to: p,
                 color: rulerColorRef.current,
@@ -375,7 +376,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 }
             } else {
                 const newTextElem: SketchText = {
-                    id: "T" + Math.random() * 10000,
+                    id: getId("T"),
                     text: "",
                     color: brushColorRef.current,
                     rtl: textAlignmentRef.current == 'Right',
@@ -394,6 +395,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 setCurrentEdited(prev => ({ ...prev, lineId: elem.id }));
                 setLines([...linesRef.current]);
             }
+        } else if (modeRef.current === EditModes.Image && elem && "id" in elem) {
+            trace("set current image")
+            setCurrentEdited(prev => ({ ...prev, imageId: elem.id }));
         }
     }
 
@@ -437,6 +441,21 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 setLines([...linesRef.current]);
             }
 
+        } else if (type === MoveTypes.ImageMove || type === MoveTypes.ImageResize) {
+            const imgElem = imagesRef.current.find(image => image.id == id);
+            if (imgElem) {
+                if (!imgElem.backup) {
+                    backupElement(imgElem)
+                }
+                if (type === MoveTypes.ImageMove) {
+                    imgElem.x = p[0];
+                    imgElem.y = p[1];
+                } else {
+                    imgElem.width = p[0] - imgElem.x;
+                    imgElem.height = p[1] - imgElem.y;
+                }
+                setImages([...imagesRef.current]);
+            }
         }
     }
 
@@ -446,6 +465,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             const line = linesRef.current.find(line => line.id == id);
             if (line) {
                 queue.current.pushLine(restoreElement(line));
+                save();
+                queue2state();
+            }
+        } else if (type === MoveTypes.ImageMove || type === MoveTypes.ImageResize) {
+            const imgElem = imagesRef.current.find(image => image.id == id);
+            if (imgElem) {
+                const changed = restoreElement(imgElem);
+                queue.current.pushImagePosition(changed);
                 save();
                 queue2state();
             }
@@ -467,6 +494,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     function handleDelete(type: ElementTypes, id: string) {
         if (type === ElementTypes.Line) {
             queue.current.pushDeleteLine(id);
+            save();
+            queue2state();
+        } else if (type == ElementTypes.Image) {
+            queue.current.pushDeleteImage({ id });
             save();
             queue2state();
         }
@@ -515,10 +546,38 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         console.log("Add audio not implemented yet");
     }
 
-    // NEW OR UPDATED: addImage references
     function addImage(srcType: string) {
-        console.log("Add image from", srcType);
-        // Possibly open camera / gallery
+        getNewPage(srcType, (uri: string) => {
+            setBusy(true);
+            getImageDimensions(uri).then((imgSize) => {
+                const ratio = imgSize.w / imgSize.h;
+                FileSystem.main.resizeImage(uri, Math.round(windowSize.width / 1.5), windowSize.height / 1.5)
+                    .then(uri2 => FileSystem.main.attachedFileToPage(uri2, pageRef.current, currPageIndexRef.current, "jpeg"))
+                    .then(imageAttachmentFile => {
+                        const img = {
+                            id: getId("I"),
+                            x: windowSize.width / 2,
+                            y: windowSize.height / 2,
+                            file: imageAttachmentFile,
+                            width: Math.round(120 * ratio),
+                            height: 120,
+                        };
+
+                        queue.current.pushImage(img)
+                        currentEdited.imageId = img.id;
+                        queue2state();
+                        save();
+                    })
+            }).finally(() => setBusy(false));
+        },
+            //cancel
+            () => setBusy(false),
+            (err: any) => Alert.alert("Error", err.description),
+            navigation,
+            {
+                selectionLimit: 1,
+                //  quality: 0.8 
+            });
     }
 
     // Brush Mode
@@ -652,14 +711,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //                          RENDER
     // -------------------------------------------------------------------------
 
-    function colorByMode(mode:EditModes, brushColor:string, textColor:string, markerColor:string, rulerColor:string) {
+    function colorByMode(mode: EditModes, brushColor: string, textColor: string, markerColor: string, rulerColor: string) {
         if (mode == EditModes.Brush) return brushColor;
         if (mode == EditModes.Text) return textColor;
         if (mode == EditModes.Marker) return markerColor;
         if (mode == EditModes.Ruler) return rulerColor;
     }
 
-    function mode2ElementType(mode:EditModes):ElementTypes {
+    function mode2ElementType(mode: EditModes): ElementTypes {
         if (mode == EditModes.Brush || mode == EditModes.Marker) {
             return ElementTypes.Sketch
         }
@@ -721,7 +780,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 markerWidth={markerWidth}
                 sideMargin={sideMargin}
                 onSelectColor={handleSelectColor}
-                color={colorByMode(mode,brushColor,textColor,markerColor, rulerColor)}
+                color={colorByMode(mode, brushColor, textColor, markerColor, rulerColor)}
                 onSelectTextSize={onTextSize}
                 onSelectTextAlignment={onTextAlignment}
                 onSelectBrushSize={onBrushSize}

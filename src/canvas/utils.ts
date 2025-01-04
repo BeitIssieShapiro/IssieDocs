@@ -136,6 +136,9 @@ export function calcEffectiveHorizontalLines(table: SketchTable, texts?: SketchT
     return result;
 }
 
+export function getId(prefix:string):string {
+    return prefix + Math.random() * 10000;
+}
 
 export function inBox(t: any, x: number, y: number, margin: number): boolean {
     // Determine the bounding box based on RTL

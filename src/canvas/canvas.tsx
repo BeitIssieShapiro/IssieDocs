@@ -634,31 +634,33 @@ export function Canvas({
                         ]}
                         source={image.src}
                     />
-                    <TouchableOpacity
-                        style={{
-                            position: "absolute",
-                            zIndex: 1000,
-                            left: image.x * ratio.current - 30,
-                            top: image.y * ratio.current,
-                        }}
-                        onPress={() => onDeleteElement?.(ElementTypes.Image, image.id)}
-                    >
-                        <IconIonic name="trash-outline" size={30} color={"blue"} />
-                    </TouchableOpacity>
-                    <MoveIcon
-                        style={{}}
-                        position={[
-                            (image.x + image.width) * ratio.current - 20,
-                            (image.y + image.height) * ratio.current - 20,
-                        ]}
-                        size={40}
-                        panResponderHandlers={moveResponder.panHandlers}
-                        onSetContext={() => {
-                            moveContext.current = { type: MoveTypes.ImageResize, id: image.id, offsetX: -30, offsetY: -30 };
-                        }}
-                        icon="resize-bottom-right"
-                        color="black"
-                    />
+                    {currentElementTypeRef.current == ElementTypes.Image &&
+                        currentEdited.imageId == image.id && <TouchableOpacity
+                            style={{
+                                position: "absolute",
+                                zIndex: 1000,
+                                left: image.x * ratio.current - 30,
+                                top: image.y * ratio.current,
+                            }}
+                            onPress={() => onDeleteElement?.(ElementTypes.Image, image.id)}
+                        >
+                            <IconIonic name="trash-outline" size={30} color={"blue"} />
+                        </TouchableOpacity>}
+                    {currentElementTypeRef.current == ElementTypes.Image &&
+                        currentEdited.imageId == image.id && <MoveIcon
+                            style={{}}
+                            position={[
+                                (image.x + image.width) * ratio.current - 20,
+                                (image.y + image.height) * ratio.current - 20,
+                            ]}
+                            size={40}
+                            panResponderHandlers={moveResponder.panHandlers}
+                            onSetContext={() => {
+                                moveContext.current = { type: MoveTypes.ImageResize, id: image.id, offsetX: -30, offsetY: -30 };
+                            }}
+                            icon="resize-bottom-right"
+                            color="black"
+                        />}
                 </React.Fragment>
             ))}
         </View>
