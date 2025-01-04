@@ -91,7 +91,6 @@ function Canvas({
     }, [paths]);
 
     const findRuler = useCallback((normXY, currSize, selectedID) => {
-
         return paths.find(p => {
             if (p.x1 == undefined) return false; //not a ruler
 

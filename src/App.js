@@ -48,7 +48,8 @@ import FlashMessage from "react-native-flash-message";
 import { OpenLink } from './parental-gate';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TopHeader } from './header';
-import { TestCmp } from './test.js';
+import { CanvasTest } from './canvas/CanvasTestGround';
+import { IssieEditPhoto2 } from './IssieEditPhoto2';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -104,12 +105,13 @@ const App = (props) => {
 
 
   // return <TestCmp/>
-
+  //return <Test a="abc" b={1}/>
+  //return <CanvasTest />
 
   return (
     <MenuProvider>
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ gestureEnabled: false, headerShown: true, headerStyle: { position:"absolute", zIndex: 2000 } }}>
+        <Stack.Navigator screenOptions={{ gestureEnabled: false, headerShown: true, headerStyle: { position: "absolute", zIndex: 2000 } }}>
           <Stack.Screen name="Home" component={FolderGallery}
             options={
               (props) => {
@@ -172,7 +174,7 @@ const App = (props) => {
             }}
           />
 
-          <Stack.Screen name="EditPhoto" component={IssieEditPhoto} 
+          <Stack.Screen name="EditPhoto" component={IssieEditPhoto2}
             initialParams={{ headerHeight: dimensions.headerHeight, insets: props.insets }}
             options={(props) => {
               const page = props.route.params.page;
