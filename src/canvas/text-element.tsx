@@ -78,7 +78,7 @@ export const TextElement: React.FC<TextElementProps> = ({
                         allowFontScaling={false}
                         multiline
                         autoFocus
-                        style={[styles.textStyle, styles.textInput, style]}
+                        style={[styles.textStyle, styles.textInput, style, { backgroundColor: text.color == '#fee100' ? 'gray' : 'yellow' }]}
                         value={text.text}
                         onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
                     />
@@ -99,7 +99,7 @@ export const TextElement: React.FC<TextElementProps> = ({
         <View key={text.id} style={[posStyle]} direction={text.rtl ? "rtl" : "ltr"}>
             <Text
                 allowFontScaling={false}
-                style={[styles.textStyle, style, {textAlign: "left"}]}
+                style={[styles.textStyle, style, { textAlign: "left" }]}
                 onLayout={(e) => handleTextLayout(e, text)}
             >
                 {text.text}
@@ -119,7 +119,6 @@ const styles = StyleSheet.create({
         flexWrap: "wrap",
     },
     textInput: {
-        backgroundColor: "yellow",
         minWidth: 50,
     },
 });

@@ -137,7 +137,31 @@ export function calcEffectiveHorizontalLines(table: SketchTable, texts?: SketchT
 }
 
 
-export function cloneElem(elem:any):any {
+export function inBox(t: any, x: number, y: number, margin: number): boolean {
+    // Determine the bounding box based on RTL
+    let left: number;
+    let right: number;
+
+    if (t.rtl) {
+        // If rtl, x is the right edge, so we go from x - width to x
+        left = t.x - t.width;
+        right = t.x;
+    } else {
+        // Non-rtl, x is the left edge, so we go from x to x + width
+        left = t.x;
+        right = t.x + t.width;
+    }
+
+    return (
+        left - margin < x &&
+        right + margin > x &&
+        t.y - margin < y &&
+        t.height &&
+        t.y + t.height + margin > y
+    );
+}
+
+export function cloneElem(elem: any): any {
     return JSON.parse(JSON.stringify(elem));
 }
 
@@ -153,7 +177,7 @@ export function restoreElement(elem: ElementBase): ElementBase {
 
     const currentClone = cloneElem(elem);
     Object.assign(elem, backupCopy);
-  
+
     console.log("restore to", currentClone)
     return currentClone;
 }

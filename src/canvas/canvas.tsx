@@ -34,6 +34,7 @@ import {
     calcEffectiveHorizontalLines,
     calculateLineAngle,
     calculateLineTrashPoint,
+    inBox,
     isPointOnLineSegment,
     joinPath,
     tableRowHeight,
@@ -359,20 +360,11 @@ export function Canvas({
     }
 
     function searchElement(cx: number, cy: number) {
-        // Generic bounding-box detection
-        const inBox = (t: any) =>
-            t.x - TEXT_SEARCH_MARGIN < cx &&
-            t.width &&
-            t.x + t.width + TEXT_SEARCH_MARGIN > cx &&
-            t.y - TEXT_SEARCH_MARGIN < cy &&
-            t.height &&
-            t.y + t.height + TEXT_SEARCH_MARGIN > cy;
-
         if (currentElementTypeRef.current === ElementTypes.Text) {
-            return textsRef.current?.find(inBox);
+            return textsRef.current?.find(t => inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
         }
         if (currentElementTypeRef.current === ElementTypes.Image) {
-            return imagesRef.current?.find(inBox);
+            return imagesRef.current?.find(t => inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
         }
         if (currentElementTypeRef.current === ElementTypes.Line) {
             const THRESHOLD = 10; // how close to the line is acceptable?
@@ -381,7 +373,6 @@ export function Canvas({
                 isPointOnLineSegment(line.from, line.to, cx, cy, THRESHOLD)
             );
         }
-
     }
 
     function handleTextLayout(e: LayoutChangeEvent, text: SketchText) {
@@ -528,7 +519,7 @@ export function Canvas({
                     <Path
                         key={path.id}
                         d={joinPath(path.points, ratio.current)}
-                        stroke={"red"}
+                        stroke={path.color}
                         strokeWidth={path.strokeWidth}
                         fill="none"
                     />
@@ -670,8 +661,6 @@ export function Canvas({
 const styles = StyleSheet.create({
     container: {
         backgroundColor: "#f5f5f5",
-        borderColor: "blue",
-        borderWidth: 1,
     },
     imageStyle: {
         position: "absolute",

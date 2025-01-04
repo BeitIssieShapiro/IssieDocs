@@ -13,11 +13,12 @@ import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { arrLast, pageTitleAddition, setNavParam } from './utils';
-import { dimensions, semanticColors } from './elements';
+import { colors, dimensions, semanticColors } from './elements';
 import EditorToolbar from './editor-toolbar';
 import { SRC_CAMERA, SRC_GALLERY } from './newPage';
 import { EditModes, RootStackParamList } from './types';
 import { backupElement, cloneElem, restoreElement } from './canvas/utils';
+import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -34,6 +35,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [tables, setTables] = useState<SketchTable[]>([]);
 
     const [windowSize, setWindowSize] = useState<ImageSize>({ width: 500, height: 500 });
+    const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
     const [zoom, setZoom] = useState<number>(1);
     const [status, setStatus] = useState<string>("");
     const [moveCanvas, setMoveCanvas] = useState<Offset>({ x: 0, y: 0 });
@@ -57,9 +59,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [textAlignment, setTextAlignment] = useState<string>("left");
     const [strokeWidth, setStrokeWidth] = useState<number>(2);
     const [markerWidth, setMarkerWidth] = useState<number>(5);
-    const [sideMargin, setSideMargin] = useState<number>(15);
-    const [brushColor, setBrushColor] = useState<string>("#000000");
-    const [rulerColor, setRulerColor] = useState<string>("#000000");
+    const [sideMargin, setSideMargin] = useState<number>(dimensions.minSideMargin);
+    const [brushColor, setBrushColor] = useState<string>(colors.black);
+    const [rulerColor, setRulerColor] = useState<string>(colors.black);
+    const [markerColor, setMarkerColor] = useState<string>(colors.yellow);
+    const [textColor, setTextColor] = useState<string>(colors.black);
+    const [tableColor, setTableColor] = useState<string>(colors.blue);
+
 
     // Corresponding Refs
     const linesRef = useRef(lines);
@@ -77,20 +83,17 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const sideMarginRef = useRef(sideMargin);
     const brushColorRef = useRef(brushColor);
     const rulerColorRef = useRef(rulerColor);
+    const markerColorRef = useRef(markerColor);
+    const textColorRef = useRef(textColor);
+    const tableColorRef = useRef(tableColor);
 
 
     // -------------------------------------------------------------------------
     //                          EFFECTS
     // -------------------------------------------------------------------------
 
-    // useEffect(() => {
-    //     pathsRef.current = paths
-    //     linesRef.current = lines;
-    // }, [paths, lines]);
-
-
     useEffect(() => {
-        trace("Refs change", mode)
+        //trace("Refs change", mode)
         modeRef.current = mode;
         fontSizeRef.current = fontSize;
         textAlignmentRef.current = textAlignment;
@@ -99,7 +102,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         sideMarginRef.current = sideMargin;
         brushColorRef.current = brushColor;
         rulerColorRef.current = rulerColor;
-    }, [mode, fontSize, textAlignment, strokeWidth, markerWidth, sideMargin, brushColor, rulerColor]);
+        markerColorRef.current = markerColor;
+        textColorRef.current = textColor;
+        tableColorRef.current = tableColor;
+
+        updateCurrentEditedText();
+    }, [mode, fontSize, textAlignment, strokeWidth, markerWidth, sideMargin,
+        brushColor, rulerColor, markerColor, textColor, tableColor]);
 
 
     useEffect(() => {
@@ -232,17 +241,28 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setTables(_tables);
     }
 
+    function beforeModeChange() {
+        saveText()
+    }
+
     // -------------------------------------------------------------------------
     //                          SKETCH HANDLERS
     // -------------------------------------------------------------------------
     function handleSketchStart(p: SketchPoint) {
         //console.log("Sketch Start", modeRef.current, p);
         if (isBrushMode() || isMarkerMode()) {
+            let color = isMarkerMode() ? markerColorRef.current + MARKER_TRANSPARENCY_CONSTANT : brushColorRef.current;
+            let strokeWidth = isMarkerMode() ? markerWidthRef.current : strokeWidthRef.current;
+            if (eraseMode) {
+                color = '#00000000';
+                strokeWidth = strokeWidthRef.current * 3;
+            }
+
             const newPath: SketchPath = {
                 id: "S" + Math.random() * 10000,
                 points: [p],
-                color: brushColorRef.current, // todo handle brush color and width
-                strokeWidth: strokeWidthRef.current,
+                color,
+                strokeWidth,
             };
 
             pathsRef.current.push(newPath);
@@ -254,7 +274,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 from: p,
                 to: p,
                 color: rulerColorRef.current,
-                strokeWidth: 2,
+                strokeWidth: strokeWidthRef.current,
                 editMode: false,
             };
             linesRef.current.push(newLine);
@@ -300,13 +320,36 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     // -------------------------------------------------------------------------
 
     function saveText() {
+        if (modeRef.current != EditModes.Text) return;
         const textElem = textsRef.current.find(t => t.editMode);
         if (textElem) {
             // todo verify text elem has changed
             delete textElem.editMode;
-            queue.current.pushText(restoreElement(textElem));
-            queue2state();
-            save();
+            if (textElem.backup) {
+                const changedElem = restoreElement(textElem) as SketchText;
+                const origElem = textElem as SketchText;
+                // compare the text elements
+                if (changedElem.text != origElem.text ||
+                    changedElem.color != origElem.color ||
+                    changedElem.fontSize != origElem.fontSize ||
+                    changedElem.rtl != origElem.rtl ||
+                    changedElem.x != origElem.x ||
+                    changedElem.y != origElem.y) {
+
+                    queue.current.pushText(changedElem);
+                    queue2state();
+                    save();
+                    return;
+                }
+            } else {
+                // new text element
+                if (textElem.text != "") {
+                    queue.current.pushText(textElem);
+                    queue2state();
+                    save();
+                    return;
+                }
+            }
         }
     }
 
@@ -320,13 +363,18 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 if (textElem) {
                     backupElement(textElem);
                     textElem.editMode = true;
+
+                    // Update the font and color based on the selected text
+                    setFontSize(textElem.fontSize);
+                    setTextColor(textElem.color);
+                    setTextAlignment(textElem.rtl?'Right':'Left')
                 }
             } else {
                 const newTextElem: SketchText = {
                     id: "T" + Math.random() * 10000,
                     text: "",
                     color: brushColorRef.current,
-                    rtl: false,
+                    rtl: textAlignmentRef.current == 'Right',
                     fontSize: fontSizeRef.current,
                     editMode: true,
                     x: p[0],
@@ -441,17 +489,19 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     function handleRulerMode() {
+        beforeModeChange();
         setMode(EditModes.Ruler);
     }
     function handleTextMode() {
+        beforeModeChange();
         setMode(EditModes.Text);
     }
     function handleImageMode() {
         setMode(EditModes.Image);
     }
     function handleAudioMode() {
-        console.log("Audio mode not implemented yet");
-        // setMode(EditModes.Audio); // if you have an Audio mode
+        beforeModeChange();
+        setMode(EditModes.Audio);
     }
     function handleAddAudio() {
         console.log("Add audio not implemented yet");
@@ -465,25 +515,25 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     // Brush Mode
     function onBrushMode() {
+        beforeModeChange();
         setMode(EditModes.Brush);
     }
 
     // Marker Mode
     function onMarkerMode() {
-        console.log("Marker mode not implemented yet");
-        // setMode(EditModes.Marker);
+        beforeModeChange();
+        setMode(EditModes.Marker);
     }
 
     // Voice Mode
     function onVoiceMode() {
-        console.log("Voice mode not implemented yet");
-        // setMode(EditModes.Voice);
+        console.log("Not implemented yet");
     }
 
     // Table Mode
     function onTableMode() {
-        console.log("Table mode not implemented yet");
-        // setMode(EditModes.Table);
+        beforeModeChange();
+        setMode(EditModes.Table);
     }
 
     // Checking if we are in a particular mode
@@ -512,19 +562,44 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         return modeRef.current === EditModes.Brush;
     }
 
-    // TableActions placeholder
-    const TableActions = {};
+    const TableActions = {
+        delete: (id: string) => {
+            queue.current.pushDeleteTable(id);
+            queue2state()
+            save();
+        },
+        addTable: (cols: number, rows: number, color: string, borderWidth: number, style: any) => {
+            trace("add table", style)
+        },
+        setRowsOrColumns: (newVal: number, isCols: boolean) => { },
+        setColor: (newColor: string) => { },
+        setBorderWidth: (borderWidth: number) => { },
+        setBorderStyle: (borderStyle: string) => { } //"2,2", ..
 
-    // NEW OR UPDATED: handleSelectColor for the color palette
+    };
+
+    function updateCurrentEditedText() {
+        const textElem = textsRef.current.find(t => t.editMode);
+        if (textElem) {
+            textElem.color = textColorRef.current;
+            textElem.fontSize = fontSizeRef.current;
+            textElem.rtl = textAlignmentRef.current == 'Right';
+            setTexts([...textsRef.current]);
+        }
+    }
+
     function handleSelectColor(newColor: string) {
         if (isBrushMode()) {
             setBrushColor(newColor)
         } else if (isRulerMode()) {
             setRulerColor(newColor);
+        } else if (isTextMode()) {
+            setTextColor(newColor);
+        } else if (isMarkerMode()) {
+            setMarkerColor(newColor);
         }
     }
 
-    // NEW OR UPDATED: handle text size, text alignment, brush & marker size
     function onTextSize(size: number) {
         setFontSize(size);
     }
@@ -546,6 +621,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     // -------------------------------------------------------------------------
     //                          RENDER
     // -------------------------------------------------------------------------
+
+    function colorByMode() {
+        if (modeRef.current == EditModes.Brush) return brushColorRef.current;
+        if (modeRef.current == EditModes.Text) return textColorRef.current;
+        if (modeRef.current == EditModes.Marker) return markerColorRef.current;
+        if (modeRef.current == EditModes.Ruler) return rulerColorRef.current;
+    }
+
     return (
         <SafeAreaView
             style={styles.mainContainer}
@@ -588,9 +671,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 TableActions={TableActions}
                 isRulerMode={mode === EditModes.Ruler}
                 isTableMode={mode === EditModes.Table}
-                isMarkerMode={isMarkerMode()}
+                isMarkerMode={mode === EditModes.Marker}
                 isTextMode={mode === EditModes.Text}
-                isAudioMode={false} // todo
+                isAudioMode={mode === EditModes.Audio} // todo
                 isImageMode={mode === EditModes.Image}
                 isVoiceMode={false}
                 isBrushMode={mode === EditModes.Brush}
@@ -601,13 +684,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 markerWidth={markerWidth}
                 sideMargin={sideMargin}
                 onSelectColor={handleSelectColor}
-                color={brushColor}
+                color={colorByMode()}
                 onSelectTextSize={onTextSize}
                 onSelectTextAlignment={onTextAlignment}
                 onSelectBrushSize={onBrushSize}
                 onSelectMarkerSize={onMarkerSize}
                 onToolBarDimensionsChange={handleToolbarDimensionChange}
-                maxFloatingHeight={0}
+                maxFloatingHeight={windowSize.height - keyboardHeight}
             />
             <View style={styles.topMargin} />
 
@@ -646,6 +729,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 // -------------------------------------------------------------------------
 const styles = StyleSheet.create({
     mainContainer: {
+        zIndex: 10,
         backgroundColor: semanticColors.mainAreaBG,
         width: '100%',
         height: '100%',
