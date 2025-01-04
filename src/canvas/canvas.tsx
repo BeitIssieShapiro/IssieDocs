@@ -13,6 +13,7 @@ import Svg, { Path } from "react-native-svg";
 import IconIonic from "react-native-vector-icons/Ionicons";
 
 import {
+    CurrentEdited,
     ElementBase,
     ElementTypes,
     MoveContext,
@@ -51,6 +52,8 @@ interface CanvasProps {
     images?: SketchImage[];
     elements?: SketchElement[]; // generic elements
     tables?: SketchTable[];
+
+    currentEdited: CurrentEdited;
 
     canvasWidth: number;
     canvasHeight: number;
@@ -97,6 +100,7 @@ export function Canvas({
     images,
     elements,
     tables,
+    currentEdited,
 
     imageSource,
     canvasWidth,
@@ -453,6 +457,8 @@ export function Canvas({
                 <TextElement
                     key={text.id}
                     text={text}
+                    editMode={(currentElementTypeRef.current == ElementTypes.Text || currentElementTypeRef.current == ElementTypes.Table)
+                        && text.id == currentEdited.textId}
                     texts={texts}
                     tables={tables}
                     actualWidth={actualWidth}
@@ -465,53 +471,54 @@ export function Canvas({
             ))}
 
             {/* Lines in edit mode */}
-            {currentElementType == ElementTypes.Line && lines?.
-                map((line) => {
-                    const angle = calculateLineAngle(line.from, line.to);
-                    const trashPos = calculateLineTrashPoint(line.from, line.to, (angle + 90) % 360, 8);
+            {currentElementTypeRef.current == ElementTypes.Line && currentEdited.lineId &&
+                lines?.filter(line => line.id == currentEdited.lineId)
+                    .map((line) => {
+                        const angle = calculateLineAngle(line.from, line.to);
+                        const trashPos = calculateLineTrashPoint(line.from, line.to, (angle + 90) % 360, 8);
 
-                    const transform = { transform: [{ rotate: `${angle}deg` }] };
-                    return (
-                        <View key={line.id}>
-                            <MoveIcon
-                                style={transform}
-                                position={[line.from[0] * ratio.current - 8, line.from[1] * ratio.current - 8]}
-                                size={16}
-                                panResponderHandlers={moveResponder.panHandlers}
-                                onSetContext={() => {
-                                    moveContext.current = { type: MoveTypes.LineStart, id: line.id, offsetX: 0, offsetY: 0 };
-                                }}
-                                icon="square"
-                                color="blue"
-                            />
+                        const transform = { transform: [{ rotate: `${angle}deg` }] };
+                        return (
+                            <View key={line.id}>
+                                <MoveIcon
+                                    style={transform}
+                                    position={[line.from[0] * ratio.current - 8, line.from[1] * ratio.current - 8]}
+                                    size={16}
+                                    panResponderHandlers={moveResponder.panHandlers}
+                                    onSetContext={() => {
+                                        moveContext.current = { type: MoveTypes.LineStart, id: line.id, offsetX: 0, offsetY: 0 };
+                                    }}
+                                    icon="square"
+                                    color={line.color}
+                                />
 
-                            <MoveIcon
-                                style={transform}
-                                position={[line.to[0] * ratio.current - 8, line.to[1] * ratio.current - 8]}
-                                size={16}
-                                panResponderHandlers={moveResponder.panHandlers}
-                                onSetContext={() => {
-                                    moveContext.current = { type: MoveTypes.LineEnd, id: line.id, offsetX: 0, offsetY: 0 };
-                                }}
-                                icon="square"
-                                color="blue"
-                            />
+                                <MoveIcon
+                                    style={transform}
+                                    position={[line.to[0] * ratio.current - 8, line.to[1] * ratio.current - 8]}
+                                    size={16}
+                                    panResponderHandlers={moveResponder.panHandlers}
+                                    onSetContext={() => {
+                                        moveContext.current = { type: MoveTypes.LineEnd, id: line.id, offsetX: 0, offsetY: 0 };
+                                    }}
+                                    icon="square"
+                                    color={line.color}
+                                />
 
-                            <TouchableOpacity
-                                key={`${line.id}-trash`}
-                                style={{
-                                    position: "absolute",
-                                    zIndex: 1000,
-                                    left: trashPos[0] * ratio.current - 11,
-                                    top: trashPos[1] * ratio.current - 11,
-                                }}
-                                onPress={() => onDeleteElement?.(ElementTypes.Line, line.id)}
-                            >
-                                <IconIonic name="trash-outline" size={22} color={"blue"} />
-                            </TouchableOpacity>
-                        </View>
-                    );
-                })}
+                                <TouchableOpacity
+                                    key={`${line.id}-trash`}
+                                    style={{
+                                        position: "absolute",
+                                        zIndex: 1000,
+                                        left: trashPos[0] * ratio.current - 11,
+                                        top: trashPos[1] * ratio.current - 11,
+                                    }}
+                                    onPress={() => onDeleteElement?.(ElementTypes.Line, line.id)}
+                                >
+                                    <IconIonic name="trash-outline" size={22} color={"blue"} />
+                                </TouchableOpacity>
+                            </View>
+                        );
+                    })}
 
             {/* Paths & Lines (Non-edit) */}
             <Svg height="100%" width="100%" style={{ position: "absolute" }}>

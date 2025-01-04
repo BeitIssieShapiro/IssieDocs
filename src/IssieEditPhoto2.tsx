@@ -7,7 +7,7 @@ import {
     View,
 } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
-import { ElementBase, ElementTypes, MoveTypes, Offset, SketchElement, SketchImage, SketchLine, SketchPath, SketchPoint, SketchTable, SketchText, TableContext } from './canvas/types';
+import { CurrentEdited, ElementBase, ElementTypes, MoveTypes, Offset, SketchElement, SketchImage, SketchLine, SketchPath, SketchPoint, SketchTable, SketchText, TableContext } from './canvas/types';
 import { Canvas } from './canvas/canvas';
 import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
@@ -33,6 +33,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [texts, setTexts] = useState<SketchText[]>([]);
     const [images, setImages] = useState<SketchImage[]>([]);
     const [tables, setTables] = useState<SketchTable[]>([]);
+    const [currentEdited, setCurrentEdited] = useState<CurrentEdited>({});
 
     const [windowSize, setWindowSize] = useState<ImageSize>({ width: 500, height: 500 });
     const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
@@ -73,7 +74,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const textsRef = useRef(texts);
     const imagesRef = useRef(images);
     const tablesRef = useRef(tables);
-
+    const currentEditedRef = useRef<CurrentEdited>(currentEdited);
 
 
     const fontSizeRef = useRef(fontSize);
@@ -106,9 +107,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         textColorRef.current = textColor;
         tableColorRef.current = tableColor;
 
-        updateCurrentEditedText();
+        updateCurrentEditedElements();
     }, [mode, fontSize, textAlignment, strokeWidth, markerWidth, sideMargin,
         brushColor, rulerColor, markerColor, textColor, tableColor]);
+
+    useEffect(() => {
+        currentEditedRef.current = currentEdited;
+    }, [currentEdited])
 
 
     useEffect(() => {
@@ -242,7 +247,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     function beforeModeChange() {
-        saveText()
+        saveText();
     }
 
     // -------------------------------------------------------------------------
@@ -275,7 +280,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 to: p,
                 color: rulerColorRef.current,
                 strokeWidth: strokeWidthRef.current,
-                editMode: false,
             };
             linesRef.current.push(newLine);
             setLines([...linesRef.current]);
@@ -309,6 +313,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             const elem = arrLast(linesRef.current);
             if (!elem) return;
             queue.current.pushLine(elem);
+            setCurrentEdited(prev => ({ ...prev, lineId: elem.id }))
         }
 
         save();
@@ -321,10 +326,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     function saveText() {
         if (modeRef.current != EditModes.Text) return;
-        const textElem = textsRef.current.find(t => t.editMode);
+        const textElem = textsRef.current.find(t => t.id == currentEditedRef.current.textId);
         if (textElem) {
             // todo verify text elem has changed
-            delete textElem.editMode;
             if (textElem.backup) {
                 const changedElem = restoreElement(textElem) as SketchText;
                 const origElem = textElem as SketchText;
@@ -362,12 +366,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 const textElem = textsRef.current.find(t => t.id == elem.id);
                 if (textElem) {
                     backupElement(textElem);
-                    textElem.editMode = true;
+                    setCurrentEdited(prev => ({ ...prev, textId: elem.id }))
 
                     // Update the font and color based on the selected text
                     setFontSize(textElem.fontSize);
                     setTextColor(textElem.color);
-                    setTextAlignment(textElem.rtl?'Right':'Left')
+                    setTextAlignment(textElem.rtl ? 'Right' : 'Left')
                 }
             } else {
                 const newTextElem: SketchText = {
@@ -376,16 +380,20 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     color: brushColorRef.current,
                     rtl: textAlignmentRef.current == 'Right',
                     fontSize: fontSizeRef.current,
-                    editMode: true,
                     x: p[0],
                     y: p[1],
                 };
+                setCurrentEdited(prev => ({ ...prev, textId: newTextElem.id }));
                 textsRef.current.push(newTextElem);
             }
 
             setTexts([...textsRef.current]);
-        } else if (modeRef.current === EditModes.Ruler && elem) {
-            console.log("Line clicked", elem);
+        } else if (modeRef.current === EditModes.Ruler && elem && "id" in elem) {
+            const lineElem = linesRef.current.find(line => line.id == elem.id);
+            if (lineElem) {
+                setCurrentEdited(prev => ({ ...prev, lineId: elem.id }));
+                setLines([...linesRef.current]);
+            }
         }
     }
 
@@ -578,13 +586,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     };
 
-    function updateCurrentEditedText() {
-        const textElem = textsRef.current.find(t => t.editMode);
-        if (textElem) {
-            textElem.color = textColorRef.current;
-            textElem.fontSize = fontSizeRef.current;
-            textElem.rtl = textAlignmentRef.current == 'Right';
-            setTexts([...textsRef.current]);
+    function updateCurrentEditedElements() {
+        if (modeRef.current == EditModes.Text && currentEditedRef.current.textId) {
+            const textElem = textsRef.current.find(t => t.id == currentEditedRef.current.textId);
+            if (textElem) {
+                textElem.color = textColorRef.current;
+                textElem.fontSize = fontSizeRef.current;
+                textElem.rtl = textAlignmentRef.current == 'Right';
+                setTexts([...textsRef.current]);
+            }
         }
     }
 
@@ -593,6 +603,16 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setBrushColor(newColor)
         } else if (isRulerMode()) {
             setRulerColor(newColor);
+            if (currentEditedRef.current.lineId) {
+                const lineElem = linesRef.current.find(line => line.id == currentEditedRef.current.lineId);
+                if (lineElem) {
+                    const cloned = cloneElem(lineElem);
+                    cloned.color = newColor;
+                    queue.current.pushLine(cloned);
+                    queue2state();
+                    save();
+                }
+            }
         } else if (isTextMode()) {
             setTextColor(newColor);
         } else if (isMarkerMode()) {
@@ -608,6 +628,16 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
     function onBrushSize(brushSize: number) {
         setStrokeWidth(brushSize);
+        if (modeRef.current == EditModes.Ruler) {
+            const lineElem = linesRef.current.find(line => line.id == currentEditedRef.current.lineId);
+            if (lineElem) {
+                const cloned = cloneElem(lineElem);
+                cloned.strokeWidth = brushSize;
+                queue.current.pushLine(cloned);
+                queue2state();
+                save();
+            }
+        }
     }
     function onMarkerSize(markerSize: number) {
         setMarkerWidth(markerSize);
@@ -706,6 +736,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 lines={lines}
                 images={images}
                 tables={tables}
+                currentEdited={currentEdited}
                 onTextChanged={handleTextChanged}
                 onSketchStart={handleSketchStart}
                 onSketchStep={handleSketchStep}

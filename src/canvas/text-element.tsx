@@ -8,6 +8,7 @@ import { calcEffectiveHorizontalLines, tableColWidth, tableRowHeight } from "./u
 
 interface TextElementProps {
     text: SketchText;
+    editMode: boolean;
     actualWidth: number;
     ratio: React.MutableRefObject<number>;
     moveResponder: any;
@@ -20,6 +21,7 @@ interface TextElementProps {
 
 export const TextElement: React.FC<TextElementProps> = ({
     text,
+    editMode,
     actualWidth,
     ratio,
     moveResponder,
@@ -58,7 +60,7 @@ export const TextElement: React.FC<TextElementProps> = ({
     const moveIconStyle: any = { position: "absolute", ...(text.rtl ? { right: -25 } : { left: -25 }) }
     //console.log("Text style", posStyle)
 
-    if (text.editMode) {
+    if (editMode) {
         return (
             <View
                 direction={text.rtl ? "rtl" : "ltr"}

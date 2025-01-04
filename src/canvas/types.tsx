@@ -18,7 +18,7 @@ export enum ElementTypes {
 export interface ElementBase {
     id: string;
     editMode?: boolean;
-    backup?:any;
+    backup?: any;
 }
 
 export interface SketchPath extends ElementBase {
@@ -38,10 +38,10 @@ export interface SketchText extends ElementBase {
     text: string;
     fontSize: number;
     color: string;
-    rtl:boolean;
+    rtl: boolean;
     // coordinates or table cell position
-    tableId?:string;
-    x: number; 
+    tableId?: string;
+    x: number;
     y: number;
     width?: number;
     height?: number;
@@ -82,8 +82,8 @@ export enum MoveTypes {
 export interface MoveContext {
     id: string;
     type: MoveTypes;
-    offsetX:number;
-    offsetY:number;
+    offsetX: number;
+    offsetY: number;
 }
 
 export interface TableContext {
@@ -98,4 +98,10 @@ export enum TablePart {
     VerticalLine = "vLine",
     HorizontalLine = "hLine",
     TableCell = "table-cell",
+}
+
+export interface CurrentEdited {
+    lineId?: string;
+    textId?: string;
+    imageId?: string;
 }
