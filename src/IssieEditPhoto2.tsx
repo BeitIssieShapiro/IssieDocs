@@ -59,7 +59,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [fontSize, setFontSize] = useState<number>(35);
     const [textAlignment, setTextAlignment] = useState<string>("left");
     const [strokeWidth, setStrokeWidth] = useState<number>(2);
-    const [markerWidth, setMarkerWidth] = useState<number>(5);
+    const [markerWidth, setMarkerWidth] = useState<number>(20);
     const [sideMargin, setSideMargin] = useState<number>(dimensions.minSideMargin);
     const [brushColor, setBrushColor] = useState<string>(colors.black);
     const [rulerColor, setRulerColor] = useState<string>(colors.black);
@@ -652,11 +652,18 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //                          RENDER
     // -------------------------------------------------------------------------
 
-    function colorByMode() {
-        if (modeRef.current == EditModes.Brush) return brushColorRef.current;
-        if (modeRef.current == EditModes.Text) return textColorRef.current;
-        if (modeRef.current == EditModes.Marker) return markerColorRef.current;
-        if (modeRef.current == EditModes.Ruler) return rulerColorRef.current;
+    function colorByMode(mode:EditModes, brushColor:string, textColor:string, markerColor:string, rulerColor:string) {
+        if (mode == EditModes.Brush) return brushColor;
+        if (mode == EditModes.Text) return textColor;
+        if (mode == EditModes.Marker) return markerColor;
+        if (mode == EditModes.Ruler) return rulerColor;
+    }
+
+    function mode2ElementType(mode:EditModes):ElementTypes {
+        if (mode == EditModes.Brush || mode == EditModes.Marker) {
+            return ElementTypes.Sketch
+        }
+        return mode as unknown as ElementTypes;
     }
 
     return (
@@ -714,7 +721,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 markerWidth={markerWidth}
                 sideMargin={sideMargin}
                 onSelectColor={handleSelectColor}
-                color={colorByMode()}
+                color={colorByMode(mode,brushColor,textColor,markerColor, rulerColor)}
                 onSelectTextSize={onTextSize}
                 onSelectTextAlignment={onTextAlignment}
                 onSelectBrushSize={onBrushSize}
@@ -749,7 +756,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onDeleteElement={handleDelete}
                 onTextYOverflow={handleTextYOverflow}
                 imageSource={{ uri: currentFile }}
-                currentElementType={mode as unknown as ElementTypes}
+                currentElementType={mode2ElementType(mode)}
             />
         </SafeAreaView>
     );

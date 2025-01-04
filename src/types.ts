@@ -1,3 +1,5 @@
+import { ElementTypes } from "./canvas/types";
+
 export type RootStackParamList = {
     EditPhoto: {
       page: any;
@@ -11,11 +13,11 @@ export type RootStackParamList = {
 
 
   export enum EditModes {
-    Brush = "sketch",
-    Text = "text",
-    Ruler = "line",
-    Image = "image",
-    Table = "table",
+    Brush = ElementTypes.Sketch,
+    Text = ElementTypes.Text,
+    Ruler = ElementTypes.Line,
+    Image = ElementTypes.Image,
+    Table = ElementTypes.Table,
     Marker = "marker",
     Audio = "audio",
     Voice = "voice",
