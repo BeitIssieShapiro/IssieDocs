@@ -127,16 +127,27 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }, [currentEdited])
 
 
-    useEffect(() => {
-        trace("EditPhoto CurrentFile: ", currentFile);
-        if (page.count > 0) {
-            setNavParam(navigation, 'pageTitleAddition', pageTitleAddition(page.count, 0));
-        }
-        setNavParam(navigation, 'onMoreMenu', () => setOpenContextMenu(true));
+    function loadPage(newPage: any, index: number) {
+        const newCurrentFile = newPage.getPage(index);
+        setCurrentFile(newPage.getPage(index));
+        setCurrPageIndex(index);
 
-        metaDataUri.current = currentFile + ".json";
+        trace("EditPhoto CurrentFile: ", newCurrentFile);
+        if (newPage.count > 0) {
+            setNavParam(navigation, 'pageTitleAddition', pageTitleAddition(newPage.count, index));
+        }
+
+        pageRef.current = newPage;
+
+        metaDataUri.current = newCurrentFile + ".json";
         loadMetadata().then(() => queue2state());
 
+    }
+
+    useEffect(() => {
+        setNavParam(navigation, 'onMoreMenu', () => setOpenContextMenu(true));
+
+        loadPage(page, (pageIndex != undefined && pageIndex > 0 ? pageIndex : 0))
         return () => {
             // Cleanup if needed
         };
@@ -145,7 +156,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     async function loadMetadata() {
         queue.current.clear();
-        const value = await FileSystem.main.loadFile(metaDataUri.current).catch(e=>{/**left blank, as expetced */}) || "[]";
+        const value = await FileSystem.main.loadFile(metaDataUri.current).catch(e => {/**left blank, as expetced */ }) || "[]";
         const sketchState = JSON.parse(value);
         for (let i = 0; i < sketchState.length; i++) {
             queue.current.add(sketchState[i]);
@@ -926,12 +937,52 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             imageSource: src,
             addToExistingPage: pageRef.current,
             goHomeAndThenToEdit: route.params.goHomeAndThenToEdit,
-            pageIndex: page.count,
+            pageIndex: pageRef.current.count,
         })
     }
 
-    function handleNewPage(src: string) {
-        throw new Error('Function not implemented.');
+    function handleNewPage(srcType: string) {
+        trace("handleNewPage", srcType);
+        getNewPage(srcType,
+            // OK
+            (uri: string) => {
+                setBusy(true);
+                addNewPage(uri, srcType, false)
+            },
+            //cancel
+            () => setBusy(false),
+            // Error
+            (err: any) => Alert.alert("Error", err.description),
+            navigation,
+            {
+                selectionLimit: 1,
+            })
+            .finally(() => setBusy(false));
+    }
+
+    function handleDeletePage() {
+        Alert.alert(translate("BeforeDeleteSubPageTitle"), translate("BeforeDeleteSubPageQuestion"),
+            [
+                {
+                    text: translate("BtnDelete"), onPress: async () => {
+                        let updatedPage = await FileSystem.main.deletePageInSheet(pageRef.current, currPageIndexRef.current);
+                        let index = currPageIndexRef.current;
+                        if (index > 0) {
+                            index--;
+                        }
+                        loadPage(updatedPage, index);
+                    },
+                    style: 'destructive'
+                },
+                {
+                    text: translate("BtnCancel"), onPress: () => {
+                        //do nothing
+                    },
+                    style: 'cancel'
+                }
+            ]
+        );
+
     }
 
     async function movePage(inc: number) {
@@ -947,13 +998,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         if (currentIndex < 0)
             currentIndex = 0;
 
-        if (currentIndex >= page.count) return;
+        if (currentIndex >= pageRef.current.count) return;
 
         currPageIndexRef.current = currentIndex;
         setCurrPageIndex(currentIndex);
         setNavParam(navigation, 'pageTitleAddition', pageTitleAddition(pageRef.current.count, currPageIndexRef.current));
 
-        const newCurrentFile = page.getPage(currentIndex);
+        const newCurrentFile = pageRef.current.getPage(currentIndex);
         const newMetaDataUri = newCurrentFile + ".json";
         setCurrentFile(newCurrentFile);
         metaDataUri.current = newMetaDataUri;
@@ -970,7 +1021,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             }}
         >
             <FileContextMenu
-                item={page}
+                item={pageRef.current}
                 isLandscape={windowSize.height < windowSize.width}
                 open={openContextMenu}
                 height={windowSize.height * .7}
@@ -983,29 +1034,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onRename={() => {
                     //rename(true) todo
                 }}
-                onDeletePage={() => { }}
-                // onDeletePage={deletePageMenu ? () => {
-                //     Alert.alert(translate("BeforeDeleteSubPageTitle"), translate("BeforeDeleteSubPageQuestion"),
-                //         [
-                //             {
-                //                 text: translate("BtnDelete"), onPress: () => {
-                //                     this.deletePage();
-
-                //                 },
-                //                 style: 'destructive'
-                //             },
-                //             {
-                //                 text: translate("BtnCancel"), onPress: () => {
-                //                     //do nothing
-                //                 },
-                //                 style: 'cancel'
-                //             }
-                //         ]
-                //     );
-
-                // } : undefined}
-                deletePageIndex={currPageIndex}
-                pagesCount={page?.count}
+                onDeletePage={pageRef.current && pageRef.current.count > 1 ? handleDeletePage : undefined}
+                deletePageIndex={currPageIndex + 1}
+                pagesCount={pageRef.current.count}
 
                 onBlankPage={() => handleAddBlankPage(FileSystem.StaticPages.Blank)}
                 onLinesPage={() => handleAddBlankPage(FileSystem.StaticPages.Lines)}
@@ -1102,7 +1133,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
             {/** previous page button */}
             {
-                page && page.count > 0 && currentFile !== page.getPage(0) ?
+                pageRef.current && pageRef.current.count > 0 && currentFile !== pageRef.current.getPage(0) ?
                     <View style={{ position: 'absolute', bottom: 50, left: 10, width: 155, height: 40, zIndex: 100 }}>
                         {getRoundedButton(() => movePage(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 125, height: 40 }, 'row-reverse', true)}
                     </View> :
@@ -1110,8 +1141,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             }
             {/** next page button */}
             {
-                page && page.count > 1 &&
-                    currentFile !== page.getPage(page.count - 1) ?
+                pageRef.current && pageRef.current.count > 1 &&
+                    currentFile !== pageRef.current.getPage(pageRef.current.count - 1) ?
                     <View style={{ position: 'absolute', bottom: 50, right: 10, height: 40, zIndex: 100 }}>
                         {getRoundedButton(() => movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 125, height: 40 }, 'row', true)}
                     </View> :
