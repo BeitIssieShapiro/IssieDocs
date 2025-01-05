@@ -61,6 +61,7 @@ export interface SketchTable extends ElementBase {
     horizontalLines: number[];
     color: string;
     strokeWidth: number;
+    strokeDash?:[];
 }
 
 export interface SketchElement extends ElementBase {

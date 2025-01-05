@@ -57,6 +57,9 @@ interface CanvasProps {
 
     canvasWidth: number;
     canvasHeight: number;
+
+    onActualCanvasSize?:(actualSize:ImageSize)=>void,
+
     zoom: number;
     offset: Offset;
     minSideMargin: number;
@@ -103,11 +106,12 @@ export function Canvas({
     currentEdited,
 
     imageSource,
-    canvasWidth,
     zoom,
     offset,
     minSideMargin,
+    canvasWidth,
     canvasHeight,
+    onActualCanvasSize,
     currentElementType,
 }: CanvasProps) {
     // Refs & State
@@ -164,7 +168,9 @@ export function Canvas({
                 calcRatio = Math.floor((calcRatio + Number.EPSILON) * 100) / 100;
 
                 ratio.current = calcRatio;
-                setImageSize({ width: size.width * calcRatio, height: size.height * calcRatio });
+                const actualSize = { width: size.width * calcRatio, height: size.height * calcRatio };
+                setImageSize(actualSize);
+                onActualCanvasSize?.(actualSize);
                 setSideMargin((canvasWidth - size.width * calcRatio) / 2);
             });
         }
@@ -559,6 +565,7 @@ export function Canvas({
                             )}
                             stroke={table.color}
                             strokeWidth={table.strokeWidth}
+                            strokeDasharray={table.strokeDash ?? []}
                             fill="none"
                         />)
                     }
@@ -577,6 +584,7 @@ export function Canvas({
                                 )}
                                 stroke={table.color}
                                 strokeWidth={table.strokeWidth}
+                                strokeDasharray={table.strokeDash ?? []}
                                 fill="none"
                             />
                         );

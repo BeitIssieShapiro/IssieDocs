@@ -19,6 +19,7 @@ import { getNewPage, SRC_CAMERA, SRC_GALLERY } from './newPage';
 import { EditModes, RootStackParamList } from './types';
 import { backupElement, cloneElem, getId, restoreElement } from './canvas/utils';
 import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
+import { isRTL } from './lang';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -36,6 +37,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [currentEdited, setCurrentEdited] = useState<CurrentEdited>({});
 
     const [windowSize, setWindowSize] = useState<ImageSize>({ width: 500, height: 500 });
+    const [canvasSize, setCanvasSize] = useState<ImageSize>({ width: 1000, height: 1000 })
     const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
     const [zoom, setZoom] = useState<number>(1);
     const [status, setStatus] = useState<string>("");
@@ -75,6 +77,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const imagesRef = useRef(images);
     const tablesRef = useRef(tables);
     const currentEditedRef = useRef<CurrentEdited>(currentEdited);
+    const canvasSizeRef = useRef<ImageSize>(canvasSize);
 
 
     const fontSizeRef = useRef(fontSize);
@@ -106,10 +109,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         markerColorRef.current = markerColor;
         textColorRef.current = textColor;
         tableColorRef.current = tableColor;
+        canvasSizeRef.current = canvasSize;
 
         updateCurrentEditedElements();
     }, [mode, fontSize, textAlignment, strokeWidth, markerWidth, sideMargin,
-        brushColor, rulerColor, markerColor, textColor, tableColor]);
+        brushColor, rulerColor, markerColor, textColor, tableColor, canvasSize]);
 
     useEffect(() => {
         currentEditedRef.current = currentEdited;
@@ -212,27 +216,24 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 if (elemIndex >= 0) {
                     _images.splice(elemIndex, 1);
                 }
-                // } else if (q[i].type === 'table') {
-                //     canvasTables = canvasTables.filter(t => t.id !== q[i].elem.id);
-                //     canvasTables.push(q[i].elem);
-                // } else if (q[i].type === 'tableDelete') {
-                //     canvasTables = canvasTables.filter(t => t.id !== q[i].elemID);
-                //     // delete all cell text related
-                //     tableCellTexts = tableCellTexts.filter(tct => tct.tableCell.tableID !== q[i].elemID)
-                // } else if (q[i].type === 'audio') {
-                //     canvasAudio.push(q[i].elem);
-                // } else if (q[i].type === 'audioDelete') {
-                //     canvasAudio = canvasAudio.filter(t => t.id !== q[i].elem.id);
-                // } else if (q[i].type === 'audioPosition') {
-                //     const elemIndex = canvasAudio.findIndex(ci => ci.id === q[i].elem.id);
-                //     if (elemIndex >= 0) {
-                //         const updatedAudio = { ...canvasAudio[elemIndex], ...q[i].elem }
-                //         canvasAudio[elemIndex] = updatedAudio;
-                //     }
-                // }
+            } else if (q[i].type === 'table') {
+                _tables = _tables.filter(t => t.id !== q[i].elem.id);
+                _tables.push(cloneElem(q[i].elem));
+            } else if (q[i].type === 'tableDelete') {
+                _tables = _tables.filter(t => t.id !== q[i].elemID);
+                // delete all cell text related
+                _texts = _texts.filter(tct => tct.tableId !== q[i].elemID)
+            } else if (q[i].type === 'audio') {
+                _audio.push(cloneElem(q[i].elem));
+            } else if (q[i].type === 'audioDelete') {
+                _audio = _audio.filter(t => t.id !== q[i].elem.id);
+            } else if (q[i].type === 'audioPosition') {
+                const elemIndex = _audio.findIndex(ci => ci.id === q[i].elem.id);
+                if (elemIndex >= 0) {
+                    _audio[elemIndex] = { ..._audio[elemIndex], ...q[i].elem }
+                }
             }
         }
-
 
         pathsRef.current = _paths;
         textsRef.current = _texts;
@@ -551,13 +552,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setBusy(true);
             getImageDimensions(uri).then((imgSize) => {
                 const ratio = imgSize.w / imgSize.h;
-                FileSystem.main.resizeImage(uri, Math.round(windowSize.width / 1.5), windowSize.height / 1.5)
+                FileSystem.main.resizeImage(uri, Math.round(canvasSize.width / 1.5), canvasSize.height / 1.5)
                     .then(uri2 => FileSystem.main.attachedFileToPage(uri2, pageRef.current, currPageIndexRef.current, "jpeg"))
                     .then(imageAttachmentFile => {
                         const img = {
                             id: getId("I"),
-                            x: windowSize.width / 2,
-                            y: windowSize.height / 2,
+                            x: canvasSize.width / 2,
+                            y: canvasSize.height / 2,
                             file: imageAttachmentFile,
                             width: Math.round(120 * ratio),
                             height: 120,
@@ -631,18 +632,123 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     const TableActions = {
         delete: (id: string) => {
+            trace("Delete table", id)
             queue.current.pushDeleteTable(id);
             queue2state()
             save();
         },
         addTable: (cols: number, rows: number, color: string, borderWidth: number, style: any) => {
-            trace("add table", style)
-        },
-        setRowsOrColumns: (newVal: number, isCols: boolean) => { },
-        setColor: (newColor: string) => { },
-        setBorderWidth: (borderWidth: number) => { },
-        setBorderStyle: (borderStyle: string) => { } //"2,2", ..
+            if (tablesRef.current.length > 0) return;
 
+            const newTable = {
+                id: getId("TL"),
+                color,
+                strokeWidth: borderWidth,
+                verticalLines: [],
+                horizontalLines: [],
+            } as SketchTable;
+
+            const bottomMargin = dimensions.toolbarHeight * 2;
+            const topMargin = dimensions.toolbarHeight * 1.2;
+            const sideMargin = 50;
+            const colWidth = Math.floor((canvasSizeRef.current.width - sideMargin * 2) / cols);
+            const rowHeight = Math.floor((canvasSizeRef.current.height - topMargin - bottomMargin) / rows);
+
+            for (let i = 0; i <= cols; i++) {
+                newTable.verticalLines.push(sideMargin + i * colWidth);
+            }
+            for (let i = 0; i <= rows; i++) {
+                newTable.horizontalLines.push(topMargin + i * rowHeight);
+            }
+            trace("Add Table")
+            queue.current.pushTable(newTable);
+            queue2state();
+            save();
+        },
+        setRowsOrColumns: (newVal: number, isCols: boolean) => {
+            if (newVal < 1) return;
+            if (tablesRef.current.length > 0 &&
+                (isCols && tablesRef.current[0].verticalLines.length + 1 != newVal ||
+                    !isCols && tablesRef.current[0].horizontalLines.length + 1 != newVal)) {
+
+                const changed = cloneElem(tablesRef.current[0]);
+                const changeAtBegining = isCols && isRTL();
+
+                const array = isCols ? changed.verticalLines : changed.horizontalLines;
+                const newArray = [];
+                const lastElemSize = changeAtBegining ? array[1] - array[0] : arrLast(array) - array[array.length - 2];
+                let isGrowing = true;
+                let begin = 0, end = -2;
+                if (newVal < array.length - 1) {
+
+                    if (changeAtBegining) {
+                        newArray.push(array[0]);
+                        begin = 2, end = array.length;
+                    }
+
+                    newArray.push(...array.slice(begin, end));
+
+                    if (!changeAtBegining) {
+                        newArray.push(arrLast(array));
+                    }
+                    isGrowing = false;
+
+                } else if (newVal >= array.length) {
+                    if (changeAtBegining) {
+                        newArray.push(array[0]);
+                    }
+                    newArray.push(...array);
+
+                    if (!changeAtBegining) {
+                        newArray.push(arrLast(array));
+                    }
+                }
+
+                // Adjust the other elements
+                let accDelta = 0;
+                if (changeAtBegining) {
+                    for (let i = newArray.length - 1; i > 1; i--) {
+                        const elemSize = newArray[i] - newArray[i - 1];
+                        accDelta = isGrowing ?
+                            accDelta + (elemSize / newArray.length) :
+                            accDelta - (lastElemSize / (newArray.length - 1))
+                        trace("change ", i, accDelta)
+                        newArray[i - 1] += accDelta;
+                    }
+                } else {
+                    for (let i = 1; i < newArray.length - 1; i++) {
+                        const elemSize = newArray[i] - newArray[i - 1];
+                        accDelta = isGrowing ?
+                            accDelta - (elemSize / (newArray.length)) :
+                            accDelta + (lastElemSize / (newArray.length - 1))
+                        newArray[i] += accDelta;
+                    }
+                }
+
+                queue.current.pushTable(changed);
+                queue2state();
+                save();
+            }
+        },
+        setBorderWidth: (borderWidth: number) => {
+            if (tablesRef.current.length > 0 && tablesRef.current[0].strokeWidth != borderWidth) {
+                const changed = cloneElem(tablesRef.current[0]);
+                changed.strokeWidth = borderWidth;
+                queue.current.pushTable(changed);
+                queue2state();
+                save();
+            }
+        },
+        setBorderStyle: (borderStyle: string) => {
+            const strokeDash = borderStyle == "0,0" ? undefined : borderStyle.split(",");
+            if (tablesRef.current.length > 0 && tablesRef.current[0].strokeDash != strokeDash) {
+                const changed = cloneElem(tablesRef.current[0]);
+                changed.strokeDash = strokeDash;
+                queue.current.pushTable(changed);
+                queue2state();
+                save();
+            }
+        } 
     };
 
     function updateCurrentEditedElements() {
@@ -676,6 +782,16 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setTextColor(newColor);
         } else if (isMarkerMode()) {
             setMarkerColor(newColor);
+
+        } else if (isTableMode()) {
+            setTableColor(newColor);
+            if (tablesRef.current.length > 0) {
+                const changed = cloneElem(tablesRef.current[0]);
+                changed.color = newColor;
+                queue.current.pushTable(changed);
+                queue2state()
+                save();
+            }
         }
     }
 
@@ -711,11 +827,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //                          RENDER
     // -------------------------------------------------------------------------
 
-    function colorByMode(mode: EditModes, brushColor: string, textColor: string, markerColor: string, rulerColor: string) {
+    function colorByMode(mode: EditModes, brushColor: string, textColor: string,
+        markerColor: string, rulerColor: string, tableColor: string) {
         if (mode == EditModes.Brush) return brushColor;
         if (mode == EditModes.Text) return textColor;
         if (mode == EditModes.Marker) return markerColor;
         if (mode == EditModes.Ruler) return rulerColor;
+        if (mode == EditModes.Table) return tableColor;
     }
 
     function mode2ElementType(mode: EditModes): ElementTypes {
@@ -780,7 +898,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 markerWidth={markerWidth}
                 sideMargin={sideMargin}
                 onSelectColor={handleSelectColor}
-                color={colorByMode(mode, brushColor, textColor, markerColor, rulerColor)}
+                color={colorByMode(mode, brushColor, textColor, markerColor, rulerColor, tableColor)}
                 onSelectTextSize={onTextSize}
                 onSelectTextAlignment={onTextAlignment}
                 onSelectBrushSize={onBrushSize}
@@ -795,6 +913,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 offset={moveCanvas}
                 canvasWidth={windowSize.width}
                 canvasHeight={windowSize.height}
+                onActualCanvasSize={(actualSize => setCanvasSize(actualSize))}
                 zoom={zoom}
                 minSideMargin={sideMargin}
                 paths={paths}
