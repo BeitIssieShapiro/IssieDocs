@@ -565,7 +565,7 @@ export function Canvas({
                             )}
                             stroke={table.color}
                             strokeWidth={table.strokeWidth}
-                            strokeDasharray={table.strokeDash ?? [0, 0]}
+                            //strokeDasharray={table.strokeDash}
                             fill="none"
                         />)
                     }
@@ -584,7 +584,7 @@ export function Canvas({
                                 )}
                                 stroke={table.color}
                                 strokeWidth={table.strokeWidth}
-                                strokeDasharray={table.strokeDash ?? [0, 0]}
+                                //strokeDasharray={table.strokeDash}
                                 fill="none"
                             />
                         );

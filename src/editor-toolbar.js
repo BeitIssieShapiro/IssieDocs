@@ -1,7 +1,7 @@
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, Fragment, useState } from "react";
 import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import Svg, { Line } from "react-native-svg";
-import { AppText, availableColorPicker, dimensions, getEraserIcon, getIconButton, IconButton, semanticColors, Spacer, textSizes } from "./elements";
+import { AppText, availableColorPicker, colors, dimensions, getEraserIcon, getIconButton, IconButton, semanticColors, Spacer, textSizes } from "./elements";
 import FadeInView from "./FadeInView";
 import { getRowDirections, translate } from "./lang";
 import { trace } from "./log";
@@ -148,7 +148,7 @@ function EditorToolbar({
 
     fontSize = fontSize || 25;
     strokeWidth = strokeWidth || 1;
-    color = color || "black"
+    color = color || colors.black;
     windowSize = windowSize || { width: 500 }
 
     isScreenNarrow = () => {
@@ -602,7 +602,7 @@ function EditorToolbar({
                     ["0,0", "2,2", "4,2"].map((style, i) => (<LineStyleSelector
                         height={40}
                         key={i}
-                        style={style}
+                        style={style == "0,0"?undefined:style}
                         Table={Table}
                         TableActions={TableActions}
                         color={Table ? Table.color : color}

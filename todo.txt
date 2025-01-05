@@ -1,3 +1,15 @@
+new canvas
+---------
+fade window?
+table:
+  - position initial
+  - move cells
+text: 
+  - initial font
+  - initial RTL
+
+
+
 version 1.5:
 V- add audio
 V- move buttons in zoom not always shown

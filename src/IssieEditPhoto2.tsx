@@ -13,13 +13,14 @@ import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { arrLast, pageTitleAddition, setNavParam } from './utils';
-import { colors, dimensions, getImageDimensions, semanticColors } from './elements';
+import { colors, dimensions, getImageDimensions, getRoundedButton, semanticColors } from './elements';
 import EditorToolbar from './editor-toolbar';
-import { getNewPage, SRC_CAMERA, SRC_GALLERY } from './newPage';
+import { getNewPage, SRC_CAMERA, SRC_FILE, SRC_GALLERY } from './newPage';
 import { EditModes, RootStackParamList } from './types';
 import { backupElement, cloneElem, getId, restoreElement, tableColWidth, tableHeight, tableRowHeight, tableWidth } from './canvas/utils';
 import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
-import { isRTL } from './lang';
+import { isRTL, translate } from './lang';
+import { FileContextMenu } from './file-context-menu';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -46,11 +47,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [eraseMode, setEraseMode] = useState<boolean>(false);
     const [openContextMenu, setOpenContextMenu] = useState<boolean>(false);
     const [currentFile, setCurrentFile] = useState<string>(page.defaultSrc);
+    const [currPageIndex, setCurrPageIndex] = useState<number>(pageIndex ?? 0);
     const [busy, setBusy] = useState<boolean>(false);
+
 
     const pageRef = useRef(page);
     const metaDataUri = useRef("");
     const currPageIndexRef = useRef(pageIndex ?? 0);
+    const currentFileRef = useRef(currentFile);
     const queue = useRef(new DoQueue(async (attachName: string) => {
         console.log("File Evicted from queue");
         await FileSystem.main.deleteAttachedFile(pageRef.current, currPageIndexRef.current, attachName);
@@ -110,10 +114,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         textColorRef.current = textColor;
         tableColorRef.current = tableColor;
         canvasSizeRef.current = canvasSize;
+        currPageIndexRef.current = currPageIndex;
+        currentFileRef.current = currentFile;
 
         updateCurrentEditedElements();
     }, [mode, fontSize, textAlignment, strokeWidth, markerWidth, sideMargin,
-        brushColor, rulerColor, markerColor, textColor, tableColor, canvasSize]);
+        brushColor, rulerColor, markerColor, textColor, tableColor, canvasSize,
+        currPageIndex, currentFile]);
 
     useEffect(() => {
         currentEditedRef.current = currentEdited;
@@ -138,7 +145,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     async function loadMetadata() {
         queue.current.clear();
-        const value = await FileSystem.main.loadFile(metaDataUri.current);
+        const value = await FileSystem.main.loadFile(metaDataUri.current).catch(e=>{/**left blank, as expetced */}) || "[]";
         const sketchState = JSON.parse(value);
         for (let i = 0; i < sketchState.length; i++) {
             queue.current.add(sketchState[i]);
@@ -481,7 +488,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
                     table.horizontalLines = table.horizontalLines.map((hLine, i) => {
                         if (i == 0) return hLine;
-                        const ratio = (table.horizontalLines[i] - table.horizontalLines[0])  / tableHeight(table);
+                        const ratio = (table.horizontalLines[i] - table.horizontalLines[0]) / tableHeight(table);
                         return hLine + dy * ratio;
                     });
                 }
@@ -579,7 +586,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         save();
     }
 
-    // NEW OR UPDATED: placeholders or stubs for these missing handlers
     function handleEraserPressed() {
         trace("Eraser pressed");
         if (modeRef.current === EditModes.Image || modeRef.current === EditModes.Table) {
@@ -816,6 +822,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
     };
 
+
     function updateCurrentEditedElements() {
         if (modeRef.current == EditModes.Text && currentEditedRef.current.textId) {
             const textElem = textsRef.current.find(t => t.id == currentEditedRef.current.textId);
@@ -908,6 +915,52 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         return mode as unknown as ElementTypes;
     }
 
+    function handleAddBlankPage(blankType: number) {
+        FileSystem.main.getStaticPageTempFile(blankType).then(uri => addNewPage(uri, SRC_FILE, true));
+    }
+
+    function addNewPage(uri: string, src: string, isBlank: boolean) {
+        navigation.navigate('SavePhoto', {
+            uri,
+            isBlank,
+            imageSource: src,
+            addToExistingPage: pageRef.current,
+            goHomeAndThenToEdit: route.params.goHomeAndThenToEdit,
+            pageIndex: page.count,
+        })
+    }
+
+    function handleNewPage(src: string) {
+        throw new Error('Function not implemented.');
+    }
+
+    async function movePage(inc: number) {
+        saveText();
+        let currentIndex = -1;
+        for (let i = 0; i < pageRef.current.count; i++) {
+            if (pageRef.current.getPage(i) == currentFileRef.current) {
+                currentIndex = i;
+                break;
+            }
+        }
+        currentIndex += inc;
+        if (currentIndex < 0)
+            currentIndex = 0;
+
+        if (currentIndex >= page.count) return;
+
+        currPageIndexRef.current = currentIndex;
+        setCurrPageIndex(currentIndex);
+        setNavParam(navigation, 'pageTitleAddition', pageTitleAddition(pageRef.current.count, currPageIndexRef.current));
+
+        const newCurrentFile = page.getPage(currentIndex);
+        const newMetaDataUri = newCurrentFile + ".json";
+        setCurrentFile(newCurrentFile);
+        metaDataUri.current = newMetaDataUri;
+        await loadMetadata();
+        queue2state();
+    }
+
     return (
         <SafeAreaView
             style={styles.mainContainer}
@@ -916,6 +969,51 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 setWindowSize({ width, height });
             }}
         >
+            <FileContextMenu
+                item={page}
+                isLandscape={windowSize.height < windowSize.width}
+                open={openContextMenu}
+                height={windowSize.height * .7}
+                width={windowSize.width * .75}
+                onClose={() => {
+                    setOpenContextMenu(false);
+                }}
+                inFoldersMode={false}
+
+                onRename={() => {
+                    //rename(true) todo
+                }}
+                onDeletePage={() => { }}
+                // onDeletePage={deletePageMenu ? () => {
+                //     Alert.alert(translate("BeforeDeleteSubPageTitle"), translate("BeforeDeleteSubPageQuestion"),
+                //         [
+                //             {
+                //                 text: translate("BtnDelete"), onPress: () => {
+                //                     this.deletePage();
+
+                //                 },
+                //                 style: 'destructive'
+                //             },
+                //             {
+                //                 text: translate("BtnCancel"), onPress: () => {
+                //                     //do nothing
+                //                 },
+                //                 style: 'cancel'
+                //             }
+                //         ]
+                //     );
+
+                // } : undefined}
+                deletePageIndex={currPageIndex}
+                pagesCount={page?.count}
+
+                onBlankPage={() => handleAddBlankPage(FileSystem.StaticPages.Blank)}
+                onLinesPage={() => handleAddBlankPage(FileSystem.StaticPages.Lines)}
+                onMathPage={() => handleAddBlankPage(FileSystem.StaticPages.Math)}
+                onAddFromCamera={() => handleNewPage(SRC_CAMERA)}
+                onAddFromMediaLib={() => handleNewPage(SRC_GALLERY)}
+            />
+
             <EditorToolbar
                 windowSize={windowSize}
                 onGoBack={() => navigation.goBack()}
@@ -1001,6 +1099,24 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 imageSource={{ uri: currentFile }}
                 currentElementType={mode2ElementType(mode)}
             />
+
+            {/** previous page button */}
+            {
+                page && page.count > 0 && currentFile !== page.getPage(0) ?
+                    <View style={{ position: 'absolute', bottom: 50, left: 10, width: 155, height: 40, zIndex: 100 }}>
+                        {getRoundedButton(() => movePage(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 125, height: 40 }, 'row-reverse', true)}
+                    </View> :
+                    null
+            }
+            {/** next page button */}
+            {
+                page && page.count > 1 &&
+                    currentFile !== page.getPage(page.count - 1) ?
+                    <View style={{ position: 'absolute', bottom: 50, right: 10, height: 40, zIndex: 100 }}>
+                        {getRoundedButton(() => movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 125, height: 40 }, 'row', true)}
+                    </View> :
+                    null
+            }
         </SafeAreaView>
     );
 }

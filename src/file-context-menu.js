@@ -38,16 +38,19 @@ export function FileContextMenu({
         return <View />;
     }
 
+    //return <View style={{position:"absolute", zIndex: 100, left:100, width:100, height:100, backgroundColor:"green"}}/>
+
     const callbackAndClose = useCallback((callback) => () => {
         onClose();
         if (callback) callback();
     }, [onClose]);
-    trace("scale", height)
     const scale =  height < 400 || isLandscape && height < 500?
      .6:
      height < 750 ? 
      0.8:1;
-
+    trace("fcm", width, height)
+    height = Math.floor(height)
+     //return <View style={{position:"absolute", zIndex: 100, left:100, width:100, height:100, backgroundColor:"green"}}/>
     return <TouchableOpacity style={{
         position: 'absolute',
         zIndex: 100, top: 0, width: '100%', height: '100%'
