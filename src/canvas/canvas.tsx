@@ -20,6 +20,7 @@ import {
     MoveTypes,
     Offset,
     SketchElement,
+    SketchElementAttributes,
     SketchImage,
     SketchLine,
     SketchPath,
@@ -54,7 +55,8 @@ interface CanvasProps {
     tables?: SketchTable[];
 
     currentEdited: CurrentEdited;
-
+    renderElements?: (elem: SketchElement) => any;
+    elementsAttr?: (elem: SketchElement) => SketchElementAttributes | undefined
     canvasWidth: number;
     canvasHeight: number;
 
@@ -104,6 +106,8 @@ export function Canvas({
     elements,
     tables,
     currentEdited,
+    renderElements,
+    elementsAttr,
 
     imageSource,
     zoom,
@@ -565,7 +569,7 @@ export function Canvas({
                             )}
                             stroke={table.color}
                             strokeWidth={table.strokeWidth}
-                            //strokeDasharray={table.strokeDash}
+                            strokeDasharray={table.strokeDash}
                             fill="none"
                         />)
                     }
@@ -584,7 +588,7 @@ export function Canvas({
                                 )}
                                 stroke={table.color}
                                 strokeWidth={table.strokeWidth}
-                                //strokeDasharray={table.strokeDash}
+                                strokeDasharray={table.strokeDash}
                                 fill="none"
                             />
                         );
@@ -671,6 +675,42 @@ export function Canvas({
                         />}
                 </React.Fragment>
             ))}
+
+            {/* General Elements */}
+            {elements?.map(elem => {
+                return <View key={elem.id} style={{ position: "absolute", left: elem.x * ratio.current, top: elem.y * ratio.current }}
+                    onMoveShouldSetResponder={(e) => {
+                        const touchPoint = screen2Canvas(e.nativeEvent.locationX, e.nativeEvent.locationY);
+                        const threshold = 5; // Minimum movement in pixels to activate drag
+                        const ret = Math.abs(touchPoint[0] - elem.x) > threshold || Math.abs(touchPoint[1] - elem.y) > threshold;
+                        if (ret) {
+                            isMoving.current = true;
+                        }
+                        return ret;
+                    }}
+                    onResponderMove={(e) => {
+                        const touchPoint = screen2Canvas(e.nativeEvent.pageX, e.nativeEvent.pageY) as SketchPoint
+                        onMoveElement?.(MoveTypes.ElementMove, elem.id, touchPoint);
+                    }}
+                    onResponderRelease={(e)=>{
+                        isMoving.current = false;
+                        onMoveEnd?.(MoveTypes.ElementMove, elem.id)
+                    }}
+                >
+                    {renderElements?.(elem)}
+                    {elementsAttr?.(elem)?.showDelete && <TouchableOpacity
+                        style={{
+                            position: "absolute",
+                            zIndex: 1000,
+                            left: -20,
+                            top: 0,
+                        }}
+                        onPress={() => onDeleteElement?.(ElementTypes.Element, elem.id)}
+                    >
+                        <IconIonic name="trash-outline" size={22} color={"blue"} />
+                    </TouchableOpacity>}
+                </View>
+            })}
         </View>
     );
 }

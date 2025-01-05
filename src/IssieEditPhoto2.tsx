@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+    ActivityIndicator,
     Alert,
     ImageSize,
     SafeAreaView,
@@ -7,7 +8,7 @@ import {
     View,
 } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
-import { CurrentEdited, ElementBase, ElementTypes, MoveTypes, Offset, SketchElement, SketchImage, SketchLine, SketchPath, SketchPoint, SketchTable, SketchText, TableContext } from './canvas/types';
+import { CurrentEdited, ElementBase, ElementTypes, MoveTypes, Offset, SketchElement, SketchElementAttributes, SketchImage, SketchLine, SketchPath, SketchPoint, SketchTable, SketchText, TableContext } from './canvas/types';
 import { Canvas } from './canvas/canvas';
 import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
@@ -21,6 +22,8 @@ import { backupElement, cloneElem, getId, restoreElement, tableColWidth, tableHe
 import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
 import { isRTL, translate } from './lang';
 import { FileContextMenu } from './file-context-menu';
+import { AudioElement } from './audio-elem';
+import { AudioElement2 } from './audio-elem-new';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -35,6 +38,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [texts, setTexts] = useState<SketchText[]>([]);
     const [images, setImages] = useState<SketchImage[]>([]);
     const [tables, setTables] = useState<SketchTable[]>([]);
+    const [audios, setAudios] = useState<SketchElement[]>([]);
     const [currentEdited, setCurrentEdited] = useState<CurrentEdited>({});
 
     const [windowSize, setWindowSize] = useState<ImageSize>({ width: 500, height: 500 });
@@ -80,6 +84,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const textsRef = useRef(texts);
     const imagesRef = useRef(images);
     const tablesRef = useRef(tables);
+    const audiosRef = useRef(audios);
     const currentEditedRef = useRef<CurrentEdited>(currentEdited);
     const canvasSizeRef = useRef<ImageSize>(canvasSize);
 
@@ -141,7 +146,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         metaDataUri.current = newCurrentFile + ".json";
         loadMetadata().then(() => queue2state());
-
     }
 
     useEffect(() => {
@@ -258,16 +262,25 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         linesRef.current = _rulers;
         imagesRef.current = _images;
         tablesRef.current = _tables;
+        audiosRef.current = _audio;
 
         setPaths(_paths);
         setTexts(_texts);
         setLines(_rulers);
         setImages(_images);
         setTables(_tables);
+        setAudios(_audio);
     }
 
     function beforeModeChange() {
         saveText();
+        if (modeRef.current == EditModes.Audio) {
+            const audioElem = audiosRef.current.find(au=>au.editMode)
+            if (audioElem) {
+                audiosRef.current = audiosRef.current.filter(au=>!au.editMode);
+                setAudios([...audiosRef.current]);
+            }
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -417,6 +430,26 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         } else if (modeRef.current === EditModes.Image && elem && "id" in elem) {
             trace("set current image")
             setCurrentEdited(prev => ({ ...prev, imageId: elem.id }));
+        } else if (modeRef.current === EditModes.Audio) {
+            // first check if an edited recording exists
+            const audio = audiosRef.current.find(ae => ae.editMode);
+            if (audio) {
+                // move it
+                audio.x = p[0];
+                audio.y = p[1];
+                setAudios([...audiosRef.current]);
+                return;
+            }
+            const audioElem = {
+                id: getId("Aud"),
+                type: "audio",
+                x: p[0],
+                y: p[1],
+                editMode: true,
+            } as SketchElement;
+            //queue.current.pushAudio(audioElem);
+            audiosRef.current.push(audioElem);
+            setAudios([...audiosRef.current]);
         }
     }
 
@@ -505,6 +538,16 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 }
                 setTables([...tablesRef.current]);
             }
+        } else if (type === MoveTypes.ElementMove) {
+            const audioElem = audiosRef.current.find(au=>au.id == id);
+            if (audioElem) {
+                if (!audioElem.backup) {
+                    backupElement(audioElem)
+                }
+                audioElem.x = p[0];
+                audioElem.y = p[1];
+                setAudios([...audiosRef.current]);
+            }
         }
     }
 
@@ -529,6 +572,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             const table = tablesRef.current.find(table => table.id == id);
             if (table && table.backup) {
                 queue.current.pushTable(restoreElement(table));
+                queue2state();
+                save();
+            }
+        } else if (type === MoveTypes.ElementMove) {
+            const audioElem = audiosRef.current.find(au=>au.id == id);
+            if (audioElem) {
+                queue.current.pushAudioPosition(restoreElement(audioElem));
                 queue2state();
                 save();
             }
@@ -579,6 +629,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             queue.current.pushDeleteImage({ id });
             save();
             queue2state();
+        } else if (type == ElementTypes.Element && modeRef.current == EditModes.Audio) {
+            queue.current.pushDeleteAudio({ id });
+            queue2state();
+            save();
         }
     }
 
@@ -987,6 +1041,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     async function movePage(inc: number) {
         saveText();
+
         let currentIndex = -1;
         for (let i = 0; i < pageRef.current.count; i++) {
             if (pageRef.current.getPage(i) == currentFileRef.current) {
@@ -1012,6 +1067,37 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         queue2state();
     }
 
+    function handleRenderElements(elem: SketchElement) {
+        if (elem.type == "audio") {
+            return <AudioElement2
+                basePath={FileSystem.main.getAttachmentBase(pageRef.current, currPageIndexRef.current)}
+                audioFile={elem.file}
+                editMode={elem.editMode}
+                width={80}
+                height={80}
+                onUpdateAudioFile={handleUpdateAudioFile}
+            />
+        }
+    }
+
+    function handleElementsAttr(elem: SketchElement): SketchElementAttributes | undefined {
+        if (elem.type == "audio" && modeRef.current == EditModes.Audio) {
+            return { showDelete: true };
+        }
+    }
+
+    async function handleUpdateAudioFile(filePath: string) {
+        const audioElem = audiosRef.current.find(au => au.editMode);
+        if (audioElem) {
+            const audioFile = await FileSystem.main.attachedFileToPage(filePath, pageRef.current, currPageIndexRef.current, "m4a");
+            delete audioElem.editMode;
+            audioElem.file = audioFile;
+            queue.current.pushAudio(audioElem);
+            queue2state();
+            save();
+        }
+    }
+
     return (
         <SafeAreaView
             style={styles.mainContainer}
@@ -1020,6 +1106,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 setWindowSize({ width, height });
             }}
         >
+            {busy &&
+                <View style={styles.busy}>
+                    <ActivityIndicator size="large" /></View>
+            }
             <FileContextMenu
                 item={pageRef.current}
                 isLandscape={windowSize.height < windowSize.width}
@@ -1081,7 +1171,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 isTableMode={mode === EditModes.Table}
                 isMarkerMode={mode === EditModes.Marker}
                 isTextMode={mode === EditModes.Text}
-                isAudioMode={mode === EditModes.Audio} // todo
+                isAudioMode={mode === EditModes.Audio}
                 isImageMode={mode === EditModes.Image}
                 isVoiceMode={false}
                 isBrushMode={mode === EditModes.Brush}
@@ -1115,6 +1205,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 lines={lines}
                 images={images}
                 tables={tables}
+                elements={audios}
+                renderElements={handleRenderElements}
+                elementsAttr={handleElementsAttr}
                 currentEdited={currentEdited}
                 onTextChanged={handleTextChanged}
                 onSketchStart={handleSketchStart}
@@ -1168,4 +1261,10 @@ const styles = StyleSheet.create({
         zIndex: 25,
         backgroundColor: semanticColors.mainAreaBG,
     },
+    busy: {
+        position: 'absolute',
+        left: "48%",
+        top: "40%",
+        zIndex: 1000
+    }
 });

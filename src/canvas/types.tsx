@@ -12,7 +12,8 @@ export enum ElementTypes {
     Text = "text",
     Line = "line",
     Image = "image",
-    Table = "table"
+    Table = "table",
+    Element = "element",
 }
 
 export interface ElementBase {
@@ -67,6 +68,11 @@ export interface SketchTable extends ElementBase {
 export interface SketchElement extends ElementBase {
     x: number;
     y: number;
+    type:string;
+}
+
+export interface SketchElementAttributes {
+    showDelete:boolean;
 }
 
 export enum MoveTypes {
@@ -78,6 +84,7 @@ export enum MoveTypes {
     ImageResize = "image-resize",
     TableResize = "table-resize",
     TableMove = "table-move",
+    ElementMove = "elem-move",
 }
 
 export interface MoveContext {
