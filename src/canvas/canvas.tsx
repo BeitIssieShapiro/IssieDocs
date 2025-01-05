@@ -58,7 +58,7 @@ interface CanvasProps {
     canvasWidth: number;
     canvasHeight: number;
 
-    onActualCanvasSize?:(actualSize:ImageSize)=>void,
+    onActualCanvasSize?: (actualSize: ImageSize) => void,
 
     zoom: number;
     offset: Offset;
@@ -565,7 +565,7 @@ export function Canvas({
                             )}
                             stroke={table.color}
                             strokeWidth={table.strokeWidth}
-                            strokeDasharray={table.strokeDash ?? []}
+                            strokeDasharray={table.strokeDash ?? [0, 0]}
                             fill="none"
                         />)
                     }
@@ -577,14 +577,14 @@ export function Canvas({
                                 key={`${table.id}v${i}`}
                                 d={joinPath(
                                     [
-                                        [vLine, horizontalLines[0]],
-                                        [vLine, (arrLast(horizontalLines) ?? 0)],
+                                        [vLine, horizontalLines[0] - table.strokeWidth / 2],
+                                        [vLine, ((arrLast(horizontalLines) ?? 0) + table.strokeWidth / 2)],
                                     ],
                                     ratio.current
                                 )}
                                 stroke={table.color}
                                 strokeWidth={table.strokeWidth}
-                                strokeDasharray={table.strokeDash ?? []}
+                                strokeDasharray={table.strokeDash ?? [0, 0]}
                                 fill="none"
                             />
                         );
@@ -620,7 +620,7 @@ export function Canvas({
                     size={40}
                     panResponderHandlers={moveResponder.panHandlers}
                     onSetContext={() => {
-                        moveContext.current = { type: MoveTypes.TableResize, id: table.id, offsetX: -30, offsetY: -30 };
+                        moveContext.current = { type: MoveTypes.TableResize, id: table.id, offsetX: -10, offsetY: -10 };
                     }}
                     icon="resize-bottom-right"
                     color="black"

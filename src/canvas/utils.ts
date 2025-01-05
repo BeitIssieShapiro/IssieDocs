@@ -114,6 +114,12 @@ export function tableHeight(table: SketchTable): number {
     return lastHLine ? lastHLine - table.horizontalLines[0] : 0;
 }
 
+export function tableWidth(table: SketchTable): number {
+    const lastVLine = arrLast(table.verticalLines);
+    return lastVLine ? lastVLine - table.verticalLines[0] : 0;
+}
+
+
 export function calcEffectiveHorizontalLines(table: SketchTable, texts?: SketchText[]): number[] {
     const tableTexts = texts?.filter(t => t.tableId == table.id);
     const result = [] as number[];

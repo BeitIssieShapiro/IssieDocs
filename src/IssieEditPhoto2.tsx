@@ -17,7 +17,7 @@ import { colors, dimensions, getImageDimensions, semanticColors } from './elemen
 import EditorToolbar from './editor-toolbar';
 import { getNewPage, SRC_CAMERA, SRC_GALLERY } from './newPage';
 import { EditModes, RootStackParamList } from './types';
-import { backupElement, cloneElem, getId, restoreElement } from './canvas/utils';
+import { backupElement, cloneElem, getId, restoreElement, tableColWidth, tableHeight, tableRowHeight, tableWidth } from './canvas/utils';
 import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
 import { isRTL } from './lang';
 
@@ -457,6 +457,36 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 }
                 setImages([...imagesRef.current]);
             }
+        } else if (type === MoveTypes.TableMove || type === MoveTypes.TableResize) {
+            const table = tablesRef.current.find(table => table.id == id);
+            if (table) {
+                if (!table.backup) {
+                    backupElement(table);
+                }
+
+                if (type === MoveTypes.TableMove) {
+                    const dx = p[0] - table.verticalLines[0];
+                    table.verticalLines = table.verticalLines.map(vLine => vLine + dx);
+
+                    const dy = p[1] - table.horizontalLines[0];
+                    table.horizontalLines = table.horizontalLines.map(hLine => hLine + dy);
+                } else {
+                    const dx = p[0] - arrLast(table.verticalLines);
+                    const dy = p[1] - arrLast(table.horizontalLines);
+                    table.verticalLines = table.verticalLines.map((vLine, i) => {
+                        if (i == 0) return vLine;
+                        const ratio = (table.verticalLines[i] - table.verticalLines[0]) / tableWidth(table);
+                        return vLine + dx * ratio;
+                    });
+
+                    table.horizontalLines = table.horizontalLines.map((hLine, i) => {
+                        if (i == 0) return hLine;
+                        const ratio = (table.horizontalLines[i] - table.horizontalLines[0])  / tableHeight(table);
+                        return hLine + dy * ratio;
+                    });
+                }
+                setTables([...tablesRef.current]);
+            }
         }
     }
 
@@ -477,16 +507,46 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 save();
                 queue2state();
             }
+        } else if (type === MoveTypes.TableMove || type === MoveTypes.TableResize) {
+            const table = tablesRef.current.find(table => table.id == id);
+            if (table && table.backup) {
+                queue.current.pushTable(restoreElement(table));
+                queue2state();
+                save();
+            }
         }
     }
 
     function handleMoveTablePart(p: SketchPoint, tableContext: TableContext) {
-        console.log("Table Part move", tableContext, p);
-        // Handle table line dragging if needed
+        const table = tablesRef.current.find(t => t.id == tableContext.elem.id);
+        if (table) {
+            trace("Table part move", p, tableContext)
+            if (!table.backup) {
+                backupElement(table);
+            }
+
+            if (tableContext.hLine != undefined && tableContext.hLine > 0 && tableContext.hLine < table.horizontalLines.length - 1) {
+                // not allow move beyond the two adjecent lines
+                if (p[1] <= table.horizontalLines[tableContext.hLine - 1] || p[1] >= table.horizontalLines[tableContext.hLine + 1]) return;
+                table.horizontalLines[tableContext.hLine] = p[1];
+            }
+            if (tableContext.vLine != undefined && tableContext.vLine > 0 && tableContext.vLine < table.verticalLines.length - 1) {
+                // not allow move beyond the two adjecent lines
+                if (p[0] <= table.verticalLines[tableContext.vLine - 1] || p[0] >= table.verticalLines[tableContext.vLine + 1]) return;
+                table.verticalLines[tableContext.vLine] = p[0];
+            }
+
+            setTables([...tablesRef.current]);
+        }
     }
 
     function handleMoveTablePartEnd(tableContext: TableContext) {
-        console.log("Table Part move end", tableContext);
+        const table = tablesRef.current.find(t => t.id == tableContext.elem.id);
+        if (table && table.backup) {
+            queue.current.pushTable(restoreElement(table));
+            queue2state();
+            save();
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -668,8 +728,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setRowsOrColumns: (newVal: number, isCols: boolean) => {
             if (newVal < 1) return;
             if (tablesRef.current.length > 0 &&
-                (isCols && tablesRef.current[0].verticalLines.length + 1 != newVal ||
-                    !isCols && tablesRef.current[0].horizontalLines.length + 1 != newVal)) {
+                (isCols && tablesRef.current[0].verticalLines.length - 1 != newVal ||
+                    !isCols && tablesRef.current[0].horizontalLines.length - 1 != newVal)) {
 
                 const changed = cloneElem(tablesRef.current[0]);
                 const changeAtBegining = isCols && isRTL();
@@ -724,6 +784,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         newArray[i] += accDelta;
                     }
                 }
+                if (isCols) {
+                    changed.verticalLines = newArray;
+                } else {
+                    changed.horizontalLines = newArray;;
+                }
 
                 queue.current.pushTable(changed);
                 queue2state();
@@ -748,7 +813,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 queue2state();
                 save();
             }
-        } 
+        }
     };
 
     function updateCurrentEditedElements() {
