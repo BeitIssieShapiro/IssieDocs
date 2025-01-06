@@ -74,6 +74,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     const modeRef = useRef<EditModes>(EditModes.Brush);
     const mainViewRef = useRef<ViewShot>(null);
+    const viewOffsetRef = useRef<Offset>({ x: 0, y: 0 })
 
     const [fontSize, setFontSize] = useState<number>(35);
     const [textAlignment, setTextAlignment] = useState<string>("left");
@@ -187,8 +188,21 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }, []);
 
     function _keyboardDidShow(e: any) {
-        trace("keyboard", e.endCoordinates)
-        setKeyboardHeight(e.endCoordinates.height - dimensions.toolbarMargin);
+        const newKbHeight = e.endCoordinates.height - dimensions.toolbarMargin
+
+        setKeyboardHeight(newKbHeight);
+
+        // check if a text box in edit:
+        const textElem = currentEditedRef.current.textId ? textsRef.current.find(t => t.id == currentEditedRef.current.textId) : undefined;
+
+        let kbTop = (e.endCoordinates.screenY - viewOffsetRef.current.y)/ratioRef.current;
+        kbTop -= moveCanvasRef.current.y;
+        kbTop /= zoomRef.current
+        if (textElem) {
+            if (textElem.y + (textElem.height ?? 20) > kbTop) {
+                trace("text behind kb")
+            }
+        }
     }
     function _keyboardDidHide() {
         setKeyboardHeight(0);
@@ -1258,8 +1272,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
     }
 
-    const maxXOffset = ()=> (canvasSizeRef.current.width * zoomRef.current - canvasSizeRef.current.width) / zoomRef.current
-    const maxYOffset = ()=> (canvasSizeRef.current.height * zoomRef.current - canvasSizeRef.current.height + keyboardHeightRef.current) / zoomRef.current
+    const maxXOffset = () => (canvasSizeRef.current.width * zoomRef.current - canvasSizeRef.current.width) / zoomRef.current
+    const maxYOffset = () => (canvasSizeRef.current.height * zoomRef.current - canvasSizeRef.current.height + keyboardHeightRef.current) / zoomRef.current
 
 
     function handleMoveCanvas(newOffset: Offset) {
@@ -1277,7 +1291,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         <SafeAreaView
             style={styles.mainContainer}
             onLayout={(e) => {
-                trace("Safe area onLoayout")
                 const { width, height } = e.nativeEvent.layout;
                 setWindowSize({ width, height });
             }}
@@ -1399,7 +1412,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     offset={moveCanvas}
                     canvasWidth={windowSize.width}
                     canvasHeight={windowSize.height - toolbarHeight - dimensions.toolbarMargin}
-                    onActualCanvasSize={(actualSize, actualMargin, ratio) => {
+                    onActualCanvasSize={(actualSize, actualMargin, viewOffset, ratio) => {
                         if (actualSize.height != canvasSize.height || actualSize.width != canvasSize.width) {
                             setCanvasSize(actualSize)
                         }
@@ -1407,6 +1420,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                             setSideMargin(actualMargin);
                         }
                         ratioRef.current = ratio;
+                        viewOffsetRef.current = viewOffset;
                     }}
                     zoom={zoom}
                     onZoom={(newZoom) => setZoom(newZoom)}

@@ -61,7 +61,7 @@ interface CanvasProps {
     canvasWidth: number;
     canvasHeight: number;
 
-    onActualCanvasSize?: (actualSize: ImageSize, actualSideMargin: number, ratio: number) => void,
+    onActualCanvasSize?: (actualSize: ImageSize, actualSideMargin: number, viewOffset:Offset, ratio: number) => void,
 
     zoom: number;
     onZoom: (newZoom: number) => void
@@ -127,7 +127,7 @@ export function Canvas({
     // Refs & State
     const isMoving = useRef(false);
     const canvasRef = useRef<View | null>(null);
-    const viewOffset = useRef({ offsetX: 0, offsetY: 0 });
+    const viewOffset = useRef<Offset>({ x: 0, y: 0 });
     const offsetRef = useRef(offset);
     const ratio = useRef(1);
     const zoomRef = useRef(1);
@@ -183,7 +183,7 @@ export function Canvas({
                 const actualSize = { width: size.width * calcRatio, height: size.height * calcRatio };
                 const actualSideMargin = (canvasWidth - size.width * calcRatio) / 2;
                 setImageSize(actualSize);
-                onActualCanvasSize?.(actualSize, actualSideMargin, ratio.current);
+                onActualCanvasSize?.(actualSize, actualSideMargin, viewOffset.current, ratio.current);
                 setSideMargin(actualSideMargin);
             });
         }
@@ -347,8 +347,8 @@ export function Canvas({
     // Convert screen coordinates to canvas coordinates
     function screen2Canvas(x: number, y: number): SketchPoint {
         return [
-            (x - viewOffset.current.offsetX) / (zoomRef.current * ratio.current) - offsetRef.current.x,
-            (y - viewOffset.current.offsetY) / (zoomRef.current * ratio.current) - offsetRef.current.y,
+            (x - viewOffset.current.x) / (zoomRef.current * ratio.current) - offsetRef.current.x,
+            (y - viewOffset.current.y) / (zoomRef.current * ratio.current) - offsetRef.current.y,
         ];
     }
 
@@ -489,7 +489,7 @@ export function Canvas({
                 setTimeout(() =>
                     canvasRef.current?.measureInWindow((absX, absY) => {
                         console.log("Canvas Layout", absX, absY)
-                        viewOffset.current = { offsetX: absX, offsetY: absY };
+                        viewOffset.current = { x: absX, y: absY };
                     }), 500);
             }}
             {...sketchResponder.panHandlers}
