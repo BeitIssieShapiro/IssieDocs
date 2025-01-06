@@ -1,12 +1,11 @@
 new canvas
 ---------
-fade window?
+
 table:
   - position initial
   - move cells
 text: 
   - initial font
-  - initial RTL
 better progress of share
   - busy indicator in FolderGalary - ShareIssieDocs
 

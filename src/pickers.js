@@ -132,8 +132,8 @@ export function MyColorPicker(props) {
 
             <View style={{
                 position: "absolute",
-                justifyContent:"flex-end",
-                top: 95, right: isScreenNarrow()?0:"15%",
+                justifyContent: "flex-end",
+                top: 95, right: isScreenNarrow() ? 0 : "15%",
                 //height: colorButtonSize * 3 + 30,
                 width: colorButtonSize * 2 + 30,
                 flexWrap: "wrap",
@@ -185,7 +185,7 @@ export function MyColorPicker(props) {
 
 const textSizeVolumeBarSize = 400;
 const dotSize = 30;
-const minTextSizePickerCollapsedSize = 80;
+const minTextSizePickerCollapsedSize = 50;
 export function TextSizePicker(props) {
     const [openMore, setOpenMore] = useState(false);
     const [height, setHeight] = useState(0);
@@ -198,18 +198,21 @@ export function TextSizePicker(props) {
     const textSizesAct = textSizes
     let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
     const simpleToolbarHeight = Math.max(buttonSize + 10, minTextSizePickerCollapsedSize);
-    const totalHeight = simpleToolbarHeight + (openMore ? 60 : 0);
+    //const totalHeight = simpleToolbarHeight + (openMore ? 60 : 0);
 
-    useEffect(() => {
-        if (props.open) {
-            setHeight(totalHeight)
-        } else {
-            setHeight(0);
-        }
-    }, [openMore, props.open]);
+    // useEffect(() => {
+    //     if (props.open) {
+    //         setHeight(totalHeight)
+    //     } else {
+    //         setHeight(0);
+    //     }
+    // }, [openMore, props.open, totalHeight]);
 
+    //trace("text size picker", props.open ? (simpleToolbarHeight + (openMore ? 60 : 0)) : 0)
 
-    return <FadeInView height={props.open ? Math.min(totalHeight, props.maxHeight) : 0}
+    return <FadeInView 
+        overflow={"hidden"}
+        height={props.open ? (simpleToolbarHeight + (openMore ? 60 : 0)) : 0}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
         <View
             style={{
@@ -249,8 +252,8 @@ export function TextSizePicker(props) {
 
         <View style={{
             height: 80,
-            paddingTop:10,
-            paddingBottom:2,
+            paddingTop: 10,
+            paddingBottom: 2,
             flex: 1,
             flexDirection: "row",
             alignItems: "center",

@@ -174,8 +174,10 @@ export function Canvas({
     useEffect(() => {
         if (imageSource?.uri) {
             Image.getSize(imageSource.uri).then((size) => {
+                console.log("img size", size, canvasHeight, canvasWidth, minSideMargin)
                 const ratioX = (canvasWidth - minSideMargin * 2) / size.width;
                 const ratioY = canvasHeight / size.height;
+                 console.log("img size2", ratioX, ratioY)
                 let calcRatio = Math.min(ratioX, ratioY);
                 calcRatio = Math.floor((calcRatio + Number.EPSILON) * 100) / 100;
 
@@ -187,7 +189,7 @@ export function Canvas({
                 setSideMargin(actualSideMargin);
             });
         }
-    }, [imageSource, canvasHeight, canvasWidth, minSideMargin, canvasWidth]);
+    }, [imageSource, canvasHeight, canvasWidth, minSideMargin]);
 
     // PanResponder for sketching
     const sketchResponder = useRef(

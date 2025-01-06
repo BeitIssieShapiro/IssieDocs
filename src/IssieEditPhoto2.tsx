@@ -77,7 +77,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const viewOffsetRef = useRef<Offset>({ x: 0, y: 0 })
 
     const [fontSize, setFontSize] = useState<number>(35);
-    const [textAlignment, setTextAlignment] = useState<string>(isRTL()?"Right":"Left");
+    const [textAlignment, setTextAlignment] = useState<string>(isRTL() ? "Right" : "Left");
     const [strokeWidth, setStrokeWidth] = useState<number>(2);
     const [markerWidth, setMarkerWidth] = useState<number>(20);
     const [sideMargin, setSideMargin] = useState<number>(dimensions.minSideMargin);
@@ -1280,6 +1280,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const maxXOffset = () => (canvasSizeRef.current.width * zoomRef.current - canvasSizeRef.current.width) / zoomRef.current
     const maxYOffset = () => (canvasSizeRef.current.height * zoomRef.current - canvasSizeRef.current.height + keyboardHeightRef.current) / zoomRef.current
 
+    function doZoom(newZoom: number) {
+        if (zoomRef.current > 1 && newZoom <= 1) {
+            setZoom(1);
+            const y = modeRef.current == EditModes.Text ? moveCanvasRef.current.y : 0;
+            setMoveCanvas({ x: 0, y })
+        } else if (newZoom > 1) {
+            setZoom(newZoom);
+        }
+    }
 
     function handleMoveCanvas(newOffset: Offset) {
         if (zoom == 1 && modeRef.current != EditModes.Text) return;
@@ -1359,8 +1368,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 }}
                 Table={tables?.[0]} // example if you only use the first table
                 fontSize4Toolbar={(size: number) => size}
-                onZoomOut={() => setZoom((prev) => prev - 0.5)}
-                onZoomIn={() => setZoom((prev) => prev + 0.5)}
+                onZoomOut={() => doZoom(zoomRef.current - 0.5)}
+                onZoomIn={() => doZoom(zoomRef.current + 0.5)}
                 eraseMode={eraseMode}
                 onEraser={handleEraserPressed}
                 onRulerMode={handleRulerMode}
@@ -1406,6 +1415,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     canvasWidth={windowSize.width}
                     canvasHeight={windowSize.height - toolbarHeight - dimensions.toolbarMargin}
                     onActualCanvasSize={(actualSize, actualMargin, viewOffset, ratio) => {
+                        //trace("actual sizes", actualSize, actualMargin, viewOffset, ratio, windowSize)
                         if (actualSize.height != canvasSize.height || actualSize.width != canvasSize.width) {
                             setCanvasSize(actualSize)
                         }
@@ -1416,9 +1426,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         viewOffsetRef.current = viewOffset;
                     }}
                     zoom={zoom}
-                    onZoom={(newZoom) => setZoom(newZoom)}
+                    onZoom={(newZoom) => doZoom(newZoom)}
                     onMoveCanvas={handleMoveCanvas}
-                    minSideMargin={sideMargin}
+                    minSideMargin={dimensions.minSideMargin}
                     paths={paths}
                     texts={texts}
                     lines={lines}
@@ -1498,9 +1508,9 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.35,
         shadowRadius: 3.84,
-        borderRadius: 10, 
-        padding: 10, 
-        top: '25%', left: '15%', width: '70%', zIndex: 1000, 
+        borderRadius: 10,
+        padding: 10,
+        top: '25%', left: '15%', width: '70%', zIndex: 1000,
         backgroundColor: 'white', alignItems: 'center'
     },
     moveCanvasButton: {
