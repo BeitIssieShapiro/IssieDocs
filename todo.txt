@@ -8,7 +8,6 @@ text:
   - initial font
   - initial RTL
 better progress of share
-  - in editPhoto
   - busy indicator in FolderGalary - ShareIssieDocs
 
 

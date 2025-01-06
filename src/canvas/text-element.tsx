@@ -51,7 +51,8 @@ export const TextElement: React.FC<TextElementProps> = ({
                 { right: actualWidth - text.x * ratio.current }
                 : { left: text.x * ratio.current }),
             top: text.y * ratio.current,
-            maxWidth: actualWidth - text.x * ratio.current
+            maxWidth: text.rtl ? text.x :
+                actualWidth - text.x * ratio.current
         };
 
     //console.log("table", ratio.current, table && table.horizontalLines, posStyle);

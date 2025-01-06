@@ -77,7 +77,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const viewOffsetRef = useRef<Offset>({ x: 0, y: 0 })
 
     const [fontSize, setFontSize] = useState<number>(35);
-    const [textAlignment, setTextAlignment] = useState<string>("left");
+    const [textAlignment, setTextAlignment] = useState<string>(isRTL()?"Right":"Left");
     const [strokeWidth, setStrokeWidth] = useState<number>(2);
     const [markerWidth, setMarkerWidth] = useState<number>(20);
     const [sideMargin, setSideMargin] = useState<number>(dimensions.minSideMargin);
@@ -191,16 +191,21 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const newKbHeight = e.endCoordinates.height - dimensions.toolbarMargin
 
         setKeyboardHeight(newKbHeight);
+        keyboardHeightRef.current = newKbHeight;
 
         // check if a text box in edit:
         const textElem = currentEditedRef.current.textId ? textsRef.current.find(t => t.id == currentEditedRef.current.textId) : undefined;
 
-        let kbTop = (e.endCoordinates.screenY - viewOffsetRef.current.y)/ratioRef.current;
+        let kbTop = (e.endCoordinates.screenY - viewOffsetRef.current.y) / ratioRef.current;
         kbTop -= moveCanvasRef.current.y;
         kbTop /= zoomRef.current
         if (textElem) {
-            if (textElem.y + (textElem.height ?? 20) > kbTop) {
+            const elemHeight = (textElem.height ?? 20);
+            const elemBottom = textElem.y + elemHeight;
+            if (elemBottom > kbTop) {
                 trace("text behind kb")
+                const dy = elemBottom - kbTop
+                handleMoveCanvas({ x: moveCanvasRef.current.x, y: -(moveCanvasRef.current.y + dy + 3) })
             }
         }
     }
@@ -1282,8 +1287,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const verticalOnly = (zoomRef.current == 1 && modeRef.current == EditModes.Text);
 
         x = verticalOnly ? moveCanvasRef.current.x : Math.min(Math.max(x, -maxXOffset() / ratioRef.current), 0);
-        y = Math.min(Math.max(y, -maxYOffset() / ratioRef.current), 0);
 
+        y = Math.min(Math.max(y, -maxYOffset() / ratioRef.current), 0);
+        trace("set move", x, y, newOffset, -maxYOffset())
         setMoveCanvas({ x, y });
     }
 
@@ -1295,35 +1301,22 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 setWindowSize({ width, height });
             }}
         >
-            <View style={{ position: "absolute", left: sideMargin, top: 100, height: 5, width: canvasSize.width, backgroundColor: "green", zIndex: 10000 }} />
+            {/* <View style={{ position: "absolute", left: sideMargin, top: 100, height: 5, width: canvasSize.width, backgroundColor: "green", zIndex: 10000 }} />
             <View style={{ position: "absolute", left: 0, top: 110, height: 5, width: windowSize.width, backgroundColor: "yellow", zIndex: 10000 }} />
-            <View style={{ position: "absolute", left: 100, top: toolbarHeight + dimensions.toolbarMargin, height: canvasSize.height, width: 5, backgroundColor: "red", zIndex: 10000 }} />
+            <View style={{ position: "absolute", left: 100, top: toolbarHeight + dimensions.toolbarMargin, height: canvasSize.height, width: 5, backgroundColor: "red", zIndex: 10000 }} /> */}
             {busy &&
                 <View style={styles.busy}>
                     <ActivityIndicator size="large" /></View>
             }
-            {shareProgress >= 0 &&
-                <View style={{ position: 'absolute', top: '25%', left: 0, width: windowSize.width, zIndex: 1000, backgroundColor: 'white', alignItems: 'center' }}>
-                    <Progress.Circle
-                        size={200} // Diameter (2 * radius)
-                        progress={shareProgress}
-                        color="#3399FF"
-                        unfilledColor="#999999" // Equivalent to shadowColor
-                        borderWidth={5}
-                        thickness={8} // Adjust thickness as needed
-                        showsText={false} // We'll add custom text
-                        animated={true} // Enable animation if desired
-                    >
-                        <View style>
-                            <Text>
-                                {fTranslate("ExportProgress",
-                                    shareProgressPage,
-                                    (pageRef.current.count > 0 ? pageRef.current.count : 1))
-                                }
-                            </Text>
-                        </View>
-                    </Progress.Circle>
-                </View>}
+
+            {shareProgress >= 0 && <View style={styles.progressBarHost}>
+                <Text style={{ fontSize: 28, marginBottom: 5 }}>{fTranslate("ExportProgress",
+                    shareProgressPage,
+                    (pageRef.current.count > 0 ? pageRef.current.count : 1))
+                }</Text>
+                <Progress.Bar width={windowSize.width * .6} progress={.7} style={[isRTL() && { transform: [{ scaleX: -1 }] }]} />
+            </View>}
+
 
             <FileContextMenu
                 item={pageRef.current}
@@ -1498,6 +1491,17 @@ const styles = StyleSheet.create({
         left: "48%",
         top: "40%",
         zIndex: 1000
+    },
+    progressBarHost: {
+        position: 'absolute',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.35,
+        shadowRadius: 3.84,
+        borderRadius: 10, 
+        padding: 10, 
+        top: '25%', left: '15%', width: '70%', zIndex: 1000, 
+        backgroundColor: 'white', alignItems: 'center'
     },
     moveCanvasButton: {
         position: 'absolute',
