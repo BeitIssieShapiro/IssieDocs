@@ -61,7 +61,7 @@ interface CanvasProps {
     canvasWidth: number;
     canvasHeight: number;
 
-    onActualCanvasSize?: (actualSize: ImageSize) => void,
+    onActualCanvasSize?: (actualSize: ImageSize, actualSideMargin: number, ratio: number) => void,
 
     zoom: number;
     onZoom: (newZoom: number) => void
@@ -128,7 +128,7 @@ export function Canvas({
     const isMoving = useRef(false);
     const canvasRef = useRef<View | null>(null);
     const viewOffset = useRef({ offsetX: 0, offsetY: 0 });
-    const canvasOffset = useRef({ x: 0, y: 0 });
+    const offsetRef = useRef(offset);
     const ratio = useRef(1);
     const zoomRef = useRef(1);
     const [imageSize, setImageSize] = useState<ImageSize | undefined>();
@@ -140,6 +140,7 @@ export function Canvas({
         position: SketchPoint;
         elem?: ElementBase | TableContext;
         initialPosition?: SketchPoint;
+        initialOffset?: Offset;
         pinch?: PinchSession;
     } | null>(null);
 
@@ -163,7 +164,7 @@ export function Canvas({
     }, [zoom]);
 
     useEffect(() => {
-        canvasOffset.current = offset;
+        offsetRef.current = offset;
     }, [offset]);
 
     useEffect(() => {
@@ -180,9 +181,10 @@ export function Canvas({
 
                 ratio.current = calcRatio;
                 const actualSize = { width: size.width * calcRatio, height: size.height * calcRatio };
+                const actualSideMargin = (canvasWidth - size.width * calcRatio) / 2;
                 setImageSize(actualSize);
-                onActualCanvasSize?.(actualSize);
-                setSideMargin((canvasWidth - size.width * calcRatio) / 2);
+                onActualCanvasSize?.(actualSize, actualSideMargin, ratio.current);
+                setSideMargin(actualSideMargin);
             });
         }
     }, [imageSource, canvasHeight, canvasWidth, minSideMargin, canvasWidth]);
@@ -194,7 +196,7 @@ export function Canvas({
             onMoveShouldSetPanResponder: () => !isMoving.current,
             onPanResponderGrant: (e, gState) => {
                 const clickPoint = screen2Canvas(gState.x0, gState.y0);
-                startSketchRef.current = { position: clickPoint };
+                startSketchRef.current = { position: clickPoint, initialOffset: offsetRef.current };
 
                 if (
                     currentElementTypeRef.current !== ElementTypes.Sketch
@@ -235,7 +237,7 @@ export function Canvas({
                         if (!startSketchRef.current.pinch) {
                             startSketchRef.current.pinch = new PinchSession(
                                 {
-                                    initialOffset: canvasOffset.current,
+                                    initialOffset: offsetRef.current,
                                     zoom: zoomRef.current,
                                     minZoom: 1,
                                     p1, p2,
@@ -263,13 +265,12 @@ export function Canvas({
                         startSketchRef.current = null;
                     } else {
                         // Move or resize an element
-                        const { initialPosition, elem } = startSketchRef.current;
-                        if (initialPosition && elem) {
-                            const pos0 = initialPosition;
-                            const dx = gState.dx / (zoomRef.current * ratio.current);
-                            const dy = gState.dy / (zoomRef.current * ratio.current);
-                            const pt: SketchPoint = [pos0[0] + dx, pos0[1] + dy];
+                        const dx = gState.dx / (zoomRef.current * ratio.current);
+                        const dy = gState.dy / (zoomRef.current * ratio.current);
 
+                        const { initialPosition, elem, initialOffset } = startSketchRef.current;
+                        if (initialPosition && elem) {
+                            const pt: SketchPoint = [initialPosition[0] + dx, initialPosition[1] + dy];
                             if ("id" in elem) {
                                 onMoveElement(
                                     currentElementTypeRef.current == ElementTypes.Line ? MoveTypes.LineMove : MoveTypes.ImageMove,
@@ -278,13 +279,21 @@ export function Canvas({
                             } else {
                                 onMoveTablePart?.(pt, elem);
                             }
+                        } else if (initialOffset) {
+                            console.log("move canvas", initialOffset, dx, dy)
+                            onMoveCanvas({ x: initialOffset.x + dx, y: initialOffset.y + dy });
                         }
                         return; // Do not proceed to `onSketchStep` if moving an element
                     }
                 }
+
                 onSketchStep(newPoint);
             },
             onPanResponderRelease: (_, gState) => {
+                if (startSketchRef.current?.pinch) {
+                    startSketchRef.current = null;
+                    return;
+                }
                 if (gState.dx === 0 && gState.dy === 0) {
                     // Possibly a tap/click
                     if (startSketchRef.current) {
@@ -338,8 +347,8 @@ export function Canvas({
     // Convert screen coordinates to canvas coordinates
     function screen2Canvas(x: number, y: number): SketchPoint {
         return [
-            (x - viewOffset.current.offsetX) / (zoomRef.current * ratio.current) - canvasOffset.current.x,
-            (y - viewOffset.current.offsetY) / (zoomRef.current * ratio.current) - canvasOffset.current.y,
+            (x - viewOffset.current.offsetX) / (zoomRef.current * ratio.current) - offsetRef.current.x,
+            (y - viewOffset.current.offsetY) / (zoomRef.current * ratio.current) - offsetRef.current.y,
         ];
     }
 
@@ -457,7 +466,7 @@ export function Canvas({
     const actualHeight = imageSize?.height || canvasHeight;
 
     normCanvasSize.current = { width: actualWidth / ratio.current, height: actualHeight / ratio.current };
-
+    //console.log(ratio.current)
     return (
         <View
             ref={canvasRef}
@@ -471,8 +480,8 @@ export function Canvas({
                     transformOrigin: "0 0 0",
                     transform: [
                         { scale: zoomRef.current },
-                        { translateX: canvasOffset.current.x * ratio.current },
-                        { translateY: canvasOffset.current.y * ratio.current },
+                        { translateX: offsetRef.current.x * ratio.current },
+                        { translateY: offsetRef.current.y * ratio.current },
                     ],
                 },
             ]}

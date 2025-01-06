@@ -3,6 +3,7 @@ import {
     ActivityIndicator,
     Alert,
     ImageSize,
+    Keyboard,
     SafeAreaView,
     StyleSheet,
     TouchableOpacity,
@@ -99,6 +100,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const currentEditedRef = useRef<CurrentEdited>(currentEdited);
     const canvasSizeRef = useRef<ImageSize>(canvasSize);
 
+    const ratioRef = useRef(1);
+    const keyboardHeightRef = useRef(keyboardHeight);
 
     const fontSizeRef = useRef(fontSize);
     const textAlignmentRef = useRef(textAlignment);
@@ -110,6 +113,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const markerColorRef = useRef(markerColor);
     const textColorRef = useRef(textColor);
     const tableColorRef = useRef(tableColor);
+    const moveCanvasRef = useRef(moveCanvas);
+    const zoomRef = useRef(zoom);
 
 
     // -------------------------------------------------------------------------
@@ -132,11 +137,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         canvasSizeRef.current = canvasSize;
         currPageIndexRef.current = currPageIndex;
         currentFileRef.current = currentFile;
+        moveCanvasRef.current = moveCanvas;
+        zoomRef.current = zoom;
+        keyboardHeightRef.current = keyboardHeight;
 
         updateCurrentEditedElements();
     }, [mode, fontSize, textAlignment, strokeWidth, markerWidth, sideMargin,
         brushColor, rulerColor, markerColor, textColor, tableColor, canvasSize,
-        currPageIndex, currentFile]);
+        currPageIndex, currentFile, moveCanvas, zoom, keyboardHeight]);
 
     useEffect(() => {
         currentEditedRef.current = currentEdited;
@@ -161,6 +169,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     useEffect(() => {
         setNavParam(navigation, 'onMoreMenu', () => setOpenContextMenu(true));
+        const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', _keyboardDidShow);
+        const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', _keyboardDidHide);
 
         loadPage(page, (pageIndex != undefined && pageIndex > 0 ? pageIndex : 0)).then(() => {
             if (share) {
@@ -169,10 +179,20 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         })
 
         return () => {
-            // Cleanup if needed
+            // Cleanup 
+            keyboardDidShowListener.remove();
+            keyboardDidHideListener.remove();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    function _keyboardDidShow(e: any) {
+        trace("keyboard", e.endCoordinates)
+        setKeyboardHeight(e.endCoordinates.height - dimensions.toolbarMargin);
+    }
+    function _keyboardDidHide() {
+        setKeyboardHeight(0);
+    }
 
     async function loadMetadata() {
         queue.current.clear();
@@ -399,6 +419,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             };
             linesRef.current.push(newLine);
             setLines([...linesRef.current]);
+        } else if (modeRef.current === EditModes.Text) {
+            trace("sketch start text")
+
         }
     }
 
@@ -459,16 +482,18 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     queue.current.pushText(changedElem);
                     queue2state();
                     save();
-                    return;
+
                 }
+                setCurrentEdited(prev => ({ ...prev, textId: undefined }));
             } else {
                 // new text element
                 if (textElem.text != "") {
                     queue.current.pushText(textElem);
                     queue2state();
                     save();
-                    return;
+
                 }
+                setCurrentEdited(prev => ({ ...prev, textId: undefined }));
             }
         }
     }
@@ -548,13 +573,29 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //                          MOVE / DRAG HANDLERS
     // -------------------------------------------------------------------------
     function handleMove(type: MoveTypes, id: string, p: SketchPoint) {
-        trace("Move elem", type, id, p)
+        trace("Move elem",
+            Math.floor(p[0]),
+            moveCanvasRef.current.x,
+            //Math.floor(p[1]), 
+            canvasSizeRef.current.width / ratioRef.current,
+            //canvasSizeRef.current.height/ratioRef.current, type, id
+        )
+
+        let [x, y] = p;
+        if (x < 20) x = 20;
+        if (x > canvasSizeRef.current.width / ratioRef.current - 20)
+            x = canvasSizeRef.current.width / ratioRef.current - 20;
+
+        if (y < 0) y = 0;
+        if (y > canvasSizeRef.current.height / ratioRef.current - 20)
+            y = canvasSizeRef.current.height / ratioRef.current - 20;
+
         if (type === MoveTypes.Text) {
             const textElem = textsRef.current.find(t => t.id === id);
-            trace("Move text", textElem, textsRef.current)
+            //trace("Move text", textElem, textsRef.current)
             if (textElem) {
-                textElem.x = p[0];
-                textElem.y = p[1];
+                textElem.x = x;
+                textElem.y = y;
                 setTexts([...textsRef.current]);
             }
         } else if (type === MoveTypes.LineStart || type === MoveTypes.LineEnd || type === MoveTypes.LineMove) {
@@ -564,14 +605,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     backupElement(line)
                 }
                 if (type === MoveTypes.LineStart) {
-                    line.from = [p[0], p[1]];
+                    line.from = [x, y];
                 } else if (type === MoveTypes.LineEnd) {
-                    line.to = [p[0], p[1]];
+                    line.to = [x, y];
                 } else {
                     const dx = line.to[0] - line.from[0];
                     const dy = line.to[1] - line.from[1];
-                    line.from = [p[0], p[1]];
-                    line.to = [p[0] + dx, p[1] + dy];
+                    line.from = [x, y];
+                    line.to = [x + dx, y + dy];
                 }
                 setLines([...linesRef.current]);
             }
@@ -583,11 +624,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     backupElement(imgElem)
                 }
                 if (type === MoveTypes.ImageMove) {
-                    imgElem.x = p[0];
-                    imgElem.y = p[1];
+                    imgElem.x = x;
+                    imgElem.y = y;
                 } else {
-                    imgElem.width = p[0] - imgElem.x;
-                    imgElem.height = p[1] - imgElem.y;
+                    imgElem.width = x - imgElem.x;
+                    imgElem.height = y - imgElem.y;
                 }
                 setImages([...imagesRef.current]);
             }
@@ -599,14 +640,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 }
 
                 if (type === MoveTypes.TableMove) {
-                    const dx = p[0] - table.verticalLines[0];
+                    const dx = x - table.verticalLines[0];
                     table.verticalLines = table.verticalLines.map(vLine => vLine + dx);
 
-                    const dy = p[1] - table.horizontalLines[0];
+                    const dy = y - table.horizontalLines[0];
                     table.horizontalLines = table.horizontalLines.map(hLine => hLine + dy);
                 } else {
-                    const dx = p[0] - arrLast(table.verticalLines);
-                    const dy = p[1] - arrLast(table.horizontalLines);
+                    const dx = x - arrLast(table.verticalLines);
+                    const dy = y - arrLast(table.horizontalLines);
                     table.verticalLines = table.verticalLines.map((vLine, i) => {
                         if (i == 0) return vLine;
                         const ratio = (table.verticalLines[i] - table.verticalLines[0]) / tableWidth(table);
@@ -627,8 +668,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 if (!audioElem.backup) {
                     backupElement(audioElem)
                 }
-                audioElem.x = p[0];
-                audioElem.y = p[1];
+                audioElem.x = x;
+                audioElem.y = y;
                 setAudios([...audiosRef.current]);
             }
         }
@@ -1128,10 +1169,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const upDownTop = toolbarHeight + 45
         const verticalMovePossible = modeRef.current == EditModes.Text || zoom > 1;
         const horizMovePossible = zoom > 1;
-        const disabledRight = canvasSize.width > (canvasSize.width + moveCanvas.x + sideMargin) * zoom;
-        const maxRight = (canvasSize.width + moveCanvas.x + sideMargin) * zoom - canvasSize.width
-        const maxDown = (canvasSize.height + moveCanvas.y + toolbarHeight + dimensions.toolbarMargin) * zoom - canvasSize.height;
-        const disabledBottom = canvasSize.height > (canvasSize.height + moveCanvas.y + toolbarHeight + dimensions.toolbarMargin) * zoom;
+
+        const disabledRight = -maxXOffset() >= moveCanvas.x;
+        const disabledBottom = -maxYOffset() >= moveCanvas.y
+
         const MoveButton = ({ rotate, onPress, style, disabled }: { rotate: number, onPress: () => void, style: any, disabled: boolean }) => (
             <TouchableOpacity style={[styles.moveCanvasButton, style, { transform: [{ rotate: rotate + 'deg' }] }]}
                 onPress={() => { console.log("presse move"); !disabled && onPress() }} >
@@ -1143,16 +1184,16 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         return (
             <React.Fragment>
-                {horizMovePossible && <MoveButton key={1} rotate={180} onPress={() => setMoveCanvas(prev => ({ ...prev, x: Math.min(prev.x + 50, 0) }))}
+                {horizMovePossible && <MoveButton key={1} rotate={180} onPress={() => handleMoveCanvas({ x: moveCanvas.x + 50, y: moveCanvas.y })}
                     style={{ top: sidesTop, left: 10 }} disabled={moveCanvas.x == 0}
                 />}
-                {horizMovePossible && <MoveButton key={2} rotate={0} onPress={() => setMoveCanvas(prev => ({ ...prev, x: prev.x - Math.min(50, maxRight) }))}
+                {horizMovePossible && <MoveButton key={2} rotate={0} onPress={() => handleMoveCanvas({ x: moveCanvas.x - 50, y: moveCanvas.y })}
                     style={{ top: sidesTop, right: 10 }} disabled={disabledRight}
                 />}
-                {verticalMovePossible && <MoveButton key={3} rotate={270} onPress={() => setMoveCanvas(prev => ({ ...prev, y: Math.min(prev.y + 50, 0) }))}
+                {verticalMovePossible && <MoveButton key={3} rotate={270} onPress={() => handleMoveCanvas({ x: moveCanvas.x, y: moveCanvas.y + 50 })}
                     style={{ top: upDownTop, left: upDownLeft - 50 }} disabled={moveCanvas.y == 0}
                 />}
-                {verticalMovePossible && <MoveButton key={4} rotate={90} onPress={() => setMoveCanvas(prev => ({ ...prev, y: prev.y - Math.min(50, maxDown) }))}
+                {verticalMovePossible && <MoveButton key={4} rotate={90} onPress={() => handleMoveCanvas({ x: moveCanvas.x + 50, y: moveCanvas.y - 50 })}
                     style={{ top: upDownTop, left: upDownLeft + 50 }} disabled={disabledBottom}
                 />}
             </React.Fragment >);
@@ -1216,7 +1257,21 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             save();
         }
     }
-    //trace("move", canvasSize.width, (canvasSize.width + moveCanvas.x + sideMargin) * zoom, sideMargin)
+
+    const maxXOffset = ()=> (canvasSizeRef.current.width * zoomRef.current - canvasSizeRef.current.width) / zoomRef.current
+    const maxYOffset = ()=> (canvasSizeRef.current.height * zoomRef.current - canvasSizeRef.current.height + keyboardHeightRef.current) / zoomRef.current
+
+
+    function handleMoveCanvas(newOffset: Offset) {
+        if (zoom == 1 && modeRef.current != EditModes.Text) return;
+        let { x, y } = newOffset;
+        const verticalOnly = (zoomRef.current == 1 && modeRef.current == EditModes.Text);
+
+        x = verticalOnly ? moveCanvasRef.current.x : Math.min(Math.max(x, -maxXOffset() / ratioRef.current), 0);
+        y = Math.min(Math.max(y, -maxYOffset() / ratioRef.current), 0);
+
+        setMoveCanvas({ x, y });
+    }
 
     return (
         <SafeAreaView
@@ -1227,6 +1282,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 setWindowSize({ width, height });
             }}
         >
+            <View style={{ position: "absolute", left: sideMargin, top: 100, height: 5, width: canvasSize.width, backgroundColor: "green", zIndex: 10000 }} />
+            <View style={{ position: "absolute", left: 0, top: 110, height: 5, width: windowSize.width, backgroundColor: "yellow", zIndex: 10000 }} />
+            <View style={{ position: "absolute", left: 100, top: toolbarHeight + dimensions.toolbarMargin, height: canvasSize.height, width: 5, backgroundColor: "red", zIndex: 10000 }} />
             {busy &&
                 <View style={styles.busy}>
                     <ActivityIndicator size="large" /></View>
@@ -1340,15 +1398,19 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     style={{ overflow: 'hidden', backgroundColor: 'gray' }}
                     offset={moveCanvas}
                     canvasWidth={windowSize.width}
-                    canvasHeight={windowSize.height - toolbarHeight}
-                    onActualCanvasSize={actualSize => {
+                    canvasHeight={windowSize.height - toolbarHeight - dimensions.toolbarMargin}
+                    onActualCanvasSize={(actualSize, actualMargin, ratio) => {
                         if (actualSize.height != canvasSize.height || actualSize.width != canvasSize.width) {
                             setCanvasSize(actualSize)
                         }
+                        if (actualMargin !== sideMargin) {
+                            setSideMargin(actualMargin);
+                        }
+                        ratioRef.current = ratio;
                     }}
                     zoom={zoom}
                     onZoom={(newZoom) => setZoom(newZoom)}
-                    onMoveCanvas={newMC => setMoveCanvas(newMC)}
+                    onMoveCanvas={handleMoveCanvas}
                     minSideMargin={sideMargin}
                     paths={paths}
                     texts={texts}
