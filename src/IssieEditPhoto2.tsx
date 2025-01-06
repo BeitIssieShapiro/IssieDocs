@@ -5,8 +5,11 @@ import {
     ImageSize,
     SafeAreaView,
     StyleSheet,
+    TouchableOpacity,
     View,
 } from 'react-native';
+import * as Progress from 'react-native-progress';
+import Share from 'react-native-share';
 import { StackScreenProps } from '@react-navigation/stack';
 import { CurrentEdited, ElementBase, ElementTypes, MoveTypes, Offset, SketchElement, SketchElementAttributes, SketchImage, SketchLine, SketchPath, SketchPoint, SketchTable, SketchText, TableContext } from './canvas/types';
 import { Canvas } from './canvas/canvas';
@@ -14,16 +17,18 @@ import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { arrLast, pageTitleAddition, setNavParam } from './utils';
-import { colors, dimensions, getImageDimensions, getRoundedButton, semanticColors } from './elements';
+import { colors, dimensions, getImageDimensions, getRoundedButton, Icon, semanticColors } from './elements';
 import EditorToolbar from './editor-toolbar';
 import { getNewPage, SRC_CAMERA, SRC_FILE, SRC_GALLERY } from './newPage';
 import { EditModes, RootStackParamList } from './types';
-import { backupElement, cloneElem, getId, restoreElement, tableColWidth, tableHeight, tableRowHeight, tableWidth } from './canvas/utils';
+import { backupElement, cloneElem, getId, restoreElement, tableColWidth, tableHeight, tableRowHeight, tableWidth, wait } from './canvas/utils';
 import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
-import { isRTL, translate } from './lang';
+import { fTranslate, isRTL, translate } from './lang';
 import { FileContextMenu } from './file-context-menu';
-import { AudioElement } from './audio-elem';
 import { AudioElement2 } from './audio-elem-new';
+import ViewShot from 'react-native-view-shot';
+import { generatePDF } from './pdf';
+import { Text } from 'react-native';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -44,6 +49,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [windowSize, setWindowSize] = useState<ImageSize>({ width: 500, height: 500 });
     const [canvasSize, setCanvasSize] = useState<ImageSize>({ width: 1000, height: 1000 })
     const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
+    const [toolbarHeight, setToolbarHeight] = useState<number>(dimensions.toolbarHeight);
+    
     const [zoom, setZoom] = useState<number>(1);
     const [status, setStatus] = useState<string>("");
     const [moveCanvas, setMoveCanvas] = useState<Offset>({ x: 0, y: 0 });
@@ -65,6 +72,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }));
 
     const modeRef = useRef<EditModes>(EditModes.Brush);
+    const mainViewRef = useRef<ViewShot>(null);
 
     const [fontSize, setFontSize] = useState<number>(35);
     const [textAlignment, setTextAlignment] = useState<string>("left");
@@ -76,6 +84,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [markerColor, setMarkerColor] = useState<string>(colors.yellow);
     const [textColor, setTextColor] = useState<string>(colors.black);
     const [tableColor, setTableColor] = useState<string>(colors.blue);
+
+    const [shareProgress, setShareProgress] = useState<number>(-1)
+    const [shareProgressPage, setShareProgressPage] = useState<number>(1)
 
 
     // Corresponding Refs
@@ -132,7 +143,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }, [currentEdited])
 
 
-    function loadPage(newPage: any, index: number) {
+    async function loadPage(newPage: any, index: number) {
         const newCurrentFile = newPage.getPage(index);
         setCurrentFile(newPage.getPage(index));
         setCurrPageIndex(index);
@@ -145,13 +156,18 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         pageRef.current = newPage;
 
         metaDataUri.current = newCurrentFile + ".json";
-        loadMetadata().then(() => queue2state());
+        await loadMetadata().then(() => queue2state());
     }
 
     useEffect(() => {
         setNavParam(navigation, 'onMoreMenu', () => setOpenContextMenu(true));
 
-        loadPage(page, (pageIndex != undefined && pageIndex > 0 ? pageIndex : 0))
+        loadPage(page, (pageIndex != undefined && pageIndex > 0 ? pageIndex : 0)).then(() => {
+            if (share) {
+                doShare();
+            }
+        })
+
         return () => {
             // Cleanup if needed
         };
@@ -174,8 +190,75 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         await FileSystem.main.writeFile(metaDataUri.current, content)
             .catch((e) => Alert.alert("File Save Failed" + e))
 
-        // TODO Save thumbnail
+        //  Save thumbnail
+        mainViewRef.current.capture().then((uri: string) => {
+            FileSystem.main.saveThumbnail(uri, pageRef.current);
+        });
     }
+
+    const doShare = async () => {
+        const shareTimeMs = 2000;
+
+        //iterates over all files and exports them
+        //this.setState({ sharing: true, shareProgress: 0, shareProgressPage: 1 });
+        const dataUrls = [];
+        setShareProgressPage(1);
+
+
+        //let interval = pageRef.current.count * shareTimeMs / 11;
+        setShareProgress(0);
+        //let intervalObj = setInterval(() => setShareProgress(prev => prev + 10), interval);
+
+        await wait(shareTimeMs);
+        try {
+            const uri = await mainViewRef.current.capture()
+            dataUrls.push(uri);
+            for (let i = 1; i < pageRef.current.count; i++) {
+                setShareProgressPage(i + 1);
+                setShareProgress(i / pageRef.current.count)
+                await loadPage(pageRef.current, i);
+                await wait(shareTimeMs);
+                const uri = await mainViewRef.current.capture()
+                dataUrls.push(uri);
+            }
+
+            //clearInterval(intervalObj);
+            //avoid reshare again
+            setNavParam(navigation, 'share', false);
+            // Always create PDF file
+            trace("about to generate PDF", dataUrls.length)
+            const shareUrl = "file://" + (await generatePDF(dataUrls));
+            trace("about to share", shareUrl)
+            setShareProgress(-1);
+
+            if (shareUrl) {
+                // Define share options
+                const shareOptions = {
+                    title: translate("ShareWithTitle"),
+                    subject: translate("ShareEmailSubject"),
+                    url: shareUrl,
+                    type: 'application/pdf',
+                };
+
+                // Share the PDF
+                Share.open(shareOptions)
+                    .then(() => {
+                        Alert.alert(translate("ShareSuccessful"));
+                    })
+                    .catch((err: any) => {
+                        if (err && err.error !== 'User did not share') {
+                            Alert.alert("Error sharing PDF");
+                        }
+                        // Handle other errors or user cancellations if necessary
+                    })
+            } else {
+                Alert.alert("Failed to generate PDF for sharing.");
+            }
+        } catch (e) {
+            console.log("Share failed", e)
+        }
+    }
+
 
     const queue2state = () => {
         let q = queue.current.getAll();
@@ -275,9 +358,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     function beforeModeChange() {
         saveText();
         if (modeRef.current == EditModes.Audio) {
-            const audioElem = audiosRef.current.find(au=>au.editMode)
+            const audioElem = audiosRef.current.find(au => au.editMode)
             if (audioElem) {
-                audiosRef.current = audiosRef.current.filter(au=>!au.editMode);
+                audiosRef.current = audiosRef.current.filter(au => !au.editMode);
                 setAudios([...audiosRef.current]);
             }
         }
@@ -539,7 +622,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 setTables([...tablesRef.current]);
             }
         } else if (type === MoveTypes.ElementMove) {
-            const audioElem = audiosRef.current.find(au=>au.id == id);
+            const audioElem = audiosRef.current.find(au => au.id == id);
             if (audioElem) {
                 if (!audioElem.backup) {
                     backupElement(audioElem)
@@ -576,7 +659,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 save();
             }
         } else if (type === MoveTypes.ElementMove) {
-            const audioElem = audiosRef.current.find(au=>au.id == id);
+            const audioElem = audiosRef.current.find(au => au.id == id);
             if (audioElem) {
                 queue.current.pushAudioPosition(restoreElement(audioElem));
                 queue2state();
@@ -956,8 +1039,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     // NEW OR UPDATED: stub for handleToolbarDimensionChange
-    function handleToolbarDimensionChange(width: number, height: number) {
-        console.log("Toolbar dimension changed:", { width, height });
+    function handleToolbarDimensionChange(height: number, exHeight: number) {
+        setToolbarHeight(height);
+        //console.log("Toolbar dimension changed:", height, exHeight);
     }
 
     // -------------------------------------------------------------------------
@@ -1036,7 +1120,42 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 }
             ]
         );
+    }
 
+    const moveArrows = (windowSize: ImageSize, keyboardHeight: number, zoom: number, moveCanvas: Offset, toolbarHeight:number) => {
+        const sidesTop = Math.min(windowSize.height / 2 - 35, windowSize.height - keyboardHeight - 95);
+        const upDownLeft = windowSize.width / 2;
+        const upDownTop = toolbarHeight + 45
+        const verticalMovePossible = modeRef.current == EditModes.Text || zoom > 1;
+        const horizMovePossible = zoom > 1;
+        const disabledRight = canvasSize.width > (canvasSize.width + moveCanvas.x + sideMargin) * zoom;
+        const maxRight = (canvasSize.width + moveCanvas.x + sideMargin) * zoom - canvasSize.width
+        const maxDown = (canvasSize.height + moveCanvas.y + toolbarHeight + dimensions.toolbarMargin) * zoom - canvasSize.height;
+        const disabledBottom = canvasSize.height > (canvasSize.height + moveCanvas.y + toolbarHeight + dimensions.toolbarMargin) * zoom;
+        const MoveButton = ({ rotate, onPress, style, disabled }: { rotate: number, onPress: () => void, style: any, disabled: boolean }) => (
+            <TouchableOpacity style={[styles.moveCanvasButton, style, { transform: [{ rotate: rotate + 'deg' }] }]}
+                onPress={() => { console.log("presse move"); !disabled && onPress() }} >
+                <Icon
+                    name='play-arrow' size={70} color={disabled ? semanticColors.moveInZoomButtonDisabled : semanticColors.moveInZoomButton}
+                />
+            </TouchableOpacity>
+        );
+
+        return (
+            <React.Fragment>
+                {horizMovePossible && <MoveButton key={1} rotate={180} onPress={() => setMoveCanvas(prev => ({ ...prev, x: Math.min(prev.x + 50, 0) }))}
+                    style={{ top: sidesTop, left: 10 }} disabled={moveCanvas.x == 0}
+                />}
+                {horizMovePossible && <MoveButton key={2} rotate={0} onPress={() => setMoveCanvas(prev => ({ ...prev, x: prev.x - Math.min(50, maxRight) }))}
+                    style={{ top: sidesTop, right: 10 }} disabled={disabledRight}
+                />}
+                {verticalMovePossible && <MoveButton key={3} rotate={270} onPress={() => setMoveCanvas(prev => ({ ...prev, y: Math.min(prev.y + 50, 0) }))}
+                    style={{ top: upDownTop, left: upDownLeft - 50 }} disabled={moveCanvas.y == 0}
+                />}
+                {verticalMovePossible && <MoveButton key={4} rotate={90} onPress={() => setMoveCanvas(prev => ({ ...prev, y: prev.y - Math.min(50, maxDown) }))}
+                    style={{ top: upDownTop, left: upDownLeft + 50 }} disabled={disabledBottom}
+                />}
+            </React.Fragment >);
     }
 
     async function movePage(inc: number) {
@@ -1097,11 +1216,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             save();
         }
     }
+    trace("move", canvasSize.width, (canvasSize.width + moveCanvas.x + sideMargin) * zoom, sideMargin)
 
     return (
         <SafeAreaView
             style={styles.mainContainer}
             onLayout={(e) => {
+                trace("Safe area onLoayout")
                 const { width, height } = e.nativeEvent.layout;
                 setWindowSize({ width, height });
             }}
@@ -1110,6 +1231,29 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 <View style={styles.busy}>
                     <ActivityIndicator size="large" /></View>
             }
+            {shareProgress >= 0 &&
+                <View style={{ position: 'absolute', top: '25%', left: 0, width: windowSize.width, zIndex: 1000, backgroundColor: 'white', alignItems: 'center' }}>
+                    <Progress.Circle
+                        size={200} // Diameter (2 * radius)
+                        progress={shareProgress}
+                        color="#3399FF"
+                        unfilledColor="#999999" // Equivalent to shadowColor
+                        borderWidth={5}
+                        thickness={8} // Adjust thickness as needed
+                        showsText={false} // We'll add custom text
+                        animated={true} // Enable animation if desired
+                    >
+                        <View style>
+                            <Text>
+                                {fTranslate("ExportProgress",
+                                    shareProgressPage,
+                                    (pageRef.current.count > 0 ? pageRef.current.count : 1))
+                                }
+                            </Text>
+                        </View>
+                    </Progress.Circle>
+                </View>}
+
             <FileContextMenu
                 item={pageRef.current}
                 isLandscape={windowSize.height < windowSize.width}
@@ -1191,38 +1335,43 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 maxFloatingHeight={windowSize.height - keyboardHeight}
             />
             <View style={styles.topMargin} />
-
-            <Canvas
-                style={{ overflow: 'hidden', backgroundColor: 'gray' }}
-                offset={moveCanvas}
-                canvasWidth={windowSize.width}
-                canvasHeight={windowSize.height}
-                onActualCanvasSize={(actualSize => setCanvasSize(actualSize))}
-                zoom={zoom}
-                minSideMargin={sideMargin}
-                paths={paths}
-                texts={texts}
-                lines={lines}
-                images={images}
-                tables={tables}
-                elements={audios}
-                renderElements={handleRenderElements}
-                elementsAttr={handleElementsAttr}
-                currentEdited={currentEdited}
-                onTextChanged={handleTextChanged}
-                onSketchStart={handleSketchStart}
-                onSketchStep={handleSketchStep}
-                onSketchEnd={handleSketchEnd}
-                onCanvasClick={handleCanvasClick}
-                onMoveElement={handleMove}
-                onMoveEnd={handleMoveEnd}
-                onMoveTablePart={handleMoveTablePart}
-                onMoveTablePartEnd={handleMoveTablePartEnd}
-                onDeleteElement={handleDelete}
-                onTextYOverflow={handleTextYOverflow}
-                imageSource={{ uri: currentFile }}
-                currentElementType={mode2ElementType(mode)}
-            />
+            <ViewShot ref={mainViewRef} options={{ format: "jpg", quality: 0.9, result: share?"base64":"tmpfile" }}>
+                <Canvas
+                    style={{ overflow: 'hidden', backgroundColor: 'gray' }}
+                    offset={moveCanvas}
+                    canvasWidth={windowSize.width}
+                    canvasHeight={windowSize.height - toolbarHeight}
+                    onActualCanvasSize={actualSize => {
+                        if (actualSize.height != canvasSize.height || actualSize.width != canvasSize.width) {
+                            setCanvasSize(actualSize)
+                        }
+                    }}
+                    zoom={zoom}
+                    minSideMargin={sideMargin}
+                    paths={paths}
+                    texts={texts}
+                    lines={lines}
+                    images={images}
+                    tables={tables}
+                    elements={audios}
+                    renderElements={handleRenderElements}
+                    elementsAttr={handleElementsAttr}
+                    currentEdited={currentEdited}
+                    onTextChanged={handleTextChanged}
+                    onSketchStart={handleSketchStart}
+                    onSketchStep={handleSketchStep}
+                    onSketchEnd={handleSketchEnd}
+                    onCanvasClick={handleCanvasClick}
+                    onMoveElement={handleMove}
+                    onMoveEnd={handleMoveEnd}
+                    onMoveTablePart={handleMoveTablePart}
+                    onMoveTablePartEnd={handleMoveTablePartEnd}
+                    onDeleteElement={handleDelete}
+                    onTextYOverflow={handleTextYOverflow}
+                    imageSource={{ uri: currentFile }}
+                    currentElementType={mode2ElementType(mode)}
+                />
+            </ViewShot>
 
             {/** previous page button */}
             {
@@ -1241,8 +1390,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     </View> :
                     null
             }
+
+            {moveArrows(windowSize, keyboardHeight, zoom, moveCanvas, toolbarHeight)}
         </SafeAreaView>
     );
+
+
+
 }
 
 // -------------------------------------------------------------------------
@@ -1266,5 +1420,9 @@ const styles = StyleSheet.create({
         left: "48%",
         top: "40%",
         zIndex: 1000
+    },
+    moveCanvasButton: {
+        position: 'absolute',
+        zIndex: 100000
     }
 });

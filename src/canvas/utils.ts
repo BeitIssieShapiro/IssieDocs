@@ -142,7 +142,7 @@ export function calcEffectiveHorizontalLines(table: SketchTable, texts?: SketchT
     return result;
 }
 
-export function getId(prefix:string):string {
+export function getId(prefix: string): string {
     return prefix + Math.random() * 10000;
 }
 
@@ -189,4 +189,10 @@ export function restoreElement(elem: ElementBase): ElementBase {
 
     console.log("restore to", currentClone)
     return currentClone;
+}
+
+export function wait(ms: number): Promise<void> {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
 }

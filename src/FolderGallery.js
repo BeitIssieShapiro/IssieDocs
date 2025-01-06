@@ -12,7 +12,6 @@ import Share from 'react-native-share';
 
 import FolderNew from './FolderNew';
 import FileNew from './FileNew'
-import * as RNFS from 'react-native-fs';
 
 import {
     registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage, gCurrentLang, getRowDirections,

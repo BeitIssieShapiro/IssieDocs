@@ -8,7 +8,6 @@ import { trace } from "./log";
 import { BrushSizePicker, MyColorPicker, TextSizePicker } from "./pickers";
 import { getSvgIcon, MarkerStroke } from "./svg-icons";
 import { Icon } from "react-native-elements";
-import { RecordButton } from "./recording";
 
 export const TextAlignment = {
     RIGHT: "Right",
