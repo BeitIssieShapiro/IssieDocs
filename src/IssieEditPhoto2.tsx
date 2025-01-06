@@ -50,7 +50,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [canvasSize, setCanvasSize] = useState<ImageSize>({ width: 1000, height: 1000 })
     const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
     const [toolbarHeight, setToolbarHeight] = useState<number>(dimensions.toolbarHeight);
-    
+
     const [zoom, setZoom] = useState<number>(1);
     const [status, setStatus] = useState<string>("");
     const [moveCanvas, setMoveCanvas] = useState<Offset>({ x: 0, y: 0 });
@@ -1122,7 +1122,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         );
     }
 
-    const moveArrows = (windowSize: ImageSize, keyboardHeight: number, zoom: number, moveCanvas: Offset, toolbarHeight:number) => {
+    const moveArrows = (windowSize: ImageSize, keyboardHeight: number, zoom: number, moveCanvas: Offset, toolbarHeight: number) => {
         const sidesTop = Math.min(windowSize.height / 2 - 35, windowSize.height - keyboardHeight - 95);
         const upDownLeft = windowSize.width / 2;
         const upDownTop = toolbarHeight + 45
@@ -1335,7 +1335,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 maxFloatingHeight={windowSize.height - keyboardHeight}
             />
             <View style={styles.topMargin} />
-            <ViewShot ref={mainViewRef} options={{ format: "jpg", quality: 0.9, result: share?"base64":"tmpfile" }}>
+            <ViewShot ref={mainViewRef} options={{ format: "jpg", quality: 0.9, result: share ? "base64" : "tmpfile" }}>
                 <Canvas
                     style={{ overflow: 'hidden', backgroundColor: 'gray' }}
                     offset={moveCanvas}
@@ -1347,6 +1347,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         }
                     }}
                     zoom={zoom}
+                    onZoom={(newZoom) => setZoom(newZoom)}
+                    onMoveCanvas={newMC => setMoveCanvas(newMC)}
                     minSideMargin={sideMargin}
                     paths={paths}
                     texts={texts}

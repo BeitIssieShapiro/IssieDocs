@@ -42,6 +42,7 @@ import {
     tableRowHeight,
 } from "./utils";
 import { TextElement } from "./text-element"; // Example sub-component for text
+import { PinchHelperEvent, PinchSession, ResizeEvent } from "./pinch";
 
 const TEXT_SEARCH_MARGIN = 0; // 15;
 const TABLE_LINE_THRESHOLD = 7;
@@ -63,6 +64,10 @@ interface CanvasProps {
     onActualCanvasSize?: (actualSize: ImageSize) => void,
 
     zoom: number;
+    onZoom: (newZoom: number) => void
+    onMoveCanvas: (newPos: Offset) => void
+
+
     offset: Offset;
     minSideMargin: number;
     style: any;
@@ -96,7 +101,8 @@ export function Canvas({
 
     onMoveTablePart,
     onMoveTablePartEnd,
-
+    onZoom,
+    onMoveCanvas,
     onDeleteElement,
     onTextYOverflow,
     paths,
@@ -134,6 +140,7 @@ export function Canvas({
         position: SketchPoint;
         elem?: ElementBase | TableContext;
         initialPosition?: SketchPoint;
+        pinch?: PinchSession;
     } | null>(null);
 
     const currentElementTypeRef = useRef<ElementTypes>(ElementTypes.Sketch);
@@ -217,6 +224,36 @@ export function Canvas({
                 const newPoint = screen2Canvas(gState.moveX, gState.moveY);
 
                 if (startSketchRef.current) {
+                    // Zoom and Move
+                    if (gState.numberActiveTouches == 2) {
+
+                        const touches = e.nativeEvent.touches
+                        const p1 = [touches[0].pageX, touches[0].pageY] as SketchPoint
+                        const p2 = [touches[1].pageX, touches[1].pageY] as SketchPoint
+
+
+                        if (!startSketchRef.current.pinch) {
+                            startSketchRef.current.pinch = new PinchSession(
+                                {
+                                    initialOffset: canvasOffset.current,
+                                    zoom: zoomRef.current,
+                                    minZoom: 1,
+                                    p1, p2,
+
+                                },
+                                (event: PinchHelperEvent) => {
+                                    onZoom(event.zoom);
+                                    onMoveCanvas(event.offset);
+                                }
+                            );
+                        }
+
+                        startSketchRef.current.pinch.processPinch(p1, p2);
+
+                        return;
+                    }
+
+
                     if (
                         currentElementTypeRef.current === ElementTypes.Sketch ||
                         (!startSketchRef.current.elem && currentElementTypeRef.current === ElementTypes.Line)
@@ -305,8 +342,6 @@ export function Canvas({
             (y - viewOffset.current.offsetY) / (zoomRef.current * ratio.current) - canvasOffset.current.y,
         ];
     }
-
-
 
     function searchTable(cx: number, cy: number): TableContext | undefined {
         for (const table of tablesRef.current) {
@@ -692,7 +727,7 @@ export function Canvas({
                         const touchPoint = screen2Canvas(e.nativeEvent.pageX, e.nativeEvent.pageY) as SketchPoint
                         onMoveElement?.(MoveTypes.ElementMove, elem.id, touchPoint);
                     }}
-                    onResponderRelease={(e)=>{
+                    onResponderRelease={(e) => {
                         isMoving.current = false;
                         onMoveEnd?.(MoveTypes.ElementMove, elem.id)
                     }}
