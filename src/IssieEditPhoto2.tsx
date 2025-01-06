@@ -660,7 +660,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             }
         } else if (type === MoveTypes.ElementMove) {
             const audioElem = audiosRef.current.find(au => au.id == id);
-            if (audioElem) {
+            if (audioElem && !audioElem.editMode) {
                 queue.current.pushAudioPosition(restoreElement(audioElem));
                 queue2state();
                 save();
@@ -1216,7 +1216,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             save();
         }
     }
-    trace("move", canvasSize.width, (canvasSize.width + moveCanvas.x + sideMargin) * zoom, sideMargin)
+    //trace("move", canvasSize.width, (canvasSize.width + moveCanvas.x + sideMargin) * zoom, sideMargin)
 
     return (
         <SafeAreaView
