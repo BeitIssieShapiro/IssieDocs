@@ -13,6 +13,17 @@ import Svg, { Path } from "react-native-svg";
 import IconIonic from "react-native-vector-icons/Ionicons";
 
 import {
+    Canvas as SkiaCanvas,
+    Path as SkiaPath,
+    PaintStyle,
+    BlendMode,
+    useCanvasRef,
+    useValue,
+    useTouchHandler
+} from "@shopify/react-native-skia";
+import { Skia, Path as SkPath } from "@shopify/react-native-skia";
+
+import {
     CurrentEdited,
     ElementBase,
     ElementTypes,
@@ -46,6 +57,22 @@ import { PinchHelperEvent, PinchSession, ResizeEvent } from "./pinch";
 
 const TEXT_SEARCH_MARGIN = 0; // 15;
 const TABLE_LINE_THRESHOLD = 7;
+
+function createSkiaPath(points: [number, number][], ratio: number): any {
+    const skPath = Skia.Path.Make();
+    if (points.length === 0) return skPath;
+
+    // Move to first point
+    const [x0, y0] = points[0];
+    skPath.moveTo(x0 * ratio, y0 * ratio);
+
+    // Draw lines to subsequent points
+    for (let i = 1; i < points.length; i++) {
+        const [x, y] = points[i];
+        skPath.lineTo(x * ratio, y * ratio);
+    }
+    return skPath;
+}
 
 interface CanvasProps {
     paths?: SketchPath[];
@@ -574,8 +601,39 @@ export function Canvas({
                         );
                     })}
 
+            <SkiaCanvas
+                style={{
+                    position: "absolute",
+                    width: "100%",
+                    height: "100%"
+                }}
+            >
+                {/* Re-draw each path in the order they appear */}
+                {paths?.map((p) => {
+                    const skPath = createSkiaPath(p.points, ratio.current);
+                    const isEraser = (p.color === "#00000000");
+
+                    // For erasers, the color doesn't matter. Use "black" or any color you like.
+                    const strokeColor = isEraser ? "black" : p.color;
+
+                    return (
+                        <SkiaPath
+                            key={p.id}
+                            path={skPath}
+                            color={strokeColor}
+                            style={"stroke"}
+                            strokeWidth={p.strokeWidth}
+                            blendMode={isEraser ? "dstOut" : "srcOver"}
+                        />
+                    );
+                })}
+
+                {/* If you also want to draw lines in Skia, do a similar map() for lines */}
+            </SkiaCanvas>
+
             {/* Paths & Lines (Non-edit) */}
-            <Svg height="100%" width="100%" style={{ position: "absolute" }}>
+            {/*
+             <Svg height="100%" width="100%" style={{ position: "absolute" }}>
                 {paths?.map((path) => (
                     <Path
                         key={path.id}
@@ -594,7 +652,8 @@ export function Canvas({
                         fill="none"
                     />
                 ))}
-                {/* Tables */}
+                {// Tables 
+                }
                 {tables?.map((table) => {
                     const horizontalLines = calcEffectiveHorizontalLines(table, textsRef.current);
 
@@ -640,7 +699,7 @@ export function Canvas({
 
                     return lines;
                 })}
-            </Svg>
+            </Svg> */}
 
             {/* Table Move/Resize Icons */}
             {currentElementType == ElementTypes.Table && tables?.map((table) => (

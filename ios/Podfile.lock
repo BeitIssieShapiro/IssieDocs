@@ -1439,6 +1439,29 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - react-native-skia (1.8.1):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React
+    - React-callinvoker
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - react-native-slider (4.5.5):
     - DoubleConversion
     - glog
@@ -2143,6 +2166,7 @@ DEPENDENCIES:
   - "react-native-image-resizer (from `../node_modules/@bam.tech/react-native-image-resizer`)"
   - react-native-pdf (from `../node_modules/react-native-pdf`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - "react-native-skia (from `../node_modules/@shopify/react-native-skia`)"
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
   - "react-native-system-sounds (from `../node_modules/@dashdoc/react-native-system-sounds`)"
   - react-native-view-shot (from `../node_modules/react-native-view-shot`)
@@ -2284,6 +2308,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-pdf"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-skia:
+    :path: "../node_modules/@shopify/react-native-skia"
   react-native-slider:
     :path: "../node_modules/@react-native-community/slider"
   react-native-system-sounds:
@@ -2422,6 +2448,7 @@ SPEC CHECKSUMS:
   react-native-image-resizer: fbb07f39d972514b12bf13bd548bfe7dbe313c3f
   react-native-pdf: 612757482d19b59e9c2ff42148118248b9080950
   react-native-safe-area-context: d6406c2adbd41b2e09ab1c386781dc1c81a90919
+  react-native-skia: 84b8ab93486d6415d8d2cf9d5ca37007430bd1a3
   react-native-slider: 124ce99f9cd2d04c79f020da6dee9f8d38a6b8c7
   react-native-system-sounds: 73999dadb18e6b8b7c18fd2ff5f29cddec639edc
   react-native-view-shot: a643bf261ce8907df3eddf7b66e408bee8ed46f6

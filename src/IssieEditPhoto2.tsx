@@ -101,6 +101,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const audiosRef = useRef(audios);
     const currentEditedRef = useRef<CurrentEdited>(currentEdited);
     const canvasSizeRef = useRef<ImageSize>(canvasSize);
+    const eraseModeRef = useRef<boolean>(false);
 
     const ratioRef = useRef(1);
     const keyboardHeightRef = useRef(keyboardHeight);
@@ -142,11 +143,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         moveCanvasRef.current = moveCanvas;
         zoomRef.current = zoom;
         keyboardHeightRef.current = keyboardHeight;
+        eraseModeRef.current = eraseMode;
 
         updateCurrentEditedElements();
     }, [mode, fontSize, textAlignment, strokeWidth, markerWidth, sideMargin,
         brushColor, rulerColor, markerColor, textColor, tableColor, canvasSize,
-        currPageIndex, currentFile, moveCanvas, zoom, keyboardHeight]);
+        currPageIndex, currentFile, moveCanvas, zoom, keyboardHeight, eraseMode]);
 
     useEffect(() => {
         currentEditedRef.current = currentEdited;
@@ -434,13 +436,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     // -------------------------------------------------------------------------
     function handleSketchStart(p: SketchPoint) {
         //console.log("Sketch Start", modeRef.current, p);
-        if (isBrushMode() || isMarkerMode()) {
+        if (modeRef.current === EditModes.Marker || modeRef.current === EditModes.Brush) {
             let color = isMarkerMode() ? markerColorRef.current + MARKER_TRANSPARENCY_CONSTANT : brushColorRef.current;
             let strokeWidth = isMarkerMode() ? markerWidthRef.current : strokeWidthRef.current;
-            if (eraseMode) {
+            if (eraseModeRef.current) {
                 color = '#00000000';
-                strokeWidth = strokeWidthRef.current * 3;
+                strokeWidth = (strokeWidth * 3 < 15 ? 15 : strokeWidth * 3)
             }
+            trace("selected stroke width", strokeWidth)
 
             const newPath: SketchPath = {
                 id: getId("S"),
@@ -470,12 +473,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     function handleSketchStep(p: SketchPoint) {
         if (isBrushMode() || isMarkerMode()) {
-
             const lastPath = arrLast(pathsRef.current);
             if (lastPath) {
                 lastPath.points.push(p);
                 setPaths([...pathsRef.current]);
-                trace("Sketch Step update", pathsRef.current.map(p => p.id));
+                trace("Sketch Step", pathsRef.current.map(p => p.id), lastPath.color);
             }
         } else if (isRulerMode()) {
             const lastLine = arrLast(linesRef.current);
@@ -821,7 +823,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     function handleEraserPressed() {
         trace("Eraser pressed");
-        if (modeRef.current === EditModes.Image || modeRef.current === EditModes.Table) {
+        if (!eraseModeRef.current &&
+            (modeRef.current === EditModes.Image || modeRef.current === EditModes.Table || modeRef.current === EditModes.Text)) {
+            beforeModeChange();
             setMode(EditModes.Brush);
         }
         setEraseMode((prev) => !prev);
@@ -829,17 +833,31 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     function handleRulerMode() {
         beforeModeChange();
+        if (eraseModeRef.current) {
+            setEraseMode(false);
+        }
         setMode(EditModes.Ruler);
     }
     function handleTextMode() {
         beforeModeChange();
+        if (eraseModeRef.current) {
+            setEraseMode(false);
+        }
         setMode(EditModes.Text);
     }
     function handleImageMode() {
+        beforeModeChange();
+        if (eraseModeRef.current) {
+            setEraseMode(false);
+        }
         setMode(EditModes.Image);
     }
     function handleAudioMode() {
         beforeModeChange();
+        if (eraseModeRef.current) {
+            setEraseMode(false);
+        }
+
         setMode(EditModes.Audio);
     }
     function handleAddAudio() {
@@ -898,8 +916,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     // Table Mode
-    function onTableMode() {
+    function handleTableMode() {
         beforeModeChange();
+        if (eraseModeRef.current) {
+            setEraseMode(false);
+        }
         setMode(EditModes.Table);
     }
 
@@ -1327,6 +1348,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setMoveCanvas({ x, y });
     }
 
+    trace("markerSize", markerWidthRef.current, "brushSize", strokeWidthRef.current)
+
     return (
         <SafeAreaView
             style={styles.mainContainer}
@@ -1401,13 +1424,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onTextMode={handleTextMode}
                 onImageMode={handleImageMode}
                 onAudioMode={handleAudioMode}
-                onAddImageFromGallery={() => addImage(SRC_GALLERY)}
-                onAddImageFromCamera={() => addImage(SRC_CAMERA)}
                 onAddAudio={handleAddAudio}
                 onBrushMode={onBrushMode}
                 onMarkerMode={onMarkerMode}
                 onVoiceMode={onVoiceMode}
-                onTableMode={onTableMode}
+                onTableMode={handleTableMode}
+                onAddImageFromGallery={() => addImage(SRC_GALLERY)}
+                onAddImageFromCamera={() => addImage(SRC_CAMERA)}
                 TableActions={TableActions}
                 isRulerMode={mode === EditModes.Ruler}
                 isTableMode={mode === EditModes.Table}
