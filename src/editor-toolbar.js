@@ -1,4 +1,4 @@
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, Fragment, useState } from "react";
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, Fragment, useState, useRef } from "react";
 import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import Svg, { Line } from "react-native-svg";
 import { AppText, availableColorPicker, colors, dimensions, getEraserIcon, getIconButton, IconButton, semanticColors, Spacer, textSizes } from "./elements";
@@ -8,6 +8,7 @@ import { trace } from "./log";
 import { BrushSizePicker, MyColorPicker, TextSizePicker } from "./pickers";
 import { getSvgIcon, MarkerStroke } from "./svg-icons";
 import { Icon } from "react-native-elements";
+import { FEATURES, getFeaturesSetting } from "./settings";
 
 export const TextAlignment = {
     RIGHT: "Right",
@@ -114,7 +115,8 @@ function EditorToolbar({
     const [zoomMenuHeight, setZoomMenuHeight] = useState(0);
     const [imageMenuHeight, setImageMenuHeight] = useState(0);
 
-    const [currAudio, setCurrAudio] = useState("");
+    const featuresRef = useRef(getFeaturesSetting());
+
 
     const [tableCols, setTableCols] = useState(Table ? Table.verticalLines.length - 1 : 3);
     const [tableRows, setTableRows] = useState(Table ? Table.horizontalLines.length - 1 : 3);
@@ -129,6 +131,9 @@ function EditorToolbar({
             setTableRows(Table.horizontalLines.length - 1);
         }
     }, [Table]);
+
+
+
 
     const setColumns = (value) => {
         if (value >= 1) {
@@ -300,31 +305,42 @@ function EditorToolbar({
 
 
 
-    const extMenu = [
-        <IconButton onPress={() => onModeButtonClick(Pickers.MARKER)} color={isMarkerMode ? color : semanticColors.editPhotoButton}
-            iconType="material-community" icon="marker" size={50} iconSize={45} selected={isMarkerMode} ensureContrast={true} />,
+    const extMenu = []
 
+    if (featuresRef.current.includes(FEATURES.marker)) {
+        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.MARKER)} color={isMarkerMode ? color : semanticColors.editPhotoButton}
+            iconType="material-community" icon="marker" size={50} iconSize={45} selected={isMarkerMode} ensureContrast={true} />
+        )
+    }
 
-        <IconButton onPress={() => onModeButtonClick(Pickers.IMAGE)
+    if (featuresRef.current.includes(FEATURES.image)) {
+        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.IMAGE)
         } color={semanticColors.editPhotoButton}
-            icon={"image"} size={47} iconSize={45} selected={isImageMode} />,
+            icon={"image"} size={47} iconSize={45} selected={isImageMode} />)
+    }
+    if (featuresRef.current.includes(FEATURES.audio)) {
 
-        <IconButton onPress={() => onModeButtonClick(Pickers.AUDIO)
+        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.AUDIO)
         } color={semanticColors.editPhotoButton}
-            iconType="material-community" icon={"microphone"} size={47} iconSize={45} selected={isAudioMode} />,
+            iconType="material-community" icon={"microphone"} size={47} iconSize={45} selected={isAudioMode} />)
+    }
 
-        <IconButton onPress={() => onModeButtonClick(Pickers.TABLE)} color={isTableMode ? (Table ? Table.color : color) : semanticColors.editPhotoButton}
-            iconType="font-awesome" icon="table" size={47} iconSize={42} selected={isTableMode} ensureContrast={true} />,
+    if (featuresRef.current.includes(FEATURES.table)) {
 
-        rullerBtn,
-        <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM, undefined, setZoomMenuHeight, 55)} color={semanticColors.editPhotoButton}
-            icon="zoom-in" size={50} iconSize={45} />,
-        // <IconButton onPress={() => onModeButtonClick(Pickers.VOICE)} color={semanticColors.editPhotoButton}
-        //     icon="record-voice-over" size={55} iconSize={45} selected={isVoiceMode} />,
+        extMenu.push(< IconButton onPress={() => onModeButtonClick(Pickers.TABLE)
+        } color={isTableMode ? (Table ? Table.color : color) : semanticColors.editPhotoButton}
+            iconType="font-awesome" icon="table" size={47} iconSize={42} selected={isTableMode} ensureContrast={true} />)
+    }
+    if (featuresRef.current.includes(FEATURES.ruler)) {
+        extMenu.push(rullerBtn);
+    }
 
+    const zoomBtn = <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM, undefined, setZoomMenuHeight, 55)} color={semanticColors.editPhotoButton}
+        icon="zoom-in" size={50} iconSize={45} />;
+    if (extMenu.length > 0) {
+        extMenu.push(zoomBtn);
+    }
 
-
-    ]
 
     const modesMenu = [
         <IconButton key={11} onPress={() => onModeButtonClick(Pickers.TEXT)} icon={translate("A")} isText={true} selected={isTextMode}
@@ -334,8 +350,8 @@ function EditorToolbar({
             color={isBrushMode ? color : semanticColors.editPhotoButton} iconSize={45} selected={isBrushMode} ensureContrast={true} />,
         <IconButton onPress={() => onSelectButtonClick(Pickers.COLOR, true)} icon={"color-lens"}
             size={55} iconSize={45} color={semanticColors.editPhotoButton} />,
-        <IconButton onPress={() => setShowExtMenu(currVal => !currVal)} icon={showExtMenu ? "expand-less" : "expand-more"}
-            size={45} color={semanticColors.editPhotoButton} />,
+        extMenu.length > 0 ? <IconButton onPress={() => setShowExtMenu(currVal => !currVal)} icon={showExtMenu ? "expand-less" : "expand-more"}
+            size={45} color={semanticColors.editPhotoButton} /> : zoomBtn,
     ]
 
     // calc preview-window position: (width 120)
@@ -601,7 +617,7 @@ function EditorToolbar({
                     ["0,0", "2,2", "4,2"].map((style, i) => (<LineStyleSelector
                         height={40}
                         key={i}
-                        style={style == "0,0"?undefined:style}
+                        style={style == "0,0" ? undefined : style}
                         Table={Table}
                         TableActions={TableActions}
                         color={Table ? Table.color : color}

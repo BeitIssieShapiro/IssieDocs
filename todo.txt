@@ -1,9 +1,10 @@
 new canvas
 ---------
-
+eraser
+drag text that moves canvas
+soft move canvas
 table:
-  - position initial
-  - move cells
+  - move cells XX
 text: 
   - initial font
 better progress of share

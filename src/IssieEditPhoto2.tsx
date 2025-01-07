@@ -370,7 +370,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             } else if (q[i].type === 'imagePosition') {
                 const elemIndex = _images.findIndex(ci => ci.id === q[i].elem.id);
                 if (elemIndex >= 0) {
-                    const updatedImage = { ..._images[elemIndex], 
+                    const updatedImage = {
+                        ..._images[elemIndex],
                         width: q[i].elem.width,
                         height: q[i].elem.height,
                         x: q[i].elem.x,
@@ -665,7 +666,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 if (!imgElem.backup) {
                     backupElement(imgElem)
                 }
-                delete imgElem.imageData 
+                delete imgElem.imageData
                 if (type === MoveTypes.ImageMove) {
                     imgElem.x = x;
                     imgElem.y = y;
@@ -947,10 +948,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             } as SketchTable;
 
             const bottomMargin = dimensions.toolbarHeight * 2;
-            const topMargin = dimensions.toolbarHeight * 1.2;
+            const topMargin = dimensions.toolbarHeight * 1.4;
             const sideMargin = 50;
-            const colWidth = Math.floor((canvasSizeRef.current.width - sideMargin * 2) / cols);
-            const rowHeight = Math.floor((canvasSizeRef.current.height - topMargin - bottomMargin) / rows);
+            const colWidth = Math.floor((canvasSizeRef.current.width / ratioRef.current - sideMargin * 2) / cols - 1);
+            const rowHeight = Math.floor((canvasSizeRef.current.height / ratioRef.current - topMargin - bottomMargin) / rows);
 
             for (let i = 0; i <= cols; i++) {
                 newTable.verticalLines.push(sideMargin + i * colWidth);

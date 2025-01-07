@@ -643,7 +643,7 @@ export function Canvas({
             </Svg>
 
             {/* Table Move/Resize Icons */}
-            {tables?.map((table) => (
+            {currentElementType == ElementTypes.Table && tables?.map((table) => (
                 <MoveIcon
                     key={`table-move-${table.id}`}
                     style={{}}
@@ -657,7 +657,7 @@ export function Canvas({
                     color="black"
                 />
             ))}
-            {tables?.map((table) => (
+            {currentElementType == ElementTypes.Table && tables?.map((table) => (
                 <MoveIcon
                     key={`table-resize-${table.id}`}
                     style={{}}

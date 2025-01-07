@@ -21,6 +21,16 @@ export const LANGUAGE = {
     english: 4
 }
 
+export const FEATURES = {
+    name: 'features',
+    ruler: 1,
+    marker: 2,
+    table: 3,
+    image: 4,
+    voice: 5,
+}
+
+
 export const USE_COLOR = {
     name: 'useColor',
     yes: 1,
@@ -45,6 +55,15 @@ export const LAST_COLORS = {
 
 export function getUseColorSetting() {
     return getSetting(USE_COLOR.name, USE_COLOR.yes);
+}
+
+export function getFeaturesSetting() {
+    const featureStr = getSetting(FEATURES.name);
+    if (!featureStr || featureStr[0] != "[") {
+        return [FEATURES.image, FEATURES.marker, FEATURES.ruler, FEATURES.table, FEATURES.voice];
+    }
+    console.log(featureStr)
+    return JSON.parse(featureStr);
 }
 
 export function getUseTextSetting() {

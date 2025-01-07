@@ -145,6 +145,13 @@ var strings = {
         "TableOverflowsPage": "הטבלה גולשת מעבר לסוף הדף",
         "FontChangeOverflowsPage": "שינוי גופן גורם לגלישה מעבר לסוף הדף",
         "BackupSuccessful": "גיבוי הסתיים בהצלחה",
+
+        "ToolsSettings":"כלים",
+        "Ruler":"סרגל",
+        "Image":"תמונה",
+        "Marker":"מדגש",
+        "Voice":"הקלטה",
+        "Table":"טבלה",
     },
     "ar": {
         "StartHere": "إضافة صفحات",

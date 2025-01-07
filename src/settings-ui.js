@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Icon, getRoundedButton } from "./elements"
 import {
     View, Alert, Text, TouchableOpacity, StyleSheet,
@@ -18,7 +18,9 @@ import { isRTL, translate } from './lang';
 
 import {
     VIEW, EDIT_TITLE, LANGUAGE, TEXT_BUTTON,
-    getSetting, getUseColorSetting, FOLDERS_VIEW
+    getSetting, getUseColorSetting, FOLDERS_VIEW,
+    getFeaturesSetting,
+    FEATURES
 } from './settings'
 import { FileSystem } from './filesystem';
 import { trace } from './log';
@@ -45,6 +47,16 @@ export default function SettingsMenu(props) {
     let useColorSetting = getUseColorSetting();
     const [useColor, setUseColor] = useState(useColorSetting);
 
+    let _features = getFeaturesSetting();
+    trace("features", _features)
+    const [features, setFeatures] = useState(_features);
+    const featuresRef = useRef(_features);
+
+
+    useEffect(() => {
+        featuresRef.current = features;
+    }, [features]);
+
     const setView = (view) => {
         let obj = {}
         obj[VIEW.name] = view;
@@ -67,6 +79,21 @@ export default function SettingsMenu(props) {
         Settings.set(obj)
         setLang(lang);
         props.onLanguageChange(lang);
+    }
+    const flipFeatureTougle = (feature) => {
+        const item = featuresRef.current.find(f => f == feature);
+        let newList = [...featuresRef.current];
+        if (item == undefined) {
+            newList.push(feature);
+            console.log("feature", feature, "on")
+        } else {
+            newList = newList.filter(f => f != feature)
+            console.log("feature", feature, "off", newList)
+        }
+        setFeatures(newList);
+        Settings.set({ [FEATURES.name]: JSON.stringify(newList) })
+
+        props.onFeaturesChange?.();
     }
 
     const setUseColorHandler = (use) => {
@@ -233,6 +260,35 @@ export default function SettingsMenu(props) {
                         editTitle == EDIT_TITLE.yes)}
 
 
+                    {/** Feature toggles */}
+                    {getGroup(props, translate("ToolsSettings") + ":", [
+                        {
+                            icon: <AppText style={{ fontSize: 25 }}>{translate("Ruler")}</AppText>,
+                            callback: () => { flipFeatureTougle(FEATURES.ruler) },
+                            selected: features?.includes(FEATURES.ruler)
+                        },
+                        {
+                            icon: <AppText style={{ fontSize: 25 }}>{translate("Marker")}</AppText>,
+                            callback: () => { flipFeatureTougle(FEATURES.marker) },
+                            selected: features?.includes(FEATURES.marker)
+                        },
+                        {
+                            icon: <AppText style={{ fontSize: 25 }}>{translate("Image")}</AppText>,
+                            callback: () => { flipFeatureTougle(FEATURES.image) },
+                            selected: features?.includes(FEATURES.image)
+                        },
+                        {
+                            icon: <AppText style={{ fontSize: 25 }}>{translate("Table")}</AppText>,
+                            callback: () => { flipFeatureTougle(FEATURES.table) },
+                            selected: features?.includes(FEATURES.table)
+                        },
+                        {
+                            icon: <AppText style={{ fontSize: 25 }}>{translate("Voice")}</AppText>,
+                            callback: () => { flipFeatureTougle(FEATURES.voice) },
+                            selected: features?.includes(FEATURES.voice)
+                        }
+                    ], true)}
+
                     <View
                         style={{
                             width: "100%",
@@ -273,7 +329,7 @@ function getButtonWithoutText() {
     return getRoundedButtonInt(() => { }, 'check-green', "", 30, 30, { width: 40, height: 40 })
 }
 
-function getGroup(props, name, items) {
+function getGroup(props, name, items, isCheckboxes) {
 
     return <View style={{ width: '100%', paddingTop: 25, paddingStart: 25, alignItems: "flex-start" }}>
         <AppText style={styles.SettingsHeaderText}>{name}</AppText>
@@ -286,8 +342,8 @@ function getGroup(props, name, items) {
             >
                 {item.icon}
                 <Spacer />
-                <View style={styles.circle}>
-                    {item.selected && <View style={styles.checkedCircle} />}
+                <View style={isCheckboxes? styles.box :styles.circle}>
+                    {item.selected && <View style={isCheckboxes? styles.checkedBox : styles.checkedCircle} />}
                 </View>
             </TouchableOpacity>
         )}
@@ -305,8 +361,8 @@ function getCheckbox(name, callback, selected) {
             onPress={callback}
         >
             <Spacer />
-            <View style={styles.circle}>
-                {selected && <View style={styles.checkedCircle} />}
+            <View style={styles.box}>
+                {selected && <View style={styles.checkedBox} />}
             </View>
             <AppText style={styles.SettingsHeaderText}>{name}</AppText>
         </TouchableOpacity>
@@ -334,6 +390,19 @@ const styles = StyleSheet.create({
         width: 14,
         height: 14,
         borderRadius: 7,
+        backgroundColor: '#979797',
+    },
+    box: {
+        width: 20,
+        height: 20,
+        borderWidth: 1,
+        borderColor: '#ACACAC',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    checkedBox: {
+        width: 14,
+        height: 14,
         backgroundColor: '#979797',
     },
     SettingsHeaderText: {
