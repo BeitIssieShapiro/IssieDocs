@@ -628,21 +628,12 @@ export function Canvas({
                     );
                 })}
 
-                {/* If you also want to draw lines in Skia, do a similar map() for lines */}
             </SkiaCanvas>
 
             {/* Paths & Lines (Non-edit) */}
 
             <Svg height="100%" width="100%" style={{ position: "absolute" }}>
-                {paths?.map((path) => (
-                    <Path
-                        key={path.id}
-                        d={joinPath(path.points, ratio.current)}
-                        stroke={path.color}
-                        strokeWidth={path.strokeWidth}
-                        fill="none"
-                    />
-                ))}
+               
                 {lines?.map((line) => (
                     <Path
                         key={line.id}
