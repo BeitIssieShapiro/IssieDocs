@@ -30,6 +30,7 @@ import { AudioElement2 } from './audio-elem-new';
 import ViewShot from 'react-native-view-shot';
 import { generatePDF } from './pdf';
 import { Text } from 'react-native';
+import { migrateMetadata } from './state-migrate';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -48,7 +49,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [currentEdited, setCurrentEdited] = useState<CurrentEdited>({});
 
     const [windowSize, setWindowSize] = useState<ImageSize>({ width: 500, height: 500 });
-    const [canvasSize, setCanvasSize] = useState<ImageSize>({ width: 1000, height: 1000 })
+    const [canvasSize, setCanvasSize] = useState<ImageSize>({ width: -1, height: -1 })
     const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
     const [toolbarHeight, setToolbarHeight] = useState<number>(dimensions.toolbarHeight);
 
@@ -217,15 +218,31 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         queue.current.clear();
         const value = await FileSystem.main.loadFile(metaDataUri.current).catch(e => {/**left blank, as expetced */ }) || "[]";
         const sketchState = JSON.parse(value);
-        for (let i = 0; i < sketchState.length; i++) {
-            queue.current.add(sketchState[i]);
+        let elements: any[];
+        if (Array.isArray(sketchState)) {
+
+            // wait for windowsSize
+            while (canvasSizeRef.current.width == -1 || ratioRef.current == 1) {
+                await wait(100);
+            }
+            elements = migrateMetadata(sketchState, canvasSizeRef.current, ratioRef.current)
+        } else {
+            //if (sketchState.version == "2.0") {
+                elements = sketchState.elements;
+            //} 
+        }
+        for (let i = 0; i < elements.length; i++) {
+            queue.current.add(elements[i]);
         }
         trace("load metadata - end", new Date().toISOString());
     }
 
     const save = async () => {
-        let sketchState = queue.current.getAll();
-        const content = JSON.stringify(sketchState, undefined, " ");
+        let elements = queue.current.getAll();
+        const content = JSON.stringify({
+            version: "2.0",
+            elements: elements
+        }, undefined, " ");
         await FileSystem.main.writeFile(metaDataUri.current, content)
             .catch((e) => Alert.alert("File Save Failed" + e))
 
@@ -339,7 +356,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 _rulers = _rulers.filter(l => l.id !== q[i].elem.id);
                 _rulers.push(cloneElem(q[i].elem));
             } else if (q[i].type === 'lineDelete') {
-                _rulers = _rulers.filter(l => l.id !== q[i].elemID);
+                _rulers = _rulers.filter(l => l.id !== q[i].elem.id);
             } else if (q[i].type === 'image') {
                 // translate the relative path to full path:
                 let elem = cloneElem(q[i].elem);
@@ -364,7 +381,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 _tables = _tables.filter(t => t.id !== q[i].elem.id);
                 _tables.push(cloneElem(q[i].elem));
             } else if (q[i].type === 'tableDelete') {
-                _tables = _tables.filter(t => t.id !== q[i].elemID);
+                _tables = _tables.filter(t => t.id !== q[i].elem.id);
                 // delete all cell text related
                 _texts = _texts.filter(tct => tct.tableId !== q[i].elemID)
             } else if (q[i].type === 'audio') {
@@ -765,7 +782,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     // -------------------------------------------------------------------------
     function handleDelete(type: ElementTypes, id: string) {
         if (type === ElementTypes.Line) {
-            queue.current.pushDeleteLine(id);
+            queue.current.pushDeleteLineNew(id);
             save();
             queue2state();
         } else if (type == ElementTypes.Image) {
@@ -907,7 +924,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const TableActions = {
         delete: (id: string) => {
             trace("Delete table", id)
-            queue.current.pushDeleteTable(id);
+            queue.current.pushDeleteTableNew(id);
             queue2state()
             save();
         },

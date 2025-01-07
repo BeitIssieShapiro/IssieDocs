@@ -62,17 +62,19 @@ export interface SketchTable extends ElementBase {
     horizontalLines: number[];
     color: string;
     strokeWidth: number;
-    strokeDash?:[];
+    strokeDash?: [];
 }
 
 export interface SketchElement extends ElementBase {
     x: number;
     y: number;
-    type:string;
+    type: string;
+    /** Allow any additional string keys with any value. */
+    [key: string]: any;
 }
 
 export interface SketchElementAttributes {
-    showDelete:boolean;
+    showDelete: boolean;
 }
 
 export enum MoveTypes {

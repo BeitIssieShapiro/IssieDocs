@@ -131,13 +131,13 @@ export default class DoQueue {
     this.clearUndo();
   }
 
-  pushColumnWidth(id, colIndex, width) {
-    this.add({ elemID: id, type: 'tableColWidth', colIndex, width });
+  pushDeleteTable(id) {
+    this.add({ elemID: id, type: 'tableDelete' });
     this.clearUndo();
   }
 
-  pushDeleteTable(id) {
-    this.add({ elemID: id, type: 'tableDelete' });
+  pushDeleteTableNew(id) {
+    this.add({ elem: { id }, type: 'tableDelete' });
     this.clearUndo();
   }
 
@@ -148,6 +148,10 @@ export default class DoQueue {
 
   pushDeleteLine(id) {
     this.add({ elemID: id, type: 'lineDelete' });
+    this.clearUndo();
+  }
+  pushDeleteLineNew(id) {
+    this.add({ elem: { id }, type: 'lineDelete' });
     this.clearUndo();
   }
 

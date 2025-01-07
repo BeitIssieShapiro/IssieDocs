@@ -32,6 +32,12 @@ export const TextElement: React.FC<TextElementProps> = ({
     texts,
 }) => {
     const table = text.tableId && tables?.find(table => table.id == text.tableId);
+
+    // if (text.tableId) {
+    //     console.log("text table",text.tableId, table)
+    // } else {
+    //     console.log("text ",text)
+    // }
     const horizontalLines = table ? calcEffectiveHorizontalLines(table, texts) : [];
     const posStyle: any = table ?
         {
@@ -55,7 +61,6 @@ export const TextElement: React.FC<TextElementProps> = ({
                 actualWidth - text.x * ratio.current
         };
 
-    //console.log("table", ratio.current, table && table.horizontalLines, posStyle);
     const style: any = { color: text.color, fontSize: text.fontSize * ratio.current, direction: text.rtl ? "rtl" : "ltr", textAlign: text.rtl ? "right" : "left" };
 
     const moveIconStyle: any = { position: "absolute", ...(text.rtl ? { right: -25 } : { left: -25 }) }
