@@ -632,8 +632,8 @@ export function Canvas({
             </SkiaCanvas>
 
             {/* Paths & Lines (Non-edit) */}
-            {/*
-             <Svg height="100%" width="100%" style={{ position: "absolute" }}>
+
+            <Svg height="100%" width="100%" style={{ position: "absolute" }}>
                 {paths?.map((path) => (
                     <Path
                         key={path.id}
@@ -699,7 +699,7 @@ export function Canvas({
 
                     return lines;
                 })}
-            </Svg> */}
+            </Svg>
 
             {/* Table Move/Resize Icons */}
             {currentElementType == ElementTypes.Table && tables?.map((table) => (
