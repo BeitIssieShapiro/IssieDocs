@@ -64,6 +64,7 @@ export function migrateMetadata(legacyElements: any[], canvasSize: ImageSize, ra
                 x: elem.normPosition.x,
                 y: elem.normPosition.y,
                 file: elem.file,
+                imageData: elem.imageData,
                 width: elem.width,
                 height: elem.height,
             } as any;

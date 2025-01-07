@@ -61,7 +61,7 @@ interface CanvasProps {
     canvasWidth: number;
     canvasHeight: number;
 
-    onActualCanvasSize?: (actualSize: ImageSize, actualSideMargin: number, viewOffset:Offset, ratio: number) => void,
+    onActualCanvasSize?: (actualSize: ImageSize, actualSideMargin: number, viewOffset: Offset, ratio: number) => void,
 
     zoom: number;
     onZoom: (newZoom: number) => void
@@ -688,7 +688,7 @@ export function Canvas({
                                 height: image.height * ratio.current,
                             },
                         ]}
-                        source={image.src}
+                        source={image.src || { uri: image.imageData }}
                     />
                     {currentElementTypeRef.current == ElementTypes.Image &&
                         currentEdited.imageId == image.id && <TouchableOpacity

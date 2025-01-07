@@ -228,7 +228,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             elements = migrateMetadata(sketchState, canvasSizeRef.current, ratioRef.current)
         } else {
             //if (sketchState.version == "2.0") {
-                elements = sketchState.elements;
+            elements = sketchState.elements;
             //} 
         }
         for (let i = 0; i < elements.length; i++) {
@@ -362,14 +362,20 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 let elem = cloneElem(q[i].elem);
                 if (elem.file) {
                     elem = {
-                        ...elem, src: { uri: FileSystem.main.getAttachmentBase(pageRef.current, currPageIndexRef.current) + elem.file }
+                        ...elem,
+                        ...(elem.file ? { src: { uri: FileSystem.main.getAttachmentBase(pageRef.current, currPageIndexRef.current) + elem.file } } : {})
                     }
-                    _images.push(elem);
                 }
+                _images.push(elem);
             } else if (q[i].type === 'imagePosition') {
                 const elemIndex = _images.findIndex(ci => ci.id === q[i].elem.id);
                 if (elemIndex >= 0) {
-                    const updatedImage = { ..._images[elemIndex], ...q[i].elem }
+                    const updatedImage = { ..._images[elemIndex], 
+                        width: q[i].elem.width,
+                        height: q[i].elem.height,
+                        x: q[i].elem.x,
+                        y: q[i].elem.y,
+                    }
                     _images[elemIndex] = updatedImage;
                 }
             } else if (q[i].type === 'imageDelete') {
@@ -659,6 +665,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 if (!imgElem.backup) {
                     backupElement(imgElem)
                 }
+                delete imgElem.imageData 
                 if (type === MoveTypes.ImageMove) {
                     imgElem.x = x;
                     imgElem.y = y;

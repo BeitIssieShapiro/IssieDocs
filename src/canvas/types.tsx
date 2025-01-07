@@ -50,7 +50,8 @@ export interface SketchText extends ElementBase {
 }
 
 export interface SketchImage extends ElementBase {
-    src: ImageURISource;
+    src?: ImageURISource;
+    imageData?:string;
     x: number;
     y: number;
     width: number;
