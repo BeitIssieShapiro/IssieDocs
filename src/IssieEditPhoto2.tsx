@@ -250,6 +250,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         //  Save thumbnail
         mainViewRef.current.capture().then((uri: string) => {
+            trace("Thumbnail saved", uri)
             FileSystem.main.saveThumbnail(uri, pageRef.current);
         });
     }

@@ -1,9 +1,9 @@
 import { getLocales } from "react-native-localize";
-import { Alert, Settings } from "react-native";
+import { Alert } from "react-native";
 import { LANGUAGE } from "./settings";
 import { isSimulator } from "./device";
 import { trace } from "./log";
-
+import { Settings } from "./new-settings"
 export var gCurrentLang = { languageTag: "he", isRTL: true }
 const DEFAULT_LANG = "he";
 let gPrefix = "";

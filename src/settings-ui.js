@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Icon, getRoundedButton } from "./elements"
 import {
     View, Alert, Text, TouchableOpacity, StyleSheet,
-    Settings, ScrollView
+     ScrollView
 } from 'react-native';
+import { Settings } from "./new-settings"
 import {
     semanticColors,
     getIcon, Spacer,

@@ -29,8 +29,9 @@ import { Spacer, globalStyles, getHeaderBackButton, getIconButton, getFont, getF
 import { fTranslate, getRowDirection, getRowDirections, getRowReverseDirection, isRTL, translate } from './lang.js';
 import {
   View, LogBox, Alert,
-  TouchableOpacity, Settings, useWindowDimensions, Text
+  TouchableOpacity,  useWindowDimensions, Text
 } from 'react-native';
+import { Settings } from "./new-settings"
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 
 

@@ -1,4 +1,4 @@
-import { Settings } from 'react-native';
+import { Settings } from "./new-settings"
 
 export const VIEW = {
     name: 'viewStyle',
@@ -77,3 +77,5 @@ export function getSetting(name, def) {
     }
     return setting;
 }
+
+

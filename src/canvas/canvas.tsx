@@ -739,7 +739,7 @@ export function Canvas({
                                 height: image.height * ratio.current,
                             },
                         ]}
-                        source={image.src || { uri: image.imageData }}
+                        source={normalizeFoAndroid(image.src) || { uri: image.imageData }}
                     />
                     {currentElementTypeRef.current == ElementTypes.Image &&
                         currentEdited.imageId == image.id && <TouchableOpacity

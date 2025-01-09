@@ -1,9 +1,11 @@
 import React from 'react';
 import {
     StyleSheet, View,
-    Alert, Text, Dimensions, Linking, Settings,
+    Alert, Text, Dimensions, Linking, 
     ActivityIndicator
 } from 'react-native';
+
+import { Settings } from "./new-settings"
 import * as Progress from 'react-native-progress';
 
 import Search from './search.js'

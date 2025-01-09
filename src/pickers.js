@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useState, useImperativeHandle, Children } from 'react';
 import {
     View,
-    StyleSheet,
-    Settings
+    StyleSheet
 } from 'react-native';
-
+import { Settings } from "./new-settings"
 import {
     AppText,
     IconButton,
