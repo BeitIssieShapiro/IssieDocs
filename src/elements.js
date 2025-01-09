@@ -12,6 +12,7 @@ import { getSvgIcon, SvgIcon } from './svg-icons.js'
 import { FileSystem } from './filesystem.js';
 import { trace } from './log.js';
 import { isTooWhite } from './utils.js';
+import { normalizeFoAndroid } from './canvas/utils';
 
 export const Icon = IconLocal;
 
@@ -371,10 +372,10 @@ export function IconButton({
 export function PageImage({ src, multiPage, width, height }) {
     return multiPage ?
         // <View>
-        <Image source={{ uri: src }} style={{ width, height, resizeMode: "stretch" }} />
+        <Image source={normalizeFoAndroid({ uri: src })} style={{ width, height, resizeMode: "stretch" }} />
 
         // </View>
-        : <Image source={{ uri: src }} style={{ width, height, resizeMode: "stretch" }} />
+        : <Image source={normalizeFoAndroid({ uri: src })} style={{ width, height, resizeMode: "stretch" }} />
 
     {/* <Image source={{ uri: src }} style={{ width, height, resizeMode: "stretch", transform: [{ rotate: '15deg' }] }} /> */ }
 }
@@ -726,7 +727,9 @@ function pickerRenderRow(rowData, currentFolder, onChangeFolder, indentLevel, su
 
 export async function getImageDimensions(uri) {
     return new Promise((resolve, reject) => {
-        Image.getSize(uri, (width, height) => {
+        trace("getImageDimensions", uri)
+        Image.getSize("file://"+uri, (width, height) => {
+            trace("getImageDimensions2", uri, width, height)
             resolve({ w: width, h: height });
         },
             (err) => {
@@ -950,7 +953,7 @@ export function FolderIcon(props) {
         return getSvgIcon(props.name.substr(4), props.size, props.color);
     }
     if (props.name?.startsWith("data:")) {
-        return <Image source={{ uri: props.name }} style={{
+        return <Image source={normalizeFoAndroid({ uri: props.name })} style={{
             width: props.size,
             height: props.size
         }} />

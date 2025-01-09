@@ -50,7 +50,7 @@ import {
     inBox,
     isPointOnLineSegment,
     joinPath,
-    tableRowHeight,
+    normalizeFoAndroid,
 } from "./utils";
 import { TextElement } from "./text-element"; // Example sub-component for text
 import { PinchHelperEvent, PinchSession, ResizeEvent } from "./pinch";
@@ -493,7 +493,8 @@ export function Canvas({
     const actualHeight = imageSize?.height || canvasHeight;
 
     normCanvasSize.current = { width: actualWidth / ratio.current, height: actualHeight / ratio.current };
-    //console.log(ratio.current)
+    imageSource = normalizeFoAndroid(imageSource)
+    console.log("canvas render", imageSource)
     return (
         <View
             ref={canvasRef}

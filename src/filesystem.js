@@ -1,6 +1,6 @@
 import * as RNFS from 'react-native-fs';
 import { fTranslate, translate } from './lang';
-import { Image, LogBox } from 'react-native';
+import { Image, LogBox, Platform } from 'react-native';
 import blankPage from './blank-page.png'
 import mathPage from './math-page.png'
 import linesPage from './lines-page.png'
@@ -29,6 +29,13 @@ const ignore = () => { };
  */
 
 
+function _lastUpdate(fi) {
+    let mtime = fi.mtime instanceof Date ? fi.mtime.valueOf() : 0;
+    let ctime = fi.ctime instanceof Date ? fi.ctime.valueOf() : 0;
+
+    return Math.max(mtime, ctime);
+
+}
 
 
 
@@ -50,7 +57,7 @@ export class FileSystem {
     _folders = [];
     _listeners = [];
     constructor() {
-        this._basePath = RNFS.DocumentDirectoryPath + '/folders/';
+        this._basePath = this._androidFileName(RNFS.DocumentDirectoryPath + '/folders/');
         console.log("base path: " + this._basePath);
         this._loaded = false;
         RNFS.mkdir(this._basePath).catch((e) => {
@@ -337,11 +344,11 @@ export class FileSystem {
     }
 
     loadFile(path) {
-        return RNFS.readFile(path, 'utf8');
+        return RNFS.readFile(this._androidFileName(path), 'utf8');
     }
 
     writeFile(path, content) {
-        return RNFS.writeFile(path, content);
+        return RNFS.writeFile(this._androidFileName(path), content);
     }
 
     async renameOrDuplicateThumbnail(pagePath, targetPage, isDuplicate) {
@@ -491,7 +498,7 @@ export class FileSystem {
                         //let contents = base64.decode(base64Contents);
                         //todo optimize code
 
-                        RNFS.writeFile(filePath, base64Contents, 'base64').then(
+                        RNFS.writeFile(this._androidFileName(filePath), base64Contents, 'base64').then(
                             //Success
                             async () => {
                                 await folder.reload();
@@ -749,12 +756,22 @@ export class FileSystem {
         }
     }
 
+    _androidFileName(path) {
+        if (Platform.OS === 'android' && !path.startsWith("file")) {
+            return "file://" + path
+        }
+        return path
+    }
+
     async _writeFolderMetaData(folderPath, color, icon) {
         trace("_writeFolderMetaData", arguments)
         let metaDataFilePath = folderPath + "/.metadata";
 
         let metadata = { color: color ? color : FileSystem.DEFAULT_FOLDER_METADATA.color, icon };
-        return RNFS.writeFile(metaDataFilePath, JSON.stringify(metadata), 'utf8').then(
+
+
+
+        return RNFS.writeFile(this._androidFileName(metaDataFilePath), JSON.stringify(metadata), 'utf8').then(
             //Success
             () => {
                 return metadata
@@ -1174,6 +1191,7 @@ export class FileSystemFolder {
         return this._files.find(f => f.name == name);
     }
 
+
     async reload() {
         if (this._loading) return;
 
@@ -1182,7 +1200,6 @@ export class FileSystemFolder {
         const items = await RNFS.readDir(this._fs.basePath + this._path);
         const filesItems = items.filter(f => !f.name.endsWith(".json") && !f.name.includes(FileSystem.ATACHMENT_PREFIX) && f.name !== ORDER_FILE_NAME &&
             f.name !== ".metadata" && !f.name.endsWith("thumbnail.jpg"));
-
         this._files = [];
         this._folders = [];
         for (let fi of filesItems) {
@@ -1195,29 +1212,30 @@ export class FileSystemFolder {
                     await FileSystem.main.readFolder(sfi, this);
                 }
             } else {
-                //trace("read file", fi.name)
                 const name = FileSystem.getFileNameFromPath(fi.name, true);
                 let sheet = new WorkSheet(fi.path, name);
-                let lastUpdate = Math.max(fi.mtime.valueOf(), fi.ctime.valueOf());
+
+                let lastUpdate = _lastUpdate(fi);
 
                 if (fi.isDirectory()) {
                     //read all pages
                     const pages = await RNFS.readDir(fi.path);
 
                     for (let i = 0; i < pages.length; i++) {
-                        lastUpdate = Math.max(lastUpdate, pages[i].mtime.valueOf(), pages[i].ctime.valueOf());
+                        lastUpdate = Math.max(lastUpdate, _lastUpdate(pages[i]));
 
                         if (!pages[i].name.endsWith(".json") && !pages[i].name.includes(FileSystem.ATACHMENT_PREFIX)) {
                             sheet.addPage(pages[i].path);
                         }
                     }
                 } else {
-                    lastUpdate = Math.max(lastUpdate, fi.mtime.valueOf(), fi.ctime.valueOf());
+                    lastUpdate = Math.max(lastUpdate, _lastUpdate(fi));
+                    trace("adding page", fi.path)
                     sheet.addPage(fi.path);
                     //finds the .json file if exists
                     let dotJsonFile = items.find(f => f.name === fi.name + ".json");
                     if (dotJsonFile) {
-                        lastUpdate = Math.max(lastUpdate, dotJsonFile.mtime.valueOf(), dotJsonFile.ctime.valueOf());
+                        lastUpdate = Math.max(lastUpdate, _lastUpdate(dotJsonFile));
                     }
                 }
 
@@ -1274,7 +1292,7 @@ export async function saveFolderOrder(folders) {
             }
         }
 
-        RNFS.writeFile(FileSystem.main.basePath + ORDER_FILE_NAME, JSON.stringify(order), 'utf8').then(
+        RNFS.writeFile(this._androidFileName(FileSystem.main.basePath + ORDER_FILE_NAME), JSON.stringify(order), 'utf8').then(
             //Success
             () => resolve(),
             //on error 
@@ -1350,7 +1368,7 @@ async function pushFolderOrder(folderName) {
     order.unshift(folderName);
     //Alert.alert(order)
 
-    RNFS.writeFile(FileSystem.main.basePath + ORDER_FILE_NAME, JSON.stringify(order), 'utf8').then(
+    RNFS.writeFile(this._androidFileName(FileSystem.main.basePath + ORDER_FILE_NAME), JSON.stringify(order), 'utf8').then(
         //Success
         undefined,
         //on error 
@@ -1379,7 +1397,7 @@ async function _renameFolderOrders(fromFolder, toFolder) {
             order = order.splice(inx, 1);
         }
 
-        RNFS.writeFile(FileSystem.main.basePath + ORDER_FILE_NAME, JSON.stringify(order), 'utf8').then(
+        RNFS.writeFile(this._androidFileName(FileSystem.main.basePath + ORDER_FILE_NAME), JSON.stringify(order), 'utf8').then(
             //Success
             undefined,
             //on error 

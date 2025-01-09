@@ -2,7 +2,8 @@
 import React from 'react';
 import {
   ImageBackground, TouchableOpacity, StyleSheet, View, Text,
-  Alert, Dimensions, PanResponder
+  Alert, Dimensions, PanResponder,
+  Image
 } from 'react-native';
 import ImageEditor from "@react-native-community/image-editor";
 import Pdf from 'react-native-pdf';
@@ -28,6 +29,7 @@ import Scroller from './scroller';
 
 import { FileSystem } from './filesystem';
 import { assert, trace } from './log.js';
+import { normalizeFoAndroid } from './canvas/utils';
 
 const OK_Cancel = 1;
 const PickName = 2;
@@ -827,7 +829,7 @@ export default class IssieSavePhoto extends React.Component {
               orientationLandscape={this.state.orientationLandscape}
               onChangeOrientation={(orientationLandscape) => this.setState({ orientationLandscape })}
             />}
-            {this.state.phase == OK_Cancel ?
+            {this.state.phase == OK_Cancel &&
               <ImageBackground
                 style={{
                   width: '100%',
@@ -837,9 +839,8 @@ export default class IssieSavePhoto extends React.Component {
 
                 imageStyle={{ resizeMode: 'contain' }}
                 blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
-                source={{ uri: this.state.imageUri }}
-              /> : null}
-
+                source={normalizeFoAndroid({ uri: this.state.imageUri })}
+              /> }
 
             {cropFrame}
             {PageNameInput}

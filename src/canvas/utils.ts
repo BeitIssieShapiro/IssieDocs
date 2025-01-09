@@ -1,5 +1,9 @@
 // utils.ts
+import { ImageURISource, Platform } from "react-native";
 import { ElementBase, SketchPoint, SketchTable, SketchText } from "./types";
+// import { NativeModules } from 'react-native';
+
+// const { FileProviderModule } = NativeModules;
 
 /** Joins a list of SketchPoints into an SVG path string. */
 export function joinPath(points: SketchPoint[], ratio: number): string {
@@ -197,4 +201,28 @@ export function wait(ms: number): Promise<void> {
     });
 }
 
+const findFilePrefix = "com.issiedocs/files"
+const findCachePrefix = "com.issiedocs/cache";
+export function normalizeFoAndroid(imgSrc: ImageURISource | undefined): ImageURISource | undefined {
 
+    let res = imgSrc;
+    if (imgSrc && Platform.OS === 'android' && imgSrc.uri && !imgSrc.uri.startsWith("content")) {
+        // FileProviderModule.getUriForFile(imgSrc.uri)
+        // .then((uri:string) => {
+        //   console.log('File URI:', uri);
+        // });
+        let pos = imgSrc.uri.indexOf(findFilePrefix);
+        if (pos >= 0) {
+            let uri = "content://com.issiedocs.provider" + imgSrc.uri.substring(pos + findFilePrefix.length);
+            res = { ...imgSrc, uri };
+        } else {
+            pos = imgSrc.uri.indexOf(findCachePrefix);
+            if (pos >= 0) {
+                let uri = "content://com.issiedocs.provider/cache_files" + imgSrc.uri.substring(pos + findCachePrefix.length);
+                res = { ...imgSrc, uri };
+            }
+        }
+    }
+    console.log('normalizeFoAndroid:', imgSrc?.uri, "=>", res?.uri);
+    return res;
+}

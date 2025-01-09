@@ -1,6 +1,5 @@
 new canvas
 ---------
-eraser
 drag text that moves canvas
 soft move canvas
 table:
@@ -22,7 +21,7 @@ V-share as image?
 V-open with image, remove the add+ button
 
 
-
+=D41 - FIXED(D19*100,2)
 
 - when in imageMode cannot move to eraser
 -align in table - margin from lines
