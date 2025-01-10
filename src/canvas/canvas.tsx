@@ -813,6 +813,7 @@ export function Canvas({
 const styles = StyleSheet.create({
     container: {
         backgroundColor: "#f5f5f5",
+        //backgroundColor: "white",
     },
     imageStyle: {
         position: "absolute",

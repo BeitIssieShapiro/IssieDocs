@@ -17,7 +17,7 @@ import { normalizeFoAndroid } from './canvas/utils';
 export const Icon = IconLocal;
 
 export const dimensions = {
-    headerHeight: 38,
+    headerHeight: 38,//Platform.OS == 'android'?48:38,
     thinHeaderHeight: 52,
     toolbarHeight: 65,
     toolbarMargin: 5,

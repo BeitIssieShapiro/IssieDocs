@@ -9,6 +9,16 @@ text:
 better progress of share
   - busy indicator in FolderGalary - ShareIssieDocs
 
+android:
+- blank page bg
+- icon, splash?
+- share sheet
+- read media external (read pdf)
+- save after add-page from images
+- rename in page
+- rename from main folders (parse error)
+
+
 
 version 1.5:
 V- add audio

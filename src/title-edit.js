@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
-    View, TextInput
+    View, TextInput,
+    Platform
 } from 'react-native';
 import {
     globalStyles,
@@ -55,7 +56,7 @@ export default function TitleEdit(props) {
             ref={inputEl}
             allowFontScaling={false}
             value={props.editMode ? editedTitle : props.title}
-            style={titleStyle}
+            style={[titleStyle,Platform.OS == 'android'?{ position:"absolute"}:null]}
             readonly={props.editMode ? true : false}
             onChangeText={(txt) => {
                 setEditedTitle(txt)

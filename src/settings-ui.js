@@ -82,6 +82,7 @@ export default function SettingsMenu(props) {
         props.onLanguageChange(lang);
     }
     const flipFeatureTougle = (feature) => {
+        //Settings.set({ [FEATURES.name]: [] });return
         const item = featuresRef.current.find(f => f == feature);
         let newList = [...featuresRef.current];
         if (item == undefined) {
@@ -92,7 +93,7 @@ export default function SettingsMenu(props) {
             console.log("feature", feature, "off", newList)
         }
         setFeatures(newList);
-        Settings.set({ [FEATURES.name]: JSON.stringify(newList) })
+        Settings.set({ [FEATURES.name]: newList })
 
         props.onFeaturesChange?.();
     }

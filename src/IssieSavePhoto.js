@@ -320,7 +320,7 @@ export default class IssieSavePhoto extends React.Component {
 
     let cropData = {
       offset: { x: 0, y: 0 },
-      size: { width, height }
+      size: { width, height },
     };
 
     if (!uri.startsWith("file")) {

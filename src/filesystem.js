@@ -64,7 +64,6 @@ export class FileSystem {
     _listeners = [];
     constructor() {
         this._basePath = _androidFileName(RNFS.DocumentDirectoryPath + '/folders/');
-        this._basePathClean = RNFS.DocumentDirectoryPath + '/folders/';
         console.log("base path: " + this._basePath);
         this._loaded = false;
         RNFS.mkdir(this._basePath).catch((e) => {
@@ -184,7 +183,6 @@ export class FileSystem {
     }
 
     findFolderByID(ID) {
-        trace("findFolderByID", this._folders)
         if (!ID) return undefined;
 
         let parts = ID.split("/");
@@ -192,7 +190,7 @@ export class FileSystem {
         let folders = this._folders;
         let folder
         for (let i = 0; i < parts.length; i++) {
-            
+
             folder = folders?.find(f => f.name === parts[i])
             folders = folder?.folders;
         }
@@ -458,7 +456,7 @@ export class FileSystem {
         }
 
         let pathObj = this._parsePath(filePath);
-
+        trace("XXX", pathObj)
         if (!pathObj.fileName || pathObj.fileName.length == 0) {
             throw translate("MissingPageName");
         }
@@ -695,7 +693,7 @@ export class FileSystem {
 
         return await this._reloadBySheet(sheet);
     }
-
+    //"file:///data/user/0/com.issiedocs/files/folders/F1/eee.jpg
     _parsePath(filePath) {
         let lastSlashPos = filePath.lastIndexOf('/');
         let fileName = filePath.substr(lastSlashPos + 1);
@@ -706,7 +704,8 @@ export class FileSystem {
         }
 
         //remove base path
-        let foldersPath = filePath.substring(this._basePathClean.length, lastSlashPos)
+        const ommitFilePath = Platform.OS == 'android' && !filePath.startsWith("file://");
+        let foldersPath = filePath.substring(this._basePath.length + (ommitFilePath ? -7 : 0), lastSlashPos)
         let folders = foldersPath.split('/');
 
         //examples:

@@ -1,3 +1,4 @@
+import { trace } from "./log"
 import { Settings } from "./new-settings"
 
 export const VIEW = {
@@ -58,12 +59,10 @@ export function getUseColorSetting() {
 }
 
 export function getFeaturesSetting() {
-    const featureStr = getSetting(FEATURES.name);
-    if (!featureStr || featureStr[0] != "[") {
-        return [FEATURES.image, FEATURES.marker, FEATURES.ruler, FEATURES.table, FEATURES.voice];
-    }
+    const featureStr = getSetting(FEATURES.name, [FEATURES.image, FEATURES.marker, FEATURES.ruler, FEATURES.table, FEATURES.voice]);
+    trace("getFeaturesSetting", featureStr)
     console.log(featureStr)
-    return JSON.parse(featureStr);
+    return featureStr;
 }
 
 export function getUseTextSetting() {
