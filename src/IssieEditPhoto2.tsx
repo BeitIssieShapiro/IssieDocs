@@ -31,6 +31,7 @@ import ViewShot from 'react-native-view-shot';
 import { generatePDF } from './pdf';
 import { Text } from 'react-native';
 import { migrateMetadata } from './state-migrate';
+import { PathCommand } from '@shopify/react-native-skia';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -489,11 +490,28 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
     }
 
-    function handleSketchEnd() {
+    function handleSketchEnd(commands?: PathCommand[]) {
         if (isBrushMode() || isMarkerMode()) {
-            const elem = arrLast(pathsRef.current);
-            if (!elem) return;
-            queue.current.pushPath(elem)
+            trace("Sketch End, elem being saved")
+            let color = isMarkerMode() ? markerColorRef.current + MARKER_TRANSPARENCY_CONSTANT : brushColorRef.current;
+            let strokeWidth = isMarkerMode() ? markerWidthRef.current : strokeWidthRef.current;
+            if (eraseModeRef.current) {
+                color = '#00000000';
+                strokeWidth = (strokeWidth * 3 < 15 ? 15 : strokeWidth * 3)
+            }
+            if (commands) {
+                const newPath: SketchPath = {
+                    id: getId("S"),
+                    points: commands,
+                    color,
+                    strokeWidth,
+                };
+
+                pathsRef.current.push(newPath);
+                setPaths([...pathsRef.current]);
+
+                queue.current.pushPath(newPath)
+            }
         } else if (isRulerMode()) {
             const elem = arrLast(linesRef.current);
             if (!elem) return;
@@ -1350,6 +1368,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     trace("markerSize", markerWidthRef.current, "brushSize", strokeWidthRef.current)
+    let currStrokeWidth = modeRef.current == EditModes.Marker ? markerWidthRef.current : strokeWidthRef.current;
 
     return (
         <SafeAreaView
@@ -1491,6 +1510,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     onSketchStart={handleSketchStart}
                     onSketchStep={handleSketchStep}
                     onSketchEnd={handleSketchEnd}
+
+                    sketchColor={eraseMode ? '#00000000' : (mode == EditModes.Marker ? markerColor + MARKER_TRANSPARENCY_CONSTANT : brushColor)}
+                    sketchStrokeWidth={eraseMode ? (mode == EditModes.Marker ? Math.min(15, markerWidth * 3) : Math.min(15, strokeWidth * 3)) :
+                        (mode == EditModes.Marker ? markerWidth : strokeWidth)}
+
                     onCanvasClick={handleCanvasClick}
                     onMoveElement={handleMove}
                     onMoveEnd={handleMoveEnd}

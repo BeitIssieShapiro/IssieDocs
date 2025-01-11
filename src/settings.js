@@ -60,7 +60,7 @@ export function getUseColorSetting() {
 
 export function getFeaturesSetting() {
     const featureStr = getSetting(FEATURES.name, [FEATURES.image, FEATURES.marker, FEATURES.ruler, FEATURES.table, FEATURES.voice]);
-    trace("getFeaturesSetting", featureStr)
+    //trace("getFeaturesSetting", featureStr)
     console.log(featureStr)
     return featureStr;
 }

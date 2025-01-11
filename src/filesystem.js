@@ -427,7 +427,7 @@ export class FileSystem {
         // delete existing thumbnail
         try {
             if (page && page.thumbnail.endsWith(THUMBNAIL_SUFFIX)) {
-                trace("delete prev. thumbnail", page.thumbnail)
+                //trace("delete prev. thumbnail", page.thumbnail)
                 await RNFS.unlink(_androidFileName(page.thumbnail));
             }
         } catch (e) { }
@@ -439,7 +439,7 @@ export class FileSystem {
             });
         }
 
-        console.log("mv", uri, thumbnailPath);
+        //console.log("mv", uri, thumbnailPath);
         return RNFS.moveFile(uri, thumbnailPath).then(async () => {
             page.setThumbnail(thumbnailPath);
             let fi = await RNFS.stat(thumbnailPath);
@@ -1231,6 +1231,7 @@ export class FileSystemFolder {
                     lastUpdate = Math.max(lastUpdate, _lastUpdate(fi));
                     trace("adding page", fi.path)
                     sheet.addPage(fi.path);
+                     
                     //finds the .json file if exists
                     let dotJsonFile = items.find(f => f.name === fi.name + ".json");
                     if (dotJsonFile) {
@@ -1241,20 +1242,24 @@ export class FileSystemFolder {
                 //find the newest thumbnail
                 let thumbnails = items.filter(f => f.name.startsWith(name + ".") && f.name.endsWith(THUMBNAIL_SUFFIX));
                 let newestFile;
+                trace("xx2")
 
                 if (thumbnails.length > 1) {
                     let newestTS = -1;
+                    trace("xx3")
+
                     for (let tnfi of thumbnails) {
-                        if (tnfi.ctime.valueOf() > newestTS) {
-                            trace("thumbnail", tnfi.name, tnfi.ctime.valueOf(), newestTS)
-                            newestTS = tnfi.ctime.valueOf();
+                        const ct = tnfi.ctime instanceof Date ? fi.ctime.valueOf() : 0;
+                        if (ct > newestTS) {
+                            //trace("thumbnail", tnfi.name, tnfi.ctime.valueOf(), newestTS)
+                            newestTS = ct;
                             newestFile = tnfi;
                         }
                     }
                     // delete old thumbnails
                     thumbnails.filter(tn => tn.name !== newestFile.name).forEach(tn => {
                         trace("delete old thumbnail", tn.name);
-                        RNFS.unlink(tn.path)
+                        RNFS.unlink(_androidFileName(tn.path));
                     });
 
                     //console.log("found tn", thumbnail.path)

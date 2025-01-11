@@ -1,7 +1,8 @@
+import { PathCommand } from "@shopify/react-native-skia";
 import { ImageURISource } from "react-native";
 
 
-export type SketchPoint = [number, number];
+export type SketchPoint = [number, number]
 export type Offset = {
     x: number;
     y: number;
@@ -23,7 +24,7 @@ export interface ElementBase {
 }
 
 export interface SketchPath extends ElementBase {
-    points: SketchPoint[];
+    points: PathCommand[];
     color: string;
     strokeWidth: number;
 }

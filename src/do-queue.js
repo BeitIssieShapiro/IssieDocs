@@ -10,7 +10,7 @@ export default class DoQueue {
 
   async clearUndo() {
     this._undoQueue.forEach(async (elem) => {
-      console.log("clear undo", elem)
+      //console.log("clear undo", elem)
       if (elem.elem?.file) {
         await this._onAttachmentRemove(elem.elem?.file);
       }

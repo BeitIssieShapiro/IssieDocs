@@ -18,10 +18,19 @@ import {
     PaintStyle,
     BlendMode,
     useCanvasRef,
-    useValue,
-    useTouchHandler
+    usePathValue,
+    Skia,
+    PathProps,
+    SkPath,
+    PathCommand,
+    PathVerb
+
+
 } from "@shopify/react-native-skia";
-import { Skia, Path as SkPath } from "@shopify/react-native-skia";
+
+// Create an Animated version of Skia's <Path> component
+const AnimatedSkiaPath = Animated.createAnimatedComponent(Path);
+
 
 import {
     CurrentEdited,
@@ -54,22 +63,23 @@ import {
 } from "./utils";
 import { TextElement } from "./text-element"; // Example sub-component for text
 import { PinchHelperEvent, PinchSession, ResizeEvent } from "./pinch";
+import Animated, { AnimatedProps, SharedValue, useAnimatedProps, useSharedValue } from "react-native-reanimated";
 
 const TEXT_SEARCH_MARGIN = 0; // 15;
 const TABLE_LINE_THRESHOLD = 7;
 
-function createSkiaPath(points: [number, number][], ratio: number): any {
+function createSkiaPath(points: PathCommand[], ratio: number): any {
     const skPath = Skia.Path.Make();
     if (points.length === 0) return skPath;
 
-    // Move to first point
-    const [x0, y0] = points[0];
-    skPath.moveTo(x0 * ratio, y0 * ratio);
-
     // Draw lines to subsequent points
-    for (let i = 1; i < points.length; i++) {
-        const [x, y] = points[i];
-        skPath.lineTo(x * ratio, y * ratio);
+    for (let i = 0; i < points.length; i++) {
+        const [verb, x, y] = points[i];
+        if (verb == PathVerb.Move) {
+            skPath.moveTo(x, y);
+        } else if (verb == PathVerb.Line) {
+            skPath.lineTo(x, y);
+        }
     }
     return skPath;
 }
@@ -91,8 +101,10 @@ interface CanvasProps {
     onActualCanvasSize?: (actualSize: ImageSize, actualSideMargin: number, viewOffset: Offset, ratio: number) => void,
 
     zoom: number;
-    onZoom: (newZoom: number) => void
-    onMoveCanvas: (newPos: Offset) => void
+    onZoom: (newZoom: number) => void;
+    onMoveCanvas: (newPos: Offset) => void;
+    sketchColor: string;
+    sketchStrokeWidth: number;
 
 
     offset: Offset;
@@ -100,7 +112,7 @@ interface CanvasProps {
     style: any;
     onSketchStart: (p: SketchPoint) => void;
     onSketchStep: (p: SketchPoint) => void;
-    onSketchEnd: () => void;
+    onSketchEnd: (Cmd?: PathCommand[]) => void;
     onTextChanged: (id: string, newText: string) => void;
     onCanvasClick: (p: SketchPoint, elem: ElementBase | TableContext | undefined) => void;
     onMoveElement: (type: MoveTypes, id: string, p: SketchPoint) => void;
@@ -114,6 +126,13 @@ interface CanvasProps {
     currentElementType: ElementTypes;
 }
 
+/** A single (x, y) coordinate */
+export interface Point {
+    x: number;
+    y: number;
+}
+
+
 export function Canvas({
     style,
     onTextChanged,
@@ -122,6 +141,9 @@ export function Canvas({
     onSketchStart,
     onSketchStep,
     onSketchEnd,
+
+    sketchColor,
+    sketchStrokeWidth,
 
     onMoveElement,
     onMoveEnd,
@@ -162,6 +184,12 @@ export function Canvas({
     const [sideMargin, setSideMargin] = useState<number>(minSideMargin);
     const normCanvasSize = useRef<ImageSize>({ width: canvasWidth, height: canvasHeight });
 
+    const lastPathSV = useSharedValue<SkPath>(Skia.Path.Make());
+    const sketchInProgressRef = useRef<boolean>(false);
+    const sketchPathInSaveProgressRef = useRef<boolean>(false);
+    const sketchTimerRef = useRef<NodeJS.Timeout | undefined>();
+    const skiaCanvasRef = useCanvasRef();
+
 
     const startSketchRef = useRef<{
         position: SketchPoint;
@@ -185,6 +213,19 @@ export function Canvas({
         tablesRef.current = tables || [];
         linesRef.current = lines || [];
     }, [texts, images, tables, lines]);
+
+    useEffect(() => {
+        // verify the last path is the same as lastPathSV
+        if (lastPathSV.value && paths && paths.length > 0) {
+            const cmds = lastPathSV.value.toCmds();
+            const lastPath = paths[paths.length-1];
+            //console.log("xx", cmds[0],  lastPath.points[0])
+            if (cmds.length > 0 && cmds[0][1] == lastPath.points[0][1] &&
+                cmds[0][2] == lastPath.points[0][2]) {
+                lastPathSV.value.reset();
+            }
+        }
+    }, [paths]);
 
     useEffect(() => {
         zoomRef.current = zoom;
@@ -283,12 +324,27 @@ export function Canvas({
                     }
 
 
-                    if (
-                        currentElementTypeRef.current === ElementTypes.Sketch ||
-                        (!startSketchRef.current.elem && currentElementTypeRef.current === ElementTypes.Line)
-                    ) {
-                        // Begin new line or sketch
-                        onSketchStart(startSketchRef.current.position);
+                    if (!startSketchRef.current.elem) {
+                        if (currentElementTypeRef.current === ElementTypes.Sketch) {
+                            //console.log("sketch start")
+                            if (sketchPathInSaveProgressRef.current) {
+                                if (lastPathSV.value.countPoints() > 0) {
+                                    lastPathSV.value?.reset();
+                                }
+                                sketchPathInSaveProgressRef.current = false;
+                            }
+
+                            sketchInProgressRef.current = true;
+                            if (sketchTimerRef.current) {
+                                //console.log("sketch start - clear timeout")
+                                clearTimeout(sketchTimerRef.current);
+                                sketchTimerRef.current = undefined;
+                            }
+                            lastPathSV.value.moveTo(startSketchRef.current.position[0] * ratio.current, startSketchRef.current.position[1] * ratio.current);
+                            skiaCanvasRef.current?.redraw();
+                        } else if (currentElementTypeRef.current === ElementTypes.Line) {
+                            onSketchStart(startSketchRef.current.position);
+                        }
                         startSketchRef.current = null;
                     } else {
                         // Move or resize an element
@@ -313,8 +369,13 @@ export function Canvas({
                         return; // Do not proceed to `onSketchStep` if moving an element
                     }
                 }
-
-                onSketchStep(newPoint);
+                if (currentElementTypeRef.current === ElementTypes.Sketch) {
+                    //console.log("sketch step")
+                    lastPathSV.value.lineTo(newPoint[0] * ratio.current, newPoint[1] * ratio.current);
+                    skiaCanvasRef.current?.redraw();
+                } else {
+                    onSketchStep(newPoint);
+                }
             },
             onPanResponderRelease: (_, gState) => {
                 if (startSketchRef.current?.pinch) {
@@ -331,8 +392,19 @@ export function Canvas({
                 }
                 const elem = startSketchRef.current?.elem;
 
-                if (currentElementTypeRef.current === ElementTypes.Sketch ||
-                    (!elem && currentElementTypeRef.current === ElementTypes.Line)) {
+                if (!elem && currentElementTypeRef.current === ElementTypes.Sketch) {
+                    const commands = lastPathSV.value.toCmds();
+                    sketchInProgressRef.current = false;
+                    sketchTimerRef.current = setTimeout(() => {
+                        //console.log("sketch timeout")
+                        sketchTimerRef.current = undefined;
+                        if (!sketchInProgressRef.current) {
+                            //console.log("call sketch end")
+                            sketchPathInSaveProgressRef.current = true;
+                            onSketchEnd(commands);
+                        }
+                    }, 300);
+                } else if (!elem && currentElementTypeRef.current === ElementTypes.Line) {
                     onSketchEnd();
                 } else if (elem) {
                     if ("id" in elem) {
@@ -494,7 +566,7 @@ export function Canvas({
 
     normCanvasSize.current = { width: actualWidth / ratio.current, height: actualHeight / ratio.current };
     imageSource = normalizeFoAndroid(imageSource)
-    console.log("canvas render", imageSource)
+    //console.log("canvas render", imageSource)
     return (
         <View
             ref={canvasRef}
@@ -603,6 +675,8 @@ export function Canvas({
                     })}
 
             <SkiaCanvas
+                ref={skiaCanvasRef}
+
                 style={{
                     position: "absolute",
                     width: "100%",
@@ -629,12 +703,20 @@ export function Canvas({
                     );
                 })}
 
+                <SkiaPath
+                    path={lastPathSV}
+                    color={sketchColor}
+                    style={"stroke"}
+                    strokeWidth={sketchStrokeWidth}
+                    blendMode={"srcOver"}
+                />
+
             </SkiaCanvas>
 
             {/* Paths & Lines (Non-edit) */}
 
             <Svg height="100%" width="100%" style={{ position: "absolute" }}>
-               
+
                 {lines?.map((line) => (
                     <Path
                         key={line.id}

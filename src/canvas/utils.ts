@@ -1,6 +1,7 @@
 // utils.ts
 import { ImageURISource, Platform } from "react-native";
 import { ElementBase, SketchPoint, SketchTable, SketchText } from "./types";
+import { PathVerb, SkPath } from "@shopify/react-native-skia";
 // import { NativeModules } from 'react-native';
 
 // const { FileProviderModule } = NativeModules;
@@ -223,6 +224,22 @@ export function normalizeFoAndroid(imgSrc: ImageURISource | undefined): ImageURI
             }
         }
     }
-    console.log('normalizeFoAndroid:', imgSrc?.uri, "=>", res?.uri);
+    //console.log('normalizeFoAndroid:', imgSrc?.uri, "=>", res?.uri);
     return res;
 }
+
+export function getPointsFromPath(path: SkPath): { x: number; y: number }[] {
+    const cmds = path.toCmds();
+    const points: { x: number; y: number }[] = [];
+  
+    for (let i = 0; i < cmds.length; i++) {
+      const cmd = cmds[i];
+      if (cmd[0] == PathVerb.Move  || cmd[0] == PathVerb.Line) {
+        const x = cmd[1] as number;
+        const y = cmd[2] as number;
+        points.push({ x, y });
+      }
+    }
+  
+    return points;
+  }
