@@ -210,13 +210,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             const elemBottom = textElem.y + elemHeight;
             if (elemBottom > kbTop) {
                 trace("text behind kb")
-                const dy = elemBottom - kbTop
+                const dy = elemBottom + kbTop
                 handleMoveCanvas({ x: moveCanvasRef.current.x, y: -(moveCanvasRef.current.y + dy + 3) })
             }
         }
     }
     function _keyboardDidHide() {
-        setKeyboardHeight(0);
+        if (zoomRef.current == 1) {
+            setMoveCanvas({x:0, y:0});
+        }
     }
 
     async function loadMetadata() {
@@ -1298,7 +1300,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 {verticalMovePossible && <MoveButton key={3} rotate={270} onPress={() => handleMoveCanvas({ x: moveCanvas.x, y: moveCanvas.y + 50 })}
                     style={{ top: upDownTop + 7, left: upDownLeft - 50 }} disabled={moveCanvas.y == 0}
                 />}
-                {verticalMovePossible && <MoveButton key={4} rotate={90} onPress={() => handleMoveCanvas({ x: moveCanvas.x + 50, y: moveCanvas.y - 50 })}
+                {verticalMovePossible && <MoveButton key={4} rotate={90} onPress={() => handleMoveCanvas({ x: moveCanvas.x, y: moveCanvas.y - 50 })}
                     style={{ top: upDownTop, left: upDownLeft + 50 }} disabled={disabledBottom}
                 />}
             </React.Fragment >);
@@ -1390,7 +1392,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     function handleMoveCanvas(newOffset: Offset) {
-        if (zoom == 1 && modeRef.current != EditModes.Text) return;
+        if (zoomRef.current == 1 && modeRef.current != EditModes.Text) return;
         let { x, y } = newOffset;
         const verticalOnly = (zoomRef.current == 1 && modeRef.current == EditModes.Text);
 

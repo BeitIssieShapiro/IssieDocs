@@ -278,6 +278,7 @@ export default class IssieCreateFolder extends React.Component {
 
 
                                 <TextInput style={[globalStyles.textInput, { direction, textAlign }, getFontFamily()]} value={this.state.name}
+                                    allowFontScaling={false}
                                     onChangeText={(txt) => this.setState({ name: txt })}
                                 />
                                 <AppText style={[styles.titleText, { textAlign }]}>{translate("CaptionFolderColor")}</AppText>

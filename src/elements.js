@@ -555,6 +555,7 @@ export function FileNameDialog({
                 <TextInput style={[globalStyles.textInput, { direction, textAlign }, getFontFamily()]}
                     onChangeText={onChangeName}
                     value={name}
+                    allowFontScaling={false}
                 />
                 <Spacer />
                 {includeOrientation && <View style={{ flex: 1, width: '100%' }}>

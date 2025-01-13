@@ -7,6 +7,7 @@ import {
     PanResponder,
     StyleSheet,
     TouchableOpacity,
+    useAnimatedValue,
     View,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
@@ -63,7 +64,7 @@ import {
 } from "./utils";
 import { TextElement } from "./text-element"; // Example sub-component for text
 import { PinchHelperEvent, PinchSession, ResizeEvent } from "./pinch";
-import Animated, { AnimatedProps, SharedValue, useAnimatedProps, useSharedValue } from "react-native-reanimated";
+import Animated, { AnimatedProps, SharedValue, useAnimatedProps, useSharedValue, withTiming } from "react-native-reanimated";
 
 const TEXT_SEARCH_MARGIN = 0; // 15;
 const TABLE_LINE_THRESHOLD = 7;
@@ -178,6 +179,9 @@ export function Canvas({
     const canvasRef = useRef<View | null>(null);
     const viewOffset = useRef<Offset>({ x: 0, y: 0 });
     const offsetRef = useRef(offset);
+    const translateX = useSharedValue(offset.x);
+    const translateY = useSharedValue(offset.y);
+
     const ratio = useRef(1);
     const zoomRef = useRef(1);
     const [imageSize, setImageSize] = useState<ImageSize | undefined>();
@@ -218,7 +222,7 @@ export function Canvas({
         // verify the last path is the same as lastPathSV
         if (lastPathSV.value && paths && paths.length > 0) {
             const cmds = lastPathSV.value.toCmds();
-            const lastPath = paths[paths.length-1];
+            const lastPath = paths[paths.length - 1];
             //console.log("xx", cmds[0],  lastPath.points[0])
             if (cmds.length > 0 && cmds[0][1] == lastPath.points[0][1] &&
                 cmds[0][2] == lastPath.points[0][2]) {
@@ -233,6 +237,8 @@ export function Canvas({
 
     useEffect(() => {
         offsetRef.current = offset;
+        translateX.value = withTiming(offset.x * ratio.current, { duration: startSketchRef.current?.pinch ? 0 : 500 });
+        translateY.value = withTiming(offset.y * ratio.current, { duration: startSketchRef.current?.pinch ? 0 : 500 });
     }, [offset]);
 
     useEffect(() => {
@@ -569,7 +575,7 @@ export function Canvas({
     imageSource = normalizeFoAndroid(imageSource)
     //console.log("canvas render", imageSource)
     return (
-        <View
+        <Animated.View
             ref={canvasRef}
             style={[
                 styles.container,
@@ -581,8 +587,8 @@ export function Canvas({
                     transformOrigin: "0 0 0",
                     transform: [
                         { scale: zoomRef.current },
-                        { translateX: offsetRef.current.x * ratio.current },
-                        { translateY: offsetRef.current.y * ratio.current },
+                        { translateX },
+                        { translateY },
                     ],
                 },
             ]}
@@ -888,7 +894,7 @@ export function Canvas({
                     </TouchableOpacity>}
                 </View>
             })}
-        </View>
+        </Animated.View>
     );
 }
 

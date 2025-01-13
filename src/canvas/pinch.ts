@@ -109,6 +109,7 @@ export class PinchSession {
 
         // Fire the event with new pinch results
         if (this.onPinchUpdate) {
+            console.log("onPinchUpdate", x,y)
             this.onPinchUpdate({
                 zoom: newZoom,
                 offset: { x, y }
