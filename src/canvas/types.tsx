@@ -96,6 +96,7 @@ export interface MoveContext {
     type: MoveTypes;
     offsetX: number;
     offsetY: number;
+    lastPt?:SketchPoint;
 }
 
 export interface TableContext {

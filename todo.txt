@@ -1,7 +1,5 @@
 new canvas
 ---------
-drag text that moves canvas
-soft move canvas
 table:
   - move cells XX
 

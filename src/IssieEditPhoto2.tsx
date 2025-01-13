@@ -54,7 +54,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
     const [toolbarHeight, setToolbarHeight] = useState<number>(dimensions.toolbarHeight);
     const [floatingToolbarHeight, setFloatingToolbarHeight] = useState<number>(0);
-    
+
 
     const [zoom, setZoom] = useState<number>(1);
     const [status, setStatus] = useState<string>("");
@@ -120,8 +120,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const textColorRef = useRef(textColor);
     const tableColorRef = useRef(tableColor);
     const moveCanvasRef = useRef(moveCanvas);
+    const moveRepeatRef = useRef<{ offset: Offset, interval: NodeJS.Timeout } | undefined>();
     const zoomRef = useRef(zoom);
-
 
     // -------------------------------------------------------------------------
     //                          EFFECTS
@@ -217,7 +217,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
     function _keyboardDidHide() {
         if (zoomRef.current == 1) {
-            setMoveCanvas({x:0, y:0});
+            setMoveCanvas({ x: 0, y: 0 });
         }
     }
 
@@ -660,17 +660,63 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     // -------------------------------------------------------------------------
     function handleMove(type: MoveTypes, id: string, p: SketchPoint) {
         trace("Move elem",
-            Math.floor(p[0]),
-            moveCanvasRef.current.x,
+            // Math.floor((p[0]) + moveCanvasRef.current.x) / zoomRef.current,
+            p[0] * zoomRef.current,
+
+
+            //canvasSizeRef.current.width,
+            //ratioRef.current
             //Math.floor(p[1]), 
             canvasSizeRef.current.width / ratioRef.current,
             //canvasSizeRef.current.height/ratioRef.current, type, id
         )
-
         let [x, y] = p;
+
+      
+        let rMoveX = 0;
+        let rMoveY = 0;
+        if ((x + moveCanvasRef.current.x) / zoomRef.current < 5) {
+            trace("hit left")
+            rMoveX = 25;
+        } 
+
+        if ((x + 30 + moveCanvasRef.current.x) * zoomRef.current > canvasSizeRef.current.width / ratioRef.current) {
+            trace("hit right")
+            rMoveX = -25;
+        } 
+
+        if ((y + moveCanvasRef.current.y) / zoomRef.current < 0) {
+            trace("hit top")
+            rMoveY = 25;
+        } 
+
+        if ((y + fontSizeRef.current/ratioRef.current + moveCanvasRef.current.y) * zoomRef.current > canvasSizeRef.current.height / ratioRef.current) {
+            trace("hit bottom")
+            rMoveY = -25;
+        } 
+
+        if (!moveRepeatRef.current && (rMoveX && rMoveX != 0) || (rMoveY && rMoveY != 0)) {
+            moveRepeatRef.current = {
+                interval: setInterval(() => {
+                    if (moveRepeatRef.current?.offset) {
+                        handleMoveCanvas({
+                            x: moveCanvasRef.current.x + moveRepeatRef.current.offset.x,
+                            y: moveCanvasRef.current.y + moveRepeatRef.current.offset.y,
+                        });
+                    }
+                }, 100),
+                offset: { x: 0, y: 0 },
+            }
+        }
+        if (moveRepeatRef.current ) moveRepeatRef.current.offset.x = rMoveX;
+        if (moveRepeatRef.current ) moveRepeatRef.current.offset.y = rMoveY;
+
+
+
         if (x < 20) x = 20;
-        if (x > canvasSizeRef.current.width / ratioRef.current - 20)
+        if (x > canvasSizeRef.current.width / ratioRef.current - 20) {
             x = canvasSizeRef.current.width / ratioRef.current - 20;
+        }
 
         if (y < 0) y = 0;
         if (y > canvasSizeRef.current.height / ratioRef.current - 20)
@@ -763,6 +809,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     function handleMoveEnd(type: MoveTypes, id: string) {
+        if (moveRepeatRef.current) {
+            trace("end repeat")
+            clearInterval(moveRepeatRef.current.interval);
+            moveRepeatRef.current = undefined;
+        }
+
+
         if (type === MoveTypes.LineStart || type === MoveTypes.LineEnd || type === MoveTypes.LineMove) {
             console.log("Move end", linesRef.current);
             const line = linesRef.current.find(line => line.id == id);
@@ -1270,10 +1323,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         );
     }
 
-    const moveArrows = (windowSize: ImageSize, keyboardHeight: number, zoom: number, moveCanvas: Offset, toolbarHeight: number, floatingToolbarHeight:number) => {
+    const moveArrows = (windowSize: ImageSize, keyboardHeight: number, zoom: number, moveCanvas: Offset, toolbarHeight: number, floatingToolbarHeight: number) => {
         const sidesTop = Math.min(windowSize.height / 2 - 35, windowSize.height - keyboardHeight - 95);
         const upDownLeft = windowSize.width / 2 - 35; //half the size of the button
-        const upDownTop = toolbarHeight + floatingToolbarHeight 
+        const upDownTop = toolbarHeight + floatingToolbarHeight
         const verticalMovePossible = modeRef.current == EditModes.Text || zoom > 1;
         const horizMovePossible = zoom > 1;
 

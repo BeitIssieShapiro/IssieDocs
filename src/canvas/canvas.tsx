@@ -61,6 +61,7 @@ import {
     isPointOnLineSegment,
     joinPath,
     normalizeFoAndroid,
+    IIF
 } from "./utils";
 import { TextElement } from "./text-element"; // Example sub-component for text
 import { PinchHelperEvent, PinchSession, ResizeEvent } from "./pinch";
@@ -236,9 +237,21 @@ export function Canvas({
     }, [zoom]);
 
     useEffect(() => {
+        if (isMoving.current && moveContext.current && moveContext.current.lastPt) {
+            // if the canvas moves as an element is being moved
+            const dx = offsetRef.current.x - offset.x;
+            const dy = offsetRef.current.y - offset.y;
+            const newPt = [moveContext.current.lastPt[0] + dx, moveContext.current.lastPt[1] + dy] as SketchPoint;
+            console.log("offset while move",dx, dy)
+            moveContext.current.lastPt = newPt;
+            onMoveElement?.(moveContext.current.type, moveContext.current.id, newPt);
+        }
+        console.log("canvas offset changed", offset)
         offsetRef.current = offset;
-        translateX.value = withTiming(offset.x * ratio.current, { duration: startSketchRef.current?.pinch ? 0 : 500 });
-        translateY.value = withTiming(offset.y * ratio.current, { duration: startSketchRef.current?.pinch ? 0 : 500 });
+        const duration = IIF(500, [isMoving.current, 100], [startSketchRef.current?.pinch, 0]);
+        translateX.value = withTiming(offset.x * ratio.current, { duration });
+        translateY.value = withTiming(offset.y * ratio.current, { duration });
+
     }, [offset]);
 
     useEffect(() => {
@@ -437,7 +450,8 @@ export function Canvas({
             onPanResponderMove: (e, gState) => {
                 if (moveContext.current) {
                     // +15 / -15 offset for text handle, etc. Adjust as needed for images
-                    const canvasPos0 = screen2Canvas(gState.x0 + gState.dx + moveContext.current.offsetX, gState.y0 + gState.dy + moveContext.current.offsetY);
+                    const canvasPos0 = screen2Canvas(gState.x0 + gState.dx + moveContext.current.offsetX * zoomRef.current, gState.y0 + gState.dy + moveContext.current.offsetY * zoomRef.current);
+                    moveContext.current.lastPt = canvasPos0;
                     onMoveElement?.(moveContext.current.type, moveContext.current.id, canvasPos0);
                 }
             },

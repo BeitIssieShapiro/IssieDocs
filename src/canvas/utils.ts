@@ -243,3 +243,11 @@ export function getPointsFromPath(path: SkPath): { x: number; y: number }[] {
   
     return points;
   }
+
+export function IIF(defValue:any, ...args:[any, any][]):any {
+
+    for (let i=0;i<args.length;i++) {
+        if (!!args[i][0]) return args[i][1];
+    }
+    return defValue;
+}
