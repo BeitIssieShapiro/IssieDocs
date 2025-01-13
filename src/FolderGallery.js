@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     StyleSheet, View,
-    Alert, Text, Dimensions, Linking, 
+    Alert, Text, Dimensions, Linking,
     ActivityIndicator
 } from 'react-native';
 
@@ -30,6 +30,7 @@ import {
     renderMenuOption,
     getRoundedButton,
     IDMenuOptionsStyle,
+    globalStyles,
 } from './elements'
 import {
     Menu,
@@ -870,7 +871,7 @@ export default class FolderGallery extends React.Component {
 
         return (
             <DDProvider>
-            
+
 
                 <View style={styles.container}
                     onLayout={this.onLayout}>
@@ -984,33 +985,10 @@ export default class FolderGallery extends React.Component {
                     </View>
 
                     {/** Progress */}
-                    {this.state.progress && <View style={{ position: 'absolute', top: '25%', left: 0, width: '100%', zIndex: 1000, alignItems: 'center' }}>
-                        {/* <ProgressCircle
-                            radius={150}
-                            color="#3399FF"
-                            shadowColor="#999"
-                            bgColor="white"
-                            percent={this.state.progress.percent}
-                            borderWidth={5} >
-                            {this.state.progress.message && <Text style={{ zIndex: 100, fontSize: 25 }}>{this.state.progress.message}</Text>}
-                        </ProgressCircle> */}
-                        <Progress.Circle
-                            size={300} // Diameter (2 * radius)
-                            progress={percent / 100} // Convert to 0-1 range
-                            color="#3399FF"
-                            unfilledColor="#999999" // Shadow color equivalent
-                            borderWidth={5}
-                            thickness={8}
-                            showsText={false} // We'll add custom text
-                        >
-                            {message && (
-                                <View style={styles.textContainer}>
-                                    <Text style={styles.text}>{message}</Text>
-                                </View>
-                            )}
-                        </Progress.Circle>
+                    {this.state.progress && <View style={globalStyles.progressBarHost}>
+                        <Text style={{ fontSize: 28, marginBottom: 5 }}>{this.state.progress.message}</Text>
+                        <Progress.Bar width={this.state.windowSize.width * .6} progress={this.state.progress.percent / 100} style={[rtl && { transform: [{ scaleX: -1 }] }]} />
                     </View>}
-
 
 
                     {/* MainExplorer*/}
@@ -1112,7 +1090,7 @@ export default class FolderGallery extends React.Component {
 
                                 </View>
                                 {/* pages */}
-                                {this.state.inprogress && <View style={{ position: 'absolute', left: "50%", top: "50%" }}>
+                                {this.state.inprogress && <View style={{ position: 'absolute', left: "50%", top: "40%", zIndex: 2000 }}>
                                     <ActivityIndicator size="large" />
                                 </View>}
 
@@ -1175,7 +1153,7 @@ export default class FolderGallery extends React.Component {
                                             minWidth: "100%"
                                         }}>
                                             {this.sortFiles(items).map((item, i) => (<DDView
-                                                onDragStart={(e)=>trace("File drag starts",e)}
+                                                onDragStart={(e) => trace("File drag starts", e)}
                                                 key={i}
                                                 id={item.name}
                                                 dragState={{ item, folderID: this.state.currentFolder?.ID }}

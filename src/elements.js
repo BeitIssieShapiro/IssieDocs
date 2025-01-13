@@ -924,8 +924,18 @@ export const globalStyles = StyleSheet.create({
         left: "48%",
         top: "40%",
         zIndex: 1000
-    }
-
+    },
+    progressBarHost: {
+        position: 'absolute',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.35,
+        shadowRadius: 3.84,
+        borderRadius: 10,
+        padding: 10,
+        top: '25%', left: '15%', width: '70%', zIndex: 1000,
+        backgroundColor: 'white', alignItems: 'center'
+    },
 })
 
 export function getHeaderBackButton(callback) {

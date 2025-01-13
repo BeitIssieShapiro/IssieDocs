@@ -18,7 +18,7 @@ import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { arrLast, pageTitleAddition, setNavParam } from './utils';
-import { colors, dimensions, getImageDimensions, getRoundedButton, Icon, semanticColors } from './elements';
+import { colors, dimensions, getImageDimensions, getRoundedButton, globalStyles, Icon, semanticColors } from './elements';
 import EditorToolbar from './editor-toolbar';
 import { getNewPage, SRC_CAMERA, SRC_FILE, SRC_GALLERY, SRC_RENAME } from './newPage';
 import { EditModes, RootStackParamList } from './types';
@@ -1421,12 +1421,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     <ActivityIndicator size="large" /></View>
             }
 
-            {shareProgress >= 0 && <View style={styles.progressBarHost}>
+            {shareProgress >= 0 && <View style={globalStyles.progressBarHost}>
                 <Text style={{ fontSize: 28, marginBottom: 5 }}>{fTranslate("ExportProgress",
                     shareProgressPage,
                     (pageRef.current.count > 0 ? pageRef.current.count : 1))
                 }</Text>
-                <Progress.Bar width={windowSize.width * .6} progress={.7} style={[isRTL() && { transform: [{ scaleX: -1 }] }]} />
+                <Progress.Bar width={windowSize.width * .6} progress={shareProgress} style={[isRTL() && { transform: [{ scaleX: -1 }] }]} />
             </View>}
 
 
@@ -1607,17 +1607,6 @@ const styles = StyleSheet.create({
         left: "48%",
         top: "40%",
         zIndex: 1000
-    },
-    progressBarHost: {
-        position: 'absolute',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.35,
-        shadowRadius: 3.84,
-        borderRadius: 10,
-        padding: 10,
-        top: '25%', left: '15%', width: '70%', zIndex: 1000,
-        backgroundColor: 'white', alignItems: 'center'
     },
     moveCanvasButton: {
         position: 'absolute',

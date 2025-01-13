@@ -1,14 +1,9 @@
 new canvas
 ---------
 drag text that moves canvas
-V-thumbnail only for first page
 soft move canvas
 table:
   - move cells XX
-text: 
-  - initial font
-better progress of share
-  - busy indicator in FolderGalary - ShareIssieDocs
 
 android:
 - blank page bg
