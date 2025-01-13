@@ -7,15 +7,23 @@ export type RootStackParamList = {
         folder: string;
         share: boolean;
         goHome: () => void;
+        saveNewFolder:any,
         goHomeAndThenToEdit: (path: string, pageIndex: number) => void;
+        returnFolderCallback:any;
     },
     SavePhoto: {
-        uri: string;
-        isBlank: boolean;
+        sheet:any,
+        folder:any,
+        uri?: string;
+        name?:string,
+        isBlank?: boolean;
         imageSource: string;
         addToExistingPage?: any;
         goHomeAndThenToEdit?: any;
         pageIndex?: number;
+        returnFolderCallback:any,
+        saveNewFolder: any,
+        title:string;
     };
     // Other routes...
 };

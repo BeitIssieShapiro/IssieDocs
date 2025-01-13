@@ -197,15 +197,15 @@ export function TextSizePicker(props) {
     const textSizesAct = textSizes
     let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
     const simpleToolbarHeight = Math.max(buttonSize + 10, minTextSizePickerCollapsedSize);
-    //const totalHeight = simpleToolbarHeight + (openMore ? 60 : 0);
+    const totalHeight = simpleToolbarHeight + (openMore ? 60 : 0);
 
-    // useEffect(() => {
-    //     if (props.open) {
-    //         setHeight(totalHeight)
-    //     } else {
-    //         setHeight(0);
-    //     }
-    // }, [openMore, props.open, totalHeight]);
+    useEffect(() => {
+        if (props.open) {
+            setHeight(totalHeight)
+        } else {
+            setHeight(0);
+        }
+    }, [openMore, props.open, totalHeight]);
 
     //trace("text size picker", props.open ? (simpleToolbarHeight + (openMore ? 60 : 0)) : 0)
 

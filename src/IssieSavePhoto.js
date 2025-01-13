@@ -164,7 +164,11 @@ export default class IssieSavePhoto extends React.Component {
       }
       pathToSave = decodeURI(this.props.route.params.uri);
     }
-    trace("Open SavePhoto with imageUri: ", imageUri, "pdf?", pdf)
+    // trace("Open SavePhoto with imageUri: ", imageUri, "pdf?", pdf, this.props.route.params.sheet)
+    // if (this.props.route.params.sheet?._pages?.length > 1) {
+    //   multiPage = true;
+    // }
+
 
     let folder = this.props.route.params.folder;
     let pageName = this.props.route.params.name;
@@ -373,18 +377,24 @@ export default class IssieSavePhoto extends React.Component {
         }
         trace("save: src - ", newPathToSave, "target:", filePath)
 
+        let thumbnailSrc = undefined
         if (this.state.multiPage) {
           //create a folder with the name of the file (happens implicitly)
           for (let i = 0; i < this.state.pages.length; i++) {
             let page = this.state.pages[i];
             await FileSystem.main.saveFile(page, filePath + "/" + i + ".jpg");
           }
-          await FileSystem.main.saveThumbnail(filePath + "/0" + ".jpg");
+          thumbnailSrc = filePath + "/0" + ".jpg";
         } else {
           //move/copy entire folder, or save single file
           await FileSystem.main.saveFile(newPathToSave, filePath, this.isDuplicate());
-          await FileSystem.main.saveThumbnail(filePath);
+          thumbnailSrc = filePath
         }
+
+        if (!this.isRename() && !this.isDuplicate()) {
+          await FileSystem.main.saveThumbnail(thumbnailSrc);
+        }
+
 
         if ((this.isRename() || this.isDuplicate()) && newPathToSave.endsWith('.jpg')) {
           //single existing file
@@ -398,14 +408,11 @@ export default class IssieSavePhoto extends React.Component {
           await FileSystem.main._iterateAttachments(newPathToSave, async (srcAttachmentPath, attachmentName) => {
             await FileSystem.main.saveFile(srcAttachmentPath, filePath + FileSystem.ATACHMENT_PREFIX + attachmentName, this.isDuplicate());
           })
-
         }
 
         if (this.isRename() || this.isDuplicate()) {
           await FileSystem.main.renameOrDuplicateThumbnail(newPathToSave, filePath, this.isDuplicate());
         }
-
-
 
         let returnFolderCallback = this.props.route.params.returnFolderCallback;
         if (returnFolderCallback && folderID) {
@@ -840,7 +847,7 @@ export default class IssieSavePhoto extends React.Component {
                 imageStyle={{ resizeMode: 'contain' }}
                 blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
                 source={normalizeFoAndroid({ uri: this.state.imageUri })}
-              /> }
+              />}
 
             {cropFrame}
             {PageNameInput}

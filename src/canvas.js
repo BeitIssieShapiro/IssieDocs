@@ -114,7 +114,6 @@ function Canvas({
             const end2 = (Math.abs(x - x2) < threshold && Math.abs(y - y2) < threshold);
 
             if (end1 || end2) return true;
-            trace("xxx", p.id, selectedID)
             if (p.id == selectedID) {
                 trace("on trash?", x, y, delX, delY)
             }

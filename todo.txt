@@ -1,6 +1,7 @@
 new canvas
 ---------
 drag text that moves canvas
+V-thumbnail only for first page
 soft move canvas
 table:
   - move cells XX
@@ -15,9 +16,6 @@ android:
 - share sheet
 - read media external (read pdf)
 - save after add-page from images
-- rename in page
-- rename from main folders (parse error)
-
 
 
 version 1.5:

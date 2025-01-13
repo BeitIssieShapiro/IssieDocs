@@ -239,6 +239,7 @@ export function Canvas({
         currentElementTypeRef.current = currentElementType;
     }, [currentElementType]);
 
+
     useEffect(() => {
         if (imageSource?.uri) {
             Image.getSize(imageSource.uri).then((size) => {
@@ -588,7 +589,6 @@ export function Canvas({
             onLayout={() => {
                 setTimeout(() =>
                     canvasRef.current?.measureInWindow((absX, absY) => {
-                        console.log("Canvas Layout", absX, absY)
                         viewOffset.current = { x: absX, y: absY };
                     }), 500);
             }}

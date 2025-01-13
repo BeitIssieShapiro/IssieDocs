@@ -37,8 +37,6 @@ const availableMarkerSize = [
     10, 20, 30, 40, 50
 ]
 
-const pickerMenuHeight = 70;
-
 const ButtonSpacer = (props) => (<Spacer key={16} width={props.width || 23} />);
 
 function spread(btns) {
@@ -109,11 +107,8 @@ function EditorToolbar({
 
     const [showExtMenu, setShowExtMenu] = useState(false);
     const [toolbarHeight, setToolbarHeight] = useState(dimensions.toolbarHeight);
-    const [textMenuHeight, setTextMenuHeight] = useState(0);
-    const [colorMenuHeight, setColorMenuHeight] = useState(0);
-    const [brushMenuHeight, setBrushMenuHeight] = useState(0);
-    const [zoomMenuHeight, setZoomMenuHeight] = useState(0);
-    const [imageMenuHeight, setImageMenuHeight] = useState(0);
+
+    const [menuHeight, setMenuHeight] = useState(0);
 
     const featuresRef = useRef(getFeaturesSetting());
 
@@ -122,8 +117,8 @@ function EditorToolbar({
     const [tableRows, setTableRows] = useState(Table ? Table.horizontalLines.length - 1 : 3);
 
     useEffect(() => {
-        onToolBarDimensionsChange(toolbarHeight, Math.max(textMenuHeight, colorMenuHeight, brushMenuHeight, zoomMenuHeight, imageMenuHeight))
-    }, [textMenuHeight, colorMenuHeight, brushMenuHeight, zoomMenuHeight, imageMenuHeight, toolbarHeight]);
+        onToolBarDimensionsChange(toolbarHeight, menuHeight)
+    }, [menuHeight, toolbarHeight]);
 
     useEffect(() => {
         if (Table) {
@@ -181,7 +176,7 @@ function EditorToolbar({
         )
     }, [showExtMenu, windowSize])
 
-    onModeButtonClick = useCallback((type) => {
+    onModeButtonClick = useCallback((type, height) => {
         let pickerTypeChanged = false;
         if (type !== showPickerType) {
             pickerTypeChanged = (showPickerType != Pickers.NONE);
@@ -189,10 +184,19 @@ function EditorToolbar({
             //pickerTypeChanged = true;
         }
 
+        const checkPickerChange = () => {
+            if (!pickerTypeChanged) setShowPicker(oldVal => {
+                if (!oldVal) {
+                    setMenuHeight(height);
+                }
+                return !oldVal
+            });
+        }
+
         switch (type) {
             case Pickers.TEXT:
                 if (isTextMode) {
-                    if (!pickerTypeChanged) setShowPicker(oldVal => !oldVal);
+                    checkPickerChange()
                 } else {
                     onTextMode();
                     setShowExtMenu(false);
@@ -200,7 +204,7 @@ function EditorToolbar({
                 break;
             case Pickers.BRUSH:
                 if (isBrushMode) {
-                    if (!pickerTypeChanged) setShowPicker(oldVal => !oldVal);
+                    checkPickerChange()
                 } else {
                     onBrushMode();
                     setShowExtMenu(false);
@@ -208,7 +212,7 @@ function EditorToolbar({
                 break;
             case Pickers.TABLE:
                 if (isTableMode) {
-                    if (!pickerTypeChanged) setShowPicker(oldVal => !oldVal);
+                    checkPickerChange()
                 } else {
                     const tableExists = onTableMode();
                     if (!tableExists) {
@@ -218,14 +222,14 @@ function EditorToolbar({
                 break;
             case Pickers.MARKER:
                 if (isMarkerMode) {
-                    if (!pickerTypeChanged) setShowPicker(oldVal => !oldVal);
+                    checkPickerChange()
                 } else {
                     onMarkerMode();
                 }
                 break;
             case Pickers.IMAGE:
                 if (isImageMode) {
-                    if (!pickerTypeChanged) setShowPicker(oldVal => !oldVal);
+                    checkPickerChange()
                 } else {
                     onImageMode();
                 }
@@ -245,7 +249,7 @@ function EditorToolbar({
                 break;
             case Pickers.RULER:
                 if (isRulerMode) {
-                    if (!pickerTypeChanged) setShowPicker(oldVal => !oldVal);
+                    checkPickerChange()
                 } else {
                     onRulerMode();
                 }
@@ -254,7 +258,7 @@ function EditorToolbar({
     }, [isVoiceMode, isTextMode, isBrushMode, isTableMode, isImageMode, isAudioMode, isMarkerMode, showPickerType, showPicker]);
 
 
-    onSelectButtonClick = useCallback((type, preservePrevious, setMenuHeight, height) => {
+    onSelectButtonClick = useCallback((type, preservePrevious, height) => {
         if (showPickerType === type) {
             setShowPicker(oldVal => {
                 if (setMenuHeight) {
@@ -300,7 +304,7 @@ function EditorToolbar({
         previewFontSize = dimensions.toolbarHeight - 5;
     }
 
-    const rullerBtn = <IconButton onPress={() => onModeButtonClick(Pickers.RULER)} color={isRulerMode ? color : semanticColors.editPhotoButton}
+    const rullerBtn = <IconButton onPress={() => onModeButtonClick(Pickers.RULER, 70)} color={isRulerMode ? color : semanticColors.editPhotoButton}
         iconType="material-community" icon="ruler" size={49} iconSize={45} selected={isRulerMode} ensureContrast={true} />;
 
 
@@ -308,26 +312,26 @@ function EditorToolbar({
     const extMenu = []
 
     if (featuresRef.current.includes(FEATURES.marker)) {
-        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.MARKER)} color={isMarkerMode ? color : semanticColors.editPhotoButton}
+        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.MARKER, 70)} color={isMarkerMode ? color : semanticColors.editPhotoButton}
             iconType="material-community" icon="marker" size={50} iconSize={45} selected={isMarkerMode} ensureContrast={true} />
         )
     }
 
     if (featuresRef.current.includes(FEATURES.image)) {
-        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.IMAGE)
+        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.IMAGE, 70)
         } color={semanticColors.editPhotoButton}
             icon={"image"} size={47} iconSize={45} selected={isImageMode} />)
     }
     if (featuresRef.current.includes(FEATURES.audio)) {
 
-        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.AUDIO)
+        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.AUDIO, 70)
         } color={semanticColors.editPhotoButton}
             iconType="material-community" icon={"microphone"} size={47} iconSize={45} selected={isAudioMode} />)
     }
 
     if (featuresRef.current.includes(FEATURES.table)) {
 
-        extMenu.push(< IconButton onPress={() => onModeButtonClick(Pickers.TABLE)
+        extMenu.push(< IconButton onPress={() => onModeButtonClick(Pickers.TABLE, isScreenNarrow() ? 140 : 70)
         } color={isTableMode ? (Table ? Table.color : color) : semanticColors.editPhotoButton}
             iconType="font-awesome" icon="table" size={47} iconSize={42} selected={isTableMode} ensureContrast={true} />)
     }
@@ -335,7 +339,7 @@ function EditorToolbar({
         extMenu.push(rullerBtn);
     }
 
-    const zoomBtn = <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM, undefined, setZoomMenuHeight, 55)} color={semanticColors.editPhotoButton}
+    const zoomBtn = <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM, false, 55)} color={semanticColors.editPhotoButton}
         icon="zoom-in" size={50} iconSize={45} />;
     if (extMenu.length > 0) {
         extMenu.push(zoomBtn);
@@ -343,12 +347,12 @@ function EditorToolbar({
 
 
     const modesMenu = [
-        <IconButton key={11} onPress={() => onModeButtonClick(Pickers.TEXT)} icon={translate("A")} isText={true} selected={isTextMode}
+        <IconButton key={11} onPress={() => onModeButtonClick(Pickers.TEXT, 70)} icon={translate("A")} isText={true} selected={isTextMode}
             color={isTextMode ? color : semanticColors.editPhotoButton} size={55} iconSize={rtl ? 45 : 40} ensureContrast={true}
         />,
-        <IconButton key={13} onPress={() => onModeButtonClick(Pickers.BRUSH)} icon={"edit"} size={55}
+        <IconButton key={13} onPress={() => onModeButtonClick(Pickers.BRUSH, 70)} icon={"edit"} size={55}
             color={isBrushMode ? color : semanticColors.editPhotoButton} iconSize={45} selected={isBrushMode} ensureContrast={true} />,
-        <IconButton onPress={() => onSelectButtonClick(Pickers.COLOR, true)} icon={"color-lens"}
+        <IconButton onPress={() => onSelectButtonClick(Pickers.COLOR, true, 70)} icon={"color-lens"}
             size={55} iconSize={45} color={semanticColors.editPhotoButton} />,
         extMenu.length > 0 ? <IconButton onPress={() => setShowExtMenu(currVal => !currVal)} icon={showExtMenu ? "expand-less" : "expand-more"}
             size={45} color={semanticColors.editPhotoButton} /> : zoomBtn,
@@ -488,7 +492,7 @@ function EditorToolbar({
             }}
             onHeightChanged={(height) => {
                 trace("color height ", height)
-                setColorMenuHeight(height)
+                setMenuHeight(height)
             }}
             maxHeight={maxFloatingHeight}
         />
@@ -508,7 +512,7 @@ function EditorToolbar({
             }}
             onHeightChanged={(height) => {
                 trace("Text height ", height)
-                setTextMenuHeight(height)
+                setMenuHeight(height)
             }}
             maxHeight={maxFloatingHeight}
             onSelectTextAlignment={onSelectTextAlignment}
@@ -517,7 +521,7 @@ function EditorToolbar({
         />
 
         {/*View for selecting brush size*/}
-        <FadeInView height={(showPickerType === Pickers.BRUSH || showPickerType === Pickers.RULER) && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
+        <FadeInView height={(showPickerType === Pickers.BRUSH || showPickerType === Pickers.RULER) && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 {
                     availableBrushSize.map((size, i) => <BrushSizePicker
@@ -536,7 +540,7 @@ function EditorToolbar({
         </FadeInView>
 
         {/*View for zoom*/}
-        <FadeInView height={showPickerType === Pickers.ZOOM && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%', height: zoomMenuHeight }]}>
+        <FadeInView height={showPickerType === Pickers.ZOOM && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 <IconButton onPress={onZoomOut} icon={"zoom-out"} size={55} iconSize={45} />
                 <IconButton onPress={onZoomIn} icon={"zoom-in"} size={55} iconSize={45} />
@@ -544,7 +548,7 @@ function EditorToolbar({
         </FadeInView>
 
         {/*View for add image*/}
-        <FadeInView height={showPickerType === Pickers.IMAGE && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
+        <FadeInView height={showPickerType === Pickers.IMAGE && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: '35%' }]}>
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 <IconButton onPress={onAddImageFromGallery} icon={"new-image"} size={55} iconSize={45} iconType="svg" color="black" />
                 <IconButton onPress={onAddImageFromCamera} icon={"new-camera"} size={55} iconSize={45} iconType="svg" color="black" />
@@ -552,7 +556,7 @@ function EditorToolbar({
         </FadeInView>
 
         {/*View for Audio*/}
-        {/* <FadeInView height={showPickerType === Pickers.AUDIO && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
+        {/* <FadeInView height={showPickerType === Pickers.AUDIO && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 <RecordButton audioFile={currAudio} size={45} backgroundColor="red" height={55} revision={1} onNewAudioFile={(filePath)=>{
                     setCurrAudio(filePath);
@@ -562,7 +566,7 @@ function EditorToolbar({
         </FadeInView> */}
 
         {/*View for selecting marker size*/}
-        <FadeInView height={showPickerType === Pickers.MARKER && showPicker ? pickerMenuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
+        <FadeInView height={showPickerType === Pickers.MARKER && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
 
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 {
@@ -583,7 +587,7 @@ function EditorToolbar({
 
         {/*View for selecting Table options*/}
         <FadeInView
-            height={showPickerType === Pickers.TABLE && showPicker ? (isScreenNarrow() ? 2 * pickerMenuHeight : pickerMenuHeight) : 0}
+            height={showPickerType === Pickers.TABLE && showPicker ? menuHeight : 0}
             style={[
                 styles.pickerView,
                 {
@@ -591,14 +595,14 @@ function EditorToolbar({
                     justifyContent: "space-evenly", alignItems: "center", flexWrap: "wrap"
                 }
             ]}>
-            <ToolbarGroup width={180} height={pickerMenuHeight - 15}>
+            <ToolbarGroup width={180} height={menuHeight - 15}>
                 <NumberSelector direction={"row-reverse"} value={tableRows} setValue={setRows} icon="table-rows" />
             </ToolbarGroup>
-            <ToolbarGroup width={180} height={pickerMenuHeight - 15}>
+            <ToolbarGroup width={180} height={menuHeight - 15}>
                 <NumberSelector direction={"row-reverse"} value={tableCols} setValue={setColumns} icon="table-rows" rotateDeg={90} />
             </ToolbarGroup>
 
-            <ToolbarGroup width={100} height={pickerMenuHeight - 15}>
+            <ToolbarGroup width={100} height={menuHeight - 15}>
                 {
                     [2, 5, 8].map((borderWidth, i) => (<LineWidthSelector
                         height={40}
@@ -612,7 +616,7 @@ function EditorToolbar({
                 }
             </ToolbarGroup>
 
-            <ToolbarGroup width={100} height={pickerMenuHeight - 15}>
+            <ToolbarGroup width={100} height={menuHeight - 15}>
                 {
                     ["0,0", "2,2", "4,2"].map((style, i) => (<LineStyleSelector
                         height={40}
@@ -635,7 +639,7 @@ function EditorToolbar({
                     }
                 }} isOn={Table !== undefined} />
                  */}
-            <ToolbarGroup width={130} height={pickerMenuHeight - 15} onPress={() => {
+            <ToolbarGroup width={130} height={menuHeight - 15} onPress={() => {
                 if (Table) {
                     TableActions.delete(Table.id);
                 } else {

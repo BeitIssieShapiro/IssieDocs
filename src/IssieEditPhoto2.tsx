@@ -20,7 +20,7 @@ import { trace } from './log';
 import { arrLast, pageTitleAddition, setNavParam } from './utils';
 import { colors, dimensions, getImageDimensions, getRoundedButton, Icon, semanticColors } from './elements';
 import EditorToolbar from './editor-toolbar';
-import { getNewPage, SRC_CAMERA, SRC_FILE, SRC_GALLERY } from './newPage';
+import { getNewPage, SRC_CAMERA, SRC_FILE, SRC_GALLERY, SRC_RENAME } from './newPage';
 import { EditModes, RootStackParamList } from './types';
 import { backupElement, cloneElem, getId, restoreElement, tableColWidth, tableHeight, tableRowHeight, tableWidth, wait } from './canvas/utils';
 import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
@@ -53,6 +53,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [canvasSize, setCanvasSize] = useState<ImageSize>({ width: -1, height: -1 })
     const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
     const [toolbarHeight, setToolbarHeight] = useState<number>(dimensions.toolbarHeight);
+    const [floatingToolbarHeight, setFloatingToolbarHeight] = useState<number>(0);
+    
 
     const [zoom, setZoom] = useState<number>(1);
     const [status, setStatus] = useState<string>("");
@@ -250,10 +252,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             .catch((e) => Alert.alert("File Save Failed" + e))
 
         //  Save thumbnail
-        mainViewRef.current.capture().then((uri: string) => {
-            trace("Thumbnail saved", uri)
-            FileSystem.main.saveThumbnail(uri, pageRef.current);
-        });
+        if (currPageIndexRef.current === 0) {
+            mainViewRef.current.capture().then((uri: string) => {
+                trace("Thumbnail saved", uri)
+                FileSystem.main.saveThumbnail(uri, pageRef.current);
+            });
+        }
     }
 
     const doShare = async () => {
@@ -516,7 +520,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             const elem = arrLast(linesRef.current);
             if (!elem) return;
             queue.current.pushLine(elem);
-            setCurrentEdited(prev => ({ ...prev, lineId: elem.id }))
+            const newCurrEdited = { ...currentEditedRef.current, lineId: elem.id }
+            currentEditedRef.current = newCurrEdited
+            setCurrentEdited(newCurrEdited);
         }
 
         save();
@@ -531,7 +537,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         if (modeRef.current != EditModes.Text) return;
         const textElem = textsRef.current.find(t => t.id == currentEditedRef.current.textId);
         if (textElem) {
-            // todo verify text elem has changed
+            // verify text elem has changed
             if (textElem.backup) {
                 const changedElem = restoreElement(textElem) as SketchText;
                 const origElem = textElem as SketchText;
@@ -548,7 +554,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     save();
 
                 }
-                setCurrentEdited(prev => ({ ...prev, textId: undefined }));
+                const newCurrEdited = { ...currentEditedRef.current, textId: undefined }
+                currentEditedRef.current = newCurrEdited
+                setCurrentEdited(newCurrEdited);
+
             } else {
                 // new text element
                 if (textElem.text != "") {
@@ -557,7 +566,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     save();
 
                 }
-                setCurrentEdited(prev => ({ ...prev, textId: undefined }));
+                const newCurrEdited = { ...currentEditedRef.current, textId: undefined }
+                currentEditedRef.current = newCurrEdited
+                setCurrentEdited(newCurrEdited);
             }
         }
     }
@@ -571,24 +582,29 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 const textElem = textsRef.current.find(t => t.id == elem.id);
                 if (textElem) {
                     backupElement(textElem);
-                    setCurrentEdited(prev => ({ ...prev, textId: elem.id }))
+                    const newCurrEdited = { ...currentEditedRef.current, textId: elem.id }
+                    currentEditedRef.current = newCurrEdited
+                    setCurrentEdited(newCurrEdited);
 
                     // Update the font and color based on the selected text
-                    setFontSize(textElem.fontSize);
+                    setFontSize(textElem.fontSize * ratioRef.current);
                     setTextColor(textElem.color);
                     setTextAlignment(textElem.rtl ? 'Right' : 'Left')
                 }
             } else {
+                trace("new text", fontSizeRef.current, ratioRef.current)
                 const newTextElem: SketchText = {
                     id: getId("T"),
                     text: "",
                     color: brushColorRef.current,
                     rtl: textAlignmentRef.current == 'Right',
-                    fontSize: fontSizeRef.current,
+                    fontSize: fontSizeRef.current / ratioRef.current,
                     x: p[0],
                     y: p[1],
                 };
-                setCurrentEdited(prev => ({ ...prev, textId: newTextElem.id }));
+                const newCurrEdited = { ...currentEditedRef.current, textId: newTextElem.id }
+                currentEditedRef.current = newCurrEdited
+                setCurrentEdited(newCurrEdited);
                 textsRef.current.push(newTextElem);
             }
 
@@ -596,12 +612,16 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         } else if (modeRef.current === EditModes.Ruler && elem && "id" in elem) {
             const lineElem = linesRef.current.find(line => line.id == elem.id);
             if (lineElem) {
-                setCurrentEdited(prev => ({ ...prev, lineId: elem.id }));
+                const newCurrEdited = { ...currentEditedRef.current, lineId: elem.id }
+                currentEditedRef.current = newCurrEdited
+                setCurrentEdited(newCurrEdited);
                 setLines([...linesRef.current]);
             }
         } else if (modeRef.current === EditModes.Image && elem && "id" in elem) {
             trace("set current image")
-            setCurrentEdited(prev => ({ ...prev, imageId: elem.id }));
+            const newCurrEdited = { ...currentEditedRef.current, imageId: elem.id }
+            currentEditedRef.current = newCurrEdited
+            setCurrentEdited(newCurrEdited);
         } else if (modeRef.current === EditModes.Audio) {
             // first check if an edited recording exists
             const audio = audiosRef.current.find(ae => ae.editMode);
@@ -1101,7 +1121,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             const textElem = textsRef.current.find(t => t.id == currentEditedRef.current.textId);
             if (textElem) {
                 textElem.color = textColorRef.current;
-                textElem.fontSize = fontSizeRef.current;
+                textElem.fontSize = fontSizeRef.current / ratioRef.current;
                 textElem.rtl = textAlignmentRef.current == 'Right';
                 setTexts([...textsRef.current]);
             }
@@ -1164,9 +1184,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     // NEW OR UPDATED: stub for handleToolbarDimensionChange
-    function handleToolbarDimensionChange(height: number, exHeight: number) {
+    function handleToolbarDimensionChange(height: number, floatingToolbarHeight: number) {
         setToolbarHeight(height);
-        //console.log("Toolbar dimension changed:", height, exHeight);
+        setFloatingToolbarHeight(floatingToolbarHeight);
+        console.log("Toolbar dimension changed:", height, floatingToolbarHeight);
     }
 
     // -------------------------------------------------------------------------
@@ -1247,10 +1268,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         );
     }
 
-    const moveArrows = (windowSize: ImageSize, keyboardHeight: number, zoom: number, moveCanvas: Offset, toolbarHeight: number) => {
+    const moveArrows = (windowSize: ImageSize, keyboardHeight: number, zoom: number, moveCanvas: Offset, toolbarHeight: number, floatingToolbarHeight:number) => {
         const sidesTop = Math.min(windowSize.height / 2 - 35, windowSize.height - keyboardHeight - 95);
-        const upDownLeft = windowSize.width / 2;
-        const upDownTop = toolbarHeight + 45
+        const upDownLeft = windowSize.width / 2 - 35; //half the size of the button
+        const upDownTop = toolbarHeight + floatingToolbarHeight 
         const verticalMovePossible = modeRef.current == EditModes.Text || zoom > 1;
         const horizMovePossible = zoom > 1;
 
@@ -1275,7 +1296,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     style={{ top: sidesTop, right: 10 }} disabled={disabledRight}
                 />}
                 {verticalMovePossible && <MoveButton key={3} rotate={270} onPress={() => handleMoveCanvas({ x: moveCanvas.x, y: moveCanvas.y + 50 })}
-                    style={{ top: upDownTop, left: upDownLeft - 50 }} disabled={moveCanvas.y == 0}
+                    style={{ top: upDownTop + 7, left: upDownLeft - 50 }} disabled={moveCanvas.y == 0}
                 />}
                 {verticalMovePossible && <MoveButton key={4} rotate={90} onPress={() => handleMoveCanvas({ x: moveCanvas.x + 50, y: moveCanvas.y - 50 })}
                     style={{ top: upDownTop, left: upDownLeft + 50 }} disabled={disabledBottom}
@@ -1330,6 +1351,19 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
     }
 
+    async function handleRename(isRename: boolean) {
+        navigation.navigate('SavePhoto', {
+            sheet: pageRef.current,
+            imageSource: SRC_RENAME,
+            folder: route.params.folder,
+            name: pageRef.current.name,
+            returnFolderCallback: route.params.returnFolderCallback,
+            saveNewFolder: route.params.saveNewFolder,
+            title: isRename ? translate("RenameFormTitle") : translate("MovePageFormTitle"),
+            goHomeAndThenToEdit: route.params.goHomeAndThenToEdit
+        });
+    }
+
     async function handleUpdateAudioFile(filePath: string) {
         const audioElem = audiosRef.current.find(au => au.editMode);
         if (audioElem) {
@@ -1367,16 +1401,17 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setMoveCanvas({ x, y });
     }
 
-    trace("markerSize", markerWidthRef.current, "brushSize", strokeWidthRef.current)
-    let currStrokeWidth = modeRef.current == EditModes.Marker ? markerWidthRef.current : strokeWidthRef.current;
 
     return (
         <SafeAreaView
             style={styles.mainContainer}
             onLayout={(e) => {
+                trace("onLayout")
                 const { width, height } = e.nativeEvent.layout;
+                trace("onLayout", width, height)
                 setWindowSize({ width, height });
             }}
+
         >
             {/* <View style={{ position: "absolute", left: sideMargin, top: 100, height: 5, width: canvasSize.width, backgroundColor: "green", zIndex: 10000 }} />
             <View style={{ position: "absolute", left: 0, top: 110, height: 5, width: windowSize.width, backgroundColor: "yellow", zIndex: 10000 }} />
@@ -1406,9 +1441,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 }}
                 inFoldersMode={false}
 
-                onRename={() => {
-                    //rename(true) todo
-                }}
+                onRename={handleRename}
                 onDeletePage={pageRef.current && pageRef.current.count > 1 ? handleDeletePage : undefined}
                 deletePageIndex={currPageIndex + 1}
                 pagesCount={pageRef.current.count}
@@ -1435,7 +1468,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     }
                 }}
                 Table={tables?.[0]} // example if you only use the first table
-                fontSize4Toolbar={(size: number) => size}
+                fontSize4Toolbar={(size: number) => size}///ratioRef.current}
                 onZoomOut={() => doZoom(zoomRef.current - 0.5)}
                 onZoomIn={() => doZoom(zoomRef.current + 0.5)}
                 eraseMode={eraseMode}
@@ -1483,7 +1516,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     canvasWidth={windowSize.width}
                     canvasHeight={windowSize.height - toolbarHeight - dimensions.toolbarMargin}
                     onActualCanvasSize={(actualSize, actualMargin, viewOffset, ratio) => {
-                        //trace("actual sizes", actualSize, actualMargin, viewOffset, ratio, windowSize)
+                        // trace("actual sizes", actualSize, actualMargin, viewOffset, ratio, windowSize)
                         if (actualSize.height != canvasSize.height || actualSize.width != canvasSize.width) {
                             setCanvasSize(actualSize)
                         }
@@ -1545,7 +1578,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     null
             }
 
-            {moveArrows(windowSize, keyboardHeight, zoom, moveCanvas, toolbarHeight)}
+            {moveArrows(windowSize, keyboardHeight, zoom, moveCanvas, toolbarHeight, floatingToolbarHeight)}
         </SafeAreaView>
     );
 
