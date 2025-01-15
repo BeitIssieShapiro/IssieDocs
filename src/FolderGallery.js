@@ -335,12 +335,14 @@ export default class FolderGallery extends React.Component {
 
         DocumentPicker.pick({
             type: [DocumentPicker.types.images, DocumentPicker.types.pdf]
-        }).then(res => {
+        }).then(async (res) => {
             if (res.length > 0) {
+                const pdfUrl = await FileSystem.contentUriToFilePath(res[0].uri).catch(e=>trace("convert err", e));
+                
                 this.props.navigation.navigate('SavePhoto', {
                     imageSource: SRC_FILE,
 
-                    uri: res[0].uri,
+                    uri: pdfUrl,
                     folder: this.state.currentFolder,
                     returnFolderCallback: (f) => this.setReturnFolder(f),
                     saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID)
@@ -434,6 +436,7 @@ export default class FolderGallery extends React.Component {
         if (!this.state.selected) return;
 
         FileSystem.main.exportWorksheet(this.state.selected).then(sheetArchivePath => {
+            trace("share file", sheetArchivePath)
             const shareOptions = {
                 title: translate("ShareWithTitle"),
                 subject: translate("ShareEmailSubject"),
@@ -904,6 +907,7 @@ export default class FolderGallery extends React.Component {
 
                     {this.state.showMenu ?
                         <SettingsMenu
+                            windowSize={this.state.windowSize}
                             onAbout={() => this.gotoAbout()}
                             onClose={() => this.closeMenu()}
                             onViewChange={(style) => this.setState({ viewStyle: style })}

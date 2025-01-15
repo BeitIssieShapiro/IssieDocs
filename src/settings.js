@@ -59,9 +59,9 @@ export function getUseColorSetting() {
 }
 
 export function getFeaturesSetting() {
-    const featureStr = getSetting(FEATURES.name, [FEATURES.image, FEATURES.marker, FEATURES.ruler, FEATURES.table, FEATURES.voice]);
-    //trace("getFeaturesSetting", featureStr)
-    return featureStr;
+    const features = getSetting(FEATURES.name)
+    if (features && Array.isArray(features)) return features;
+    return [FEATURES.image, FEATURES.marker, FEATURES.ruler, FEATURES.table, FEATURES.voice];
 }
 
 export function getUseTextSetting() {
@@ -70,7 +70,8 @@ export function getUseTextSetting() {
 
 export function getSetting(name, def) {
     let setting = Settings.get(name);
-    if (setting === undefined) {
+    //trace("getSetting", setting)
+    if (setting === undefined || setting === null) {
         setting = def;
     }
     return setting;

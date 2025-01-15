@@ -19,3 +19,7 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+project.ext.react = [
+    nodeExecutableAndArgs: ["/opt/homebrew/bin/node"]
+]

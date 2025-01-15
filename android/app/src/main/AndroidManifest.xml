@@ -21,6 +21,20 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
+
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+
+            <!-- to see your app in "Open with" for local files -->
+            <data android:scheme="file" />
+
+            <data android:mimeType="application/pdf" />
+            <data android:mimeType="application/zip" />
+            <data android:mimeType="image/jpeg" />
+            <data android:mimeType="image/png" />
+        </intent-filter>
+
       </activity>
       
       <provider

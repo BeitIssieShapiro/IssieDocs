@@ -126,6 +126,8 @@ interface CanvasProps {
     onTextYOverflow?: (elemId: string) => void;
     imageSource?: ImageURISource;
     currentElementType: ElementTypes;
+
+    viewShotRef: any;
 }
 
 /** A single (x, y) coordinate */
@@ -174,6 +176,7 @@ export function Canvas({
     canvasHeight,
     onActualCanvasSize,
     currentElementType,
+    viewShotRef
 }: CanvasProps) {
     // Refs & State
     const isMoving = useRef(false);
@@ -539,6 +542,7 @@ export function Canvas({
 
     function searchElement(cx: number, cy: number) {
         if (currentElementTypeRef.current === ElementTypes.Text) {
+            //console.log("searchElement txt",textsRef.current)
             return textsRef.current?.find(t => inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
         }
         if (currentElementTypeRef.current === ElementTypes.Image) {
@@ -614,6 +618,8 @@ export function Canvas({
             }}
             {...sketchResponder.panHandlers}
         >
+            <View style={{flex:1, backgroundColor:"white"}} collapsable={false} ref={viewShotRef} >
+
             {/* Background Image */}
             {imageSize && (
                 <Image
@@ -703,6 +709,8 @@ export function Canvas({
                     height: "100%"
                 }}
             >
+                {/* <Text>HHHH</Text> */}
+               
                 {/* Re-draw each path in the order they appear */}
                 {paths?.map((p) => {
                     const skPath = createSkiaPath(p.points, ratio.current);
@@ -908,6 +916,7 @@ export function Canvas({
                     </TouchableOpacity>}
                 </View>
             })}
+            </View>
         </Animated.View>
     );
 }

@@ -4,11 +4,8 @@ table:
   - move cells XX
 
 android:
-- blank page bg
 - icon, splash?
-- share sheet
 - read media external (read pdf)
-- save after add-page from images
 
 
 version 1.5:

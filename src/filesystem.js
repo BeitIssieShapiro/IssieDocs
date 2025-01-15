@@ -13,9 +13,16 @@ import { TemporaryDirectoryPath } from 'react-native-fs'
 import { PromiseAllProgress } from './utils';
 import uuid from 'react-native-uuid';
 
+
 const THUMBNAIL_SUFFIX = ".thumbnail.jpg";
 
 const ignore = () => { };
+
+function joinPaths(...segments) {
+    return segments
+        .map((seg) => seg.replace(/\/+$/, ""))
+        .join("/");
+}
 
 /**
  * Filesystem:
@@ -875,7 +882,7 @@ export class FileSystem {
         const date = new Date()
         let fn = Math.random() + '-' + date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + 'T' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2);
 
-        return RNFS.TemporaryDirectoryPath + fn + "." + ext
+        return _androidFileName(joinPaths(RNFS.TemporaryDirectoryPath, fn + "." + ext))
     }
 
     static getFileNameFromPath(path, withoutExt) {
@@ -887,6 +894,19 @@ export class FileSystem {
     }
 
 
+    static async contentUriToFilePath(contentUri) {
+        let ret = contentUri;
+        if (contentUri.startsWith("content://")) {
+
+            // e.g. store temp file in DocumentDirectoryPath or CachesDirectoryPath
+            ret = joinPaths(TemporaryDirectoryPath, "temp.pdf");
+
+            // Copy the file from content URI → localFilePath
+            // On Android, RNFS.copyFile(...) can handle content:// URIs (with proper permission).
+            await RNFS.copyFile(contentUri, ret);
+        }
+        return _androidFileName(ret);
+    }
 
     // size = {width, height}
     getStaticPageTempFile(pageType) {
@@ -948,7 +968,6 @@ export class FileSystem {
         const containingFolderInfoFileName = FileSystem.getTempFileName("metadata");
 
         files.push(containingFolderInfoFileName);
-
         if (sheet) {
             if (sheet.path.endsWith(".jpg")) {
                 files.push(sheet.defaultSrc);
@@ -971,7 +990,7 @@ export class FileSystem {
         const mdStr = JSON.stringify(folderMetaData);
         trace("add metadata file", mdStr)
         await FileSystem.main.writeFile(containingFolderInfoFileName, mdStr);
-        return zip(files, (TemporaryDirectoryPath + name + ".zip"));
+        return zip(files, _androidFileName(joinPaths(TemporaryDirectoryPath, name + ".zip"))).then(path => _androidFileName(path));
     }
 
 
@@ -998,7 +1017,7 @@ export class FileSystem {
                 const date = new Date()
                 let fn = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + ' ' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2);
 
-                return zip(allZipPaths, (TemporaryDirectoryPath + "IssieDocs Backup-" + fn + ".zip"));
+                return zip(allZipPaths, joinPaths(TemporaryDirectoryPath, "IssieDocs Backup-" + fn + ".zip")).then(path => _androidFileName(path));
             });
         })
 
@@ -1021,7 +1040,7 @@ export class FileSystem {
 
 
     async extractZipInfo(zipPath, unzipInPath) {
-        const unzipTargetPath = unzipInPath || RNFS.TemporaryDirectoryPath + "imported";
+        const unzipTargetPath = _androidFileName(unzipInPath || joinPaths(RNFS.TemporaryDirectoryPath, "imported"));
         // verify no files from last import:
         try {
             await RNFS.unlink(unzipTargetPath);

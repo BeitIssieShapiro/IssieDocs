@@ -731,6 +731,7 @@ export default class IssieSavePhoto extends React.Component {
 
     trace("SAVE: phase", this.state.phase)
     trace("PDF: size", this.state.pdfWidth, this.state.pdfHeight)
+    trace("save img", this.state.imageUri)
     return (
       <View style={styles.container}
         ref={v => this.topView = v}
@@ -794,14 +795,16 @@ export default class IssieSavePhoto extends React.Component {
                 style={{ flex: 1, width: this.state.pdfWidth, height: this.state.pdfHeight }}
                 source={{ uri: this.verifyFilePrefix(this.state.imageUri), path: this.verifyFilePrefix(this.state.imageUri) }}
                 page={this.state.pdfPage}
+                enablePaging={true}
+                
                 onLoadComplete={(numberOfPages, filePath, dim) => {
-                  trace("PDF: onLoadComplete", dim)
+                  trace("PDF: onLoadComplete", dim, numberOfPages)
                   if (!this.state.pdfWidthOnce) {
                     // setTimeout(()=>this.movePage(1), 200)
-                    setTimeout(() => this.setState({ pdfPage: 1 }), 200)
+                    //setTimeout(() => this.setState({ pdfPage: 1 }), 200)
                     this.setState({
                       pdfWidthOnce: true,
-                      pdfPage: numberOfPages,
+                      pdfPage: 1,
                       pdfPageCount: numberOfPages, pdfWidth: dim.width, pdfHeight: dim.height
                     })
                   }

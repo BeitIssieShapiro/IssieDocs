@@ -27,7 +27,7 @@ import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
 import { fTranslate, isRTL, translate } from './lang';
 import { FileContextMenu } from './file-context-menu';
 import { AudioElement2 } from './audio-elem-new';
-import ViewShot from 'react-native-view-shot';
+import { captureRef } from 'react-native-view-shot';
 import { generatePDF } from './pdf';
 import { Text } from 'react-native';
 import { migrateMetadata } from './state-migrate';
@@ -77,7 +77,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }));
 
     const modeRef = useRef<EditModes>(EditModes.Brush);
-    const mainViewRef = useRef<ViewShot>(null);
+    const capturedViewRef = useRef(null);
     const viewOffsetRef = useRef<Offset>({ x: 0, y: 0 })
 
     const [fontSize, setFontSize] = useState<number>(35);
@@ -255,10 +255,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         //  Save thumbnail
         if (currPageIndexRef.current === 0) {
-            mainViewRef.current.capture().then((uri: string) => {
-                trace("Thumbnail saved", uri)
-                FileSystem.main.saveThumbnail(uri, pageRef.current);
-            });
+            captureRef(capturedViewRef, { format: "jpg", quality: 0.6, height: dimensions.tileHeight, width: dimensions.tileWidth })
+                //mainViewRef.current?.capture()
+                .then((uri: string) => {
+                    trace("Thumbnail saved", uri)
+                    FileSystem.main.saveThumbnail(uri, pageRef.current);
+                }).catch((e) => trace("error save thumbnail", e));
         }
     }
 
@@ -277,14 +279,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         await wait(shareTimeMs);
         try {
-            const uri = await mainViewRef.current.capture()
+            const uri = await captureRef(capturedViewRef, { format: "jpg", quality: 0.9, result:"base64" })
+
             dataUrls.push(uri);
             for (let i = 1; i < pageRef.current.count; i++) {
                 setShareProgressPage(i + 1);
                 setShareProgress(i / pageRef.current.count)
                 await loadPage(pageRef.current, i);
                 await wait(shareTimeMs);
-                const uri = await mainViewRef.current.capture()
+                const uri = await captureRef(capturedViewRef, { format: "jpg", quality: 0.9,  result:"base64" })
                 dataUrls.push(uri);
             }
 
@@ -304,6 +307,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     subject: translate("ShareEmailSubject"),
                     url: shareUrl,
                     type: 'application/pdf',
+                    saveToFiles: true,
+                    showAppsToView: true,
                 };
 
                 // Share the PDF
@@ -672,28 +677,28 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         )
         let [x, y] = p;
 
-      
+
         let rMoveX = 0;
         let rMoveY = 0;
         if ((x + moveCanvasRef.current.x) / zoomRef.current < 5) {
             trace("hit left")
             rMoveX = 25;
-        } 
+        }
 
         if ((x + 30 + moveCanvasRef.current.x) * zoomRef.current > canvasSizeRef.current.width / ratioRef.current) {
             trace("hit right")
             rMoveX = -25;
-        } 
+        }
 
         if ((y + moveCanvasRef.current.y) / zoomRef.current < 0) {
             trace("hit top")
             rMoveY = 25;
-        } 
+        }
 
-        if ((y + fontSizeRef.current/ratioRef.current + moveCanvasRef.current.y) * zoomRef.current > canvasSizeRef.current.height / ratioRef.current) {
+        if ((y + fontSizeRef.current / ratioRef.current + moveCanvasRef.current.y) * zoomRef.current > canvasSizeRef.current.height / ratioRef.current) {
             trace("hit bottom")
             rMoveY = -25;
-        } 
+        }
 
         if (!moveRepeatRef.current && (rMoveX && rMoveX != 0) || (rMoveY && rMoveY != 0)) {
             moveRepeatRef.current = {
@@ -708,8 +713,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 offset: { x: 0, y: 0 },
             }
         }
-        if (moveRepeatRef.current ) moveRepeatRef.current.offset.x = rMoveX;
-        if (moveRepeatRef.current ) moveRepeatRef.current.offset.y = rMoveY;
+        if (moveRepeatRef.current) moveRepeatRef.current.offset.x = rMoveX;
+        if (moveRepeatRef.current) moveRepeatRef.current.offset.y = rMoveY;
 
 
 
@@ -1458,7 +1463,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
 
     return (
-        <SafeAreaView
+        <View
             style={styles.mainContainer}
             onLayout={(e) => {
                 trace("onLayout")
@@ -1466,6 +1471,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 trace("onLayout", width, height)
                 setWindowSize({ width, height });
             }}
+        //ref={mainViewRef}
 
         >
             {/* <View style={{ position: "absolute", left: sideMargin, top: 100, height: 5, width: canvasSize.width, backgroundColor: "green", zIndex: 10000 }} />
@@ -1564,56 +1570,57 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 maxFloatingHeight={windowSize.height - keyboardHeight}
             />
             <View style={styles.topMargin} />
-            <ViewShot ref={mainViewRef} options={{ format: "jpg", quality: 0.9, result: share ? "base64" : "tmpfile" }}>
-                <Canvas
-                    style={{ overflow: 'hidden', backgroundColor: 'gray' }}
-                    offset={moveCanvas}
-                    canvasWidth={windowSize.width}
-                    canvasHeight={windowSize.height - toolbarHeight - dimensions.toolbarMargin}
-                    onActualCanvasSize={(actualSize, actualMargin, viewOffset, ratio) => {
-                        // trace("actual sizes", actualSize, actualMargin, viewOffset, ratio, windowSize)
-                        if (actualSize.height != canvasSize.height || actualSize.width != canvasSize.width) {
-                            setCanvasSize(actualSize)
-                        }
-                        if (actualMargin !== sideMargin) {
-                            setSideMargin(actualMargin);
-                        }
-                        ratioRef.current = ratio;
-                        viewOffsetRef.current = viewOffset;
-                    }}
-                    zoom={zoom}
-                    onZoom={(newZoom) => doZoom(newZoom)}
-                    onMoveCanvas={handleMoveCanvas}
-                    minSideMargin={dimensions.minSideMargin}
-                    paths={paths}
-                    texts={texts}
-                    lines={lines}
-                    images={images}
-                    tables={tables}
-                    elements={audios}
-                    renderElements={handleRenderElements}
-                    elementsAttr={handleElementsAttr}
-                    currentEdited={currentEdited}
-                    onTextChanged={handleTextChanged}
-                    onSketchStart={handleSketchStart}
-                    onSketchStep={handleSketchStep}
-                    onSketchEnd={handleSketchEnd}
+            {/* <ViewShot ref={mainViewRef} options={{ format: "jpg", quality: 0.9, result: share ? "base64" : "tmpfile" }}> */}
+            <Canvas
+                viewShotRef={capturedViewRef}
+                style={{ overflow: 'hidden', backgroundColor: 'gray' }}
+                offset={moveCanvas}
+                canvasWidth={windowSize.width}
+                canvasHeight={windowSize.height - toolbarHeight - dimensions.toolbarMargin}
+                onActualCanvasSize={(actualSize, actualMargin, viewOffset, ratio) => {
+                    // trace("actual sizes", actualSize, actualMargin, viewOffset, ratio, windowSize)
+                    if (actualSize.height != canvasSize.height || actualSize.width != canvasSize.width) {
+                        setCanvasSize(actualSize)
+                    }
+                    if (actualMargin !== sideMargin) {
+                        setSideMargin(actualMargin);
+                    }
+                    ratioRef.current = ratio;
+                    viewOffsetRef.current = viewOffset;
+                }}
+                zoom={zoom}
+                onZoom={(newZoom) => doZoom(newZoom)}
+                onMoveCanvas={handleMoveCanvas}
+                minSideMargin={dimensions.minSideMargin}
+                paths={paths}
+                texts={texts}
+                lines={lines}
+                images={images}
+                tables={tables}
+                elements={audios}
+                renderElements={handleRenderElements}
+                elementsAttr={handleElementsAttr}
+                currentEdited={currentEdited}
+                onTextChanged={handleTextChanged}
+                onSketchStart={handleSketchStart}
+                onSketchStep={handleSketchStep}
+                onSketchEnd={handleSketchEnd}
 
-                    sketchColor={eraseMode ? '#00000000' : (mode == EditModes.Marker ? markerColor + MARKER_TRANSPARENCY_CONSTANT : brushColor)}
-                    sketchStrokeWidth={eraseMode ? (mode == EditModes.Marker ? Math.min(15, markerWidth * 3) : Math.min(15, strokeWidth * 3)) :
-                        (mode == EditModes.Marker ? markerWidth : strokeWidth)}
+                sketchColor={eraseMode ? '#00000000' : (mode == EditModes.Marker ? markerColor + MARKER_TRANSPARENCY_CONSTANT : brushColor)}
+                sketchStrokeWidth={eraseMode ? (mode == EditModes.Marker ? Math.min(15, markerWidth * 3) : Math.min(15, strokeWidth * 3)) :
+                    (mode == EditModes.Marker ? markerWidth : strokeWidth)}
 
-                    onCanvasClick={handleCanvasClick}
-                    onMoveElement={handleMove}
-                    onMoveEnd={handleMoveEnd}
-                    onMoveTablePart={handleMoveTablePart}
-                    onMoveTablePartEnd={handleMoveTablePartEnd}
-                    onDeleteElement={handleDelete}
-                    onTextYOverflow={handleTextYOverflow}
-                    imageSource={{ uri: currentFile }}
-                    currentElementType={mode2ElementType(mode)}
-                />
-            </ViewShot>
+                onCanvasClick={handleCanvasClick}
+                onMoveElement={handleMove}
+                onMoveEnd={handleMoveEnd}
+                onMoveTablePart={handleMoveTablePart}
+                onMoveTablePartEnd={handleMoveTablePartEnd}
+                onDeleteElement={handleDelete}
+                onTextYOverflow={handleTextYOverflow}
+                imageSource={{ uri: currentFile }}
+                currentElementType={mode2ElementType(mode)}
+            />
+            {/* </ViewShot> */}
 
             {/** previous page button */}
             {
@@ -1634,7 +1641,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             }
 
             {moveArrows(windowSize, keyboardHeight, zoom, moveCanvas, toolbarHeight, floatingToolbarHeight)}
-        </SafeAreaView>
+        </View>
     );
 
 

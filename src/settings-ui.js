@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Icon, getRoundedButton } from "./elements"
 import {
     View, Alert, Text, TouchableOpacity, StyleSheet,
-     ScrollView
+    ScrollView
 } from 'react-native';
 import { Settings } from "./new-settings"
 import {
@@ -12,6 +12,7 @@ import {
     AppText
 } from './elements'
 import Share from 'react-native-share';
+import * as Progress from 'react-native-progress';
 
 
 import FadeInView from './FadeInView'
@@ -154,14 +155,13 @@ export default function SettingsMenu(props) {
             position: 'absolute', width: "100%", height: '100%', top: 0,
             zIndex: 1000, alignItems: "center", justifyContent: "center"
         }}>
-            <ProgressCircle
+            <Progress.Bar
                 radius={100}
-                color="#3399FF"
-                shadowColor="#999"
-                bgColor="white"
-                percent={backupProgress}
-                borderWidth={5} >
-            </ProgressCircle>
+                width={props.windowSize.width * .6}
+                style={[isRTL() && { transform: [{ scaleX: -1 }] }]}
+                progress={backupProgress}
+            />
+
         </View>}
 
         <FadeInView
@@ -300,7 +300,7 @@ export default function SettingsMenu(props) {
                         }}
                     />
                     <View style={{ width: '100%', paddingTop: 25, paddingStart: 25, alignItems: "flex" }}>
-                        {getRoundedButton(backup, undefined, translate("BackupBtn"), 30, 30, { width: 250, height: 40 }, "row", true)}
+                        {getRoundedButton(backup, undefined, translate("BackupBtn"), 30, 30, { width: 250, height: 40 }, "row", true, false, true)}
                     </View>
 
 
@@ -344,8 +344,8 @@ function getGroup(props, name, items, isCheckboxes) {
             >
                 {item.icon}
                 <Spacer />
-                <View style={isCheckboxes? styles.box :styles.circle}>
-                    {item.selected && <View style={isCheckboxes? styles.checkedBox : styles.checkedCircle} />}
+                <View style={isCheckboxes ? styles.box : styles.circle}>
+                    {item.selected && <View style={isCheckboxes ? styles.checkedBox : styles.checkedCircle} />}
                 </View>
             </TouchableOpacity>
         )}

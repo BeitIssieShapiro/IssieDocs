@@ -31,7 +31,7 @@ class SettingsAndroid {
 
     static get(key: string): any {
         const val = storage.getString(key); // Retrieve the stored value as a string
-        console.log("Settings.get", key, "=", val);
+        //console.log("Settings.get", key, "=", val);
         try {
             // Attempt to parse JSON, fallback to raw value if not valid JSON
             return val ? JSON.parse(val) : null;
