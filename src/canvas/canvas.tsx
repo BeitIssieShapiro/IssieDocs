@@ -245,13 +245,13 @@ export function Canvas({
             const dx = offsetRef.current.x - offset.x;
             const dy = offsetRef.current.y - offset.y;
             const newPt = [moveContext.current.lastPt[0] + dx, moveContext.current.lastPt[1] + dy] as SketchPoint;
-            console.log("offset while move",dx, dy)
+            console.log("offset while move", dx, dy)
             moveContext.current.lastPt = newPt;
             onMoveElement?.(moveContext.current.type, moveContext.current.id, newPt);
         }
         console.log("canvas offset changed", offset)
         offsetRef.current = offset;
-        const duration = IIF(500, [isMoving.current, 100], [startSketchRef.current?.pinch, 0]);
+        const duration = IIF(500, [isMoving.current && currentElementTypeRef.current == ElementTypes.Text, 0], [isMoving.current, 100], [startSketchRef.current?.pinch, 0]);
         translateX.value = withTiming(offset.x * ratio.current, { duration });
         translateY.value = withTiming(offset.y * ratio.current, { duration });
 
@@ -397,7 +397,9 @@ export function Canvas({
                     lastPathSV.value.lineTo(newPoint[0] * ratio.current, newPoint[1] * ratio.current);
                     skiaCanvasRef.current?.redraw();
                 } else {
-                    onSketchStep(newPoint);
+                    // pass a screen point, as offset may change during...
+                    onSketchStep([e.nativeEvent.pageX,e.nativeEvent.pageY]) ;
+                    isMoving.current = true;
                 }
             },
             onPanResponderRelease: (_, gState) => {
@@ -437,6 +439,9 @@ export function Canvas({
                     } else {
                         onMoveTablePartEnd?.(elem);
                     }
+                } else if (currentElementTypeRef.current === ElementTypes.Text) {
+                    isMoving.current = false;
+                    onSketchEnd();
                 }
                 startSketchRef.current = null;
             },
@@ -618,176 +623,157 @@ export function Canvas({
             }}
             {...sketchResponder.panHandlers}
         >
-            <View style={{flex:1, backgroundColor:"white"}} collapsable={false} ref={viewShotRef} >
+            <View style={{ flex: 1, backgroundColor: "white" }} collapsable={false} ref={viewShotRef} >
 
-            {/* Background Image */}
-            {imageSize && (
-                <Image
-                    source={imageSource}
+                {/* Background Image */}
+                {imageSize && (
+                    <Image
+                        source={imageSource}
+                        style={{
+                            position: "absolute",
+                            width: imageSize.width,
+                            height: imageSize.height,
+                        }}
+                    />
+                )}
+
+                {/* Text Elements */}
+                {texts?.map((text) => (
+                    <TextElement
+                        key={text.id}
+                        text={text}
+                        editMode={(currentElementTypeRef.current == ElementTypes.Text || currentElementTypeRef.current == ElementTypes.Table)
+                            && text.id == currentEdited.textId}
+                        texts={texts}
+                        tables={tables}
+                        actualWidth={actualWidth}
+                        ratio={ratio}
+                        moveResponder={moveResponder}
+                        moveContext={moveContext}
+                        onTextChanged={onTextChanged}
+                        handleTextLayout={handleTextLayout}
+                    />
+                ))}
+
+                {/* Lines in edit mode */}
+                {currentElementTypeRef.current == ElementTypes.Line && currentEdited.lineId &&
+                    lines?.filter(line => line.id == currentEdited.lineId)
+                        .map((line) => {
+                            const angle = calculateLineAngle(line.from, line.to);
+                            const trashPos = calculateLineTrashPoint(line.from, line.to, (angle + 90) % 360, 8);
+
+                            const transform = { transform: [{ rotate: `${angle}deg` }] };
+                            return (
+                                <View key={line.id}>
+                                    <MoveIcon
+                                        style={transform}
+                                        position={[line.from[0] * ratio.current - 8, line.from[1] * ratio.current - 8]}
+                                        size={16}
+                                        panResponderHandlers={moveResponder.panHandlers}
+                                        onSetContext={() => {
+                                            moveContext.current = { type: MoveTypes.LineStart, id: line.id, offsetX: 0, offsetY: 0 };
+                                        }}
+                                        icon="square"
+                                        color={line.color}
+                                    />
+
+                                    <MoveIcon
+                                        style={transform}
+                                        position={[line.to[0] * ratio.current - 8, line.to[1] * ratio.current - 8]}
+                                        size={16}
+                                        panResponderHandlers={moveResponder.panHandlers}
+                                        onSetContext={() => {
+                                            moveContext.current = { type: MoveTypes.LineEnd, id: line.id, offsetX: 0, offsetY: 0 };
+                                        }}
+                                        icon="square"
+                                        color={line.color}
+                                    />
+
+                                    <TouchableOpacity
+                                        key={`${line.id}-trash`}
+                                        style={{
+                                            position: "absolute",
+                                            zIndex: 1000,
+                                            left: trashPos[0] * ratio.current - 11,
+                                            top: trashPos[1] * ratio.current - 11,
+                                        }}
+                                        onPress={() => onDeleteElement?.(ElementTypes.Line, line.id)}
+                                    >
+                                        <IconIonic name="trash-outline" size={22} color={"blue"} />
+                                    </TouchableOpacity>
+                                </View>
+                            );
+                        })}
+
+                <SkiaCanvas
+                    ref={skiaCanvasRef}
+
                     style={{
                         position: "absolute",
-                        width: imageSize.width,
-                        height: imageSize.height,
+                        width: "100%",
+                        height: "100%"
                     }}
-                />
-            )}
+                >
+                    {/* <Text>HHHH</Text> */}
 
-            {/* Text Elements */}
-            {texts?.map((text) => (
-                <TextElement
-                    key={text.id}
-                    text={text}
-                    editMode={(currentElementTypeRef.current == ElementTypes.Text || currentElementTypeRef.current == ElementTypes.Table)
-                        && text.id == currentEdited.textId}
-                    texts={texts}
-                    tables={tables}
-                    actualWidth={actualWidth}
-                    ratio={ratio}
-                    moveResponder={moveResponder}
-                    moveContext={moveContext}
-                    onTextChanged={onTextChanged}
-                    handleTextLayout={handleTextLayout}
-                />
-            ))}
+                    {/* Re-draw each path in the order they appear */}
+                    {paths?.map((p) => {
+                        const skPath = createSkiaPath(p.points, ratio.current);
+                        const isEraser = (p.color === "#00000000");
 
-            {/* Lines in edit mode */}
-            {currentElementTypeRef.current == ElementTypes.Line && currentEdited.lineId &&
-                lines?.filter(line => line.id == currentEdited.lineId)
-                    .map((line) => {
-                        const angle = calculateLineAngle(line.from, line.to);
-                        const trashPos = calculateLineTrashPoint(line.from, line.to, (angle + 90) % 360, 8);
+                        // For erasers, the color doesn't matter. Use "black" or any color you like.
+                        const strokeColor = isEraser ? "black" : p.color;
 
-                        const transform = { transform: [{ rotate: `${angle}deg` }] };
                         return (
-                            <View key={line.id}>
-                                <MoveIcon
-                                    style={transform}
-                                    position={[line.from[0] * ratio.current - 8, line.from[1] * ratio.current - 8]}
-                                    size={16}
-                                    panResponderHandlers={moveResponder.panHandlers}
-                                    onSetContext={() => {
-                                        moveContext.current = { type: MoveTypes.LineStart, id: line.id, offsetX: 0, offsetY: 0 };
-                                    }}
-                                    icon="square"
-                                    color={line.color}
-                                />
-
-                                <MoveIcon
-                                    style={transform}
-                                    position={[line.to[0] * ratio.current - 8, line.to[1] * ratio.current - 8]}
-                                    size={16}
-                                    panResponderHandlers={moveResponder.panHandlers}
-                                    onSetContext={() => {
-                                        moveContext.current = { type: MoveTypes.LineEnd, id: line.id, offsetX: 0, offsetY: 0 };
-                                    }}
-                                    icon="square"
-                                    color={line.color}
-                                />
-
-                                <TouchableOpacity
-                                    key={`${line.id}-trash`}
-                                    style={{
-                                        position: "absolute",
-                                        zIndex: 1000,
-                                        left: trashPos[0] * ratio.current - 11,
-                                        top: trashPos[1] * ratio.current - 11,
-                                    }}
-                                    onPress={() => onDeleteElement?.(ElementTypes.Line, line.id)}
-                                >
-                                    <IconIonic name="trash-outline" size={22} color={"blue"} />
-                                </TouchableOpacity>
-                            </View>
+                            <SkiaPath
+                                key={p.id}
+                                path={skPath}
+                                color={strokeColor}
+                                style={"stroke"}
+                                strokeWidth={p.strokeWidth}
+                                blendMode={isEraser ? "dstOut" : "srcOver"}
+                            />
                         );
                     })}
 
-            <SkiaCanvas
-                ref={skiaCanvasRef}
-
-                style={{
-                    position: "absolute",
-                    width: "100%",
-                    height: "100%"
-                }}
-            >
-                {/* <Text>HHHH</Text> */}
-               
-                {/* Re-draw each path in the order they appear */}
-                {paths?.map((p) => {
-                    const skPath = createSkiaPath(p.points, ratio.current);
-                    const isEraser = (p.color === "#00000000");
-
-                    // For erasers, the color doesn't matter. Use "black" or any color you like.
-                    const strokeColor = isEraser ? "black" : p.color;
-
-                    return (
-                        <SkiaPath
-                            key={p.id}
-                            path={skPath}
-                            color={strokeColor}
-                            style={"stroke"}
-                            strokeWidth={p.strokeWidth}
-                            blendMode={isEraser ? "dstOut" : "srcOver"}
-                        />
-                    );
-                })}
-
-                <SkiaPath
-                    path={lastPathSV}
-                    color={sketchColor}
-                    style={"stroke"}
-                    strokeWidth={sketchStrokeWidth}
-                    blendMode={"srcOver"}
-                />
-
-            </SkiaCanvas>
-
-            {/* Paths & Lines (Non-edit) */}
-
-            <Svg height="100%" width="100%" style={{ position: "absolute" }}>
-
-                {lines?.map((line) => (
-                    <Path
-                        key={line.id}
-                        d={joinPath([line.from, line.to], ratio.current)}
-                        stroke={line.color}
-                        strokeWidth={line.strokeWidth}
-                        fill="none"
+                    <SkiaPath
+                        path={lastPathSV}
+                        color={sketchColor}
+                        style={"stroke"}
+                        strokeWidth={sketchStrokeWidth}
+                        blendMode={"srcOver"}
                     />
-                ))}
-                {// Tables 
-                }
-                {tables?.map((table) => {
-                    const horizontalLines = calcEffectiveHorizontalLines(table, textsRef.current);
 
-                    const lines = [];
+                </SkiaCanvas>
 
-                    for (let i = 0; i < horizontalLines.length; i++) {
-                        const hLine = horizontalLines[i];
-                        lines.push(<Path
-                            key={`${table.id}h${i}`}
-                            d={joinPath(
-                                [
-                                    [table.verticalLines[0], hLine],
-                                    [arrLast(table.verticalLines) ?? 0, hLine],
-                                ],
-                                ratio.current
-                            )}
-                            stroke={table.color}
-                            strokeWidth={table.strokeWidth}
-                            strokeDasharray={table.strokeDash}
+                {/* Paths & Lines (Non-edit) */}
+
+                <Svg height="100%" width="100%" style={{ position: "absolute" }}>
+
+                    {lines?.map((line) => (
+                        <Path
+                            key={line.id}
+                            d={joinPath([line.from, line.to], ratio.current)}
+                            stroke={line.color}
+                            strokeWidth={line.strokeWidth}
                             fill="none"
-                        />)
+                        />
+                    ))}
+                    {// Tables 
                     }
+                    {tables?.map((table) => {
+                        const horizontalLines = calcEffectiveHorizontalLines(table, textsRef.current);
 
-                    for (let i = 0; i < table.verticalLines.length; i++) {
-                        const vLine = table.verticalLines[i];
-                        lines.push(
-                            <Path
-                                key={`${table.id}v${i}`}
+                        const lines = [];
+
+                        for (let i = 0; i < horizontalLines.length; i++) {
+                            const hLine = horizontalLines[i];
+                            lines.push(<Path
+                                key={`${table.id}h${i}`}
                                 d={joinPath(
                                     [
-                                        [vLine, horizontalLines[0] - table.strokeWidth / 2],
-                                        [vLine, ((arrLast(horizontalLines) ?? 0) + table.strokeWidth / 2)],
+                                        [table.verticalLines[0], hLine],
+                                        [arrLast(table.verticalLines) ?? 0, hLine],
                                     ],
                                     ratio.current
                                 )}
@@ -795,127 +781,146 @@ export function Canvas({
                                 strokeWidth={table.strokeWidth}
                                 strokeDasharray={table.strokeDash}
                                 fill="none"
-                            />
-                        );
-                    }
+                            />)
+                        }
 
-                    return lines;
-                })}
-            </Svg>
+                        for (let i = 0; i < table.verticalLines.length; i++) {
+                            const vLine = table.verticalLines[i];
+                            lines.push(
+                                <Path
+                                    key={`${table.id}v${i}`}
+                                    d={joinPath(
+                                        [
+                                            [vLine, horizontalLines[0] - table.strokeWidth / 2],
+                                            [vLine, ((arrLast(horizontalLines) ?? 0) + table.strokeWidth / 2)],
+                                        ],
+                                        ratio.current
+                                    )}
+                                    stroke={table.color}
+                                    strokeWidth={table.strokeWidth}
+                                    strokeDasharray={table.strokeDash}
+                                    fill="none"
+                                />
+                            );
+                        }
 
-            {/* Table Move/Resize Icons */}
-            {currentElementType == ElementTypes.Table && tables?.map((table) => (
-                <MoveIcon
-                    key={`table-move-${table.id}`}
-                    style={{}}
-                    position={[table.verticalLines[0] * ratio.current - 30, table.horizontalLines[0] * ratio.current]}
-                    size={30}
-                    panResponderHandlers={moveResponder.panHandlers}
-                    onSetContext={() => {
-                        moveContext.current = { type: MoveTypes.TableMove, id: table.id, offsetX: 30, offsetY: 0 };
-                    }}
-                    icon="move"
-                    color="black"
-                />
-            ))}
-            {currentElementType == ElementTypes.Table && tables?.map((table) => (
-                <MoveIcon
-                    key={`table-resize-${table.id}`}
-                    style={{}}
-                    position={[
-                        (arrLast(table.verticalLines) ?? 0) * ratio.current - 20,
-                        (arrLast(table.horizontalLines) ?? 0) * ratio.current - 20,
-                    ]}
-                    size={40}
-                    panResponderHandlers={moveResponder.panHandlers}
-                    onSetContext={() => {
-                        moveContext.current = { type: MoveTypes.TableResize, id: table.id, offsetX: -10, offsetY: -10 };
-                    }}
-                    icon="resize-bottom-right"
-                    color="black"
-                />
-            ))}
+                        return lines;
+                    })}
+                </Svg>
 
-            {/* Images */}
-            {images?.map((image) => (
-                <React.Fragment key={image.id}>
-                    <Image
-                        style={[
-                            styles.imageStyle,
-                            {
-                                left: image.x * ratio.current,
-                                top: image.y * ratio.current,
-                                width: image.width * ratio.current,
-                                height: image.height * ratio.current,
-                            },
-                        ]}
-                        source={normalizeFoAndroid(image.src) || { uri: image.imageData }}
+                {/* Table Move/Resize Icons */}
+                {currentElementType == ElementTypes.Table && tables?.map((table) => (
+                    <MoveIcon
+                        key={`table-move-${table.id}`}
+                        style={{}}
+                        position={[table.verticalLines[0] * ratio.current - 30, table.horizontalLines[0] * ratio.current]}
+                        size={30}
+                        panResponderHandlers={moveResponder.panHandlers}
+                        onSetContext={() => {
+                            moveContext.current = { type: MoveTypes.TableMove, id: table.id, offsetX: 30, offsetY: 0 };
+                        }}
+                        icon="move"
+                        color="black"
                     />
-                    {currentElementTypeRef.current == ElementTypes.Image &&
-                        currentEdited.imageId == image.id && <TouchableOpacity
+                ))}
+                {currentElementType == ElementTypes.Table && tables?.map((table) => (
+                    <MoveIcon
+                        key={`table-resize-${table.id}`}
+                        style={{}}
+                        position={[
+                            (arrLast(table.verticalLines) ?? 0) * ratio.current - 20,
+                            (arrLast(table.horizontalLines) ?? 0) * ratio.current - 20,
+                        ]}
+                        size={40}
+                        panResponderHandlers={moveResponder.panHandlers}
+                        onSetContext={() => {
+                            moveContext.current = { type: MoveTypes.TableResize, id: table.id, offsetX: -10, offsetY: -10 };
+                        }}
+                        icon="resize-bottom-right"
+                        color="black"
+                    />
+                ))}
+
+                {/* Images */}
+                {images?.map((image) => (
+                    <React.Fragment key={image.id}>
+                        <Image
+                            style={[
+                                styles.imageStyle,
+                                {
+                                    left: image.x * ratio.current,
+                                    top: image.y * ratio.current,
+                                    width: image.width * ratio.current,
+                                    height: image.height * ratio.current,
+                                },
+                            ]}
+                            source={normalizeFoAndroid(image.src) || { uri: image.imageData }}
+                        />
+                        {currentElementTypeRef.current == ElementTypes.Image &&
+                            currentEdited.imageId == image.id && <TouchableOpacity
+                                style={{
+                                    position: "absolute",
+                                    zIndex: 1000,
+                                    left: image.x * ratio.current - 30,
+                                    top: image.y * ratio.current,
+                                }}
+                                onPress={() => onDeleteElement?.(ElementTypes.Image, image.id)}
+                            >
+                                <IconIonic name="trash-outline" size={30} color={"blue"} />
+                            </TouchableOpacity>}
+                        {currentElementTypeRef.current == ElementTypes.Image &&
+                            currentEdited.imageId == image.id && <MoveIcon
+                                style={{}}
+                                position={[
+                                    (image.x + image.width) * ratio.current - 20,
+                                    (image.y + image.height) * ratio.current - 20,
+                                ]}
+                                size={40}
+                                panResponderHandlers={moveResponder.panHandlers}
+                                onSetContext={() => {
+                                    moveContext.current = { type: MoveTypes.ImageResize, id: image.id, offsetX: -30, offsetY: -30 };
+                                }}
+                                icon="resize-bottom-right"
+                                color="black"
+                            />}
+                    </React.Fragment>
+                ))}
+
+                {/* General Elements */}
+                {elements?.map(elem => {
+                    return <View key={elem.id} style={{ position: "absolute", left: elem.x * ratio.current, top: elem.y * ratio.current }}
+                        onMoveShouldSetResponder={(e) => {
+                            const touchPoint = screen2Canvas(e.nativeEvent.locationX, e.nativeEvent.locationY);
+                            const threshold = 5; // Minimum movement in pixels to activate drag
+                            const ret = Math.abs(touchPoint[0] - elem.x) > threshold || Math.abs(touchPoint[1] - elem.y) > threshold;
+                            if (ret) {
+                                isMoving.current = true;
+                            }
+                            return ret;
+                        }}
+                        onResponderMove={(e) => {
+                            const touchPoint = screen2Canvas(e.nativeEvent.pageX, e.nativeEvent.pageY) as SketchPoint
+                            onMoveElement?.(MoveTypes.ElementMove, elem.id, touchPoint);
+                        }}
+                        onResponderRelease={(e) => {
+                            isMoving.current = false;
+                            onMoveEnd?.(MoveTypes.ElementMove, elem.id)
+                        }}
+                    >
+                        {renderElements?.(elem)}
+                        {elementsAttr?.(elem)?.showDelete && <TouchableOpacity
                             style={{
                                 position: "absolute",
                                 zIndex: 1000,
-                                left: image.x * ratio.current - 30,
-                                top: image.y * ratio.current,
+                                left: -20,
+                                top: 0,
                             }}
-                            onPress={() => onDeleteElement?.(ElementTypes.Image, image.id)}
+                            onPress={() => onDeleteElement?.(ElementTypes.Element, elem.id)}
                         >
-                            <IconIonic name="trash-outline" size={30} color={"blue"} />
+                            <IconIonic name="trash-outline" size={22} color={"blue"} />
                         </TouchableOpacity>}
-                    {currentElementTypeRef.current == ElementTypes.Image &&
-                        currentEdited.imageId == image.id && <MoveIcon
-                            style={{}}
-                            position={[
-                                (image.x + image.width) * ratio.current - 20,
-                                (image.y + image.height) * ratio.current - 20,
-                            ]}
-                            size={40}
-                            panResponderHandlers={moveResponder.panHandlers}
-                            onSetContext={() => {
-                                moveContext.current = { type: MoveTypes.ImageResize, id: image.id, offsetX: -30, offsetY: -30 };
-                            }}
-                            icon="resize-bottom-right"
-                            color="black"
-                        />}
-                </React.Fragment>
-            ))}
-
-            {/* General Elements */}
-            {elements?.map(elem => {
-                return <View key={elem.id} style={{ position: "absolute", left: elem.x * ratio.current, top: elem.y * ratio.current }}
-                    onMoveShouldSetResponder={(e) => {
-                        const touchPoint = screen2Canvas(e.nativeEvent.locationX, e.nativeEvent.locationY);
-                        const threshold = 5; // Minimum movement in pixels to activate drag
-                        const ret = Math.abs(touchPoint[0] - elem.x) > threshold || Math.abs(touchPoint[1] - elem.y) > threshold;
-                        if (ret) {
-                            isMoving.current = true;
-                        }
-                        return ret;
-                    }}
-                    onResponderMove={(e) => {
-                        const touchPoint = screen2Canvas(e.nativeEvent.pageX, e.nativeEvent.pageY) as SketchPoint
-                        onMoveElement?.(MoveTypes.ElementMove, elem.id, touchPoint);
-                    }}
-                    onResponderRelease={(e) => {
-                        isMoving.current = false;
-                        onMoveEnd?.(MoveTypes.ElementMove, elem.id)
-                    }}
-                >
-                    {renderElements?.(elem)}
-                    {elementsAttr?.(elem)?.showDelete && <TouchableOpacity
-                        style={{
-                            position: "absolute",
-                            zIndex: 1000,
-                            left: -20,
-                            top: 0,
-                        }}
-                        onPress={() => onDeleteElement?.(ElementTypes.Element, elem.id)}
-                    >
-                        <IconIonic name="trash-outline" size={22} color={"blue"} />
-                    </TouchableOpacity>}
-                </View>
-            })}
+                    </View>
+                })}
             </View>
         </Animated.View>
     );

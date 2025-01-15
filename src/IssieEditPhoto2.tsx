@@ -123,6 +123,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const moveRepeatRef = useRef<{ offset: Offset, interval: NodeJS.Timeout } | undefined>();
     const zoomRef = useRef(zoom);
 
+    const dragToMoveCanvasRef = useRef<{
+        initialOffset: Offset;
+        initialPt: SketchPoint;
+    } | undefined>()
+
+
     // -------------------------------------------------------------------------
     //                          EFFECTS
     // -------------------------------------------------------------------------
@@ -279,7 +285,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         await wait(shareTimeMs);
         try {
-            const uri = await captureRef(capturedViewRef, { format: "jpg", quality: 0.9, result:"base64" })
+            const uri = await captureRef(capturedViewRef, { format: "jpg", quality: 0.9, result: "base64" })
 
             dataUrls.push(uri);
             for (let i = 1; i < pageRef.current.count; i++) {
@@ -287,7 +293,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 setShareProgress(i / pageRef.current.count)
                 await loadPage(pageRef.current, i);
                 await wait(shareTimeMs);
-                const uri = await captureRef(capturedViewRef, { format: "jpg", quality: 0.9,  result:"base64" })
+                const uri = await captureRef(capturedViewRef, { format: "jpg", quality: 0.9, result: "base64" })
                 dataUrls.push(uri);
             }
 
@@ -448,7 +454,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //                          SKETCH HANDLERS
     // -------------------------------------------------------------------------
     function handleSketchStart(p: SketchPoint) {
-        //console.log("Sketch Start", modeRef.current, p);
+        console.log("Sketch Start", modeRef.current, p);
         if (modeRef.current === EditModes.Marker || modeRef.current === EditModes.Brush) {
             let color = isMarkerMode() ? markerColorRef.current + MARKER_TRANSPARENCY_CONSTANT : brushColorRef.current;
             let strokeWidth = isMarkerMode() ? markerWidthRef.current : strokeWidthRef.current;
@@ -485,19 +491,32 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     function handleSketchStep(p: SketchPoint) {
-        if (isBrushMode() || isMarkerMode()) {
-            const lastPath = arrLast(pathsRef.current);
-            if (lastPath) {
-                lastPath.points.push(p);
-                setPaths([...pathsRef.current]);
-                trace("Sketch Step", pathsRef.current.map(p => p.id), lastPath.color);
-            }
-        } else if (isRulerMode()) {
+        // if (isBrushMode() || isMarkerMode()) {
+        //     const lastPath = arrLast(pathsRef.current);
+        //     if (lastPath) {
+        //         lastPath.points.push(p);
+        //         setPaths([...pathsRef.current]);
+        //         trace("Sketch Step", pathsRef.current.map(p => p.id), lastPath.color);
+        //     }
+        // } else 
+        if (isRulerMode()) {
             const lastLine = arrLast(linesRef.current);
             if (lastLine) {
                 lastLine.to = p;
                 setLines([...linesRef.current]);
             }
+        } else if (isTextMode()) {
+
+            if (!dragToMoveCanvasRef.current) {
+                dragToMoveCanvasRef.current = {
+                    initialOffset: { ...moveCanvasRef.current },
+                    initialPt: p
+                }
+            }
+            const dy = (p[1] - dragToMoveCanvasRef.current.initialPt[1]) / ratioRef.current;
+            handleMoveCanvas({ x: dragToMoveCanvasRef.current.initialOffset.x, y: dragToMoveCanvasRef.current.initialOffset.y + dy });
+            trace("text sketch step", p)
+
         }
     }
 
@@ -530,7 +549,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             const newCurrEdited = { ...currentEditedRef.current, lineId: elem.id }
             currentEditedRef.current = newCurrEdited
             setCurrentEdited(newCurrEdited);
+
+        } else if (isTextMode()) {
+            trace("text sketch release")
+            dragToMoveCanvasRef.current = undefined;
+            return;
         }
+
 
         save();
         queue2state();
@@ -1328,11 +1353,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         );
     }
 
-    const moveArrows = (windowSize: ImageSize, keyboardHeight: number, zoom: number, moveCanvas: Offset, toolbarHeight: number, floatingToolbarHeight: number) => {
+    const moveArrows = (windowSize: ImageSize, keyboardHeight: number, zoom: number, moveCanvas: Offset, toolbarHeight: number, floatingToolbarHeight: number, mode:EditModes) => {
         const sidesTop = Math.min(windowSize.height / 2 - 35, windowSize.height - keyboardHeight - 95);
         const upDownLeft = windowSize.width / 2 - 35; //half the size of the button
         const upDownTop = toolbarHeight + floatingToolbarHeight
-        const verticalMovePossible = modeRef.current == EditModes.Text || zoom > 1;
+        const verticalMovePossible = mode != EditModes.Text && zoom > 1;
         const horizMovePossible = zoom > 1;
 
         const disabledRight = -maxXOffset() >= moveCanvas.x;
@@ -1452,12 +1477,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     function handleMoveCanvas(newOffset: Offset) {
         if (zoomRef.current == 1 && modeRef.current != EditModes.Text) return;
         let { x, y } = newOffset;
+        trace("set move before", x, y)
         const verticalOnly = (zoomRef.current == 1 && modeRef.current == EditModes.Text);
 
         x = verticalOnly ? moveCanvasRef.current.x : Math.min(Math.max(x, -maxXOffset() / ratioRef.current), 0);
 
         y = Math.min(Math.max(y, -maxYOffset() / ratioRef.current), 0);
-        trace("set move", x, y, newOffset, -maxYOffset())
+        trace("set move", x, y, -maxYOffset())
         setMoveCanvas({ x, y });
     }
 
@@ -1640,7 +1666,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     null
             }
 
-            {moveArrows(windowSize, keyboardHeight, zoom, moveCanvas, toolbarHeight, floatingToolbarHeight)}
+            {moveArrows(windowSize, keyboardHeight, zoom, moveCanvas, toolbarHeight, floatingToolbarHeight, mode)}
         </View>
     );
 
