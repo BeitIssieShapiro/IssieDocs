@@ -44,12 +44,13 @@ export const TextElement: React.FC<TextElementProps> = ({
             position: "absolute", // backgroundColor: "green",
 
             ...(text.rtl ?
-                { right: actualWidth - table.verticalLines[text.x + 1] * ratio.current, } :
-                { left: (table.verticalLines[text.x]) * ratio.current + table.strokeWidth }
+                { right: actualWidth - (table.verticalLines[text.x + 1] - table.strokeWidth / 2) * ratio.current, } :
+                { left: (table.verticalLines[text.x] + table.strokeWidth / 2) * ratio.current }
             ),
-            top: (horizontalLines[text.y]) * ratio.current + table.strokeWidth,
+            top: (horizontalLines[text.y]) * ratio.current + table.strokeWidth / 2,
             width: tableColWidth(table, text.x) * ratio.current - table.strokeWidth,
             minHeight: tableRowHeight(table, text.y) * ratio.current - table.strokeWidth,
+            //maxHeight: tableRowHeight(table, text.y) * ratio.current - table.strokeWidth,
         } :
         {
             position: "absolute",
@@ -65,13 +66,14 @@ export const TextElement: React.FC<TextElementProps> = ({
 
     const moveIconStyle: any = { position: "absolute", ...(text.rtl ? { right: -25 } : { left: -25 }) }
     //console.log("Text style", posStyle)
+    const textBGColor = text.color == '#fee100' ? 'gray' : 'yellow';
 
     if (editMode) {
         return (
             <View
                 direction={text.rtl ? "rtl" : "ltr"}
                 key={text.id}
-                style={[styles.textInputHost, posStyle, { textAlign: "center" }]}
+                style={[styles.textInputHost, posStyle, { textAlign: "center", zIndex: 500 }, table && { backgroundColor: textBGColor }]}
                 {...moveResponder.panHandlers}
                 onStartShouldSetResponder={(e) => {
                     moveContext.current = { type: MoveTypes.Text, id: text.id, offsetX: text.rtl ? -15 : 15, offsetY: -15 };
@@ -86,7 +88,7 @@ export const TextElement: React.FC<TextElementProps> = ({
                         allowFontScaling={false}
                         multiline
                         autoFocus
-                        style={[styles.textStyle, styles.textInput, style, { backgroundColor: text.color == '#fee100' ? 'gray' : 'yellow' }]}
+                        style={[styles.textStyle, styles.textInput, style, { backgroundColor: textBGColor }]}
                         value={text.text}
                         onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
                     />
@@ -104,7 +106,7 @@ export const TextElement: React.FC<TextElementProps> = ({
     }
 
     return (
-        <View key={text.id} style={[posStyle]} direction={text.rtl ? "rtl" : "ltr"}>
+        <View key={text.id} style={posStyle} direction={text.rtl ? "rtl" : "ltr"}>
             <Text
                 allowFontScaling={false}
                 style={[styles.textStyle, style, { textAlign: "left" }]}
@@ -118,7 +120,7 @@ export const TextElement: React.FC<TextElementProps> = ({
 
 const styles = StyleSheet.create({
     textInputHost: {
-        zIndex: 1000,
+        zIndex: 3000,
         flexDirection: "row",
     },
     textStyle: {

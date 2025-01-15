@@ -162,6 +162,7 @@ function EditorToolbar({
         },
         openImageSubMenu: () => {
             setShowPickerType(Pickers.IMAGE);
+            setMenuHeight(70)
             setShowPicker(true);
         }
     }));
@@ -548,7 +549,7 @@ function EditorToolbar({
         </FadeInView>
 
         {/*View for add image*/}
-        <FadeInView height={showPickerType === Pickers.IMAGE && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: '35%' }]}>
+        <FadeInView height={showPickerType === Pickers.IMAGE && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 <IconButton onPress={onAddImageFromGallery} icon={"new-image"} size={55} iconSize={45} iconType="svg" color="black" />
                 <IconButton onPress={onAddImageFromCamera} icon={"new-camera"} size={55} iconSize={45} iconType="svg" color="black" />

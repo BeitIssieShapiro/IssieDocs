@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    Dimensions,
     ImageSize,
     Keyboard,
     SafeAreaView,
@@ -49,7 +50,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [audios, setAudios] = useState<SketchElement[]>([]);
     const [currentEdited, setCurrentEdited] = useState<CurrentEdited>({});
 
-    const [windowSize, setWindowSize] = useState<ImageSize>({ width: 500, height: 500 });
+    const [windowSize, setWindowSize] = useState<ImageSize>(Dimensions.get("window"));
     const [canvasSize, setCanvasSize] = useState<ImageSize>({ width: -1, height: -1 })
     const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
     const [toolbarHeight, setToolbarHeight] = useState<number>(dimensions.toolbarHeight);
@@ -59,7 +60,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [zoom, setZoom] = useState<number>(1);
     const [status, setStatus] = useState<string>("");
     const [moveCanvas, setMoveCanvas] = useState<Offset>({ x: 0, y: 0 });
-    const [mode, setMode] = useState<EditModes>(EditModes.Brush);
+    const [mode, setMode] = useState<EditModes>(EditModes.Text);
     const [eraseMode, setEraseMode] = useState<boolean>(false);
     const [openContextMenu, setOpenContextMenu] = useState<boolean>(false);
     const [currentFile, setCurrentFile] = useState<string>(page.defaultSrc);
@@ -76,8 +77,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         await FileSystem.main.deleteAttachedFile(pageRef.current, currPageIndexRef.current, attachName);
     }));
 
-    const modeRef = useRef<EditModes>(EditModes.Brush);
+    const modeRef = useRef<EditModes>(mode);
     const capturedViewRef = useRef(null);
+    const toolbarRef = useRef<any>(null);
     const viewOffsetRef = useRef<Offset>({ x: 0, y: 0 })
 
     const [fontSize, setFontSize] = useState<number>(35);
@@ -185,6 +187,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', _keyboardDidShow);
         const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', _keyboardDidHide);
 
+        const handleChange = ({ window }: any) => {
+            setWindowSize(window);
+        };
+
+        const subscription = Dimensions.addEventListener('change', handleChange);
+        // const {width, height} = Dimensions.get("window");
+        // setWindowSize({width, height});
+
         loadPage(page, (pageIndex != undefined && pageIndex > 0 ? pageIndex : 0)).then(() => {
             if (share) {
                 doShare();
@@ -193,6 +203,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         return () => {
             // Cleanup 
+            subscription?.remove()
             keyboardDidShowListener.remove();
             keyboardDidHideListener.remove();
         };
@@ -215,9 +226,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             const elemHeight = (textElem.height ?? 20);
             const elemBottom = textElem.y + elemHeight;
             if (elemBottom > kbTop) {
-                trace("text behind kb")
-                const dy = elemBottom + kbTop
-                handleMoveCanvas({ x: moveCanvasRef.current.x, y: -(moveCanvasRef.current.y + dy + 3) })
+                trace("text behind kb", elemBottom, kbTop)
+                const dy = kbTop - elemBottom;
+                handleMoveCanvas({ x: moveCanvasRef.current.x, y: moveCanvasRef.current.y + dy - 3 })
             }
         }
     }
@@ -484,6 +495,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             };
             linesRef.current.push(newLine);
             setLines([...linesRef.current]);
+            const newCurrEdited = { ...currentEditedRef.current, lineId: newLine.id }
+            currentEditedRef.current = newCurrEdited
+            setCurrentEdited(newCurrEdited);
+
         } else if (modeRef.current === EditModes.Text) {
             trace("sketch start text")
 
@@ -546,10 +561,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             const elem = arrLast(linesRef.current);
             if (!elem) return;
             queue.current.pushLine(elem);
-            const newCurrEdited = { ...currentEditedRef.current, lineId: elem.id }
-            currentEditedRef.current = newCurrEdited
-            setCurrentEdited(newCurrEdited);
-
         } else if (isTextMode()) {
             trace("text sketch release")
             dragToMoveCanvasRef.current = undefined;
@@ -605,26 +616,39 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
     }
 
+    function selectText(textElem: SketchText) {
+        backupElement(textElem);
+        const newCurrEdited = { ...currentEditedRef.current, textId: textElem.id }
+        currentEditedRef.current = newCurrEdited
+        setCurrentEdited(newCurrEdited);
+
+        // Update the font and color based on the selected text
+        setFontSize(textElem.fontSize * ratioRef.current);
+        setTextColor(textElem.color);
+        setTextAlignment(textElem.rtl ? 'Right' : 'Left')
+    }
+
     function handleCanvasClick(p: SketchPoint, elem: ElementBase | TableContext | undefined) {
         if (isTextMode()) {
             saveText();
 
             if (elem && 'id' in elem) {
-                // click on existing
+                // click on existing text
                 const textElem = textsRef.current.find(t => t.id == elem.id);
                 if (textElem) {
-                    backupElement(textElem);
-                    const newCurrEdited = { ...currentEditedRef.current, textId: elem.id }
-                    currentEditedRef.current = newCurrEdited
-                    setCurrentEdited(newCurrEdited);
-
-                    // Update the font and color based on the selected text
-                    setFontSize(textElem.fontSize * ratioRef.current);
-                    setTextColor(textElem.color);
-                    setTextAlignment(textElem.rtl ? 'Right' : 'Left')
+                    selectText(textElem);
                 }
             } else {
-                trace("new text", fontSizeRef.current, ratioRef.current)
+
+                if (elem && "cell" in elem && elem.cell) {
+                    // search tableCell
+                    const textElem = textsRef.current.find(t => elem.cell && t.x == elem.cell[0] && t.y == elem.cell[1]);
+                    if (textElem) {
+                        selectText(textElem);
+                        return;
+                    }
+                }
+
                 const newTextElem: SketchText = {
                     id: getId("T"),
                     text: "",
@@ -634,6 +658,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     x: p[0],
                     y: p[1],
                 };
+
+                if (elem && "cell" in elem) {
+                    // clicked a table
+                    const tableContext = elem as TableContext;
+                    newTextElem.tableId = tableContext.elem.id;
+                    newTextElem.x = tableContext.cell && tableContext.cell[0] || 0;
+                    newTextElem.y = tableContext.cell && tableContext.cell[1] || 0;
+                }
+
                 const newCurrEdited = { ...currentEditedRef.current, textId: newTextElem.id }
                 currentEditedRef.current = newCurrEdited
                 setCurrentEdited(newCurrEdited);
@@ -723,6 +756,17 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         if ((y + fontSizeRef.current / ratioRef.current + moveCanvasRef.current.y) * zoomRef.current > canvasSizeRef.current.height / ratioRef.current) {
             trace("hit bottom")
             rMoveY = -25;
+        }
+        // move below keyboard
+        if (keyboardHeightRef.current > 0) {
+            const dy = (y + fontSizeRef.current + moveCanvasRef.current.y) * zoomRef.current - ((canvasSizeRef.current.height - keyboardHeightRef.current) / ratioRef.current);
+            if (dy > 0) {
+                handleMoveCanvas({
+                    x: moveCanvasRef.current.x,
+                    y: moveCanvasRef.current.y - dy
+                });
+            }
+            //rMoveY = -25;
         }
 
         if (!moveRepeatRef.current && (rMoveX && rMoveX != 0) || (rMoveY && rMoveY != 0)) {
@@ -975,6 +1019,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setEraseMode(false);
         }
         setMode(EditModes.Image);
+
+        if (imagesRef.current?.length == 0) {
+            toolbarRef.current?.openImageSubMenu();
+        } else if (imagesRef.current?.length == 1) {
+            const newCurrEdited = { ...currentEditedRef.current, imageId: imagesRef.current[0].id }
+            currentEditedRef.current = newCurrEdited
+            setCurrentEdited(newCurrEdited);
+        }
     }
     function handleAudioMode() {
         beforeModeChange();
@@ -1353,7 +1405,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         );
     }
 
-    const moveArrows = (windowSize: ImageSize, keyboardHeight: number, zoom: number, moveCanvas: Offset, toolbarHeight: number, floatingToolbarHeight: number, mode:EditModes) => {
+    const moveArrows = (windowSize: ImageSize, keyboardHeight: number, zoom: number, moveCanvas: Offset, toolbarHeight: number, floatingToolbarHeight: number, mode: EditModes) => {
         const sidesTop = Math.min(windowSize.height / 2 - 35, windowSize.height - keyboardHeight - 95);
         const upDownLeft = windowSize.width / 2 - 35; //half the size of the button
         const upDownTop = toolbarHeight + floatingToolbarHeight
@@ -1497,7 +1549,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 trace("onLayout", width, height)
                 setWindowSize({ width, height });
             }}
-        //ref={mainViewRef}
 
         >
             {/* <View style={{ position: "absolute", left: sideMargin, top: 100, height: 5, width: canvasSize.width, backgroundColor: "green", zIndex: 10000 }} />
@@ -1541,6 +1592,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             />
 
             <EditorToolbar
+                ref={toolbarRef}
                 windowSize={windowSize}
                 onGoBack={() => navigation.goBack()}
                 onUndo={() => {
