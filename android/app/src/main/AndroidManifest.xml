@@ -25,9 +25,11 @@
         <intent-filter>
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
 
             <!-- to see your app in "Open with" for local files -->
             <data android:scheme="file" />
+            <data android:scheme="content" />
 
             <data android:mimeType="application/pdf" />
             <data android:mimeType="application/zip" />

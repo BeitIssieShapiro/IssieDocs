@@ -310,6 +310,7 @@ export function Canvas({
                 }
             },
             onPanResponderMove: (e, gState) => {
+                if (Math.abs(gState.dx) < 2 && Math.abs(gState.dy) < 2) return;
                 const newPoint = screen2Canvas(gState.moveX, gState.moveY);
 
                 if (startSketchRef.current) {
@@ -404,9 +405,12 @@ export function Canvas({
                     startSketchRef.current = null;
                     return;
                 }
-                if (gState.dx === 0 && gState.dy === 0) {
+                //console.log("x1", gState, Math.abs(gState.dx) < 2 && Math.abs(gState.dy) < 2)
+                if (Math.abs(gState.dx) < 2 && Math.abs(gState.dy) < 2) {
+                    console.log("x1",startSketchRef.current)
                     // Possibly a tap/click
                     if (startSketchRef.current) {
+                        console.log("x1")
                         onCanvasClick(startSketchRef.current.position, startSketchRef.current?.elem);
                     }
                     startSketchRef.current = null;

@@ -1,11 +1,12 @@
 new canvas
 ---------
+viewshot, in text mode not take the yellow part
 table:
   - move cells XX
 
 android:
 - icon, splash?
-- read media external (read pdf)
+V- read media external (read pdf)
 
 
 version 1.5:
@@ -306,3 +307,4 @@ V - better resolution of added images
 refactor-render of canvas
 ----------
 - share flow
+

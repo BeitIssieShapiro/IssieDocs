@@ -12,6 +12,8 @@ import { unzip, zip } from 'react-native-zip-archive';
 import { TemporaryDirectoryPath } from 'react-native-fs'
 import { PromiseAllProgress } from './utils';
 import uuid from 'react-native-uuid';
+import { NativeModules } from 'react-native';
+const { FileProviderModule } = NativeModules;
 
 
 const THUMBNAIL_SUFFIX = ".thumbnail.jpg";
@@ -893,19 +895,23 @@ export class FileSystem {
         return fileName;
     }
 
-
     static async contentUriToFilePath(contentUri) {
-        let ret = contentUri;
-        if (contentUri.startsWith("content://")) {
-
-            // e.g. store temp file in DocumentDirectoryPath or CachesDirectoryPath
-            ret = joinPaths(TemporaryDirectoryPath, "temp.pdf");
-
-            // Copy the file from content URI → localFilePath
-            // On Android, RNFS.copyFile(...) can handle content:// URIs (with proper permission).
-            await RNFS.copyFile(contentUri, ret);
+        if (Platform.OS == 'android') {
+            return FileProviderModule.getFilePathFromUri(contentUri, false);
         }
-        return _androidFileName(ret);
+        return contentUri;
+        
+        // let ret = contentUri;
+        // if (contentUri.startsWith("content://")) {
+        //     RNFS.
+        //     // e.g. store temp file in DocumentDirectoryPath or CachesDirectoryPath
+        //     ret = joinPaths(TemporaryDirectoryPath, "temp.pdf");
+
+        //     // Copy the file from content URI → localFilePath
+        //     // On Android, RNFS.copyFile(...) can handle content:// URIs (with proper permission).
+        //     await RNFS.copyFile(contentUri, ret);
+        // }
+        // return _androidFileName(ret);
     }
 
     // size = {width, height}

@@ -201,6 +201,9 @@ export default class FolderGallery extends React.Component {
             Alert.alert(msg);
         }
 
+        url = await FileSystem.contentUriToFilePath(url);
+        trace("_handleOpenURL url=", url)
+
         if (url.endsWith(".zip")) {
             FileSystem.main.extractZipInfo(url).then(zipInfo => {
                 if (zipInfo.metadata.backup) {
