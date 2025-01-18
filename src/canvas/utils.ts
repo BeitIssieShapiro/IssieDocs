@@ -228,21 +228,6 @@ export function normalizeFoAndroid(imgSrc: ImageURISource | undefined): ImageURI
     return res;
 }
 
-export function getPointsFromPath(path: SkPath): { x: number; y: number }[] {
-    const cmds = path.toCmds();
-    const points: { x: number; y: number }[] = [];
-  
-    for (let i = 0; i < cmds.length; i++) {
-      const cmd = cmds[i];
-      if (cmd[0] == PathVerb.Move  || cmd[0] == PathVerb.Line) {
-        const x = cmd[1] as number;
-        const y = cmd[2] as number;
-        points.push({ x, y });
-      }
-    }
-  
-    return points;
-  }
 
 export function IIF(defValue:any, ...args:[any, any][]):any {
 

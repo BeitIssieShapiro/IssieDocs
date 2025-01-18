@@ -78,12 +78,17 @@ function createSkiaPath(points: PathCommand[], ratio: number): any {
     for (let i = 0; i < points.length; i++) {
         const [verb, x, y] = points[i];
         if (verb == PathVerb.Move) {
-            skPath.moveTo(x, y);
+            skPath.moveTo(x * ratio, y * ratio);
         } else if (verb == PathVerb.Line) {
-            skPath.lineTo(x, y);
+            skPath.lineTo(x * ratio, y * ratio);
         }
     }
     return skPath;
+}
+
+function toCmds(path: SkPath, ratio: number): PathCommand[] {
+    const commands = path.toCmds();
+    return commands.map(c => [c[0], c[1] / ratio, c[2] / ratio]);
 }
 
 interface CanvasProps {
@@ -226,7 +231,7 @@ export function Canvas({
     useEffect(() => {
         // verify the last path is the same as lastPathSV
         if (lastPathSV.value && paths && paths.length > 0) {
-            const cmds = lastPathSV.value.toCmds();
+            const cmds = toCmds(lastPathSV.value, ratio.current);
             const lastPath = paths[paths.length - 1];
             //console.log("xx", cmds[0],  lastPath.points[0])
             if (cmds.length > 0 && cmds[0][1] == lastPath.points[0][1] &&
@@ -407,7 +412,7 @@ export function Canvas({
                 }
                 //console.log("x1", gState, Math.abs(gState.dx) < 2 && Math.abs(gState.dy) < 2)
                 if (Math.abs(gState.dx) < 2 && Math.abs(gState.dy) < 2) {
-                    console.log("x1",startSketchRef.current)
+                    console.log("x1", startSketchRef.current)
                     // Possibly a tap/click
                     if (startSketchRef.current) {
                         console.log("x1")
@@ -419,7 +424,7 @@ export function Canvas({
                 const elem = startSketchRef.current?.elem;
 
                 if (!elem && currentElementTypeRef.current === ElementTypes.Sketch) {
-                    const commands = lastPathSV.value.toCmds();
+                    const commands = toCmds(lastPathSV.value, ratio.current);
                     sketchInProgressRef.current = false;
                     sketchTimerRef.current = setTimeout(() => {
                         //console.log("sketch timeout")
