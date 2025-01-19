@@ -1,10 +1,9 @@
 new canvas
 ---------
-viewshot, in text mode not take the yellow part
-table does not scroll when keyboard apear
 
 case insesitive - check exists on file.jpg and folder as well
 end of page due to fontsize change
+folder gallery, when coming back from edit - does not update dimensions
 
 
 

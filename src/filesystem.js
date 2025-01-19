@@ -428,7 +428,6 @@ export class FileSystem {
             return;
 
 
-        trace("saveThumbnail", pathObj)
         const folder = this.findFolderByID(pathObj.folderID)
         let thumbnailPath = this._basePath + folder.path + '/' + pathObj.fileName;
         trace("saveThumbnail", thumbnailPath,)
@@ -938,16 +937,6 @@ export class FileSystem {
             toFile: filePath
         });
         await downloadInfo.promise;
-    }
-
-    static async fileExists(path) {
-        try {
-            await RNFS.stat(path);
-            //file exists, :
-            return true
-        } catch (e) {
-            return false;
-        }
     }
 
     async exportWorksheet(sheet, folderObj) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import {
     Image,
     ImageSize,
@@ -61,11 +61,14 @@ import {
     isPointOnLineSegment,
     joinPath,
     normalizeFoAndroid,
-    IIF
+    IIF,
+    wait
 } from "./utils";
-import { TextElement } from "./text-element"; // Example sub-component for text
+import TextElement from "./text-element"; // Example sub-component for text
 import { PinchHelperEvent, PinchSession, ResizeEvent } from "./pinch";
-import Animated, { AnimatedProps, SharedValue, useAnimatedProps, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, { AnimatedProps, SharedValue, useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { dimensions } from "../elements";
+import { captureRef } from "react-native-view-shot";
 
 const TEXT_SEARCH_MARGIN = 0; // 15;
 const TABLE_LINE_THRESHOLD = 7;
@@ -132,7 +135,7 @@ interface CanvasProps {
     imageSource?: ImageURISource;
     currentElementType: ElementTypes;
 
-    viewShotRef: any;
+    //viewShotRef: any;
 }
 
 /** A single (x, y) coordinate */
@@ -142,7 +145,7 @@ export interface Point {
 }
 
 
-export function Canvas({
+function Canvas({
     style,
     onTextChanged,
     onCanvasClick,
@@ -181,8 +184,8 @@ export function Canvas({
     canvasHeight,
     onActualCanvasSize,
     currentElementType,
-    viewShotRef
-}: CanvasProps) {
+    //viewShotRef
+}: CanvasProps, ref: any) {
     // Refs & State
     const isMoving = useRef(false);
     const isDragMoving = useRef(false);
@@ -203,7 +206,11 @@ export function Canvas({
     const sketchPathInSaveProgressRef = useRef<boolean>(false);
     const sketchTimerRef = useRef<NodeJS.Timeout | undefined>();
     const skiaCanvasRef = useCanvasRef();
-
+    const editTextRef = useRef<any>(null);
+    const moveIconDisplay = useSharedValue<'none' | 'flex' | undefined>("flex");
+    const visibleAnimatedStyle = useAnimatedStyle(() => ({
+        display: moveIconDisplay.value
+    }));
 
     const startSketchRef = useRef<{
         position: SketchPoint;
@@ -220,6 +227,9 @@ export function Canvas({
     const imagesRef = useRef<SketchImage[]>(images || []);
     const tablesRef = useRef<SketchTable[]>(tables || []);
     const linesRef = useRef<SketchLine[]>(lines || []);
+
+    const viewShotRef = useRef(null);
+
     // Effects
     useEffect(() => {
         textsRef.current = texts || [];
@@ -255,7 +265,7 @@ export function Canvas({
             moveContext.current.lastPt = newPt;
             onMoveElement?.(moveContext.current.type, moveContext.current.id, newPt);
         }
-        console.log("canvas offset changed", offset)
+        //console.log("canvas offset changed", offset)
         offsetRef.current = offset;
         const duration = IIF(500, [isDragMoving.current, 0], [isMoving.current, 100], [startSketchRef.current?.pinch, 0]);
         translateX.value = withTiming(offset.x * ratio.current, { duration });
@@ -284,6 +294,25 @@ export function Canvas({
             }), 0);
         }
     }, [imageSource, canvasHeight, canvasWidth, minSideMargin]);
+
+    useImperativeHandle(ref, () => ({
+        toThumbnail: () => {
+            moveIconDisplay.value = "none";
+            editTextRef.current?.prepareForThumbnail();
+            return new Promise(resolve=>{
+                captureRef(viewShotRef, { format: "jpg", quality: 0.6, height: dimensions.tileHeight, width: dimensions.tileWidth })
+                .then((uri)=>resolve(uri))
+                .finally(() => {
+                    setTimeout(() => moveIconDisplay.value = "flex");
+                });
+
+            })
+        },
+        toExport: () => {
+            return captureRef(viewShotRef, { format: "jpg", quality: 0.9, result: "base64" });
+        }
+    }));
+
 
     // PanResponder for sketching
     const sketchResponder = useRef(
@@ -687,12 +716,15 @@ export function Canvas({
                 </SkiaCanvas>
 
                 {/* Text Elements */}
-                {texts?.map((text) => (
-                    <TextElement
+                {texts?.map((text) => {
+                    const editMode = (currentElementTypeRef.current == ElementTypes.Text || currentElementTypeRef.current == ElementTypes.Table)
+                        && text.id == currentEdited.textId
+                    console.log("render text", text.id, currentEdited.textId)
+                    return <TextElement
+                        ref={editMode ? editTextRef : undefined}
                         key={text.id}
                         text={text}
-                        editMode={(currentElementTypeRef.current == ElementTypes.Text || currentElementTypeRef.current == ElementTypes.Table)
-                            && text.id == currentEdited.textId}
+                        editMode={editMode}
                         texts={texts}
                         tables={tables}
                         actualWidth={actualWidth}
@@ -702,7 +734,7 @@ export function Canvas({
                         onTextChanged={onTextChanged}
                         handleTextLayout={handleTextLayout}
                     />
-                ))}
+                })}
 
                 {/* Lines in edit mode */}
                 {currentElementTypeRef.current == ElementTypes.Line && currentEdited.lineId &&
@@ -715,7 +747,7 @@ export function Canvas({
                             return (
                                 <View key={line.id}>
                                     <MoveIcon
-                                        style={[transform, styles.moveIcon]}
+                                        style={[transform, styles.moveIcon, visibleAnimatedStyle]}
                                         position={[line.from[0] * ratio.current - 8, line.from[1] * ratio.current - 8]}
                                         size={16}
                                         panResponderHandlers={moveResponder.panHandlers}
@@ -727,7 +759,7 @@ export function Canvas({
                                     />
 
                                     <MoveIcon
-                                        style={[transform, styles.moveIcon]}
+                                        style={[transform, styles.moveIcon, visibleAnimatedStyle]}
                                         position={[line.to[0] * ratio.current - 8, line.to[1] * ratio.current - 8]}
                                         size={16}
                                         panResponderHandlers={moveResponder.panHandlers}
@@ -745,7 +777,7 @@ export function Canvas({
 
                                             left: trashPos[0] * ratio.current - 11,
                                             top: trashPos[1] * ratio.current - 11,
-                                        }, styles.moveIcon]}
+                                        }, styles.moveIcon, visibleAnimatedStyle]}
                                         onPress={() => onDeleteElement?.(ElementTypes.Line, line.id)}
                                     >
                                         <IconIonic name="trash-outline" size={22} color={"blue"} />
@@ -821,7 +853,7 @@ export function Canvas({
                 {currentElementType == ElementTypes.Table && tables?.map((table) => {
                     return < MoveIcon
                         key={`table-move-${table.id}`}
-                        style={styles.moveIcon}
+                        style={styles.moveIcon, visibleAnimatedStyle}
                         position={[table.verticalLines[0] * ratio.current - 30, table.horizontalLines[0] * ratio.current]}
                         size={30}
                         panResponderHandlers={moveResponder.panHandlers}
@@ -837,7 +869,7 @@ export function Canvas({
 
                     return <MoveIcon
                         key={`table-resize-${table.id}`}
-                        style={styles.moveIcon}
+                        style={styles.moveIcon, visibleAnimatedStyle}
                         position={[
                             (arrLast(table.verticalLines) ?? 0) * ratio.current - 20,
                             (arrLast(horizontalLines) ?? 0) * ratio.current - 20,
@@ -881,7 +913,7 @@ export function Canvas({
                             </TouchableOpacity>}
                         {currentElementTypeRef.current == ElementTypes.Image &&
                             currentEdited.imageId == image.id && <MoveIcon
-                                style={styles.moveIcon}
+                                style={styles.moveIcon, visibleAnimatedStyle}
                                 position={[
                                     (image.x + image.width) * ratio.current - 20,
                                     (image.y + image.height) * ratio.current - 20,
@@ -924,7 +956,7 @@ export function Canvas({
                                 position: "absolute",
                                 left: -20,
                                 top: 0,
-                            }, styles.moveIcon]}
+                            }, styles.moveIcon, visibleAnimatedStyle]}
                             onPress={() => onDeleteElement?.(ElementTypes.Element, elem.id)}
                         >
                             <IconIonic name="trash-outline" size={22} color={"blue"} />
@@ -935,6 +967,8 @@ export function Canvas({
         </Animated.View>
     );
 }
+
+export default forwardRef(Canvas);
 
 const styles = StyleSheet.create({
     container: {

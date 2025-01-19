@@ -14,7 +14,7 @@ import * as Progress from 'react-native-progress';
 import Share from 'react-native-share';
 import { StackScreenProps } from '@react-navigation/stack';
 import { CurrentEdited, ElementBase, ElementTypes, MoveTypes, Offset, SketchElement, SketchElementAttributes, SketchImage, SketchLine, SketchPath, SketchPoint, SketchTable, SketchText, TableContext } from './canvas/types';
-import { Canvas } from './canvas/canvas';
+import Canvas from './canvas/canvas';
 import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
@@ -28,7 +28,6 @@ import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
 import { fTranslate, isRTL, translate } from './lang';
 import { FileContextMenu } from './file-context-menu';
 import { AudioElement2 } from './audio-elem-new';
-import { captureRef } from 'react-native-view-shot';
 import { generatePDF } from './pdf';
 import { Text } from 'react-native';
 import { migrateMetadata } from './state-migrate';
@@ -80,7 +79,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }));
 
     const modeRef = useRef<EditModes>(mode);
-    const capturedViewRef = useRef(null);
+    const capturedViewRef = useRef<any>(null);
     const toolbarRef = useRef<any>(null);
     const viewOffsetRef = useRef<Offset>({ x: 0, y: 0 })
 
@@ -282,12 +281,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         //  Save thumbnail
         if (currPageIndexRef.current === 0) {
-            captureRef(capturedViewRef, { format: "jpg", quality: 0.6, height: dimensions.tileHeight, width: dimensions.tileWidth })
-                //mainViewRef.current?.capture()
+            await capturedViewRef.current?.toThumbnail()
                 .then((uri: string) => {
-                    trace("Thumbnail saved", uri)
-                    FileSystem.main.saveThumbnail(uri, pageRef.current);
-                }).catch((e) => trace("error save thumbnail", e));
+                    // do not block for saving the thumbnail
+                    setTimeout(() => FileSystem.main.saveThumbnail(uri, pageRef.current));
+                }).catch((e: any) => trace("error save thumbnail", e));
         }
     }
 
@@ -306,15 +304,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         await wait(shareTimeMs);
         try {
-            const uri = await captureRef(capturedViewRef, { format: "jpg", quality: 0.9, result: "base64" })
-
+            const uri = await capturedViewRef.current?.toExport();
+            await capturedViewRef.current?.toExport()
             dataUrls.push(uri);
             for (let i = 1; i < pageRef.current.count; i++) {
                 setShareProgressPage(i + 1);
                 setShareProgress(i / pageRef.current.count)
                 await loadPage(pageRef.current, i);
                 await wait(shareTimeMs);
-                const uri = await captureRef(capturedViewRef, { format: "jpg", quality: 0.9, result: "base64" })
+                const uri = await capturedViewRef.current?.toExport();
                 dataUrls.push(uri);
             }
 
@@ -638,9 +636,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setTextAlignment(textElem.rtl ? 'Right' : 'Left')
     }
 
-    function handleCanvasClick(p: SketchPoint, elem: ElementBase | TableContext | undefined) {
+    async function handleCanvasClick(p: SketchPoint, elem: ElementBase | TableContext | undefined) {
         if (isTextMode()) {
-            saveText();
+            await saveText();
 
             if (elem && 'id' in elem) {
                 // click on existing text
@@ -1754,7 +1752,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             <View style={styles.topMargin} />
             {/* <ViewShot ref={mainViewRef} options={{ format: "jpg", quality: 0.9, result: share ? "base64" : "tmpfile" }}> */}
             <Canvas
-                viewShotRef={capturedViewRef}
+                ref={capturedViewRef}
                 style={{ overflow: 'hidden', backgroundColor: 'gray' }}
                 offset={moveCanvas}
                 canvasWidth={windowSize.width}

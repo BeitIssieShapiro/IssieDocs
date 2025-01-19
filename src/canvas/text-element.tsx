@@ -1,10 +1,15 @@
 // TextElement.tsx
-import React from "react";
-import { View, Text, TextInput, StyleSheet, LayoutChangeEvent, TextInputProps, ViewProps } from "react-native";
+import React, { forwardRef, useEffect, useImperativeHandle } from "react";
+import { View, Text, TextInput, StyleSheet, LayoutChangeEvent, TextInputProps, ViewProps, ColorValue } from "react-native";
 import IconIonic from "react-native-vector-icons/Ionicons";
 import { MoveIcon } from "./canvas-elements";
 import { SketchText, MoveTypes, SketchPoint, SketchTable } from "./types";
 import { calcEffectiveHorizontalLines, tableColWidth, tableRowHeight } from "./utils";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
+const AnimatedIcon = Animated.createAnimatedComponent(IconIonic);
+
 
 interface TextElementProps {
     text: SketchText;
@@ -19,7 +24,7 @@ interface TextElementProps {
     texts: SketchText[];
 }
 
-export const TextElement: React.FC<TextElementProps> = ({
+function TextElement({
     text,
     editMode,
     actualWidth,
@@ -30,8 +35,29 @@ export const TextElement: React.FC<TextElementProps> = ({
     handleTextLayout,
     tables,
     texts,
-}) => {
+}: TextElementProps, ref: any) {
+    const textBGColor = useSharedValue<ColorValue>("black");
+    const moveIconDisplay = useSharedValue<'none' | 'flex' | undefined>("flex");
     const table = text.tableId && tables?.find(table => table.id == text.tableId);
+
+    const bgAnimatedStyle = useAnimatedStyle(() => ({
+        backgroundColor: textBGColor.value,
+    }));
+    const visibleAnimatedStyle = useAnimatedStyle(() => ({
+        display: moveIconDisplay.value
+    }));
+
+    useImperativeHandle(ref, () => ({
+        prepareForThumbnail: () => {
+            textBGColor.value = "transparent";
+            moveIconDisplay.value = "none";
+        },
+    }));
+
+    useEffect(() => {
+        textBGColor.value = (text.color == '#fee100' ? "gray" : "yellow");
+        moveIconDisplay.value = "flex";
+    }, [text])
 
     // if (text.tableId) {
     //     console.log("text table",text.tableId, table)
@@ -66,42 +92,43 @@ export const TextElement: React.FC<TextElementProps> = ({
 
     const moveIconStyle: any = { position: "absolute", ...(text.rtl ? { right: -25 } : { left: -25 }) }
     //console.log("Text style", posStyle)
-    const textBGColor = text.color == '#fee100' ? 'gray' : 'yellow';
+
+    console.log("Text render", editMode)
 
     if (editMode) {
         return (
-            <View
+            <Animated.View
                 direction={text.rtl ? "rtl" : "ltr"}
                 key={text.id}
-                style={[styles.textInputHost, posStyle, { textAlign: "center", zIndex: 500 }, table && { backgroundColor: textBGColor }]}
-                {...(table?{}:moveResponder.panHandlers)}
+                style={[styles.textInputHost, posStyle, { textAlign: "center", zIndex: 500 }, table && bgAnimatedStyle]}
+                {...(table ? {} : moveResponder.panHandlers)}
                 onStartShouldSetResponder={(e) => {
                     moveContext.current = { type: MoveTypes.Text, id: text.id, offsetX: text.rtl ? -15 : 15, offsetY: -15 };
                     return moveResponder.panHandlers?.onStartShouldSetResponder?.(e) || false;
                 }}
             >
-                {!table && <IconIonic style={moveIconStyle} name="move" size={25} color={"blue"} />}
+                {!table && <AnimatedIcon style={[moveIconStyle, visibleAnimatedStyle]} name="move" size={25} color={"blue"} />}
                 <>
-                    <TextInput
+                    <AnimatedTextInput
                         autoCapitalize="none"
                         autoCorrect={false}
                         allowFontScaling={false}
                         multiline
                         autoFocus
-                        style={[styles.textStyle, styles.textInput, style, { backgroundColor: textBGColor }]}
+                        style={[styles.textStyle, styles.textInput, style, bgAnimatedStyle]}
                         value={text.text}
                         onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
                     />
                     {/* Hidden Text to measure layout */}
                     <Text
                         allowFontScaling={false}
-                        style={[styles.textStyle, posStyle, style, { position: "absolute", [text.rtl ? "right" : "left"]: -10000, textAlign: "left", minHeight:0 }]}
+                        style={[styles.textStyle, posStyle, style, { position: "absolute", [text.rtl ? "right" : "left"]: -10000, textAlign: "left", minHeight: 0 }]}
                         onLayout={(e) => handleTextLayout(e, text)}
                     >
                         {text.text}
                     </Text>
                 </>
-            </View>
+            </Animated.View>
         );
     }
 
@@ -132,3 +159,5 @@ const styles = StyleSheet.create({
         minWidth: 50,
     },
 });
+
+export default forwardRef(TextElement);

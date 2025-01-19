@@ -185,6 +185,7 @@ export default class FolderGallery extends React.Component {
         this.props.navigation.removeAllListeners();
     }
 
+
     _menuHandler = () => {
         this.setState({ showMenu: !this.state.showMenu })
         setNavParam(this.props.navigation, 'isMenuOpened', !this.state.showMenu);
