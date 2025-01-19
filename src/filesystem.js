@@ -628,8 +628,7 @@ export class FileSystem {
         } else {
             //change to folder
             assert(sheet.path.endsWith(".jpg"), "change to folder");
-            let basePath = sheet.path.substring(0, sheet.path.length - 4); //remove .jpg 
-
+            const basePath = sheet.path.substring(0, sheet.path.length - 4); //remove .jpg 
             await RNFS.mkdir(basePath);
             await RNFS.moveFile(sheet.path, basePath + '/0.jpg');
             await RNFS.moveFile(sheet.path + ".json", basePath + "/0.jpg.json").catch(ignore);
@@ -700,7 +699,7 @@ export class FileSystem {
         //fix file names
         // let basePathEnd = pagePath.lastIndexOf('/');
         // let basePath = pagePath.substring(0, basePathEnd+1);
-        let basePath = sheet.path;
+        const basePath = sheet.path;
         for (let i = deleteIndex + 1; i < sheet.count; i++) {
 
             await RNFS.moveFile(basePath + '/' + i + ".jpg", basePath + '/' + (i - 1) + ".jpg")

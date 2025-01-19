@@ -1,13 +1,13 @@
 new canvas
 ---------
 viewshot, in text mode not take the yellow part
-V - sketch is not rotating well (normalized?)
-missing audio
 table does not scroll when keyboard apear
 drag to move not working with table
-table menu shows only after two clicks
-eraser only affect when done sketching
+resize rows, location of resize
+resize table only in table mode
 
+case insesitive - check exists on file.jpg and folder as well
+end of page due to fontsize change
 
 
 

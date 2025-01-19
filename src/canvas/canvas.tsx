@@ -586,7 +586,7 @@ export function Canvas({
 
         const prevHeight = text.height || 0;
         text.height = height / ratio.current;
-        if (!text.tableId && text.y + text.height > normCanvasSize.current.height &&
+        if (!text.tableId && text.y + height / ratio.current > normCanvasSize.current.height &&
             text.y + prevHeight <= normCanvasSize.current.height) {
             // change in height passed end of page
             onTextYOverflow?.(text.id);
@@ -605,6 +605,8 @@ export function Canvas({
     normCanvasSize.current = { width: actualWidth / ratio.current, height: actualHeight / ratio.current };
     imageSource = normalizeFoAndroid(imageSource)
     //console.log("canvas render", imageSource)
+    const isEraser = (color: string) => color === "#00000000";
+
     return (
         <Animated.View
             ref={canvasRef}
@@ -658,29 +660,25 @@ export function Canvas({
                     {/* Re-draw each path in the order they appear */}
                     {paths?.map((p) => {
                         const skPath = createSkiaPath(p.points, ratio.current);
-                        const isEraser = (p.color === "#00000000");
-
-                        // For erasers, the color doesn't matter. Use "black" or any color you like.
-                        const strokeColor = isEraser ? "black" : p.color;
 
                         return (
                             <SkiaPath
                                 key={p.id}
                                 path={skPath}
-                                color={strokeColor}
+                                color={isEraser(p.color) ? "black" : p.color}
                                 style={"stroke"}
                                 strokeWidth={p.strokeWidth}
-                                blendMode={isEraser ? "dstOut" : "srcOver"}
+                                blendMode={isEraser(p.color) ? "dstOut" : "srcOver"}
                             />
                         );
                     })}
 
                     <SkiaPath
                         path={lastPathSV}
-                        color={sketchColor}
+                        color={isEraser(sketchColor) ? "black" : sketchColor}
                         style={"stroke"}
                         strokeWidth={sketchStrokeWidth}
-                        blendMode={"srcOver"}
+                        blendMode={isEraser(sketchColor) ? "dstOut" : "srcOver"}
                     />
 
                 </SkiaCanvas>
@@ -817,8 +815,8 @@ export function Canvas({
                 </Svg>
 
                 {/* Table Move/Resize Icons */}
-                {currentElementType == ElementTypes.Table && tables?.map((table) => (
-                    <MoveIcon
+                {currentElementType == ElementTypes.Table && tables?.map((table) => {
+                    return < MoveIcon
                         key={`table-move-${table.id}`}
                         style={styles.moveIcon}
                         position={[table.verticalLines[0] * ratio.current - 30, table.horizontalLines[0] * ratio.current]}
@@ -830,14 +828,16 @@ export function Canvas({
                         icon="move"
                         color="black"
                     />
-                ))}
-                {currentElementType == ElementTypes.Table && tables?.map((table) => (
-                    <MoveIcon
+                })}
+                {currentElementType == ElementTypes.Table && tables?.map((table) => {
+                    const horizontalLines = calcEffectiveHorizontalLines(table, texts)
+
+                    return <MoveIcon
                         key={`table-resize-${table.id}`}
                         style={styles.moveIcon}
                         position={[
                             (arrLast(table.verticalLines) ?? 0) * ratio.current - 20,
-                            (arrLast(table.horizontalLines) ?? 0) * ratio.current - 20,
+                            (arrLast(horizontalLines) ?? 0) * ratio.current - 20,
                         ]}
                         size={40}
                         panResponderHandlers={moveResponder.panHandlers}
@@ -847,7 +847,7 @@ export function Canvas({
                         icon="resize-bottom-right"
                         color="black"
                     />
-                ))}
+                })}
 
                 {/* Images */}
                 {images?.map((image) => (

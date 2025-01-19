@@ -95,7 +95,7 @@ export const TextElement: React.FC<TextElementProps> = ({
                     {/* Hidden Text to measure layout */}
                     <Text
                         allowFontScaling={false}
-                        style={[styles.textStyle, posStyle, style, { position: "absolute", [text.rtl ? "right" : "left"]: -10000, textAlign: "left", backgroundColor: "red" }]}
+                        style={[styles.textStyle, posStyle, style, { position: "absolute", [text.rtl ? "right" : "left"]: -10000, textAlign: "left", minHeight:0 }]}
                         onLayout={(e) => handleTextLayout(e, text)}
                     >
                         {text.text}
@@ -112,7 +112,7 @@ export const TextElement: React.FC<TextElementProps> = ({
                 style={[styles.textStyle, style, { textAlign: "left" }]}
                 onLayout={(e) => handleTextLayout(e, text)}
             >
-                {text.text}
+                {text.text}{Math.floor(text.height!)}
             </Text>
         </View>
     );

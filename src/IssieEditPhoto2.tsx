@@ -19,11 +19,11 @@ import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { arrLast, pageTitleAddition, setNavParam } from './utils';
-import { colors, dimensions, getImageDimensions, getRoundedButton, globalStyles, Icon, semanticColors } from './elements';
+import { colors, dimensions, getImageDimensions, getRoundedButton, globalStyles, Icon, semanticColors, Spacer } from './elements';
 import EditorToolbar from './editor-toolbar';
 import { getNewPage, SRC_CAMERA, SRC_FILE, SRC_GALLERY, SRC_RENAME } from './newPage';
 import { EditModes, RootStackParamList } from './types';
-import { backupElement, cloneElem, getId, restoreElement, tableColWidth, tableHeight, tableRowHeight, tableWidth, wait } from './canvas/utils';
+import { backupElement, calcEffectiveHorizontalLines, cloneElem, getId, restoreElement, tableColWidth, tableHeight, tableRowHeight, tableWidth, wait } from './canvas/utils';
 import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
 import { fTranslate, isRTL, translate } from './lang';
 import { FileContextMenu } from './file-context-menu';
@@ -33,6 +33,8 @@ import { generatePDF } from './pdf';
 import { Text } from 'react-native';
 import { migrateMetadata } from './state-migrate';
 import { PathCommand } from '@shopify/react-native-skia';
+import RNSystemSounds from '@dashdoc/react-native-system-sounds';
+import { hideMessage, showMessage } from 'react-native-flash-message';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -203,6 +205,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         return () => {
             // Cleanup 
+            saveText();
             subscription?.remove()
             keyboardDidShowListener.remove();
             keyboardDidHideListener.remove();
@@ -542,7 +545,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             let strokeWidth = isMarkerMode() ? markerWidthRef.current : strokeWidthRef.current;
             if (eraseModeRef.current) {
                 color = '#00000000';
-                strokeWidth = (strokeWidth * 3 < 15 ? 15 : strokeWidth * 3)
+                strokeWidth = Math.max(15, strokeWidth * 3)
             }
             if (commands) {
                 const newPath: SketchPath = {
@@ -576,7 +579,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //                          TEXT HANDLERS
     // -------------------------------------------------------------------------
 
-    function saveText() {
+    async function saveText() {
         if (modeRef.current != EditModes.Text) return;
         const textElem = textsRef.current.find(t => t.id == currentEditedRef.current.textId);
         if (textElem) {
@@ -594,7 +597,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
                     queue.current.pushText(changedElem);
                     queue2state();
-                    save();
+                    await save();
 
                 }
                 const newCurrEdited = { ...currentEditedRef.current, textId: undefined }
@@ -606,7 +609,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 if (textElem.text != "") {
                     queue.current.pushText(textElem);
                     queue2state();
-                    save();
+                    await save();
 
                 }
                 const newCurrEdited = { ...currentEditedRef.current, textId: undefined }
@@ -793,13 +796,19 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
 
         if (y < 0) y = 0;
-        if (y > canvasSizeRef.current.height / ratioRef.current - 20)
+        if (y > canvasSizeRef.current.height / ratioRef.current - 20) {
             y = canvasSizeRef.current.height / ratioRef.current - 20;
+        }
 
         if (type === MoveTypes.Text) {
             const textElem = textsRef.current.find(t => t.id === id);
-            //trace("Move text", textElem, textsRef.current)
             if (textElem) {
+                // limit y-offset to consider text height:
+                if (y > canvasSizeRef.current.height / ratioRef.current - (textElem.height || 20)) {
+                    y = canvasSizeRef.current.height / ratioRef.current - (textElem.height || 20);
+                }
+
+
                 textElem.x = x;
                 textElem.y = y;
                 setTexts([...textsRef.current]);
@@ -861,9 +870,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         return vLine + dx * ratio;
                     });
 
-                    table.horizontalLines = table.horizontalLines.map((hLine, i) => {
+                    const horizontalLines = calcEffectiveHorizontalLines(table, textsRef.current)
+
+                    table.horizontalLines = horizontalLines.map((hLine, i) => {
                         if (i == 0) return hLine;
-                        const ratio = (table.horizontalLines[i] - table.horizontalLines[0]) / tableHeight(table);
+                        const ratio = (horizontalLines[i] - horizontalLines[0]) / tableHeight(table);
                         return hLine + dy * ratio;
                     });
                 }
@@ -979,6 +990,79 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     // -------------------------------------------------------------------------
     function handleTextYOverflow(elemId: string) {
         console.log("End of page reached", elemId);
+
+        RNSystemSounds.beep(RNSystemSounds.Beeps.Negative)
+        const textElem = textsRef.current.find(t => t.id == elemId);
+        if (textElem) {
+            const tableElem = textElem.tableId && tablesRef.current.find(t => t.id == textElem.tableId);
+            const tableOverflow = tableElem && textElem.y < tableElem.horizontalLines.length - 2;
+            const isFontChange = false; //todo
+
+            showMessage({
+                message: tableOverflow ? translate("TableOverflowsPage") :
+                    (isFontChange ? translate("FontChangeOverflowsPage") :
+                        translate("ReachedEndOfPage")),
+                type: "warning",
+                animated: true,
+                duration: 10000,
+                position: "center",
+                titleStyle: { lineHeight: 35, fontSize: 25, height: 100, textAlign: "center", margin: 15, color: "black" },
+                style: { width: 450, height: 250 },
+
+                renderAfterContent: (opt) => {
+                    return <View style={{ flexDirection: "row", height: 50, width: "100%", justifyContent: 'center' }}>
+                        {!tableOverflow && !isFontChange && getRoundedButton(
+                            async () => {
+                                hideMessage()
+
+                                // take the last line - after NL
+                                let text = ""
+                                text = textElem.text;
+                                let nlPos = text.lastIndexOf("\n");
+                                if (nlPos === text.length - 1) {
+                                    nlPos = text.lastIndexOf("\n", nlPos - 1);
+                                }
+
+                                if (nlPos >= 0) {
+                                    text = text.substring(nlPos + 1);
+                                    textElem.text = textElem.text.substring(0, nlPos);
+                                } else {
+                                    textElem.text = "";
+                                }
+
+                                await saveText();
+
+                                const newUri = await FileSystem.main.cloneToTemp(currentFileRef.current);
+                                const updatedSheet = await FileSystem.main.addPageToSheet(pageRef.current, newUri, currPageIndexRef.current + 1);
+                                trace('add page at end of file', updatedSheet)
+                                pageRef.current = updatedSheet;
+                                await movePage(currPageIndexRef.current + 1);
+                                if (tableElem) {
+                                    queue.current.pushTable(tableElem);
+                                }
+                                const newTextElem = {
+                                    ...textElem,
+                                    text,
+                                    y: 0
+                                }
+
+                                queue.current.pushText(newTextElem);
+                                const newCurrEdited = { ...currentEditedRef.current, textId: newTextElem.id }
+                                currentEditedRef.current = newCurrEdited
+                                setCurrentEdited(newCurrEdited);
+                                queue2state();
+                            }, "add", translate("AddPageMenuTitle"), 25, 35, { width: 180 }, undefined, undefined, undefined, true)
+                        }
+                        <Spacer />
+                        {getRoundedButton(() => hideMessage(),
+                            "cancel",
+                            tableOverflow || isFontChange ? translate("BtnOK") : translate("BtnCancel"),
+                            25, 35, { width: 180 }, undefined, undefined, undefined, true)}
+
+                    </View>
+                }
+            })
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -1098,6 +1182,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setEraseMode(false);
         }
         setMode(EditModes.Table);
+        return tablesRef.current.length > 0;
     }
 
     // Checking if we are in a particular mode
@@ -1442,7 +1527,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     async function movePage(inc: number) {
-        saveText();
+        await saveText();
 
         let currentIndex = -1;
         for (let i = 0; i < pageRef.current.count; i++) {
@@ -1685,7 +1770,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onSketchEnd={handleSketchEnd}
 
                 sketchColor={eraseMode ? '#00000000' : (mode == EditModes.Marker ? markerColor + MARKER_TRANSPARENCY_CONSTANT : brushColor)}
-                sketchStrokeWidth={eraseMode ? (mode == EditModes.Marker ? Math.min(15, markerWidth * 3) : Math.min(15, strokeWidth * 3)) :
+                sketchStrokeWidth={eraseMode ? (mode == EditModes.Marker ? Math.max(15, markerWidth * 3) : Math.max(15, strokeWidth * 3)) :
                     (mode == EditModes.Marker ? markerWidth : strokeWidth)}
 
                 onCanvasClick={handleCanvasClick}

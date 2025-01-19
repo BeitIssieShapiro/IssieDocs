@@ -217,6 +217,7 @@ function EditorToolbar({
                 } else {
                     const tableExists = onTableMode();
                     if (!tableExists) {
+                        setMenuHeight(height);
                         setShowPicker(true);
                     }
                 }
@@ -323,8 +324,7 @@ function EditorToolbar({
         } color={semanticColors.editPhotoButton}
             icon={"image"} size={47} iconSize={45} selected={isImageMode} />)
     }
-    if (featuresRef.current.includes(FEATURES.audio)) {
-
+    if (featuresRef.current.includes(FEATURES.voice)) {
         extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.AUDIO, 70)
         } color={semanticColors.editPhotoButton}
             iconType="material-community" icon={"microphone"} size={47} iconSize={45} selected={isAudioMode} />)
@@ -332,7 +332,7 @@ function EditorToolbar({
 
     if (featuresRef.current.includes(FEATURES.table)) {
 
-        extMenu.push(< IconButton onPress={() => onModeButtonClick(Pickers.TABLE, isScreenNarrow() ? 140 : 70)
+        extMenu.push(< IconButton onPress={() => onModeButtonClick(Pickers.TABLE, isScreenNarrow() ? 160 : 80)
         } color={isTableMode ? (Table ? Table.color : color) : semanticColors.editPhotoButton}
             iconType="font-awesome" icon="table" size={47} iconSize={42} selected={isTableMode} ensureContrast={true} />)
     }
@@ -345,7 +345,6 @@ function EditorToolbar({
     if (extMenu.length > 0) {
         extMenu.push(zoomBtn);
     }
-
 
     const modesMenu = [
         <IconButton key={11} onPress={() => onModeButtonClick(Pickers.TEXT, 70)} icon={translate("A")} isText={true} selected={isTextMode}
