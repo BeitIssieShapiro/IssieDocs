@@ -1,10 +1,7 @@
 new canvas
 ---------
-
 case insesitive - check exists on file.jpg and folder as well
 end of page due to fontsize change?
-
-npm patch: react-native-sound, viewshot, react-native-view-shot
 
 
 table:

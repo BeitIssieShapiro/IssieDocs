@@ -1759,8 +1759,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 canvasWidth={windowSize.width}
                 canvasHeight={windowSize.height - toolbarHeight - dimensions.toolbarMargin}
                 onActualCanvasSize={(actualSize, actualMargin, viewOffset, ratio) => {
-                    // trace("actual sizes", actualSize, actualMargin, viewOffset, ratio, windowSize)
+                    trace("actual sizes", actualSize, actualMargin, viewOffset, ratio, windowSize)
                     if (actualSize.height != canvasSize.height || actualSize.width != canvasSize.width) {
+                        trace("setCanvasSize. before", canvasSize, "after", actualSize)
                         setCanvasSize(actualSize)
                     }
                     if (actualMargin !== sideMargin) {

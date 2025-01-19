@@ -299,12 +299,12 @@ function Canvas({
         toThumbnail: () => {
             moveIconDisplay.value = "none";
             editTextRef.current?.prepareForThumbnail();
-            return new Promise(resolve=>{
+            return new Promise(resolve => {
                 captureRef(viewShotRef, { format: "jpg", quality: 0.6, height: dimensions.tileHeight, width: dimensions.tileWidth })
-                .then((uri)=>resolve(uri))
-                .finally(() => {
-                    setTimeout(() => moveIconDisplay.value = "flex");
-                });
+                    .then((uri) => resolve(uri))
+                    .finally(() => {
+                        setTimeout(() => moveIconDisplay.value = "flex");
+                    });
 
             })
         },
@@ -657,12 +657,18 @@ function Canvas({
                     ],
                 },
             ]}
-            onLayout={() => {
+            onLayout={(e) => {
+                console.log("canvas onLayout", e.nativeEvent.layout)
                 setTimeout(() =>
-                    canvasRef.current?.measureInWindow((absX, absY) => {
-                        viewOffset.current = { x: absX, y: absY };
-                    }), 500);
+                    canvasRef.current?.measure((x, y, w, h, px, py) => {
+                        viewOffset.current = {
+                            x: Math.floor(px - offsetRef.current.x * ratio.current * zoomRef.current),
+                            y: Math.floor(py - offsetRef.current.y * ratio.current * zoomRef.current)
+                        };
+                        console.log("canvas measure", viewOffset.current)
+                    }), 500)
             }}
+
             {...sketchResponder.panHandlers}
         >
             <View style={{ flex: 1, backgroundColor: "white", zIndex: 10 }} collapsable={false} ref={viewShotRef} >
