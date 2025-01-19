@@ -2,9 +2,9 @@ new canvas
 ---------
 
 case insesitive - check exists on file.jpg and folder as well
-end of page due to fontsize change
-folder gallery, when coming back from edit - does not update dimensions
+end of page due to fontsize change?
 
+npm patch: react-native-sound, viewshot, react-native-view-shot
 
 
 table:
@@ -12,7 +12,6 @@ table:
 
 android:
 - icon, splash?
-V- read media external (read pdf)
 
 
 version 1.5:
@@ -26,9 +25,6 @@ V-share as image?
 V-open with image, remove the add+ button
 
 
-=D41 - FIXED(D19*100,2)
-
-- when in imageMode cannot move to eraser
 -align in table - margin from lines
 
 

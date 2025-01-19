@@ -110,6 +110,9 @@ export default class FolderGallery extends React.Component {
         try {
             registerLangEvent()
 
+            this.dimSubscription = Dimensions.addEventListener('change', ({ window }) => this.setState({ windowSize: window }));
+
+
             this.props.navigation.addListener("focus", async () => {
                 //this.refresh();
                 this.setState({ selected: undefined });
@@ -180,6 +183,7 @@ export default class FolderGallery extends React.Component {
 
     componentWillUnmount = () => {
         unregisterLangEvent()
+        this.dimSubscription?.remove();
 
         Linking.removeAllListeners();
         this.props.navigation.removeAllListeners();
@@ -341,8 +345,8 @@ export default class FolderGallery extends React.Component {
             type: [DocumentPicker.types.images, DocumentPicker.types.pdf]
         }).then(async (res) => {
             if (res.length > 0) {
-                const pdfUrl = await FileSystem.contentUriToFilePath(res[0].uri).catch(e=>trace("convert err", e));
-                
+                const pdfUrl = await FileSystem.contentUriToFilePath(res[0].uri).catch(e => trace("convert err", e));
+
                 this.props.navigation.navigate('SavePhoto', {
                     imageSource: SRC_FILE,
 

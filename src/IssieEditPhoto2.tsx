@@ -1096,6 +1096,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             (modeRef.current === EditModes.Image || modeRef.current === EditModes.Table || modeRef.current === EditModes.Text)) {
             beforeModeChange();
             setMode(EditModes.Brush);
+            toolbarRef.current?.closePicker();
         }
         setEraseMode((prev) => !prev);
     }

@@ -98,13 +98,6 @@ const App = (props) => {
     setIsSimulator(true)
   }
 
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-
   // return <TestCmp/>
   //return <Test a="abc" b={1}/>
   //return <CanvasTest />

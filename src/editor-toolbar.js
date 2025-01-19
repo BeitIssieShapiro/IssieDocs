@@ -159,6 +159,7 @@ function EditorToolbar({
     useImperativeHandle(ref, () => ({
         closePicker: () => {
             setShowPicker(false);
+            setMenuHeight(0);
         },
         openImageSubMenu: () => {
             setShowPickerType(Pickers.IMAGE);
