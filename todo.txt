@@ -2,8 +2,6 @@ new canvas
 ---------
 viewshot, in text mode not take the yellow part
 table does not scroll when keyboard apear
-drag to move not working with table
-resize rows, location of resize
 resize table only in table mode
 
 case insesitive - check exists on file.jpg and folder as well

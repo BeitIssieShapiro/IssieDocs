@@ -942,10 +942,26 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 backupElement(table);
             }
 
+
             if (tableContext.hLine != undefined && tableContext.hLine > 0 && tableContext.hLine < table.horizontalLines.length - 1) {
                 // not allow move beyond the two adjecent lines
-                if (p[1] <= table.horizontalLines[tableContext.hLine - 1] || p[1] >= table.horizontalLines[tableContext.hLine + 1]) return;
-                table.horizontalLines[tableContext.hLine] = p[1];
+                const horizontalLines = calcEffectiveHorizontalLines(table, textsRef.current)
+                if (p[1] <= horizontalLines[tableContext.hLine - 1] || p[1] >= horizontalLines[tableContext.hLine + 1]) return;
+
+                // calculate the added size to all rows before this
+                const prevRowsDelta = horizontalLines[tableContext.hLine - 1] - table.horizontalLines[tableContext.hLine - 1];
+
+                // find text elements of this line:
+                const rowTexts = textsRef.current.filter(t => t.tableId == table.id && t.y + 1 == tableContext.hLine);
+                for (let rowText of rowTexts) {
+                    if (rowText.height && p[1] - horizontalLines[tableContext.hLine - 1] < rowText.height) {
+                        // trying to resize the line smaller than the heighest text in the row
+                        trace("limit resize row", rowText.height, p[1] - table.horizontalLines[tableContext.hLine - 1])
+                        return;
+                    }
+                }
+
+                table.horizontalLines[tableContext.hLine] = p[1] - prevRowsDelta;
             }
             if (tableContext.vLine != undefined && tableContext.vLine > 0 && tableContext.vLine < table.verticalLines.length - 1) {
                 // not allow move beyond the two adjecent lines

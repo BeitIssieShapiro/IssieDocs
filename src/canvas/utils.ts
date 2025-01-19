@@ -138,7 +138,7 @@ export function calcEffectiveHorizontalLines(table: SketchTable, texts?: SketchT
                 const maxTextHeight = Math.max(...rowTexts.map(rt => (rt.height ?? 0)));
                 if (maxTextHeight > rowHeight) {
                     // emlarge row height and all next rows position
-                    dy += maxTextHeight - rowHeight;
+                    dy += maxTextHeight - rowHeight + table.strokeWidth/2;
                 }
             }
         }

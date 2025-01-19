@@ -377,7 +377,7 @@ export function Canvas({
                         const dy = gState.dy / (zoomRef.current * ratio.current);
 
                         const { initialPosition, elem, initialOffset } = startSketchRef.current;
-                        if (initialPosition && elem) {
+                        if (initialPosition && elem && currentElementTypeRef.current != ElementTypes.Text) {
                             const pt: SketchPoint = [initialPosition[0] + dx, initialPosition[1] + dy];
                             if ("id" in elem) {
                                 onMoveElement(
@@ -388,6 +388,7 @@ export function Canvas({
                                 onMoveTablePart?.(pt, elem);
                             }
                         } else if (initialOffset) {
+                            isDragMoving.current = true;
                             onMoveCanvas({ x: initialOffset.x + dx, y: initialOffset.y + dy });
                         }
                         return; // Do not proceed to `onSketchStep` if moving an element
@@ -450,6 +451,7 @@ export function Canvas({
                     onSketchEnd();
                 }
                 startSketchRef.current = null;
+                isDragMoving.current = false;
             },
         })
     ).current;
