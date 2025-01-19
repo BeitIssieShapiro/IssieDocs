@@ -1344,7 +1344,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             }
         },
         setBorderStyle: (borderStyle: string) => {
-            const strokeDash = borderStyle == "0,0" ? undefined : borderStyle.split(",");
+            const strokeDash = !borderStyle || borderStyle == "0,0" ? [0, 0] : borderStyle.split(",");
             if (tablesRef.current.length > 0 && tablesRef.current[0].strokeDash != strokeDash) {
                 const changed = cloneElem(tablesRef.current[0]);
                 changed.strokeDash = strokeDash;
@@ -1632,13 +1632,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     function handleMoveCanvas(newOffset: Offset) {
         if (zoomRef.current == 1 && modeRef.current != EditModes.Text) return;
         let { x, y } = newOffset;
-        trace("set move before", x, y)
+        //trace("set move before", x, y)
         const verticalOnly = (zoomRef.current == 1 && modeRef.current == EditModes.Text);
 
         x = verticalOnly ? moveCanvasRef.current.x : Math.min(Math.max(x, -maxXOffset() / ratioRef.current), 0);
 
         y = Math.min(Math.max(y, -maxYOffset() / ratioRef.current), 0);
-        trace("set move", x, y, -maxYOffset())
+        //trace("set move", x, y, -maxYOffset())
         setMoveCanvas({ x, y });
     }
 

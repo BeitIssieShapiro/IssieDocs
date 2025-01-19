@@ -91,9 +91,6 @@ function TextElement({
     const style: any = { color: text.color, fontSize: text.fontSize * ratio.current, direction: text.rtl ? "rtl" : "ltr", textAlign: text.rtl ? "right" : "left" };
 
     const moveIconStyle: any = { position: "absolute", ...(text.rtl ? { right: -25 } : { left: -25 }) }
-    //console.log("Text style", posStyle)
-
-    console.log("Text render", editMode)
 
     if (editMode) {
         return (

@@ -344,7 +344,7 @@ function Canvas({
                 }
             },
             onPanResponderMove: (e, gState) => {
-                if (Math.abs(gState.dx) < 2 && Math.abs(gState.dy) < 2) return;
+                if (gState.numberActiveTouches == 1 && Math.abs(gState.dx) < 2 && Math.abs(gState.dy) < 2) return;
                 const newPoint = screen2Canvas(gState.moveX, gState.moveY);
 
                 if (startSketchRef.current) {
@@ -719,7 +719,6 @@ function Canvas({
                 {texts?.map((text) => {
                     const editMode = (currentElementTypeRef.current == ElementTypes.Text || currentElementTypeRef.current == ElementTypes.Table)
                         && text.id == currentEdited.textId
-                    console.log("render text", text.id, currentEdited.textId)
                     return <TextElement
                         ref={editMode ? editTextRef : undefined}
                         key={text.id}
@@ -741,7 +740,7 @@ function Canvas({
                     lines?.filter(line => line.id == currentEdited.lineId)
                         .map((line) => {
                             const angle = calculateLineAngle(line.from, line.to);
-                            const trashPos = calculateLineTrashPoint(line.from, line.to, (angle + 90) % 360, 8);
+                            const trashPos = calculateLineTrashPoint(line.from, line.to, (angle + 90) % 360, 20);
 
                             const transform = { transform: [{ rotate: `${angle}deg` }] };
                             return (

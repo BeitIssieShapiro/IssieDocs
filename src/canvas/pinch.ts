@@ -91,14 +91,19 @@ export class PinchSession {
 
         const shouldMove = newZoom !== 1
 
+        const deltaZoom = initialZoom / newZoom;
+
         let x = shouldMove ?
-            initialOffset.x - (initialPosition.x - center.x) :
-            0;
+            (initialOffset.x * deltaZoom - initialPosition.x * (1 - deltaZoom)) - (initialPosition.x - center.x) * deltaZoom : 0;
+        // initialOffset.x - (initialPosition.x - center.x) :
+        // 0;
 
         let y = shouldMove ?
-            initialOffset.y - (initialPosition.y - center.y) :
-            0;
+            (initialOffset.y * deltaZoom - initialPosition.y * (1 - deltaZoom)) - (initialPosition.y - center.y) * deltaZoom : 0;
+        // initialOffset.y - (initialPosition.y - center.y) :
+        // 0;
 
+        console.log("onPinchUpdate 0", x, y, newZoom, shouldMove)
         // Don't allow positive offset or else the image slides offscreen
         if (x > 0 || newZoom === 1) {
             x = 0;
@@ -109,7 +114,7 @@ export class PinchSession {
 
         // Fire the event with new pinch results
         if (this.onPinchUpdate) {
-            console.log("onPinchUpdate", x,y)
+            console.log("onPinchUpdate", x, y, newZoom, shouldMove)
             this.onPinchUpdate({
                 zoom: newZoom,
                 offset: { x, y }
