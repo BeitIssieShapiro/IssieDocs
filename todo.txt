@@ -2,7 +2,6 @@ new canvas
 ---------
 viewshot, in text mode not take the yellow part
 table does not scroll when keyboard apear
-resize table only in table mode
 
 case insesitive - check exists on file.jpg and folder as well
 end of page due to fontsize change

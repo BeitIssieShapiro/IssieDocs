@@ -227,7 +227,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         kbTop /= zoomRef.current
         if (textElem) {
             const elemHeight = (textElem.height ?? 20);
-            const elemBottom = textElem.y + elemHeight;
+            let elemBottom = textElem.y + elemHeight;
+            if (textElem.tableId) {
+                const table = tablesRef.current.find(t => t.id == textElem.tableId);
+                if (table) {
+                    const horizontalLines = calcEffectiveHorizontalLines(table, textsRef.current);
+                    elemBottom = horizontalLines[textElem.y] + elemHeight;
+                }
+            }
             if (elemBottom > kbTop) {
                 trace("text behind kb", elemBottom, kbTop)
                 const dy = kbTop - elemBottom;
@@ -642,7 +649,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     selectText(textElem);
                 }
             } else {
-                trace("xxx2")
                 if (elem && "cell" in elem && elem.cell) {
                     // search tableCell
                     const textElem = textsRef.current.find(t => elem.cell && t.x == elem.cell[0] && t.y == elem.cell[1]);
@@ -651,7 +657,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         return;
                     }
                 }
-                trace("xxx3")
                 const newTextElem: SketchText = {
                     id: getId("T"),
                     text: "",
@@ -661,7 +666,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     x: p[0],
                     y: p[1],
                 };
-                trace("xxx4")
                 if (elem && "cell" in elem) {
                     // clicked a table
                     const tableContext = elem as TableContext;
@@ -669,7 +673,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     newTextElem.x = tableContext.cell && tableContext.cell[0] || 0;
                     newTextElem.y = tableContext.cell && tableContext.cell[1] || 0;
                 }
-                trace("xxx")
                 const newCurrEdited = { ...currentEditedRef.current, textId: newTextElem.id }
                 currentEditedRef.current = newCurrEdited
                 setCurrentEdited(newCurrEdited);

@@ -468,6 +468,7 @@ export function Canvas({
                     // +15 / -15 offset for text handle, etc. Adjust as needed for images
                     const canvasPos0 = screen2Canvas(gState.x0 + gState.dx + moveContext.current.offsetX * zoomRef.current, gState.y0 + gState.dy + moveContext.current.offsetY * zoomRef.current);
                     moveContext.current.lastPt = canvasPos0;
+                    console.log("XX")
                     onMoveElement?.(moveContext.current.type, moveContext.current.id, canvasPos0);
                 }
             },
@@ -505,7 +506,7 @@ export function Canvas({
                 }
             }
 
-            console.log("xxx", cx, cy, table.verticalLines, horizontalLines)
+            //console.log("xxx", cx, cy, table.verticalLines, horizontalLines)
 
             for (let h = 1; h < horizontalLines.length - 1; h++) {
                 if (Math.abs(horizontalLines[h] - cy) < TABLE_LINE_THRESHOLD) {

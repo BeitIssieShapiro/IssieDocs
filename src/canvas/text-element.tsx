@@ -74,7 +74,7 @@ export const TextElement: React.FC<TextElementProps> = ({
                 direction={text.rtl ? "rtl" : "ltr"}
                 key={text.id}
                 style={[styles.textInputHost, posStyle, { textAlign: "center", zIndex: 500 }, table && { backgroundColor: textBGColor }]}
-                {...moveResponder.panHandlers}
+                {...(table?{}:moveResponder.panHandlers)}
                 onStartShouldSetResponder={(e) => {
                     moveContext.current = { type: MoveTypes.Text, id: text.id, offsetX: text.rtl ? -15 : 15, offsetY: -15 };
                     return moveResponder.panHandlers?.onStartShouldSetResponder?.(e) || false;
@@ -112,7 +112,7 @@ export const TextElement: React.FC<TextElementProps> = ({
                 style={[styles.textStyle, style, { textAlign: "left" }]}
                 onLayout={(e) => handleTextLayout(e, text)}
             >
-                {text.text}{Math.floor(text.height!)}
+                {text.text}
             </Text>
         </View>
     );
