@@ -184,7 +184,7 @@ export function MyColorPicker(props) {
 
 const textSizeVolumeBarSize = 400;
 const dotSize = 30;
-const minTextSizePickerCollapsedSize = 50;
+const minTextSizePickerCollapsedSize = 80;
 export function TextSizePicker(props) {
     const [openMore, setOpenMore] = useState(false);
     const [height, setHeight] = useState(0);
@@ -195,8 +195,8 @@ export function TextSizePicker(props) {
     const onSelectTextAlignment = props.onSelectTextAlignment;
 
     const textSizesAct = textSizes
-    let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow ? 1.2 : 1.4));
-    const simpleToolbarHeight = Math.max(buttonSize + 10, minTextSizePickerCollapsedSize);
+    let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow ? .8 : 1.4));
+    const simpleToolbarHeight = Math.max(buttonSize + (props.isScreenNarrow ? 0 : 10), minTextSizePickerCollapsedSize);
     const totalHeight = simpleToolbarHeight + (openMore ? 60 : 0);
 
     useEffect(() => {
@@ -209,7 +209,7 @@ export function TextSizePicker(props) {
 
     //trace("text size picker", props.open ? (simpleToolbarHeight + (openMore ? 60 : 0)) : 0)
 
-    return <FadeInView 
+    return <FadeInView
         overflow={"hidden"}
         height={props.open ? (simpleToolbarHeight + (openMore ? 60 : 0)) : 0}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
@@ -225,7 +225,7 @@ export function TextSizePicker(props) {
                 }))}
 
             <View style={{ height: "100%", width: 100, flexDirection: "column", justifyContent: 'center', alignItems: "flex-end" }}>
-                <Spacer />
+                {!props.isScreenNarrow && <Spacer />}
                 <View style={{ flexDirection: "row", height: 40, justifyContent: "space-evenly" }}>
                     <Spacer />
                     <SelectedCircle selected={textAlignment == TextAlignment.LEFT} size={40}>
@@ -238,7 +238,7 @@ export function TextSizePicker(props) {
                         <Icon type="font-awesome" name="align-center" size={25} color={props.color}
                             selected={textAlignment == TextAlignment.CENTER} onPress={() => onSelectTextAlignment(TextAlignment.CENTER)} />
                     </SelectedCircle>}
-                    <Spacer />
+                    {!props.isScreenNarrow && <Spacer />}
                     <SelectedCircle selected={textAlignment == TextAlignment.RIGHT} size={40}>
                         <Icon type="font-awesome" name="align-right" size={25} color={props.color}
                             onPress={() => onSelectTextAlignment(TextAlignment.RIGHT)} />

@@ -36,7 +36,7 @@ function TextElement({
     tables,
     texts,
 }: TextElementProps, ref: any) {
-    const textBGColor = useSharedValue<ColorValue>("black");
+    const textBGColor = useSharedValue<ColorValue>("yellow");
     const moveIconDisplay = useSharedValue<'none' | 'flex' | undefined>("flex");
     const table = text.tableId && tables?.find(table => table.id == text.tableId);
 

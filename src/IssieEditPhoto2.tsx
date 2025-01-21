@@ -840,7 +840,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 if (!imgElem.backup) {
                     backupElement(imgElem)
                 }
-                delete imgElem.imageData
+                //delete imgElem.imageData
                 if (type === MoveTypes.ImageMove) {
                     imgElem.x = x;
                     imgElem.y = y;
@@ -914,7 +914,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         } else if (type === MoveTypes.ImageMove || type === MoveTypes.ImageResize) {
             const imgElem = imagesRef.current.find(image => image.id == id);
             if (imgElem) {
-                const changed = restoreElement(imgElem);
+                const changed = restoreElement(imgElem) as SketchImage;
+                delete changed.imageData;
                 queue.current.pushImagePosition(changed);
                 save();
                 queue2state();

@@ -918,7 +918,7 @@ function Canvas({
                             </TouchableOpacity>}
                         {currentElementTypeRef.current == ElementTypes.Image &&
                             currentEdited.imageId == image.id && <MoveIcon
-                                style={styles.moveIcon, visibleAnimatedStyle}
+                                style={[styles.moveIcon, visibleAnimatedStyle]}
                                 position={[
                                     (image.x + image.width) * ratio.current - 20,
                                     (image.y + image.height) * ratio.current - 20,

@@ -376,6 +376,7 @@ function EditorToolbar({
 
         {/** Left side toolbar */}
         <View style={{
+            direction: rtl,
             position: 'absolute',
             height: dimensions.toolbarHeight,
             left: 0,
@@ -391,9 +392,8 @@ function EditorToolbar({
             <IconButton onPress={onRedo} color={canRedo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} icon={rtl ? "redo" : "undo"} size={55} />
             <Spacer width={23} />
             {getEraserIcon(onEraser, 50, eraseMode ? 'black' : semanticColors.editPhotoButton, eraseMode, 25)}
-
             { /* text size preview */}
-            <View style={{
+            <View style={[{
                 position: 'absolute',
                 top: 0,
                 width: 120,
@@ -402,8 +402,10 @@ function EditorToolbar({
                 justifyContent: 'center',
                 alignItems: 'center',
                 alignContent: 'center',
-                right: isScreenNarrow() ? 0 : previewOffset
-            }} >
+            },
+            //isScreenNarrow() ? { left: 0 } :
+            { [rtl ? "right" : "left"]: previewOffset }
+            ]} >
                 {
                     isTextMode ?
                         <View
@@ -448,23 +450,27 @@ function EditorToolbar({
 
             {/** right side top toolbar */}
             <View style={[{
+                direction: rtl,
                 position: 'absolute',
                 [rtl ? "right" : "left"]: 0,
                 height: dimensions.toolbarHeight,
-                flexDirection: rtl ? "row-reverse" : "row", alignItems: 'center',
+                flexDirection: rtl ? "row-reverse" : "row",
+                alignItems: 'center',
             }, isScreenNarrow() ?
-                { top: dimensions.toolbarHeight, left: 0 } :
-                { top: 0, right: 0 }
+                { top: dimensions.toolbarHeight } :
+                { top: 0 }
             ]} >
                 {spread(modesMenu)}
             </View>
         </View >
         {/** bottom toolbar */}
         {showExtMenu && <View style={{
-            position: 'absolute',
+            position: 'absolute', direction: rtl,
             [rtl ? "right" : "left"]: 0,
+            //left:0,
             height: dimensions.toolbarHeight,
-            flexDirection: rtl ? "row-reverse" : "row", alignItems: 'center',
+            flexDirection: rtl ? "row-reverse" : "row",
+            alignItems: 'center',
             top: (isScreenNarrow() ? 2 : 1) * dimensions.toolbarHeight,
 
         }} >
@@ -596,14 +602,14 @@ function EditorToolbar({
                     justifyContent: "space-evenly", alignItems: "center", flexWrap: "wrap"
                 }
             ]}>
-            <ToolbarGroup width={180} height={menuHeight - 15}>
+            <ToolbarGroup width={180} height={dimensions.toolbarHeight}>
                 <NumberSelector direction={"row-reverse"} value={tableRows} setValue={setRows} icon="table-rows" />
             </ToolbarGroup>
-            <ToolbarGroup width={180} height={menuHeight - 15}>
+            <ToolbarGroup width={180} height={dimensions.toolbarHeight}>
                 <NumberSelector direction={"row-reverse"} value={tableCols} setValue={setColumns} icon="table-rows" rotateDeg={90} />
             </ToolbarGroup>
 
-            <ToolbarGroup width={100} height={menuHeight - 15}>
+            <ToolbarGroup width={100} height={dimensions.toolbarHeight}>
                 {
                     [2, 5, 8].map((borderWidth, i) => (<LineWidthSelector
                         height={40}
@@ -617,7 +623,7 @@ function EditorToolbar({
                 }
             </ToolbarGroup>
 
-            <ToolbarGroup width={100} height={menuHeight - 15}>
+            <ToolbarGroup width={100} height={dimensions.toolbarHeight}>
                 {
                     ["0,0", "2,2", "4,2"].map((style, i) => (<LineStyleSelector
                         height={40}
@@ -640,7 +646,7 @@ function EditorToolbar({
                     }
                 }} isOn={Table !== undefined} />
                  */}
-            <ToolbarGroup width={130} height={menuHeight - 15} onPress={() => {
+            <ToolbarGroup width={130} height={dimensions.toolbarHeight} onPress={() => {
                 if (Table) {
                     TableActions.delete(Table.id);
                 } else {

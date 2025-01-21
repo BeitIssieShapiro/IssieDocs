@@ -192,7 +192,7 @@ export function restoreElement(elem: ElementBase): ElementBase {
     const currentClone = cloneElem(elem);
     Object.assign(elem, backupCopy);
 
-    console.log("restore to", currentClone)
+    // console.log("restore to", currentClone)
     return currentClone;
 }
 
