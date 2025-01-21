@@ -3,6 +3,8 @@ new canvas
 case insesitive - check exists on file.jpg and folder as well
 end of page due to fontsize change?
 
+crash when un-zoom fast and below 1
+resize and move image, the image is not shown
 
 table:
   - move cells XX

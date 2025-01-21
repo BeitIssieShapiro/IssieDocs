@@ -54,6 +54,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [windowSize, setWindowSize] = useState<ImageSize>(Dimensions.get("window"));
     const [canvasSize, setCanvasSize] = useState<ImageSize>({ width: -1, height: -1 })
     const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
+    const [keyboardTop, setKeyboardTop] = useState<number>(0);
     const [toolbarHeight, setToolbarHeight] = useState<number>(dimensions.toolbarHeight);
     const [floatingToolbarHeight, setFloatingToolbarHeight] = useState<number>(0);
 
@@ -221,12 +222,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         // check if a text box in edit:
         const textElem = currentEditedRef.current.textId ? textsRef.current.find(t => t.id == currentEditedRef.current.textId) : undefined;
 
-        let kbTop = (e.endCoordinates.screenY - viewOffsetRef.current.y) / ratioRef.current;
-        kbTop -= moveCanvasRef.current.y;
-        kbTop /= zoomRef.current
+        let kbTop = (e.endCoordinates.screenY - viewOffsetRef.current.y);
+
+        //setKeyboardTop(kbTop)
         if (textElem) {
             const elemHeight = (textElem.height ?? 20);
-            let elemBottom = textElem.y + elemHeight;
+            let elemBottom = (textElem.y + elemHeight + moveCanvasRef.current.y) *ratioRef.current * zoomRef.current;
             if (textElem.tableId) {
                 const table = tablesRef.current.find(t => t.id == textElem.tableId);
                 if (table) {
@@ -235,8 +236,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 }
             }
             if (elemBottom > kbTop) {
-                trace("text behind kb", elemBottom, kbTop)
-                const dy = kbTop - elemBottom;
+                trace("text behind kb", elemBottom, kbTop, elemHeight, "ratio", ratioRef.current, "zoom", zoomRef.current)
+                const dy = (kbTop - elemBottom) / (ratioRef.current*zoomRef.current);
                 handleMoveCanvas({ x: moveCanvasRef.current.x, y: moveCanvasRef.current.y + dy - 3 })
             }
         }
@@ -1655,8 +1656,22 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         >
             {/* <View style={{ position: "absolute", left: sideMargin, top: 100, height: 5, width: canvasSize.width, backgroundColor: "green", zIndex: 10000 }} />
+
+            
             <View style={{ position: "absolute", left: 0, top: 110, height: 5, width: windowSize.width, backgroundColor: "yellow", zIndex: 10000 }} />
             <View style={{ position: "absolute", left: 100, top: toolbarHeight + dimensions.toolbarMargin, height: canvasSize.height, width: 5, backgroundColor: "red", zIndex: 10000 }} /> */}
+            {/* {[...Array(100).keys()].map((i: number) => (<View key={i}
+                style={{ position: "absolute", left: 0, top: toolbarHeight + dimensions.toolbarMargin + i * 25, height: 2, width: windowSize.width, backgroundColor: "yellow", zIndex: 10000 }}
+            >
+                <Text style={{ position: "absolute", left: 100, top: -13 }}>{i * 25}</Text>
+            </View>))}
+
+            <View 
+                style={{ position: "absolute", left: 0, top: toolbarHeight + dimensions.toolbarMargin + keyboardTop -2, height: 2, width: windowSize.width, backgroundColor: "red", zIndex: 10000 }}
+            >
+                <Text style={{ position: "absolute", left: 100, top: -13 }}>kb</Text>
+            </View> */}
+
             {busy &&
                 <View style={styles.busy}>
                     <ActivityIndicator size="large" /></View>
