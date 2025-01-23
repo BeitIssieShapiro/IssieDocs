@@ -3,7 +3,11 @@ new canvas
 case insesitive - check exists on file.jpg and folder as well
 end of page due to fontsize change?
 
-crash when un-zoom fast and below 1
+read the tools state from the state onLoad
+V - resize image - preserve AR 
+V - add up/down if zoom > 1
+V - share PDF - allow sharing 
+
 
 
 table:

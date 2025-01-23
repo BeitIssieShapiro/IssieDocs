@@ -27,6 +27,7 @@ export interface SketchPath extends ElementBase {
     points: PathCommand[];
     color: string;
     strokeWidth: number;
+    isMarker: boolean; 
 }
 
 export interface SketchLine extends ElementBase {
@@ -56,7 +57,8 @@ export interface SketchImage extends ElementBase {
     x: number;
     y: number;
     width: number;
-    height: number
+    height: number;
+    aspectRatio?:number;
 }
 
 export interface SketchTable extends ElementBase {

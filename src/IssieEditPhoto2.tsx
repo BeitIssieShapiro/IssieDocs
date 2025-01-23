@@ -54,7 +54,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [windowSize, setWindowSize] = useState<ImageSize>(Dimensions.get("window"));
     const [canvasSize, setCanvasSize] = useState<ImageSize>({ width: -1, height: -1 })
     const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
-    const [keyboardTop, setKeyboardTop] = useState<number>(0);
+    //const [keyboardTop, setKeyboardTop] = useState<number>(0);
     const [toolbarHeight, setToolbarHeight] = useState<number>(dimensions.toolbarHeight);
     const [floatingToolbarHeight, setFloatingToolbarHeight] = useState<number>(0);
 
@@ -84,10 +84,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const toolbarRef = useRef<any>(null);
     const viewOffsetRef = useRef<Offset>({ x: 0, y: 0 })
 
+    
     const [fontSize, setFontSize] = useState<number>(35);
     const [textAlignment, setTextAlignment] = useState<string>(isRTL() ? "Right" : "Left");
     const [strokeWidth, setStrokeWidth] = useState<number>(2);
     const [markerWidth, setMarkerWidth] = useState<number>(20);
+    const [rulerStrokeWidth, setRulerStrokeWidth] = useState<number>(2);
+
     const [sideMargin, setSideMargin] = useState<number>(dimensions.minSideMargin);
     const [brushColor, setBrushColor] = useState<string>(colors.black);
     const [rulerColor, setRulerColor] = useState<string>(colors.black);
@@ -116,6 +119,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const fontSizeRef = useRef(fontSize);
     const textAlignmentRef = useRef(textAlignment);
     const strokeWidthRef = useRef(strokeWidth);
+    const rulerStrokeWidthRef = useRef(rulerStrokeWidth);
     const markerWidthRef = useRef(markerWidth);
     const sideMarginRef = useRef(sideMargin);
     const brushColorRef = useRef(brushColor);
@@ -143,6 +147,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         fontSizeRef.current = fontSize;
         textAlignmentRef.current = textAlignment;
         strokeWidthRef.current = strokeWidth;
+        rulerStrokeWidthRef.current = rulerStrokeWidth;
         markerWidthRef.current = markerWidth;
         sideMarginRef.current = sideMargin;
         brushColorRef.current = brushColor;
@@ -159,7 +164,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         eraseModeRef.current = eraseMode;
 
         updateCurrentEditedElements();
-    }, [mode, fontSize, textAlignment, strokeWidth, markerWidth, sideMargin,
+    }, [mode, fontSize, textAlignment, strokeWidth, rulerStrokeWidth, markerWidth, sideMargin,
         brushColor, rulerColor, markerColor, textColor, tableColor, canvasSize,
         currPageIndex, currentFile, moveCanvas, zoom, keyboardHeight, eraseMode]);
 
@@ -181,7 +186,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         pageRef.current = newPage;
 
         metaDataUri.current = newCurrentFile + ".json";
-        await loadMetadata().then(() => queue2state());
+        await loadMetadata().then(() => queue2state(true));
     }
 
     useEffect(() => {
@@ -227,7 +232,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         //setKeyboardTop(kbTop)
         if (textElem) {
             const elemHeight = (textElem.height ?? 20);
-            let elemBottom = (textElem.y + elemHeight + moveCanvasRef.current.y) *ratioRef.current * zoomRef.current;
+            let elemBottom = (textElem.y + elemHeight + moveCanvasRef.current.y) * ratioRef.current * zoomRef.current;
             if (textElem.tableId) {
                 const table = tablesRef.current.find(t => t.id == textElem.tableId);
                 if (table) {
@@ -237,7 +242,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             }
             if (elemBottom > kbTop) {
                 trace("text behind kb", elemBottom, kbTop, elemHeight, "ratio", ratioRef.current, "zoom", zoomRef.current)
-                const dy = (kbTop - elemBottom) / (ratioRef.current*zoomRef.current);
+                const dy = (kbTop - elemBottom) / (ratioRef.current * zoomRef.current);
                 handleMoveCanvas({ x: moveCanvasRef.current.x, y: moveCanvasRef.current.y + dy - 3 })
             }
         }
@@ -333,8 +338,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     subject: translate("ShareEmailSubject"),
                     url: shareUrl,
                     type: 'application/pdf',
-                    saveToFiles: true,
-                    showAppsToView: true,
+                    //saveToFiles: true,
+                    //showAppsToView: true,
                 };
 
                 // Share the PDF
@@ -357,7 +362,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
 
-    const queue2state = () => {
+    const queue2state = (updateToolsState?:boolean) => {
         let q = queue.current.getAll();
 
         //console.log("Queue:", q.map(elem=>`${elem.type}: ${elem.elem.from+","+elem.elem.to}\n`))
@@ -369,12 +374,26 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         let _rulers = [] as SketchLine[];
         let _audio = [] as SketchElement[];
 
+        let fontSize
+        let textAlignment
+        let strokeWidth
+        let markerStrokeWidth
+        let markerColor
+        let brushColor
+        let rulerColor
+        let rulerStrokeWidth
+        let textColor
+
         for (let i = 0; i < q.length; i++) {
             if (q[i].type === 'text') {
                 const txtElem = cloneElem(q[i].elem);
 
                 //first try to find same ID and replace, or add it
                 let found = false;
+
+                fontSize = txtElem.fontSize;
+                textAlignment = txtElem.textAlignment;
+                textColor = txtElem.color;
 
                 for (let j = 0; j < _texts.length; j++) {
                     if (_texts[j].id === txtElem.id) {
@@ -392,10 +411,25 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     _texts.push(txtElem);
                 }
             } else if (q[i].type === 'path') {
-                _paths.push(q[i].elem);
+                const sketchElem = q[i].elem as SketchPath;
+                if (sketchElem.isMarker) {
+                    markerStrokeWidth = sketchElem.strokeWidth;
+                    markerColor = sketchElem.color;
+                } else {
+                    // for cases it is missing
+                    sketchElem.isMarker = false;
+                    strokeWidth = sketchElem.strokeWidth
+                    brushColor = sketchElem.color;                        
+                }
+                _paths.push(sketchElem);
             } else if (q[i].type === 'line') {
                 _rulers = _rulers.filter(l => l.id !== q[i].elem.id);
-                _rulers.push(cloneElem(q[i].elem));
+                const lineElem = q[i].elem as SketchLine;
+
+                rulerColor = lineElem.color;
+                rulerStrokeWidth = lineElem.strokeWidth;
+
+                _rulers.push(cloneElem(lineElem));
             } else if (q[i].type === 'lineDelete') {
                 _rulers = _rulers.filter(l => l.id !== q[i].elem.id);
             } else if (q[i].type === 'image') {
@@ -457,6 +491,18 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setImages(_images);
         setTables(_tables);
         setAudios(_audio);
+        
+        if (updateToolsState) {
+            if (fontSize != undefined) setFontSize(fontSize);
+            if (textAlignment != undefined) setTextAlignment(textAlignment);
+            if (strokeWidth != undefined) setStrokeWidth(strokeWidth);
+            if (markerStrokeWidth != undefined) setMarkerWidth(markerStrokeWidth);
+            if (markerColor != undefined) setMarkerColor(markerColor);
+            if (brushColor != undefined) setBrushColor(brushColor);
+            if (rulerColor != undefined) setRulerColor(rulerColor);
+            if (rulerStrokeWidth != undefined) setRulerStrokeWidth(rulerStrokeWidth);
+            if (textColor != undefined) setTextColor(textColor);
+        }
     }
 
     function beforeModeChange() {
@@ -489,6 +535,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 points: [p],
                 color,
                 strokeWidth,
+                isMarker: isMarkerMode(),
             };
 
             pathsRef.current.push(newPath);
@@ -500,7 +547,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 from: p,
                 to: p,
                 color: rulerColorRef.current,
-                strokeWidth: strokeWidthRef.current,
+                strokeWidth: rulerStrokeWidthRef.current,
             };
             linesRef.current.push(newLine);
             setLines([...linesRef.current]);
@@ -559,6 +606,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     points: commands,
                     color,
                     strokeWidth,
+                    isMarker: isMarkerMode(),
                 };
 
                 pathsRef.current.push(newPath);
@@ -839,14 +887,16 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             if (imgElem) {
                 if (!imgElem.backup) {
                     backupElement(imgElem)
+                    imgElem.aspectRatio = imgElem.width / imgElem.height;
                 }
                 //delete imgElem.imageData
                 if (type === MoveTypes.ImageMove) {
                     imgElem.x = x;
                     imgElem.y = y;
                 } else {
-                    imgElem.width = x - imgElem.x;
-                    imgElem.height = y - imgElem.y;
+                    const delta = (x - imgElem.x) - imgElem.width;
+                    imgElem.width += delta;
+                    imgElem.height += delta / (imgElem.aspectRatio || 1)
                 }
                 setImages([...imagesRef.current]);
             }
@@ -916,6 +966,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             if (imgElem) {
                 const changed = restoreElement(imgElem) as SketchImage;
                 delete changed.imageData;
+                delete changed.aspectRatio;
                 queue.current.pushImagePosition(changed);
                 save();
                 queue2state();
@@ -1409,8 +1460,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setTextAlignment(newTextAlignment);
     }
     function onBrushSize(brushSize: number) {
-        setStrokeWidth(brushSize);
         if (modeRef.current == EditModes.Ruler) {
+            setRulerStrokeWidth(brushSize);
             const lineElem = linesRef.current.find(line => line.id == currentEditedRef.current.lineId);
             if (lineElem) {
                 const cloned = cloneElem(lineElem);
@@ -1419,6 +1470,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 queue2state();
                 save();
             }
+        } else {
+            setStrokeWidth(brushSize);
         }
     }
     function onMarkerSize(markerSize: number) {
@@ -1514,7 +1567,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const sidesTop = Math.min(windowSize.height / 2 - 35, windowSize.height - keyboardHeight - 95);
         const upDownLeft = windowSize.width / 2 - 35; //half the size of the button
         const upDownTop = toolbarHeight + floatingToolbarHeight
-        const verticalMovePossible = mode != EditModes.Text && zoom > 1;
+        const verticalMovePossible = zoom > 1;
         const horizMovePossible = zoom > 1;
 
         const disabledRight = -maxXOffset() >= moveCanvas.x;
@@ -1754,7 +1807,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 fontSize={fontSize}
                 textAlignment={textAlignment}
                 showCenterTextAlignment={false} // or some logic
-                strokeWidth={strokeWidth}
+                strokeWidth={mode === EditModes.Ruler ? rulerStrokeWidth :strokeWidth}
                 markerWidth={markerWidth}
                 sideMargin={sideMargin}
                 onSelectColor={handleSelectColor}
