@@ -46,7 +46,7 @@ function _lastUpdate(fi) {
 }
 
 function _androidFileName(path) {
-    if (Platform.OS === 'android' && !path.startsWith("file")) {
+    if (Platform.OS === 'android' && path && !path.startsWith("file")) {
         return "file://" + path
     }
     return path
@@ -712,6 +712,10 @@ export class FileSystem {
     }
     //"file:///data/user/0/com.issiedocs/files/folders/F1/eee.jpg
     _parsePath(filePath) {
+        if (!filePath) {
+            trace("unexpected empty filePath")
+            return
+        }
         let lastSlashPos = filePath.lastIndexOf('/');
         let fileName = filePath.substr(lastSlashPos + 1);
         let isWorksheetInFolder = true;
@@ -898,18 +902,6 @@ export class FileSystem {
             return FileProviderModule.getFilePathFromUri(contentUri, false);
         }
         return contentUri;
-        
-        // let ret = contentUri;
-        // if (contentUri.startsWith("content://")) {
-        //     RNFS.
-        //     // e.g. store temp file in DocumentDirectoryPath or CachesDirectoryPath
-        //     ret = joinPaths(TemporaryDirectoryPath, "temp.pdf");
-
-        //     // Copy the file from content URI → localFilePath
-        //     // On Android, RNFS.copyFile(...) can handle content:// URIs (with proper permission).
-        //     await RNFS.copyFile(contentUri, ret);
-        // }
-        // return _androidFileName(ret);
     }
 
     // size = {width, height}
@@ -940,6 +932,7 @@ export class FileSystem {
     }
 
     async exportWorksheet(sheet, folderObj) {
+        trace("start export", sheet.name)
         let folder;
         let name;
         if (sheet) {
@@ -970,10 +963,10 @@ export class FileSystem {
                     files.push(jsonFileName);
                 }
                 await this._iterateAttachments(sheet.defaultSrc, (srcAttachmentPath) => files.push(srcAttachmentPath));
-
+               
             } else {
                 folderMetaData.subFolder = sheet.name;
-                const items = await RNFS.readDir(sheet.path);
+                const items = await RNFS.readDir(sheet._path).catch(e => console.log("readdir err", e));
                 for (let fi of items) {
                     files.push(fi.path);
                 }
@@ -982,9 +975,17 @@ export class FileSystem {
 
         // write metadata file
         const mdStr = JSON.stringify(folderMetaData);
-        trace("add metadata file", mdStr)
+        //trace("add metadata file", sheet.name, mdStr)
         await FileSystem.main.writeFile(containingFolderInfoFileName, mdStr);
-        return zip(files, _androidFileName(joinPaths(TemporaryDirectoryPath, name + ".zip"))).then(path => _androidFileName(path));
+        const targetFile = _androidFileName(joinPaths(TemporaryDirectoryPath, name + ".zip"));
+        // delete if exists before
+        await RNFS.unlink(targetFile).catch(ignore);
+
+       
+
+        return zip(files, targetFile).then(path => {
+            return _androidFileName(path)
+        });
     }
 
 
@@ -1001,18 +1002,23 @@ export class FileSystem {
                 }
             }
         });
+        trace("wait for all zips")
 
+        return PromiseAllProgress(exportedSheetsAsync, progressCB).then(async (allZipPaths) => {
+            //trace("all zips ready", allZipPaths)
+            const backupMetadataPath = joinPaths(TemporaryDirectoryPath, "backup.metadata");;
+            await FileSystem.main.writeFile(backupMetadataPath, "{\"backup\":true}");
 
-        return PromiseAllProgress(exportedSheetsAsync, progressCB).then(allZipPaths => {
-            const backupMetadataPath = TemporaryDirectoryPath + "backup.metadata";
-            return FileSystem.main.writeFile(backupMetadataPath, "{\"backup\":true}").then(() => {
-                allZipPaths.push(backupMetadataPath);
+            allZipPaths.push(backupMetadataPath);
 
-                const date = new Date()
-                let fn = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + ' ' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2);
+            const date = new Date()
+            let fn = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + ' ' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2);
+            trace("about to zip", allZipPaths)
+            const targetPath = _androidFileName(joinPaths(TemporaryDirectoryPath, "IssieDocs Backup-" + fn + ".zip"));
+            await RNFS.unlink(targetPath).catch(ignore);
 
-                return zip(allZipPaths, joinPaths(TemporaryDirectoryPath, "IssieDocs Backup-" + fn + ".zip")).then(path => _androidFileName(path));
-            });
+            return zip(allZipPaths, targetPath).then(path => _androidFileName(path));
+
         })
 
     }
@@ -1036,11 +1042,7 @@ export class FileSystem {
     async extractZipInfo(zipPath, unzipInPath) {
         const unzipTargetPath = _androidFileName(unzipInPath || joinPaths(RNFS.TemporaryDirectoryPath, "imported"));
         // verify no files from last import:
-        try {
-            await RNFS.unlink(unzipTargetPath);
-        } catch (e) {
-            trace("delete folder failed", e)
-        }
+        await RNFS.unlink(unzipTargetPath).catch(ignore);
 
         // extract zip name:
         const lastSlash = zipPath.lastIndexOf("/");

@@ -50,7 +50,7 @@ export default function SettingsMenu(props) {
     const [useColor, setUseColor] = useState(useColorSetting);
 
     let _features = getFeaturesSetting();
-    trace("features", _features)
+    //trace("features", _features)
     const [features, setFeatures] = useState(_features);
     const featuresRef = useRef(_features);
 
@@ -144,6 +144,7 @@ export default function SettingsMenu(props) {
                 .catch((err) => Alert.alert("Backup failed: " + err))
                 .finally(() => setBackupProgress(undefined));
         }))
+            .finally(() => setBackupProgress(undefined));
     }
 
     return <TouchableOpacity onPress={props.onClose} style={{

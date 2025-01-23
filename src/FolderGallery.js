@@ -442,7 +442,7 @@ export default class FolderGallery extends React.Component {
 
     ShareIssieDocs = () => {
         if (!this.state.selected) return;
-
+        this.setState({ inprogress: true })
         FileSystem.main.exportWorksheet(this.state.selected).then(sheetArchivePath => {
             trace("share file", sheetArchivePath)
             const shareOptions = {
@@ -450,12 +450,14 @@ export default class FolderGallery extends React.Component {
                 subject: translate("ShareEmailSubject"),
                 urls: [sheetArchivePath],
             };
+            
             Share.open(shareOptions).then(() => {
+                this.setState({ inprogress: false })
                 Alert.alert(translate("ShareSuccessful"));
             }).catch(err => {
                 Alert.alert(translate("ActionCancelled"));
             });
-        });
+        }).finally(()=>this.setState({ inprogress: false }));
     }
 
     AddToPageFromCamera = (page) => {
