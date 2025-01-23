@@ -146,12 +146,12 @@ var strings = {
         "FontChangeOverflowsPage": "שינוי גופן גורם לגלישה מעבר לסוף הדף",
         "BackupSuccessful": "גיבוי הסתיים בהצלחה",
 
-        "ToolsSettings":"כלים",
-        "Ruler":"סרגל",
-        "Image":"תמונה",
-        "Marker":"מדגש",
-        "Voice":"הקלטה",
-        "Table":"טבלה",
+        "ToolsSettings": "כלים",
+        "Ruler": "סרגל",
+        "Image": "תמונה",
+        "Marker": "מדגש",
+        "Voice": "הקלטה",
+        "Table": "טבלה",
     },
     "ar": {
         "StartHere": "إضافة صفحات",
@@ -282,6 +282,12 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "TableOverflowsPage": "الجدول يتجاوز نهاية الصفحة",
         "FontChangeOverflowsPage": "تغيير الخط يتسبب في تجاوز الصفحة",
         "BackupSuccessful": "تم النسخ الاحتياطي بنجاح",
+        "ToolsSettings": "أدوات",
+        "Ruler": "خط مستقيم", // or "مسطرة رسم"
+        "Image": "صورة",
+        "Marker": "محدد",
+        "Voice": "تسجيل",
+        "Table": "جدول"
     },
     "en": {
         "StartHere": "Add worksheets",
@@ -416,6 +422,12 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "TableOverflowsPage": "The table overflows beyond the end of the page",
         "FontChangeOverflowsPage": "Font change cause text to overflow beyond the end of the page",
         "BackupSuccessful": "Backup successful",
+        "ToolsSettings": "Tools",
+        "Ruler": "Ruler",
+        "Image": "Image",
+        "Marker": "Marker",
+        "Voice": "Recording",
+        "Table": "Table",
     },
 }
 
@@ -511,7 +523,7 @@ export function unregisterLangEvent() {
 
 export function loadLanguage() {
     let langSetting = Settings.get(LANGUAGE.name);
-    trace("langauge loaded", langSetting, langSetting+"" === LANGUAGE.default+"")
+    trace("langauge loaded", langSetting, langSetting + "" === LANGUAGE.default + "")
     if (langSetting === undefined || langSetting === LANGUAGE.default) {
         const locales = getLocales();
         langSetting = LANGUAGE.english;
