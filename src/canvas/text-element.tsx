@@ -49,15 +49,17 @@ function TextElement({
 
     useImperativeHandle(ref, () => ({
         prepareForThumbnail: () => {
+            console.log("prep for tn")
             textBGColor.value = "transparent";
             moveIconDisplay.value = "none";
         },
     }));
 
     useEffect(() => {
+
         textBGColor.value = (text.color == '#fee100' ? "gray" : "yellow");
         moveIconDisplay.value = "flex";
-    }, [text])
+    }, [text, editMode])
 
     // if (text.tableId) {
     //     console.log("text table",text.tableId, table)
@@ -84,8 +86,8 @@ function TextElement({
                 { right: actualWidth - text.x * ratio.current }
                 : { left: text.x * ratio.current }),
             top: text.y * ratio.current,
-            maxWidth: text.rtl ? text.x :
-                actualWidth - text.x * ratio.current
+            maxWidth: text.rtl ? text.x * ratio.current - 3 :
+                actualWidth - text.x * ratio.current - 3,
         };
 
     const style: any = { color: text.color, fontSize: text.fontSize * ratio.current, direction: text.rtl ? "rtl" : "ltr", textAlign: text.rtl ? "right" : "left" };
@@ -112,7 +114,7 @@ function TextElement({
                         allowFontScaling={false}
                         multiline
                         autoFocus
-                        style={[styles.textStyle, styles.textInput, style, bgAnimatedStyle]}
+                        style={[styles.textStyle, style, bgAnimatedStyle, text.text.length < 2 && { minWidth: text.fontSize }]}
                         value={text.text}
                         onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
                     />
@@ -152,9 +154,7 @@ const styles = StyleSheet.create({
         margin: 0,
         flexWrap: "wrap",
     },
-    textInput: {
-        minWidth: 50,
-    },
+
 });
 
 export default forwardRef(TextElement);

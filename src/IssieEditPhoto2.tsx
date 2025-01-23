@@ -383,6 +383,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         let rulerColor
         let rulerStrokeWidth
         let textColor
+        let latestMode:EditModes|undefined
 
         for (let i = 0; i < q.length; i++) {
             if (q[i].type === 'text') {
@@ -394,6 +395,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 fontSize = txtElem.fontSize;
                 textAlignment = txtElem.textAlignment;
                 textColor = txtElem.color;
+                latestMode = EditModes.Text;
 
                 for (let j = 0; j < _texts.length; j++) {
                     if (_texts[j].id === txtElem.id) {
@@ -422,6 +424,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     brushColor = sketchElem.color;                        
                 }
                 _paths.push(sketchElem);
+                latestMode = EditModes.Brush;
             } else if (q[i].type === 'line') {
                 _rulers = _rulers.filter(l => l.id !== q[i].elem.id);
                 const lineElem = q[i].elem as SketchLine;
@@ -430,8 +433,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 rulerStrokeWidth = lineElem.strokeWidth;
 
                 _rulers.push(cloneElem(lineElem));
+                latestMode = EditModes.Ruler;
             } else if (q[i].type === 'lineDelete') {
                 _rulers = _rulers.filter(l => l.id !== q[i].elem.id);
+                latestMode = EditModes.Ruler;
             } else if (q[i].type === 'image') {
                 // translate the relative path to full path:
                 let elem = cloneElem(q[i].elem);
@@ -442,6 +447,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     }
                 }
                 _images.push(elem);
+                latestMode = EditModes.Image;
             } else if (q[i].type === 'imagePosition') {
                 const elemIndex = _images.findIndex(ci => ci.id === q[i].elem.id);
                 if (elemIndex >= 0) {
@@ -453,23 +459,29 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         y: q[i].elem.y,
                     }
                     _images[elemIndex] = updatedImage;
+                    latestMode = EditModes.Image;
                 }
             } else if (q[i].type === 'imageDelete') {
                 const elemIndex = _images.findIndex(ci => ci.id === q[i].elem.id);
                 if (elemIndex >= 0) {
                     _images.splice(elemIndex, 1);
+                    latestMode = EditModes.Image;
                 }
             } else if (q[i].type === 'table') {
                 _tables = _tables.filter(t => t.id !== q[i].elem.id);
                 _tables.push(cloneElem(q[i].elem));
+                latestMode = EditModes.Table;
             } else if (q[i].type === 'tableDelete') {
                 _tables = _tables.filter(t => t.id !== q[i].elem.id);
                 // delete all cell text related
                 _texts = _texts.filter(tct => tct.tableId !== q[i].elemID)
+                latestMode = EditModes.Table;
             } else if (q[i].type === 'audio') {
                 _audio.push(cloneElem(q[i].elem));
+                latestMode = EditModes.Audio;
             } else if (q[i].type === 'audioDelete') {
                 _audio = _audio.filter(t => t.id !== q[i].elem.id);
+                latestMode = EditModes.Audio;
             } else if (q[i].type === 'audioPosition') {
                 const elemIndex = _audio.findIndex(ci => ci.id === q[i].elem.id);
                 if (elemIndex >= 0) {
@@ -502,11 +514,18 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             if (rulerColor != undefined) setRulerColor(rulerColor);
             if (rulerStrokeWidth != undefined) setRulerStrokeWidth(rulerStrokeWidth);
             if (textColor != undefined) setTextColor(textColor);
+            if (latestMode != undefined) {
+                setMode(latestMode);
+                if ([EditModes.Audio, EditModes.Image, EditModes.Ruler, EditModes.Table].includes(latestMode)) {
+                    // expand the ext menu:
+                    toolbarRef.current?.openExtMenu();
+                }
+            }
         }
     }
 
-    function beforeModeChange() {
-        saveText();
+    async function beforeModeChange() {
+        await saveText();
         if (modeRef.current == EditModes.Audio) {
             const audioElem = audiosRef.current.find(au => au.editMode)
             if (audioElem) {

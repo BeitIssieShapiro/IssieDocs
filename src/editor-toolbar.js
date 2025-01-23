@@ -165,7 +165,11 @@ function EditorToolbar({
             setShowPickerType(Pickers.IMAGE);
             setMenuHeight(70)
             setShowPicker(true);
+        }, 
+        openExtMenu: ()=>{
+            setShowExtMenu(true);
         }
+
     }));
 
 

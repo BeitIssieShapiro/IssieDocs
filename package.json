@@ -21,8 +21,6 @@
     "@react-navigation/stack": "^7.0.18",
     "@react-pdf/pdfkit": "^4.0.0",
     "@shopify/react-native-skia": "^1.8.1",
-    "deprecated-react-native-prop-types": "^5.0.0",
-    "issie-sketch-canvas": "file:modified_canvas",
     "react": "18.3.1",
     "react-native": "0.76.6",
     "react-native-audio-record": "^0.2.2",

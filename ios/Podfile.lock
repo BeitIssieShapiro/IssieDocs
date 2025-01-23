@@ -2059,8 +2059,6 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNSketchCanvas (0.8.0):
-    - React
   - RNSound (0.11.2):
     - React-Core
     - RNSound/Core (= 0.11.2)
@@ -2229,7 +2227,6 @@ DEPENDENCIES:
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNShare (from `../node_modules/react-native-share`)
-  - RNSketchCanvas (from `../node_modules/issie-sketch-canvas`)
   - RNSound (from `../node_modules/react-native-sound`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
@@ -2414,8 +2411,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-screens"
   RNShare:
     :path: "../node_modules/react-native-share"
-  RNSketchCanvas:
-    :path: "../node_modules/issie-sketch-canvas"
   RNSound:
     :path: "../node_modules/react-native-sound"
   RNSVG:
@@ -2514,7 +2509,6 @@ SPEC CHECKSUMS:
   RNReanimated: 56fffbede49b5bddb327616096e822f342978794
   RNScreens: d022507f2b6d76c73335e9e35aedcf7bb2f791b0
   RNShare: 05e577d8a74e5647a5cf753cd5e038623676392b
-  RNSketchCanvas: f9b2da4e2be1a5d0c3f3cc451721fa9df6cb1e42
   RNSound: 6c156f925295bdc83e8e422e7d8b38d33bc71852
   RNSVG: ec2e9d524612ee95db5df143a54518c5404d93f0
   RNVectorIcons: 07792a9538e8577c1263fcad187712e90d65d8fb
