@@ -414,17 +414,20 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 }
             } else if (q[i].type === 'path') {
                 const sketchElem = q[i].elem as SketchPath;
-                if (sketchElem.isMarker) {
+                if (sketchElem.isMarker || sketchElem.color.length > 7) {
                     markerStrokeWidth = sketchElem.strokeWidth;
-                    markerColor = sketchElem.color;
+                    markerColor = sketchElem.color.substring(0, sketchElem.color.length-2);
+                    latestMode = EditModes.Marker;
+                    sketchElem.isMarker = true;
+
                 } else {
                     // for cases it is missing
                     sketchElem.isMarker = false;
                     strokeWidth = sketchElem.strokeWidth
-                    brushColor = sketchElem.color;                        
+                    brushColor = sketchElem.color;     
+                    latestMode = EditModes.Brush;
                 }
                 _paths.push(sketchElem);
-                latestMode = EditModes.Brush;
             } else if (q[i].type === 'line') {
                 _rulers = _rulers.filter(l => l.id !== q[i].elem.id);
                 const lineElem = q[i].elem as SketchLine;
@@ -516,7 +519,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             if (textColor != undefined) setTextColor(textColor);
             if (latestMode != undefined) {
                 setMode(latestMode);
-                if ([EditModes.Audio, EditModes.Image, EditModes.Ruler, EditModes.Table].includes(latestMode)) {
+                if ([EditModes.Audio, EditModes.Image, EditModes.Ruler, EditModes.Table, EditModes.Marker].includes(latestMode)) {
                     // expand the ext menu:
                     toolbarRef.current?.openExtMenu();
                 }
@@ -548,7 +551,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 strokeWidth = (strokeWidth * 3 < 15 ? 15 : strokeWidth * 3)
             }
             trace("selected stroke width", strokeWidth)
-
             const newPath: SketchPath = {
                 id: getId("S"),
                 points: [p],
@@ -1508,15 +1510,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //                          RENDER
     // -------------------------------------------------------------------------
 
-    function colorByMode(mode: EditModes, brushColor: string, textColor: string,
-        markerColor: string, rulerColor: string, tableColor: string) {
-        if (mode == EditModes.Brush) return brushColor;
-        if (mode == EditModes.Text) return textColor;
-        if (mode == EditModes.Marker) return markerColor;
-        if (mode == EditModes.Ruler) return rulerColor;
-        if (mode == EditModes.Table) return tableColor;
-    }
-
+ 
     function mode2ElementType(mode: EditModes): ElementTypes {
         if (mode == EditModes.Brush || mode == EditModes.Marker) {
             return ElementTypes.Sketch
@@ -1830,7 +1824,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 markerWidth={markerWidth}
                 sideMargin={sideMargin}
                 onSelectColor={handleSelectColor}
-                color={colorByMode(mode, brushColor, textColor, markerColor, rulerColor, tableColor)}
+                brushColor={brushColor}
+                textColor={textColor}
+                markerColor={markerColor}
+                rulerColor={rulerColor}
+                tableColor={tableColor}
                 onSelectTextSize={onTextSize}
                 onSelectTextAlignment={onTextAlignment}
                 onSelectBrushSize={onBrushSize}

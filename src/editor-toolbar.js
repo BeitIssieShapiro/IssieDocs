@@ -9,6 +9,7 @@ import { BrushSizePicker, MyColorPicker, TextSizePicker } from "./pickers";
 import { getSvgIcon, MarkerStroke } from "./svg-icons";
 import { Icon } from "react-native-elements";
 import { FEATURES, getFeaturesSetting } from "./settings";
+import { IIF } from "./canvas/utils";
 
 export const TextAlignment = {
     RIGHT: "Right",
@@ -89,7 +90,12 @@ function EditorToolbar({
     isRulerMode,
     Table,
     fontSize,
-    color,
+
+    brushColor,
+    markerColor,
+    rulerColor,
+    textColor,
+    tableColor,
     strokeWidth,
     markerWidth,
 
@@ -127,9 +133,6 @@ function EditorToolbar({
         }
     }, [Table]);
 
-
-
-
     const setColumns = (value) => {
         if (value >= 1) {
             TableActions.setRowsOrColumns(value, true);
@@ -146,8 +149,8 @@ function EditorToolbar({
 
 
     fontSize = fontSize || 25;
-    strokeWidth = strokeWidth || 1;
-    color = color || colors.black;
+    // strokeWidth = strokeWidth || 1;
+    // color = color || colors.black;
     windowSize = windowSize || { width: 500 }
 
     isScreenNarrow = () => {
@@ -165,8 +168,8 @@ function EditorToolbar({
             setShowPickerType(Pickers.IMAGE);
             setMenuHeight(70)
             setShowPicker(true);
-        }, 
-        openExtMenu: ()=>{
+        },
+        openExtMenu: () => {
             setShowExtMenu(true);
         }
 
@@ -311,7 +314,7 @@ function EditorToolbar({
         previewFontSize = dimensions.toolbarHeight - 5;
     }
 
-    const rullerBtn = <IconButton onPress={() => onModeButtonClick(Pickers.RULER, 70)} color={isRulerMode ? color : semanticColors.editPhotoButton}
+    const rullerBtn = <IconButton onPress={() => onModeButtonClick(Pickers.RULER, 70)} color={rulerColor}
         iconType="material-community" icon="ruler" size={49} iconSize={45} selected={isRulerMode} ensureContrast={true} />;
 
 
@@ -319,7 +322,7 @@ function EditorToolbar({
     const extMenu = []
 
     if (featuresRef.current.includes(FEATURES.marker)) {
-        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.MARKER, 70)} color={isMarkerMode ? color : semanticColors.editPhotoButton}
+        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.MARKER, 70)} color={markerColor}
             iconType="material-community" icon="marker" size={50} iconSize={45} selected={isMarkerMode} ensureContrast={true} />
         )
     }
@@ -338,7 +341,7 @@ function EditorToolbar({
     if (featuresRef.current.includes(FEATURES.table)) {
 
         extMenu.push(< IconButton onPress={() => onModeButtonClick(Pickers.TABLE, isScreenNarrow() ? 160 : 80)
-        } color={isTableMode ? (Table ? Table.color : color) : semanticColors.editPhotoButton}
+        } color={Table ? Table.color : tableColor}
             iconType="font-awesome" icon="table" size={47} iconSize={42} selected={isTableMode} ensureContrast={true} />)
     }
     if (featuresRef.current.includes(FEATURES.ruler)) {
@@ -353,10 +356,10 @@ function EditorToolbar({
 
     const modesMenu = [
         <IconButton key={11} onPress={() => onModeButtonClick(Pickers.TEXT, 70)} icon={translate("A")} isText={true} selected={isTextMode}
-            color={isTextMode ? color : semanticColors.editPhotoButton} size={55} iconSize={rtl ? 45 : 40} ensureContrast={true}
+            color={textColor} size={55} iconSize={rtl ? 45 : 40} ensureContrast={true}
         />,
         <IconButton key={13} onPress={() => onModeButtonClick(Pickers.BRUSH, 70)} icon={"edit"} size={55}
-            color={isBrushMode ? color : semanticColors.editPhotoButton} iconSize={45} selected={isBrushMode} ensureContrast={true} />,
+            color={brushColor} iconSize={45} selected={isBrushMode} ensureContrast={true} />,
         <IconButton onPress={() => onSelectButtonClick(Pickers.COLOR, true, 70)} icon={"color-lens"}
             size={55} iconSize={45} color={semanticColors.editPhotoButton} />,
         extMenu.length > 0 ? <IconButton onPress={() => setShowExtMenu(currVal => !currVal)} icon={showExtMenu ? "expand-less" : "expand-more"}
@@ -369,6 +372,13 @@ function EditorToolbar({
     const previewOffset = isScreenNarrow() ? 0 :
         windowSize.width / 2 - 60;
     //(windowSize.width - folderUndoRedo - modesButton) / 2 - 60 + folderUndoRedo;
+
+    const colorByMode = IIF(semanticColors.addButton,
+        [isTextMode, textColor],
+        [isBrushMode, brushColor],
+        [isMarkerMode, markerColor],
+        [isRulerMode, rulerColor],
+        [isTableMode, tableColor])
 
 
     {/* Toolbar */ }
@@ -422,7 +432,7 @@ function EditorToolbar({
                                         fontSize: previewFontSize,
                                         width: "100%",
                                         lineHeight: previewFontSize + 8,
-                                        color: color,
+                                        color: textColor,
                                         textAlignVertical: 'center'
                                     }
                                     //,rtl ? {} : { fontWeight: 'bold' }]
@@ -440,14 +450,15 @@ function EditorToolbar({
                                 }, rtl ? { left: -25 } : { right: -25 }]}><AppText
                                     style={{
                                         fontSize: 35,
-                                        color: color,
+                                        color: textColor,
                                     }}>+</AppText>
                                 </View>}
                         </View> :
                         !isImageMode && !isTableMode && (isMarkerMode ?
-                            <MarkerStroke color={color} strokeWidth={markerWidth} />
+                            <MarkerStroke color={colorByMode}
+                                strokeWidth={markerWidth} />
                             :
-                            getSvgIcon('doodle', 55, color, strokeWidth * .8))
+                            getSvgIcon('doodle', 55, colorByMode, strokeWidth * .8))
                 }
             </View>
 
@@ -491,7 +502,7 @@ function EditorToolbar({
             open={showPickerType === Pickers.COLOR && showPicker}
             top={toolbarHeight}
             width={availablePickerWidth}
-            color={eraseMode ? undefined : color}
+            color={eraseMode ? undefined :colorByMode}
             isScreenNarrow={isScreenNarrow()}
             onSelect={(color) => {
                 onSelectColor(color);
@@ -514,7 +525,7 @@ function EditorToolbar({
             width={availablePickerWidth}
             size={fontSize}
             fontSize4Toolbar={fontSize4Toolbar}
-            color={color}
+            color={textColor}
             isScreenNarrow={isScreenNarrow()}
             onSelect={(size, keepOpen) => {
                 onSelectTextSize(size);
@@ -536,7 +547,7 @@ function EditorToolbar({
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 {
                     availableBrushSize.map((size, i) => <BrushSizePicker
-                        color={color}
+                        color={brushColor}
                         brushSize={size}
                         size={colorButtonsSize}
                         key={"" + i}
@@ -588,8 +599,8 @@ function EditorToolbar({
                             onSelectMarkerSize(size);
                             setShowPicker(false);
                         }} >
-                        <MarkerStroke color={color} strokeWidth={size} />
-                        {size === markerWidth && <View style={{ position: "absolute", bottom: 0, height: 8, width: 8, left: 21, borderRadius: 4, backgroundColor: color }} />}
+                        <MarkerStroke color={markerColor} strokeWidth={size} />
+                        {size === markerWidth && <View style={{ position: "absolute", bottom: 0, height: 8, width: 8, left: 21, borderRadius: 4, backgroundColor: markerColor }} />}
                     </TouchableOpacity>
                     ))
                 }
@@ -622,7 +633,7 @@ function EditorToolbar({
                         Table={Table}
                         TableActions={TableActions}
                         tableCols={tableCols} tableRows={tableRows}
-                        color={Table ? Table.color : color}
+                        color={Table ? Table.color : tableColor}
                     />))
                 }
             </ToolbarGroup>
@@ -635,26 +646,16 @@ function EditorToolbar({
                         style={style == "0,0" ? undefined : style}
                         Table={Table}
                         TableActions={TableActions}
-                        color={Table ? Table.color : color}
+                        color={Table ? Table.color : tableColor}
                     />))
                 }
             </ToolbarGroup>
 
-            {/* <View style={{ width: '20%', alignItems: 'center', backgroundColor: "#EBECEF", paddingTop: 10, margin: 4, borderRadius: 10 }}>
-                <AppText style={{ fontSize: isScreenNarrow() ? 20 : 30 }}>{translate(Table ? "DeleteTableCaption" : "ShowTableCaption")}</AppText> */}
-            {/*<PushButton2 titleOn={translate("Yes")} titleOff={translate("No")} onPressCallback={() => {
-                    if (Table) {
-                        TableActions.delete(Table.id);
-                    } else {
-                        TableActions.addTable(tableRows, tableCols, color, 2);
-                    }
-                }} isOn={Table !== undefined} />
-                 */}
             <ToolbarGroup width={130} height={dimensions.toolbarHeight} onPress={() => {
                 if (Table) {
                     TableActions.delete(Table.id);
                 } else {
-                    TableActions.addTable(tableCols, tableRows, color, 2);
+                    TableActions.addTable(tableCols, tableRows, tableColor, 2);
                 }
             }}>
                 <AppText style={{ fontSize: 20, color: semanticColors.actionButton }}>{translate(Table ? "DeleteTableCaption" : "ShowTableCaption")}</AppText>
@@ -705,7 +706,7 @@ function ToolbarGroup({ width, height, children, onPress }) {
 }
 
 function LineWidthSelector({ borderWidth, color, Table, TableActions, tableCols, tableRows, height }) {
-    return <TouchableOpacity style={{ height, width: 15 }} onPress={() => {
+    return <TouchableOpacity style={{ height, width: 20, alignItems: "center" }} onPress={() => {
         //add table
         if (!Table) {
             TableActions.addTable(tableCols, tableRows, color, borderWidth, "0,0");
@@ -718,7 +719,7 @@ function LineWidthSelector({ borderWidth, color, Table, TableActions, tableCols,
 }
 
 function LineStyleSelector({ tableCols, tableRows, style, Table, TableActions, color, height }) {
-    return <TouchableOpacity style={{ height, width: 15 }} onPress={() => {
+    return <TouchableOpacity style={{ height, width: 20, alignItems: "center" }} onPress={() => {
         //add table
         if (!Table) {
             TableActions.addTable(tableCols, tableRows, color, 2, style);
