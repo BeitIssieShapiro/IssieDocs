@@ -242,7 +242,7 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
 
     let textExist = text && text.length > 0;
     const activeDirection = direction ? direction : getRowDirection();
-    const textAlign = icon? (activeDirection == "row"? "right":"left") : (isRTL()?"right":"left");
+    const textAlign = icon ? (activeDirection == "row" ? "right" : "left") : (isRTL() ? "right" : "left");
 
     return <TouchableOpacity
         activeOpacity={0.7}
@@ -478,7 +478,7 @@ export function OrientationPicker({
     </View>
 }
 
-export function RootFolderPicker({ folders, currentFolder, onChangeFolder, showSubFolders }) {
+export function RootFolderPicker({ folders, currentFolder, onChangeFolder, showSubFolders, showBuiltinFolders }) {
     const [more, setMore] = useState(false);
     const [reload, setReload] = useState(0);
 
@@ -522,11 +522,11 @@ export function RootFolderPicker({ folders, currentFolder, onChangeFolder, showS
         <View style={{ backgroundColor: semanticColors.listBackground, alignItems: flexStart }}>
             {renderFolderLine(defFolder, -1, currentFolder, onChangeFolder, false, 0)}
             {folders.map((item, index) => renderFolderLine(item, index, currentFolder, onChangeFolder, showSubFolders, 0, expandedFolders, setExpandedFolders))}
-            {getIconButton(() => setMore(val => !val), semanticColors.titleText, more ? "expand-less" : "expand-more", 45)}
-            {more &&
+            {showBuiltinFolders && getIconButton(() => setMore(val => !val), semanticColors.titleText, more ? "expand-less" : "expand-more", 45)}
+            {more && showBuiltinFolders &&
                 getLocalizedFoldersAndIcons()
                     .filter(f => folders.find(f2 => f2.name === f.text) == undefined)
-                    .map((itm, index) => ({ name: itm.text, icon: itm.icon, color: (availableColorPicker[index % availableColorPicker.length]) }))
+                    .map((itm, index) => ({ ID: itm.text, name: itm.text, path: itm.text, icon: itm.icon, color: (availableColorPicker[index % availableColorPicker.length]) }))
                     .map((item, index) => renderFolderLine(item, index, currentFolder, onChangeFolder, false, 0))
 
             }
@@ -587,7 +587,7 @@ export function FileNameDialog({
                         'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 220, height: 40 }, row, true)}
                 </View>
                 <Spacer />
-                <RootFolderPicker onChangeFolder={onChangeFolder} folders={folders} currentFolder={folder} showSubFolders={true} />
+                <RootFolderPicker onChangeFolder={onChangeFolder} folders={folders} currentFolder={folder} showSubFolders={true} showBuiltinFolders={true} />
             </View>
 
 
@@ -604,6 +604,7 @@ function renderFolderLine(rowData, index, currentFolder, onChangeFolder, showSub
         rowData.reload();
 
     // trace("pickerRenderRow", rowData.ID, expanded, expandedFolders)
+    trace(currentFolder.ID, rowData)
 
     return [<TouchableOpacity key={index} style={{
         height: 65, width: '100%',
@@ -729,7 +730,7 @@ function pickerRenderRow(rowData, currentFolder, onChangeFolder, indentLevel, su
 export async function getImageDimensions(uri) {
     return new Promise((resolve, reject) => {
         trace("getImageDimensions", uri)
-        Image.getSize("file://"+uri, (width, height) => {
+        Image.getSize("file://" + uri, (width, height) => {
             trace("getImageDimensions2", uri, width, height)
             resolve({ w: width, h: height });
         },
@@ -981,12 +982,12 @@ export function AppText(props) {
 
     return (
         <Text allowFontScaling={false}
-        style={[{
-            fontFamily: getFont(),
-            fontSize: 24,
-            textAlign: isRTL() ? 'right' : 'left',
+            style={[{
+                fontFamily: getFont(),
+                fontSize: 24,
+                textAlign: isRTL() ? 'right' : 'left',
 
-        }, props.style]}
+            }, props.style]}
             onPress={props.onPress}
 
             {...moreProps}

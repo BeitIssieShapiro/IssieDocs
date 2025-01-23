@@ -285,7 +285,8 @@ export default class IssieCreateFolder extends React.Component {
                                 {colorSelection}
                                 {!this.isLandscape() && iconsSelection}
                                 <AppText style={[styles.titleText, { textAlign }]}>{translate("InFolderCaption")}</AppText>
-                                <RootFolderPicker onChangeFolder={(folder) => this.setState({ inFolder: folder })} folders={this.state.folders} currentFolder={this.state.inFolder} />
+                                <RootFolderPicker onChangeFolder={(folder) => this.setState({ inFolder: folder })} 
+                                    folders={this.state.folders} currentFolder={this.state.inFolder} showBuiltinFolders={false}/>
 
                             </View>
                             {this.isLandscape() ? <Spacer /> : null}

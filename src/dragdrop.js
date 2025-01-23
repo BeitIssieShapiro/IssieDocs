@@ -27,12 +27,12 @@ export const DDProvider = ({ children }) => {
             target.onDragExit = onDragExit;
             return;
         }
-        trace("registerTarget", id, desc)
+        //trace("registerTarget", id, desc)
         targets.current.push({ id, desc, bounds, onDrop, onDragEnter, onDragExit });
     };
 
     const unregisterTarget = (id) => {
-        trace("unregisterTarget", id)
+        //trace("unregisterTarget", id)
         targets.current = targets.current.filter((t) => t.id !== id);
     };
 
