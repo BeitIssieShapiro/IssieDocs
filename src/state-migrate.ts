@@ -1,6 +1,13 @@
 
 import { SketchElement, SketchImage, SketchLine, SketchPath, SketchPoint, SketchTable, SketchText } from "./canvas/types";
 import { ImageSize } from "react-native";
+import {
+
+    PathCommand,
+    PathVerb
+
+
+} from "@shopify/react-native-skia";
 
 export function migrateMetadata(legacyElements: any[], canvasSize: ImageSize, ratio: number): any[] {
     const newElemenets = [] as any[];
@@ -15,8 +22,9 @@ export function migrateMetadata(legacyElements: any[], canvasSize: ImageSize, ra
                 id: "" + elem.id,
                 text: elem.text,
                 rtl: elem.rtl,
+                alignment: elem.alignment,
                 color: elem.fontColor,
-                fontSize: elem.fontSize,
+                fontSize: elem.fontSize / ratio,
                 x: elem.normPosition.x,
                 y: elem.normPosition.y,
             } as SketchText;
@@ -26,17 +34,19 @@ export function migrateMetadata(legacyElements: any[], canvasSize: ImageSize, ra
                 id: "" + elem.id,
                 text: elem.text,
                 rtl: elem.rtl,
+                alignment: elem.alignment,
                 color: elem.fontColor,
-                fontSize: elem.fontSize,
+                fontSize: elem.fontSize / ratio,
                 tableId: elem.tableCell.tableID,
                 x: elem.tableCell.col,
                 y: elem.tableCell.row,
             } as SketchText;
             type = "text";
         } else if (type === 'path') {
-            const points = elem.path.data.map((p: string) => {
+            const points = elem.path.data.map((p: string, i: number) => {
+                const verb = i == 0 ? PathVerb.Move : PathVerb.Line;
                 const coor = p.split(',').map(pp => parseFloat(pp).toFixed(2) as any)
-                return [(coor[0] * canvasSize.width / elem.size.width) / ratio, (coor[1] * canvasSize.height / elem.size.height) / ratio];
+                return [verb, (coor[0] * canvasSize.width / elem.size.width) / ratio, (coor[1] * canvasSize.height / elem.size.height) / ratio];
             });
 
             newElem = {
@@ -79,7 +89,7 @@ export function migrateMetadata(legacyElements: any[], canvasSize: ImageSize, ra
                 strokeWidth: elem.width,
                 verticalLines: elem.verticalLines.map((p: number) => (p * canvasSize.width / elem.size.width) / ratio) as number[],
                 horizontalLines: elem.horizontalLines.map((p: number) => (p * canvasSize.height / elem.size.height) / ratio) as number[],
-                strokeDash: elem.style,
+                strokeDash: elem.style ? elem.style.split(",").map((n: string) => parseInt(n)) : undefined,
             } as SketchTable;
         } else if (type === 'tableDelete') {
             newElem = {

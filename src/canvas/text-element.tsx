@@ -90,16 +90,19 @@ function TextElement({
                 actualWidth - text.x * ratio.current - 3,
         };
 
-    const style: any = { color: text.color, fontSize: text.fontSize * ratio.current, direction: text.rtl ? "rtl" : "ltr", textAlign: text.rtl ? "right" : "left" };
+    const style: any = {
+        color: text.color, fontSize: text.fontSize * ratio.current,
+        direction: text.rtl ? "rtl" : "ltr", textAlign: text.alignment.toLowerCase()
+    };
 
     const moveIconStyle: any = { position: "absolute", ...(text.rtl ? { right: -25 } : { left: -25 }) }
-
+    console.log("text style", text.text, style)
     if (editMode) {
         return (
             <Animated.View
                 direction={text.rtl ? "rtl" : "ltr"}
                 key={text.id}
-                style={[styles.textInputHost, posStyle, { textAlign: "center", zIndex: 500 }, table && bgAnimatedStyle]}
+                style={[styles.textInputHost, posStyle, { zIndex: 500 }, table && bgAnimatedStyle]}
                 {...(table ? {} : moveResponder.panHandlers)}
                 onStartShouldSetResponder={(e) => {
                     moveContext.current = { type: MoveTypes.Text, id: text.id, offsetX: text.rtl ? -15 : 15, offsetY: -15 };
@@ -114,14 +117,16 @@ function TextElement({
                         allowFontScaling={false}
                         multiline
                         autoFocus
-                        style={[styles.textStyle, style, bgAnimatedStyle, text.text.length < 2 && { minWidth: text.fontSize }]}
+                        style={[styles.textStyle, style, bgAnimatedStyle,
+                        table && { width: posStyle.width },
+                        text.text.length < 2 && { minWidth: text.fontSize }]}
                         value={text.text}
                         onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
                     />
                     {/* Hidden Text to measure layout */}
                     <Text
                         allowFontScaling={false}
-                        style={[styles.textStyle, posStyle, style, { position: "absolute", [text.rtl ? "right" : "left"]: -10000, textAlign: "left", minHeight: 0 }]}
+                        style={[styles.textStyle, posStyle, style, { position: "absolute", [text.rtl ? "right" : "left"]: -10000, minHeight: 0 }]}
                         onLayout={(e) => handleTextLayout(e, text)}
                     >
                         {text.text}
@@ -135,7 +140,7 @@ function TextElement({
         <View key={text.id} style={posStyle} direction={text.rtl ? "rtl" : "ltr"}>
             <Text
                 allowFontScaling={false}
-                style={[styles.textStyle, style, { textAlign: "left" }]}
+                style={[styles.textStyle, style]}
                 onLayout={(e) => handleTextLayout(e, text)}
             >
                 {text.text}

@@ -963,7 +963,7 @@ export class FileSystem {
                     files.push(jsonFileName);
                 }
                 await this._iterateAttachments(sheet.defaultSrc, (srcAttachmentPath) => files.push(srcAttachmentPath));
-               
+
             } else {
                 folderMetaData.subFolder = sheet.name;
                 const items = await RNFS.readDir(sheet._path).catch(e => console.log("readdir err", e));
@@ -971,17 +971,17 @@ export class FileSystem {
                     files.push(fi.path);
                 }
             }
+            if (sheet.thumbnail) {
+                files.push(sheet.thumbnail)
+            }
         }
 
         // write metadata file
         const mdStr = JSON.stringify(folderMetaData);
-        //trace("add metadata file", sheet.name, mdStr)
         await FileSystem.main.writeFile(containingFolderInfoFileName, mdStr);
         const targetFile = _androidFileName(joinPaths(TemporaryDirectoryPath, name + ".zip"));
         // delete if exists before
         await RNFS.unlink(targetFile).catch(ignore);
-
-       
 
         return zip(files, targetFile).then(path => {
             return _androidFileName(path)
@@ -1111,21 +1111,23 @@ export class FileSystem {
             folder = await this.addFolder(folderName, icon, color, false, false, false, parentID);
         }
         targetPath += folder.path + "/";
-
+        let targetPath2 = targetPath;
         if (zipInfo.metadata.subFolder) {
-            targetPath += zipInfo.metadata.subFolder + "/";
-            try {
-                await RNFS.mkdir(targetPath);
-            } catch (e) {
-                // ignore if already exist
-            }
+            targetPath2 += zipInfo.metadata.subFolder + "/";
+            await RNFS.mkdir(targetPath2).catch(ignore);
         }
 
         // copy all other files
         const filesItems = items.filter(f => !f.name.endsWith(".metadata"));
         for (let fi of filesItems) {
+
             try {
-                await RNFS.moveFile(fi.path, targetPath + fi.name);
+                if (fi.name.endsWith("thumbnail.jpg")) {
+                    // if in subfolder, needs to save thumbnail one up
+                    await RNFS.moveFile(fi.path, targetPath + fi.name);
+                } else {
+                    await RNFS.moveFile(fi.path, targetPath2 + fi.name);
+                }
             } catch (e) {
                 trace("error copy file", e, fi.path, targetPath);
             }

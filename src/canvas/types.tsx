@@ -42,6 +42,7 @@ export interface SketchText extends ElementBase {
     fontSize: number;
     color: string;
     rtl: boolean;
+    alignment: string;
     // coordinates or table cell position
     tableId?: string;
     x: number;
@@ -66,7 +67,7 @@ export interface SketchTable extends ElementBase {
     horizontalLines: number[];
     color: string;
     strokeWidth: number;
-    strokeDash?: [];
+    strokeDash?: [number, number];
 }
 
 export interface SketchElement extends ElementBase {

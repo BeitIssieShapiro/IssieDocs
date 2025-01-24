@@ -84,7 +84,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const toolbarRef = useRef<any>(null);
     const viewOffsetRef = useRef<Offset>({ x: 0, y: 0 })
 
-    
+
     const [fontSize, setFontSize] = useState<number>(35);
     const [textAlignment, setTextAlignment] = useState<string>(isRTL() ? "Right" : "Left");
     const [strokeWidth, setStrokeWidth] = useState<number>(2);
@@ -362,7 +362,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
 
-    const queue2state = (updateToolsState?:boolean) => {
+    const queue2state = (updateToolsState?: boolean) => {
         let q = queue.current.getAll();
 
         //console.log("Queue:", q.map(elem=>`${elem.type}: ${elem.elem.from+","+elem.elem.to}\n`))
@@ -383,7 +383,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         let rulerColor
         let rulerStrokeWidth
         let textColor
-        let latestMode:EditModes|undefined
+        let latestMode: EditModes | undefined
 
         for (let i = 0; i < q.length; i++) {
             if (q[i].type === 'text') {
@@ -393,7 +393,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 let found = false;
 
                 fontSize = txtElem.fontSize;
-                textAlignment = txtElem.textAlignment;
+                if (!txtElem.alignment) {
+                    txtElem.alignment = txtElem.rtl ? "Right" : "Left";
+                }
+                textAlignment = txtElem.alignment;
                 textColor = txtElem.color;
                 latestMode = EditModes.Text;
 
@@ -416,7 +419,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 const sketchElem = q[i].elem as SketchPath;
                 if (sketchElem.isMarker || sketchElem.color.length > 7) {
                     markerStrokeWidth = sketchElem.strokeWidth;
-                    markerColor = sketchElem.color.substring(0, sketchElem.color.length-2);
+                    markerColor = sketchElem.color.substring(0, sketchElem.color.length - 2);
                     latestMode = EditModes.Marker;
                     sketchElem.isMarker = true;
 
@@ -424,7 +427,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     // for cases it is missing
                     sketchElem.isMarker = false;
                     strokeWidth = sketchElem.strokeWidth
-                    brushColor = sketchElem.color;     
+                    brushColor = sketchElem.color;
                     latestMode = EditModes.Brush;
                 }
                 _paths.push(sketchElem);
@@ -472,7 +475,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 }
             } else if (q[i].type === 'table') {
                 _tables = _tables.filter(t => t.id !== q[i].elem.id);
-                _tables.push(cloneElem(q[i].elem));
+                const tableElem = cloneElem(q[i].elem) as SketchTable;
+                if (tableElem.strokeDash && !Array.isArray(tableElem.strokeDash)) {
+                    tableElem.strokeDash = (tableElem.strokeDash as string).split(",").map((n: string) => parseInt(n)) as [number, number];
+                }
+                _tables.push(tableElem);
                 latestMode = EditModes.Table;
             } else if (q[i].type === 'tableDelete') {
                 _tables = _tables.filter(t => t.id !== q[i].elem.id);
@@ -506,7 +513,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setImages(_images);
         setTables(_tables);
         setAudios(_audio);
-        
+
         if (updateToolsState) {
             if (fontSize != undefined) setFontSize(fontSize);
             if (textAlignment != undefined) setTextAlignment(textAlignment);
@@ -667,6 +674,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     changedElem.color != origElem.color ||
                     changedElem.fontSize != origElem.fontSize ||
                     changedElem.rtl != origElem.rtl ||
+                    changedElem.alignment != origElem.alignment ||
                     changedElem.x != origElem.x ||
                     changedElem.y != origElem.y) {
 
@@ -703,7 +711,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         // Update the font and color based on the selected text
         setFontSize(textElem.fontSize * ratioRef.current);
         setTextColor(textElem.color);
-        setTextAlignment(textElem.rtl ? 'Right' : 'Left')
+        setTextAlignment(textElem.alignment)
     }
 
     async function handleCanvasClick(p: SketchPoint, elem: ElementBase | TableContext | undefined) {
@@ -730,6 +738,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     text: "",
                     color: brushColorRef.current,
                     rtl: textAlignmentRef.current == 'Right',
+                    alignment: textAlignmentRef.current,
                     fontSize: fontSizeRef.current / ratioRef.current,
                     x: p[0],
                     y: p[1],
@@ -1436,7 +1445,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             if (textElem) {
                 textElem.color = textColorRef.current;
                 textElem.fontSize = fontSizeRef.current / ratioRef.current;
-                textElem.rtl = textAlignmentRef.current == 'Right';
+                textElem.alignment = textAlignmentRef.current;
+                if (!textElem.tableId) {
+                    textElem.rtl = textAlignmentRef.current == "Right";
+                }
                 setTexts([...textsRef.current]);
             }
         }
@@ -1510,7 +1522,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //                          RENDER
     // -------------------------------------------------------------------------
 
- 
+
     function mode2ElementType(mode: EditModes): ElementTypes {
         if (mode == EditModes.Brush || mode == EditModes.Marker) {
             return ElementTypes.Sketch
@@ -1819,8 +1831,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 isBrushMode={mode === EditModes.Brush}
                 fontSize={fontSize}
                 textAlignment={textAlignment}
-                showCenterTextAlignment={false} // or some logic
-                strokeWidth={mode === EditModes.Ruler ? rulerStrokeWidth :strokeWidth}
+                showCenterTextAlignment={mode == EditModes.Table}
+                strokeWidth={mode === EditModes.Ruler ? rulerStrokeWidth : strokeWidth}
                 markerWidth={markerWidth}
                 sideMargin={sideMargin}
                 onSelectColor={handleSelectColor}

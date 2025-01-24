@@ -811,6 +811,7 @@ function Canvas({
                         const horizontalLines = calcEffectiveHorizontalLines(table, textsRef.current);
 
                         const lines = [];
+                        const dashArray = table.strokeDash && table.strokeDash.map((v: number) => v * 5);
 
                         for (let i = 0; i < horizontalLines.length; i++) {
                             const hLine = horizontalLines[i];
@@ -825,7 +826,7 @@ function Canvas({
                                 )}
                                 stroke={table.color}
                                 strokeWidth={table.strokeWidth}
-                                strokeDasharray={table.strokeDash}
+                                strokeDasharray={dashArray}
                                 fill="none"
                             />)
                         }
@@ -844,7 +845,7 @@ function Canvas({
                                     )}
                                     stroke={table.color}
                                     strokeWidth={table.strokeWidth}
-                                    strokeDasharray={table.strokeDash}
+                                    strokeDasharray={dashArray}
                                     fill="none"
                                 />
                             );
@@ -858,7 +859,7 @@ function Canvas({
                 {currentElementType == ElementTypes.Table && tables?.map((table) => {
                     return < MoveIcon
                         key={`table-move-${table.id}`}
-                        style={styles.moveIcon, visibleAnimatedStyle}
+                        style={[styles.moveIcon, visibleAnimatedStyle]}
                         position={[table.verticalLines[0] * ratio.current - 30, table.horizontalLines[0] * ratio.current]}
                         size={30}
                         panResponderHandlers={moveResponder.panHandlers}
@@ -874,7 +875,7 @@ function Canvas({
 
                     return <MoveIcon
                         key={`table-resize-${table.id}`}
-                        style={styles.moveIcon, visibleAnimatedStyle}
+                        style={[styles.moveIcon, visibleAnimatedStyle]}
                         position={[
                             (arrLast(table.verticalLines) ?? 0) * ratio.current - 20,
                             (arrLast(horizontalLines) ?? 0) * ratio.current - 20,

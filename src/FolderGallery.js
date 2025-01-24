@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {
     StyleSheet, View,
-    Alert, Text, Dimensions, Linking,
+    Alert, Text, Dimensions, Linking, NativeEventEmitter, NativeModules,
     ActivityIndicator
 } from 'react-native';
 
@@ -14,6 +14,7 @@ import Share from 'react-native-share';
 
 import FolderNew from './FolderNew';
 import FileNew from './FileNew'
+import { GlobalContext } from './global-context.js';
 
 import {
     registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage, gCurrentLang, getRowDirections,
@@ -46,11 +47,11 @@ import { getSvgIcon, SvgIcon } from './svg-icons';
 import { StackActions } from '@react-navigation/native';
 import { FileSystem, swapFolders, saveFolderOrder } from './filesystem.js';
 import { trace } from './log.js';
-import { showMessage } from 'react-native-flash-message';
 import { LogBox } from 'react-native';
 import { FileContextMenu } from './file-context-menu.js';
 import { FolderPanel } from './folder-panel.js';
 import { DDProvider, DDScrollView, DDView } from './dragdrop.js';
+
 
 const SORT_BY_NAME = 0;
 const SORT_BY_DATE = 1;
@@ -75,6 +76,8 @@ function checkFilter(filter, name) {
 
 
 export default class FolderGallery extends React.Component {
+
+    static contextType = GlobalContext;
 
     constructor(props) {
         LogBox.ignoreLogs(["ref.measureLayout must be called"])
@@ -141,6 +144,11 @@ export default class FolderGallery extends React.Component {
             this.setEditEnabled(false);
             Linking.addEventListener("url", this._handleOpenURL);
 
+            if (this.context?.url) {
+                trace("open with URL:", this.context)
+                setTimeout(() => this._handleOpenURL({ url: this.context?.url }));
+            }
+
             //load only the folders
             let folders = await FileSystem.main.getRootFolders();
             //trace("folders loaded", folders)
@@ -186,6 +194,7 @@ export default class FolderGallery extends React.Component {
         this.dimSubscription?.remove();
 
         Linking.removeAllListeners();
+        this.fileListener?.remove();
         this.props.navigation.removeAllListeners();
     }
 
@@ -450,14 +459,14 @@ export default class FolderGallery extends React.Component {
                 subject: translate("ShareEmailSubject"),
                 urls: [sheetArchivePath],
             };
-            
+
             Share.open(shareOptions).then(() => {
                 this.setState({ inprogress: false })
                 Alert.alert(translate("ShareSuccessful"));
             }).catch(err => {
                 Alert.alert(translate("ActionCancelled"));
             });
-        }).finally(()=>this.setState({ inprogress: false }));
+        }).finally(() => this.setState({ inprogress: false }));
     }
 
     AddToPageFromCamera = (page) => {
