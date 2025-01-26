@@ -169,7 +169,7 @@ const App = (props) => {
           />
 
           <Stack.Screen name="EditPhoto" component={IssieEditPhoto2}
-            initialParams={{ headerHeight: dimensions.headerHeight, insets: props.insets }}
+            initialParams={{ headerHeight: dimensions.headerHeight, insets: props.insets }} // todo calculate better the height?
             options={(props) => {
               const page = props.route.params.page;
               let fileName = page.name;

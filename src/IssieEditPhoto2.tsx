@@ -23,7 +23,7 @@ import { colors, dimensions, getImageDimensions, getRoundedButton, globalStyles,
 import EditorToolbar from './editor-toolbar';
 import { getNewPage, SRC_CAMERA, SRC_FILE, SRC_GALLERY, SRC_RENAME } from './newPage';
 import { EditModes, RootStackParamList } from './types';
-import { backupElement, calcEffectiveHorizontalLines, cloneElem, getId, restoreElement, tableColWidth, tableHeight, tableRowHeight, tableWidth, wait } from './canvas/utils';
+import { backupElement, calcEffectiveHorizontalLines, calcRatio, cloneElem, getId, restoreElement, tableColWidth, tableHeight, tableRowHeight, tableWidth, wait } from './canvas/utils';
 import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
 import { fTranslate, isRTL, translate } from './lang';
 import { FileContextMenu } from './file-context-menu';
@@ -38,7 +38,7 @@ import { hideMessage, showMessage } from 'react-native-flash-message';
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
 export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
-    const { page, folder, share, goHome, pageIndex } = route.params;
+    const { page, folder, share, goHome, pageIndex, insets, headerHeight } = route.params;
 
     // -------------------------------------------------------------------------
     //                          STATE & REFS
@@ -52,13 +52,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [currentEdited, setCurrentEdited] = useState<CurrentEdited>({});
 
     const [windowSize, setWindowSize] = useState<ImageSize>(Dimensions.get("window"));
+
     const [canvasSize, setCanvasSize] = useState<ImageSize>({ width: -1, height: -1 })
     const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
-    //const [keyboardTop, setKeyboardTop] = useState<number>(0);
+    const [keyboardTop, setKeyboardTop] = useState<number>(0);
     const [toolbarHeight, setToolbarHeight] = useState<number>(dimensions.toolbarHeight);
     const [floatingToolbarHeight, setFloatingToolbarHeight] = useState<number>(0);
 
-
+    const [ratio, setRatio] = useState<number>(1);
     const [zoom, setZoom] = useState<number>(1);
     const [status, setStatus] = useState<string>("");
     const [moveCanvas, setMoveCanvas] = useState<Offset>({ x: 0, y: 0 });
@@ -80,9 +81,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }));
 
     const modeRef = useRef<EditModes>(mode);
-    const capturedViewRef = useRef<any>(null);
+    const canvasRef = useRef<any>(null);
     const toolbarRef = useRef<any>(null);
-    const viewOffsetRef = useRef<Offset>({ x: 0, y: 0 })
+    const windowSizeRef = useRef(windowSize);
+    const toolbarHeightRef = useRef(toolbarHeight);
+    const canvasTop = useRef(headerHeight + insets.top + toolbarHeight + dimensions.toolbarMargin);
 
 
     const [fontSize, setFontSize] = useState<number>(35);
@@ -113,8 +116,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const canvasSizeRef = useRef<ImageSize>(canvasSize);
     const eraseModeRef = useRef<boolean>(false);
 
-    const ratioRef = useRef(1);
+    const ratioRef = useRef(ratio);
     const keyboardHeightRef = useRef(keyboardHeight);
+    const keyboardTopRef = useRef(0);
 
     const fontSizeRef = useRef(fontSize);
     const textAlignmentRef = useRef(textAlignment);
@@ -172,11 +176,33 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         currentEditedRef.current = currentEdited;
     }, [currentEdited])
 
+    useEffect(() => {
+        canvasTop.current = headerHeight + insets.top + toolbarHeight + dimensions.toolbarMargin
+        calcCanvasRatio(currentFileRef.current);
+    }, [toolbarHeight])
+
+
+    async function calcCanvasRatio(imgPath: string) {
+        const res = await calcRatio(imgPath, dimensions.minSideMargin,
+            {
+                width: windowSizeRef.current.width,
+                height: windowSizeRef.current.height - toolbarHeightRef.current - dimensions.toolbarMargin * 2 - headerHeight - insets.top - insets.bottom
+            });
+        trace("calcRatio", res, toolbarHeightRef.current)
+        setCanvasSize(res.actualSize);
+        canvasSizeRef.current = res.actualSize;
+        setSideMargin(res.actualSideMargin);
+        setRatio(res.ratio);
+        ratioRef.current = res.ratio;
+
+    }
 
     async function loadPage(newPage: any, index: number) {
         const newCurrentFile = newPage.getPage(index);
-        setCurrentFile(newPage.getPage(index));
+        setCurrentFile(newCurrentFile);
         setCurrPageIndex(index);
+        setZoom(1);
+        setMoveCanvas({ x: 0, y: 0 });
 
         trace("EditPhoto CurrentFile: ", newCurrentFile);
         if (newPage.count > 0) {
@@ -184,11 +210,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
 
         pageRef.current = newPage;
-
         metaDataUri.current = newCurrentFile + ".json";
-        await loadMetadata().then(() => queue2state(true));
-    }
 
+        await calcCanvasRatio(newCurrentFile);
+
+        await loadMetadata(ratioRef.current, canvasSizeRef.current).then(() => queue2state(true));
+    }
+    trace("win-size", windowSize)
     useEffect(() => {
         setNavParam(navigation, 'onMoreMenu', () => setOpenContextMenu(true));
         const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', _keyboardDidShow);
@@ -196,12 +224,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         const handleChange = ({ window }: any) => {
             setWindowSize(window);
+            windowSizeRef.current = window;
+            calcCanvasRatio(currentFileRef.current);
         };
 
         const subscription = Dimensions.addEventListener('change', handleChange);
-        // const {width, height} = Dimensions.get("window");
-        // setWindowSize({width, height});
-
         loadPage(page, (pageIndex != undefined && pageIndex > 0 ? pageIndex : 0)).then(() => {
             if (share) {
                 doShare();
@@ -227,9 +254,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         // check if a text box in edit:
         const textElem = currentEditedRef.current.textId ? textsRef.current.find(t => t.id == currentEditedRef.current.textId) : undefined;
 
-        let kbTop = (e.endCoordinates.screenY - viewOffsetRef.current.y);
+        let kbTop = (e.endCoordinates.screenY - (canvasTop.current));
 
-        //setKeyboardTop(kbTop)
+        setKeyboardTop(kbTop)
+        keyboardTopRef.current = kbTop
         if (textElem) {
             const elemHeight = (textElem.height ?? 20);
             let elemBottom = (textElem.y + elemHeight + moveCanvasRef.current.y) * ratioRef.current * zoomRef.current;
@@ -253,18 +281,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
     }
 
-    async function loadMetadata() {
+    async function loadMetadata(ratio: number, canvasSize: ImageSize) {
         queue.current.clear();
         const value = await FileSystem.main.loadFile(metaDataUri.current).catch(e => {/**left blank, as expetced */ }) || "[]";
         const sketchState = JSON.parse(value);
         let elements: any[];
         if (Array.isArray(sketchState)) {
-
-            // wait for windowsSize
-            while (canvasSizeRef.current.width == -1 || ratioRef.current == 1) {
-                await wait(100);
-            }
-            elements = migrateMetadata(sketchState, canvasSizeRef.current, ratioRef.current)
+            elements = migrateMetadata(sketchState, canvasSize, ratio)
         } else {
             //if (sketchState.version == "2.0") {
             elements = sketchState.elements;
@@ -287,7 +310,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         //  Save thumbnail
         if (currPageIndexRef.current === 0) {
-            await capturedViewRef.current?.toThumbnail()
+            await canvasRef.current?.toThumbnail()
                 .then((uri: string) => {
                     // do not block for saving the thumbnail
                     setTimeout(() => FileSystem.main.saveThumbnail(uri, pageRef.current));
@@ -310,15 +333,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         await wait(shareTimeMs);
         try {
-            const uri = await capturedViewRef.current?.toExport();
-            await capturedViewRef.current?.toExport()
+            const uri = await canvasRef.current?.toExport();
+            await canvasRef.current?.toExport()
             dataUrls.push(uri);
             for (let i = 1; i < pageRef.current.count; i++) {
                 setShareProgressPage(i + 1);
                 setShareProgress(i / pageRef.current.count)
                 await loadPage(pageRef.current, i);
                 await wait(shareTimeMs);
-                const uri = await capturedViewRef.current?.toExport();
+                const uri = await canvasRef.current?.toExport();
                 dataUrls.push(uri);
             }
 
@@ -515,7 +538,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setAudios(_audio);
 
         if (updateToolsState) {
-            if (fontSize != undefined) setFontSize(fontSize);
+            if (fontSize != undefined) setFontSize(fontSize * ratioRef.current);
             if (textAlignment != undefined) setTextAlignment(textAlignment);
             if (strokeWidth != undefined) setStrokeWidth(strokeWidth);
             if (markerStrokeWidth != undefined) setMarkerWidth(markerStrokeWidth);
@@ -733,6 +756,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         return;
                     }
                 }
+                trace("new text", fontSizeRef.current, ratioRef.current)
                 const newTextElem: SketchText = {
                     id: getId("T"),
                     text: "",
@@ -805,17 +829,17 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //                          MOVE / DRAG HANDLERS
     // -------------------------------------------------------------------------
     function handleMove(type: MoveTypes, id: string, p: SketchPoint) {
-        trace("Move elem",
-            // Math.floor((p[0]) + moveCanvasRef.current.x) / zoomRef.current,
-            p[0] * zoomRef.current,
+        // trace("Move elem",
+        //     // Math.floor((p[0]) + moveCanvasRef.current.x) / zoomRef.current,
+        //     p[0] * zoomRef.current,
 
 
-            //canvasSizeRef.current.width,
-            //ratioRef.current
-            //Math.floor(p[1]), 
-            canvasSizeRef.current.width / ratioRef.current,
-            //canvasSizeRef.current.height/ratioRef.current, type, id
-        )
+        //     //canvasSizeRef.current.width,
+        //     //ratioRef.current
+        //     //Math.floor(p[1]), 
+        //     canvasSizeRef.current.width / ratioRef.current,
+        //     //canvasSizeRef.current.height/ratioRef.current, type, id
+        // )
         let [x, y] = p;
 
 
@@ -836,25 +860,27 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             rMoveY = 25;
         }
 
-        if ((y + fontSizeRef.current / ratioRef.current + moveCanvasRef.current.y) * zoomRef.current > canvasSizeRef.current.height / ratioRef.current) {
+        const availableHeight = keyboardTopRef.current ? keyboardTopRef.current : canvasSizeRef.current.height / ratioRef.current
+        if ((y + fontSizeRef.current / ratioRef.current + moveCanvasRef.current.y) * zoomRef.current > availableHeight) {
             trace("hit bottom")
             rMoveY = -25;
         }
-        // move below keyboard
-        if (keyboardHeightRef.current > 0) {
-            const dy = (y + fontSizeRef.current + moveCanvasRef.current.y) * zoomRef.current - ((canvasSizeRef.current.height - keyboardHeightRef.current) / ratioRef.current);
-            if (dy > 0) {
-                handleMoveCanvas({
-                    x: moveCanvasRef.current.x,
-                    y: moveCanvasRef.current.y - dy
-                });
-            }
-            //rMoveY = -25;
-        }
+        // // move below keyboard
+        // if (keyboardHeightRef.current > 0) {
+        //     const dy = (y + fontSizeRef.current + moveCanvasRef.current.y) * zoomRef.current - ((canvasSizeRef.current.height - keyboardHeightRef.current) / ratioRef.current);
+        //     if (dy > 0) {
+        //         handleMoveCanvas({
+        //             x: moveCanvasRef.current.x,
+        //             y: moveCanvasRef.current.y - dy
+        //         });
+        //     }
+        //     //rMoveY = -25;
+        // }
 
-        if (!moveRepeatRef.current && (rMoveX && rMoveX != 0) || (rMoveY && rMoveY != 0)) {
+        if (!moveRepeatRef.current && ((rMoveX && rMoveX != 0) || (rMoveY && rMoveY != 0))) {
             moveRepeatRef.current = {
                 interval: setInterval(() => {
+                    trace("repeat", moveRepeatRef.current?.offset)
                     if (moveRepeatRef.current?.offset) {
                         handleMoveCanvas({
                             x: moveCanvasRef.current.x + moveRepeatRef.current.offset.x,
@@ -1230,13 +1256,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setBusy(true);
             getImageDimensions(uri).then((imgSize) => {
                 const ratio = imgSize.w / imgSize.h;
-                FileSystem.main.resizeImage(uri, Math.round(canvasSize.width / 1.5), canvasSize.height / 1.5)
+                FileSystem.main.resizeImage(uri, Math.round(canvasSizeRef.current.width / 1.5), canvasSizeRef.current.height / 1.5)
                     .then(uri2 => FileSystem.main.attachedFileToPage(uri2, pageRef.current, currPageIndexRef.current, "jpeg"))
                     .then(imageAttachmentFile => {
                         const img = {
                             id: getId("I"),
-                            x: canvasSize.width / 2,
-                            y: canvasSize.height / 2,
+                            x: canvasSizeRef.current.width / 2,
+                            y: canvasSizeRef.current.height / 2,
                             file: imageAttachmentFile,
                             width: Math.round(120 * ratio),
                             height: 120,
@@ -1299,15 +1325,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     function isTextMode() {
         return modeRef.current === EditModes.Text;
     }
-    function isAudioMode() {
-        return modeRef.current === EditModes.Audio;
-    }
-    function isImageMode() {
-        return modeRef.current === EditModes.Image;
-    }
-    function isVoiceMode() {
-        return modeRef.current === EditModes.Voice;
-    }
+
     function isBrushMode() {
         return modeRef.current === EditModes.Brush;
     }
@@ -1514,6 +1532,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     // NEW OR UPDATED: stub for handleToolbarDimensionChange
     function handleToolbarDimensionChange(height: number, floatingToolbarHeight: number) {
         setToolbarHeight(height);
+        toolbarHeightRef.current = height;
         setFloatingToolbarHeight(floatingToolbarHeight);
         console.log("Toolbar dimension changed:", height, floatingToolbarHeight);
     }
@@ -1634,22 +1653,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 break;
             }
         }
-        currentIndex += inc;
-        if (currentIndex < 0)
-            currentIndex = 0;
+        let newIndex = currentIndex + inc;
+        if (newIndex < 0)
+            newIndex = 0;
 
-        if (currentIndex >= pageRef.current.count) return;
-
-        currPageIndexRef.current = currentIndex;
-        setCurrPageIndex(currentIndex);
-        setNavParam(navigation, 'pageTitleAddition', pageTitleAddition(pageRef.current.count, currPageIndexRef.current));
-
-        const newCurrentFile = pageRef.current.getPage(currentIndex);
-        const newMetaDataUri = newCurrentFile + ".json";
-        setCurrentFile(newCurrentFile);
-        metaDataUri.current = newMetaDataUri;
-        await loadMetadata();
-        queue2state();
+        if (newIndex >= pageRef.current.count) return;
+        await loadPage(pageRef.current, newIndex);
     }
 
     function handleRenderElements(elem: SketchElement) {
@@ -1726,12 +1735,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     return (
         <View
             style={styles.mainContainer}
-            onLayout={(e) => {
-                trace("onLayout")
-                const { width, height } = e.nativeEvent.layout;
-                trace("onLayout", width, height)
-                setWindowSize({ width, height });
-            }}
+        // onLayout={(e) => {
+        //     trace("onLayout")
+        //     const { y, width, height } = e.nativeEvent.layout;
+        //     trace("onLayout", width, height, y)
+        //     //setViewTop(y);
+        // }}
 
         >
             {/* <View style={{ position: "absolute", left: sideMargin, top: 100, height: 5, width: canvasSize.width, backgroundColor: "green", zIndex: 10000 }} />
@@ -1831,7 +1840,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 isBrushMode={mode === EditModes.Brush}
                 fontSize={fontSize}
                 textAlignment={textAlignment}
-                showCenterTextAlignment={mode == EditModes.Table}
+                showCenterTextAlignment={currentEdited.textId && texts.find(t => t.id == currentEdited.textId)?.tableId}
                 strokeWidth={mode === EditModes.Ruler ? rulerStrokeWidth : strokeWidth}
                 markerWidth={markerWidth}
                 sideMargin={sideMargin}
@@ -1851,27 +1860,17 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             <View style={styles.topMargin} />
             {/* <ViewShot ref={mainViewRef} options={{ format: "jpg", quality: 0.9, result: share ? "base64" : "tmpfile" }}> */}
             <Canvas
-                ref={capturedViewRef}
+                ref={canvasRef}
                 style={{ overflow: 'hidden', backgroundColor: 'gray' }}
                 offset={moveCanvas}
-                canvasWidth={windowSize.width}
-                canvasHeight={windowSize.height - toolbarHeight - dimensions.toolbarMargin}
-                onActualCanvasSize={(actualSize, actualMargin, viewOffset, ratio) => {
-                    trace("actual sizes", actualSize, actualMargin, viewOffset, ratio, windowSize)
-                    if (actualSize.height != canvasSize.height || actualSize.width != canvasSize.width) {
-                        trace("setCanvasSize. before", canvasSize, "after", actualSize)
-                        setCanvasSize(actualSize)
-                    }
-                    if (actualMargin !== sideMargin) {
-                        setSideMargin(actualMargin);
-                    }
-                    ratioRef.current = ratio;
-                    viewOffsetRef.current = viewOffset;
-                }}
+                canvasWidth={canvasSize.width}
+                canvasHeight={canvasSize.height}// - toolbarHeight - dimensions.toolbarMargin}
+                ratio={ratio}
+                //canvasTop={canvasTop.current}
                 zoom={zoom}
                 onZoom={(newZoom) => doZoom(newZoom)}
                 onMoveCanvas={handleMoveCanvas}
-                minSideMargin={dimensions.minSideMargin}
+                sideMargin={sideMargin}
                 paths={paths}
                 texts={texts}
                 lines={lines}

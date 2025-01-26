@@ -10,6 +10,8 @@ export type RootStackParamList = {
         saveNewFolder:any,
         goHomeAndThenToEdit: (path: string, pageIndex: number) => void;
         returnFolderCallback:any;
+        insets: any;
+        headerHeight:number;
     },
     SavePhoto: {
         sheet:any,

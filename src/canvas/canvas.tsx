@@ -7,7 +7,6 @@ import {
     PanResponder,
     StyleSheet,
     TouchableOpacity,
-    useAnimatedValue,
     View,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
@@ -16,21 +15,15 @@ import IconIonic from "react-native-vector-icons/Ionicons";
 import {
     Canvas as SkiaCanvas,
     Path as SkiaPath,
-    PaintStyle,
-    BlendMode,
     useCanvasRef,
-    usePathValue,
     Skia,
-    PathProps,
     SkPath,
     PathCommand,
-    PathVerb
-
-
+    PathVerb,
 } from "@shopify/react-native-skia";
 
 // Create an Animated version of Skia's <Path> component
-const AnimatedSkiaPath = Animated.createAnimatedComponent(Path);
+//const AnimatedSkiaPath = Animated.createAnimatedComponent(Path);
 
 
 import {
@@ -61,12 +54,11 @@ import {
     isPointOnLineSegment,
     joinPath,
     normalizeFoAndroid,
-    IIF,
-    wait
+    IIF
 } from "./utils";
 import TextElement from "./text-element"; // Example sub-component for text
-import { PinchHelperEvent, PinchSession, ResizeEvent } from "./pinch";
-import Animated, { AnimatedProps, SharedValue, useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { PinchHelperEvent, PinchSession } from "./pinch";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { dimensions } from "../elements";
 import { captureRef } from "react-native-view-shot";
 
@@ -83,6 +75,7 @@ function createSkiaPath(points: PathCommand[], ratio: number): any {
         if (verb == PathVerb.Move) {
             skPath.moveTo(x * ratio, y * ratio);
         } else if (verb == PathVerb.Line) {
+            // if (i == 1) console.log("line at", x , y , "ratioRef", ratioRef)
             skPath.lineTo(x * ratio, y * ratio);
         }
     }
@@ -108,17 +101,15 @@ interface CanvasProps {
     canvasWidth: number;
     canvasHeight: number;
 
-    onActualCanvasSize?: (actualSize: ImageSize, actualSideMargin: number, viewOffset: Offset, ratio: number) => void,
-
     zoom: number;
     onZoom: (newZoom: number) => void;
     onMoveCanvas: (newPos: Offset) => void;
     sketchColor: string;
     sketchStrokeWidth: number;
 
-
+    ratio: number;
     offset: Offset;
-    minSideMargin: number;
+    sideMargin: number;
     style: any;
     onSketchStart: (p: SketchPoint) => void;
     onSketchStep: (p: SketchPoint) => void;
@@ -179,10 +170,10 @@ function Canvas({
     imageSource,
     zoom,
     offset,
-    minSideMargin,
+    ratio,
+    sideMargin,
     canvasWidth,
     canvasHeight,
-    onActualCanvasSize,
     currentElementType,
     //viewShotRef
 }: CanvasProps, ref: any) {
@@ -195,11 +186,9 @@ function Canvas({
     const translateX = useSharedValue(offset.x);
     const translateY = useSharedValue(offset.y);
 
-    const ratio = useRef(1);
-    const zoomRef = useRef(1);
-    const [imageSize, setImageSize] = useState<ImageSize | undefined>();
-    const [sideMargin, setSideMargin] = useState<number>(minSideMargin);
-    const normCanvasSize = useRef<ImageSize>({ width: canvasWidth, height: canvasHeight });
+    const ratioRef = useRef(ratio);
+    const zoomRef = useRef(zoom);
+    const canvasHeightRef = useRef(canvasHeight)
 
     const lastPathSV = useSharedValue<SkPath>(Skia.Path.Make());
     const sketchInProgressRef = useRef<boolean>(false);
@@ -241,7 +230,7 @@ function Canvas({
     useEffect(() => {
         // verify the last path is the same as lastPathSV
         if (lastPathSV.value && paths && paths.length > 0) {
-            const cmds = toCmds(lastPathSV.value, ratio.current);
+            const cmds = toCmds(lastPathSV.value, ratioRef.current);
             const lastPath = paths[paths.length - 1];
             //console.log("xx", cmds[0],  lastPath.points[0])
             if (cmds.length > 0 && cmds[0][1] == lastPath.points[0][1] &&
@@ -253,7 +242,9 @@ function Canvas({
 
     useEffect(() => {
         zoomRef.current = zoom;
-    }, [zoom]);
+        ratioRef.current = ratio;
+        canvasHeightRef.current = canvasHeight;
+    }, [zoom, ratio, canvasHeight]);
 
     useEffect(() => {
         if (isMoving.current && moveContext.current && moveContext.current.lastPt) {
@@ -261,15 +252,15 @@ function Canvas({
             const dx = offsetRef.current.x - offset.x;
             const dy = offsetRef.current.y - offset.y;
             const newPt = [moveContext.current.lastPt[0] + dx, moveContext.current.lastPt[1] + dy] as SketchPoint;
-            console.log("offset while move", dx, dy)
+            //console.log("offset while move", dx, dy)
             moveContext.current.lastPt = newPt;
             onMoveElement?.(moveContext.current.type, moveContext.current.id, newPt);
         }
         //console.log("canvas offset changed", offset)
         offsetRef.current = offset;
         const duration = IIF(500, [isDragMoving.current, 0], [isMoving.current, 100], [startSketchRef.current?.pinch, 0]);
-        translateX.value = withTiming(offset.x * ratio.current, { duration });
-        translateY.value = withTiming(offset.y * ratio.current, { duration });
+        translateX.value = withTiming(offset.x * ratioRef.current, { duration });
+        translateY.value = withTiming(offset.y * ratioRef.current, { duration });
 
     }, [offset]);
 
@@ -277,23 +268,6 @@ function Canvas({
         currentElementTypeRef.current = currentElementType;
     }, [currentElementType]);
 
-    useEffect(() => {
-        if (imageSource?.uri) {
-            setTimeout(() => imageSource && imageSource.uri && Image.getSize(imageSource.uri).then((size) => {
-                const ratioX = (canvasWidth - minSideMargin * 2) / size.width;
-                const ratioY = canvasHeight / size.height;
-                let calcRatio = Math.min(ratioX, ratioY);
-                calcRatio = Math.floor((calcRatio + Number.EPSILON) * 100) / 100;
-
-                ratio.current = calcRatio;
-                const actualSize = { width: size.width * calcRatio, height: size.height * calcRatio };
-                const actualSideMargin = (canvasWidth - size.width * calcRatio) / 2;
-                setImageSize(actualSize);
-                onActualCanvasSize?.(actualSize, actualSideMargin, viewOffset.current, ratio.current);
-                setSideMargin(actualSideMargin);
-            }), 0);
-        }
-    }, [imageSource, canvasHeight, canvasWidth, minSideMargin]);
 
     useImperativeHandle(ref, () => ({
         toThumbnail: () => {
@@ -310,7 +284,8 @@ function Canvas({
         },
         toExport: () => {
             return captureRef(viewShotRef, { format: "jpg", quality: 0.9, result: "base64" });
-        }
+        },
+        getViewOffset: () => viewOffset.current,
     }));
 
 
@@ -394,7 +369,7 @@ function Canvas({
                                 clearTimeout(sketchTimerRef.current);
                                 sketchTimerRef.current = undefined;
                             }
-                            lastPathSV.value.moveTo(startSketchRef.current.position[0] * ratio.current, startSketchRef.current.position[1] * ratio.current);
+                            lastPathSV.value.moveTo(startSketchRef.current.position[0] * ratioRef.current, startSketchRef.current.position[1] * ratioRef.current);
                             skiaCanvasRef.current?.redraw();
                         } else if (currentElementTypeRef.current === ElementTypes.Line) {
                             onSketchStart(startSketchRef.current.position);
@@ -402,8 +377,8 @@ function Canvas({
                         startSketchRef.current = null;
                     } else {
                         // Move or resize an element
-                        const dx = gState.dx / (zoomRef.current * ratio.current);
-                        const dy = gState.dy / (zoomRef.current * ratio.current);
+                        const dx = gState.dx / (zoomRef.current * ratioRef.current);
+                        const dy = gState.dy / (zoomRef.current * ratioRef.current);
 
                         const { initialPosition, elem, initialOffset } = startSketchRef.current;
                         if (initialPosition && elem && currentElementTypeRef.current != ElementTypes.Text) {
@@ -425,7 +400,7 @@ function Canvas({
                 }
                 if (currentElementTypeRef.current === ElementTypes.Sketch) {
                     //console.log("sketch step")
-                    lastPathSV.value.lineTo(newPoint[0] * ratio.current, newPoint[1] * ratio.current);
+                    lastPathSV.value.lineTo(newPoint[0] * ratioRef.current, newPoint[1] * ratioRef.current);
                     skiaCanvasRef.current?.redraw();
                 } else if (currentElementTypeRef.current === ElementTypes.Line) {
                     onSketchStep(newPoint);
@@ -454,7 +429,7 @@ function Canvas({
                 const elem = startSketchRef.current?.elem;
 
                 if (!elem && currentElementTypeRef.current === ElementTypes.Sketch) {
-                    const commands = toCmds(lastPathSV.value, ratio.current);
+                    const commands = toCmds(lastPathSV.value, ratioRef.current);
                     sketchInProgressRef.current = false;
                     sketchTimerRef.current = setTimeout(() => {
                         //console.log("sketch timeout")
@@ -497,7 +472,6 @@ function Canvas({
                     // +15 / -15 offset for text handle, etc. Adjust as needed for images
                     const canvasPos0 = screen2Canvas(gState.x0 + gState.dx + moveContext.current.offsetX * zoomRef.current, gState.y0 + gState.dy + moveContext.current.offsetY * zoomRef.current);
                     moveContext.current.lastPt = canvasPos0;
-                    console.log("XX")
                     onMoveElement?.(moveContext.current.type, moveContext.current.id, canvasPos0);
                 }
             },
@@ -513,8 +487,8 @@ function Canvas({
     // Convert screen coordinates to canvas coordinates
     function screen2Canvas(x: number, y: number): SketchPoint {
         return [
-            (x - viewOffset.current.x) / (zoomRef.current * ratio.current) - offsetRef.current.x,
-            (y - viewOffset.current.y) / (zoomRef.current * ratio.current) - offsetRef.current.y,
+            (x - viewOffset.current.x) / (zoomRef.current * ratioRef.current) - offsetRef.current.x,
+            (y - viewOffset.current.y) / (zoomRef.current * ratioRef.current) - offsetRef.current.y,
         ];
     }
 
@@ -604,7 +578,7 @@ function Canvas({
 
     function handleTextLayout(e: LayoutChangeEvent, text: SketchText) {
         const { width, height } = e.nativeEvent.layout;
-        text.width = width / ratio.current;
+        text.width = width / ratioRef.current;
         let table: SketchTable | undefined = undefined;
         let tableEndY = 0
 
@@ -617,26 +591,23 @@ function Canvas({
 
 
         const prevHeight = text.height || 0;
-        text.height = height / ratio.current;
-        if (!text.tableId && text.y + height / ratio.current > normCanvasSize.current.height &&
-            text.y + prevHeight <= normCanvasSize.current.height) {
+        const normHeight = canvasHeightRef.current / ratioRef.current;
+        text.height = height / ratioRef.current;
+        if (!text.tableId && text.y + height / ratioRef.current > normHeight &&
+            text.y + prevHeight <= normHeight) {
             // change in height passed end of page
             onTextYOverflow?.(text.id);
         } else if (table) {
             const tableEndYAfter = arrLast(calcEffectiveHorizontalLines(table, textsRef.current)) ?? 0;
 
-            if (tableEndYAfter > normCanvasSize.current.height && tableEndY <= normCanvasSize.current.height) {
+            if (tableEndYAfter > normHeight && tableEndY <= normHeight) {
                 onTextYOverflow?.(text.id);
             }
         }
     }
 
-    const actualWidth = imageSize?.width || canvasWidth;
-    const actualHeight = imageSize?.height || canvasHeight;
-
-    normCanvasSize.current = { width: actualWidth / ratio.current, height: actualHeight / ratio.current };
     imageSource = normalizeFoAndroid(imageSource)
-    //console.log("canvas render", imageSource)
+    console.log("canvas render", ratio, canvasWidth)
     const isEraser = (color: string) => color === "#00000000";
 
     return (
@@ -647,8 +618,8 @@ function Canvas({
                 style,
                 {
                     marginLeft: sideMargin,
-                    width: actualWidth,
-                    height: actualHeight,
+                    width: canvasWidth,
+                    height: canvasHeight,
                     transformOrigin: "0 0 0",
                     transform: [
                         { scale: zoomRef.current },
@@ -662,10 +633,10 @@ function Canvas({
                 setTimeout(() =>
                     canvasRef.current?.measure((x, y, w, h, px, py) => {
                         viewOffset.current = {
-                            x: Math.floor(px - offsetRef.current.x * ratio.current * zoomRef.current),
-                            y: Math.floor(py - offsetRef.current.y * ratio.current * zoomRef.current)
+                            x: Math.floor(px - offsetRef.current.x * ratio * zoomRef.current),
+                            y: Math.floor(py - offsetRef.current.y * ratio * zoomRef.current)
                         };
-                        console.log("canvas measure", viewOffset.current)
+                        console.log("View offset:", viewOffset.current)
                     }), 500)
             }}
 
@@ -674,14 +645,14 @@ function Canvas({
             <View style={{ flex: 1, backgroundColor: "white", zIndex: 10 }} collapsable={false} ref={viewShotRef} >
 
                 {/* Background Image */}
-                {imageSize && (
+                {imageSource && (
                     <Image
                         source={imageSource}
                         style={{
                             zIndex: 0,
                             position: "absolute",
-                            width: imageSize.width,
-                            height: imageSize.height,
+                            width: canvasWidth,
+                            height: canvasHeight,
                         }}
                     />
                 )}
@@ -689,15 +660,16 @@ function Canvas({
                 <SkiaCanvas
                     ref={skiaCanvasRef}
                     style={{
+                        //backgroundColor:"green",
                         position: "absolute",
                         width: "100%",
                         height: "100%",
-
                     }}
                 >
                     {/* Re-draw each path in the order they appear */}
                     {paths?.map((p) => {
-                        const skPath = createSkiaPath(p.points, ratio.current);
+                        //console.log("createSkiaPath", ratioRef.current, actualWidth, actualHeight)
+                        const skPath = createSkiaPath(p.points, ratio);
 
                         return (
                             <SkiaPath
@@ -732,7 +704,7 @@ function Canvas({
                         editMode={editMode}
                         texts={texts}
                         tables={tables}
-                        actualWidth={actualWidth}
+                        actualWidth={canvasWidth}
                         ratio={ratio}
                         moveResponder={moveResponder}
                         moveContext={moveContext}
@@ -753,7 +725,7 @@ function Canvas({
                                 <View key={line.id}>
                                     <MoveIcon
                                         style={[transform, styles.moveIcon, visibleAnimatedStyle]}
-                                        position={[line.from[0] * ratio.current - 8, line.from[1] * ratio.current - 8]}
+                                        position={[line.from[0] * ratio - 8, line.from[1] * ratio - 8]}
                                         size={16}
                                         panResponderHandlers={moveResponder.panHandlers}
                                         onSetContext={() => {
@@ -765,7 +737,7 @@ function Canvas({
 
                                     <MoveIcon
                                         style={[transform, styles.moveIcon, visibleAnimatedStyle]}
-                                        position={[line.to[0] * ratio.current - 8, line.to[1] * ratio.current - 8]}
+                                        position={[line.to[0] * ratio - 8, line.to[1] * ratio - 8]}
                                         size={16}
                                         panResponderHandlers={moveResponder.panHandlers}
                                         onSetContext={() => {
@@ -780,8 +752,8 @@ function Canvas({
                                         style={[{
                                             position: "absolute",
 
-                                            left: trashPos[0] * ratio.current - 11,
-                                            top: trashPos[1] * ratio.current - 11,
+                                            left: trashPos[0] * ratio - 11,
+                                            top: trashPos[1] * ratio - 11,
                                         }, styles.moveIcon, visibleAnimatedStyle]}
                                         onPress={() => onDeleteElement?.(ElementTypes.Line, line.id)}
                                     >
@@ -799,7 +771,7 @@ function Canvas({
                     {lines?.map((line) => (
                         <Path
                             key={line.id}
-                            d={joinPath([line.from, line.to], ratio.current)}
+                            d={joinPath([line.from, line.to], ratio)}
                             stroke={line.color}
                             strokeWidth={line.strokeWidth}
                             fill="none"
@@ -822,7 +794,7 @@ function Canvas({
                                         [table.verticalLines[0], hLine],
                                         [arrLast(table.verticalLines) ?? 0, hLine],
                                     ],
-                                    ratio.current
+                                    ratio
                                 )}
                                 stroke={table.color}
                                 strokeWidth={table.strokeWidth}
@@ -841,7 +813,7 @@ function Canvas({
                                             [vLine, horizontalLines[0] - table.strokeWidth / 2],
                                             [vLine, ((arrLast(horizontalLines) ?? 0) + table.strokeWidth / 2)],
                                         ],
-                                        ratio.current
+                                        ratio
                                     )}
                                     stroke={table.color}
                                     strokeWidth={table.strokeWidth}
@@ -860,7 +832,7 @@ function Canvas({
                     return < MoveIcon
                         key={`table-move-${table.id}`}
                         style={[styles.moveIcon, visibleAnimatedStyle]}
-                        position={[table.verticalLines[0] * ratio.current - 30, table.horizontalLines[0] * ratio.current]}
+                        position={[table.verticalLines[0] * ratio - 30, table.horizontalLines[0] * ratio]}
                         size={30}
                         panResponderHandlers={moveResponder.panHandlers}
                         onSetContext={() => {
@@ -877,8 +849,8 @@ function Canvas({
                         key={`table-resize-${table.id}`}
                         style={[styles.moveIcon, visibleAnimatedStyle]}
                         position={[
-                            (arrLast(table.verticalLines) ?? 0) * ratio.current - 20,
-                            (arrLast(horizontalLines) ?? 0) * ratio.current - 20,
+                            (arrLast(table.verticalLines) ?? 0) * ratio - 20,
+                            (arrLast(horizontalLines) ?? 0) * ratio - 20,
                         ]}
                         size={40}
                         panResponderHandlers={moveResponder.panHandlers}
@@ -897,10 +869,10 @@ function Canvas({
                             style={[
                                 styles.imageStyle,
                                 {
-                                    left: image.x * ratio.current,
-                                    top: image.y * ratio.current,
-                                    width: image.width * ratio.current,
-                                    height: image.height * ratio.current,
+                                    left: image.x * ratio,
+                                    top: image.y * ratio,
+                                    width: image.width * ratio,
+                                    height: image.height * ratio,
                                 },
                             ]}
                             source={normalizeFoAndroid(image.src) || { uri: image.imageData }}
@@ -910,8 +882,8 @@ function Canvas({
                                 style={{
                                     position: "absolute",
                                     zIndex: 30,
-                                    left: image.x * ratio.current - 30,
-                                    top: image.y * ratio.current,
+                                    left: image.x * ratio - 30,
+                                    top: image.y * ratio,
                                 }}
                                 onPress={() => onDeleteElement?.(ElementTypes.Image, image.id)}
                             >
@@ -921,8 +893,8 @@ function Canvas({
                             currentEdited.imageId == image.id && <MoveIcon
                                 style={[styles.moveIcon, visibleAnimatedStyle]}
                                 position={[
-                                    (image.x + image.width) * ratio.current - 20,
-                                    (image.y + image.height) * ratio.current - 20,
+                                    (image.x + image.width) * ratio - 20,
+                                    (image.y + image.height) * ratio - 20,
                                 ]}
                                 size={40}
                                 panResponderHandlers={moveResponder.panHandlers}
@@ -937,7 +909,7 @@ function Canvas({
 
                 {/* General Elements */}
                 {elements?.map(elem => {
-                    return <View key={elem.id} style={{ position: "absolute", left: elem.x * ratio.current, top: elem.y * ratio.current }}
+                    return <View key={elem.id} style={{ position: "absolute", left: elem.x * ratio, top: elem.y * ratio }}
                         onMoveShouldSetResponder={(e) => {
                             const touchPoint = screen2Canvas(e.nativeEvent.locationX, e.nativeEvent.locationY);
                             const threshold = 5; // Minimum movement in pixels to activate drag

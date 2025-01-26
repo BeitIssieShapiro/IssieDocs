@@ -15,7 +15,7 @@ interface TextElementProps {
     text: SketchText;
     editMode: boolean;
     actualWidth: number;
-    ratio: React.MutableRefObject<number>;
+    ratio: number;
     moveResponder: any;
     moveContext: React.MutableRefObject<any>;
     onTextChanged: (id: string, text: string) => void;
@@ -36,6 +36,7 @@ function TextElement({
     tables,
     texts,
 }: TextElementProps, ref: any) {
+    //console.log("text ratio", ratio, actualWidth, text.fontSize)
     const textBGColor = useSharedValue<ColorValue>("yellow");
     const moveIconDisplay = useSharedValue<'none' | 'flex' | undefined>("flex");
     const table = text.tableId && tables?.find(table => table.id == text.tableId);
@@ -69,38 +70,37 @@ function TextElement({
     const horizontalLines = table ? calcEffectiveHorizontalLines(table, texts) : [];
     const posStyle: any = table ?
         {
-            position: "absolute", // backgroundColor: "green",
+            position: "absolute",
 
             ...(text.rtl ?
-                { right: actualWidth - (table.verticalLines[text.x + 1] - table.strokeWidth / 2) * ratio.current, } :
-                { left: (table.verticalLines[text.x] + table.strokeWidth / 2) * ratio.current }
+                { right: actualWidth - (table.verticalLines[text.x + 1] - table.strokeWidth / 2) * ratio, } :
+                { left: (table.verticalLines[text.x] + table.strokeWidth / 2) * ratio }
             ),
-            top: (horizontalLines[text.y]) * ratio.current + table.strokeWidth / 2,
-            width: tableColWidth(table, text.x) * ratio.current - table.strokeWidth,
-            minHeight: tableRowHeight(table, text.y) * ratio.current - table.strokeWidth,
-            //maxHeight: tableRowHeight(table, text.y) * ratio.current - table.strokeWidth,
+            top: (horizontalLines[text.y]) * ratio + table.strokeWidth / 2,
+            width: tableColWidth(table, text.x) * ratio - table.strokeWidth,
+            minHeight: tableRowHeight(table, text.y) * ratio - table.strokeWidth,
         } :
         {
             position: "absolute",
             ...(text.rtl ?
-                { right: actualWidth - text.x * ratio.current }
-                : { left: text.x * ratio.current }),
-            top: text.y * ratio.current,
-            maxWidth: text.rtl ? text.x * ratio.current - 3 :
-                actualWidth - text.x * ratio.current - 3,
+                { right: actualWidth - text.x * ratio }
+                : { left: text.x * ratio }),
+            top: text.y * ratio,
+            maxWidth: text.rtl ? text.x * ratio - 3 :
+                actualWidth - text.x * ratio - 3,
         };
 
     const style: any = {
-        color: text.color, fontSize: text.fontSize * ratio.current,
-        direction: text.rtl ? "rtl" : "ltr", textAlign: text.alignment.toLowerCase()
+        color: text.color, fontSize: text.fontSize * ratio,
+        textAlign: text.alignment.toLowerCase()
     };
 
     const moveIconStyle: any = { position: "absolute", ...(text.rtl ? { right: -25 } : { left: -25 }) }
-    console.log("text style", text.text, style)
+    console.log("text style", actualWidth, ratio)
     if (editMode) {
         return (
             <Animated.View
-                direction={text.rtl ? "rtl" : "ltr"}
+                //direction={text.rtl ? "rtl" : "ltr"}
                 key={text.id}
                 style={[styles.textInputHost, posStyle, { zIndex: 500 }, table && bgAnimatedStyle]}
                 {...(table ? {} : moveResponder.panHandlers)}
@@ -119,7 +119,8 @@ function TextElement({
                         autoFocus
                         style={[styles.textStyle, style, bgAnimatedStyle,
                         table && { width: posStyle.width },
-                        text.text.length < 2 && { minWidth: text.fontSize }]}
+                        !table && { minWidth: text.fontSize * ratio }
+                        ]}
                         value={text.text}
                         onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
                     />
@@ -137,10 +138,13 @@ function TextElement({
     }
 
     return (
-        <View key={text.id} style={posStyle} direction={text.rtl ? "rtl" : "ltr"}>
+        <View key={text.id} style={posStyle}>
             <Text
                 allowFontScaling={false}
-                style={[styles.textStyle, style]}
+                style={[styles.textStyle, style,
+                table && { width: posStyle.width },
+                !table && { textAlign: "left" }
+                ]}
                 onLayout={(e) => handleTextLayout(e, text)}
             >
                 {text.text}

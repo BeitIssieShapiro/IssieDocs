@@ -1,10 +1,6 @@
 // utils.ts
-import { ImageURISource, Platform } from "react-native";
+import { ImageURISource, Platform, Image, ImageSize } from "react-native";
 import { ElementBase, SketchPoint, SketchTable, SketchText } from "./types";
-import { PathVerb, SkPath } from "@shopify/react-native-skia";
-// import { NativeModules } from 'react-native';
-
-// const { FileProviderModule } = NativeModules;
 
 /** Joins a list of SketchPoints into an SVG path string. */
 export function joinPath(points: SketchPoint[], ratio: number): string {
@@ -138,7 +134,7 @@ export function calcEffectiveHorizontalLines(table: SketchTable, texts?: SketchT
                 const maxTextHeight = Math.max(...rowTexts.map(rt => (rt.height ?? 0)));
                 if (maxTextHeight > rowHeight) {
                     // emlarge row height and all next rows position
-                    dy += maxTextHeight - rowHeight + table.strokeWidth/2;
+                    dy += maxTextHeight - rowHeight + table.strokeWidth / 2;
                 }
             }
         }
@@ -229,10 +225,42 @@ export function normalizeFoAndroid(imgSrc: ImageURISource | undefined): ImageURI
 }
 
 
-export function IIF(defValue:any, ...args:[any, any][]):any {
+export function IIF(defValue: any, ...args: [any, any][]): any {
 
-    for (let i=0;i<args.length;i++) {
+    for (let i = 0; i < args.length; i++) {
         if (!!args[i][0]) return args[i][1];
     }
     return defValue;
+}
+
+export interface CalcRatioResponse {
+    ratio: number;
+    actualSize: ImageSize;
+    actualSideMargin: number;
+}
+
+export async function calcRatio(imgPath: string, minSideMargin: number, windowSize: ImageSize): Promise<CalcRatioResponse> {
+    if (imgPath) {
+        return new Promise((resolve) => {
+            setTimeout(() => Image.getSize(imgPath).then((size) => {
+                const ratioX = (windowSize.width - minSideMargin * 2) / size.width;
+                const ratioY = windowSize.height / size.height;
+                let ratio = Math.min(ratioX, ratioY);
+                ratio = Math.floor((ratio + Number.EPSILON) * 100) / 100;
+
+                const actualSize = { width: size.width * ratio, height: size.height * ratio };
+                const actualSideMargin = (windowSize.width - size.width * ratio) / 2;
+                resolve( {
+                    ratio,
+                    actualSize,
+                    actualSideMargin,
+                })
+            }), 0);
+        })
+    }
+    return {
+        ratio: 1,
+        actualSize: windowSize,
+        actualSideMargin: minSideMargin,
+    };
 }

@@ -3,10 +3,6 @@ new canvas
 case insesitive - check exists on file.jpg and folder as well
 end of page due to fontsize change?
 
-export/import take thumbnails
-
-
-
 
 table:
   - move cells XX

@@ -233,12 +233,12 @@ export function TextSizePicker(props) {
                             onPress={() => onSelectTextAlignment(TextAlignment.LEFT)} />
                     </SelectedCircle>
 
-                    {props.showCenterTextAlignment && <Spacer />}
+                    {props.showCenterTextAlignment && <Spacer width={5}/>}
                     {props.showCenterTextAlignment && <SelectedCircle selected={textAlignment == TextAlignment.CENTER} size={40}>
                         <Icon type="font-awesome" name="align-center" size={25} color={props.color}
                             selected={textAlignment == TextAlignment.CENTER} onPress={() => onSelectTextAlignment(TextAlignment.CENTER)} />
                     </SelectedCircle>}
-                    {!props.isScreenNarrow && <Spacer />}
+                    {!props.isScreenNarrow && <Spacer width={5}/>}
                     <SelectedCircle selected={textAlignment == TextAlignment.RIGHT} size={40}>
                         <Icon type="font-awesome" name="align-right" size={25} color={props.color}
                             onPress={() => onSelectTextAlignment(TextAlignment.RIGHT)} />
