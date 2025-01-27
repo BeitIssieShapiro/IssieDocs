@@ -607,7 +607,7 @@ function Canvas({
     }
 
     imageSource = normalizeFoAndroid(imageSource)
-    console.log("canvas render", ratio, canvasWidth)
+    //console.log("canvas render", ratio, canvasWidth)
     const isEraser = (color: string) => color === "#00000000";
 
     return (
@@ -622,7 +622,7 @@ function Canvas({
                     height: canvasHeight,
                     transformOrigin: "0 0 0",
                     transform: [
-                        { scale: zoomRef.current },
+                        { scale: zoom },
                         { translateX },
                         { translateY },
                     ],
@@ -836,7 +836,7 @@ function Canvas({
                         size={30}
                         panResponderHandlers={moveResponder.panHandlers}
                         onSetContext={() => {
-                            moveContext.current = { type: MoveTypes.TableMove, id: table.id, offsetX: 30, offsetY: 0 };
+                            moveContext.current = { type: MoveTypes.TableMove, id: table.id, offsetX: 15, offsetY: -15 };
                         }}
                         icon="move"
                         color="black"

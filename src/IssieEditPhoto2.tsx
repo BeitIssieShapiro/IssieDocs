@@ -188,7 +188,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 width: windowSizeRef.current.width,
                 height: windowSizeRef.current.height - toolbarHeightRef.current - dimensions.toolbarMargin * 2 - headerHeight - insets.top - insets.bottom
             });
-        trace("calcRatio", res, toolbarHeightRef.current)
+        //trace("calcRatio", res, toolbarHeightRef.current)
         setCanvasSize(res.actualSize);
         canvasSizeRef.current = res.actualSize;
         setSideMargin(res.actualSideMargin);
@@ -216,7 +216,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         await loadMetadata(ratioRef.current, canvasSizeRef.current).then(() => queue2state(true));
     }
-    trace("win-size", windowSize)
+    //trace("win-size", windowSize)
     useEffect(() => {
         setNavParam(navigation, 'onMoreMenu', () => setOpenContextMenu(true));
         const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', _keyboardDidShow);
@@ -825,57 +825,123 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setTexts([...textsRef.current]);
     }
 
+
     // -------------------------------------------------------------------------
     //                          MOVE / DRAG HANDLERS
     // -------------------------------------------------------------------------
     function handleMove(type: MoveTypes, id: string, p: SketchPoint) {
-        // trace("Move elem",
-        //     // Math.floor((p[0]) + moveCanvasRef.current.x) / zoomRef.current,
-        //     p[0] * zoomRef.current,
-
-
-        //     //canvasSizeRef.current.width,
-        //     //ratioRef.current
-        //     //Math.floor(p[1]), 
-        //     canvasSizeRef.current.width / ratioRef.current,
-        //     //canvasSizeRef.current.height/ratioRef.current, type, id
-        // )
         let [x, y] = p;
+        const r = ratioRef.current;
+        const z = zoomRef.current;
+        const cw = canvasSizeRef.current.width;
+        const ch = canvasSizeRef.current.height;
+        const offx = moveCanvasRef.current.x;
+        const offy = moveCanvasRef.current.y;
+        const mr = sideMarginRef.current;
+        const pm = dimensions.toolbarMargin;
+        const kbh = keyboardHeightRef.current - dimensions.toolbarMargin;
 
+        const getElemBox = () => {
+            let elem: any;
+            let moveOffset: Offset = { x: 0, y: 0 }
+            if (type === MoveTypes.Text) {
+                elem = textsRef.current.find(t => t.id === id);
+                moveOffset.x = elem?.rtl ? -35 : -15;
+                moveOffset.y = -15;
+            } else if (type === MoveTypes.ImageMove) {
+                elem = imagesRef.current.find(image => image.id == id);
+                moveOffset = { x: -15, y: 0 }
+            } else if (type === MoveTypes.TableMove) {
+                elem = tablesRef.current.find(table => table.id == id);
+
+                if (elem) {
+                    const horizontalLines = calcEffectiveHorizontalLines(elem, textsRef.current);
+
+                    return {
+                        moveOffset: { x: -15, y: -15 },
+                        x: elem.verticalLines[0],
+                        y: horizontalLines[0],
+                        width: tableWidth(elem),
+                        height: horizontalLines[horizontalLines.length - 1] - horizontalLines[0],
+                        moveIconOnRight: false,
+                    };
+                }
+            } else if (type === MoveTypes.ElementMove) {
+                elem = audiosRef.current.find(au => au.id == id);
+                moveOffset = { x: 20, y: 20 };
+            }
+            if (elem) {
+                const box = {
+                    x: elem.x, y: elem.y, width: Math.max(elem.width, 20), height: elem.height,
+                    moveIconOnRight: false,
+                    moveOffset,
+                };
+                if (type === MoveTypes.Text && elem.rtl) {
+                    box.moveIconOnRight = true
+                }
+                return box
+            }
+
+            trace("Default elem box")
+            return { x, y, width: 0, height: 0, moveIconOnRight: false, moveOffset };
+        }
+
+        const elemBox = getElemBox();
+
+        const marginRight = elemBox.moveIconOnRight ? 15 : 20;
+
+        if (x + elemBox.moveOffset.x < 0) {
+            trace("hit left", x + elemBox.moveOffset.x, 0)
+            x = 0 - elemBox.moveOffset.x;
+        }
+        let xRight = x + (elemBox.moveIconOnRight ? 0 : elemBox.width);
+
+
+
+        if ((xRight - elemBox.moveOffset.x - marginRight) * r > cw) {
+            trace("hit right", (xRight - elemBox.moveOffset.x) * r, cw, marginRight)
+            x = cw / r + elemBox.moveOffset.x + marginRight;
+            if (!elemBox.moveIconOnRight) {
+                x -= elemBox.width;
+            }
+
+        }
+
+        if (y < 0) y = 0;
+        if ((y + elemBox.height - elemBox.moveOffset.y) * r > ch) {
+            trace("hit bottom", elemBox, cw, ch)
+            y = ch / r - elemBox.height - elemBox.moveOffset.y;;
+        }
 
         let rMoveX = 0;
         let rMoveY = 0;
-        if ((x + moveCanvasRef.current.x) / zoomRef.current < 5) {
-            trace("hit left")
+        if ((x + offx + mr) / z < 30) {
+            trace("push left")
             rMoveX = 25;
         }
 
-        if ((x + 30 + moveCanvasRef.current.x) * zoomRef.current > canvasSizeRef.current.width / ratioRef.current) {
-            trace("hit right")
-            rMoveX = -25;
-        }
-
-        if ((y + moveCanvasRef.current.y) / zoomRef.current < 0) {
-            trace("hit top")
+        if ((y - 15 + offy - dimensions.toolbarMargin) / z < 5) {
+            trace("push up")
             rMoveY = 25;
         }
 
-        const availableHeight = keyboardTopRef.current ? keyboardTopRef.current : canvasSizeRef.current.height / ratioRef.current
-        if ((y + fontSizeRef.current / ratioRef.current + moveCanvasRef.current.y) * zoomRef.current > availableHeight) {
-            trace("hit bottom")
+        const yBottom = (y + elemBox.height) * r;
+
+        const dy = yBottom + offy * r - (ch + pm) / z;
+        trace("move info", dy, kbh)
+
+        if (dy + kbh / z > -5) {
+            trace("push down")
             rMoveY = -25;
         }
-        // // move below keyboard
-        // if (keyboardHeightRef.current > 0) {
-        //     const dy = (y + fontSizeRef.current + moveCanvasRef.current.y) * zoomRef.current - ((canvasSizeRef.current.height - keyboardHeightRef.current) / ratioRef.current);
-        //     if (dy > 0) {
-        //         handleMoveCanvas({
-        //             x: moveCanvasRef.current.x,
-        //             y: moveCanvasRef.current.y - dy
-        //         });
-        //     }
-        //     //rMoveY = -25;
-        // }
+
+        const dx = xRight * r + offx * r - (cw + mr) / z;
+
+        if (dx > 0) {
+            trace("push right")
+            rMoveX = -25;
+        }
+
 
         if (!moveRepeatRef.current && ((rMoveX && rMoveX != 0) || (rMoveY && rMoveY != 0))) {
             moveRepeatRef.current = {
@@ -895,26 +961,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         if (moveRepeatRef.current) moveRepeatRef.current.offset.y = rMoveY;
 
 
-
-        if (x < 20) x = 20;
-        if (x > canvasSizeRef.current.width / ratioRef.current - 20) {
-            x = canvasSizeRef.current.width / ratioRef.current - 20;
-        }
-
-        if (y < 0) y = 0;
-        if (y > canvasSizeRef.current.height / ratioRef.current - 20) {
-            y = canvasSizeRef.current.height / ratioRef.current - 20;
-        }
-
         if (type === MoveTypes.Text) {
             const textElem = textsRef.current.find(t => t.id === id);
             if (textElem) {
-                // limit y-offset to consider text height:
-                if (y > canvasSizeRef.current.height / ratioRef.current - (textElem.height || 20)) {
-                    y = canvasSizeRef.current.height / ratioRef.current - (textElem.height || 20);
-                }
-
-
                 textElem.x = x;
                 textElem.y = y;
                 setTexts([...textsRef.current]);
@@ -945,7 +994,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     backupElement(imgElem)
                     imgElem.aspectRatio = imgElem.width / imgElem.height;
                 }
-                //delete imgElem.imageData
                 if (type === MoveTypes.ImageMove) {
                     imgElem.x = x;
                     imgElem.y = y;

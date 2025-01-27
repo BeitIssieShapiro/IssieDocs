@@ -96,7 +96,7 @@ function TextElement({
     };
 
     const moveIconStyle: any = { position: "absolute", ...(text.rtl ? { right: -25 } : { left: -25 }) }
-    console.log("text style", actualWidth, ratio)
+    //console.log("text style", actualWidth, ratio)
     if (editMode) {
         return (
             <Animated.View
@@ -119,7 +119,7 @@ function TextElement({
                         autoFocus
                         style={[styles.textStyle, style, bgAnimatedStyle,
                         table && { width: posStyle.width },
-                        !table && { minWidth: text.fontSize * ratio }
+                        !table && { minWidth: Math.max(text.fontSize * ratio, 20 / ratio) }
                         ]}
                         value={text.text}
                         onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
@@ -127,7 +127,7 @@ function TextElement({
                     {/* Hidden Text to measure layout */}
                     <Text
                         allowFontScaling={false}
-                        style={[styles.textStyle, posStyle, style, { position: "absolute", [text.rtl ? "right" : "left"]: -10000, minHeight: 0 }]}
+                        style={[styles.textStyle, posStyle, style, { position: "absolute", [text.rtl ? "right" : "left"]: -10000, minHeight: 0 }, !table && { minWidth: 20 / ratio }]}
                         onLayout={(e) => handleTextLayout(e, text)}
                     >
                         {text.text}
