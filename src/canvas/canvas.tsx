@@ -247,12 +247,13 @@ function Canvas({
     }, [zoom, ratio, canvasHeight]);
 
     useEffect(() => {
+        console.log("offset change", isMoving.current, moveContext.current, moveContext.current?.lastPt)
         if (isMoving.current && moveContext.current && moveContext.current.lastPt) {
             // if the canvas moves as an element is being moved
             const dx = offsetRef.current.x - offset.x;
             const dy = offsetRef.current.y - offset.y;
             const newPt = [moveContext.current.lastPt[0] + dx, moveContext.current.lastPt[1] + dy] as SketchPoint;
-            //console.log("offset while move", dx, dy)
+            console.log("offset while move", dx, dy)
             moveContext.current.lastPt = newPt;
             onMoveElement?.(moveContext.current.type, moveContext.current.id, newPt);
         }
@@ -369,7 +370,10 @@ function Canvas({
                                 clearTimeout(sketchTimerRef.current);
                                 sketchTimerRef.current = undefined;
                             }
-                            lastPathSV.value.moveTo(startSketchRef.current.position[0] * ratioRef.current, startSketchRef.current.position[1] * ratioRef.current);
+                            lastPathSV.value.moveTo(
+                                parseFloat((startSketchRef.current.position[0] * ratioRef.current).toFixed(1)),
+                                parseFloat((startSketchRef.current.position[1] * ratioRef.current).toFixed(1))
+                            );
                             skiaCanvasRef.current?.redraw();
                         } else if (currentElementTypeRef.current === ElementTypes.Line) {
                             onSketchStart(startSketchRef.current.position);
@@ -384,6 +388,11 @@ function Canvas({
                         if (initialPosition && elem && currentElementTypeRef.current != ElementTypes.Text) {
                             const pt: SketchPoint = [initialPosition[0] + dx, initialPosition[1] + dy];
                             if ("id" in elem) {
+                                isMoving.current = true;
+                                if (moveContext.current == null) {
+                                    moveContext.current = { type: MoveTypes.ImageMove, id: elem.id, offsetX: 0, offsetY: 0 };
+                                }
+                                moveContext.current.lastPt = pt;
                                 onMoveElement(
                                     currentElementTypeRef.current == ElementTypes.Line ? MoveTypes.LineMove : MoveTypes.ImageMove,
                                     elem.id,
@@ -447,6 +456,9 @@ function Canvas({
                         onMoveEnd(
                             currentElementTypeRef.current == ElementTypes.Line ? MoveTypes.LineMove : MoveTypes.ImageMove,
                             (elem as ElementBase).id);
+                        isMoving.current = false;
+                        moveContext.current = null;
+
                     } else {
                         onMoveTablePartEnd?.(elem);
                     }
@@ -651,8 +663,8 @@ function Canvas({
                         style={{
                             zIndex: 0,
                             position: "absolute",
-                            width: canvasWidth,
-                            height: canvasHeight,
+                            width: Math.round(canvasWidth),
+                            height: Math.round(canvasHeight),
                         }}
                     />
                 )}
@@ -871,8 +883,8 @@ function Canvas({
                                 {
                                     left: image.x * ratio,
                                     top: image.y * ratio,
-                                    width: image.width * ratio,
-                                    height: image.height * ratio,
+                                    width: Math.round(image.width * ratio),
+                                    height: Math.round(image.height * ratio),
                                 },
                             ]}
                             source={normalizeFoAndroid(image.src) || { uri: image.imageData }}

@@ -4,6 +4,11 @@ case insesitive - check exists on file.jpg and folder as well
 end of page due to fontsize change?
 
 
+3. push up is too high
+4. add image - blur ??
+
+
+
 table:
   - move cells XX
 

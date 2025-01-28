@@ -847,7 +847,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             if (type === MoveTypes.Text) {
                 elem = textsRef.current.find(t => t.id === id);
                 moveOffset.x = elem?.rtl ? -35 : -15;
-                moveOffset.y = -15;
+                moveOffset.y = -7;
             } else if (type === MoveTypes.ImageMove) {
                 elem = imagesRef.current.find(image => image.id == id);
                 moveOffset = { x: -15, y: 0 }
@@ -888,7 +888,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         const elemBox = getElemBox();
 
-        const marginRight = elemBox.moveIconOnRight ? 15 : 20;
+        const marginRight = type === MoveTypes.Text ? (elemBox.moveIconOnRight ? 15 : 20) : 0;
 
         if (x + elemBox.moveOffset.x < 0) {
             trace("hit left", x + elemBox.moveOffset.x, 0)
@@ -910,7 +910,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         if (y < 0) y = 0;
         if ((y + elemBox.height - elemBox.moveOffset.y) * r > ch) {
             trace("hit bottom", elemBox, cw, ch)
-            y = ch / r - elemBox.height - elemBox.moveOffset.y;;
+            y = ch / r - elemBox.height + elemBox.moveOffset.y;;
         }
 
         let rMoveX = 0;
@@ -1042,8 +1042,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 if (!audioElem.backup) {
                     backupElement(audioElem)
                 }
-                audioElem.x = x;
-                audioElem.y = y;
+                audioElem.x = x - 50;
+                audioElem.y = y - 50;
                 setAudios([...audiosRef.current]);
             }
         }
@@ -1071,6 +1071,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 const changed = restoreElement(imgElem) as SketchImage;
                 delete changed.imageData;
                 delete changed.aspectRatio;
+                delete changed.src;
                 queue.current.pushImagePosition(changed);
                 save();
                 queue2state();
@@ -1079,15 +1080,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             const table = tablesRef.current.find(table => table.id == id);
             if (table && table.backup) {
                 queue.current.pushTable(restoreElement(table));
-                queue2state();
                 save();
+                queue2state();
             }
         } else if (type === MoveTypes.ElementMove) {
             const audioElem = audiosRef.current.find(au => au.id == id);
             if (audioElem && !audioElem.editMode) {
                 queue.current.pushAudioPosition(restoreElement(audioElem));
-                queue2state();
                 save();
+                queue2state();
             }
         }
     }
@@ -1304,8 +1305,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setBusy(true);
             getImageDimensions(uri).then((imgSize) => {
                 const ratio = imgSize.w / imgSize.h;
-                FileSystem.main.resizeImage(uri, Math.round(canvasSizeRef.current.width / 1.5), canvasSizeRef.current.height / 1.5)
-                    .then(uri2 => FileSystem.main.attachedFileToPage(uri2, pageRef.current, currPageIndexRef.current, "jpeg"))
+                // FileSystem.main.resizeImage(uri, Math.round(canvasSizeRef.current.width / 1.5), canvasSizeRef.current.height / 1.5)
+                //.then(uri2 => FileSystem.main.attachedFileToPage(uri2, pageRef.current, currPageIndexRef.current, "jpeg"))
+                FileSystem.main.attachedFileToPage(uri, pageRef.current, currPageIndexRef.current, "jpeg")
                     .then(imageAttachmentFile => {
                         const img = {
                             id: getId("I"),
@@ -1329,7 +1331,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             navigation,
             {
                 selectionLimit: 1,
-                //  quality: 0.8 
             });
     }
 
