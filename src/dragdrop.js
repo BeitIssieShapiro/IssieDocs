@@ -187,7 +187,6 @@ export const DDView = ({
             // },
             onPanResponderGrant: (e, gestureState) => {
                 trace("DDView pan granted")
-                const { pageX, pageY } = e.nativeEvent;
                 setIsDragging(true);
 
                 // Offset the ghost frame to the current touch position

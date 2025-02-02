@@ -69,6 +69,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [currentFile, setCurrentFile] = useState<string>(page.defaultSrc);
     const [currPageIndex, setCurrPageIndex] = useState<number>(pageIndex ?? 0);
     const [busy, setBusy] = useState<boolean>(false);
+    const [canvasTop, setCanvasTop] = useState<number>(headerHeight + insets.top + toolbarHeight + dimensions.toolbarMargin);
 
 
     const pageRef = useRef(page);
@@ -85,7 +86,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const toolbarRef = useRef<any>(null);
     const windowSizeRef = useRef(windowSize);
     const toolbarHeightRef = useRef(toolbarHeight);
-    const canvasTop = useRef(headerHeight + insets.top + toolbarHeight + dimensions.toolbarMargin);
+    const canvasTopRef = useRef(canvasTop);
 
 
     const [fontSize, setFontSize] = useState<number>(35);
@@ -177,7 +178,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }, [currentEdited])
 
     useEffect(() => {
-        canvasTop.current = headerHeight + insets.top + toolbarHeight + dimensions.toolbarMargin
         calcCanvasRatio(currentFileRef.current);
     }, [toolbarHeight])
 
@@ -192,7 +192,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setCanvasSize(res.actualSize);
         canvasSizeRef.current = res.actualSize;
         setSideMargin(res.actualSideMargin);
+        canvasTopRef.current = headerHeight + insets.top + toolbarHeight + dimensions.toolbarMargin
+        setCanvasTop(canvasTopRef.current)
         setRatio(res.ratio);
+        setMoveCanvas({...moveCanvasRef.current})
         ratioRef.current = res.ratio;
 
     }
@@ -254,7 +257,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         // check if a text box in edit:
         const textElem = currentEditedRef.current.textId ? textsRef.current.find(t => t.id == currentEditedRef.current.textId) : undefined;
 
-        let kbTop = (e.endCoordinates.screenY - (canvasTop.current));
+        let kbTop = (e.endCoordinates.screenY - (canvasTopRef.current));
 
         setKeyboardTop(kbTop)
         keyboardTopRef.current = kbTop
@@ -327,25 +330,29 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setShareProgressPage(1);
 
 
-        //let interval = pageRef.current.count * shareTimeMs / 11;
         setShareProgress(0);
-        //let intervalObj = setInterval(() => setShareProgress(prev => prev + 10), interval);
 
         await wait(shareTimeMs);
         try {
             const uri = await canvasRef.current?.toExport();
-            await canvasRef.current?.toExport()
-            dataUrls.push(uri);
+            dataUrls.push({
+                uri,
+                size: canvasSizeRef.current,
+                ratio: ratioRef.current,
+            });
             for (let i = 1; i < pageRef.current.count; i++) {
                 setShareProgressPage(i + 1);
                 setShareProgress(i / pageRef.current.count)
                 await loadPage(pageRef.current, i);
                 await wait(shareTimeMs);
                 const uri = await canvasRef.current?.toExport();
-                dataUrls.push(uri);
+                dataUrls.push({
+                    uri,
+                    size: canvasSizeRef.current,
+                    ratio: ratioRef.current,
+                });
             }
 
-            //clearInterval(intervalObj);
             //avoid reshare again
             setNavParam(navigation, 'share', false);
             // Always create PDF file
@@ -1180,7 +1187,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 type: "warning",
                 animated: true,
                 duration: 10000,
-                position: "center",
+                position: { top: 100, left: (windowSize.width - 450) / 2 },
                 titleStyle: { lineHeight: 35, fontSize: 25, height: 100, textAlign: "center", margin: 15, color: "black" },
                 style: { width: 450, height: 250 },
 
@@ -1915,7 +1922,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 canvasWidth={canvasSize.width}
                 canvasHeight={canvasSize.height}// - toolbarHeight - dimensions.toolbarMargin}
                 ratio={ratio}
-                //canvasTop={canvasTop.current}
+                canvasTop={canvasTop}
                 zoom={zoom}
                 onZoom={(newZoom) => doZoom(newZoom)}
                 onMoveCanvas={handleMoveCanvas}

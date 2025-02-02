@@ -110,6 +110,7 @@ interface CanvasProps {
     ratio: number;
     offset: Offset;
     sideMargin: number;
+    canvasTop: number;
     style: any;
     onSketchStart: (p: SketchPoint) => void;
     onSketchStep: (p: SketchPoint) => void;
@@ -172,16 +173,18 @@ function Canvas({
     offset,
     ratio,
     sideMargin,
+    canvasTop,
     canvasWidth,
     canvasHeight,
     currentElementType,
-    //viewShotRef
+    
 }: CanvasProps, ref: any) {
     // Refs & State
     const isMoving = useRef(false);
     const isDragMoving = useRef(false);
     const canvasRef = useRef<View | null>(null);
-    const viewOffset = useRef<Offset>({ x: 0, y: 0 });
+    //const viewOffset = useRef<Offset>({ x: 0, y: 0 });
+    const canvasTopRef = useRef(canvasTop);
     const offsetRef = useRef(offset);
     const translateX = useSharedValue(offset.x);
     const translateY = useSharedValue(offset.y);
@@ -189,6 +192,7 @@ function Canvas({
     const ratioRef = useRef(ratio);
     const zoomRef = useRef(zoom);
     const canvasHeightRef = useRef(canvasHeight)
+    const sideMarginRef = useRef(sideMargin);
 
     const lastPathSV = useSharedValue<SkPath>(Skia.Path.Make());
     const sketchInProgressRef = useRef<boolean>(false);
@@ -244,7 +248,9 @@ function Canvas({
         zoomRef.current = zoom;
         ratioRef.current = ratio;
         canvasHeightRef.current = canvasHeight;
-    }, [zoom, ratio, canvasHeight]);
+        sideMarginRef.current = sideMargin;
+        canvasTopRef.current = canvasTop;
+    }, [zoom, ratio, canvasHeight, sideMargin, canvasTop]);
 
     useEffect(() => {
         console.log("offset change", isMoving.current, moveContext.current, moveContext.current?.lastPt)
@@ -275,18 +281,28 @@ function Canvas({
             moveIconDisplay.value = "none";
             editTextRef.current?.prepareForThumbnail();
             return new Promise(resolve => {
-                captureRef(viewShotRef, { format: "jpg", quality: 0.6, height: dimensions.tileHeight, width: dimensions.tileWidth })
-                    .then((uri) => resolve(uri))
-                    .finally(() => {
-                        setTimeout(() => moveIconDisplay.value = "flex");
-                    });
+                setTimeout(() =>
+                    captureRef(viewShotRef, { format: "jpg", quality: 0.6, height: dimensions.tileHeight, width: dimensions.tileWidth })
+                        .then((uri) => resolve(uri))
+                        .finally(() => {
+                            setTimeout(() => moveIconDisplay.value = "flex");
+                        }), 100);
 
             })
         },
         toExport: () => {
-            return captureRef(viewShotRef, { format: "jpg", quality: 0.9, result: "base64" });
+            moveIconDisplay.value = "none";
+            editTextRef.current?.prepareForThumbnail();
+            return new Promise(resolve => {
+                setTimeout(() =>
+                    captureRef(viewShotRef, { format: "jpg", quality: 0.9, result: "base64" })
+                        .then((uri) => resolve(uri))
+                        .finally(() => {
+                            setTimeout(() => moveIconDisplay.value = "flex");
+                        }), 100)
+            })
         },
-        getViewOffset: () => viewOffset.current,
+        //getViewOffset: () => viewOffset.current,
     }));
 
 
@@ -328,8 +344,8 @@ function Canvas({
                     if (gState.numberActiveTouches == 2) {
 
                         const touches = e.nativeEvent.touches
-                        const p1 = [touches[0].pageX, touches[0].pageY] as SketchPoint
-                        const p2 = [touches[1].pageX, touches[1].pageY] as SketchPoint
+                        const p1 = [touches[0]?.pageX, touches[0]?.pageY] as SketchPoint
+                        const p2 = [touches[1]?.pageX, touches[1]?.pageY] as SketchPoint
 
 
                         if (!startSketchRef.current.pinch) {
@@ -415,8 +431,10 @@ function Canvas({
                     onSketchStep(newPoint);
                 } else {
                     // pass a screen point, as offset may change during...
-                    onSketchStep([e.nativeEvent.pageX, e.nativeEvent.pageY]);
-                    isDragMoving.current = true;
+                    if (e.nativeEvent) {
+                        onSketchStep([e.nativeEvent.pageX, e.nativeEvent.pageY]);
+                        isDragMoving.current = true;
+                    }
                 }
             },
             onPanResponderRelease: (_, gState) => {
@@ -426,10 +444,8 @@ function Canvas({
                 }
                 //console.log("x1", gState, Math.abs(gState.dx) < 2 && Math.abs(gState.dy) < 2)
                 if (Math.abs(gState.dx) < 2 && Math.abs(gState.dy) < 2) {
-                    console.log("x1", startSketchRef.current)
                     // Possibly a tap/click
                     if (startSketchRef.current) {
-                        console.log("x1")
                         onCanvasClick(startSketchRef.current.position, startSketchRef.current?.elem);
                     }
                     startSketchRef.current = null;
@@ -499,8 +515,8 @@ function Canvas({
     // Convert screen coordinates to canvas coordinates
     function screen2Canvas(x: number, y: number): SketchPoint {
         return [
-            (x - viewOffset.current.x) / (zoomRef.current * ratioRef.current) - offsetRef.current.x,
-            (y - viewOffset.current.y) / (zoomRef.current * ratioRef.current) - offsetRef.current.y,
+            (x - sideMarginRef.current) / (zoomRef.current * ratioRef.current) - offsetRef.current.x,
+            (y - canvasTopRef.current) / (zoomRef.current * ratioRef.current) - offsetRef.current.y,
         ];
     }
 
@@ -640,21 +656,21 @@ function Canvas({
                     ],
                 },
             ]}
-            onLayout={(e) => {
-                console.log("canvas onLayout", e.nativeEvent.layout)
-                setTimeout(() =>
-                    canvasRef.current?.measure((x, y, w, h, px, py) => {
-                        viewOffset.current = {
-                            x: Math.floor(px - offsetRef.current.x * ratio * zoomRef.current),
-                            y: Math.floor(py - offsetRef.current.y * ratio * zoomRef.current)
-                        };
-                        console.log("View offset:", viewOffset.current)
-                    }), 500)
-            }}
+            // onLayout={(e) => {
+            //     console.log("canvas onLayout", e.nativeEvent.layout)
+            //     setTimeout(() =>
+            //         canvasRef.current?.measure((x, y, w, h, px, py) => {
+            //             viewOffset.current = {
+            //                 x: Math.floor(px - offsetRef.current.x * ratio * zoomRef.current),
+            //                 y: Math.floor(py - offsetRef.current.y * ratio * zoomRef.current)
+            //             };
+            //             console.log("View offset:", viewOffset.current)
+            //         }), 500)
+            // }}
 
             {...sketchResponder.panHandlers}
         >
-            <View style={{ flex: 1, backgroundColor: "white", zIndex: 10 }} collapsable={false} ref={viewShotRef} >
+            <View style={{ flex: 1, backgroundColor: "white" }} collapsable={false} ref={viewShotRef} >
 
                 {/* Background Image */}
                 {imageSource && (
@@ -676,6 +692,7 @@ function Canvas({
                         position: "absolute",
                         width: "100%",
                         height: "100%",
+                        zIndex: 8,
                     }}
                 >
                     {/* Re-draw each path in the order they appear */}
@@ -778,7 +795,7 @@ function Canvas({
 
 
                 {/* Paths & Lines (Non-edit) */}
-                <Svg height="100%" width="100%" style={{ position: "absolute" }}>
+                <Svg height="100%" width="100%" style={{ position: "absolute", zIndex: 8 }}>
 
                     {lines?.map((line) => (
                         <Path
@@ -921,7 +938,7 @@ function Canvas({
 
                 {/* General Elements */}
                 {elements?.map(elem => {
-                    return <View key={elem.id} style={{ position: "absolute", left: elem.x * ratio, top: elem.y * ratio }}
+                    return <View key={elem.id} style={[styles.elementStyle, { left: elem.x * ratio, top: elem.y * ratio }]}
                         onMoveShouldSetResponder={(e) => {
                             const touchPoint = screen2Canvas(e.nativeEvent.locationX, e.nativeEvent.locationY);
                             const threshold = 5; // Minimum movement in pixels to activate drag
@@ -932,8 +949,10 @@ function Canvas({
                             return ret;
                         }}
                         onResponderMove={(e) => {
-                            const touchPoint = screen2Canvas(e.nativeEvent.pageX, e.nativeEvent.pageY) as SketchPoint
-                            onMoveElement?.(MoveTypes.ElementMove, elem.id, touchPoint);
+                            if (e.nativeEvent) {
+                                const touchPoint = screen2Canvas(e.nativeEvent.pageX, e.nativeEvent.pageY) as SketchPoint
+                                onMoveElement?.(MoveTypes.ElementMove, elem.id, touchPoint);
+                            }
                         }}
                         onResponderRelease={(e) => {
                             isMoving.current = false;
@@ -968,7 +987,11 @@ const styles = StyleSheet.create({
     },
     imageStyle: {
         position: "absolute",
-        zIndex: 10,
+        zIndex: 2,
+    },
+    elementStyle: {
+        position: "absolute",
+        zIndex: 15,
     },
     moveIcon: {
         zIndex: 2500,

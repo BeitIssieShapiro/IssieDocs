@@ -1,5 +1,5 @@
 import 'text-encoding'
-import PDFDocument from '@react-pdf/pdfkit'; 
+import PDFDocument from '@react-pdf/pdfkit';
 import RNFS from 'react-native-fs';
 import { Buffer } from 'buffer'; // Ensure buffer is available in your RN environment
 
@@ -41,12 +41,14 @@ export async function generatePDF(base64Images) {
 
       // 4. Add each base64 image on its own page
       for (let i = 0; i < base64Images.length; i++) {
-        const base64 = base64Images[i];
-
+        const base64 = base64Images[i].uri;
+        const size = base64Images[i].size;
+        const r = base64Images[i].ratio;
         // Add a new page each time
         doc.addPage({
-          size: 'A4', // or 'LETTER', or custom [width, height]
-          margins: { top: 0, left: 0, right: 0, bottom: 0 },
+          size: size.height > size.width ? [size.width, size.height] : [size.height, size.width],
+          layout: size.height > size.width ? "portrait" : "landscape",
+          margins: 0,
         });
 
         // Clean the base64 string if it includes `data:image/...;base64,`
@@ -55,7 +57,7 @@ export async function generatePDF(base64Images) {
         // Insert the image at (x=0, y=0), sized to fit A4 (~595 x 842 points)
         // Adjust the `fit` to preserve aspect ratio while filling the page as needed
         doc.image(Buffer.from(cleanedBase64, 'base64'), 0, 0, {
-          fit: [595, 842], // A4 in points
+          fit: [size.width, size.height],
           align: 'center',
           valign: 'center',
         });

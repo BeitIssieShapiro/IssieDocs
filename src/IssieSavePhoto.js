@@ -6,8 +6,7 @@ import {
   Image
 } from 'react-native';
 import ImageEditor from "@react-native-community/image-editor";
-import Pdf from 'react-native-pdf';
-import ViewShot from "react-native-view-shot";
+import PdfThumbnail from "react-native-pdf-thumbnail";
 import { StackActions } from '@react-navigation/native';
 import { Icon, OrientationPicker } from "./elements"
 import { getRowDirections, translate } from './lang.js'
@@ -22,9 +21,6 @@ import ImageResizer from '@bam.tech/react-native-image-resizer';
 
 import { getNewPage, SRC_RENAME, SRC_DUPLICATE, SRC_FILE } from './newPage'
 
-import * as Progress from 'react-native-progress';
-
-import { fTranslate } from './lang';
 import Scroller from './scroller';
 
 import { FileSystem } from './filesystem';
@@ -158,11 +154,24 @@ export default class IssieSavePhoto extends React.Component {
     } else {
       imageUri = decodeURI(this.props.route.params.uri);
       if (this.isFile() && imageUri.endsWith('.pdf')) {
-        pdf = true;
+
+        pages = await PdfThumbnail.generateAllPages("file://" + imageUri)
+        //.catch(e => console.log("error readin pdf", e));
+
+        pages = pages.map(p => {
+          if (p.uri.startsWith("file://")) return p.uri.slice(7);
+          return p.uri
+        });
+
+        imageUri = pages[0];
+        multiPage = pages.length > 1;
+        pathToSave = pages[0];
+
+        //pdf = true;
       } else {
         pages.push(imageUri)
+        pathToSave = decodeURI(this.props.route.params.uri);
       }
-      pathToSave = decodeURI(this.props.route.params.uri);
     }
     // trace("Open SavePhoto with imageUri: ", imageUri, "pdf?", pdf, this.props.route.params.sheet)
     // if (this.props.route.params.sheet?._pages?.length > 1) {
@@ -179,7 +188,7 @@ export default class IssieSavePhoto extends React.Component {
     folders = folders.filter(f => f.name !== FileSystem.DEFAULT_FOLDER.name);
 
     this.setState({
-      imageUri, pathToSave, pdf, pdfPage: 1,
+      imageUri, pathToSave, pdf, currentPage:0,
       folders, folder, pageName, addToExistingPage, multiPage, pages, onConfirm, phase: skipConfirm ? PickName : OK_Cancel,
     }, () => {
       if (!pdf) {
@@ -565,7 +574,7 @@ export default class IssieSavePhoto extends React.Component {
   }
 
   movePage = (inc) => {
-    this.setState({ pdfPage: this.state.pdfPage + inc });
+    this.setState({ currentPage: this.state.currentPage + inc });
   }
 
   saveNewFolder = async (newFolder, color, icon, parentID) => {
@@ -747,122 +756,50 @@ export default class IssieSavePhoto extends React.Component {
           {actionButtons}
         </View>
 
-        {this.state.pdf ?
-          <View style={styles.bgImage}>
-            {this.state.pdfInProcess ?
-              <View style={{ position: 'absolute', top: '25%', left: 0, width: '100%', zIndex: 1000, alignItems: 'center' }}>
-                {/* <ProgressCircle
-                  radius={150}
-                  color="#3399FF"
-                  shadowColor="#999"
-                  bgColor="white"
-                  percent={this.state.pdfInProcess * 100 / this.state.pdfPageCount}
-                  borderWidth={5} >
-                  <Text style={{ zIndex: 100, fontSize: 25 }}>{fTranslate("ImportProgress", this.state.pdfInProcess, this.state.pdfPageCount)}</Text>
-                </ProgressCircle> */}
-                <Progress.Circle
-                  size={300} // Diameter (2 * radius)
-                  progress={this.state.pdfInProcess * 100 / this.state.pdfPageCount} // Value between 0 and 1
-                  color="#3399FF"
-                  unfilledColor="#999999" // Equivalent to shadowColor
-                  borderWidth={5}
-                  thickness={8} // Adjust thickness as needed
-                  showsText={false} // We'll add custom text
-                  animated={true} // Enable animation if desired
-                >
-                  {this.state.pdfInProcess && (
-                    <View style={styles.textContainer}>
-                      <Text style={styles.text}>
-                        {fTranslate(
-                          "ImportProgress",
-                          this.state.pdfInProcess,
-                          this.state.pdfPageCount > 0 ? this.state.pdfPageCount : 1
-                        )}
-                      </Text>
-                    </View>
-                  )}
-                </Progress.Circle>
-              </View> : null}
-            <ViewShot
-              ref={(ref) => {
-                this.viewShotRef = ref;
-              }}
-              options={{ format: "jpg", quality: 0.9 }}
+
+        <View style={[{
+          justifyContent: flexStart,
+          alignItems: 'center',
+          top: dimensions.toolbarHeight,
+        },
+        this.state.phase == OK_Cancel ?
+
+          {
+            width: '100%',
+            height: (this.state.imgSize.h * this.state.scale)
+          } :
+          {
+            width: '100%',
+            height: '100%',
+          }
+        ]}>
+          {this.isBlankPage() && this.state.addToExistingPage && <OrientationPicker
+            orientationLandscape={this.state.orientationLandscape}
+            onChangeOrientation={(orientationLandscape) => this.setState({ orientationLandscape })}
+          />}
+          {this.state.phase == OK_Cancel &&
+            <ImageBackground
               style={{
-                flex: 1, position: 'absolute', width: this.state.pdfWidth, height: this.state.pdfHeight
-              }}>
-              <Pdf
-                style={{ flex: 1, width: this.state.pdfWidth, height: this.state.pdfHeight }}
-                source={{ uri: this.verifyFilePrefix(this.state.imageUri), path: this.verifyFilePrefix(this.state.imageUri) }}
-                page={this.state.pdfPage}
-                enablePaging={true}
-                
-                onLoadComplete={(numberOfPages, filePath, dim) => {
-                  trace("PDF: onLoadComplete", dim, numberOfPages)
-                  if (!this.state.pdfWidthOnce) {
-                    // setTimeout(()=>this.movePage(1), 200)
-                    //setTimeout(() => this.setState({ pdfPage: 1 }), 200)
-                    this.setState({
-                      pdfWidthOnce: true,
-                      pdfPage: 1,
-                      pdfPageCount: numberOfPages, pdfWidth: dim.width, pdfHeight: dim.height
-                    })
-                  }
-                }}
+                width: '100%',
+                height: '100%',
+                backgroundColor: "white",
+              }}
 
-                onError={(error) => {
-                  Alert.alert(translate("PDFLoadFailed") + ":" + error);
-                }}
-              >
-
-              </Pdf>
-            </ViewShot>
-            {PageNameInput}
-          </View> :
-          <View style={[{
-            justifyContent: flexStart,
-            alignItems: 'center',
-            top: dimensions.toolbarHeight,
-          },
-          this.state.phase == OK_Cancel ?
-
-            {
-              width: '100%',
-              height: (this.state.imgSize.h * this.state.scale)
-            } :
-            {
-              width: '100%',
-              height: '100%',
-            }
-          ]}>
-            {this.isBlankPage() && this.state.addToExistingPage && <OrientationPicker
-              orientationLandscape={this.state.orientationLandscape}
-              onChangeOrientation={(orientationLandscape) => this.setState({ orientationLandscape })}
+              imageStyle={{ resizeMode: 'contain' }}
+              blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
+              source={this.state?.pages && normalizeFoAndroid({ uri: this.state.pages[this.state.currentPage] })}
             />}
-            {this.state.phase == OK_Cancel &&
-              <ImageBackground
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  backgroundColor: "white",
-                }}
 
-                imageStyle={{ resizeMode: 'contain' }}
-                blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
-                source={normalizeFoAndroid({ uri: this.state.imageUri })}
-              />}
+          {cropFrame}
+          {PageNameInput}
+        </View>
 
-            {cropFrame}
-            {PageNameInput}
-          </View>
-        }
         {
-          this.state.PickName || this.state.pdf && this.state.pdfPageCount < 2 || !this.state.pdf ?
-            null :
-            getPageNavigationButtons(0, '100%',
-              this.state.pdfPage == 1, //isFirst
-              this.state.pdfPage == this.state.pdfPageCount, //isLast
-              (inc) => this.movePage(inc))
+          !this.state.PickName && this.state.pages?.length > 1 &&
+          getPageNavigationButtons(0, '100%',
+            this.state.currentPage == 0, //isFirst
+            this.state.pages.length - 1 == this.state.currentPage, //isLast
+            (inc) => this.movePage(inc))
         }
       </View >
     );
