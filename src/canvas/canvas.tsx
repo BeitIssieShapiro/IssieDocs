@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import {
     Image,
     ImageSize,
@@ -177,7 +177,7 @@ function Canvas({
     canvasWidth,
     canvasHeight,
     currentElementType,
-    
+
 }: CanvasProps, ref: any) {
     // Refs & State
     const isMoving = useRef(false);
@@ -513,14 +513,14 @@ function Canvas({
     ).current;
 
     // Convert screen coordinates to canvas coordinates
-    function screen2Canvas(x: number, y: number): SketchPoint {
+    const screen2Canvas = useCallback((x: number, y: number): SketchPoint => {
         return [
             (x - sideMarginRef.current) / (zoomRef.current * ratioRef.current) - offsetRef.current.x,
             (y - canvasTopRef.current) / (zoomRef.current * ratioRef.current) - offsetRef.current.y,
         ];
-    }
+    }, []);
 
-    function searchTable(cx: number, cy: number): TableContext | undefined {
+    const searchTable = useCallback((cx: number, cy: number): TableContext | undefined => {
         for (const table of tablesRef.current) {
             // 0. calculate effective hlines
             const horizontalLines = calcEffectiveHorizontalLines(table, textsRef.current);
@@ -585,9 +585,9 @@ function Canvas({
         }
         // 3. Click not on any line or cell of any table
         return undefined;
-    }
+    }, []);
 
-    function searchElement(cx: number, cy: number) {
+    const searchElement = useCallback((cx: number, cy: number) =>{
         if (currentElementTypeRef.current === ElementTypes.Text) {
             //console.log("searchElement txt",textsRef.current)
             return textsRef.current?.find(t => !t.tableId && inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
@@ -602,9 +602,9 @@ function Canvas({
                 isPointOnLineSegment(line.from, line.to, cx, cy, THRESHOLD)
             );
         }
-    }
+    }, []);
 
-    function handleTextLayout(e: LayoutChangeEvent, text: SketchText) {
+    const handleTextLayout = useCallback((e: LayoutChangeEvent, text: SketchText) => {
         const { width, height } = e.nativeEvent.layout;
         text.width = width / ratioRef.current;
         let table: SketchTable | undefined = undefined;
@@ -632,7 +632,7 @@ function Canvas({
                 onTextYOverflow?.(text.id);
             }
         }
-    }
+    }, []);
 
     imageSource = normalizeFoAndroid(imageSource)
     //console.log("canvas render", ratio, canvasWidth)

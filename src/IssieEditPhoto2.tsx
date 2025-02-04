@@ -450,7 +450,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 if (sketchElem.isMarker || sketchElem.color.length > 7) {
                     markerStrokeWidth = sketchElem.strokeWidth;
                     markerColor = sketchElem.color.substring(0, sketchElem.color.length - 2);
-                    latestMode = EditModes.Marker;
+                    //latestMode = EditModes.Marker;
                     sketchElem.isMarker = true;
 
                 } else {
@@ -469,10 +469,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 rulerStrokeWidth = lineElem.strokeWidth;
 
                 _rulers.push(cloneElem(lineElem));
-                latestMode = EditModes.Ruler;
+                //latestMode = EditModes.Ruler;
             } else if (q[i].type === 'lineDelete') {
                 _rulers = _rulers.filter(l => l.id !== q[i].elem.id);
-                latestMode = EditModes.Ruler;
+                //latestMode = EditModes.Ruler;
             } else if (q[i].type === 'image') {
                 // translate the relative path to full path:
                 let elem = cloneElem(q[i].elem);
@@ -483,7 +483,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     }
                 }
                 _images.push(elem);
-                latestMode = EditModes.Image;
+                //latestMode = EditModes.Image;
             } else if (q[i].type === 'imagePosition') {
                 const elemIndex = _images.findIndex(ci => ci.id === q[i].elem.id);
                 if (elemIndex >= 0) {
@@ -495,13 +495,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         y: q[i].elem.y,
                     }
                     _images[elemIndex] = updatedImage;
-                    latestMode = EditModes.Image;
+                    //latestMode = EditModes.Image;
                 }
             } else if (q[i].type === 'imageDelete') {
                 const elemIndex = _images.findIndex(ci => ci.id === q[i].elem.id);
                 if (elemIndex >= 0) {
                     _images.splice(elemIndex, 1);
-                    latestMode = EditModes.Image;
+                    //latestMode = EditModes.Image;
                 }
             } else if (q[i].type === 'table') {
                 _tables = _tables.filter(t => t.id !== q[i].elem.id);
@@ -510,18 +510,18 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     tableElem.strokeDash = (tableElem.strokeDash as string).split(",").map((n: string) => parseInt(n)) as [number, number];
                 }
                 _tables.push(tableElem);
-                latestMode = EditModes.Table;
+                //latestMode = EditModes.Table;
             } else if (q[i].type === 'tableDelete') {
                 _tables = _tables.filter(t => t.id !== q[i].elem.id);
                 // delete all cell text related
                 _texts = _texts.filter(tct => tct.tableId !== q[i].elemID)
-                latestMode = EditModes.Table;
+                //latestMode = EditModes.Table;
             } else if (q[i].type === 'audio') {
                 _audio.push(cloneElem(q[i].elem));
-                latestMode = EditModes.Audio;
+                //latestMode = EditModes.Audio;
             } else if (q[i].type === 'audioDelete') {
                 _audio = _audio.filter(t => t.id !== q[i].elem.id);
-                latestMode = EditModes.Audio;
+                //latestMode = EditModes.Audio;
             } else if (q[i].type === 'audioPosition') {
                 const elemIndex = _audio.findIndex(ci => ci.id === q[i].elem.id);
                 if (elemIndex >= 0) {
