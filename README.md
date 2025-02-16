@@ -47,7 +47,32 @@ if pod install fails on glog:
 https://stackoverflow.com/questions/50448717/os-pod-install-error-module-glog-cannot-be-installed
 
 
-hack solution to issieDocs' header staying on top (in IssieEditPhoto, scroll down in zoom mode):
-/Users/i022021/dev/Issie/IssieDocs/node_modules/@react-navigation/stack/lib/commonjs/views/Stack/CardContainer.js
-...
-header: {zIndex:2000}
+## Changes on NPM modules: maintained by npm-patch
+- "@react-navigation/stack": "^7.0.18"
+  a change, that makes the issieDocs' header staying on top (in IssieEditPhoto, scroll down in zoom mode):
+  /Users/i022021/dev/Issie/IssieDocs/node_modules/@react-navigation/stack/lib/commonjs/views/Stack/CardContainer.js
+- "react-native-system-sounds": "1.1.0"
+  fix compilation error
+- "react-native-pdf-thumbnail": "^1.3.1"
+  fix compilation error
+
+### any new change:
+`npx patch-package react-native-pdf-thumbnail --exclude "android/build"`
+
+
+## Android
+most times, only re building from scratch work.
+steps:
+delete:
+- android/build
+- android/app/.cxx
+- android/app/build
+
+run: (in android folder)
+`./gradlew clean`
+`./gradlew assembleDebug`
+
+
+to build a release:
+`./gradlew bundleRelease`
+

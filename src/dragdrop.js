@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { trace } from './log';
 import { genID } from './utils';
+import { Dimensions } from 'react-native';
 
 // Context for Drag and Drop
 const DragDropContext = createContext();
@@ -37,6 +38,7 @@ export const DDProvider = ({ children }) => {
     };
 
     const findTarget = (x, y) => {
+        trace("Find Drop Target", x, y, targets.current.map(t => ({ x: t.bounds.x, y: t.bounds.y, offsetY: t.bounds.scrollPos?.current?.y, id: t.desc })))
         return targets.current.find(
             (t) => {
                 // trace(`find?`, x, y, t.bounds.scrollPos?.current)
@@ -52,7 +54,6 @@ export const DDProvider = ({ children }) => {
 
     const checkHover = (id, x, y) => {
         const hoverOnItem = findTarget(x, y);
-
         targets.current.forEach(t => {
             //trace(`hover? ''`, t.bounds.y, y)
             if (t == hoverOnItem) {
@@ -140,7 +141,12 @@ export const DDView = ({
     const scrollPos = useScrollContext();
 
     useEffect(() => {
-        return () => unregisterTarget(localID.current);
+        const dimListner = Dimensions.addEventListener('change', () => handleLayoutChange());
+
+        return () => {
+            unregisterTarget(localID.current);
+            dimListner.remove();
+        }
     }, []);
 
 
@@ -186,7 +192,7 @@ export const DDView = ({
             //     return false; // Let ScrollView continue handling
             // },
             onPanResponderGrant: (e, gestureState) => {
-                trace("DDView pan granted")
+                trace("DDView pan granted", scrollPos)
                 setIsDragging(true);
 
                 // Offset the ghost frame to the current touch position
@@ -212,7 +218,7 @@ export const DDView = ({
             onPanResponderMove: (e, gestureState) => {
                 const adjustedDy = gestureState.dy - (scrollPos?.current.y || 0); // Adjust for scroll offset
                 pan.setValue({ x: gestureState.dx, y: adjustedDy }); // Update pan manually
-            
+
                 const { moveX, moveY } = gestureState;
                 checkHover(localID.current, moveX, moveY);
             },
@@ -242,6 +248,22 @@ export const DDView = ({
         })
     ).current;
 
+    function handleLayoutChange() {
+        if (viewRef.current) {
+            viewRef.current.measureInWindow((absX, absY, width, height) => {
+                if (isTarget) {
+                    trace("re-register", id, { x: absX, y: absY })
+                    registerTarget(localID.current, id, { x: absX, y: absY, width, height, scrollPos },
+                        onDrop, onDragEnter, onDragExit);
+                }
+                setAbsPosition({ x: absX + (scrollPos?.current.x || 0), y: absY + (scrollPos?.current.y || 0) });
+            });
+        } else {
+            trace('layout called, not yet ref', id)
+        }
+    }
+
+
     return (
         <>
             {/* Actual View */}
@@ -252,21 +274,11 @@ export const DDView = ({
                     style,
                 ]}
                 onLayout={(e) => {
+                    //trace("Drag view layout", scrollPos)
                     const { x, y, width, height } = e.nativeEvent.layout;
                     originalLayout.current = { x, y, width, height };
 
-                    if (viewRef.current) {
-                        viewRef.current.measureInWindow((absX, absY, width, height) => {
-                            if (isTarget) {
-                                registerTarget(localID.current, id, { x: absX, y: absY, width, height, scrollPos },
-                                    onDrop, onDragEnter, onDragExit);
-                            }
-                            setAbsPosition({ x: absX, y: absY });
-                        });
-                    } else {
-                        trace('layout called, not yet ref', id)
-                    }
-
+                    handleLayoutChange()
                 }}
                 {...(isDragSource ? panResponder.panHandlers : {})} // Apply handlers only if a isDragSource
                 {...props}
