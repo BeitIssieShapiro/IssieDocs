@@ -159,8 +159,8 @@ export default class IssieSavePhoto extends React.Component {
         //.catch(e => console.log("error readin pdf", e));
 
         pages = pages.map(p => {
-          if (p.uri.startsWith("file://")) return p.uri.slice(7);
-          return p.uri
+          if (p.uri.startsWith("file://")) return decodeURI(p.uri.slice(7));
+          return decodeURI(p.uri);
         });
 
         imageUri = pages[0];
