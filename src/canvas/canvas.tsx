@@ -293,10 +293,11 @@ function Canvas({
         toExport: () => {
             moveIconDisplay.value = "none";
             editTextRef.current?.prepareForThumbnail();
-            return new Promise(resolve => {
+            return new Promise((resolve, reject) => {
                 setTimeout(() =>
                     captureRef(viewShotRef, { format: "jpg", quality: 0.9, result: "base64" })
                         .then((uri) => resolve(uri))
+                        .catch((e)=>reject(e))
                         .finally(() => {
                             setTimeout(() => moveIconDisplay.value = "flex");
                         }), 100)

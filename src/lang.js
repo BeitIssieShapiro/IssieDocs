@@ -152,6 +152,11 @@ var strings = {
         "Marker": "מדגש",
         "Voice": "הקלטה",
         "Table": "טבלה",
+
+        "ExportPDFWithAudioTitle": "שיתוף פ.ד.פ",
+        "ExportPDFWithAudioWarning": "שיתוף כקובץ פדפ לא יכלול הקלטות ולא יאפשר עריכה, כדי לאפשר עריכה יש לשתף כדף עבודה. האם להמשיך בכל זאת?",
+        "DoNotAskAgain":"אל תשאל שוב",
+
     },
     "ar": {
         "StartHere": "إضافة صفحات",
@@ -287,7 +292,10 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "Image": "صورة",
         "Marker": "محدد",
         "Voice": "تسجيل",
-        "Table": "جدول"
+        "Table": "جدول",
+        "ExportPDFWithAudioTitle": "شارك كملف PDF",
+        "ExportPDFWithAudioWarning": "مشاركة كملف PDF لن تتضمن التسجيلات ولن تسمح بالتعديل. للسماح بالتعديل، فكر في المشاركة كملف ورقي. هل تريد المتابعة على أي حال",
+        "DoNotAskAgain":"لا تسأل مرة أخرى",
     },
     "en": {
         "StartHere": "Add worksheets",
@@ -428,6 +436,9 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "Marker": "Marker",
         "Voice": "Recording",
         "Table": "Table",
+        "ExportPDFWithAudioTitle": "Share as PDF",
+        "ExportPDFWithAudioWarning": "Sharing as a PDF will not include recordings nor allow editing.\nTo allow editing consider sharing as a worksheet. Proceed anyway?",
+        "DoNotAskAgain":"Do not ask again"
     },
 }
 

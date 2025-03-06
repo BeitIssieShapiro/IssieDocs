@@ -220,17 +220,17 @@ export function getEmbeddedSvgButton(callback, icon, iconSize, key, color) {
 }
 
 
-export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction, dark, isMobile, forceText) {
+export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction, dark, isMobile, forceText, key) {
 
     if (getUseTextSetting() && !isMobile || forceText) {
-        return getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark)
+        return getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark, key)
     } else {
         let newDim = { width: dim.height, height: dim.height };
-        return getRoundedButtonInt(callback, icon, "", textSize, iconSize, newDim, direction, dark)
+        return getRoundedButtonInt(callback, icon, "", textSize, iconSize, newDim, direction, dark, key)
     }
 
 }
-export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark) {
+export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark, key) {
     let color = dark ? "white" : semanticColors.titleText;
     if (icon === 'check-green') {
         color = 'green';
@@ -245,6 +245,7 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
     const textAlign = icon ? (activeDirection == "row" ? "right" : "left") : (isRTL() ? "right" : "left");
 
     return <TouchableOpacity
+        key={key}
         activeOpacity={0.7}
         onPress={callback}
         style={{ ...dim }}

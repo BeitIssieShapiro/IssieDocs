@@ -8,7 +8,8 @@ import { name as appName } from './app.json';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { semanticColors } from './src/elements';
 import { trace } from './src/log';
-import {GlobalContext} from './src/global-context.js';
+import { GlobalContext } from './src/global-context.js';
+import { MessageBoxProvider } from './src/message';
 
 //import * as Sentry from "@sentry/react-native";
 
@@ -49,7 +50,9 @@ function SafeApp(props) {
         paddingRight: insets.right,
         backgroundColor: semanticColors.header
     }}>
-        <App insets={insets} />
+        <MessageBoxProvider>
+            <App insets={insets} />
+        </MessageBoxProvider>
 
     </View>
 

@@ -10,6 +10,8 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+
+import { Settings } from "./new-settings"
 import * as Progress from 'react-native-progress';
 import Share from 'react-native-share';
 import { StackScreenProps } from '@react-navigation/stack';
@@ -23,7 +25,7 @@ import { colors, dimensions, getImageDimensions, getRoundedButton, globalStyles,
 import EditorToolbar from './editor-toolbar';
 import { getNewPage, SRC_CAMERA, SRC_FILE, SRC_GALLERY, SRC_RENAME } from './newPage';
 import { EditModes, RootStackParamList } from './types';
-import { backupElement, calcEffectiveHorizontalLines, calcRatio, cloneElem, getId, restoreElement, tableColWidth, tableHeight, tableRowHeight, tableWidth, wait } from './canvas/utils';
+import { backupElement, calcEffectiveHorizontalLines, calcRatio, cloneElem, getId, joinPath, restoreElement, tableColWidth, tableHeight, tableRowHeight, tableWidth, wait } from './canvas/utils';
 import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
 import { fTranslate, isRTL, translate } from './lang';
 import { FileContextMenu } from './file-context-menu';
@@ -34,6 +36,10 @@ import { migrateMetadata } from './state-migrate';
 import { PathCommand } from '@shopify/react-native-skia';
 import RNSystemSounds from '@dashdoc/react-native-system-sounds';
 import { hideMessage, showMessage } from 'react-native-flash-message';
+import { readFile } from 'react-native-fs';
+import { Buffer } from 'buffer';
+import { getSetting } from './settings';
+import { useMessageBox } from './message';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -181,6 +187,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         calcCanvasRatio(currentFileRef.current);
     }, [toolbarHeight])
 
+    const { showMessageBox } = useMessageBox();
 
     async function calcCanvasRatio(imgPath: string) {
         const res = await calcRatio(imgPath, dimensions.minSideMargin,
@@ -195,7 +202,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         canvasTopRef.current = headerHeight + insets.top + toolbarHeight + dimensions.toolbarMargin
         setCanvasTop(canvasTopRef.current)
         setRatio(res.ratio);
-        setMoveCanvas({...moveCanvasRef.current})
+        setMoveCanvas({ ...moveCanvasRef.current })
         ratioRef.current = res.ratio;
 
     }
@@ -279,6 +286,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
     }
     function _keyboardDidHide() {
+        setKeyboardHeight(0);
+        keyboardHeightRef.current = 0;
+
+        setKeyboardTop(0)
+        keyboardTopRef.current = 0
         if (zoomRef.current == 1) {
             setMoveCanvas({ x: 0, y: 0 });
         }
@@ -330,15 +342,38 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setShareProgressPage(1);
 
 
+        // const readAudioElements = async () => {
+        //     const res = [];
+        //     for (const audio of audiosRef.current) {
+        //         const audioFile = FileSystem.main.getAttachmentBase(pageRef.current, currPageIndexRef.current) + audio.file;
+        //         const base64Audio = await readFile(audioFile, "base64");
+        //         const audioBuffer = Buffer.from(base64Audio, 'base64');
+
+        //         res.push({
+        //             audioFileAnnotation: {
+        //                 src: audioBuffer,
+        //                 name: 'audio.mp3',
+        //                 description: 'Click to open and play the audio'
+        //             },
+        //             x: audio.x,
+        //             y: audio.y,
+        //             size: 80,
+        //         });
+        //     }
+        //     return res;
+        // }
+
         setShareProgress(0);
 
         await wait(shareTimeMs);
         try {
             const uri = await canvasRef.current?.toExport();
+            //let audioExists = audiosRef.current?.length > 0;
             dataUrls.push({
                 uri,
                 size: canvasSizeRef.current,
                 ratio: ratioRef.current,
+                //audioFiles: await readAudioElements()
             });
             for (let i = 1; i < pageRef.current.count; i++) {
                 setShareProgressPage(i + 1);
@@ -346,11 +381,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 await loadPage(pageRef.current, i);
                 await wait(shareTimeMs);
                 const uri = await canvasRef.current?.toExport();
+
                 dataUrls.push({
                     uri,
                     size: canvasSizeRef.current,
                     ratio: ratioRef.current,
+                    // audioFiles: await readAudioElements()
                 });
+
+                //audioExists = audioExists || audiosRef.current?.length > 0;
             }
 
             //avoid reshare again
@@ -368,26 +407,51 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     subject: translate("ShareEmailSubject"),
                     url: shareUrl,
                     type: 'application/pdf',
-                    //saveToFiles: true,
-                    //showAppsToView: true,
                 };
 
+                const successFunc = () => Alert.alert(translate("ShareSuccessful"));
+                const failureFunc = (err: any) => {
+                    if (err && err.message == 'User did not share') {
+                        Alert.alert(translate("ActionCancelled"));
+                    } else {
+                        Alert.alert("Error", err.message);
+                    }
+                    // Handle other errors or user cancellations if necessary
+                } 
+                
+                const doNotShow = getSetting("DoNotShowPDFAlert", false);
+
+                if (!doNotShow) {
+                    showMessageBox(translate("ExportPDFWithAudioTitle"), translate("ExportPDFWithAudioWarning"),
+                        [
+                            {
+                                text: translate("Yes"), onPress: (doNotShow) => {
+                                    if (doNotShow) {
+                                        Settings.set({"DoNotShowPDFAlert": true});
+                                    }
+                                    Share.open(shareOptions).then(successFunc).catch(failureFunc)
+                                },
+                                style: "default"
+                            },
+                            {
+                                text: translate("BtnCancel"), onPress: () => {
+                                    //do nothing
+                                },
+                                style: 'cancel'
+                            }
+                        ], true);
+                    return;
+                }
+
                 // Share the PDF
-                Share.open(shareOptions)
-                    .then(() => {
-                        Alert.alert(translate("ShareSuccessful"));
-                    })
-                    .catch((err: any) => {
-                        if (err && err.error !== 'User did not share') {
-                            Alert.alert("Error sharing PDF");
-                        }
-                        // Handle other errors or user cancellations if necessary
-                    })
+                Share.open(shareOptions).then(successFunc).catch(failureFunc);
             } else {
                 Alert.alert("Failed to generate PDF for sharing.");
             }
         } catch (e) {
             console.log("Share failed", e)
+        } finally {
+            setShareProgress(-1);
         }
     }
 

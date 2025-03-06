@@ -2,15 +2,32 @@ import 'text-encoding'
 import PDFDocument from '@react-pdf/pdfkit';
 import RNFS from 'react-native-fs';
 import { Buffer } from 'buffer'; // Ensure buffer is available in your RN environment
+import { ImageSize } from 'react-native';
+
+export interface GeneratePDFProps {
+  uri: string;
+  size: ImageSize;
+  ratio: number;
+  audioFiles: {
+    audioFileAnnotation: {
+      src: string;
+      name: string;
+      description: string;
+    },
+    x: number;
+    y: number;
+    size: number;
+  }[];
+}
 
 /**
  * Generates a PDF file from an array of base64 image strings.
  * Each image will occupy one page in the PDF.
  *
- * @param {string[]} base64Images - Array of base64-encoded image strings
+ * @param {any[]} base64Images - Array of base64-encoded image strings
  * @return {Promise<string>} - A local file path to the generated PDF
  */
-export async function generatePDF(base64Images) {
+export async function generatePDF(base64Images: GeneratePDFProps[]) {
   return new Promise(async (resolve, reject) => {
     try {
       // 1. Create a new PDF document
@@ -50,6 +67,21 @@ export async function generatePDF(base64Images) {
           layout: size.height > size.width ? "portrait" : "landscape",
           margins: 0,
         });
+
+        // // Add audio files if exist (all added to current - last add page)
+        // for (const audio of base64Images[i].audioFiles) {
+        //   const fileOptions = {
+        //     src: audio.audioFileAnnotation.src,
+        //     name: audio.audioFileAnnotation.name,
+        //     type: 'audio/mpeg',
+        //     description: audio.audioFileAnnotation.description,
+        //     creationDate: new Date(),
+        //     modifiedDate: new Date(),
+        //     relationship: "Supplement",
+        //   };
+        //   const options = { Name: 'Paperclip' }
+        //   doc.fileAnnotation(0,0, 100,100, fileOptions, options)
+        // }
 
         // Clean the base64 string if it includes `data:image/...;base64,`
         const cleanedBase64 = base64.replace(/^data:image\/\w+;base64,/, '');
