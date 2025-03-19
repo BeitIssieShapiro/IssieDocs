@@ -76,6 +76,12 @@ export default function CameraOverlay(props) {
                 style={{ flex: 1, justifyContent: 'flex-end' }}
                 cameraType={CameraType.Back}
                 saveToCameraRoll={false}
+                showFrame={false}
+                scanBarcode={false}
+                zoomMode='on'
+                zoom={1.0}
+                maxZoom={3.0}
+                resizeMode="contain"
             />}
 
             {!permission && <AppText 
