@@ -4,10 +4,10 @@ import { trace } from "./log";
 
 export function setNavParam(nav, name, val) {
   if (!nav) return;
-
-
   nav.setParams({ [name]: val });
 }
+
+export const pageTitleAddition = (count, index) => count > 1 ? " - " + (index + 1) + "/" + count : ""
 
 export function PromiseAllProgress(proms, progress_cb) {
   let d = 0;

@@ -255,7 +255,7 @@ RCT_EXPORT_METHOD(transferToBase64:(nonnull NSNumber *)reactTag type: (NSString*
 
          RNSketchCanvas *view = viewRegistry[reactTag];
          if (!view || ![view isKindOfClass:[RNSketchCanvas class]]) {
-             RCTLogError(@"Cannot find RNSketchCanvas with tag #%@", reactTag);
+             // RCTLogError(@"Cannot find RNSketchCanvas with tag #%@", reactTag);
              return;
          }
 

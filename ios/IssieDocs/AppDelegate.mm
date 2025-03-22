@@ -1,34 +1,45 @@
 #import "AppDelegate.h"
-
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTLinkingManager.h>
-
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-  self.moduleName = @"IssieDocs";
-  // You can add your custom initial props in the dictionary below.
-  // They will be passed down to the ViewController used by React Native.
-  self.initialProps = @{};
+  // Handle any initial shared files
+  NSURL *url = [launchOptions objectForKey:UIApplicationLaunchOptionsURLKey];
+  
+  NSDictionary *initialProps = @{};
+  
+  if (url) {
+    initialProps = @{
+      @"url": url.absoluteString
+    };
+  }
 
-  return [super application:application didFinishLaunchingWithOptions:launchOptions];
+  self.moduleName = @"IssieDocs";
+  self.initialProps = initialProps;
+
+  // Initialize the React Native bridge with initialProps
+  [super application:application didFinishLaunchingWithOptions:launchOptions];
+
+  return YES;
 }
 
 - (BOOL)application:(UIApplication *)application
-   openURL:(NSURL *)url
-   options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
+            openURL:(NSURL *)url
+            options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
 {
+
   return [RCTLinkingManager application:application openURL:url options:options];
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
 {
-  return [self getBundleURL];
+  return [self bundleURL];
 }
 
-- (NSURL *)getBundleURL
+- (NSURL *)bundleURL
 {
 #if DEBUG
   return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index"];

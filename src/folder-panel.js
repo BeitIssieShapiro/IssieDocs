@@ -1,12 +1,12 @@
 import { Alert, TouchableOpacity, View } from "react-native";
-import { DraxView } from "react-native-drax";
 import { SvgIcon } from "./svg-icons";
-import { SBDraxScrollView, dimensions } from "./elements";
+import {  dimensions } from "./elements";
 import FolderNew, { FolderDraxView } from "./FolderNew";
 import { FileSystem } from "./filesystem";
 import { useState } from "react";
 import { getRowDirections, translate } from "./lang";
 import { trace } from "./log";
+import { DDScrollView } from "./dragdrop";
 
 export function FolderPanel({
     treeWidth,
@@ -65,7 +65,7 @@ export function FolderPanel({
                 </TouchableOpacity>
             </FolderDraxView>}
 
-        <SBDraxScrollView
+        <DDScrollView
             rtl={rtl}
             myRef={onRef}
             scrollEnabled={true}
@@ -115,6 +115,6 @@ export function FolderPanel({
                 />)
 
             }
-        </SBDraxScrollView>
+        </DDScrollView>
     </View>
 }

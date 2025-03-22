@@ -1,9 +1,9 @@
 import { getLocales } from "react-native-localize";
-import { Alert, Settings } from "react-native";
+import { Alert } from "react-native";
 import { LANGUAGE } from "./settings";
 import { isSimulator } from "./device";
 import { trace } from "./log";
-
+import { Settings } from "./new-settings"
 export var gCurrentLang = { languageTag: "he", isRTL: true }
 const DEFAULT_LANG = "he";
 let gPrefix = "";
@@ -92,7 +92,7 @@ var strings = {
         "BtnAddPhoto": "בחר תמונה",
         "BtnAddPage": "דף נוסף",
         "BtnSave": "שמירה",
-        "BtnShare": "שיתוף כתמונה",
+        "BtnShare": "שיתוף כקובץ PDF",
         "BtnShareIssieDocs": "שיתוף כדף עבודה",
         "BtnChangeName": "שינוי שם",
         "BtnDelete": "מחיקה",
@@ -145,6 +145,18 @@ var strings = {
         "TableOverflowsPage": "הטבלה גולשת מעבר לסוף הדף",
         "FontChangeOverflowsPage": "שינוי גופן גורם לגלישה מעבר לסוף הדף",
         "BackupSuccessful": "גיבוי הסתיים בהצלחה",
+
+        "ToolsSettings": "כלים",
+        "Ruler": "סרגל",
+        "Image": "תמונה",
+        "Marker": "מדגש",
+        "Voice": "הקלטה",
+        "Table": "טבלה",
+
+        "ExportPDFWithAudioTitle": "שיתוף פ.ד.פ",
+        "ExportPDFWithAudioWarning": "שיתוף כקובץ פדפ לא יכלול הקלטות ולא יאפשר עריכה, כדי לאפשר עריכה יש לשתף כדף עבודה. האם להמשיך בכל זאת?",
+        "DoNotAskAgain":"אל תשאל שוב",
+
     },
     "ar": {
         "StartHere": "إضافة صفحات",
@@ -223,7 +235,7 @@ var strings = {
         "BtnAddPhoto": "اختر صورة",
         "BtnAddPage": "صفحة أخرى",
         "BtnSave": "حفظ",
-        "BtnShare": "مشاركة",
+        "BtnShare": "مشاركة كملف PDF",
         "BtnChangeName": "إعادة تسمية",
         "BtnDelete": "حذف",
         "BtnDuplicate": "تكرير",
@@ -275,6 +287,15 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "TableOverflowsPage": "الجدول يتجاوز نهاية الصفحة",
         "FontChangeOverflowsPage": "تغيير الخط يتسبب في تجاوز الصفحة",
         "BackupSuccessful": "تم النسخ الاحتياطي بنجاح",
+        "ToolsSettings": "أدوات",
+        "Ruler": "خط مستقيم", // or "مسطرة رسم"
+        "Image": "صورة",
+        "Marker": "محدد",
+        "Voice": "تسجيل",
+        "Table": "جدول",
+        "ExportPDFWithAudioTitle": "شارك كملف PDF",
+        "ExportPDFWithAudioWarning": "مشاركة كملف PDF لن تتضمن التسجيلات ولن تسمح بالتعديل. للسماح بالتعديل، فكر في المشاركة كملف ورقي. هل تريد المتابعة على أي حال",
+        "DoNotAskAgain":"لا تسأل مرة أخرى",
     },
     "en": {
         "StartHere": "Add worksheets",
@@ -354,7 +375,7 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "BtnAddPhoto": "Add a photo",
         "BtnAddPage": "Add",
         "BtnSave": "Save",
-        "BtnShare": "Share as Image",
+        "BtnShare": "Share as PDF",
         "BtnShareIssieDocs": "Share as Worksheet",
         "BtnChangeName": "Rename",
         "BtnDelete": "Delete",
@@ -409,6 +430,15 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "TableOverflowsPage": "The table overflows beyond the end of the page",
         "FontChangeOverflowsPage": "Font change cause text to overflow beyond the end of the page",
         "BackupSuccessful": "Backup successful",
+        "ToolsSettings": "Tools",
+        "Ruler": "Ruler",
+        "Image": "Image",
+        "Marker": "Marker",
+        "Voice": "Recording",
+        "Table": "Table",
+        "ExportPDFWithAudioTitle": "Share as PDF",
+        "ExportPDFWithAudioWarning": "Sharing as a PDF will not include recordings nor allow editing.\nTo allow editing consider sharing as a worksheet. Proceed anyway?",
+        "DoNotAskAgain":"Do not ask again"
     },
 }
 
@@ -503,7 +533,8 @@ export function unregisterLangEvent() {
 }
 
 export function loadLanguage() {
-    let langSetting = Settings.get('language');
+    let langSetting = Settings.get(LANGUAGE.name);
+    trace("langauge loaded", langSetting, langSetting + "" === LANGUAGE.default + "")
     if (langSetting === undefined || langSetting === LANGUAGE.default) {
         const locales = getLocales();
         langSetting = LANGUAGE.english;

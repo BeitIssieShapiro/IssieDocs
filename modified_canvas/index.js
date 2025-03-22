@@ -156,7 +156,7 @@ export default class RNSketchCanvas extends React.Component {
 
   addOrSetCanvasImage(data) {
     // todo validate data
-    const prefix = data.imageData.indexOf(";base64,");
+    const prefix = data.imageData?.indexOf(";base64,");
     if (prefix >=0) {
       data.imageData = data.imageData.substr(prefix+8);
     }

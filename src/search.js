@@ -40,6 +40,7 @@ export default function Search(props) {
             <TextInput
                 placeholder={'  ' + translate("Search")}
                 onChangeText={props.onChangeText}
+                allowFontScaling={false}
                 //ref={inputEl}
                 style={{
                     fontSize: 25,

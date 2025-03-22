@@ -8,6 +8,8 @@ import { name as appName } from './app.json';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { semanticColors } from './src/elements';
 import { trace } from './src/log';
+import { GlobalContext } from './src/global-context.js';
+import { MessageBoxProvider } from './src/message';
 
 //import * as Sentry from "@sentry/react-native";
 
@@ -20,13 +22,23 @@ import { trace } from './src/log';
 
 // const wApp = Sentry.wrap(App);
 
-function SafeAppContainer() {
-    return <SafeAreaProvider>
-        <SafeApp />
-    </SafeAreaProvider>;
+
+
+function SafeAppContainer(props) {
+    console.log("props.url", props.url)
+    return <GlobalContext.Provider value={{
+        url: props.url
+    }}>
+        <SafeAreaProvider>
+            <SafeApp />
+        </SafeAreaProvider>
+    </GlobalContext.Provider>;
 }
 
-function SafeApp() {
+
+
+
+function SafeApp(props) {
     const insets = useSafeAreaInsets();
     return <View style={{
         width: "100%",
@@ -37,8 +49,11 @@ function SafeApp() {
         paddingLeft: insets.left,
         paddingRight: insets.right,
         backgroundColor: semanticColors.header
-      }}>
-        <App insets={insets}/>
+    }}>
+        <MessageBoxProvider>
+            <App insets={insets} />
+        </MessageBoxProvider>
+
     </View>
 
 }

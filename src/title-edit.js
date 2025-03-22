@@ -1,20 +1,14 @@
 import React, { useState, useRef } from 'react';
 import {
-    View, Alert, Text, TouchableOpacity, StyleSheet,
-    Settings, ScrollView, TextInput
+    View, TextInput,
+    Platform
 } from 'react-native';
 import {
     globalStyles,
-    AppText,
-    getEmbeddedButton,
-    Spacer,
-    semanticColors,
-    getMaterialCommunityIconButton,
     getIconButton,
     getFontFamily,
-    dimensions
 } from './elements'
-import { getRowDirection, isRTL } from './lang';
+import { isRTL } from './lang';
 
 
 export default function TitleEdit(props) {
@@ -46,14 +40,14 @@ export default function TitleEdit(props) {
             marginBottom: 5,
             alignItems: 'center', justifyContent: 'center',
             alignContent: 'center',
-            borderWidth:1,
+            borderWidth: 1,
             height: 45,
-            borderColor:'transparent'
+            borderColor: 'transparent'
         },
         props.editMode ? {
             //backgroundColor: '#6C89AF',
             //borderBottomColor: '#A1C7FC',
-            borderColor:'#A1C7FC', 
+            borderColor: '#A1C7FC',
             borderRadius: 3
         } : {}]}
     >
@@ -62,7 +56,7 @@ export default function TitleEdit(props) {
             ref={inputEl}
             allowFontScaling={false}
             value={props.editMode ? editedTitle : props.title}
-            style={titleStyle}
+            style={[titleStyle,Platform.OS == 'android'?{ position:"absolute"}:null]}
             readonly={props.editMode ? true : false}
             onChangeText={(txt) => {
                 setEditedTitle(txt)
@@ -73,14 +67,14 @@ export default function TitleEdit(props) {
         />
         <View style={
             [
-                { position: 'absolute',  top: 0,  flexDirection: 'row', alignItems: 'center' },
-                isRTL()?{left:-25}:{right:-30}
+                { position: 'absolute', top: 0, flexDirection: 'row', alignItems: 'center' },
+                isRTL() ? { left: -25 } : { right: -30 }
             ]}>
             {props.editMode ? getIconButton(() => {
                 setEditedTitle("")
                 props.onSaveCallback.getTitleToSave = () => ""
             }, "white", "close", 30) : null}
         </View>
-        
+
     </View>
 }

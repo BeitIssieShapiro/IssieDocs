@@ -1,4 +1,5 @@
-import { Settings } from 'react-native';
+import { trace } from "./log"
+import { Settings } from "./new-settings"
 
 export const VIEW = {
     name: 'viewStyle',
@@ -20,6 +21,16 @@ export const LANGUAGE = {
     arabic: 3,
     english: 4
 }
+
+export const FEATURES = {
+    name: 'features',
+    ruler: 1,
+    marker: 2,
+    table: 3,
+    image: 4,
+    voice: 5,
+}
+
 
 export const USE_COLOR = {
     name: 'useColor',
@@ -47,14 +58,23 @@ export function getUseColorSetting() {
     return getSetting(USE_COLOR.name, USE_COLOR.yes);
 }
 
+export function getFeaturesSetting() {
+    const features = getSetting(FEATURES.name)
+    if (features && Array.isArray(features)) return features;
+    return [FEATURES.image, FEATURES.marker, FEATURES.ruler, FEATURES.table, FEATURES.voice];
+}
+
 export function getUseTextSetting() {
     return getSetting(TEXT_BUTTON.name, TEXT_BUTTON.yes) === TEXT_BUTTON.yes;
 }
 
 export function getSetting(name, def) {
     let setting = Settings.get(name);
-    if (setting === undefined) {
+    //trace("getSetting", setting)
+    if (setting === undefined || setting === null) {
         setting = def;
     }
     return setting;
 }
+
+

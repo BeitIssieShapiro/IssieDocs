@@ -5,11 +5,11 @@ import {
     normalizeTitle, semanticColors, FolderTextStyle,
     getEmbeddedButton, AppText, Spacer, dimensions, FolderIcon
 } from './elements'
-import { DraxView } from 'react-native-drax';
 import { trace } from './log';
 import { FileSystem } from './filesystem';
 import { showMessage } from 'react-native-flash-message';
 import { fTranslate, getRowDirections, isRTL, translate } from './lang';
+import { DDView } from './dragdrop';
 
 
 const dragOverColor = 'lightblue'
@@ -42,7 +42,7 @@ export default function FolderNew(props) {
 
     const { row, rowReverse, rtl } = getRowDirections();
     const height = asTitle ? dimensions.folderAsTitleHeight : dimensions.folderHeight;
-    const textWidth = props.width - (6+45+5+25) - (isChild?20:0)
+    const textWidth = props.width - (6 + 45 + 5 + 25) - (isChild ? 20 : 0)
     return (
         <React.Fragment>
             <FolderDraxView
@@ -53,6 +53,7 @@ export default function FolderNew(props) {
                 setDragOver={(val) => setDragOver(val)}
                 dragOver={dragOver}
                 allowDropFolders={props.allowDropFolders}
+                dragable={!locatedAtTitle}
 
                 style={{
                     alignContent: 'center',
@@ -115,7 +116,8 @@ export default function FolderNew(props) {
 
                                 {nonTreeTitle && <View style={[{
                                     alignContent: 'center', alignItems: 'center', justifyContent: 'center',
-                                    paddingBottom: '5%', height: '100%'
+                                    paddingBottom: 5, 
+                                    height: '100%'
                                 }, rtl ? { paddingRight: sidePadding } : { paddingLeft: sidePadding }]}>
                                     <Icon name="folder" size={45} color={props.color} />
                                     <View style={[{ position: 'absolute', top: 0, width: '100%', height: '100%' }, rtl ? { left: 0 } : { right: 0 }]}>
@@ -129,7 +131,7 @@ export default function FolderNew(props) {
                                 </View>}
 
                                 <Spacer width={6} />
-                                
+
                                 {props.hideTitle ? null : <AppText
                                     style={[FolderTextStyle, {
                                         fontSize: props.fontSize || 32, lineHeight: 60,
@@ -211,21 +213,23 @@ export default function FolderNew(props) {
 }
 
 export function FolderDraxView(props) {
-    return <DraxView
+    return <DDView
         key={props.index}
+        id={props.id}
         longPressDelay={700}
-        payload={{ folderID: props.id, isFolder: true, icon: props.icon, color: props.color }}
-
+        dragState={{ folderID: props.id, isFolder: true, icon: props.icon, color: props.color }}
+        isTarget
+        isDragSource={!!props.dragable}
         onDragStart={() => {
             trace("start drag folder", props.id)
         }}
-        onReceiveDragEnter={() => {
+        onDragEnter={() => {
             trace("folder drag enter")
             if (props.allowDropFolders)
                 props.setDragOver(true)
         }}
-        onReceiveDragExit={() => props.setDragOver(false)}
-        onReceiveDragDrop={({ dragged: { payload } }) => {
+        onDragExit={() => props.setDragOver(false)}
+        onDrop={(payload) => {
             props.setDragOver(false);
             trace("Drop on Folder:", payload.folderID, "into", props.id)
             if (payload.folderID === props.id) {
@@ -272,5 +276,5 @@ export function FolderDraxView(props) {
             backgroundColor: props.dragOver ? dragOverColor : undefined
         }]}
     >{props.children}
-    </DraxView>
+    </DDView>
 }

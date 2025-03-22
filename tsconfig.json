@@ -1,3 +1,22 @@
 {
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "jsx": "react",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowJs": true, // Allows JavaScript files in the project
+    "noEmit": true, // Prevent emitting JavaScript files
+    "isolatedModules": true
+  },
+  "include": [
+    "src/**/*",
+    "index.js"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
   "extends": "@react-native/typescript-config/tsconfig.json"
 }

@@ -1,0 +1,16 @@
+diff --git a/node_modules/@dashdoc/react-native-system-sounds/ios/RNSystemSounds.m b/node_modules/@dashdoc/react-native-system-sounds/ios/RNSystemSounds.m
+index f82a489..07bb716 100644
+--- a/node_modules/@dashdoc/react-native-system-sounds/ios/RNSystemSounds.m
++++ b/node_modules/@dashdoc/react-native-system-sounds/ios/RNSystemSounds.m
+@@ -5,8 +5,9 @@
+ 
+ RCT_EXPORT_MODULE()
+ 
+-RCT_EXPORT_METHOD(playSystemSound: (nonnull NSInteger *) soundID){
+-    AudioServicesPlaySystemSound (soundID);
++RCT_EXPORT_METHOD(playSystemSound:(nonnull NSNumber *)soundID) {
++    NSInteger sysSoundID = [soundID integerValue]; // Convert NSNumber to NSInteger
++    AudioServicesPlaySystemSound(sysSoundID);
+ }
+ 
+ @end

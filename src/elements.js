@@ -11,13 +11,13 @@ import { getUseTextSetting } from './settings.js'
 import { getSvgIcon, SvgIcon } from './svg-icons.js'
 import { FileSystem } from './filesystem.js';
 import { trace } from './log.js';
-import { DraxScrollView } from 'react-native-drax';
 import { isTooWhite } from './utils.js';
+import { normalizeFoAndroid } from './canvas/utils';
 
 export const Icon = IconLocal;
 
 export const dimensions = {
-    headerHeight: 38,
+    headerHeight: 38,//Platform.OS == 'android'?48:38,
     thinHeaderHeight: 52,
     toolbarHeight: 65,
     toolbarMargin: 5,
@@ -32,8 +32,6 @@ export const dimensions = {
     tileHeight: 197
 
 }
-
-export const MARKER_TRANSPARENCY_CONSTANT = "40";
 
 
 export function getFont() {
@@ -69,6 +67,7 @@ export const semanticColors = {
     folderIcons: '#27b0ff', //colors.navyBlue,
     selectedCheck: "#4630EB",
     moveInZoomButton: "#D16F28",
+    moveInZoomButtonDisabled: "#BFA28F",
     header: '#183d72',
     header2: 'white',
     mainAreaBG: '#f1f2f4',
@@ -221,17 +220,17 @@ export function getEmbeddedSvgButton(callback, icon, iconSize, key, color) {
 }
 
 
-export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction, dark, isMobile) {
+export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction, dark, isMobile, forceText, key) {
 
-    if (getUseTextSetting() && !isMobile) {
-        return getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark)
+    if (getUseTextSetting() && !isMobile || forceText) {
+        return getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark, key)
     } else {
         let newDim = { width: dim.height, height: dim.height };
-        return getRoundedButtonInt(callback, icon, "", textSize, iconSize, newDim, direction, dark)
+        return getRoundedButtonInt(callback, icon, "", textSize, iconSize, newDim, direction, dark, key)
     }
 
 }
-export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark) {
+export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark, key) {
     let color = dark ? "white" : semanticColors.titleText;
     if (icon === 'check-green') {
         color = 'green';
@@ -242,8 +241,11 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
     }
 
     let textExist = text && text.length > 0;
+    const activeDirection = direction ? direction : getRowDirection();
+    const textAlign = icon ? (activeDirection == "row" ? "right" : "left") : (isRTL() ? "right" : "left");
 
     return <TouchableOpacity
+        key={key}
         activeOpacity={0.7}
         onPress={callback}
         style={{ ...dim }}
@@ -255,23 +257,25 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
                 borderRadius: 25,
                 alignItems: 'center',
                 alignContent: 'center',
+                padding: 5,
                 justifyContent: textExist ? 'flex-end' : 'center',
                 backgroundColor: dark ? '#808080' : '#eeeded',
-                flexDirection: direction ? direction : getRowDirection()
+                flexDirection: activeDirection,
             }}>
             {textExist ?
                 <AppText style={{
-                    position: 'absolute', paddingTop: 5, left: 0, width: icon ? '80%' : '100%', fontSize: textSize, lineHeight: textSize + (isRTL() ? 5 : 0),
-                    color: dark ? "white" : semanticColors.titleText, textAlign: 'center'
+                    marginEnd: (isRTL() ? 5 : 0), marginStart: (isRTL() ? 0 : 5),
+                    width: icon ? '80%' : '100%', fontSize: textSize, lineHeight: textSize + (isRTL() ? 5 : 0),
+                    color: dark ? "white" : semanticColors.titleText, textAlign
                 }}>{text}</AppText> : null
             }
             {icon?.startsWith("svg-") ?
                 <SvgIcon name={icon.substr(4)} size={iconSize} color={color} />
                 : icon && <Icon name={icon} size={iconSize} color={color} />
             }
-            {textExist ?
+            {/* {textExist ?
                 <Spacer width={5} /> : null
-            }
+            } */}
         </View>
     </TouchableOpacity>
 }
@@ -369,10 +373,10 @@ export function IconButton({
 export function PageImage({ src, multiPage, width, height }) {
     return multiPage ?
         // <View>
-        <Image source={{ uri: src }} style={{ width, height, resizeMode: "stretch" }} />
+        <Image source={normalizeFoAndroid({ uri: src })} style={{ width, height, resizeMode: "stretch" }} />
 
         // </View>
-        : <Image source={{ uri: src }} style={{ width, height, resizeMode: "stretch" }} />
+        : <Image source={normalizeFoAndroid({ uri: src })} style={{ width, height, resizeMode: "stretch" }} />
 
     {/* <Image source={{ uri: src }} style={{ width, height, resizeMode: "stretch", transform: [{ rotate: '15deg' }] }} /> */ }
 }
@@ -475,7 +479,7 @@ export function OrientationPicker({
     </View>
 }
 
-export function RootFolderPicker({ folders, currentFolder, onChangeFolder, showSubFolders }) {
+export function RootFolderPicker({ folders, currentFolder, onChangeFolder, showSubFolders, showBuiltinFolders }) {
     const [more, setMore] = useState(false);
     const [reload, setReload] = useState(0);
 
@@ -519,11 +523,11 @@ export function RootFolderPicker({ folders, currentFolder, onChangeFolder, showS
         <View style={{ backgroundColor: semanticColors.listBackground, alignItems: flexStart }}>
             {renderFolderLine(defFolder, -1, currentFolder, onChangeFolder, false, 0)}
             {folders.map((item, index) => renderFolderLine(item, index, currentFolder, onChangeFolder, showSubFolders, 0, expandedFolders, setExpandedFolders))}
-            {getIconButton(() => setMore(val => !val), semanticColors.titleText, more ? "expand-less" : "expand-more", 45)}
-            {more &&
+            {showBuiltinFolders && getIconButton(() => setMore(val => !val), semanticColors.titleText, more ? "expand-less" : "expand-more", 45)}
+            {more && showBuiltinFolders &&
                 getLocalizedFoldersAndIcons()
                     .filter(f => folders.find(f2 => f2.name === f.text) == undefined)
-                    .map((itm, index) => ({ name: itm.text, icon: itm.icon, color: (availableColorPicker[index % availableColorPicker.length]) }))
+                    .map((itm, index) => ({ ID: itm.text, name: itm.text, path: itm.text, icon: itm.icon, color: (availableColorPicker[index % availableColorPicker.length]) }))
                     .map((item, index) => renderFolderLine(item, index, currentFolder, onChangeFolder, false, 0))
 
             }
@@ -552,6 +556,7 @@ export function FileNameDialog({
                 <TextInput style={[globalStyles.textInput, { direction, textAlign }, getFontFamily()]}
                     onChangeText={onChangeName}
                     value={name}
+                    allowFontScaling={false}
                 />
                 <Spacer />
                 {includeOrientation && <View style={{ flex: 1, width: '100%' }}>
@@ -580,10 +585,10 @@ export function FileNameDialog({
                     <AppText style={[styles.titleText, { textAlign }, { width: isLandscape ? '40%' : '30%' }]}>{translate("CaptionFolderNameList")}</AppText>
                     {getRoundedButton(() => navigation.navigate('CreateFolder',
                         { saveNewFolder: onSaveNewFolder, isMobile }),
-                        'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 250, height: 40 }, row, true)}
+                        'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 220, height: 40 }, row, true)}
                 </View>
                 <Spacer />
-                <RootFolderPicker onChangeFolder={onChangeFolder} folders={folders} currentFolder={folder} showSubFolders={true} />
+                <RootFolderPicker onChangeFolder={onChangeFolder} folders={folders} currentFolder={folder} showSubFolders={true} showBuiltinFolders={true} />
             </View>
 
 
@@ -600,6 +605,7 @@ function renderFolderLine(rowData, index, currentFolder, onChangeFolder, showSub
         rowData.reload();
 
     // trace("pickerRenderRow", rowData.ID, expanded, expandedFolders)
+    trace(currentFolder.ID, rowData)
 
     return [<TouchableOpacity key={index} style={{
         height: 65, width: '100%',
@@ -724,7 +730,9 @@ function pickerRenderRow(rowData, currentFolder, onChangeFolder, indentLevel, su
 
 export async function getImageDimensions(uri) {
     return new Promise((resolve, reject) => {
-        Image.getSize(uri, (width, height) => {
+        trace("getImageDimensions", uri)
+        Image.getSize("file://" + uri, (width, height) => {
+            trace("getImageDimensions2", uri, width, height)
             resolve({ w: width, h: height });
         },
             (err) => {
@@ -791,44 +799,44 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
 }
 
 
-export function SBDraxScrollView({
-    persistentScrollbar = false,
-    children,
-    myRef,
-    rtl,
-    ...other
-}) {
-    const [nativeEvent, setNativeEvent] = useState();
-    const top = nativeEvent
-        ? nativeEvent.contentOffset.y +
-        (nativeEvent.contentOffset.y / nativeEvent.contentSize.height) *
-        nativeEvent.layoutMeasurement.height
-        : 0;
+// export function SBDraxScrollView({
+//     persistentScrollbar = false,
+//     children,
+//     myRef,
+//     rtl,
+//     ...other
+// }) {
+//     const [nativeEvent, setNativeEvent] = useState();
+//     const top = nativeEvent
+//         ? nativeEvent.contentOffset.y +
+//         (nativeEvent.contentOffset.y / nativeEvent.contentSize.height) *
+//         nativeEvent.layoutMeasurement.height
+//         : 0;
 
-    return (
-        <DraxScrollView
-            ref={myRef}
-            scrollEventThrottle={5}
-            showsVerticalScrollIndicator={false}
-            onScroll={event => setNativeEvent(event.nativeEvent)}
-            {...other}>
-            {children}
+//     return (
+//         <View
+//             ref={myRef}
+//             scrollEventThrottle={5}
+//             showsVerticalScrollIndicator={false}
+//             onScroll={event => setNativeEvent(event.nativeEvent)}
+//             {...other}>
+//             {children}
 
-            <View
-                style={[{
-                    position: 'absolute',
-                    top,
+//             <View
+//                 style={[{
+//                     position: 'absolute',
+//                     top,
 
-                    height: 200,
-                    width: 4,
-                    borderRadius: 20,
-                    backgroundColor: 'gray',
-                    opacity: 0.6,
-                }, rtl ? { left: 4 } : { right: 4 }]}
-            />
-        </DraxScrollView>
-    );
-}
+//                     height: 200,
+//                     width: 4,
+//                     borderRadius: 20,
+//                     backgroundColor: 'gray',
+//                     opacity: 0.6,
+//                 }, rtl ? { left: 4 } : { right: 4 }]}
+//             />
+//         </View>
+//     );
+// }
 
 export function TilesView({
     children,
@@ -919,8 +927,18 @@ export const globalStyles = StyleSheet.create({
         left: "48%",
         top: "40%",
         zIndex: 1000
-    }
-
+    },
+    progressBarHost: {
+        position: 'absolute',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.35,
+        shadowRadius: 3.84,
+        borderRadius: 10,
+        padding: 10,
+        top: '25%', left: '15%', width: '70%', zIndex: 1000,
+        backgroundColor: 'white', alignItems: 'center'
+    },
 })
 
 export function getHeaderBackButton(callback) {
@@ -948,7 +966,7 @@ export function FolderIcon(props) {
         return getSvgIcon(props.name.substr(4), props.size, props.color);
     }
     if (props.name?.startsWith("data:")) {
-        return <Image source={{ uri: props.name }} style={{
+        return <Image source={normalizeFoAndroid({ uri: props.name })} style={{
             width: props.size,
             height: props.size
         }} />
@@ -964,15 +982,16 @@ export function AppText(props) {
     } : {}
 
     return (
-        <Text style={[{
-            fontFamily: getFont(),
-            fontSize: 24,
-            textAlign: isRTL() ? 'right' : 'left',
+        <Text allowFontScaling={false}
+            style={[{
+                fontFamily: getFont(),
+                fontSize: 24,
+                textAlign: isRTL() ? 'right' : 'left',
 
-        }, props.style]}
+            }, props.style]}
             onPress={props.onPress}
 
-        {...moreProps}
+            {...moreProps}
         >{props.children}</Text>
     );
 }

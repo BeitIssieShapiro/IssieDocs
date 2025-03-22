@@ -2,11 +2,11 @@
 import React from 'react';
 import {
   ImageBackground, TouchableOpacity, StyleSheet, View, Text,
-  Alert, Dimensions, PanResponder
+  Alert, Dimensions, PanResponder,
+  Image
 } from 'react-native';
 import ImageEditor from "@react-native-community/image-editor";
-import Pdf from 'react-native-pdf';
-import ViewShot from "react-native-view-shot";
+import PdfThumbnail from "react-native-pdf-thumbnail";
 import { StackActions } from '@react-navigation/native';
 import { Icon, OrientationPicker } from "./elements"
 import { getRowDirections, translate } from './lang.js'
@@ -21,12 +21,11 @@ import ImageResizer from '@bam.tech/react-native-image-resizer';
 
 import { getNewPage, SRC_RENAME, SRC_DUPLICATE, SRC_FILE } from './newPage'
 
-import ProgressCircle from 'react-native-progress-circle'
-import { fTranslate } from './lang';
 import Scroller from './scroller';
 
 import { FileSystem } from './filesystem';
 import { assert, trace } from './log.js';
+import { normalizeFoAndroid } from './canvas/utils';
 
 const OK_Cancel = 1;
 const PickName = 2;
@@ -41,6 +40,8 @@ export default class IssieSavePhoto extends React.Component {
 
   constructor() {
     super();
+
+    this.viewShotRef = null;
 
     this._panResponderMove = PanResponder.create({
       onStartShouldSetPanResponder: (evt, gestureState) => Math.abs(gestureState.dy) > 5,
@@ -75,8 +76,8 @@ export default class IssieSavePhoto extends React.Component {
       phase: OK_Cancel,
       cropping: false,
       topView: 0,
-      pdfWidth: '100%',
-      pdfHeight: '100%',
+      pdfWidth: "100%",
+      pdfHeight: "100%",
       pdfPageCount: 0,
       yOffset: 0,
       windowSize: { width: 0, height: 0 },
@@ -153,13 +154,30 @@ export default class IssieSavePhoto extends React.Component {
     } else {
       imageUri = decodeURI(this.props.route.params.uri);
       if (this.isFile() && imageUri.endsWith('.pdf')) {
-        pdf = true;
+
+        pages = await PdfThumbnail.generateAllPages("file://" + imageUri)
+        //.catch(e => console.log("error readin pdf", e));
+
+        pages = pages.map(p => {
+          if (p.uri.startsWith("file://")) return decodeURI(p.uri.slice(7));
+          return decodeURI(p.uri);
+        });
+
+        imageUri = pages[0];
+        multiPage = pages.length > 1;
+        pathToSave = pages[0];
+
+        //pdf = true;
       } else {
         pages.push(imageUri)
+        pathToSave = decodeURI(this.props.route.params.uri);
       }
-      pathToSave = decodeURI(this.props.route.params.uri);
     }
-    trace("Open SavePhoto with imageUri: ", imageUri, "pdf?", pdf)
+    // trace("Open SavePhoto with imageUri: ", imageUri, "pdf?", pdf, this.props.route.params.sheet)
+    // if (this.props.route.params.sheet?._pages?.length > 1) {
+    //   multiPage = true;
+    // }
+
 
     let folder = this.props.route.params.folder;
     let pageName = this.props.route.params.name;
@@ -170,7 +188,7 @@ export default class IssieSavePhoto extends React.Component {
     folders = folders.filter(f => f.name !== FileSystem.DEFAULT_FOLDER.name);
 
     this.setState({
-      imageUri, pathToSave, pdf, pdfPage: 1,
+      imageUri, pathToSave, pdf, currentPage:0,
       folders, folder, pageName, addToExistingPage, multiPage, pages, onConfirm, phase: skipConfirm ? PickName : OK_Cancel,
     }, () => {
       if (!pdf) {
@@ -315,7 +333,7 @@ export default class IssieSavePhoto extends React.Component {
 
     let cropData = {
       offset: { x: 0, y: 0 },
-      size: { width, height }
+      size: { width, height },
     };
 
     if (!uri.startsWith("file")) {
@@ -368,35 +386,42 @@ export default class IssieSavePhoto extends React.Component {
         }
         trace("save: src - ", newPathToSave, "target:", filePath)
 
+        let thumbnailSrc = undefined
         if (this.state.multiPage) {
           //create a folder with the name of the file (happens implicitly)
           for (let i = 0; i < this.state.pages.length; i++) {
             let page = this.state.pages[i];
             await FileSystem.main.saveFile(page, filePath + "/" + i + ".jpg");
           }
-          await FileSystem.main.saveThumbnail(filePath + "/0" + ".jpg");
+          thumbnailSrc = filePath + "/0" + ".jpg";
         } else {
           //move/copy entire folder, or save single file
           await FileSystem.main.saveFile(newPathToSave, filePath, this.isDuplicate());
-          await FileSystem.main.saveThumbnail(filePath);
+          thumbnailSrc = filePath
         }
+
+        if (!this.isRename() && !this.isDuplicate()) {
+          await FileSystem.main.saveThumbnail(thumbnailSrc);
+        }
+
 
         if ((this.isRename() || this.isDuplicate()) && newPathToSave.endsWith('.jpg')) {
           //single existing file
           try {
             await FileSystem.main.saveFile(newPathToSave + ".json", filePath + ".json", this.isDuplicate());
-            // todo move thumbnail too
           } catch (e) {
             //ignore, as maybe json is missing
           }
 
+          // rename/move attachments
+          await FileSystem.main._iterateAttachments(newPathToSave, async (srcAttachmentPath, attachmentName) => {
+            await FileSystem.main.saveFile(srcAttachmentPath, filePath + FileSystem.ATACHMENT_PREFIX + attachmentName, this.isDuplicate());
+          })
         }
 
         if (this.isRename() || this.isDuplicate()) {
           await FileSystem.main.renameOrDuplicateThumbnail(newPathToSave, filePath, this.isDuplicate());
         }
-
-
 
         let returnFolderCallback = this.props.route.params.returnFolderCallback;
         if (returnFolderCallback && folderID) {
@@ -424,13 +449,14 @@ export default class IssieSavePhoto extends React.Component {
       this.setState({ pdfPage: page + 1 });
       setTimeout(
         () => {
-          let viewShot = this.refs.viewShot;
-          viewShot.capture().then(
-            uri => FileSystem.main.cloneToTemp(uri).then(newUri => resolve(newUri)),
-            err => {
-              reject(err)
-            }
-          );
+          if (this.viewShotRef) {
+            this.viewShotRef.capture().then(
+              uri => FileSystem.main.cloneToTemp(uri).then(newUri => resolve(newUri)),
+              err => {
+                reject(err)
+              }
+            );
+          }
         }, 1000);
     }
     );
@@ -548,7 +574,7 @@ export default class IssieSavePhoto extends React.Component {
   }
 
   movePage = (inc) => {
-    this.setState({ pdfPage: this.state.pdfPage + inc });
+    this.setState({ currentPage: this.state.currentPage + inc });
   }
 
   saveNewFolder = async (newFolder, color, icon, parentID) => {
@@ -568,7 +594,7 @@ export default class IssieSavePhoto extends React.Component {
   }
 
   verifyFilePrefix = (url) => {
-    
+
     if (url && url.startsWith("/")) {
       return "file://" + url;
     }
@@ -611,7 +637,7 @@ export default class IssieSavePhoto extends React.Component {
           { //Add page
             this.state.phase == OK_Cancel && !this.state.pdf && !this.state.addToExistingPage ?
               <Spacer width={10} /> : null}
-          {this.state.phase == OK_Cancel && !this.state.onConfirm && !this.state.pdf && !this.state.addToExistingPage ?
+          {this.state.phase == OK_Cancel && !this.state.onConfirm && !this.state.pdf && !this.state.addToExistingPage && !this.isFile() ?
             getRoundedButton(this.AddPage, 'add', translate("BtnAddPage"), 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isScreenNarrow()) :
             null
           }
@@ -713,6 +739,8 @@ export default class IssieSavePhoto extends React.Component {
 
 
     trace("SAVE: phase", this.state.phase)
+    trace("PDF: size", this.state.pdfWidth, this.state.pdfHeight)
+    trace("save img", this.state.imageUri)
     return (
       <View style={styles.container}
         ref={v => this.topView = v}
@@ -728,87 +756,52 @@ export default class IssieSavePhoto extends React.Component {
           {actionButtons}
         </View>
 
-        {this.state.pdf ?
-          <View style={styles.bgImage}>
-            {this.state.pdfInProcess ?
-              <View style={{ position: 'absolute', top: '25%', left: 0, width: '100%', zIndex: 1000, alignItems: 'center' }}>
-                <ProgressCircle
-                  radius={150}
-                  color="#3399FF"
-                  shadowColor="#999"
-                  bgColor="white"
-                  percent={this.state.pdfInProcess * 100 / this.state.pdfPageCount}
-                  borderWidth={5} >
-                  <Text style={{ zIndex: 100, fontSize: 25 }}>{fTranslate("ImportProgress", this.state.pdfInProcess, this.state.pdfPageCount)}</Text>
-                </ProgressCircle>
-              </View> : null}
-            <ViewShot ref="viewShot" options={{ format: "jpg", quality: 0.9 }}
+
+        <View style={[{
+          justifyContent: flexStart,
+          alignItems: 'center',
+          top: dimensions.toolbarHeight,
+        },
+        this.state.phase == OK_Cancel ?
+
+          {
+            width: '100%',
+            height: (this.state.imgSize.h * this.state.scale)
+          } :
+          {
+            width: '100%',
+            height: '100%',
+          }
+        ]}>
+          {this.isBlankPage() && this.state.addToExistingPage && <OrientationPicker
+            orientationLandscape={this.state.orientationLandscape}
+            onChangeOrientation={(orientationLandscape) => this.setState({ orientationLandscape })}
+          />}
+          {this.state.phase == OK_Cancel &&
+            <ImageBackground
               style={{
-                flex: 1, position: 'absolute', width: this.state.pdfWidth, height: this.state.pdfHeight
-              }}>
-              <Pdf
-                source={{ uri: this.verifyFilePrefix(this.state.imageUri), path:  this.verifyFilePrefix(this.state.imageUri) }}
-                page={this.state.pdfPage}
-                style={{ flex: 1 }}
-                onLoadComplete={(numberOfPages, filePath, dim) => {
-                  if (!this.state.pdfWidthOnce) {
-                    this.setState({ pdfWidthOnce: true, pdfPageCount: numberOfPages, pdfWidth: dim.width, pdfHeight: dim.height });
-                  }
-                }}
+                width: '100%',
+                height: '100%',
+                backgroundColor: "white",
+              }}
 
-                onError={(error) => {
-                  Alert.alert(translate("PDFLoadFailed") + ":" + error);
-                }}
-              >
-
-              </Pdf>
-            </ViewShot>
-            {PageNameInput}
-          </View> :
-          <View style={[{
-            justifyContent: flexStart,
-            alignItems: 'center',
-            top: dimensions.toolbarHeight,
-          },
-          this.state.phase == OK_Cancel ?
-
-            {
-              width: '100%',
-              height: (this.state.imgSize.h * this.state.scale)
-            } :
-            {
-               width: '100%',
-               height: '100%',
-            }
-          ]}>
-            {this.isBlankPage() && this.state.addToExistingPage && <OrientationPicker
-              orientationLandscape={this.state.orientationLandscape}
-              onChangeOrientation={(orientationLandscape) => this.setState({ orientationLandscape })}
+              imageStyle={{ resizeMode: 'contain' }}
+              blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
+              source={this.state?.pages && normalizeFoAndroid({ uri: this.state.pages[this.state.currentPage] })}
             />}
-            {this.state.phase == OK_Cancel ?
-              <ImageBackground
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  backgroundColor: "white",
-                }}
 
-                imageStyle={{ resizeMode: 'contain' }}
-                blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
-                source={{ uri: this.state.imageUri }}
-              /> : null}
+          {cropFrame}
+          {PageNameInput}
+        </View>
 
-
-            {cropFrame}
-            {PageNameInput}
-          </View>}
-        {this.state.PickName || this.state.pdf && this.state.pdfPageCount < 2 || !this.state.pdf ?
-          null :
+        {
+          !this.state.PickName && this.state.pages?.length > 1 &&
           getPageNavigationButtons(0, '100%',
-            this.state.pdfPage == 1, //isFirst
-            this.state.pdfPage == this.state.pdfPageCount, //isLast
-            (inc) => this.movePage(inc))}
-      </View>
+            this.state.currentPage == 0, //isFirst
+            this.state.pages.length - 1 == this.state.currentPage, //isLast
+            (inc) => this.movePage(inc))
+        }
+      </View >
     );
   };
 
@@ -826,6 +819,11 @@ const styles = StyleSheet.create({
     height: '100%',
     top: dimensions.toolbarHeight + dimensions.toolbarMargin,
     alignItems: 'center'
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   }
 
 });

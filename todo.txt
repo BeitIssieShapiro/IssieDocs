@@ -1,6 +1,32 @@
+new canvas
+---------
+case insesitive - check exists on file.jpg and folder as well
+end of page due to fontsize change?
 
 
-- when in imageMode cannot move to eraser
+3. push up is too high
+4. add image - blur ??
+
+
+
+table:
+  - move cells XX
+
+android:
+- icon, splash?
+
+
+version 1.5:
+V- add audio
+V- move buttons in zoom not always shown
+V- export to pdf with multiple pages
+V- bluetooth keyboard
+V-"next" button is not nice
+V-drag audio is not perfect
+V-share as image?
+V-open with image, remove the add+ button
+
+
 -align in table - margin from lines
 
 
@@ -285,3 +311,4 @@ V - better resolution of added images
 refactor-render of canvas
 ----------
 - share flow
+

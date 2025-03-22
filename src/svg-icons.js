@@ -1,7 +1,11 @@
 import React from 'react';
-import { Icon, MARKER_TRANSPARENCY_CONSTANT } from './elements';
+//import { Icon } from './elements';
+import { Icon } from 'react-native-elements'
 import { Svg, Path, Line, Rect, Polygon, G, Text, Ellipse } from 'react-native-svg'
 import { translate } from "./lang.js"
+
+export const MARKER_TRANSPARENCY_CONSTANT = "40";
+
 
 export function getSvgIcon(name, size, color, strokeWidth) {
     return <SvgIcon name={name} size={size} color={color} strokeWidth={strokeWidth} />

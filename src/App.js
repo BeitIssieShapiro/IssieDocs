@@ -29,8 +29,11 @@ import { Spacer, globalStyles, getHeaderBackButton, getIconButton, getFont, getF
 import { fTranslate, getRowDirection, getRowDirections, getRowReverseDirection, isRTL, translate } from './lang.js';
 import {
   View, LogBox, Alert,
-  TouchableOpacity, Settings, useWindowDimensions, Text
+  TouchableOpacity,  useWindowDimensions, Text
 } from 'react-native';
+import { Settings } from "./new-settings"
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+
 
 import { EDIT_TITLE } from './settings'
 
@@ -46,7 +49,8 @@ import FlashMessage from "react-native-flash-message";
 import { OpenLink } from './parental-gate';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TopHeader } from './header';
-import { TestCmp } from './test.js';
+import { CanvasTest } from './canvas/CanvasTestGround';
+import { IssieEditPhoto2 } from './IssieEditPhoto2';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -77,6 +81,7 @@ Text.defaultProps.maxFontSizeMultiplier = 1;
 TextInput.defaultProps = {};
 TextInput.defaultProps.maxFontSizeMultiplier = 1;
 
+export const audioRecorderPlayer = new AudioRecorderPlayer();
 
 
 const App = (props) => {
@@ -93,20 +98,14 @@ const App = (props) => {
     setIsSimulator(true)
   }
 
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-
-  //return <TestCmp/>
-
+  // return <TestCmp/>
+  //return <Test a="abc" b={1}/>
+  //return <CanvasTest />
 
   return (
     <MenuProvider>
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ gestureEnabled: false, headerShown: true }}>
+        <Stack.Navigator screenOptions={{ gestureEnabled: false, headerShown: true, headerStyle: { position: "absolute", zIndex: 2000 } }}>
           <Stack.Screen name="Home" component={FolderGallery}
             options={
               (props) => {
@@ -124,7 +123,7 @@ const App = (props) => {
                 let title = titleSetting;
                 let titleSavedCallback = { getTitleToSave: undefined };
                 const header = (() => <TopHeader
-                  actions={<View style={{ width: "100%", flexDirection: getRowDirection(), justifyContent: "flex-end" }}>
+                  actions={<View style={{ width: "100%", flexDirection: getRowDirection(), justifyContent: "flex-end", zIndex: 2000 }}>
                     {
                       props.route && props.route.params ?
                         getIconButton(() => {
@@ -169,14 +168,15 @@ const App = (props) => {
             }}
           />
 
-          <Stack.Screen name="EditPhoto" component={IssieEditPhoto}
-            initialParams={{ headerHeight: dimensions.headerHeight  , insets:props.insets}}
+          <Stack.Screen name="EditPhoto" component={IssieEditPhoto2}
+            initialParams={{ headerHeight: dimensions.headerHeight, insets: props.insets }} // todo calculate better the height?
             options={(props) => {
               const page = props.route.params.page;
               let fileName = page.name;
               let multiPageTitleAddition = props.route.params.pageTitleAddition || "";
 
               const header = () => <TopHeader
+                style={{ zIndex: 2000 }}
                 actions={<View />}
                 titleText={fileName + multiPageTitleAddition}
                 nav={<View style={{ flex: 1, flexDirection: getRowDirection() }}>

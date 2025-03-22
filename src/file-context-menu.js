@@ -7,6 +7,7 @@ import { SvgIcon } from "./svg-icons";
 import { getRowDirection, getRowReverseDirection, isRTL } from './lang';
 import React, { useCallback } from "react";
 import { trace } from "./log";
+import { normalizeFoAndroid } from "./canvas/utils";
 
 export function FileContextMenu({
     width,
@@ -38,16 +39,19 @@ export function FileContextMenu({
         return <View />;
     }
 
+    //return <View style={{position:"absolute", zIndex: 100, left:100, width:100, height:100, backgroundColor:"green"}}/>
+
     const callbackAndClose = useCallback((callback) => () => {
         onClose();
         if (callback) callback();
     }, [onClose]);
-    trace("scale", height)
     const scale =  height < 400 || isLandscape && height < 500?
      .6:
      height < 750 ? 
      0.8:1;
-
+    trace("fcm", width, height)
+    height = Math.floor(height)
+     //return <View style={{position:"absolute", zIndex: 100, left:100, width:100, height:100, backgroundColor:"green"}}/>
     return <TouchableOpacity style={{
         position: 'absolute',
         zIndex: 100, top: 0, width: '100%', height: '100%'
@@ -80,7 +84,7 @@ export function FileContextMenu({
 
                 {/**title */}
                 <View style={{ flexDirection: getRowReverseDirection(), alignItems: "center", padding: 15 }}>
-                    <Image source={{ uri: item.thumbnail }} style={{ height: 70, width: 50, resizeMode: "stretch", borderColor: "gray", borderWidth: 1 }} />
+                    <Image source={normalizeFoAndroid({ uri: item.thumbnail })} style={{ height: 70, width: 50, resizeMode: "stretch", borderColor: "gray", borderWidth: 1 }} />
                     <Spacer width={10} />
                     <AppText style={{ fontSize: 35, width: width - 100 }}>{item.name}</AppText>
                 </View>

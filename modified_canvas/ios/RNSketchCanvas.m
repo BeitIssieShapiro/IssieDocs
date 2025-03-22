@@ -441,51 +441,93 @@
 
 
 - (void)addOrSetImageOnCanvas:(NSDictionary *)imageOnCanvas {
+    // Initialize _arrImages if it's nil
     if (_arrImages == nil) {
-        NSLog(@"Reinit arrImages");
+        NSLog(@"Reinitializing _arrImages");
         _arrImages = [NSMutableArray new];
     }
     
-    NSString * id = imageOnCanvas[@"id"];
+    // Rename 'id' to 'imageId' to avoid conflict with Objective-C's 'id' type
+    NSString *imageId = imageOnCanvas[@"id"];
     
-    // first look for this image
-    int index = -1, imgLocation = -1;
-    for (CanvasImage *img in _arrImages) {
-        index++;
-        if (img.id == id) {
-            //found
+    // Validate that imageId exists
+    if (imageId == nil || ![imageId isKindOfClass:[NSString class]]) {
+        NSLog(@"Invalid or missing 'id' in imageOnCanvas");
+        return;
+    }
+    
+    // Search for existing CanvasImage with the same id
+    NSInteger imgLocation = -1;
+    for (NSInteger index = 0; index < _arrImages.count; index++) {
+        CanvasImage *img = _arrImages[index];
+        if ([img.id isEqualToString:imageId]) {
             imgLocation = index;
             break;
         }
     }
     
-    // convert to CanvasImage
-    CanvasImage * canvasImg = [CanvasImage new];
+    // Create a new CanvasImage instance
+    CanvasImage *canvasImg = [CanvasImage new];
+    canvasImg.id = imageId;
     
-    canvasImg.id = id;
+    // Set anchor point
+    if (imageOnCanvas[@"anchor"] && [imageOnCanvas[@"anchor"] isKindOfClass:[NSDictionary class]]) {
+        canvasImg.anchor = CGPointMake([imageOnCanvas[@"anchor"][@"x"] floatValue],
+                                       [imageOnCanvas[@"anchor"][@"y"] floatValue]);
+    } else {
+        canvasImg.anchor = CGPointMake(0, 0);
+    }
     
-    canvasImg.anchor = imageOnCanvas[@"anchor"] == nil ?
-        CGPointMake(0, 0) :
-        CGPointMake([imageOnCanvas[@"anchor"][@"x"] floatValue], [imageOnCanvas[@"anchor"][@"y"] floatValue]);
-    canvasImg.position = imageOnCanvas[@"position"] == nil ?
-        CGPointMake(0, 0) :
-        CGPointMake([imageOnCanvas[@"position"][@"x"] floatValue], [imageOnCanvas[@"position"][@"y"] floatValue]);
-
-    canvasImg.width = imageOnCanvas[@"width"] ? [imageOnCanvas[@"width"] longValue] : -1;
-    canvasImg.height = imageOnCanvas[@"height"] ? [imageOnCanvas[@"height"] longValue] : -1;
+    // Set position
+    if (imageOnCanvas[@"position"] && [imageOnCanvas[@"position"] isKindOfClass:[NSDictionary class]]) {
+        canvasImg.position = CGPointMake([imageOnCanvas[@"position"][@"x"] floatValue],
+                                         [imageOnCanvas[@"position"][@"y"] floatValue]);
+    } else {
+        canvasImg.position = CGPointMake(0, 0);
+    }
+    
+    // Set width and height
+    canvasImg.width = imageOnCanvas[@"width"] ? [imageOnCanvas[@"width"] floatValue] : -1;
+    canvasImg.height = imageOnCanvas[@"height"] ? [imageOnCanvas[@"height"] floatValue] : -1;
     canvasImg.drawRect = CGRectMake(canvasImg.position.x, canvasImg.position.y, canvasImg.width, canvasImg.height);
-
-    NSData *data = [[NSData alloc]initWithBase64EncodedString:imageOnCanvas[@"imageData"] options:NSDataBase64DecodingIgnoreUnknownCharacters];
-    canvasImg.image = [UIImage imageWithData:data];
     
+    // Handle image loading from imageData or file
+    UIImage *loadedImage = nil;
+    
+    if (imageOnCanvas[@"imageData"] && [imageOnCanvas[@"imageData"] isKindOfClass:[NSString class]]) {
+        // Decode base64 imageData
+        NSData *data = [[NSData alloc] initWithBase64EncodedString:imageOnCanvas[@"imageData"]
+                                                           options:NSDataBase64DecodingIgnoreUnknownCharacters];
+        if (data) {
+            loadedImage = [UIImage imageWithData:data];
+        } else {
+            NSLog(@"Failed to decode imageData for imageId: %@", imageId);
+        }
+    } else if (imageOnCanvas[@"file"] && [imageOnCanvas[@"file"] isKindOfClass:[NSString class]]) {
+        // Load image from file path
+        NSString *filePath = imageOnCanvas[@"file"];
+        loadedImage = [UIImage imageWithContentsOfFile:filePath];
+        if (!loadedImage) {
+            NSLog(@"Failed to load image from file path: %@", filePath);
+        }
+    } else {
+        NSLog(@"No valid 'imageData' or 'file' found for imageId: %@", imageId);
+    }
+    
+    canvasImg.image = loadedImage;
+    
+    // Update or add the CanvasImage to _arrImages
     if (imgLocation > -1) {
         _arrImages[imgLocation] = canvasImg;
+        NSLog(@"Updated existing CanvasImage with id: %@", imageId);
     } else {
         [_arrImages addObject:canvasImg];
+        NSLog(@"Added new CanvasImage with id: %@", imageId);
     }
+    
+    // Refresh the canvas display
     [self setNeedsDisplay];
 }
-
 
 - (void)newPath:(int) pathId strokeColor:(UIColor*) strokeColor strokeWidth:(int) strokeWidth {
     _currentPath = [[RNSketchData alloc]

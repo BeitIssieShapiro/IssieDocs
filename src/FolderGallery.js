@@ -1,17 +1,20 @@
 import React from 'react';
 import {
-     StyleSheet, View,
-     Alert, Text, Dimensions, Linking, Settings,
+    StyleSheet, View,
+    Alert, Text, Dimensions, Linking, NativeEventEmitter, NativeModules,
     ActivityIndicator
 } from 'react-native';
-import ProgressCircle from 'react-native-progress-circle'
+
+import { Settings } from "./new-settings"
+import * as Progress from 'react-native-progress';
+
 import Search from './search.js'
 import SettingsMenu from './settings-ui'
 import Share from 'react-native-share';
 
 import FolderNew from './FolderNew';
 import FileNew from './FileNew'
-import * as RNFS from 'react-native-fs';
+import { GlobalContext } from './global-context.js';
 
 import {
     registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage, gCurrentLang, getRowDirections,
@@ -28,8 +31,7 @@ import {
     renderMenuOption,
     getRoundedButton,
     IDMenuOptionsStyle,
-    SBDraxScrollView,
-    RootFolderPicker,
+    globalStyles,
 } from './elements'
 import {
     Menu,
@@ -37,7 +39,6 @@ import {
     MenuOption,
     MenuTrigger,
 } from 'react-native-popup-menu';
-import { DraxProvider, DraxView } from 'react-native-drax';
 
 
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
@@ -46,10 +47,11 @@ import { getSvgIcon, SvgIcon } from './svg-icons';
 import { StackActions } from '@react-navigation/native';
 import { FileSystem, swapFolders, saveFolderOrder } from './filesystem.js';
 import { trace } from './log.js';
-import { showMessage } from 'react-native-flash-message';
 import { LogBox } from 'react-native';
 import { FileContextMenu } from './file-context-menu.js';
 import { FolderPanel } from './folder-panel.js';
+import { DDProvider, DDScrollView, DDView } from './dragdrop.js';
+
 
 const SORT_BY_NAME = 0;
 const SORT_BY_DATE = 1;
@@ -75,7 +77,10 @@ function checkFilter(filter, name) {
 
 export default class FolderGallery extends React.Component {
 
+    static contextType = GlobalContext;
+
     constructor(props) {
+        LogBox.ignoreLogs(["ref.measureLayout must be called"])
         super(props);
         this.state = {
             windowSize: { width: 500, height: 1024 },
@@ -108,6 +113,9 @@ export default class FolderGallery extends React.Component {
         try {
             registerLangEvent()
 
+            this.dimSubscription = Dimensions.addEventListener('change', ({ window }) => this.setState({ windowSize: window }));
+
+
             this.props.navigation.addListener("focus", async () => {
                 //this.refresh();
                 this.setState({ selected: undefined });
@@ -135,6 +143,11 @@ export default class FolderGallery extends React.Component {
             setNavParam(this.props.navigation, 'editHandler', () => this.toggleEditMode());
             this.setEditEnabled(false);
             Linking.addEventListener("url", this._handleOpenURL);
+
+            if (this.context?.url) {
+                trace("open with URL:", this.context)
+                setTimeout(() => this._handleOpenURL({ url: this.context?.url }));
+            }
 
             //load only the folders
             let folders = await FileSystem.main.getRootFolders();
@@ -178,10 +191,13 @@ export default class FolderGallery extends React.Component {
 
     componentWillUnmount = () => {
         unregisterLangEvent()
+        this.dimSubscription?.remove();
 
         Linking.removeAllListeners();
+        this.fileListener?.remove();
         this.props.navigation.removeAllListeners();
     }
+
 
     _menuHandler = () => {
         this.setState({ showMenu: !this.state.showMenu })
@@ -189,52 +205,52 @@ export default class FolderGallery extends React.Component {
 
     }
 
-    _handleOpenURL = (event) => {
-        //console.log("_handleOpenURL event:", JSON.stringify(event));
+    _handleOpenURL = async (event) => {
+        console.log("_handleOpenURL event:", JSON.stringify(event));
         let url = event.url
-        if (url?.startsWith("openissiedocs")) {
-            const urlPos = url.indexOf("url=");
-            if (urlPos > 0) {
-                url = url.substr(urlPos + 4);
-                url = decodeURI(url);
+        url = decodeURI(url);
 
-                const handleDoneMessage = (msg) => {
-                    this.setState({ progress: undefined });
-                    Alert.alert(msg);
-                }
-
-                if (url.endsWith(".zip")) {
-                    FileSystem.main.extractZipInfo(url).then(zipInfo => {
-                        if (zipInfo.metadata.backup) {
-                            this.setState({ progress: { percent: 0, message: translate("RestoreBackup") } });
-                            FileSystem.main.RestoreFromBackup(zipInfo, (progress) => {
-                                trace("restore progress" + progress)
-                                this.setState({ progress: { percent: progress, message: translate("RestoreBackup") } });
-                            })
-                                .then(handleDoneMessage)
-                                .finally(() => this.setState({ progress: undefined }));
-                        } else {
-                            // ask if to preserve folder
-                            const title = fTranslate("ImportQuestionTitle", zipInfo.name);
-                            const buttons = [
-                                { text: fTranslate("BtnPreserveImportFolder", zipInfo.metadata.name), onPress: () => FileSystem.main.importWorhsheetWithInfo(zipInfo, true).then(handleDoneMessage) },
-                                { text: translate("BtnIgnoreImportFolder"), onPress: () => FileSystem.main.importWorhsheetWithInfo(zipInfo, false).then(handleDoneMessage) },
-                                { text: translate("BtnCancel"), type: 'cancel' },
-                            ];
-                            Alert.alert(title, undefined, buttons);
-                        }
-                    });
-                } else {
-                    this.props.navigation.navigate('SavePhoto', {
-                        uri: url,
-                        imageSource: SRC_FILE,
-                        folder: this.state.currentFolder,
-                        returnFolderCallback: (f) => this.setReturnFolder(f),
-                        saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID)
-                    })
-                }
-            }
+        const handleDoneMessage = (msg) => {
+            this.setState({ progress: undefined });
+            Alert.alert(msg);
         }
+
+        url = await FileSystem.contentUriToFilePath(url);
+        trace("_handleOpenURL url=", url)
+
+        if (url.endsWith(".zip")) {
+            FileSystem.main.extractZipInfo(url).then(zipInfo => {
+                if (zipInfo.metadata.backup) {
+                    this.setState({ progress: { percent: 0, message: translate("RestoreBackup") } });
+                    FileSystem.main.RestoreFromBackup(zipInfo, (progress) => {
+                        trace("restore progress" + progress)
+                        this.setState({ progress: { percent: progress, message: translate("RestoreBackup") } });
+                    })
+                        .then(handleDoneMessage)
+                        .finally(() => this.setState({ progress: undefined }));
+                } else {
+                    // ask if to preserve folder
+                    const title = fTranslate("ImportQuestionTitle", zipInfo.name);
+                    const buttons = [
+                        { text: fTranslate("BtnPreserveImportFolder", zipInfo.metadata.name), onPress: () => FileSystem.main.importWorhsheetWithInfo(zipInfo, true).then(handleDoneMessage) },
+                        { text: translate("BtnIgnoreImportFolder"), onPress: () => FileSystem.main.importWorhsheetWithInfo(zipInfo, false).then(handleDoneMessage) },
+                        { text: translate("BtnCancel"), type: 'cancel' },
+                    ];
+                    Alert.alert(title, undefined, buttons);
+                }
+            });
+        } else {
+            const tempUrl = await FileSystem.main.cloneToTemp(url);
+            trace("openURL", url, tempUrl)
+            this.props.navigation.navigate('SavePhoto', {
+                uri: tempUrl,
+                imageSource: SRC_FILE,
+                folder: this.state.currentFolder,
+                returnFolderCallback: (f) => this.setReturnFolder(f),
+                saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID)
+            })
+        }
+
     }
 
     // refresh = async (folderName, callback) => {
@@ -336,12 +352,14 @@ export default class FolderGallery extends React.Component {
 
         DocumentPicker.pick({
             type: [DocumentPicker.types.images, DocumentPicker.types.pdf]
-        }).then(res => {
+        }).then(async (res) => {
             if (res.length > 0) {
+                const pdfUrl = await FileSystem.contentUriToFilePath(res[0].uri).catch(e => trace("convert err", e));
+
                 this.props.navigation.navigate('SavePhoto', {
                     imageSource: SRC_FILE,
 
-                    uri: res[0].uri,
+                    uri: pdfUrl,
                     folder: this.state.currentFolder,
                     returnFolderCallback: (f) => this.setReturnFolder(f),
                     saveNewFolder: (newFolder, color, icon, parentID) => this.saveNewFolder(newFolder, color, icon, false, undefined, parentID)
@@ -433,19 +451,22 @@ export default class FolderGallery extends React.Component {
 
     ShareIssieDocs = () => {
         if (!this.state.selected) return;
-
+        this.setState({ inprogress: true })
         FileSystem.main.exportWorksheet(this.state.selected).then(sheetArchivePath => {
+            trace("share file", sheetArchivePath)
             const shareOptions = {
                 title: translate("ShareWithTitle"),
                 subject: translate("ShareEmailSubject"),
                 urls: [sheetArchivePath],
             };
+
             Share.open(shareOptions).then(() => {
+                this.setState({ inprogress: false })
                 Alert.alert(translate("ShareSuccessful"));
             }).catch(err => {
                 Alert.alert(translate("ActionCancelled"));
             });
-        });
+        }).finally(() => this.setState({ inprogress: false }));
     }
 
     AddToPageFromCamera = (page) => {
@@ -871,7 +892,8 @@ export default class FolderGallery extends React.Component {
 
 
         return (
-            <DraxProvider>
+            <DDProvider>
+
 
                 <View style={styles.container}
                     onLayout={this.onLayout}>
@@ -904,6 +926,7 @@ export default class FolderGallery extends React.Component {
 
                     {this.state.showMenu ?
                         <SettingsMenu
+                            windowSize={this.state.windowSize}
                             onAbout={() => this.gotoAbout()}
                             onClose={() => this.closeMenu()}
                             onViewChange={(style) => this.setState({ viewStyle: style })}
@@ -985,18 +1008,10 @@ export default class FolderGallery extends React.Component {
                     </View>
 
                     {/** Progress */}
-                    {this.state.progress && <View style={{ position: 'absolute', top: '25%', left: 0, width: '100%', zIndex: 1000, alignItems: 'center' }}>
-                        <ProgressCircle
-                            radius={150}
-                            color="#3399FF"
-                            shadowColor="#999"
-                            bgColor="white"
-                            percent={this.state.progress.percent}
-                            borderWidth={5} >
-                            {this.state.progress.message && <Text style={{ zIndex: 100, fontSize: 25 }}>{this.state.progress.message}</Text>}
-                        </ProgressCircle>
+                    {this.state.progress && <View style={globalStyles.progressBarHost}>
+                        <Text style={{ fontSize: 28, marginBottom: 5 }}>{this.state.progress.message}</Text>
+                        <Progress.Bar width={this.state.windowSize.width * .6} progress={this.state.progress.percent / 100} style={[rtl && { transform: [{ scaleX: -1 }] }]} />
                     </View>}
-
 
 
                     {/* MainExplorer*/}
@@ -1098,12 +1113,12 @@ export default class FolderGallery extends React.Component {
 
                                 </View>
                                 {/* pages */}
-                                {this.state.inprogress && <View style={{ position: 'absolute', left: "50%", top: "50%" }}>
+                                {this.state.inprogress && <View style={{ position: 'absolute', left: "50%", top: "40%", zIndex: 2000 }}>
                                     <ActivityIndicator size="large" />
                                 </View>}
 
 
-                                <SBDraxScrollView
+                                <DDScrollView
                                     rtl={rtl}
                                     scrollEnabled={true}
                                     showsVerticalScrollIndicator={false}
@@ -1160,9 +1175,11 @@ export default class FolderGallery extends React.Component {
                                             flexWrap: 'wrap',
                                             minWidth: "100%"
                                         }}>
-                                            {this.sortFiles(items).map((item, i) => (<DraxView
+                                            {this.sortFiles(items).map((item, i) => (<DDView
+                                                onDragStart={(e) => trace("File drag starts", e)}
                                                 key={i}
-                                                payload={{ item, folderID: this.state.currentFolder?.ID }}
+                                                id={item.name}
+                                                dragState={{ item, folderID: this.state.currentFolder?.ID }}
                                                 numColumns={asTiles ? numColumnsForTiles : 1}
                                                 longPressDelay={700}
                                             >
@@ -1181,7 +1198,7 @@ export default class FolderGallery extends React.Component {
                                                     onContextMenu: () => this.setSelected(item),
                                                     count: item.count
                                                 })}
-                                            </DraxView>))
+                                            </DDView>))
                                             }
                                         </View>
 
@@ -1203,7 +1220,7 @@ export default class FolderGallery extends React.Component {
                                         )
 
                                     }
-                                </SBDraxScrollView>
+                                </DDScrollView>
                             </View>
 
                         }
@@ -1256,7 +1273,7 @@ export default class FolderGallery extends React.Component {
 
                     </View>
                 </View>
-            </DraxProvider>
+            </DDProvider>
         );
     }
 }

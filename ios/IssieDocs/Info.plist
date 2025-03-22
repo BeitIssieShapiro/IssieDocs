@@ -2,6 +2,30 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+	<dict>
+		<key>CFBundleTypeName</key>
+		<string>My Supported Documents</string>
+		<key>LSItemContentTypes</key>
+		<array>
+		<!-- PDF -->
+		<string>com.adobe.pdf</string>
+		<!-- PNG -->
+		<string>public.png</string>
+		<!-- JPEG -->
+		<string>public.jpeg</string>
+		<!-- ZIP -->
+		<string>public.zip-archive</string>
+		<!-- Potentially for file URL references -->
+        <string>public.file-url</string>
+        <!-- Potentially for direct web links -->
+        <string>public.url</string>
+		</array>
+		<key>LSHandlerRank</key>
+    	<string>Alternate</string>
+	</dict>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
@@ -48,24 +72,24 @@
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSAllowsLocalNetworking</key>
 		<true/>
-		<key>NSExceptionDomains</key>
-		<dict>
-			<key>localhost</key>
-			<dict>
-				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-			</dict>
-		</dict>
 	</dict>
 	<key>NSAppleMusicUsageDescription</key>
 	<string>Allow IssieDocs load images as IssieDocs pages and save pages as images</string>
 	<key>NSCameraUsageDescription</key>
-	<string>The Camera will be used to allow you capture photos that you'll embed in IssieDocs pages</string>
+	<string>The Camera will be used to allow you capture photos that you&apos;ll embed in IssieDocs pages</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Allow IssieDocs save pages as photos in the Photo Library</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow IssieDocs loading photos from the Photo Library into IssieDocs pages</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Allow IssieDocs to record voice messages to place on worksheets</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Alef_Regular.ttf</string>
@@ -91,7 +115,7 @@
 	<string>LaunchScreen2</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UIRequiresFullScreen</key>
 	<false/>
