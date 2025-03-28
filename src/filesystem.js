@@ -710,7 +710,6 @@ export class FileSystem {
 
         return await this._reloadBySheet(sheet);
     }
-    //"file:///data/user/0/com.issiedocs/files/folders/F1/eee.jpg
     _parsePath(filePath) {
         if (!filePath) {
             trace("unexpected empty filePath")

@@ -1,4 +1,4 @@
-package com.issiedocs
+package org.issieshapiro.issiedocs
 
 import android.app.Application
 import com.facebook.react.PackageList

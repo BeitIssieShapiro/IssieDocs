@@ -1,4 +1,4 @@
-package com.issiedocs // Use your app's package name
+package org.issieshapiro.issiedocs
 
 import android.content.ContentResolver
 import android.content.Context

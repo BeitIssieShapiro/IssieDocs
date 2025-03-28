@@ -1,4 +1,4 @@
-package com.issiedocs
+package org.issieshapiro.issiedocs
 
 import android.content.Intent
 import com.facebook.react.ReactActivity

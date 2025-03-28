@@ -198,8 +198,8 @@ export function wait(ms: number): Promise<void> {
     });
 }
 
-const findFilePrefix = "com.issiedocs/files"
-const findCachePrefix = "com.issiedocs/cache";
+const findFilePrefix = "org.issieshapiro.issiedocs/files"
+const findCachePrefix = "org.issieshapiro.issiedocs/cache";
 export function normalizeFoAndroid(imgSrc: ImageURISource | undefined): ImageURISource | undefined {
 
     let res = imgSrc;
@@ -210,12 +210,12 @@ export function normalizeFoAndroid(imgSrc: ImageURISource | undefined): ImageURI
         // });
         let pos = imgSrc.uri.indexOf(findFilePrefix);
         if (pos >= 0) {
-            let uri = "content://com.issiedocs.provider" + imgSrc.uri.substring(pos + findFilePrefix.length);
+            let uri = "content://org.issieshapiro.issiedocs.provider" + imgSrc.uri.substring(pos + findFilePrefix.length);
             res = { ...imgSrc, uri };
         } else {
             pos = imgSrc.uri.indexOf(findCachePrefix);
             if (pos >= 0) {
-                let uri = "content://com.issiedocs.provider/cache_files" + imgSrc.uri.substring(pos + findCachePrefix.length);
+                let uri = "content://org.issieshapiro.issiedocs.provider/cache_files" + imgSrc.uri.substring(pos + findCachePrefix.length);
                 res = { ...imgSrc, uri };
             }
         }

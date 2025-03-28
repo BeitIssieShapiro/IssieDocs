@@ -1,7 +1,7 @@
 # OSX
 #
 .DS_Store
-
+*.jks
 # Xcode
 #
 build/
@@ -67,3 +67,4 @@ yarn-error.log
 /coverage
 
 android/gradle.properties
+android/app/release
