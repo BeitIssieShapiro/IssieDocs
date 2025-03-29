@@ -1,6 +1,8 @@
 #import "AppDelegate.h"
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTLinkingManager.h>
+#import <ReactAppDependencyProvider/RCTAppDependencyProvider.h>
+
 
 @implementation AppDelegate
 
@@ -18,6 +20,8 @@
   }
 
   self.moduleName = @"IssieDocs";
+  self.dependencyProvider = [RCTAppDependencyProvider new];
+    
   self.initialProps = initialProps;
 
   // Initialize the React Native bridge with initialProps

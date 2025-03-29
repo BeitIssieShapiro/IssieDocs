@@ -15,7 +15,7 @@ def node_require(script)
 end
 
 platform :ios, '16'
-install! 'cocoapods', :disable_input_output_paths => true
+#install! 'cocoapods', :disable_input_output_paths => true
 
 node_require('react-native/scripts/react_native_pods.rb')
 node_require('react-native-permissions/scripts/setup.rb')
@@ -66,7 +66,7 @@ target 'IssieDocs' do
     installer.pods_project.build_configurations.each do |config|
       config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13'
-    end
+    end 
     # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
     react_native_post_install(
       installer,

@@ -68,3 +68,4 @@ yarn-error.log
 
 android/gradle.properties
 android/app/release
+.kotlin/
