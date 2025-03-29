@@ -182,7 +182,7 @@ export default class FolderGallery extends React.Component {
     setEditEnabled = (inFolder) => {
         setNavParam(this.props.navigation, 'isEditEnabled', () => {
             let editTitleSetting = Settings.get(EDIT_TITLE.name);
-            if (editTitleSetting === undefined) {
+            if (Settings.isEmpty(editTitleSetting)) {
                 editTitleSetting = EDIT_TITLE.no;
             }
             return editTitleSetting === EDIT_TITLE.yes || inFolder;
@@ -857,7 +857,7 @@ export default class FolderGallery extends React.Component {
         const asTree = foldersViewStyle === FOLDERS_VIEW.tree;
 
         let editTitleSetting = Settings.get(EDIT_TITLE.name);
-        if (editTitleSetting === undefined) {
+        if (Settings.isEmpty(editTitleSetting)) {
             editTitleSetting = EDIT_TITLE.no;
         }
 

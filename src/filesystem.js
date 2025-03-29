@@ -45,7 +45,7 @@ function _lastUpdate(fi) {
     return Math.max(mtime, ctime);
 }
 
-function _androidFileName(path) {
+export function _androidFileName(path) {
     if (Platform.OS === 'android' && path && !path.startsWith("file")) {
         return "file://" + path
     }
@@ -745,8 +745,8 @@ export class FileSystem {
         trace("deleteFile", filePath)
         const { folderID } = this._parsePath(filePath);
 
-        await RNFS.unlink(filePath)
-        await RNFS.unlink(filePath + ".json").catch(ignore)
+        await RNFS.unlink(_androidFileName(filePath))
+        await RNFS.unlink(_androidFileName(filePath + ".json")).catch(ignore)
         await this._iterateAttachments(filePath, async (srcAttachmentPath) => {
             await RNFS.unlink(srcAttachmentPath);
         });

@@ -36,8 +36,6 @@ import { migrateMetadata } from './state-migrate';
 import { PathCommand } from '@shopify/react-native-skia';
 import RNSystemSounds from '@dashdoc/react-native-system-sounds';
 import { hideMessage, showMessage } from 'react-native-flash-message';
-import { readFile } from 'react-native-fs';
-import { Buffer } from 'buffer';
 import { getSetting } from './settings';
 import { useMessageBox } from './message';
 

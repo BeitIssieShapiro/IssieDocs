@@ -535,7 +535,7 @@ export function unregisterLangEvent() {
 export function loadLanguage() {
     let langSetting = Settings.get(LANGUAGE.name);
     trace("langauge loaded", langSetting, langSetting + "" === LANGUAGE.default + "")
-    if (langSetting === undefined || langSetting === LANGUAGE.default) {
+    if (Settings.isEmpty(langSetting) || langSetting === LANGUAGE.default) {
         const locales = getLocales();
         langSetting = LANGUAGE.english;
 

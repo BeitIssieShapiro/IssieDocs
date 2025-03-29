@@ -1,3 +1,6 @@
+android:
+- test share 
+
 new canvas
 ---------
 case insesitive - check exists on file.jpg and folder as well

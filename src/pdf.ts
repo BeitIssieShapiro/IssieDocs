@@ -3,21 +3,22 @@ import PDFDocument from '@react-pdf/pdfkit';
 import RNFS from 'react-native-fs';
 import { Buffer } from 'buffer'; // Ensure buffer is available in your RN environment
 import { ImageSize } from 'react-native';
+import { _androidFileName } from './filesystem';
 
 export interface GeneratePDFProps {
   uri: string;
   size: ImageSize;
   ratio: number;
-  audioFiles: {
-    audioFileAnnotation: {
-      src: string;
-      name: string;
-      description: string;
-    },
-    x: number;
-    y: number;
-    size: number;
-  }[];
+  // audioFiles: {
+  //   audioFileAnnotation: {
+  //     src: string;
+  //     name: string;
+  //     description: string;
+  //   },
+  //   x: number;
+  //   y: number;
+  //   size: number;
+  // }[];
 }
 
 /**
@@ -49,7 +50,7 @@ export async function generatePDF(base64Images: GeneratePDFProps[]) {
         const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
 
         try {
-          await RNFS.writeFile(filePath, pdfData.toString('base64'), 'base64');
+          await RNFS.writeFile(_androidFileName(filePath), pdfData.toString('base64'), 'base64');
           resolve(filePath); // Return the local PDF path
         } catch (fileErr) {
           reject(fileErr);

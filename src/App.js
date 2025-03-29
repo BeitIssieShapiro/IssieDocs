@@ -29,7 +29,7 @@ import { Spacer, globalStyles, getHeaderBackButton, getIconButton, getFont, getF
 import { fTranslate, getRowDirection, getRowDirections, getRowReverseDirection, isRTL, translate } from './lang.js';
 import {
   View, LogBox, Alert,
-  TouchableOpacity,  useWindowDimensions, Text
+  TouchableOpacity, useWindowDimensions, Text
 } from 'react-native';
 import { Settings } from "./new-settings"
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
@@ -111,12 +111,12 @@ const App = (props) => {
               (props) => {
                 let editMode = props.route.params && props.route.params.editMode || false;
                 let titleSetting = Settings.get('appTitle');
-                if (titleSetting === undefined) {
+                if (Settings.isEmpty(titleSetting)) {
                   titleSetting = fTranslate("DefaultAppTitle", "IssieDocs");
                 }
 
                 let editTitleSetting = Settings.get(EDIT_TITLE.name);
-                if (editTitleSetting === undefined) {
+                if (Settings.isEmpty(editTitleSetting)) {
                   editTitleSetting = EDIT_TITLE.no;
                 }
 
