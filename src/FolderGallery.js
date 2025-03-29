@@ -19,7 +19,7 @@ import { GlobalContext } from './global-context.js';
 import {
     registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage, gCurrentLang, getRowDirections,
 } from "./lang.js"
-import { USE_COLOR, getUseColorSetting, EDIT_TITLE, VIEW, FOLDERS_VIEW } from './settings.js'
+import { USE_COLOR, getUseColorSetting, EDIT_TITLE, VIEW, FOLDERS_VIEW, isSettingEmpty } from './settings.js'
 import { setNavParam } from './utils'
 import {
     semanticColors,
@@ -182,7 +182,7 @@ export default class FolderGallery extends React.Component {
     setEditEnabled = (inFolder) => {
         setNavParam(this.props.navigation, 'isEditEnabled', () => {
             let editTitleSetting = Settings.get(EDIT_TITLE.name);
-            if (Settings.isEmpty(editTitleSetting)) {
+            if (isSettingEmpty(editTitleSetting)) {
                 editTitleSetting = EDIT_TITLE.no;
             }
             return editTitleSetting === EDIT_TITLE.yes || inFolder;
@@ -857,7 +857,7 @@ export default class FolderGallery extends React.Component {
         const asTree = foldersViewStyle === FOLDERS_VIEW.tree;
 
         let editTitleSetting = Settings.get(EDIT_TITLE.name);
-        if (Settings.isEmpty(editTitleSetting)) {
+        if (isSettingEmpty(editTitleSetting)) {
             editTitleSetting = EDIT_TITLE.no;
         }
 

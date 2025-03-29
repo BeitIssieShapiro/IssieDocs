@@ -1,6 +1,6 @@
 import { getLocales } from "react-native-localize";
 import { Alert } from "react-native";
-import { LANGUAGE } from "./settings";
+import { isSettingEmpty, LANGUAGE } from "./settings";
 import { isSimulator } from "./device";
 import { trace } from "./log";
 import { Settings } from "./new-settings"
@@ -535,7 +535,7 @@ export function unregisterLangEvent() {
 export function loadLanguage() {
     let langSetting = Settings.get(LANGUAGE.name);
     trace("langauge loaded", langSetting, langSetting + "" === LANGUAGE.default + "")
-    if (Settings.isEmpty(langSetting) || langSetting === LANGUAGE.default) {
+    if (isSettingEmpty(langSetting) || langSetting === LANGUAGE.default) {
         const locales = getLocales();
         langSetting = LANGUAGE.english;
 

@@ -53,9 +53,6 @@ class SettingsAndroid {
         storage.set(key, JSON.stringify(val));
     }
 
-    static isEmpty(val: any) {
-        return val == undefined || val == null;
-    }
 
     // static setArray(key: string, arr: any[]) {
     //     storage.set(key, arr.length);

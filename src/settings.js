@@ -70,10 +70,13 @@ export function getUseTextSetting() {
 
 export function getSetting(name, def) {
     let setting = Settings.get(name);
-    if (Settings.isEmpty(setting)) {
+    if (isSettingEmpty(setting)) {
         setting = def;
     }
     return setting;
 }
 
+export function isSettingEmpty(val) {
+    return val == undefined || val == null;
+}
 

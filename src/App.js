@@ -35,7 +35,7 @@ import { Settings } from "./new-settings"
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 
 
-import { EDIT_TITLE } from './settings'
+import { EDIT_TITLE, isSettingEmpty } from './settings'
 
 import TitleEdit from './title-edit.js'
 
@@ -111,12 +111,12 @@ const App = (props) => {
               (props) => {
                 let editMode = props.route.params && props.route.params.editMode || false;
                 let titleSetting = Settings.get('appTitle');
-                if (Settings.isEmpty(titleSetting)) {
+                if (isSettingEmpty(titleSetting)) {
                   titleSetting = fTranslate("DefaultAppTitle", "IssieDocs");
                 }
 
                 let editTitleSetting = Settings.get(EDIT_TITLE.name);
-                if (Settings.isEmpty(editTitleSetting)) {
+                if (isSettingEmpty(editTitleSetting)) {
                   editTitleSetting = EDIT_TITLE.no;
                 }
 
