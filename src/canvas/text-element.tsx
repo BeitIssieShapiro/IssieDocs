@@ -40,7 +40,6 @@ function TextElement({
     const textBGColor = useSharedValue<ColorValue>("yellow");
     const moveIconDisplay = useSharedValue<'none' | 'flex' | undefined>("flex");
     const table = text.tableId && tables?.find(table => table.id == text.tableId);
-
     const bgAnimatedStyle = useAnimatedStyle(() => ({
         backgroundColor: textBGColor.value,
     }));
@@ -60,7 +59,7 @@ function TextElement({
 
         textBGColor.value = (text.color == '#fee100' ? "gray" : "yellow");
         moveIconDisplay.value = "flex";
-    }, [text, editMode])
+    }, [text.color, editMode])
 
     // if (text.tableId) {
     //     console.log("text table",text.tableId, table)

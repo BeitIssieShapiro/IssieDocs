@@ -7,7 +7,7 @@ import { getRowDirections, translate } from "./lang";
 import { trace } from "./log";
 import { BrushSizePicker, MyColorPicker, TextSizePicker } from "./pickers";
 import { getSvgIcon, MarkerStroke } from "./svg-icons";
-import { Icon } from "react-native-elements";
+import { Icon } from "@rneui/themed";
 import { FEATURES, getFeaturesSetting } from "./settings";
 import { IIF } from "./canvas/utils";
 

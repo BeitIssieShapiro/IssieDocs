@@ -1,5 +1,5 @@
 import { View, Image, TouchableOpacity } from "react-native";
-import { Icon } from 'react-native-elements'
+import { Icon } from '@rneui/themed'
 import { AppText, semanticColors, Spacer } from "./elements";
 import FadeInView from "./FadeInView";
 import { fTranslate, translate } from "./lang";

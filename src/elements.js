@@ -2,7 +2,7 @@ import {
     TouchableOpacity, Text, StyleSheet, Image, View
     , Alert, TextInput, ShadowPropTypesIOS
 } from 'react-native';
-import { Icon as IconLocal } from 'react-native-elements'
+import { Icon as IconLocal} from "@rneui/themed";
 import LinearGradient from 'react-native-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import { translate, getLocalizedFoldersAndIcons, isRTL, getRowDirection, getRowDirections, getFlexEnd, getRowReverseDirection, getFlexStart } from "./lang.js";

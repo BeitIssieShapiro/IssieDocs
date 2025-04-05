@@ -113,11 +113,11 @@ export const MessageBoxProvider: React.FC = ({ children }: any) => {
             {children}
             {/* Render the MessageBox in a Modal when visible */}
             {visible && msgProps && (
-                <Modal transparent visible={visible} onRequestClose={msgProps.onClose}>
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                // <Modal transparent visible={visible} onRequestClose={msgProps.onClose}>
+                    // <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', position: "absolute", left: 0, top: 0 }}>
                         <MessageBox {...msgProps} width={msgProps.width || 500} showDoNotShow={msgProps.showDoNotShow || false} />
-                    </View>
-                </Modal>
+                    // </View>
+                // </Modal>
             )}
         </MessageBoxContext.Provider>
     );
@@ -150,6 +150,12 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         alignItems: "center",
         backgroundColor: "white",
+        shadowColor: '#171717',
+        shadowOffset: { width: 3, height: 6 },
+        shadowOpacity: 0.4,
+        shadowRadius: 7,
+        borderColor:"gray",
+        borderWidth:1
     },
     title: {
         fontSize: 28,

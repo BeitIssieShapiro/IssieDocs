@@ -18,6 +18,7 @@ import { translate } from './lang';
 import { LAST_COLORS } from './settings';
 import { Icon } from "./elements"
 import Slider from '@react-native-community/slider';
+//import { Slider } from '@rneui/themed'
 import { TextAlignment } from './editor-toolbar';
 
 
@@ -113,7 +114,7 @@ export function MyColorPicker(props) {
                 //height: colorButtonSize * 3 + 30,
                 width: colorButtonSize * 2 + 30,
                 flexWrap: "wrap",
-                zIndex: 1000, flexDirection: "row",
+                zIndex: 1000, flexDirection: "row"
             }} >
                 {lastColors.map((color, i) => <View key={i} style={{ padding: 5 }}>{
                     getColorButton(
@@ -211,7 +212,7 @@ export function TextSizePicker(props) {
 
     return <FadeInView
         overflow={"hidden"}
-        height={props.open ? (simpleToolbarHeight + (openMore ? 60 : 0)) : 0}
+        height={props.open ? (simpleToolbarHeight + (openMore ? 80 : 0)) : 0}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
         <View
             style={{
@@ -233,12 +234,12 @@ export function TextSizePicker(props) {
                             onPress={() => onSelectTextAlignment(TextAlignment.LEFT)} />
                     </SelectedCircle>
 
-                    {props.showCenterTextAlignment && <Spacer width={5}/>}
+                    {props.showCenterTextAlignment && <Spacer width={5} />}
                     {props.showCenterTextAlignment && <SelectedCircle selected={textAlignment == TextAlignment.CENTER} size={40}>
                         <Icon type="font-awesome" name="align-center" size={25} color={props.color}
                             selected={textAlignment == TextAlignment.CENTER} onPress={() => onSelectTextAlignment(TextAlignment.CENTER)} />
                     </SelectedCircle>}
-                    {!props.isScreenNarrow && <Spacer width={5}/>}
+                    {!props.isScreenNarrow && <Spacer width={5} />}
                     <SelectedCircle selected={textAlignment == TextAlignment.RIGHT} size={40}>
                         <Icon type="font-awesome" name="align-right" size={25} color={props.color}
                             onPress={() => onSelectTextAlignment(TextAlignment.RIGHT)} />
@@ -249,21 +250,22 @@ export function TextSizePicker(props) {
             </View>
         </View>
 
-        <View style={{
-            height: 80,
-            paddingTop: 10,
-            paddingBottom: 2,
-            flex: 1,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            width: "85%"
-        }}>
+        <View
+            style={{
+                height: 80,
+                paddingTop: 10,
+                paddingBottom: 2,
+                flex: 1,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "85%"
+            }}>
             <AppText style={{
                 fontSize: 30,
                 lineHeight: 30,
             }}
-                onPress={() => props.onSelect(props.size)}
+                onPress={() => props.onSelect(props.size - 5, true)}
             >{translate("A")}</AppText>
             <Slider
                 value={props.size}
@@ -272,18 +274,45 @@ export function TextSizePicker(props) {
                 maximumValue={345}
                 // step = {10}
                 style={{
-                    width: "80%"
+                    width: "80%",zIndex:1000
                 }}
                 onSlidingComplete={(val => {
+                    console.log("onSlidingComplete",  val)
                     val = Math.floor(val / 10) * 10 + 5;
                     props.onSelect(val, false);
                 })}
+                
             />
+
+            {/* <Slider
+                style={{ backgroundColor: "green" }}
+                value={10}
+                onSlidingComplete={(val) => props.onSelect(val, true)}
+                onValueChange={(val) => props.onSelect(val, true)}
+                maximumValue={345}
+                minimumValue={5}
+                step={1}
+                allowTouchTrack
+                trackStyle={{ height: 5, backgroundColor: 'gray' }}
+                thumbStyle={{ height: 20, width: 20, backgroundColor: 'blue' }}
+            // thumbProps={{
+            //     children: (
+            //         <Icon
+            //             name="heartbeat"
+            //             type="font-awesome"
+            //             size={20}
+            //             reverse
+            //             containerStyle={{ bottom: 20, right: 20 }}
+            //             color={color()}
+            //         />
+            //     ),
+            // }}
+            /> */}
             <AppText style={{
                 fontSize: 65,
                 lineHeight: 65,
             }}
-                onPress={() => props.onSelect(props.size)}
+                onPress={() => props.onSelect(props.size + 5, true)}
             >{translate("A")}</AppText>
         </View>
 

@@ -919,15 +919,25 @@ export class FileSystem {
     }
 
     async _getStaticPage(filePath, pageType) {
-        let page = FileSystem._getStaticPageRef(pageType);
+        if (Platform.OS === 'android') {
+            const pageName = pageType === FileSystem.StaticPages.Lines
+                ? "lines-page.png"
+                : (pageType === FileSystem.StaticPages.Math
+                    ? "math-page.png"
+                    : "blank-page.png");
 
-        let pageResolved = Image.resolveAssetSource(page);
+            // Copy the asset file to filePath.
+            await RNFS.copyFileAssets(pageName, filePath);
+        } else {
+            let page = FileSystem._getStaticPageRef(pageType);
+            let pageResolved = Image.resolveAssetSource(page);
 
-        let downloadInfo = await RNFS.downloadFile({
-            fromUrl: pageResolved.uri,
-            toFile: filePath
-        });
-        await downloadInfo.promise;
+            let downloadInfo = await RNFS.downloadFile({
+                fromUrl: pageResolved.uri,
+                toFile: filePath
+            });
+            await downloadInfo.promise;
+        }
     }
 
     async exportWorksheet(sheet, folderObj) {

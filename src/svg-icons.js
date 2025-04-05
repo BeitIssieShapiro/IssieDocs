@@ -1,6 +1,6 @@
 import React from 'react';
 //import { Icon } from './elements';
-import { Icon } from 'react-native-elements'
+import { Icon } from '@rneui/themed'
 import { Svg, Path, Line, Rect, Polygon, G, Text, Ellipse } from 'react-native-svg'
 import { translate } from "./lang.js"
 

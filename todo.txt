@@ -1,5 +1,9 @@
 android:
 - test share 
+V- background of textedit is not according to text color
+- search page not finding - missing feature for nested folders and also to find the containing folder
+- cancel new from image, stays busy
+
 
 new canvas
 ---------

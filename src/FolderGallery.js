@@ -702,7 +702,7 @@ export default class FolderGallery extends React.Component {
 
 
     addEmptyPage = async (type) => {
-        let folderName = this.state.currentFolder ? this.state.currentFolder.name : FileSystem.DEFAULT_FOLDER.name;
+        //let folderName = this.state.currentFolder ? this.state.currentFolder.name : FileSystem.DEFAULT_FOLDER.name;
         // let fileName = await FileSystem.main.getStaticPage(folderName, type);
 
         // let folder = this.state.currentFolder
@@ -718,7 +718,12 @@ export default class FolderGallery extends React.Component {
         // } else {
         //     Alert.alert("error finding newly created file")
         // }
-        let uri = await FileSystem.main.getStaticPageTempFile(type);
+
+        let uri = await FileSystem.main.getStaticPageTempFile(type).catch(e => {
+            Alert.alert("Add new file error", JSON.stringify(e))
+            return;
+        });
+
 
         this.props.navigation.navigate('SavePhoto', {
             uri,
@@ -830,16 +835,27 @@ export default class FolderGallery extends React.Component {
             folderIsLoading = this.state.currentFolder.loading;
         } else if (this.state.folders) {
             if (this.state.filterFolders?.length > 0) {
+                folders = folders.filter((item) => checkFilter(this.state.filterFolders, item.name))
 
                 //aggregates all files matching the filter
                 this.state.folders.forEach(folder => {
-                    items = items.concat(folder.items.filter(file => {
-                        //trace("file.name", file.name, file.name.indexOf(this.state.filterFolders))
-                        return checkFilter(this.state.filterFolders, file.name)
-                    }));
+                    const addToItems = (folder) => {
+                        const newItems = folder.items.filter(file => checkFilter(this.state.filterFolders, file.name))
+                        if (newItems.length) {
+                            items = items.concat(newItems);
+                        }
+                    }
+
+                    addToItems(folder);
+                    if (folder.folders) {
+                        folder.folders.forEach(f => addToItems(f))
+                        const sf = folder.folders.filter(fol => checkFilter(this.state.filterFolders, fol.name))
+                        if (sf && sf.length > 0) {
+                            folders = folders.concat(sf)
+                        }
+                    }
                 })
 
-                folders = folders.filter((item) => checkFilter(this.state.filterFolders, item.name))
             } else {
                 //renders the default folder
                 const defFolder = this.state.folders.find(f => f.name === "Default");
