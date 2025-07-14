@@ -74,5 +74,12 @@ run: (in android folder)
 
 
 to build a release:
+- you must bump the version each time you upload to the play:
+in `android/app/build.gradle`
+``
+  versionCode <code> // e.g. 5
+  versionName "<versionName>" // e.g. "1.1"
+``
+
 `./gradlew bundleRelease`
 
