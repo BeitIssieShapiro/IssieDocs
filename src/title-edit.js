@@ -56,7 +56,9 @@ export default function TitleEdit(props) {
             ref={inputEl}
             allowFontScaling={false}
             value={props.editMode ? editedTitle : props.title}
-            style={[titleStyle,Platform.OS == 'android'?{ position:"absolute"}:null]}
+            style={[titleStyle,Platform.OS == 'android'?{ position:"absolute", height:"100%", 
+                 verticalAlign:"bottom", lineHeight:20}:null]}
+            te
             readonly={props.editMode ? true : false}
             onChangeText={(txt) => {
                 setEditedTitle(txt)
