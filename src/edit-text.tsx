@@ -9,9 +9,9 @@ import {
     FlatList,
 } from "react-native";
 import { translate } from "./lang";
-import IconMCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import { MyColorPicker } from "./pickers";
 import { IconButton } from "./elements";
+import { MyIcon } from "./common/icons";
 
 export interface FaceText {
     text: string;
@@ -69,7 +69,7 @@ export const EditText: React.FC<EditTextProps> = ({
 
                 <MyColorPicker title={translate("SelectColor")} allowCustom={true} color={openColorPicker ? openColorPicker.color : "white"}
                     height={300} width={width} isScreenNarrow={true} onClose={() => setOpenColorPicker(undefined)}
-                    onSelect={(color:string) => {
+                    onSelect={(color: string) => {
                         openColorPicker && openColorPicker.onSelect(color);
                         setOpenColorPicker(undefined);
                     }} open={openColorPicker != undefined}
@@ -141,8 +141,8 @@ export const EditText: React.FC<EditTextProps> = ({
                     <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", marginEnd: 15, width: "33%" }}
                         onPress={() => setIsBold(!isBold)}>
                         {isBold ?
-                            <IconMCI name="checkbox-outline" style={{ fontSize: 30, color: BTN_COLOR }} /> :
-                            <IconMCI name="checkbox-blank-outline" style={{ fontSize: 30, color: BTN_COLOR }} />
+                            <MyIcon info={{ type: "MDI", name: "checkbox-outline", size: 30 }} /> :
+                            <MyIcon info={{ type: "MDI", name: "checkbox-blank-outline", size: 30 }} />
                         }
                         <Text allowFontScaling={false} style={styles.styleLabel} >{translate("Bold")}</Text>
                     </TouchableOpacity>

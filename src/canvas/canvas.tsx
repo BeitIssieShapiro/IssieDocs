@@ -10,7 +10,6 @@ import {
     View,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import IconIonic from "react-native-vector-icons/Ionicons";
 
 import {
     Canvas as SkiaCanvas,
@@ -61,6 +60,7 @@ import { PinchHelperEvent, PinchSession } from "./pinch";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { dimensions } from "../elements";
 import { captureRef } from "react-native-view-shot";
+import { MyIcon } from "../common/icons";
 
 const TEXT_SEARCH_MARGIN = 0; // 15;
 const TABLE_LINE_THRESHOLD = 7;
@@ -297,7 +297,7 @@ function Canvas({
                 setTimeout(() =>
                     captureRef(viewShotRef, { format: "jpg", quality: 0.9, result: "base64" })
                         .then((uri) => resolve(uri))
-                        .catch((e)=>reject(e))
+                        .catch((e) => reject(e))
                         .finally(() => {
                             setTimeout(() => moveIconDisplay.value = "flex");
                         }), 100)
@@ -588,7 +588,7 @@ function Canvas({
         return undefined;
     }, []);
 
-    const searchElement = useCallback((cx: number, cy: number) =>{
+    const searchElement = useCallback((cx: number, cy: number) => {
         if (currentElementTypeRef.current === ElementTypes.Text) {
             //console.log("searchElement txt",textsRef.current)
             return textsRef.current?.find(t => !t.tableId && inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
@@ -787,7 +787,7 @@ function Canvas({
                                         }, styles.moveIcon, visibleAnimatedStyle]}
                                         onPress={() => onDeleteElement?.(ElementTypes.Line, line.id)}
                                     >
-                                        <IconIonic name="trash-outline" size={22} color={"blue"} />
+                                        <MyIcon info={{ type: "Ionicons", name: "trash-outline", size: 22, color: "blue" }} />
                                     </TouchableOpacity>
                                 </View>
                             );
@@ -917,7 +917,8 @@ function Canvas({
                                 }}
                                 onPress={() => onDeleteElement?.(ElementTypes.Image, image.id)}
                             >
-                                <IconIonic name="trash-outline" size={30} color={"blue"} />
+                                <MyIcon info={{ type: "Ionicons", name: "trash-outline", size: 30, color: "blue" }} />
+
                             </TouchableOpacity>}
                         {currentElementTypeRef.current == ElementTypes.Image &&
                             currentEdited.imageId == image.id && <MoveIcon
@@ -969,7 +970,7 @@ function Canvas({
                             }, styles.moveIcon, visibleAnimatedStyle]}
                             onPress={() => onDeleteElement?.(ElementTypes.Element, elem.id)}
                         >
-                            <IconIonic name="trash-outline" size={22} color={"blue"} />
+                            <MyIcon info={{ type: "Ionicons", name: "trash-outline", size: 22, color: "blue" }} />
                         </TouchableOpacity>}
                     </View>
                 })}

@@ -1,6 +1,4 @@
 import React from 'react';
-//import { Icon } from './elements';
-import { Icon } from '@rneui/themed'
 import { Svg, Path, Line, Rect, Polygon, G, Text, Ellipse } from 'react-native-svg'
 import { translate } from "./lang.js"
 
@@ -32,7 +30,7 @@ export function SvgIcon({ name, width, height, color, strokeWidth, size }) {
                     <Path d="M 2 46 L 32 15" />
                     <Path d="M 3 45 L 33 45" />
                     <Path d="M 32 15 L 32 45" />
-                    <Path d="M 72 28 L 72 2" strokeWidth="9"/>
+                    <Path d="M 72 28 L 72 2" strokeWidth="9" />
                     <Path d="M 60 15 L 84 15" strokeWidth="9" />
                 </G></Svg>);
         case 'page-empty':
@@ -45,7 +43,7 @@ export function SvgIcon({ name, width, height, color, strokeWidth, size }) {
             </Svg>);
         case 'page-lines':
             return (<Svg viewBox="-0.5 -0.5 83 103" {...props}>
-                <G  fill="none">
+                <G fill="none">
                     <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" stroke={color} strokeWidth="5" />
                     <Path d="M 51 1 L 51 31 L 81 31 Z" />
                     <Path d="M 51 1 L 51 31 L 81 31" fill="none" stroke={color} strokeWidth="5" />
@@ -60,7 +58,7 @@ export function SvgIcon({ name, width, height, color, strokeWidth, size }) {
                 </G></Svg>);
         case 'page-math':
             return (<Svg viewBox="-0.5 -0.5 83 104" {...props}>
-                <G stroke={color} strokeWidth="2"  fill="none">
+                <G stroke={color} strokeWidth="2" fill="none">
                     <Path d="M 1 1 L 51 1 L 81 31 L 81 101 L 1 101 L 1 1 Z" strokeWidth="5" />
                     <Path d="M 51 1 L 51 31 L 81 31 Z" strokeWidth="5" />
                     <Path d="M 51 1 L 51 31 L 81 31" strokeWidth="5" />
@@ -88,7 +86,7 @@ export function SvgIcon({ name, width, height, color, strokeWidth, size }) {
                 <G stroke={color}>
                     <Path d="M 8 8 L 8 37.9" strokeWidth="3" />
                     <Path d="M 8 44.65 L 3.5 35.65 L 8 37.9 L 12.5 35.65 Z" strokeWidth="3" fill={color} />
-                    <Ellipse cx="28" cy="28" rx="10" ry="10" strokeWidth="3" fill="none"/>
+                    <Ellipse cx="28" cy="28" rx="10" ry="10" strokeWidth="3" fill="none" />
                     <Path d="M 28 29 L 28 20" strokeWidth="2" />
                     <Path d="M 20 28 L 29 28" strokeWidth="2" />
                 </G>
@@ -509,24 +507,24 @@ export function SvgIcon({ name, width, height, color, strokeWidth, size }) {
         case 'marker':
             return <Svg {...props} viewBox="0 0 24 24">
                 <G fill={color}>
-                    <Path d="M4.56681 3.09871C4.91328 2.93219 5.32452 2.979 5.6247 3.21914L10.4679 7.09367L17.2747 9.03849C17.4381 9.08517 17.5869 9.17273 17.7071 9.2929L20.7071 12.2929C21.0976 12.6834 21.0976 13.3166 20.7071 13.7071C20.3166 14.0976 19.6834 14.0976 19.2929 13.7071L17 11.4142L10.4142 18L12.7071 20.2929C13.0976 20.6834 13.0976 21.3166 12.7071 21.7071C12.3166 22.0977 11.6834 22.0977 11.2929 21.7071L8.29289 18.7071C8.17272 18.5869 8.08516 18.4381 8.03848 18.2747L6.10966 11.5239L4.2929 9.70713C4.10537 9.51959 4.00001 9.26524 4.00001 9.00002L4 4.00001C4 3.61561 4.22034 3.26523 4.56681 3.09871ZM8.12317 11.2911L9.49463 16.0912L15.0912 10.4946L10.291 9.12318L8.12317 11.2911ZM8.50287 8.08293L6 6.08064L6.00001 8.58581L7 9.5858L8.50287 8.08293Z"  />
-                    
+                    <Path d="M4.56681 3.09871C4.91328 2.93219 5.32452 2.979 5.6247 3.21914L10.4679 7.09367L17.2747 9.03849C17.4381 9.08517 17.5869 9.17273 17.7071 9.2929L20.7071 12.2929C21.0976 12.6834 21.0976 13.3166 20.7071 13.7071C20.3166 14.0976 19.6834 14.0976 19.2929 13.7071L17 11.4142L10.4142 18L12.7071 20.2929C13.0976 20.6834 13.0976 21.3166 12.7071 21.7071C12.3166 22.0977 11.6834 22.0977 11.2929 21.7071L8.29289 18.7071C8.17272 18.5869 8.08516 18.4381 8.03848 18.2747L6.10966 11.5239L4.2929 9.70713C4.10537 9.51959 4.00001 9.26524 4.00001 9.00002L4 4.00001C4 3.61561 4.22034 3.26523 4.56681 3.09871ZM8.12317 11.2911L9.49463 16.0912L15.0912 10.4946L10.291 9.12318L8.12317 11.2911ZM8.50287 8.08293L6 6.08064L6.00001 8.58581L7 9.5858L8.50287 8.08293Z" />
+
                 </G>
             </Svg>
-        
+
         default:
-            return <Icon name="missing" />
+            return <MyIcon info={{ name: "missing" }} />
     }
 }
 
-export function MarkerStroke({color, strokeWidth}) {
+export function MarkerStroke({ color, strokeWidth }) {
     const maxMarkerWidth = 50
     const delta = maxMarkerWidth - strokeWidth;
-    const y1 = 10 + delta/2 + "";
-    const y2 = 10 + maxMarkerWidth -  delta/2 + "";
+    const y1 = 10 + delta / 2 + "";
+    const y2 = 10 + maxMarkerWidth - delta / 2 + "";
     return <Svg viewBox="0 0 70 70" >
         <G stroke={color}>
-            <Polygon points={"7,"+y1+" 70,"+y1+" 63,"+y2+" 0,"+y2} fill={color + MARKER_TRANSPARENCY_CONSTANT} stroke="#00000000"/>
+            <Polygon points={"7," + y1 + " 70," + y1 + " 63," + y2 + " 0," + y2} fill={color + MARKER_TRANSPARENCY_CONSTANT} stroke="#00000000" />
         </G>
     </Svg>
 }

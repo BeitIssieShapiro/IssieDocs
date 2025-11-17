@@ -1,9 +1,7 @@
 import { GestureResponderHandlers, View } from "react-native";
 import { SketchPoint } from "./types";
-import IconIonic from 'react-native-vector-icons/Ionicons';
-import IconMCI from 'react-native-vector-icons/MaterialCommunityIcons';
-import { AnimatedView } from "react-native-reanimated/lib/typescript/component/View";
 import Animated from "react-native-reanimated";
+import { MyIcon } from "../common/icons";
 
 interface MoveIconProps {
     style: any;
@@ -28,7 +26,8 @@ export function MoveIcon({ style, position, size, panResponderHandlers, onSetCon
 
     >
         {icon == "resize-bottom-right" ?
-            <IconMCI name={icon} size={size} color={color} />
-            : <IconIonic name={icon} size={size} color={color} />}
+            <MyIcon info={{ type: "MDI", name: icon, size, color }} /> :
+            <MyIcon info={{ type: "Ionicons", name: icon, size, color }} />
+        }
     </Animated.View>
 }

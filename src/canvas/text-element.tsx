@@ -1,14 +1,13 @@
 // TextElement.tsx
 import React, { forwardRef, useEffect, useImperativeHandle } from "react";
 import { View, Text, TextInput, StyleSheet, LayoutChangeEvent, TextInputProps, ViewProps, ColorValue } from "react-native";
-import IconIonic from "react-native-vector-icons/Ionicons";
-import { MoveIcon } from "./canvas-elements";
 import { SketchText, MoveTypes, SketchPoint, SketchTable } from "./types";
 import { calcEffectiveHorizontalLines, tableColWidth, tableRowHeight } from "./utils";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { MyIcon } from "../common/icons";
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
-const AnimatedIcon = Animated.createAnimatedComponent(IconIonic);
+const AnimatedIcon = Animated.createAnimatedComponent(MyIcon);
 
 
 interface TextElementProps {
@@ -108,7 +107,7 @@ function TextElement({
                     return moveResponder.panHandlers?.onStartShouldSetResponder?.(e) || false;
                 }}
             >
-                {!table && <AnimatedIcon style={[moveIconStyle, visibleAnimatedStyle]} name="move" size={25} color={"blue"} />}
+                {!table && <AnimatedIcon style={[moveIconStyle, visibleAnimatedStyle]} info={{ type: "Ionicons", name: "move", size: 25, color: "blue" }} />}
                 <>
                     <AnimatedTextInput
                         autoCapitalize="none"

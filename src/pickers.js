@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useState, useImperativeHandle, Children } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     View,
-    StyleSheet
+    StyleSheet,
+    Pressable
 } from 'react-native';
 import { Settings } from "./new-settings"
 import {
@@ -13,13 +14,11 @@ import {
 import FadeInView from './FadeInView';
 import ColorPicker from 'react-native-wheel-color-picker'
 import { trace } from './log';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 import { translate } from './lang';
 import { LAST_COLORS } from './settings';
-import { Icon } from "./elements"
 import Slider from '@react-native-community/slider';
-//import { Slider } from '@rneui/themed'
 import { TextAlignment } from './editor-toolbar';
+import { MyIcon } from './common/icons';
 
 
 const styles = StyleSheet.create({
@@ -230,18 +229,18 @@ export function TextSizePicker(props) {
                 <View style={{ flexDirection: "row", height: 40, justifyContent: "space-evenly" }}>
                     <Spacer />
                     <SelectedCircle selected={textAlignment == TextAlignment.LEFT} size={40}>
-                        <Icon type="font-awesome" name="align-left" size={25} color={props.color}
+                        <MyIcon info={{ name: "align-left", size: 25, color: props.color }}
                             onPress={() => onSelectTextAlignment(TextAlignment.LEFT)} />
                     </SelectedCircle>
 
                     {props.showCenterTextAlignment && <Spacer width={5} />}
                     {props.showCenterTextAlignment && <SelectedCircle selected={textAlignment == TextAlignment.CENTER} size={40}>
-                        <Icon type="font-awesome" name="align-center" size={25} color={props.color}
+                        <MyIcon info={{ name: "align-center", size: 25, color: props.color }}
                             selected={textAlignment == TextAlignment.CENTER} onPress={() => onSelectTextAlignment(TextAlignment.CENTER)} />
                     </SelectedCircle>}
                     {!props.isScreenNarrow && <Spacer width={5} />}
                     <SelectedCircle selected={textAlignment == TextAlignment.RIGHT} size={40}>
-                        <Icon type="font-awesome" name="align-right" size={25} color={props.color}
+                        <MyIcon info={{ name: "align-right", size: 25, color: props.color }}
                             onPress={() => onSelectTextAlignment(TextAlignment.RIGHT)} />
                     </SelectedCircle>
                     <Spacer />
@@ -274,14 +273,14 @@ export function TextSizePicker(props) {
                 maximumValue={345}
                 // step = {10}
                 style={{
-                    width: "80%",zIndex:1000
+                    width: "80%", zIndex: 1000
                 }}
                 onSlidingComplete={(val => {
-                    console.log("onSlidingComplete",  val)
+                    console.log("onSlidingComplete", val)
                     val = Math.floor(val / 10) * 10 + 5;
                     props.onSelect(val, false);
                 })}
-                
+
             />
 
             {/* <Slider
@@ -320,7 +319,7 @@ export function TextSizePicker(props) {
 }
 
 function getTextSizePicker(color, size, textSize, selected, index, fontSize4Toolbar, callback) {
-    return <TouchableOpacity
+    return <Pressable
         onPress={() => callback(textSize)}
         activeOpacity={0.7}
         key={"" + index}
@@ -333,7 +332,7 @@ function getTextSizePicker(color, size, textSize, selected, index, fontSize4Tool
                 lineHeight: fontSize4Toolbar(textSize) + 4
             }}>{translate("A")}</AppText>
         </SelectedCircle>
-    </TouchableOpacity>
+    </Pressable>
 }
 
 function SelectedCircle({ size, children, selected }) {
@@ -352,7 +351,7 @@ function SelectedCircle({ size, children, selected }) {
 
 export function BrushSizePicker({ color, size, brushSize, isScreenNarrow, onPress, selectedStrokeWidth }) {
     size = isScreenNarrow ? size + 10 : size;
-    return <TouchableOpacity
+    return <Pressable
         style={{ width: size, height: size }}
         onPress={() => onPress(brushSize)}
         activeOpacity={0.7}
@@ -365,7 +364,7 @@ export function BrushSizePicker({ color, size, brushSize, isScreenNarrow, onPres
             alignItems: 'center'
         }}
         >
-            <Icon name={"edit"} color={color} size={brushSize * 4 + 12}></Icon>
+            <MyIcon info={{ name: "edit", size: brushSize * 4 + 12, color }} />
         </View>
-    </TouchableOpacity>
+    </Pressable>
 }

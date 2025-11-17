@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Icon, IconButton, getIconButton, hierarchicalName } from "./elements"
+import { IconButton, hierarchicalName } from "./elements"
 import { View, TouchableOpacity, Alert } from 'react-native';
 import {
     normalizeTitle, semanticColors, FolderTextStyle,
-    getEmbeddedButton, AppText, Spacer, dimensions, FolderIcon
+    AppText, Spacer, dimensions, FolderIcon
 } from './elements'
 import { trace } from './log';
 import { FileSystem } from './filesystem';
 import { showMessage } from 'react-native-flash-message';
 import { fTranslate, getRowDirections, isRTL, translate } from './lang';
 import { DDView } from './dragdrop';
+import { MyIcon } from './common/icons';
 
 
 const dragOverColor = 'lightblue'
@@ -75,9 +76,9 @@ export default function FolderNew(props) {
                         alignItems: 'center',
                         zIndex: 100
                     }, rtl ? { left: 18 } : { right: 18 }]}>
-                        {getEmbeddedButton(props.onDelete, 'delete-forever', 40)}
+                        <MyIcon info={{ type: "MDI", color: semanticColors.titleText, name: "delete-forever", size: 40 }} onPress={props.onDelete} />
                         <Spacer width={17} />
-                        {getEmbeddedButton(props.onRename, 'edit', 40)}
+                        <MyIcon info={{ type: "MDI", color: semanticColors.titleText, name: "edit", size: 40 }} onPress={props.onRename} />
                     </View> : null
                 }
 
@@ -116,10 +117,10 @@ export default function FolderNew(props) {
 
                                 {nonTreeTitle && <View style={[{
                                     alignContent: 'center', alignItems: 'center', justifyContent: 'center',
-                                    paddingBottom: 5, 
+                                    paddingBottom: 5,
                                     height: '100%'
                                 }, rtl ? { paddingRight: sidePadding } : { paddingLeft: sidePadding }]}>
-                                    <Icon name="folder" size={45} color={props.color} />
+                                    <MyIcon info={{ name: "folder", size: 45, color: props.color }} />
                                     <View style={[{ position: 'absolute', top: 0, width: '100%', height: '100%' }, rtl ? { left: 0 } : { right: 0 }]}>
                                         <View style={{
                                             width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', paddingTop: '7%',
@@ -153,7 +154,7 @@ export default function FolderNew(props) {
                                 }}
                             >
                                 <View style={{ flexDirection: row, justifyContent: 'center', width: '100%' }}>
-                                    <Icon name="folder" size={72} color={props.color} />
+                                    <MyIcon info={{ name: "folder", size: 72, color: props.color }} />
 
                                     <View style={{ position: 'absolute', left: 0, top: 25, width: '100%', height: '100%' }}>
                                         <View style={{ width: '100%', justifyContent: 'center', flexDirection: rowReverse }}>
@@ -175,8 +176,8 @@ export default function FolderNew(props) {
                         <View style={[
                             { position: 'absolute', top: 0, flexDirection: 'column', alignItems: 'center', marginTop: 10 },
                             rtl ? { left: 0 } : { right: 0 }]}>
-                            <Icon name={"expand-less"} size={55} color={props.index == 0 ? 'gray' : 'black'} onPress={props.index > 0 ? props.onMoveUp : undefined} />
-                            <Icon name={"expand-more"} size={55} color={props.isLast ? 'gray' : 'black'} onPress={props.isLast ? undefined : props.onMoveDown} />
+                            <MyIcon info={{ name: "expand-less", size: 55, color: props.index == 0 ? 'gray' : 'black' }} onPress={props.index > 0 ? props.onMoveUp : undefined} />:
+                            <MyIcon info={{ name: "expand-more", size: 55, color: props.isLast ? 'gray' : 'black' }} onPress={props.isLast ? undefined : props.onMoveDown} />
                         </View> :
                         <View />
                 }

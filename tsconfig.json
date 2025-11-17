@@ -11,12 +11,13 @@
     "noEmit": true, // Prevent emitting JavaScript files
     "isolatedModules": true
   },
+  "extends": "@react-native/typescript-config",
   "include": [
     "src/**/*",
     "index.js"
   ],
   "exclude": [
-    "node_modules"
-  ],
-  "extends": "@react-native/typescript-config/tsconfig.json"
+    "**/node_modules",
+    "**/Pods"
+  ]
 }

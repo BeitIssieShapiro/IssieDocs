@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
-//import { AnimatedButton } from "./animatedButton";
-import Icon from 'react-native-vector-icons/FontAwesome';
 
 import { TouchableOpacity, View, Text } from "react-native";
 import { AudioWaveForm } from "./audio-progress";
 
 import { isRTL } from "./lang";
 import { audioRecorderPlayer } from "./App";
+import { MyIcon } from "./common/icons";
 
 
 
@@ -169,11 +168,8 @@ export function RecordButton({ audioFile, backgroundColor, size, height, revisio
                 }}
 
             >
-                <Icon
-                    name={recording ? "stop" : "microphone"}
-                    color={"white"}
-                    size={size / 2}
-                />
+                <MyIcon info={{ type: "MDI", name: recording ? "stop" : "microphone", color: "white", size: size * 2 / 3 }} />
+
 
             </TouchableOpacity>
 
@@ -234,13 +230,10 @@ export function RecordButton({ audioFile, backgroundColor, size, height, revisio
                     }
                 }}
             >
+                <View style={{ marginLeft: 6, marginRight: 3 }}>
+                    <MyIcon info={{ type: "MDI", name: !playing ? "play" : "pause", color: "white", size: size / 3 }} />
+                </View>
 
-                <Icon
-                    name={!playing ? "play" : "pause"}
-                    color={"white"}
-                    size={size / 4}
-                    style={{ marginLeft: 6, marginRight: 3 }}
-                />
             </TouchableOpacity>
             <View style={{ flexDirection: "column", height: 70, width: size * 2 }}>
                 {recording && <AudioWaveForm width={size * 2} height={40} infiniteProgress={recordProgress} color={BTN_BACK_COLOR} baseColor={"lightgray"} />}

@@ -529,7 +529,7 @@ export function registerLangEvent() {
 }
 
 export function unregisterLangEvent() {
-    RNLocalize.removeEventListener("change", loadLanguage)
+    //RNLocalize.removeEventListener("change", loadLanguage)
 }
 
 export function loadLanguage() {

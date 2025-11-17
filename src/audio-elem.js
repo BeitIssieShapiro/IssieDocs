@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { audioRecorderPlayer } from "./App";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 
@@ -15,6 +14,7 @@ import Animated, {
     interpolateColor,
 } from 'react-native-reanimated';
 import { semanticColors } from './elements';
+import { MyIcon } from './common/icons';
 
 const zeroPos = { x0: 0, y0: 0, dx: 0, dy: 0 }
 export const BTN_BACK_COLOR = "#C8572A";
@@ -134,9 +134,13 @@ export function AudioElement({
                     shadowRadius: 3.84,
                 }}
             >
-                {showDelete && <Icon name="delete-forever" style={{ position: "absolute", left: -35, top: -5, zIndex: 1000, transform: [{ scale: 1 / zoom }] }} color={"black"} size={40} onPress={() => {
-                    if (onDelete) onDelete();
-                }} />}
+                {showDelete &&
+                    <View style={{ position: "absolute", left: -35, top: -5, zIndex: 1000, transform: [{ scale: 1 / zoom }] }}>
+                        <MyIcon info={{ type:"MDI", name: "delete-forever", color: "black", size: 40 }} onPress={() => {
+                            if (onDelete) onDelete();
+                        }} />
+                    </View>
+                }
                 {
                     editMode && !audioFile ?
                         <RecordButton2

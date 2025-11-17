@@ -1,5 +1,4 @@
 import { View, Image, TouchableOpacity } from "react-native";
-import { Icon } from '@rneui/themed'
 import { AppText, semanticColors, Spacer } from "./elements";
 import FadeInView from "./FadeInView";
 import { fTranslate, translate } from "./lang";
@@ -8,6 +7,7 @@ import { getRowDirection, getRowReverseDirection, isRTL } from './lang';
 import React, { useCallback } from "react";
 import { trace } from "./log";
 import { normalizeFoAndroid } from "./canvas/utils";
+import { MyIcon } from "./common/icons";
 
 export function FileContextMenu({
     width,
@@ -45,13 +45,13 @@ export function FileContextMenu({
         onClose();
         if (callback) callback();
     }, [onClose]);
-    const scale =  height < 400 || isLandscape && height < 500?
-     .6:
-     height < 750 ? 
-     0.8:1;
+    const scale = height < 400 || isLandscape && height < 500 ?
+        .6 :
+        height < 750 ?
+            0.8 : 1;
     trace("fcm", width, height)
     height = Math.floor(height)
-     //return <View style={{position:"absolute", zIndex: 100, left:100, width:100, height:100, backgroundColor:"green"}}/>
+    //return <View style={{position:"absolute", zIndex: 100, left:100, width:100, height:100, backgroundColor:"green"}}/>
     return <TouchableOpacity style={{
         position: 'absolute',
         zIndex: 100, top: 0, width: '100%', height: '100%'
@@ -78,7 +78,7 @@ export function FileContextMenu({
             <TouchableOpacity
                 onPress={onClose}
                 style={[{ position: "absolute", top: 8, width: 40, height: 40, zIndex: 101 }, isRTL() ? { left: 8 } : { right: 8 }]} >
-                <Icon name={'close'} size={30} />
+                <MyIcon info={{ name: "close", size: 30 }} />
             </TouchableOpacity>
             <TouchableOpacity activeOpacity={1} style={{ height: "100%", width: "100%" }}>
 
@@ -91,13 +91,13 @@ export function FileContextMenu({
 
                 <Seperator />
 
-                <View style={{ 
+                <View style={{
                     flexDirection: isLandscape ? getRowReverseDirection() : "column",
-                    justifyContent:"space-evenly",
-                    alignItems:isLandscape?"flex-start":"center",
-                    }}>
+                    justifyContent: "space-evenly",
+                    alignItems: isLandscape ? "flex-start" : "center",
+                }}>
                     {/** Menu */}
-                    <MenuGroup scale={scale} width={isLandscape ?"43%":"90%"}>
+                    <MenuGroup scale={scale} width={isLandscape ? "43%" : "90%"}>
                         <OneMenu scale={scale} icon="edit" onPress={callbackAndClose(onRename)} text={translate("BtnChangeName")} />
                         <Seperator />
                         {onDeletePage && <OneMenu scale={scale} icon="delete-forever" onPress={callbackAndClose(onDeletePage)} text={fTranslate("BeforeDeleteSubPageMenu", deletePageIndex, pagesCount)} />}
@@ -106,9 +106,9 @@ export function FileContextMenu({
                             <React.Fragment>
                                 <OneMenu scale={scale} icon="delete-forever" onPress={callbackAndClose(onDelete)} text={translate("BtnDelete")} />
                                 <Seperator />
-                                <OneMenu scale={scale} icon="folder-move" iconType={"material-community"} onPress={callbackAndClose(onMove)} text={translate("BtnMove")} />
+                                <OneMenu scale={scale} icon="folder-move" iconType={"MDI"} onPress={callbackAndClose(onMove)} text={translate("BtnMove")} />
                                 <Seperator />
-                                <OneMenu scale={scale} icon="file-multiple" iconType={"material-community"} onPress={callbackAndClose(onDuplicate)} text={translate("BtnDuplicate")} />
+                                <OneMenu scale={scale} icon="file-multiple" iconType={"MDI"} onPress={callbackAndClose(onDuplicate)} text={translate("BtnDuplicate")} />
                                 <Seperator />
                                 <OneMenu scale={scale} icon="share" onPress={callbackAndClose(onShareImgs)} text={translate("BtnShare")} />
                                 <Seperator />
@@ -116,7 +116,7 @@ export function FileContextMenu({
                             </React.Fragment>
                         }
                     </MenuGroup>
-                    <MenuGroup scale={scale} width={isLandscape ? "43%":"90%"} title={translate("AddPageMenuTitle")} icon="menu-new-empty-page" iconType="svg">
+                    <MenuGroup scale={scale} width={isLandscape ? "43%" : "90%"} title={translate("AddPageMenuTitle")} icon="menu-new-empty-page" iconType="svg">
                         <OneMenu scale={scale} icon="new-camera" iconType={"svg"} onPress={callbackAndClose(onAddFromCamera)} text={translate("MenuFromCamera")} />
                         <OneMenu scale={scale} icon="new-image" iconType={"svg"} onPress={callbackAndClose(onAddFromMediaLib)} text={translate("MenuFromMediaLib")} />
                         <OneMenu scale={scale} icon="page-empty" iconType={"svg"} onPress={callbackAndClose(onBlankPage)} text={translate("MenuNewPageEmpty")} />
@@ -131,16 +131,16 @@ export function FileContextMenu({
 
 
 function MenuGroup(props) {
-    return <View style={{ 
-        flexDirection: "column", 
-        margin: 20*props.scale, 
-        backgroundColor: "#F1F2F4", 
+    return <View style={{
+        flexDirection: "column",
+        margin: 20 * props.scale,
+        backgroundColor: "#F1F2F4",
         borderRadius: 10,
-        width:props.width,
+        width: props.width,
     }}>
         {props.title &&
             <View style={{ marginHorizontal: 15 }}>
-                <AppText style={{ fontSize: 35 * props.scale}}>{props.title}</AppText>
+                <AppText style={{ fontSize: 35 * props.scale }}>{props.title}</AppText>
             </View>
         }
         {props.title && <Seperator />}
@@ -155,7 +155,7 @@ function OneMenu({
     text,
     scale
 }) {
-    iconType = iconType || 'material'
+    iconType = iconType || 'MI'
     return <TouchableOpacity style={{
         flexDirection: getRowDirection(),
         justifyContent: "space-between",
@@ -173,12 +173,9 @@ function OneMenu({
             />
 
             :
-            <Icon
-                type={iconType}
-                name={icon} size={40 * scale}
-                color={semanticColors.titleText}
-            />}
-        <AppText style={{ fontSize: 30*scale }}>{text}</AppText>
+            <MyIcon info={{ type: iconType, name: icon, size: 40 * scale, color: semanticColors.titleText }} />
+        }
+        <AppText style={{ fontSize: 30 * scale }}>{text}</AppText>
     </TouchableOpacity>
 
 }

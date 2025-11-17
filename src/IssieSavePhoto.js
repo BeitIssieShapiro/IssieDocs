@@ -8,7 +8,7 @@ import {
 import ImageEditor from "@react-native-community/image-editor";
 import PdfThumbnail from "react-native-pdf-thumbnail";
 import { StackActions } from '@react-navigation/native';
-import { Icon, OrientationPicker } from "./elements"
+import { OrientationPicker } from "./elements"
 import { getRowDirections, translate } from './lang.js'
 
 import {
@@ -188,7 +188,7 @@ export default class IssieSavePhoto extends React.Component {
     folders = folders.filter(f => f.name !== FileSystem.DEFAULT_FOLDER.name);
 
     this.setState({
-      imageUri, pathToSave, pdf, currentPage:0,
+      imageUri, pathToSave, pdf, currentPage: 0,
       folders, folder, pageName, addToExistingPage, multiPage, pages, onConfirm, phase: skipConfirm ? PickName : OK_Cancel,
     }, () => {
       if (!pdf) {
@@ -723,16 +723,17 @@ export default class IssieSavePhoto extends React.Component {
         {/* <Text>{JSON.stringify(this.state.cropData)}</Text> */}
 
         <View style={{ position: 'absolute', left: 5, top: 5 }}>
-          <Icon name={'border-style'} size={45} />
+          <MyIcon info={{ name: "border-style", size: 45 }} />
+
         </View>
         <View style={{ position: 'absolute', transform: [{ rotate: 90 + 'deg' }], right: 5, top: 5 }}>
-          <Icon name={'border-style'} size={45} />
+          <MyIcon info={{ name: "border-style", size: 45 }} />
         </View>
         <View style={{ position: 'absolute', transform: [{ rotate: 180 + 'deg' }], right: 5, bottom: 5 }}>
-          <Icon name={'border-style'} size={45} />
+          <MyIcon info={{ name: "border-style", size: 45 }} />
         </View>
         <View style={{ position: 'absolute', transform: [{ rotate: 270 + 'deg' }], left: 5, bottom: 5 }}>
-          <Icon name={'border-style'} size={45} />
+          <MyIcon info={{ name: "border-style", size: 45 }} />
         </View>
       </View>
     }

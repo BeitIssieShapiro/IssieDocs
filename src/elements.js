@@ -1,11 +1,9 @@
 import {
     TouchableOpacity, Text, StyleSheet, Image, View
-    , Alert, TextInput, ShadowPropTypesIOS
+    , TextInput
 } from 'react-native';
-import { Icon as IconLocal} from "@rneui/themed";
-import LinearGradient from 'react-native-linear-gradient';
 import React, { useEffect, useState } from 'react';
-import { translate, getLocalizedFoldersAndIcons, isRTL, getRowDirection, getRowDirections, getFlexEnd, getRowReverseDirection, getFlexStart } from "./lang.js";
+import { translate, getLocalizedFoldersAndIcons, isRTL, getRowDirection, getRowDirections } from "./lang.js";
 import { getUseTextSetting } from './settings.js'
 
 import { getSvgIcon, SvgIcon } from './svg-icons.js'
@@ -13,8 +11,8 @@ import { FileSystem } from './filesystem.js';
 import { trace } from './log.js';
 import { isTooWhite } from './utils.js';
 import { normalizeFoAndroid } from './canvas/utils';
+import { MyIcon } from './common/icons.tsx';
 
-export const Icon = IconLocal;
 
 export const dimensions = {
     headerHeight: 38,//Platform.OS == 'android'?48:38,
@@ -146,7 +144,7 @@ export const folderColors = [
 
 
 export function getIcon(name, size, color) {
-    return <Icon name={name} size={size} color={color} />
+    return <MyIcon info={{ type: "MI", name: name, size, color }} />
 }
 
 export function MoreButton({
@@ -165,53 +163,10 @@ export function MoreButton({
             borderColor: color,
         }}
         onPress={onPress} >
-        <Icon name={'more-horiz'} size={size - 3} color={color} />
+        <MyIcon info={{ type: "MI", color, name: "more-horiz", size: size - 3 }} />
     </TouchableOpacity>
 }
 
-
-
-export function getSquareButton(func, color, selectedColor, txt, icon, size, selected, dimensions,
-    iconSize, iconFirst, rMargin, lMargin) {
-    let dim = {
-        width: styles.squareShapeView.width,
-        height: styles.squareShapeView.height
-    }
-    if (dimensions) {
-        dim = dimensions
-    }
-    if (!iconSize)
-        iconSize = size;
-
-    if (!rMargin) rMargin = 0;
-    if (!lMargin) lMargin = 0;
-
-    if (iconFirst == undefined)
-        iconFirst = false;
-
-    return <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={func}
-    >
-        <LinearGradient
-            colors={selected ? selectedColor : color}
-            style={[styles.squareShapeView, dim, styles.notSelected, iconFirst ? { flexDirection: 'row-reverse' } : {}]}>
-            <AppText style={{ fontSize: size, color: 'white', marginLeft: lMargin, marginRight: rMargin }}>{txt ? txt : ''}</AppText>
-            {icon ? <Icon name={icon} size={iconSize} color='white' /> : null}
-        </LinearGradient>
-    </TouchableOpacity>
-}
-
-export function getEmbeddedButton(callback, icon, iconSize, index, iconType) {
-    iconType = iconType || 'material'
-    return <Icon
-        key={index}
-        type={iconType}
-        name={icon} size={iconSize}
-        color={semanticColors.titleText}
-        onPress={callback}
-    />
-}
 
 export function getEmbeddedSvgButton(callback, icon, iconSize, key, color) {
     return <TouchableOpacity onPress={callback} key={key}>
@@ -271,7 +226,7 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
             }
             {icon?.startsWith("svg-") ?
                 <SvgIcon name={icon.substr(4)} size={iconSize} color={color} />
-                : icon && <Icon name={icon} size={iconSize} color={color} />
+                : icon && <MyIcon info={{ name: icon, size: iconSize, color }} />
             }
             {/* {textExist ?
                 <Spacer width={5} /> : null
@@ -281,7 +236,7 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
 }
 
 export function getMaterialCommunityIconButton(callback, color, icon, size, isText, iconSize, selected) {
-    return getIconButton(callback, color, icon, size, isText, iconSize, selected, "material-community")
+    return getIconButton(callback, color, icon, size, isText, iconSize, selected, "MDI")
 }
 
 export function getSvgIconButton(callback, color, icon, size, isText, iconSize, selected) {
@@ -313,7 +268,7 @@ export function IconButton({
     ensureContrast,
     rotateDeg,
 }) {
-    iconType = iconType || "material";
+    iconType = iconType || "MI";
     let isSvg = iconType === "svg";
 
     let viewStyle = {
@@ -346,7 +301,7 @@ export function IconButton({
         </AppText> :
         isSvg ?
             getSvgIcon(icon, sizeToUse, color) :
-            <Icon name={icon} type={iconType} size={sizeToUse} color={color} style={rotateDeg && { transform: [{ rotate: rotateDeg + 'deg' }] }} />
+            <MyIcon info={{ type: iconType, name: icon, size: sizeToUse, color }} style={rotateDeg && { transform: [{ rotate: rotateDeg + 'deg' }] }} />
 
     return <View style={backgroundContrast}>
         {notPressable ?
@@ -621,14 +576,15 @@ function renderFolderLine(rowData, index, currentFolder, onChangeFolder, showSub
         },
         getFontFamily()]}>
             {indentLevel > 0 && <View style={{ minWidth: 70 * indentLevel }} />}
-            {!isHome && showSubFolders && <Icon name={expanded ? "expand-less" : "expand-more"} size={45} onPress={() => {
-                if (expanded) {
-                    setExpandedFolders(expandedFolders.filter(f => f !== rowData.ID))
-                } else {
-                    trace("setExpandedFolder", [rowData.ID, ...expandedFolders])
-                    setExpandedFolders([rowData.ID, ...expandedFolders])
-                }
-            }} />}
+            {!isHome && showSubFolders && <MyIcon info={{ type: "MI", name: expanded ? "expand-less" : "expand-more", size: 45 }}
+                onPress={() => {
+                    if (expanded) {
+                        setExpandedFolders(expandedFolders.filter(f => f !== rowData.ID))
+                    } else {
+                        trace("setExpandedFolder", [rowData.ID, ...expandedFolders])
+                        setExpandedFolders([rowData.ID, ...expandedFolders])
+                    }
+                }} />}
 
 
             {isHome ?
@@ -638,7 +594,7 @@ function renderFolderLine(rowData, index, currentFolder, onChangeFolder, showSub
                 </View>
                 :
                 <View style={{ alignContent: 'center', alignItems: 'center', justifyContent: 'center', paddingRight: 30, height: '100%' }}>
-                    <Icon name="folder" size={45} color={rowData.color} />
+                    <MyIcon info={{ name: "folder", size: 45, color: rowData.color }} />
                     <View style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
                         <View style={{
                             width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center',
@@ -971,7 +927,8 @@ export function FolderIcon(props) {
             height: props.size
         }} />
     }
-    return <Icon name={props.name} size={props.size} color={props.color} />
+    return <MyIcon info={{ name: props.name, size: props.size, color: props.color }} />
+
 }
 
 export function AppText(props) {
@@ -1022,7 +979,7 @@ export function getColorButtonInt(callback, color, size, icon, index, iconColor)
         }, borderStyle]}
         >
 
-            {icon && <Icon color={iconColor || "white"} size={size} name={icon}></Icon>}
+            {icon && <MyIcon info={{ color: iconColor || "white", size, name: icon }} />}
         </View>
     </TouchableOpacity>
 }

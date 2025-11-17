@@ -9,8 +9,8 @@ import {
     FlatList,
 } from "react-native";
 import { translate } from "./lang";
-import IconMCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getRoundedButton, IconButton, Spacer } from "./elements";
+import { MyIcon } from "./common/icons";
 
 interface MessageButton {
     text: string;
@@ -54,8 +54,8 @@ export const MessageBox: React.FC<MessageBoxProps> = ({
                 {showDoNotShow && <TouchableOpacity style={styles.checkBoxHost}
                     onPress={() => setSetDoNotShow(prev => !prev)}>
                     {doNotShow ?
-                        <IconMCI name="checkbox-outline" style={{ fontSize: 30, color: BTN_COLOR }} /> :
-                        <IconMCI name="checkbox-blank-outline" style={{ fontSize: 30, color: BTN_COLOR }} />
+                        <MyIcon info={{ type: "MDI", name: "checkbox-outline", size: 30 }} /> :
+                        <MyIcon info={{ type: "MDI", name: "checkbox-blank-outline", size: 30 }} />
                     }
                     <Text allowFontScaling={false} style={styles.checkbox} >{translate("DoNotAskAgain")}</Text>
                 </TouchableOpacity>}
@@ -114,9 +114,9 @@ export const MessageBoxProvider: React.FC = ({ children }: any) => {
             {/* Render the MessageBox in a Modal when visible */}
             {visible && msgProps && (
                 // <Modal transparent visible={visible} onRequestClose={msgProps.onClose}>
-                    // <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', position: "absolute", left: 0, top: 0 }}>
-                        <MessageBox {...msgProps} width={msgProps.width || 500} showDoNotShow={msgProps.showDoNotShow || false} />
-                    // </View>
+                // <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', position: "absolute", left: 0, top: 0 }}>
+                <MessageBox {...msgProps} width={msgProps.width || 500} showDoNotShow={msgProps.showDoNotShow || false} />
+                // </View>
                 // </Modal>
             )}
         </MessageBoxContext.Provider>
@@ -154,8 +154,8 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 3, height: 6 },
         shadowOpacity: 0.4,
         shadowRadius: 7,
-        borderColor:"gray",
-        borderWidth:1
+        borderColor: "gray",
+        borderWidth: 1
     },
     title: {
         fontSize: 28,

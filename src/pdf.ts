@@ -1,4 +1,4 @@
-import 'text-encoding'
+//import 'text-encoding'
 import PDFDocument from '@react-pdf/pdfkit';
 import RNFS from 'react-native-fs';
 import { Buffer } from 'buffer'; // Ensure buffer is available in your RN environment

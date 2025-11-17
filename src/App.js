@@ -7,39 +7,29 @@
  */
 
 import React from 'react';
-import {
-  SafeAreaView,
-  useColorScheme,
-} from 'react-native';
-
-import {
-  Colors,
-} from 'react-native/Libraries/NewAppScreen';
+import { createSound } from 'react-native-nitro-sound';
 
 import IssieSavePhoto from './IssieSavePhoto'
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
 import FolderGallery from './FolderGallery';
-import IssieEditPhoto from './IssieEditPhoto';
 import IssieAbout from './issieabout'
 import IssieCreateFolder from './create-folder';
-import { Spacer, globalStyles, getHeaderBackButton, getIconButton, getFont, getFontFamily, dimensions, MoreButton, semanticColors } from './elements';
+import { Spacer, getHeaderBackButton, getIconButton, getFont, dimensions, MoreButton } from './elements';
 
-import { fTranslate, getRowDirection, getRowDirections, getRowReverseDirection, isRTL, translate } from './lang.js';
+import { fTranslate, getRowDirection, translate } from './lang.js';
 import {
-  View, LogBox, Alert,
+  View, LogBox, 
   TouchableOpacity, useWindowDimensions, Text
 } from 'react-native';
 import { Settings } from "./new-settings"
-import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 
 
 import { EDIT_TITLE, isSettingEmpty } from './settings'
 
 import TitleEdit from './title-edit.js'
 
-import { Icon } from "./elements"
 import { setIsSimulator } from './device';
 import { TextInput } from 'react-native-gesture-handler';
 import { MenuProvider } from 'react-native-popup-menu';
@@ -47,10 +37,10 @@ import CameraModal from './CameraOverlay';
 import { SvgIcon } from './svg-icons';
 import FlashMessage from "react-native-flash-message";
 import { OpenLink } from './parental-gate';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TopHeader } from './header';
-import { CanvasTest } from './canvas/CanvasTestGround';
+// import { CanvasTest } from './canvas/CanvasTestGround';
 import { IssieEditPhoto2 } from './IssieEditPhoto2';
+import { MyIcon } from './common/icons';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -81,7 +71,8 @@ Text.defaultProps.maxFontSizeMultiplier = 1;
 TextInput.defaultProps = {};
 TextInput.defaultProps.maxFontSizeMultiplier = 1;
 
-export const audioRecorderPlayer = new AudioRecorderPlayer();
+export const audioRecorderPlayer = createSound();
+
 
 
 const App = (props) => {
@@ -140,8 +131,7 @@ const App = (props) => {
                         }, execNavParam(props.route, "isEditEnabled", false) ? 'white' : 'gray', getNavParam(props.route, "editMode", false) ? "check" : "edit", 35) : null
                     }
                     {!isScreenNarrow() && <Spacer />}
-                    <Icon name="settings" color='white' size={35} onPress={() => execNavParam(props.route, "menuHandler", "")}
-                    />
+                    <MyIcon info={{ type:"Ionicons", name: "settings-outline", color: "white", size: 35 }} onPress={() => execNavParam(props.route, "menuHandler", "")} />
 
                   </View>
                   }

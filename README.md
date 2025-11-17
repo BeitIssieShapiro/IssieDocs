@@ -83,3 +83,12 @@ in `android/app/build.gradle`
 
 `./gradlew bundleRelease`
 
+
+## scratch react-native
+- `npx @react-native-community/cli@latest init IssieDocs`
+- copy dependency to package.json
+- adjust Podfile (setup_permissions, RNLocalize)
+- replace AppDelegate.swift (add briding header with splash.h)
+- copy lunchScreen, fonts, info.plist, entitlelemts, assets
+
+

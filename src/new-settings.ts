@@ -1,7 +1,7 @@
-import { MMKV } from 'react-native-mmkv';
+import { createMMKV } from 'react-native-mmkv';
 import { Platform, Settings as SettingIOS } from 'react-native';
 
-const storage = new MMKV({
+const storage = createMMKV({
     id: 'IssieDocsStorage',
 });;
 

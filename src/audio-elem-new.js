@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import React, { useCallback,  useState } from 'react';
+import {  Pressable, StyleSheet, View } from 'react-native';
 import { audioRecorderPlayer } from "./App";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 
@@ -16,7 +15,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { semanticColors } from './elements';
 
-const zeroPos = { x0: 0, y0: 0, dx: 0, dy: 0 }
 export const BTN_BACK_COLOR = "#C8572A";
 
 async function playRecording(audioFile, playbackListener) {

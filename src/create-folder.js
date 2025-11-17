@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Alert, Text, TouchableOpacity, PanResponder, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
 import { AppText, FolderIcon, RootFolderPicker, getFontFamily, getSvgIconButton } from './elements.js'
-import { Icon } from "./elements"
 import { getRowDirection, getRowDirections, translate } from './lang.js'
 
 import {
@@ -11,15 +10,13 @@ import {
     getPageNavigationButtons, semanticColors,
     Spacer, getRoundedButton, dimensions, getColorButton
 } from './elements'
-import { ScrollView, TextInput } from 'react-native-gesture-handler';
+import {  TextInput } from 'react-native-gesture-handler';
 import { getNewPage, SRC_GALLERY } from './newPage.js';
 import { trace } from './log.js';
 import { FileSystem } from './filesystem.js';
 import Scroller from './scroller.js';
 
 export default class IssieCreateFolder extends React.Component {
-
-
     constructor(props) {
         super();
 
@@ -204,7 +201,7 @@ export default class IssieCreateFolder extends React.Component {
                         <TouchableOpacity style={{ padding: 20 }} key={i} onPress={() => {
                             this.setState({ icon: item, yOffset: 0 })
                         }}>
-                            <Icon name={item} size={55} color={this.state.icon === item ? semanticColors.selectedIconColor : semanticColors.availableIconColor} />
+                            <MyIcon info={{ name: item, size: 55, color: this.state.icon === item ? semanticColors.selectedIconColor : semanticColors.availableIconColor }} />
                         </TouchableOpacity>
                     ))
                 }
@@ -269,7 +266,7 @@ export default class IssieCreateFolder extends React.Component {
                             }}
                             >
                                 <View style={{ width: '100%', flexDirection: rowReverse, alignItems: 'center', justifyContent: 'flex-start' }}>
-                                    <Icon name="folder" size={55} color={this.state.color ? this.state.color : 'gray'} />
+                                    <MyIcon info={{ name: "folder", size: 55, color: this.state.color ? this.state.color : 'gray' }} />
                                     <AppText style={[styles.titleText, { textAlign }]}>{translate("CaptionFolderNameInput")}</AppText>
                                     <View style={{ position: 'absolute', left: 10, top: 21 }}>
                                         {this.state.icon ? <FolderIcon name={this.state.icon} size={30} color='white' /> : null}
@@ -285,8 +282,8 @@ export default class IssieCreateFolder extends React.Component {
                                 {colorSelection}
                                 {!this.isLandscape() && iconsSelection}
                                 <AppText style={[styles.titleText, { textAlign }]}>{translate("InFolderCaption")}</AppText>
-                                <RootFolderPicker onChangeFolder={(folder) => this.setState({ inFolder: folder })} 
-                                    folders={this.state.folders} currentFolder={this.state.inFolder} showBuiltinFolders={false}/>
+                                <RootFolderPicker onChangeFolder={(folder) => this.setState({ inFolder: folder })}
+                                    folders={this.state.folders} currentFolder={this.state.inFolder} showBuiltinFolders={false} />
 
                             </View>
                             {this.isLandscape() ? <Spacer /> : null}

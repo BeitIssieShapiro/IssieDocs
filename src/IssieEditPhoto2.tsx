@@ -5,7 +5,6 @@ import {
     Dimensions,
     ImageSize,
     Keyboard,
-    SafeAreaView,
     StyleSheet,
     TouchableOpacity,
     View,
@@ -38,6 +37,7 @@ import RNSystemSounds from '@dashdoc/react-native-system-sounds';
 import { hideMessage, showMessage } from 'react-native-flash-message';
 import { getSetting } from './settings';
 import { useMessageBox } from './message';
+import { MyIcon } from './common/icons';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -1738,9 +1738,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const MoveButton = ({ rotate, onPress, style, disabled }: { rotate: number, onPress: () => void, style: any, disabled: boolean }) => (
             <TouchableOpacity style={[styles.moveCanvasButton, style, { transform: [{ rotate: rotate + 'deg' }] }]}
                 onPress={() => { console.log("presse move"); !disabled && onPress() }} >
-                <Icon
-                    name='play-arrow' size={70} color={disabled ? semanticColors.moveInZoomButtonDisabled : semanticColors.moveInZoomButton}
-                />
+                <MyIcon info={{type:"MI",name:"play-arrow", size:70, color: disabled ? semanticColors.moveInZoomButtonDisabled : semanticColors.moveInZoomButton}}/>
             </TouchableOpacity>
         );
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Icon, getRoundedButton } from "./elements"
+import { getRoundedButton } from "./elements"
 import {
     View, Alert, Text, TouchableOpacity, StyleSheet,
     ScrollView
@@ -26,6 +26,7 @@ import {
 } from './settings'
 import { FileSystem } from './filesystem';
 import { trace } from './log';
+import { MyIcon } from './common/icons';
 
 
 export default function SettingsMenu(props) {
@@ -178,7 +179,7 @@ export default function SettingsMenu(props) {
             <Spacer />
 
             <View style={{ flexDirection: "row-reverse", justifyContent: 'space-between', alignItems: 'center' }}>
-                <Icon name={'close'} onPress={props.onClose} size={30} style={{ marginEnd: 10 }} />
+                <MyIcon info={{ name: "close", size: 30 }} onPress={props.onClose} style={{ marginEnd: 10 }} />
                 <AppText style={styles.SettingsHeaderText}>{translate("Settings")}</AppText>
             </View>
             <ScrollView style={{
@@ -189,10 +190,9 @@ export default function SettingsMenu(props) {
             >
                 <TouchableOpacity activeOpacity={1} style={{ alignItems: "flex-start" }} >
                     <TouchableOpacity onPress={props.onAbout} style={{ flexDirection: "row-reverse", paddingStart: 25 }}>
-
                         <AppText style={{ fontSize: 25 }}>{translate("About")}</AppText>
                         <Spacer />
-                        <Icon name={'info'} size={35} color={semanticColors.titleText} />
+                        <MyIcon info={{ name: "info", size: 35, color: semanticColors.titleText }} />
                     </TouchableOpacity>
                     {getGroup(props, translate("Language") + ":", [
                         /*{

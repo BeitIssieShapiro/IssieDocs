@@ -8,6 +8,7 @@ import {
     translate
 } from "./lang.js"
 import { Spacer, getIconButton } from './elements.js';
+import { MyIcon } from './common/icons';
 
 let updateInputText = (iText, fontSize) => {
     if (iText) {
@@ -54,7 +55,7 @@ export default function Search(props) {
             <View style={[{ position: 'absolute', 
                 flexDirection:props.rtl?'row':'row-reverse', 
                     alignItems:'center', justifyContent:'center', alignContent:'center' },props.rtl?{left: '1%'}:{right: '1%'}]}>
-                <Icon name={"search"} size={30} color={"#010101"} />
+                <MyIcon info={{type:"Ionicons", name:"search", size:25, color: "#010101"}} />
                 <Spacer />
                 {props.value && props.value.length > 0?getIconButton(()=>props.onChangeText(""), "#010101", "close", 20):null}
             </View>

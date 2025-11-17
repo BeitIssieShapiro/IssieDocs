@@ -7,7 +7,7 @@ import {
 
 import { Settings } from "./new-settings"
 import * as Progress from 'react-native-progress';
-
+import { pick } from '@react-native-documents/picker'
 import Search from './search.js'
 import SettingsMenu from './settings-ui'
 import Share from 'react-native-share';
@@ -39,10 +39,10 @@ import {
     MenuOption,
     MenuTrigger,
 } from 'react-native-popup-menu';
+import SplashScreen from 'react-native-splash-screen';
 
 
 import { SRC_CAMERA, SRC_GALLERY, SRC_RENAME, SRC_DUPLICATE, getNewPage, SRC_FILE } from './newPage';
-import DocumentPicker from 'react-native-document-picker';
 import { getSvgIcon, SvgIcon } from './svg-icons';
 import { StackActions } from '@react-navigation/native';
 import { FileSystem, swapFolders, saveFolderOrder } from './filesystem.js';
@@ -165,17 +165,18 @@ export default class FolderGallery extends React.Component {
             });
 
         } finally {
+            const now = Date.now();
+            const nativeStartTime = this.context.nativeStartTime;
+            const elapsed = now - nativeStartTime;
+            const minDuration = 2000;
+            const remaining = Math.max(0, minDuration - elapsed);
 
-            //calculate min of 2 second from start:
-            let ellapsed = new Date() - this.state.startTime;
-            ellapsed /= 1000;
-            var ellapsedSeconds = Math.round(ellapsed);
-            console.log("loading took ", ellapsedSeconds, "seconds");
-            // if (ellapsedSeconds >= 2) {
-            //     SplashScreen.hide();
-            // } else {
-            //     setTimeout(() => SplashScreen.hide(), 2000 - ellapsed * 1000);
-            // }
+            console.log("Splash delay remaining:", remaining);
+
+            setTimeout(() => {
+                console.log("Splash Closed");
+                SplashScreen.hide();
+            }, remaining);
         }
     };
 
@@ -350,7 +351,7 @@ export default class FolderGallery extends React.Component {
     newFromFileExplorer = () => {
         this.setState({ isNewPageMode: false });
 
-        DocumentPicker.pick({
+        pick({
             type: [DocumentPicker.types.images, DocumentPicker.types.pdf]
         }).then(async (res) => {
             if (res.length > 0) {

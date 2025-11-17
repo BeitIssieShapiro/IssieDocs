@@ -7,134 +7,50 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		00E356F31AD99517003FC87E /* IssieDocsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* IssieDocsTests.m */; };
-		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
-		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
-		5119913DB58616D0EA8EC2CC /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4B9F9B4F601EBD7BCBF16D3A /* PrivacyInfo.xcprivacy */; };
-		6A0C1B532BA969DD00C79EA4 /* LaunchScreen2.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6A0C1B522BA969DD00C79EA4 /* LaunchScreen2.storyboard */; };
-		6A8D78992C3AA6D600DBE101 /* Alef_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A8D78942C3AA6D600DBE101 /* Alef_Bold.ttf */; };
-		6A8D789A2C3AA6D600DBE101 /* Alef_Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A8D78952C3AA6D600DBE101 /* Alef_Regular.ttf */; };
-		6A8D789B2C3AA6D600DBE101 /* Verdana_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A8D78962C3AA6D600DBE101 /* Verdana_Bold.ttf */; };
-		6A8D789C2C3AA6D600DBE101 /* Verdana.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A8D78972C3AA6D600DBE101 /* Verdana.ttf */; };
-		6A8D789D2C3AA6D600DBE101 /* DroidSans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A8D78982C3AA6D600DBE101 /* DroidSans.ttf */; };
-		6A8D789F2C3AA75C00DBE101 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6A8D789E2C3AA75C00DBE101 /* Assets.xcassets */; };
-		E34C1B67F4ADC6250C85F30F /* libPods-IssieDocs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B90821948689295DA8FCE6C /* libPods-IssieDocs.a */; };
+		0C80B921A6F3F58F76C31292 /* libPods-IssieDocs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-IssieDocs.a */; };
+		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		6AE84D442ECB2D40000D1578 /* LaunchScreen2.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6AE84D432ECB2D40000D1578 /* LaunchScreen2.storyboard */; };
+		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
+		F2B5DE0035FDB875A5A77A98 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		00E356F41AD99517003FC87E /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
-			remoteInfo = IssieDocs;
-		};
-		6ABD3B892BAF61D700EFEDB2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 6AD557BF2BA9B5910076DC3C;
-			remoteInfo = OpenIssieDocs2;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		6ABD3B8B2BAF61D700EFEDB2 /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
-		00E356EE1AD99517003FC87E /* IssieDocsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IssieDocsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		00E356F21AD99517003FC87E /* IssieDocsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IssieDocsTests.m; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* IssieDocs.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IssieDocs.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = IssieDocs/AppDelegate.h; sourceTree = "<group>"; };
-		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = IssieDocs/AppDelegate.mm; sourceTree = "<group>"; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = IssieDocs/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = IssieDocs/Info.plist; sourceTree = "<group>"; };
-		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = IssieDocs/main.m; sourceTree = "<group>"; };
-		4B9F9B4F601EBD7BCBF16D3A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = IssieDocs/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		6A0C1B522BA969DD00C79EA4 /* LaunchScreen2.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = LaunchScreen2.storyboard; sourceTree = "<group>"; };
-		6A8D78942C3AA6D600DBE101 /* Alef_Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Alef_Bold.ttf; sourceTree = "<group>"; };
-		6A8D78952C3AA6D600DBE101 /* Alef_Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Alef_Regular.ttf; sourceTree = "<group>"; };
-		6A8D78962C3AA6D600DBE101 /* Verdana_Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Verdana_Bold.ttf; sourceTree = "<group>"; };
-		6A8D78972C3AA6D600DBE101 /* Verdana.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Verdana.ttf; sourceTree = "<group>"; };
-		6A8D78982C3AA6D600DBE101 /* DroidSans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = DroidSans.ttf; sourceTree = "<group>"; };
-		6A8D789E2C3AA75C00DBE101 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		6ABD3B8C2BAF888A00EFEDB2 /* OpenIssieDocs2.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenIssieDocs2.entitlements; sourceTree = "<group>"; };
-		6AD557972BA99D290076DC3C /* IssieDocs-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IssieDocs-Bridging-Header.h"; sourceTree = "<group>"; };
-		6AD557C22BA9B5910076DC3C /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
-		6AD557C52BA9B5910076DC3C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
-		6AD557C72BA9B5910076DC3C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		6AF0262C2BC1932C00EEF6C1 /* IssieDocs.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; name = IssieDocs.entitlements; path = ../resources/ios/IssieDocs.entitlements; sourceTree = "<group>"; };
-		6AF0262D2BC1948C00EEF6C1 /* IssieDocs.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = IssieDocs.entitlements; path = IssieDocs/IssieDocs.entitlements; sourceTree = "<group>"; };
-		6B90821948689295DA8FCE6C /* libPods-IssieDocs.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-IssieDocs.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		B695CD703DAE9881A8B9AE2D /* Pods-IssieDocs.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs.debug.xcconfig"; path = "Target Support Files/Pods-IssieDocs/Pods-IssieDocs.debug.xcconfig"; sourceTree = "<group>"; };
-		DB0092EB683CB69C41F0BA11 /* Pods-IssieDocs.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs.release.xcconfig"; path = "Target Support Files/Pods-IssieDocs/Pods-IssieDocs.release.xcconfig"; sourceTree = "<group>"; };
+		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = IssieDocs/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		3B4392A12AC88292D35C810B /* Pods-IssieDocs.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs.debug.xcconfig"; path = "Target Support Files/Pods-IssieDocs/Pods-IssieDocs.debug.xcconfig"; sourceTree = "<group>"; };
+		5709B34CF0A7D63546082F79 /* Pods-IssieDocs.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs.release.xcconfig"; path = "Target Support Files/Pods-IssieDocs/Pods-IssieDocs.release.xcconfig"; sourceTree = "<group>"; };
+		5DCACB8F33CDC322A6C60F78 /* libPods-IssieDocs.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-IssieDocs.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6AE84D402ECB2AA8000D1578 /* IssieDocs-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IssieDocs-Bridging-Header.h"; sourceTree = "<group>"; };
+		6AE84D432ECB2D40000D1578 /* LaunchScreen2.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen2.storyboard; sourceTree = "<group>"; };
+		6AE84D452ECB2F48000D1578 /* IssieDocs.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = IssieDocs.entitlements; path = IssieDocs/IssieDocs.entitlements; sourceTree = "<group>"; };
+		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = IssieDocs/AppDelegate.swift; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		00E356EB1AD99517003FC87E /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E34C1B67F4ADC6250C85F30F /* libPods-IssieDocs.a in Frameworks */,
+				0C80B921A6F3F58F76C31292 /* libPods-IssieDocs.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		00E356EF1AD99517003FC87E /* IssieDocsTests */ = {
-			isa = PBXGroup;
-			children = (
-				00E356F21AD99517003FC87E /* IssieDocsTests.m */,
-				00E356F01AD99517003FC87E /* Supporting Files */,
-			);
-			path = IssieDocsTests;
-			sourceTree = "<group>";
-		};
-		00E356F01AD99517003FC87E /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				00E356F11AD99517003FC87E /* Info.plist */,
-			);
-			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
 		13B07FAE1A68108700A75B9A /* IssieDocs */ = {
 			isa = PBXGroup;
 			children = (
-				6A8D78942C3AA6D600DBE101 /* Alef_Bold.ttf */,
-				6A8D78952C3AA6D600DBE101 /* Alef_Regular.ttf */,
-				6A8D78982C3AA6D600DBE101 /* DroidSans.ttf */,
-				6A8D78962C3AA6D600DBE101 /* Verdana_Bold.ttf */,
-				6A8D78972C3AA6D600DBE101 /* Verdana.ttf */,
-				6AF0262D2BC1948C00EEF6C1 /* IssieDocs.entitlements */,
-				6A8D789E2C3AA75C00DBE101 /* Assets.xcassets */,
-				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
-				13B07FB01A68108700A75B9A /* AppDelegate.mm */,
+				6AE84D452ECB2F48000D1578 /* IssieDocs.entitlements */,
+				13B07FB51A68108700A75B9A /* Images.xcassets */,
+				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
-				6AF0262C2BC1932C00EEF6C1 /* IssieDocs.entitlements */,
-				6A0C1B522BA969DD00C79EA4 /* LaunchScreen2.storyboard */,
-				13B07FB71A68108700A75B9A /* main.m */,
-				6AD557972BA99D290076DC3C /* IssieDocs-Bridging-Header.h */,
-				4B9F9B4F601EBD7BCBF16D3A /* PrivacyInfo.xcprivacy */,
+				6AE84D432ECB2D40000D1578 /* LaunchScreen2.storyboard */,
+				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				6AE84D402ECB2AA8000D1578 /* IssieDocs-Bridging-Header.h */,
 			);
 			name = IssieDocs;
 			sourceTree = "<group>";
@@ -143,20 +59,9 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				6B90821948689295DA8FCE6C /* libPods-IssieDocs.a */,
+				5DCACB8F33CDC322A6C60F78 /* libPods-IssieDocs.a */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		6AD557C12BA9B5910076DC3C /* OpenIssieDocs2 */ = {
-			isa = PBXGroup;
-			children = (
-				6ABD3B8C2BAF888A00EFEDB2 /* OpenIssieDocs2.entitlements */,
-				6AD557C22BA9B5910076DC3C /* ShareViewController.swift */,
-				6AD557C42BA9B5910076DC3C /* MainInterface.storyboard */,
-				6AD557C72BA9B5910076DC3C /* Info.plist */,
-			);
-			path = OpenIssieDocs2;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -171,8 +76,6 @@
 			children = (
 				13B07FAE1A68108700A75B9A /* IssieDocs */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
-				00E356EF1AD99517003FC87E /* IssieDocsTests */,
-				6AD557C12BA9B5910076DC3C /* OpenIssieDocs2 */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -186,7 +89,6 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* IssieDocs.app */,
-				00E356EE1AD99517003FC87E /* IssieDocsTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -194,8 +96,8 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				B695CD703DAE9881A8B9AE2D /* Pods-IssieDocs.debug.xcconfig */,
-				DB0092EB683CB69C41F0BA11 /* Pods-IssieDocs.release.xcconfig */,
+				3B4392A12AC88292D35C810B /* Pods-IssieDocs.debug.xcconfig */,
+				5709B34CF0A7D63546082F79 /* Pods-IssieDocs.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -203,41 +105,21 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		00E356ED1AD99517003FC87E /* IssieDocsTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "IssieDocsTests" */;
-			buildPhases = (
-				00E356EA1AD99517003FC87E /* Sources */,
-				00E356EB1AD99517003FC87E /* Frameworks */,
-				00E356EC1AD99517003FC87E /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				00E356F51AD99517003FC87E /* PBXTargetDependency */,
-			);
-			name = IssieDocsTests;
-			productName = IssieDocsTests;
-			productReference = 00E356EE1AD99517003FC87E /* IssieDocsTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 		13B07F861A680F5B00A75B9A /* IssieDocs */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "IssieDocs" */;
 			buildPhases = (
-				64A180EEB5DF6777DDC83A57 /* [CP] Check Pods Manifest.lock */,
+				C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				6ABD3B8B2BAF61D700EFEDB2 /* Embed Foundation Extensions */,
-				56E30A33F66BC8BACD704CE8 /* [CP] Embed Pods Frameworks */,
-				0BA24AE6767E555D87A8A905 /* [CP] Copy Pods Resources */,
+				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
+				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				6ABD3B8A2BAF61D700EFEDB2 /* PBXTargetDependency */,
 			);
 			name = IssieDocs;
 			productName = IssieDocs;
@@ -250,15 +132,10 @@
 		83CBB9F71A601CBA00E9B192 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 1530;
 				LastUpgradeCheck = 1210;
 				TargetAttributes = {
-					00E356ED1AD99517003FC87E = {
-						CreatedOnToolsVersion = 6.2;
-						TestTargetID = 13B07F861A680F5B00A75B9A;
-					};
 					13B07F861A680F5B00A75B9A = {
-						LastSwiftMigration = 1530;
+						LastSwiftMigration = 2610;
 					};
 				};
 			};
@@ -276,31 +153,18 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* IssieDocs */,
-				00E356ED1AD99517003FC87E /* IssieDocsTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		00E356EC1AD99517003FC87E /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		13B07F8E1A680F5B00A75B9A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6A8D789B2C3AA6D600DBE101 /* Verdana_Bold.ttf in Resources */,
-				6A0C1B532BA969DD00C79EA4 /* LaunchScreen2.storyboard in Resources */,
-				6A8D789C2C3AA6D600DBE101 /* Verdana.ttf in Resources */,
-				6A8D789D2C3AA6D600DBE101 /* DroidSans.ttf in Resources */,
-				6A8D789F2C3AA75C00DBE101 /* Assets.xcassets in Resources */,
-				6A8D789A2C3AA6D600DBE101 /* Alef_Regular.ttf in Resources */,
-				6A8D78992C3AA6D600DBE101 /* Alef_Bold.ttf in Resources */,
-				5119913DB58616D0EA8EC2CC /* PrivacyInfo.xcprivacy in Resources */,
+				6AE84D442ECB2D40000D1578 /* LaunchScreen2.storyboard in Resources */,
+				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				F2B5DE0035FDB875A5A77A98 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -321,26 +185,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"../node_modules/react-native/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"../node_modules/react-native/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
+			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
-		0BA24AE6767E555D87A8A905 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		56E30A33F66BC8BACD704CE8 /* [CP] Embed Pods Frameworks */ = {
+		00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -348,16 +195,20 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		64A180EEB5DF6777DDC83A57 /* [CP] Check Pods Manifest.lock */ = {
+		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -379,206 +230,105 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		E235C05ADACE081382539298 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		00E356EA1AD99517003FC87E /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				00E356F31AD99517003FC87E /* IssieDocsTests.m in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		13B07F871A680F5B00A75B9A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
-				13B07FC11A68108700A75B9A /* main.m in Sources */,
+				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin PBXTargetDependency section */
-		00E356F51AD99517003FC87E /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 13B07F861A680F5B00A75B9A /* IssieDocs */;
-			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
-		};
-		6ABD3B8A2BAF61D700EFEDB2 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			targetProxy = 6ABD3B892BAF61D700EFEDB2 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
-/* Begin PBXVariantGroup section */
-		6AD557C42BA9B5910076DC3C /* MainInterface.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				6AD557C52BA9B5910076DC3C /* Base */,
-			);
-			name = MainInterface.storyboard;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
-
 /* Begin XCBuildConfiguration section */
-		00E356F61AD99517003FC87E /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = SKNJT9TD9G;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				INFOPLIST_FILE = IssieDocsTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(SDKROOT)/usr/lib/swift",
-					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
-					"$(inherited)",
-				);
-				OTHER_LDFLAGS = (
-					"-ObjC",
-					"-lc++",
-					"$(inherited)",
-				);
-				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IssieDocs.app/IssieDocs";
-			};
-			name = Debug;
-		};
-		00E356F71AD99517003FC87E /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				COPY_PHASE_STRIP = NO;
-				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = SKNJT9TD9G;
-				INFOPLIST_FILE = IssieDocsTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(SDKROOT)/usr/lib/swift",
-					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
-					"$(inherited)",
-				);
-				OTHER_LDFLAGS = (
-					"-ObjC",
-					"-lc++",
-					"$(inherited)",
-				);
-				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IssieDocs.app/IssieDocs";
-			};
-			name = Release;
-		};
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = B695CD703DAE9881A8B9AE2D /* Pods-IssieDocs.debug.xcconfig */;
+			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-IssieDocs.debug.xcconfig */;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				ENABLE_BITCODE = NO;
-				EXCLUDED_ARCHS = "";
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				INFOPLIST_FILE = IssieDocs/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift$(inherited)";
-				MARKETING_VERSION = 1.5.1;
-				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "$(inherited)";
+				MARKETING_VERSION = 1.6;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
-					"-v",
 				);
-				OTHER_SWIFT_FLAGS = "$(inherited) -D COCOAPODS -Xcc -fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/ReactNativeCameraKit/ReactNativeCameraKit.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTTypeSafety/RCTTypeSafety.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RNReanimated/RNReanimated.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React/React-Core.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/ReactCommon/ReactCommon.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React_Codegen/React-Codegen.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/SSZipArchive/SSZipArchive.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/folly/RCT-Folly.modulemap\" -Xcc -fmodule-map-file=\"${PODS_ROOT}/Headers/Public/yoga/Yoga.modulemap\"";
-				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.issieshapiro.issiedoc.IssieDoc;
 				PRODUCT_NAME = IssieDocs;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_INCLUDE_PATHS = "$(inherited)";
 				SWIFT_OBJC_BRIDGING_HEADER = "IssieDocs-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TVOS_DEPLOYMENT_TARGET = 16.6;
-				USE_HEADERMAP = YES;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DB0092EB683CB69C41F0BA11 /* Pods-IssieDocs.release.xcconfig */;
+			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-IssieDocs.release.xcconfig */;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
-				EXCLUDED_ARCHS = "";
 				INFOPLIST_FILE = IssieDocs/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift$(inherited)";
-				MARKETING_VERSION = 1.5.1;
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_CFLAGS = "$(inherited)";
+				MARKETING_VERSION = 1.6;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
-					"-v",
 				);
-				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.issieshapiro.issiedoc.IssieDoc;
 				PRODUCT_NAME = IssieDocs;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_INCLUDE_PATHS = "$(inherited) ";
 				SWIFT_OBJC_BRIDGING_HEADER = "IssieDocs-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TVOS_DEPLOYMENT_TARGET = 16.6;
-				USE_HEADERMAP = YES;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
@@ -616,7 +366,7 @@
 				COPY_PHASE_STRIP = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = i386;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -632,7 +382,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -644,7 +394,6 @@
 				);
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "$(inherited)";
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DFOLLY_NO_CONFIG",
@@ -653,7 +402,6 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -694,7 +442,7 @@
 				COPY_PHASE_STRIP = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = i386;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -703,7 +451,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -714,7 +462,6 @@
 					"\"$(inherited)\"",
 				);
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_CFLAGS = "$(inherited)";
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DFOLLY_NO_CONFIG",
@@ -723,7 +470,6 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -734,15 +480,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "IssieDocsTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				00E356F61AD99517003FC87E /* Debug */,
-				00E356F71AD99517003FC87E /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "IssieDocs" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

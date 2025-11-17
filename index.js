@@ -7,7 +7,6 @@ import App from './src/App';
 import { name as appName } from './app.json';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { semanticColors } from './src/elements';
-import { trace } from './src/log';
 import { GlobalContext } from './src/global-context.js';
 import { MessageBoxProvider } from './src/message';
 
@@ -27,7 +26,8 @@ import { MessageBoxProvider } from './src/message';
 function SafeAppContainer(props) {
     console.log("props.url", props.url)
     return <GlobalContext.Provider value={{
-        url: props.url
+        url: props.url,
+        nativeStartTime: props.nativeStartTime ?? now,
     }}>
         <SafeAreaProvider>
             <SafeApp />

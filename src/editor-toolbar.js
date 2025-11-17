@@ -7,9 +7,9 @@ import { getRowDirections, translate } from "./lang";
 import { trace } from "./log";
 import { BrushSizePicker, MyColorPicker, TextSizePicker } from "./pickers";
 import { getSvgIcon, MarkerStroke } from "./svg-icons";
-import { Icon } from "@rneui/themed";
 import { FEATURES, getFeaturesSetting } from "./settings";
 import { IIF } from "./canvas/utils";
+import { MyIcon } from "./common/icons";
 
 export const TextAlignment = {
     RIGHT: "Right",
@@ -315,7 +315,7 @@ function EditorToolbar({
     }
 
     const rullerBtn = <IconButton onPress={() => onModeButtonClick(Pickers.RULER, 70)} color={rulerColor}
-        iconType="material-community" icon="ruler" size={49} iconSize={45} selected={isRulerMode} ensureContrast={true} />;
+        iconType="MDI" icon="ruler" size={49} iconSize={45} selected={isRulerMode} ensureContrast={true} />;
 
 
 
@@ -323,7 +323,7 @@ function EditorToolbar({
 
     if (featuresRef.current.includes(FEATURES.marker)) {
         extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.MARKER, 70)} color={markerColor}
-            iconType="material-community" icon="marker" size={50} iconSize={45} selected={isMarkerMode} ensureContrast={true} />
+            iconType="MDI" icon="marker" size={50} iconSize={45} selected={isMarkerMode} ensureContrast={true} />
         )
     }
 
@@ -335,14 +335,14 @@ function EditorToolbar({
     if (featuresRef.current.includes(FEATURES.voice)) {
         extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.AUDIO, 70)
         } color={semanticColors.editPhotoButton}
-            iconType="material-community" icon={"microphone"} size={47} iconSize={45} selected={isAudioMode} />)
+            iconType="MDI" icon={"microphone"} size={47} iconSize={45} selected={isAudioMode} />)
     }
 
     if (featuresRef.current.includes(FEATURES.table)) {
 
         extMenu.push(< IconButton onPress={() => onModeButtonClick(Pickers.TABLE, isScreenNarrow() ? 160 : 80)
         } color={Table ? Table.color : tableColor}
-            iconType="font-awesome" icon="table" size={47} iconSize={42} selected={isTableMode} ensureContrast={true} />)
+            iconType="MDI" icon="table-large" size={47} iconSize={42} selected={isTableMode} ensureContrast={true} />)
     }
     if (featuresRef.current.includes(FEATURES.ruler)) {
         extMenu.push(rullerBtn);
@@ -360,9 +360,9 @@ function EditorToolbar({
         />,
         <IconButton key={13} onPress={() => onModeButtonClick(Pickers.BRUSH, 70)} icon={"edit"} size={55}
             color={brushColor} iconSize={45} selected={isBrushMode} ensureContrast={true} />,
-        <IconButton onPress={() => onSelectButtonClick(Pickers.COLOR, true, 70)} icon={"color-lens"}
+        <IconButton onPress={() => onSelectButtonClick(Pickers.COLOR, true, 70)} iconType="MI" icon={"color-lens"}
             size={55} iconSize={45} color={semanticColors.editPhotoButton} />,
-        extMenu.length > 0 ? <IconButton onPress={() => setShowExtMenu(currVal => !currVal)} icon={showExtMenu ? "expand-less" : "expand-more"}
+        extMenu.length > 0 ? <IconButton onPress={() => setShowExtMenu(currVal => !currVal)} iconType="MI" icon={showExtMenu ? "expand-less" : "expand-more"}
             size={45} color={semanticColors.editPhotoButton} /> : zoomBtn,
     ]
 
@@ -401,9 +401,9 @@ function EditorToolbar({
         }}>
             <IconButton onPress={onGoBack} color={semanticColors.editPhotoButton} icon="folder" size={55} iconSize={45} />
             <Spacer width={45} />
-            <IconButton onPress={onUndo} color={semanticColors.editPhotoButton} icon={rtl ? "undo" : "redo"} size={55} />
+            <IconButton onPress={onUndo} color={semanticColors.editPhotoButton} iconType="MDI" icon={rtl ? "undo" : "redo"} size={55} />
             <Spacer width={23} />
-            <IconButton onPress={onRedo} color={canRedo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} icon={rtl ? "redo" : "undo"} size={55} />
+            <IconButton onPress={onRedo} color={canRedo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} iconType="MDI" icon={rtl ? "redo" : "undo"} size={55} />
             <Spacer width={23} />
             {getEraserIcon(onEraser, 50, eraseMode ? 'black' : semanticColors.editPhotoButton, eraseMode, 25)}
             { /* text size preview */}
@@ -502,7 +502,7 @@ function EditorToolbar({
             open={showPickerType === Pickers.COLOR && showPicker}
             top={toolbarHeight}
             width={availablePickerWidth}
-            color={eraseMode ? undefined :colorByMode}
+            color={eraseMode ? undefined : colorByMode}
             isScreenNarrow={isScreenNarrow()}
             onSelect={(color) => {
                 onSelectColor(color);
@@ -659,8 +659,7 @@ function EditorToolbar({
                 }
             }}>
                 <AppText style={{ fontSize: 20, color: semanticColors.actionButton }}>{translate(Table ? "DeleteTableCaption" : "ShowTableCaption")}</AppText>
-                <Icon color={semanticColors.actionButton} name={Table ? "delete-forever" : "add"} size={35} />
-
+                <MyIcon info={{ type: "MDI", color: semanticColors.actionButton, name: Table ? "delete-forever" : "add", size: 35 }} />
             </ToolbarGroup>
         </FadeInView>
 
@@ -677,7 +676,7 @@ function NumberSelector({ value, setValue, icon, direction, rotateDeg }) {
                 <Text allowFontScaling={false} style={{ fontSize: 20, textAlign: "center", justifyContent: "center", color: semanticColors.actionButton }}>
                     {value || 1}
                 </Text>
-                <Icon name={icon} size={35} color={semanticColors.actionButton} style={rotateDeg && { transform: [{ rotate: rotateDeg + 'deg' }] }} />
+                <MyIcon info={{name:icon, size:35, color:semanticColors.actionButton}} style={rotateDeg && { transform: [{ rotate: rotateDeg + 'deg' }] }} />
                 <Spacer height={7} />
             </View>
             <Spacer width={5} />
