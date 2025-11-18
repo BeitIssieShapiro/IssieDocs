@@ -373,25 +373,38 @@ function Canvas({
 
                     if (!startSketchRef.current.elem) {
                         if (currentElementTypeRef.current === ElementTypes.Sketch) {
-                            //console.log("sketch start")
-                            if (sketchPathInSaveProgressRef.current) {
-                                if (lastPathSV.value.countPoints() > 0) {
-                                    lastPathSV.value?.reset();
-                                }
-                                sketchPathInSaveProgressRef.current = false;
+                            if (sketchTimerRef.current) {
+                                console.log("sketch continue - cancel save timer")
+                                clearTimeout(sketchTimerRef.current);
+                                sketchTimerRef.current = undefined;
+                                // continue the previous sketch
+
+                                lastPathSV.value.moveTo(
+                                    parseFloat((startSketchRef.current.position[0] * ratioRef.current).toFixed(1)),
+                                    parseFloat((startSketchRef.current.position[1] * ratioRef.current).toFixed(1))
+                                )
+
+                                sketchInProgressRef.current = true;
+                            }
+                            // else if (sketchPathInSaveProgressRef.current) {
+                            //     if (lastPathSV.value.countPoints() > 0) {
+                            //         lastPathSV.value.reset();
+                            //     }
+                            //     sketchPathInSaveProgressRef.current = false;
+                            // } 
+
+
+                            if (!sketchInProgressRef.current) {
+                                // init line
+                                lastPathSV.value.reset();
+                                lastPathSV.value.moveTo(
+                                    parseFloat((startSketchRef.current.position[0] * ratioRef.current).toFixed(1)),
+                                    parseFloat((startSketchRef.current.position[1] * ratioRef.current).toFixed(1))
+                                )
                             }
 
                             sketchInProgressRef.current = true;
-                            if (sketchTimerRef.current) {
-                                //console.log("sketch start - clear timeout")
-                                clearTimeout(sketchTimerRef.current);
-                                sketchTimerRef.current = undefined;
-                            }
-                            lastPathSV.value.moveTo(
-                                parseFloat((startSketchRef.current.position[0] * ratioRef.current).toFixed(1)),
-                                parseFloat((startSketchRef.current.position[1] * ratioRef.current).toFixed(1))
-                            );
-                            skiaCanvasRef.current?.redraw();
+
                         } else if (currentElementTypeRef.current === ElementTypes.Line) {
                             onSketchStart(startSketchRef.current.position);
                         }
@@ -426,8 +439,10 @@ function Canvas({
                 }
                 if (currentElementTypeRef.current === ElementTypes.Sketch) {
                     //console.log("sketch step")
-                    lastPathSV.value.lineTo(newPoint[0] * ratioRef.current, newPoint[1] * ratioRef.current);
-                    skiaCanvasRef.current?.redraw();
+                    lastPathSV.modify(p=>{
+                        "worklet"
+                        return p.lineTo(newPoint[0] * ratioRef.current, newPoint[1] * ratioRef.current) as any;
+                    })
                 } else if (currentElementTypeRef.current === ElementTypes.Line) {
                     onSketchStep(newPoint);
                 } else {
