@@ -2,12 +2,13 @@ import React from 'react';
 import {
     StyleSheet, View,
     Alert, Text, Dimensions, Linking, NativeEventEmitter, NativeModules,
-    ActivityIndicator
+    ActivityIndicator,
+    Platform
 } from 'react-native';
 
 import { Settings } from "./new-settings"
 import * as Progress from 'react-native-progress';
-import { pick } from '@react-native-documents/picker'
+import { isErrorWithCode, pick, types } from '@react-native-documents/picker'
 import Search from './search.js'
 import SettingsMenu from './settings-ui'
 import Share from 'react-native-share';
@@ -175,7 +176,9 @@ export default class FolderGallery extends React.Component {
 
             setTimeout(() => {
                 console.log("Splash Closed");
-                SplashScreen.hide();
+                if (Platform.OS != "android") {
+                    SplashScreen.hide();
+                }
             }, remaining);
         }
     };
@@ -352,7 +355,7 @@ export default class FolderGallery extends React.Component {
         this.setState({ isNewPageMode: false });
 
         pick({
-            type: [DocumentPicker.types.images, DocumentPicker.types.pdf]
+            type: [types.images, types.pdf]
         }).then(async (res) => {
             if (res.length > 0) {
                 const pdfUrl = await FileSystem.contentUriToFilePath(res[0].uri).catch(e => trace("convert err", e));
@@ -368,7 +371,7 @@ export default class FolderGallery extends React.Component {
                 });
             }
         }).catch(err => {
-            if (!DocumentPicker.isCancel(err)) {
+            if (!isErrorWithCode(err) || err.code != errorCodes.OPERATION_CANCELED) {
                 Alert.alert(err);
             }
         });

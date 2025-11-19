@@ -20,7 +20,7 @@ export function MyIcon({ info, onPress, style }: { info: IconProps, onPress?: ()
         (info.type == "MDI" ? MDIIcon :
             (info.type == "MI" ? MIIcon : IconAnt));
     // @ts-ignore
-    return <IconElem style={style} name={info.name} size={info.size || 22} color={info.color || defaultIconColor} style={{ width: info.size, height: info.size, margin: 0, padding: 0 }} onPress={onPress} />
+    return <IconElem name={info.name} size={info.size || 22} color={info.color || defaultIconColor} style={[{ width: info.size, height: info.size, margin: 0, padding: 0 }, style]} onPress={onPress} />
 }
 
 export function MyCloseIcon({ onClose }: { onClose: () => void }) {

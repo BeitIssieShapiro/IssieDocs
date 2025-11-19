@@ -659,7 +659,7 @@ function EditorToolbar({
                 }
             }}>
                 <AppText style={{ fontSize: 20, color: semanticColors.actionButton }}>{translate(Table ? "DeleteTableCaption" : "ShowTableCaption")}</AppText>
-                <MyIcon info={{ type: "MDI", color: semanticColors.actionButton, name: Table ? "delete-forever" : "add", size: 35 }} />
+                <MyIcon info={{ type: "MI", color: semanticColors.actionButton, name: Table ? "delete-forever" : "add", size: 35 }} />
             </ToolbarGroup>
         </FadeInView>
 
@@ -676,7 +676,7 @@ function NumberSelector({ value, setValue, icon, direction, rotateDeg }) {
                 <Text allowFontScaling={false} style={{ fontSize: 20, textAlign: "center", justifyContent: "center", color: semanticColors.actionButton }}>
                     {value || 1}
                 </Text>
-                <MyIcon info={{name:icon, size:35, color:semanticColors.actionButton}} style={rotateDeg && { transform: [{ rotate: rotateDeg + 'deg' }] }} />
+                <MyIcon info={{ type: "MI", name: icon, size: 35, color: semanticColors.actionButton }} style={rotateDeg && { transform: [{ rotate: rotateDeg + 'deg' }] }} />
                 <Spacer height={7} />
             </View>
             <Spacer width={5} />

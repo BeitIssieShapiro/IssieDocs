@@ -6,7 +6,7 @@ import {
   Image
 } from 'react-native';
 import ImageEditor from "@react-native-community/image-editor";
-import PdfThumbnail from "react-native-pdf-thumbnail";
+// import PdfThumbnail from "react-native-pdf-thumbnail";
 import { StackActions } from '@react-navigation/native';
 import { OrientationPicker } from "./elements"
 import { getRowDirections, translate } from './lang.js'
@@ -26,6 +26,7 @@ import Scroller from './scroller';
 import { FileSystem } from './filesystem';
 import { assert, trace } from './log.js';
 import { normalizeFoAndroid } from './canvas/utils';
+import { MyIcon } from './common/icons';
 
 const OK_Cancel = 1;
 const PickName = 2;
@@ -154,20 +155,19 @@ export default class IssieSavePhoto extends React.Component {
     } else {
       imageUri = decodeURI(this.props.route.params.uri);
       if (this.isFile() && imageUri.endsWith('.pdf')) {
+        throw ("TODO replace PdfThumbnail");
+        // pages = await PdfThumbnail.generateAllPages("file://" + imageUri)
+        // //.catch(e => console.log("error readin pdf", e));
 
-        pages = await PdfThumbnail.generateAllPages("file://" + imageUri)
-        //.catch(e => console.log("error readin pdf", e));
+        // pages = pages.map(p => {
+        //   if (p.uri.startsWith("file://")) return decodeURI(p.uri.slice(7));
+        //   return decodeURI(p.uri);
+        // });
 
-        pages = pages.map(p => {
-          if (p.uri.startsWith("file://")) return decodeURI(p.uri.slice(7));
-          return decodeURI(p.uri);
-        });
+        // imageUri = pages[0];
+        // multiPage = pages.length > 1;
+        // pathToSave = pages[0];
 
-        imageUri = pages[0];
-        multiPage = pages.length > 1;
-        pathToSave = pages[0];
-
-        //pdf = true;
       } else {
         pages.push(imageUri)
         pathToSave = decodeURI(this.props.route.params.uri);
@@ -638,7 +638,7 @@ export default class IssieSavePhoto extends React.Component {
             this.state.phase == OK_Cancel && !this.state.pdf && !this.state.addToExistingPage ?
               <Spacer width={10} /> : null}
           {this.state.phase == OK_Cancel && !this.state.onConfirm && !this.state.pdf && !this.state.addToExistingPage && !this.isFile() ?
-            getRoundedButton(this.AddPage, 'add', translate("BtnAddPage"), 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isScreenNarrow()) :
+            getRoundedButton(this.AddPage, 'add', translate("BtnAddPage"), 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isScreenNarrow(), undefined, undefined, "MI") :
             null
           }
 
@@ -723,17 +723,17 @@ export default class IssieSavePhoto extends React.Component {
         {/* <Text>{JSON.stringify(this.state.cropData)}</Text> */}
 
         <View style={{ position: 'absolute', left: 5, top: 5 }}>
-          <MyIcon info={{ name: "border-style", size: 45 }} />
+          <MyIcon info={{ type: "MI", name: "border-style", size: 45 }} />
 
         </View>
         <View style={{ position: 'absolute', transform: [{ rotate: 90 + 'deg' }], right: 5, top: 5 }}>
-          <MyIcon info={{ name: "border-style", size: 45 }} />
+          <MyIcon info={{ type: "MI", name: "border-style", size: 45 }} />
         </View>
         <View style={{ position: 'absolute', transform: [{ rotate: 180 + 'deg' }], right: 5, bottom: 5 }}>
-          <MyIcon info={{ name: "border-style", size: 45 }} />
+          <MyIcon info={{ type: "MI", name: "border-style", size: 45 }} />
         </View>
         <View style={{ position: 'absolute', transform: [{ rotate: 270 + 'deg' }], left: 5, bottom: 5 }}>
-          <MyIcon info={{ name: "border-style", size: 45 }} />
+          <MyIcon info={{ type: "MI", name: "border-style", size: 45 }} />
         </View>
       </View>
     }

@@ -175,17 +175,17 @@ export function getEmbeddedSvgButton(callback, icon, iconSize, key, color) {
 }
 
 
-export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction, dark, isMobile, forceText, key) {
+export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction, dark, isMobile, forceText, key, iconType) {
 
     if (getUseTextSetting() && !isMobile || forceText) {
-        return getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark, key)
+        return getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark, key, iconType)
     } else {
         let newDim = { width: dim.height, height: dim.height };
-        return getRoundedButtonInt(callback, icon, "", textSize, iconSize, newDim, direction, dark, key)
+        return getRoundedButtonInt(callback, icon, "", textSize, iconSize, newDim, direction, dark, key, iconType)
     }
 
 }
-export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark, key) {
+export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark, key, iconType) {
     let color = dark ? "white" : semanticColors.titleText;
     if (icon === 'check-green') {
         color = 'green';
@@ -226,7 +226,7 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
             }
             {icon?.startsWith("svg-") ?
                 <SvgIcon name={icon.substr(4)} size={iconSize} color={color} />
-                : icon && <MyIcon info={{ name: icon, size: iconSize, color }} />
+                : icon && <MyIcon info={{ name: icon, size: iconSize, color, type: iconType }} />
             }
             {/* {textExist ?
                 <Spacer width={5} /> : null
@@ -979,7 +979,7 @@ export function getColorButtonInt(callback, color, size, icon, index, iconColor)
         }, borderStyle]}
         >
 
-            {icon && <MyIcon info={{ color: iconColor || "white", size, name: icon }} />}
+            {icon && <MyIcon info={{ type: "MI", color: iconColor || "white", size: size * 2 / 3, name: icon }} />}
         </View>
     </TouchableOpacity>
 }

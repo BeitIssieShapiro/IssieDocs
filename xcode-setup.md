@@ -52,5 +52,3 @@ at application:openURL:options
     savedEvent = URL.absoluteString;
 ```
 
-## apply fix to multiline textInput
-https://github.com/facebook/react-native/pull/37958/files

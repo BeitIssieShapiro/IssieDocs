@@ -15,6 +15,7 @@ import { getNewPage, SRC_GALLERY } from './newPage.js';
 import { trace } from './log.js';
 import { FileSystem } from './filesystem.js';
 import Scroller from './scroller.js';
+import { MyIcon } from './common/icons';
 
 export default class IssieCreateFolder extends React.Component {
     constructor(props) {

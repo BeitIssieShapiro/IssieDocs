@@ -25,9 +25,10 @@ import { MessageBoxProvider } from './src/message';
 
 function SafeAppContainer(props) {
     console.log("props.url", props.url)
+    const now = new Date();
     return <GlobalContext.Provider value={{
         url: props.url,
-        nativeStartTime: props.nativeStartTime ?? now,
+        nativeStartTime: props.nativeStartTime ?? now.getMilliseconds(),
     }}>
         <SafeAreaProvider>
             <SafeApp />

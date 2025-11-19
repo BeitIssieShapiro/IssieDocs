@@ -1,0 +1,13 @@
+diff --git a/node_modules/@react-navigation/stack/lib/module/views/Stack/CardContainer.js b/node_modules/@react-navigation/stack/lib/module/views/Stack/CardContainer.js
+index dfaf18a..6442c57 100644
+--- a/node_modules/@react-navigation/stack/lib/module/views/Stack/CardContainer.js
++++ b/node_modules/@react-navigation/stack/lib/module/views/Stack/CardContainer.js
+@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
+     flex: 1
+   },
+   header: {
+-    zIndex: 1
++    zIndex: 1000
+   },
+   scene: {
+     flex: 1
