@@ -10,7 +10,7 @@ import {
     getPageNavigationButtons, semanticColors,
     Spacer, getRoundedButton, dimensions, getColorButton
 } from './elements'
-import {  TextInput } from 'react-native-gesture-handler';
+import { TextInput } from 'react-native-gesture-handler';
 import { getNewPage, SRC_GALLERY } from './newPage.js';
 import { trace } from './log.js';
 import { FileSystem } from './filesystem.js';
@@ -202,7 +202,7 @@ export default class IssieCreateFolder extends React.Component {
                         <TouchableOpacity style={{ padding: 20 }} key={i} onPress={() => {
                             this.setState({ icon: item, yOffset: 0 })
                         }}>
-                            <MyIcon info={{ name: item, size: 55, color: this.state.icon === item ? semanticColors.selectedIconColor : semanticColors.availableIconColor }} />
+                            <MyIcon info={{ type: "MI", name: item, size: 55, color: this.state.icon === item ? semanticColors.selectedIconColor : semanticColors.availableIconColor }} />
                         </TouchableOpacity>
                     ))
                 }

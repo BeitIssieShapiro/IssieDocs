@@ -3,6 +3,11 @@ alef
 alef_bold
 material.ttf
 
+# language
+for the hebrew context menu of TextInput, you need the following:
+- add he, ar to languages: click on project->info->localizations
+- add string catalog file with he and ar and one string
+
 ## permission
 info.plist
 IssieDocs.entitlements

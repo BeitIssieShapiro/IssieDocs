@@ -1,4 +1,4 @@
-package com.issiedocs
+package org.issieshapiro.issiedocs
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

@@ -30,11 +30,28 @@ class FileProviderModule(reactContext: ReactApplicationContext) :
     fun getUriForFile(filePath: String, promise: Promise) {
         try {
             val context = reactApplicationContext
-            val file = File(context.filesDir, filePath.removePrefix("/data/user/0/${context.packageName}/files/"))
-            val uri: Uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+            var cleanPath = filePath
+
+            // Remove file:// if exists
+            if (cleanPath.startsWith("file://")) {
+                cleanPath = cleanPath.removePrefix("file://")
+            }
+
+            // Remove absolute prefix to get relative name
+            cleanPath = cleanPath.removePrefix("/data/user/0/${context.packageName}/files/")
+
+            val file = File(context.filesDir, cleanPath)
+
+            val uri: Uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.provider",
+                file
+            )
+
             promise.resolve(uri.toString())
+
         } catch (e: Exception) {
-            promise.reject("ERROR", e.message)
+            promise.reject("ERROR", e)
         }
     }
 
@@ -56,13 +73,21 @@ class FileProviderModule(reactContext: ReactApplicationContext) :
      * @return string value of the File path.
      */
     @ReactMethod
-    fun getFilePathFromUri(filePath:String, uniqueName: Boolean): String {
-        val uri = Uri.parse(filePath)
-        val context: Context = reactApplicationContext
-        if (uri.path?.contains("file://") == true) {
-            return uri.path!!;
+    fun getFilePathFromUri(filePath:String, uniqueName: Boolean, promise: Promise) {
+        try {
+            val uri = Uri.parse(filePath)
+            val context: Context = reactApplicationContext
+
+            if (uri.path?.contains("file://") == true) {
+                promise.resolve(uri.path)
+                return
+            }
+
+            val file = getFileFromContentUri(context, uri, uniqueName)
+            promise.resolve(file.path)
+        } catch (e: Exception) {
+            promise.reject("ERROR", e)
         }
-        return getFileFromContentUri(context, uri, uniqueName).path
     }
 
     private fun getFileFromContentUri(context: Context, contentUri: Uri, uniqueName: Boolean): File {

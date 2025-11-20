@@ -173,7 +173,6 @@ export default class FolderGallery extends React.Component {
             const remaining = Math.max(0, minDuration - elapsed);
 
             console.log("Splash delay remaining:", remaining);
-
             setTimeout(() => {
                 console.log("Splash Closed");
                 if (Platform.OS != "android") {

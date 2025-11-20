@@ -6,7 +6,7 @@ import {
   Image
 } from 'react-native';
 import ImageEditor from "@react-native-community/image-editor";
-// import PdfThumbnail from "react-native-pdf-thumbnail";
+import PdfThumbnail from "react-native-pdf-thumbnail";
 import { StackActions } from '@react-navigation/native';
 import { OrientationPicker } from "./elements"
 import { getRowDirections, translate } from './lang.js'
@@ -155,18 +155,16 @@ export default class IssieSavePhoto extends React.Component {
     } else {
       imageUri = decodeURI(this.props.route.params.uri);
       if (this.isFile() && imageUri.endsWith('.pdf')) {
-        throw ("TODO replace PdfThumbnail");
-        // pages = await PdfThumbnail.generateAllPages("file://" + imageUri)
-        // //.catch(e => console.log("error readin pdf", e));
+        const pdfPages = await PdfThumbnail.generateAllPages("file://" + imageUri)
 
-        // pages = pages.map(p => {
-        //   if (p.uri.startsWith("file://")) return decodeURI(p.uri.slice(7));
-        //   return decodeURI(p.uri);
-        // });
+        pages = pdfPages.map(p => {
+          if (p.uri.startsWith("file://")) return decodeURI(p.uri.slice(7));
+          return decodeURI(p.uri);
+        });
 
-        // imageUri = pages[0];
-        // multiPage = pages.length > 1;
-        // pathToSave = pages[0];
+        imageUri = pages[0];
+        multiPage = pages.length > 1;
+        pathToSave = pages[0];
 
       } else {
         pages.push(imageUri)

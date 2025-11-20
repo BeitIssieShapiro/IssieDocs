@@ -5,6 +5,7 @@ import {
     Dimensions,
     ImageSize,
     Keyboard,
+    Platform,
     StyleSheet,
     TouchableOpacity,
     View,
@@ -29,7 +30,6 @@ import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
 import { fTranslate, isRTL, translate } from './lang';
 import { FileContextMenu } from './file-context-menu';
 import { AudioElement2 } from './audio-elem-new';
-import { generatePDF } from './pdf';
 import { Text } from 'react-native';
 import { migrateMetadata } from './state-migrate';
 import { PathCommand } from '@shopify/react-native-skia';
@@ -38,6 +38,7 @@ import { hideMessage, showMessage } from 'react-native-flash-message';
 import { getSetting } from './settings';
 import { useMessageBox } from './message';
 import { MyIcon } from './common/icons';
+import { generatePDF } from './pdf';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -394,7 +395,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setNavParam(navigation, 'share', false);
             // Always create PDF file
             trace("about to generate PDF", dataUrls.length)
-            const shareUrl = "file://" + (await generatePDF(dataUrls));
+            let shareUrl = "file://" + (await generatePDF(dataUrls));
+            shareUrl = await FileSystem.filePathToContentUri(shareUrl)
+
             trace("about to share", shareUrl)
             setShareProgress(-1);
 
@@ -2021,7 +2024,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             {
                 pageRef.current && pageRef.current.count > 0 && currentFile !== pageRef.current.getPage(0) ?
                     <View style={{ position: 'absolute', bottom: 50, left: 10, width: 155, height: 40, zIndex: 100 }}>
-                        {getRoundedButton(() => movePage(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 125, height: 40 }, 'row-reverse', true)}
+                        {getRoundedButton(() => movePage(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 125, height: 40 }, 'row-reverse', true, undefined, undefined, undefined, "MI")}
                     </View> :
                     null
             }
@@ -2030,7 +2033,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 pageRef.current && pageRef.current.count > 1 &&
                     currentFile !== pageRef.current.getPage(pageRef.current.count - 1) ?
                     <View style={{ position: 'absolute', bottom: 50, right: 10, height: 40, zIndex: 100 }}>
-                        {getRoundedButton(() => movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 125, height: 40 }, 'row', true)}
+                        {getRoundedButton(() => movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 125, height: 40 }, 'row', true, undefined, undefined, undefined, "MI")}
                     </View> :
                     null
             }

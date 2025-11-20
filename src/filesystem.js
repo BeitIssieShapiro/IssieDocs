@@ -903,6 +903,13 @@ export class FileSystem {
         return contentUri;
     }
 
+    static async filePathToContentUri(contentUri) {
+        if (Platform.OS == 'android') {
+            return FileProviderModule.getUriForFile(contentUri);
+        }
+        return contentUri;
+    }
+
     // size = {width, height}
     getStaticPageTempFile(pageType) {
         let tempFileName = FileSystem.getTempFileName("jpg");
