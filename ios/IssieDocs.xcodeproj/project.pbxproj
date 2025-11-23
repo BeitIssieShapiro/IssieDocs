@@ -10,7 +10,9 @@
 		0C80B921A6F3F58F76C31292 /* libPods-IssieDocs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-IssieDocs.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		6A6D65F12ECEEEF200332E5F /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D65F02ECEEEF200332E5F /* Localizable.xcstrings */; };
-		6A6D65F52ECEFF5700332E5F /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D65F32ECEFF5700332E5F /* InfoPlist.strings */; };
+		6A6D66012ED3023700332E5F /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D65FF2ED3023700332E5F /* InfoPlist.strings */; };
+		6A6D66052ED3024600332E5F /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D66032ED3024600332E5F /* InfoPlist.strings */; };
+		6A6D66092ED3026000332E5F /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D66072ED3026000332E5F /* InfoPlist.strings */; };
 		6AE84D442ECB2D40000D1578 /* LaunchScreen2.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6AE84D432ECB2D40000D1578 /* LaunchScreen2.storyboard */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		F2B5DE0035FDB875A5A77A98 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
@@ -25,7 +27,9 @@
 		5709B34CF0A7D63546082F79 /* Pods-IssieDocs.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs.release.xcconfig"; path = "Target Support Files/Pods-IssieDocs/Pods-IssieDocs.release.xcconfig"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-IssieDocs.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-IssieDocs.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A6D65F02ECEEEF200332E5F /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = Localizable.xcstrings; path = IssieDocs/Localizable.xcstrings; sourceTree = "<group>"; };
-		6A6D65F22ECEFF5700332E5F /* Hebrew */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Hebrew; path = InfoPlist.strings; sourceTree = "<group>"; };
+		6A6D65FE2ED3023700332E5F /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = InfoPlist.strings; sourceTree = "<group>"; };
+		6A6D66022ED3024600332E5F /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = InfoPlist.strings; sourceTree = "<group>"; };
+		6A6D66062ED3026000332E5F /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = InfoPlist.strings; sourceTree = "<group>"; };
 		6AE84D402ECB2AA8000D1578 /* IssieDocs-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IssieDocs-Bridging-Header.h"; sourceTree = "<group>"; };
 		6AE84D432ECB2D40000D1578 /* LaunchScreen2.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen2.storyboard; sourceTree = "<group>"; };
 		6AE84D452ECB2F48000D1578 /* IssieDocs.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = IssieDocs.entitlements; path = IssieDocs/IssieDocs.entitlements; sourceTree = "<group>"; };
@@ -51,8 +55,10 @@
 				6AE84D452ECB2F48000D1578 /* IssieDocs.entitlements */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				6A6D65F02ECEEEF200332E5F /* Localizable.xcstrings */,
+				6A6D66042ED3024600332E5F /* Base.lproj */,
+				6A6D66002ED3023700332E5F /* ar.lproj */,
+				6A6D66082ED3026000332E5F /* he.lproj */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
-				6A6D65F42ECEFF5700332E5F /* Hebrew.lproj */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				6AE84D432ECB2D40000D1578 /* LaunchScreen2.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
@@ -70,13 +76,31 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		6A6D65F42ECEFF5700332E5F /* Hebrew.lproj */ = {
+		6A6D66002ED3023700332E5F /* ar.lproj */ = {
 			isa = PBXGroup;
 			children = (
-				6A6D65F32ECEFF5700332E5F /* InfoPlist.strings */,
+				6A6D65FF2ED3023700332E5F /* InfoPlist.strings */,
 			);
-			name = Hebrew.lproj;
-			path = IssieDocs/Hebrew.lproj;
+			name = ar.lproj;
+			path = IssieDocs/ar.lproj;
+			sourceTree = "<group>";
+		};
+		6A6D66042ED3024600332E5F /* Base.lproj */ = {
+			isa = PBXGroup;
+			children = (
+				6A6D66032ED3024600332E5F /* InfoPlist.strings */,
+			);
+			name = Base.lproj;
+			path = IssieDocs/Base.lproj;
+			sourceTree = SOURCE_ROOT;
+		};
+		6A6D66082ED3026000332E5F /* he.lproj */ = {
+			isa = PBXGroup;
+			children = (
+				6A6D66072ED3026000332E5F /* InfoPlist.strings */,
+			);
+			name = he.lproj;
+			path = IssieDocs/he.lproj;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -163,7 +187,6 @@
 				ar,
 				he,
 				Base,
-				Hebrew,
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
@@ -181,10 +204,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				6AE84D442ECB2D40000D1578 /* LaunchScreen2.storyboard in Resources */,
+				6A6D66092ED3026000332E5F /* InfoPlist.strings in Resources */,
+				6A6D66052ED3024600332E5F /* InfoPlist.strings in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				6A6D65F12ECEEEF200332E5F /* Localizable.xcstrings in Resources */,
 				F2B5DE0035FDB875A5A77A98 /* PrivacyInfo.xcprivacy in Resources */,
-				6A6D65F52ECEFF5700332E5F /* InfoPlist.strings in Resources */,
+				6A6D66012ED3023700332E5F /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -215,9 +240,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -254,9 +283,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-IssieDocs/Pods-IssieDocs-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -277,10 +310,26 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		6A6D65F32ECEFF5700332E5F /* InfoPlist.strings */ = {
+		6A6D65FF2ED3023700332E5F /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
-				6A6D65F22ECEFF5700332E5F /* Hebrew */,
+				6A6D65FE2ED3023700332E5F /* ar */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		6A6D66032ED3024600332E5F /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				6A6D66022ED3024600332E5F /* Base */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		6A6D66072ED3026000332E5F /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				6A6D66062ED3026000332E5F /* he */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";

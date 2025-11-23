@@ -7,7 +7,12 @@ material.ttf
 for the hebrew context menu of TextInput, you need the following:
 - add he, ar to languages: click on project->info->localizations
 - add string catalog file with he and ar and one string
+- add 3 folders:
+  - Base.lproj, he.lproj, ar.lproj under ios/IssieDocs
+  - inside each, add one file named `InfoPlist.strings` with one comment `// empty intentionally`
+  link them to the xcode project
 
+  
 ## permission
 info.plist
 IssieDocs.entitlements

@@ -439,7 +439,7 @@ function Canvas({
                 }
                 if (currentElementTypeRef.current === ElementTypes.Sketch) {
                     //console.log("sketch step")
-                    lastPathSV.modify(p=>{
+                    lastPathSV.modify(p => {
                         "worklet"
                         return p.lineTo(newPoint[0] * ratioRef.current, newPoint[1] * ratioRef.current) as any;
                     })
@@ -686,7 +686,9 @@ function Canvas({
 
             {...sketchResponder.panHandlers}
         >
-            <View style={{ flex: 1, backgroundColor: "white" }} collapsable={false} ref={viewShotRef} >
+            <View style={{ direction: "ltr", flex: 1, backgroundColor: "white" }} collapsable={false} ref={viewShotRef}
+
+            >
 
                 {/* Background Image */}
                 {imageSource && (
