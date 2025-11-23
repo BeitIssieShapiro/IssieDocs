@@ -1222,7 +1222,7 @@ export default class FolderGallery extends React.Component {
                                         </View>
 
 
-                                        : this.state.currentFolder && (folderIsLoading ?
+                                        : this.state.currentFolder && !subFolders?.length && (folderIsLoading ?
                                             <View>
                                                 <AppText style={{ fontSize: 35 }}>{translate("Loading")}</AppText>
                                             </View>
@@ -1328,5 +1328,3 @@ const styles = StyleSheet.create({
         //borderColor: "#D1CFCF"
     }
 });
-
-
