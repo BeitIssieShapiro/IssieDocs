@@ -96,6 +96,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     const [fontSize, setFontSize] = useState<number>(35);
     const [textAlignment, setTextAlignment] = useState<string>(isRTL() ? "Right" : "Left");
+    const [textFont, setTextFont] = useState<string | undefined>(undefined);
     const [strokeWidth, setStrokeWidth] = useState<number>(2);
     const [markerWidth, setMarkerWidth] = useState<number>(20);
     const [rulerStrokeWidth, setRulerStrokeWidth] = useState<number>(2);
@@ -128,6 +129,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     const fontSizeRef = useRef(fontSize);
     const textAlignmentRef = useRef(textAlignment);
+    const textFontRef = useRef(textFont);
     const strokeWidthRef = useRef(strokeWidth);
     const rulerStrokeWidthRef = useRef(rulerStrokeWidth);
     const markerWidthRef = useRef(markerWidth);
@@ -156,6 +158,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         modeRef.current = mode;
         fontSizeRef.current = fontSize;
         textAlignmentRef.current = textAlignment;
+        textFontRef.current = textFont;
         strokeWidthRef.current = strokeWidth;
         rulerStrokeWidthRef.current = rulerStrokeWidth;
         markerWidthRef.current = markerWidth;
@@ -174,7 +177,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         eraseModeRef.current = eraseMode;
 
         updateCurrentEditedElements();
-    }, [mode, fontSize, textAlignment, strokeWidth, rulerStrokeWidth, markerWidth, sideMargin,
+    }, [mode, fontSize, textAlignment, textFont, strokeWidth, rulerStrokeWidth, markerWidth, sideMargin,
         brushColor, rulerColor, markerColor, textColor, tableColor, canvasSize,
         currPageIndex, currentFile, moveCanvas, zoom, keyboardHeight, eraseMode]);
 
@@ -470,6 +473,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         let _audio = [] as SketchElement[];
 
         let fontSize
+        let fontName = undefined
         let textAlignment
         let strokeWidth
         let markerStrokeWidth
@@ -488,6 +492,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 let found = false;
 
                 fontSize = txtElem.fontSize;
+                fontName = txtElem.fontFamily;
+
                 if (!txtElem.alignment) {
                     txtElem.alignment = txtElem.rtl ? "Right" : "Left";
                 }
@@ -611,6 +617,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         if (updateToolsState) {
             if (fontSize != undefined) setFontSize(fontSize * ratioRef.current);
+            setTextFont(fontName);
             if (textAlignment != undefined) setTextAlignment(textAlignment);
             if (strokeWidth != undefined) setStrokeWidth(strokeWidth);
             if (markerStrokeWidth != undefined) setMarkerWidth(markerStrokeWidth);
@@ -806,7 +813,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         // Update the font and color based on the selected text
         setFontSize(textElem.fontSize * ratioRef.current);
         setTextColor(textElem.color);
-        setTextAlignment(textElem.alignment)
+        setTextAlignment(textElem.alignment);
+        setTextFont(textElem.fontFamily);
     }
 
     async function handleCanvasClick(p: SketchPoint, elem: ElementBase | TableContext | undefined) {
@@ -836,6 +844,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     rtl: textAlignmentRef.current == 'Right',
                     alignment: textAlignmentRef.current,
                     fontSize: fontSizeRef.current / ratioRef.current,
+                    fontFamily: textFont,
                     x: p[0],
                     y: p[1],
                 };
@@ -1582,11 +1591,17 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         if (modeRef.current == EditModes.Text && currentEditedRef.current.textId) {
             const textElem = textsRef.current.find(t => t.id == currentEditedRef.current.textId);
             if (textElem) {
+                const fontChanged = textElem.fontFamily !== textFontRef.current;
                 textElem.color = textColorRef.current;
                 textElem.fontSize = fontSizeRef.current / ratioRef.current;
                 textElem.alignment = textAlignmentRef.current;
+                textElem.fontFamily = textFontRef.current;
                 if (!textElem.tableId) {
                     textElem.rtl = textAlignmentRef.current == "Right";
+                }
+                // Force width remeasurement when font changes by clearing width
+                if (fontChanged) {
+                    textElem.width = undefined;
                 }
                 setTexts([...textsRef.current]);
             }
@@ -1971,6 +1986,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 tableColor={tableColor}
                 onSelectTextSize={onTextSize}
                 onSelectTextAlignment={onTextAlignment}
+                onSelectFont={setTextFont}
+                textFont={textFont}
                 onSelectBrushSize={onBrushSize}
                 onSelectMarkerSize={onMarkerSize}
                 onToolBarDimensionsChange={handleToolbarDimensionChange}
@@ -2055,6 +2072,7 @@ const styles = StyleSheet.create({
         backgroundColor: semanticColors.mainAreaBG,
         width: '100%',
         height: '100%',
+        direction: "ltr"
     },
     topMargin: {
         height: dimensions.toolbarMargin,
@@ -2072,4 +2090,4 @@ const styles = StyleSheet.create({
         position: 'absolute',
         zIndex: 100000
     }
-});
+})

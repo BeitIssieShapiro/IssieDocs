@@ -13,6 +13,13 @@
 		6A6D66012ED3023700332E5F /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D65FF2ED3023700332E5F /* InfoPlist.strings */; };
 		6A6D66052ED3024600332E5F /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D66032ED3024600332E5F /* InfoPlist.strings */; };
 		6A6D66092ED3026000332E5F /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D66072ED3026000332E5F /* InfoPlist.strings */; };
+		6A6D66222ED6063000332E5F /* DroidSans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D661D2ED6063000332E5F /* DroidSans.ttf */; };
+		6A6D66232ED6063000332E5F /* Alef_Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D661B2ED6063000332E5F /* Alef_Regular.ttf */; };
+		6A6D66242ED6063000332E5F /* Schoolbell.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D66202ED6063000332E5F /* Schoolbell.ttf */; };
+		6A6D66252ED6063000332E5F /* DanaYadAlefAlefAlef-Normal.otf in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D661C2ED6063000332E5F /* DanaYadAlefAlefAlef-Normal.otf */; };
+		6A6D66262ED6063000332E5F /* Molhim Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D661E2ED6063000332E5F /* Molhim Regular.ttf */; };
+		6A6D66272ED6063000332E5F /* Alef_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D661A2ED6063000332E5F /* Alef_Bold.ttf */; };
+		6A6D66282ED6063000332E5F /* Satisfy-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D661F2ED6063000332E5F /* Satisfy-Regular.ttf */; };
 		6AE84D442ECB2D40000D1578 /* LaunchScreen2.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6AE84D432ECB2D40000D1578 /* LaunchScreen2.storyboard */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		F2B5DE0035FDB875A5A77A98 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
@@ -30,6 +37,13 @@
 		6A6D65FE2ED3023700332E5F /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = InfoPlist.strings; sourceTree = "<group>"; };
 		6A6D66022ED3024600332E5F /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = InfoPlist.strings; sourceTree = "<group>"; };
 		6A6D66062ED3026000332E5F /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = InfoPlist.strings; sourceTree = "<group>"; };
+		6A6D661A2ED6063000332E5F /* Alef_Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Alef_Bold.ttf; sourceTree = "<group>"; };
+		6A6D661B2ED6063000332E5F /* Alef_Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Alef_Regular.ttf; sourceTree = "<group>"; };
+		6A6D661C2ED6063000332E5F /* DanaYadAlefAlefAlef-Normal.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DanaYadAlefAlefAlef-Normal.otf"; sourceTree = "<group>"; };
+		6A6D661D2ED6063000332E5F /* DroidSans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = DroidSans.ttf; sourceTree = "<group>"; };
+		6A6D661E2ED6063000332E5F /* Molhim Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Molhim Regular.ttf"; sourceTree = "<group>"; };
+		6A6D661F2ED6063000332E5F /* Satisfy-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Satisfy-Regular.ttf"; sourceTree = "<group>"; };
+		6A6D66202ED6063000332E5F /* Schoolbell.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Schoolbell.ttf; sourceTree = "<group>"; };
 		6AE84D402ECB2AA8000D1578 /* IssieDocs-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IssieDocs-Bridging-Header.h"; sourceTree = "<group>"; };
 		6AE84D432ECB2D40000D1578 /* LaunchScreen2.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen2.storyboard; sourceTree = "<group>"; };
 		6AE84D452ECB2F48000D1578 /* IssieDocs.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = IssieDocs.entitlements; path = IssieDocs/IssieDocs.entitlements; sourceTree = "<group>"; };
@@ -52,6 +66,7 @@
 		13B07FAE1A68108700A75B9A /* IssieDocs */ = {
 			isa = PBXGroup;
 			children = (
+				6A6D66212ED6063000332E5F /* fonts */,
 				6AE84D452ECB2F48000D1578 /* IssieDocs.entitlements */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				6A6D65F02ECEEEF200332E5F /* Localizable.xcstrings */,
@@ -102,6 +117,21 @@
 			name = he.lproj;
 			path = IssieDocs/he.lproj;
 			sourceTree = "<group>";
+		};
+		6A6D66212ED6063000332E5F /* fonts */ = {
+			isa = PBXGroup;
+			children = (
+				6A6D661A2ED6063000332E5F /* Alef_Bold.ttf */,
+				6A6D661B2ED6063000332E5F /* Alef_Regular.ttf */,
+				6A6D661C2ED6063000332E5F /* DanaYadAlefAlefAlef-Normal.otf */,
+				6A6D661D2ED6063000332E5F /* DroidSans.ttf */,
+				6A6D661E2ED6063000332E5F /* Molhim Regular.ttf */,
+				6A6D661F2ED6063000332E5F /* Satisfy-Regular.ttf */,
+				6A6D66202ED6063000332E5F /* Schoolbell.ttf */,
+			);
+			name = fonts;
+			path = ../fonts;
+			sourceTree = SOURCE_ROOT;
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
 			isa = PBXGroup;
@@ -206,6 +236,13 @@
 				6AE84D442ECB2D40000D1578 /* LaunchScreen2.storyboard in Resources */,
 				6A6D66092ED3026000332E5F /* InfoPlist.strings in Resources */,
 				6A6D66052ED3024600332E5F /* InfoPlist.strings in Resources */,
+				6A6D66222ED6063000332E5F /* DroidSans.ttf in Resources */,
+				6A6D66232ED6063000332E5F /* Alef_Regular.ttf in Resources */,
+				6A6D66242ED6063000332E5F /* Schoolbell.ttf in Resources */,
+				6A6D66252ED6063000332E5F /* DanaYadAlefAlefAlef-Normal.otf in Resources */,
+				6A6D66262ED6063000332E5F /* Molhim Regular.ttf in Resources */,
+				6A6D66272ED6063000332E5F /* Alef_Bold.ttf in Resources */,
+				6A6D66282ED6063000332E5F /* Satisfy-Regular.ttf in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				6A6D65F12ECEEEF200332E5F /* Localizable.xcstrings in Resources */,
 				F2B5DE0035FDB875A5A77A98 /* PrivacyInfo.xcprivacy in Resources */,

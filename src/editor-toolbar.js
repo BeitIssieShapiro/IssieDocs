@@ -105,6 +105,8 @@ function EditorToolbar({
     onSelectTextAlignment,
     textAlignment,
     showCenterTextAlignment,
+    onSelectFont,
+    textFont,
 
 }, ref) {
     const [showPicker, setShowPicker] = useState(false);
@@ -427,14 +429,16 @@ function EditorToolbar({
                         >
                             < AppText
                                 style={
-                                    //[
-                                    {
-                                        fontSize: previewFontSize,
-                                        width: "100%",
-                                        lineHeight: previewFontSize + 8,
-                                        color: textColor,
-                                        textAlignVertical: 'center'
-                                    }
+                                    [
+                                        {
+                                            fontSize: previewFontSize,
+                                            width: "100%",
+                                            lineHeight: previewFontSize + 8,
+                                            color: textColor,
+                                            textAlignVertical: 'center'
+                                        },
+                                        textFont ? { fontFamily: textFont } : {}
+                                    ]
                                     //,rtl ? {} : { fontWeight: 'bold' }]
                                 }
                             >{translate("A B C")}</AppText>
@@ -540,6 +544,8 @@ function EditorToolbar({
             onSelectTextAlignment={onSelectTextAlignment}
             textAlignment={textAlignment}
             showCenterTextAlignment={showCenterTextAlignment}
+            onSelectFont={onSelectFont}
+            textFont={textFont}
         />
 
         {/*View for selecting brush size*/}

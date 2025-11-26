@@ -90,7 +90,8 @@ function TextElement({
 
     const style: any = {
         color: text.color, fontSize: text.fontSize * ratio,
-        textAlign: text.alignment.toLowerCase()
+        textAlign: text.alignment.toLowerCase(),
+        fontFamily: text.fontFamily // could be undefined
     };
 
     const moveIconStyle: any = { position: "absolute", ...(text.rtl ? { right: -25 } : { left: -25 }) }
@@ -141,7 +142,7 @@ function TextElement({
                 allowFontScaling={false}
                 style={[styles.textStyle, style,
                 table && { width: posStyle.width },
-                !table && { textAlign: "left" }
+                // !table && { textAlign: "left" }
                 ]}
                 onLayout={(e) => handleTextLayout(e, text)}
             >
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
         padding: 0,
         margin: 0,
         flexWrap: "wrap",
-        zIndex: 13
+        zIndex: 13,
     },
 
 });

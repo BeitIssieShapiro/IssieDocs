@@ -1296,35 +1296,12 @@ export default class FolderGallery extends React.Component {
         );
     }
 }
-//1=create-pages, 2=create-pages+select-folder
-// function getDesktopHint(amount) {
-//     return <View style={{ flexDirection: 'row', width: '100%', marginTop: 25 }}>
-//         <View style={{ width: '50%', alignItems: 'center' }}>
-//             {getSvgIcon('start-icon', 150, semanticColors.addButton)}
-//             <Spacer />
-//             <AppText style={{ fontSize: 35, color: '#797a7c' }}>{translate("StartHere")}</AppText>
-//         </View>
-//         <Spacer />
-//         <Spacer />
-//         {amount == 2 ? <View style={{ width: '50%', alignItems: 'center' }}>
-
-//             <AppText style={{ fontSize: 35, color: '#797a7c' }}> {translate("ChooseFolder")}</AppText>
-//             <Spacer />
-//             {getSvgIcon('arrow-to-folders')}
-//         </View> :
-//             <View style={{ width: '50%' }} />}
-
-//     </View>
-// }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         flexDirection: "column",
         backgroundColor: 'white',
+        direction: "ltr"
     },
-    borderW: {
-        //borderWidth: 3,
-        //borderColor: "#D1CFCF"
-    }
 });

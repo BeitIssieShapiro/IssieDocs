@@ -43,6 +43,7 @@ export interface SketchText extends ElementBase {
     color: string;
     rtl: boolean;
     alignment: string;
+    fontFamily?: string;
     // coordinates or table cell position
     tableId?: string;
     x: number;

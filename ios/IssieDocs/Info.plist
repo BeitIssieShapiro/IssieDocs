@@ -75,7 +75,7 @@
 	<key>NSAppleMusicUsageDescription</key>
 	<string>Allow IssieDocs load images as IssieDocs pages and save pages as images</string>
 	<key>NSCameraUsageDescription</key>
-	<string>The Camera will be used to allow you capture photos that you'll embed in IssieDocs pages</string>
+	<string>The Camera will be used to allow you capture photos that you&apos;ll embed in IssieDocs pages</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Allow IssieDocs to record voice messages to place on worksheets</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
@@ -88,9 +88,10 @@
 	<array>
 		<string>Alef_Regular.ttf</string>
 		<string>Alef_Bold.ttf</string>
-		<string>DroidSans.ttf</string>
-		<string>Verdana.ttf</string>
-		<string>Verdana_Bold.ttf</string>
+		<string>DanaYadAlefAlefAlef-Normal.otf</string>
+		<string>Molhim Regular.ttf</string>
+		<string>Satisfy-Regular.ttf</string>
+		<string>Schoolbell.ttf</string>
 		<string>AntDesign.ttf</string>
 		<string>Ionicons.ttf</string>
 		<string>MaterialIcons.ttf</string>

@@ -654,6 +654,16 @@ function Canvas({
     //console.log("canvas render", ratio, canvasWidth)
     const isEraser = (color: string) => color === "#00000000";
 
+    const transformStyle = useAnimatedStyle(() => {
+        return {
+            transform: [
+                { scale: zoom },
+                { translateX: translateX.value },
+                { translateY: translateY.value },
+            ],
+        };
+    });
+
     return (
         <Animated.View
             ref={canvasRef}
@@ -665,12 +675,14 @@ function Canvas({
                     width: canvasWidth,
                     height: canvasHeight,
                     transformOrigin: "0 0 0",
-                    transform: [
-                        { scale: zoom },
-                        { translateX },
-                        { translateY },
-                    ],
+                    // transform: [
+                    //     { scale: zoom },
+                    //     { translateX },
+                    //     { translateY },
+                    // ],
+
                 },
+                transformStyle
             ]}
             // onLayout={(e) => {
             //     console.log("canvas onLayout", e.nativeEvent.layout)

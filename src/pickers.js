@@ -14,15 +14,19 @@ import {
 import FadeInView from './FadeInView';
 import ColorPicker from 'react-native-wheel-color-picker'
 import { trace } from './log';
-import { translate } from './lang';
+import { translate, gCurrentLang } from './lang';
 import { LAST_COLORS } from './settings';
 import Slider from '@react-native-community/slider';
 import { TextAlignment } from './editor-toolbar';
 import { MyIcon } from './common/icons';
+import { AVAILABLE_FONTS } from './fonts.ts';
 
+
+const fontRowHeight = 60;
 
 const styles = StyleSheet.create({
     pickerView: {
+        direction: "ltr",
         flexDirection: 'column',
         position: 'absolute',
         backgroundColor: 'white',
@@ -33,6 +37,15 @@ const styles = StyleSheet.create({
         //padding: 5,
         paddingTop: 2,
         alignItems: 'center'
+    },
+    fontSelectionRow: {
+        direction: "rtl",
+        flexDirection: 'row',
+        width: '100%',
+        height: fontRowHeight,
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        paddingHorizontal: 10
     }
 });
 
@@ -182,9 +195,9 @@ export function MyColorPicker(props) {
     </FadeInView>
 }
 
-const textSizeVolumeBarSize = 400;
-const dotSize = 30;
 const minTextSizePickerCollapsedSize = 80;
+
+
 export function TextSizePicker(props) {
     const [openMore, setOpenMore] = useState(false);
     const [height, setHeight] = useState(0);
@@ -193,6 +206,10 @@ export function TextSizePicker(props) {
 
     const textAlignment = props.textAlignment;
     const onSelectTextAlignment = props.onSelectTextAlignment;
+    const textFont = props.textFont;
+    const onSelectFont = props.onSelectFont;
+
+    // Get available fonts for selected language
 
     const textSizesAct = textSizes
     let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow ? .8 : 1.4));
@@ -207,16 +224,15 @@ export function TextSizePicker(props) {
         }
     }, [openMore, props.open, totalHeight]);
 
-    //trace("text size picker", props.open ? (simpleToolbarHeight + (openMore ? 60 : 0)) : 0)
 
     return <FadeInView
         overflow={"hidden"}
-        height={props.open ? (simpleToolbarHeight + (openMore ? 80 : 0)) : 0}
+        height={props.open ? (simpleToolbarHeight + fontRowHeight + (openMore ? 80 : 0)) : 0}
         style={[styles.pickerView, { top: props.top, left: 0, right: 0 }]}>
         <View
             style={{
                 flexDirection: 'row', width: '100%', height: simpleToolbarHeight,
-                justifyContent: 'space-evenly', alignContent: 'center'
+                justifyContent: 'space-between', alignContent: 'center'
             }}>
             {textSizesAct.map((size, i) => getTextSizePicker(props.color, buttonSize, size, size === props.size, i, props.fontSize4Toolbar,
                 (size) => {
@@ -224,7 +240,7 @@ export function TextSizePicker(props) {
                     props.onSelect(size)
                 }))}
 
-            <View style={{ height: "100%", width: 100, flexDirection: "column", justifyContent: 'center', alignItems: "flex-end" }}>
+            <View style={{ width: 100, flexDirection: "column", justifyContent: 'flex-start', alignItems: "flex-end" }}>
                 {!props.isScreenNarrow && <Spacer />}
                 <View style={{ flexDirection: "row", height: 40, justifyContent: "space-evenly" }}>
                     <Spacer />
@@ -245,8 +261,25 @@ export function TextSizePicker(props) {
                     </SelectedCircle>
                     <Spacer />
                 </View>
+            </View>
+        </View>
+
+
+        {/* Font Selection Row */}
+        <View
+            style={styles.fontSelectionRow}>
+            <View style={{ position: "absolute", left: 10 }}>
                 <IconButton onPress={() => setOpenMore(val => !val)} icon={openMore ? "expand-less" : "expand-more"} color="black" size={40} />
             </View>
+            {AVAILABLE_FONTS.map((font, i) => (
+                <FontButton
+                    key={i}
+                    font={font}
+                    selected={textFont === font.name}
+                    onSelect={() => onSelectFont(font.name)}
+                    size={42}
+                />
+            ))}
         </View>
 
         <View
@@ -335,8 +368,8 @@ function getTextSizePicker(color, size, textSize, selected, index, fontSize4Tool
     </Pressable>
 }
 
-function SelectedCircle({ size, children, selected }) {
-    return <View style={{
+function SelectedCircle({ size, children, selected, additionalStyle }) {
+    return <View style={[{
         backgroundColor: selected ? '#eeeded' : 'transparent',
         borderRadius: size / 2,
         width: size,
@@ -344,8 +377,25 @@ function SelectedCircle({ size, children, selected }) {
         justifyContent: 'center',
         alignItems: 'center',
         alignContent: 'center',
-    }}
+    }, additionalStyle]}
     >{children}</View>
+}
+
+function FontButton({ font, selected, onSelect, size }) {
+    console.log("font button", font, selected)
+    return (
+        <Pressable onPress={onSelect} activeOpacity={0.7}>
+            <SelectedCircle additionalStyle={{ width: undefined, paddingHorizontal: 15, maring: 10 }} selected={selected} size={size}>
+                <AppText style={{
+                    fontFamily: font.name,
+                    fontSize: size * 0.5,
+                    lineHeight: size * 0.6
+                }}>
+                    {font.preview}
+                </AppText>
+            </SelectedCircle>
+        </Pressable>
+    );
 }
 
 
