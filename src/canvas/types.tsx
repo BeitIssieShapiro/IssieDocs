@@ -44,6 +44,9 @@ export interface SketchText extends ElementBase {
     rtl: boolean;
     alignment: string;
     fontFamily?: string;
+    bold?: boolean;
+    italic?: boolean;
+    underline?: boolean;
     // coordinates or table cell position
     tableId?: string;
     x: number;

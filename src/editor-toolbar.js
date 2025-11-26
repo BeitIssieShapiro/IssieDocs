@@ -107,6 +107,12 @@ function EditorToolbar({
     showCenterTextAlignment,
     onSelectFont,
     textFont,
+    textBold,
+    textItalic,
+    textUnderline,
+    onSelectTextBold,
+    onSelectTextItalic,
+    onSelectTextUnderline,
 
 }, ref) {
     const [showPicker, setShowPicker] = useState(false);
@@ -546,6 +552,12 @@ function EditorToolbar({
             showCenterTextAlignment={showCenterTextAlignment}
             onSelectFont={onSelectFont}
             textFont={textFont}
+            textBold={textBold}
+            textItalic={textItalic}
+            textUnderline={textUnderline}
+            onSelectTextBold={onSelectTextBold}
+            onSelectTextItalic={onSelectTextItalic}
+            onSelectTextUnderline={onSelectTextUnderline}
         />
 
         {/*View for selecting brush size*/}

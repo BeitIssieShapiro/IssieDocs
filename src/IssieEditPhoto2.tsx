@@ -97,6 +97,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [fontSize, setFontSize] = useState<number>(35);
     const [textAlignment, setTextAlignment] = useState<string>(isRTL() ? "Right" : "Left");
     const [textFont, setTextFont] = useState<string | undefined>(undefined);
+    const [textBold, setTextBold] = useState<boolean>(false);
+    const [textItalic, setTextItalic] = useState<boolean>(false);
+    const [textUnderline, setTextUnderline] = useState<boolean>(false);
     const [strokeWidth, setStrokeWidth] = useState<number>(2);
     const [markerWidth, setMarkerWidth] = useState<number>(20);
     const [rulerStrokeWidth, setRulerStrokeWidth] = useState<number>(2);
@@ -130,6 +133,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const fontSizeRef = useRef(fontSize);
     const textAlignmentRef = useRef(textAlignment);
     const textFontRef = useRef(textFont);
+    const textBoldRef = useRef(textBold);
+    const textItalicRef = useRef(textItalic);
+    const textUnderlineRef = useRef(textUnderline);
     const strokeWidthRef = useRef(strokeWidth);
     const rulerStrokeWidthRef = useRef(rulerStrokeWidth);
     const markerWidthRef = useRef(markerWidth);
@@ -159,6 +165,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         fontSizeRef.current = fontSize;
         textAlignmentRef.current = textAlignment;
         textFontRef.current = textFont;
+        textBoldRef.current = textBold;
+        textItalicRef.current = textItalic;
+        textUnderlineRef.current = textUnderline;
         strokeWidthRef.current = strokeWidth;
         rulerStrokeWidthRef.current = rulerStrokeWidth;
         markerWidthRef.current = markerWidth;
@@ -177,7 +186,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         eraseModeRef.current = eraseMode;
 
         updateCurrentEditedElements();
-    }, [mode, fontSize, textAlignment, textFont, strokeWidth, rulerStrokeWidth, markerWidth, sideMargin,
+    }, [mode, fontSize, textAlignment, textFont, textBold, textItalic, textUnderline, strokeWidth, rulerStrokeWidth, markerWidth, sideMargin,
         brushColor, rulerColor, markerColor, textColor, tableColor, canvasSize,
         currPageIndex, currentFile, moveCanvas, zoom, keyboardHeight, eraseMode]);
 
@@ -475,6 +484,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         let fontSize
         let fontName = undefined
         let textAlignment
+        let textBold
+        let textItalic
+        let textUnderline
         let strokeWidth
         let markerStrokeWidth
         let markerColor
@@ -499,6 +511,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 }
                 textAlignment = txtElem.alignment;
                 textColor = txtElem.color;
+                textBold = txtElem.bold;
+                textItalic = txtElem.italic;
+                textUnderline = txtElem.underline;
                 latestMode = EditModes.Text;
 
                 for (let j = 0; j < _texts.length; j++) {
@@ -619,6 +634,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             if (fontSize != undefined) setFontSize(fontSize * ratioRef.current);
             setTextFont(fontName);
             if (textAlignment != undefined) setTextAlignment(textAlignment);
+            if (textBold != undefined) setTextBold(textBold);
+            if (textItalic != undefined) setTextItalic(textItalic);
+            if (textUnderline != undefined) setTextUnderline(textUnderline);
             if (strokeWidth != undefined) setStrokeWidth(strokeWidth);
             if (markerStrokeWidth != undefined) setMarkerWidth(markerStrokeWidth);
             if (markerColor != undefined) setMarkerColor(markerColor);
@@ -815,6 +833,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setTextColor(textElem.color);
         setTextAlignment(textElem.alignment);
         setTextFont(textElem.fontFamily);
+        setTextBold(textElem.bold || false);
+        setTextItalic(textElem.italic || false);
+        setTextUnderline(textElem.underline || false);
     }
 
     async function handleCanvasClick(p: SketchPoint, elem: ElementBase | TableContext | undefined) {
@@ -845,6 +866,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     alignment: textAlignmentRef.current,
                     fontSize: fontSizeRef.current / ratioRef.current,
                     fontFamily: textFont,
+                    bold: textBold,
+                    italic: textItalic,
+                    underline: textUnderline,
                     x: p[0],
                     y: p[1],
                 };
@@ -1592,16 +1616,24 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             const textElem = textsRef.current.find(t => t.id == currentEditedRef.current.textId);
             if (textElem) {
                 const fontChanged = textElem.fontFamily !== textFontRef.current;
+                const boldChanged = textElem.bold !== textBoldRef.current;
+                const italicChanged = textElem.italic !== textItalicRef.current;
+                const underlineChanged = textElem.underline !== textUnderlineRef.current;
+                
                 textElem.color = textColorRef.current;
                 textElem.fontSize = fontSizeRef.current / ratioRef.current;
                 textElem.alignment = textAlignmentRef.current;
                 textElem.fontFamily = textFontRef.current;
+                textElem.bold = textBoldRef.current;
+                textElem.italic = textItalicRef.current;
+                textElem.underline = textUnderlineRef.current;
                 if (!textElem.tableId) {
                     textElem.rtl = textAlignmentRef.current == "Right";
                 }
-                // Force width remeasurement when font changes by clearing width
-                if (fontChanged) {
+                // Force width remeasurement when font or styling changes by clearing width
+                if (fontChanged || boldChanged || italicChanged || underlineChanged) {
                     textElem.width = undefined;
+                    console.log("style changed - recalc width")
                 }
                 setTexts([...textsRef.current]);
             }
@@ -1988,6 +2020,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onSelectTextAlignment={onTextAlignment}
                 onSelectFont={setTextFont}
                 textFont={textFont}
+                textBold={textBold}
+                textItalic={textItalic}
+                textUnderline={textUnderline}
+                onSelectTextBold={setTextBold}
+                onSelectTextItalic={setTextItalic}
+                onSelectTextUnderline={setTextUnderline}
                 onSelectBrushSize={onBrushSize}
                 onSelectMarkerSize={onMarkerSize}
                 onToolBarDimensionsChange={handleToolbarDimensionChange}

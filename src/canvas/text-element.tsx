@@ -1,5 +1,5 @@
 // TextElement.tsx
-import React, { forwardRef, useEffect, useImperativeHandle } from "react";
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { View, Text, TextInput, StyleSheet, LayoutChangeEvent, TextInputProps, ViewProps, ColorValue } from "react-native";
 import { SketchText, MoveTypes, SketchPoint, SketchTable } from "./types";
 import { calcEffectiveHorizontalLines, tableColWidth, tableRowHeight } from "./utils";
@@ -35,6 +35,7 @@ function TextElement({
     tables,
     texts,
 }: TextElementProps, ref: any) {
+    const [revision, setRevision] = useState<number>(0)
     //console.log("text ratio", ratio, actualWidth, text.fontSize)
     const textBGColor = useSharedValue<ColorValue>("yellow");
     const moveIconDisplay = useSharedValue<'none' | 'flex' | undefined>("flex");
@@ -88,14 +89,19 @@ function TextElement({
                 actualWidth - text.x * ratio - 3,
         };
 
+    const widthStyle = text.width? {width: text.width * ratio}:undefined;
+
     const style: any = {
         color: text.color, fontSize: text.fontSize * ratio,
         textAlign: text.alignment.toLowerCase(),
-        fontFamily: text.fontFamily // could be undefined
+        fontFamily: text.fontFamily, // could be undefined
+        fontWeight: text.bold ? 'bold' : 'normal',
+        fontStyle: text.italic ? 'italic' : 'normal',
+        textDecorationLine: text.underline ? 'underline' : 'none',
     };
 
     const moveIconStyle: any = { position: "absolute", ...(text.rtl ? { right: -25 } : { left: -25 }) }
-    //console.log("text style", actualWidth, ratio)
+    console.log("text style", widthStyle)
     if (editMode) {
         return (
             <Animated.View
@@ -117,6 +123,7 @@ function TextElement({
                         multiline
                         autoFocus
                         style={[styles.textStyle, style, bgAnimatedStyle,
+                        !table && widthStyle,
                         table && { width: posStyle.width },
                         !table && { minWidth: Math.max(text.fontSize * ratio, 20 / ratio) }
                         ]}
@@ -127,7 +134,10 @@ function TextElement({
                     <Text
                         allowFontScaling={false}
                         style={[styles.textStyle, posStyle, style, { position: "absolute", [text.rtl ? "right" : "left"]: -10000, minHeight: 0 }, !table && { minWidth: 20 / ratio }]}
-                        onLayout={(e) => handleTextLayout(e, text)}
+                        onLayout={(e) => {
+                            handleTextLayout(e, text)
+                            setRevision(prev=>prev+1)
+                        }}
                     >
                         {text.text}
                     </Text>

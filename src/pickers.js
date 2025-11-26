@@ -280,6 +280,29 @@ export function TextSizePicker(props) {
                     size={42}
                 />
             ))}
+            <Spacer width={20} />
+            <View style={{borderWidth:1, borderStyle:"solid", height: 40, width:1, color: "gray"}}/>
+            <Spacer width={20} />
+            <StyleButton
+                icon="format-bold"
+                selected={props.textBold}
+                onPress={() => props.onSelectTextBold?.(!props.textBold)}
+                size={42}
+            />
+            <Spacer width={5} />
+            <StyleButton
+                icon="format-italic"
+                selected={props.textItalic}
+                onPress={() => props.onSelectTextItalic?.(!props.textItalic)}
+                size={42}
+            />
+            <Spacer width={5} />
+            <StyleButton
+                icon="format-underline"
+                selected={props.textUnderline}
+                onPress={() => props.onSelectTextUnderline?.(!props.textUnderline)}
+                size={42}
+            />
         </View>
 
         <View
@@ -382,7 +405,6 @@ function SelectedCircle({ size, children, selected, additionalStyle }) {
 }
 
 function FontButton({ font, selected, onSelect, size }) {
-    console.log("font button", font, selected)
     return (
         <Pressable onPress={onSelect} activeOpacity={0.7}>
             <SelectedCircle additionalStyle={{ width: undefined, paddingHorizontal: 15, maring: 10 }} selected={selected} size={size}>
@@ -393,6 +415,16 @@ function FontButton({ font, selected, onSelect, size }) {
                 }}>
                     {font.preview}
                 </AppText>
+            </SelectedCircle>
+        </Pressable>
+    );
+}
+
+function StyleButton({ icon, selected, onPress, size }) {
+    return (
+        <Pressable onPress={onPress} activeOpacity={0.7}>
+            <SelectedCircle selected={selected} size={size}>
+                <MyIcon info={{ type: "MI", name: icon, size: size * 0.6, color: "black" }} />
             </SelectedCircle>
         </Pressable>
     );

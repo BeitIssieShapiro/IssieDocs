@@ -61,6 +61,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-na
 import { dimensions } from "../elements";
 import { captureRef } from "react-native-view-shot";
 import { MyIcon } from "../common/icons";
+import { trace } from "../log";
 
 const TEXT_SEARCH_MARGIN = 0; // 15;
 const TABLE_LINE_THRESHOLD = 7;
@@ -623,6 +624,7 @@ function Canvas({
     const handleTextLayout = useCallback((e: LayoutChangeEvent, text: SketchText) => {
         const { width, height } = e.nativeEvent.layout;
         text.width = width / ratioRef.current;
+        trace("text width", width)
         let table: SketchTable | undefined = undefined;
         let tableEndY = 0
 
