@@ -912,7 +912,7 @@ export default class FolderGallery extends React.Component {
 
         return (
             <DDProvider>
-
+                
 
                 <View style={styles.container}
                     onLayout={this.onLayout}>
@@ -1151,7 +1151,7 @@ export default class FolderGallery extends React.Component {
                                         height: scrollerHeight,
                                         backgroundColor: semanticColors.mainAreaBG,
                                         top: 0,
-                                        minWidth: "100%",
+                                        sminWidth: "100%",
                                     }}>
 
 
@@ -1165,25 +1165,29 @@ export default class FolderGallery extends React.Component {
 
                                     {(subFolders || !this.state.currentFolder) && <View
                                         style={{
-                                            flexWrap: 'wrap', flexDirection: rowReverse,
-                                            width: '100%', alignItems: 'center',
+                                            flexWrap: asTiles ? 'wrap' : 'nowrap',
+                                            flexDirection: asTiles ? rowReverse : 'column',
+                                            width: '100%',
+                                            alignItems: asTiles ? 'center' : 'stretch',
                                         }}
                                     >
                                         {(subFolders || folders).map((item, index) => <FolderNew
-                                            //width={treeWidth}
                                             key={index}
                                             id={item.ID}
                                             isOverview={true}
+                                            asTile={asTiles}
                                             name={item.name}
                                             color={item.color}
                                             icon={item.icon}
-                                            width={this.state.windowSize.width * (this.isLandscape() ? .2 : .25)}
+                                            width={asTiles ? (this.isLandscape() ? dimensions.tileWidth * 0.85 : dimensions.tileWidth * 0.9) : undefined}
                                             editMode={this.state.editMode}
-                                            fixedFolder={false}//item.name === DEFAULT_FOLDER_NAME}
+                                            fixedFolder={false}
                                             current={false}
                                             onPress={() => this.selectFolder(item)}
                                             allowDropFolders={true}
                                             isLandscape={this.isLandscape()}
+                                            rtl={rtl}
+                                            rowReverse={rowReverse}
                                         />)}
 
                                     </View>}

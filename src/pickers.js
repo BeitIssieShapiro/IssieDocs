@@ -224,6 +224,7 @@ export function TextSizePicker(props) {
         }
     }, [openMore, props.open, totalHeight]);
 
+    const availableStyles = AVAILABLE_FONTS.find(af => af.name == textFont)?.supportedStyles || [];
 
     return <FadeInView
         overflow={"hidden"}
@@ -281,28 +282,36 @@ export function TextSizePicker(props) {
                 />
             ))}
             <Spacer width={20} />
-            <View style={{borderWidth:1, borderStyle:"solid", height: 40, width:1, color: "gray"}}/>
+            <View style={{ borderWidth: 1, borderStyle: "solid", height: 40, width: 1, color: "gray" }} />
             <Spacer width={20} />
-            <StyleButton
-                icon="format-bold"
-                selected={props.textBold}
-                onPress={() => props.onSelectTextBold?.(!props.textBold)}
-                size={42}
-            />
-            <Spacer width={5} />
-            <StyleButton
-                icon="format-italic"
-                selected={props.textItalic}
-                onPress={() => props.onSelectTextItalic?.(!props.textItalic)}
-                size={42}
-            />
-            <Spacer width={5} />
-            <StyleButton
-                icon="format-underline"
-                selected={props.textUnderline}
-                onPress={() => props.onSelectTextUnderline?.(!props.textUnderline)}
-                size={42}
-            />
+            {availableStyles.includes("bold") && <>
+                <StyleButton
+                    icon="format-bold"
+                    selected={props.textBold}
+                    onPress={() => props.onSelectTextBold?.(!props.textBold)}
+                    size={42}
+                />
+                <Spacer width={5} />
+            </>
+            }
+            {availableStyles.includes("italic") && <>
+                <StyleButton
+                    icon="format-italic"
+                    selected={props.textItalic}
+                    onPress={() => props.onSelectTextItalic?.(!props.textItalic)}
+                    size={42}
+                />
+                <Spacer width={5} />
+            </>
+            }
+            {availableStyles.includes("underline") &&
+                <StyleButton
+                    icon="format-underline"
+                    selected={props.textUnderline}
+                    onPress={() => props.onSelectTextUnderline?.(!props.textUnderline)}
+                    size={42}
+                />
+            }
         </View>
 
         <View
@@ -413,7 +422,7 @@ function FontButton({ font, selected, onSelect, size }) {
                     fontSize: size * 0.5,
                     lineHeight: size * 0.6
                 }}>
-                    {font.preview}
+                    {translate(font.preview)}
                 </AppText>
             </SelectedCircle>
         </Pressable>

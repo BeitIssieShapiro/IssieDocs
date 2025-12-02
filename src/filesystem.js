@@ -467,6 +467,10 @@ export class FileSystem {
         });
     };
 
+    static async exists(fullPath) {
+        return RNFS.exists(fullPath);
+    }
+
     async saveFile(uri, filePath, isCopy) {
         trace("saveFile", arguments)
         //asserts that the filePath is in this filesystem:
@@ -847,8 +851,32 @@ export class FileSystem {
             for (let key in err) {
                 errorStr += JSON.stringify(err[key]).substr(15) + "\n";
             }
-            //Alert.alert("Error: " + errorStr);
-            if (err && err.toString().includes("already exists")) {
+
+
+            function isFileExistsError(error) {
+                if (!error) return false;
+
+                const code = String(error.code || "");
+                const message = String(error.message || "");
+
+                // --- iOS Cocoa ---
+                if (code.includes("516")) return true;       // NSFileWriteFileExistsError
+                if (code === "17") return true;              // POSIX EEXIST
+
+                // --- Android typical ---
+                if (code.toLowerCase() === "eexist") return true;
+                if (code.toLowerCase() === "exists") return true;
+
+                // Sometimes message indicates it
+                if (message.toLowerCase().includes("exist")) return true;
+
+                // Some RNFS Android builds use errno numbers:
+                if (code === "-17") return true;             // Android EEXIST as negative errno
+
+                return false;
+            }
+
+            if (isFileExistsError(err)) {
                 reject(translate("PageAlreadyExists"));
                 return;
             }
@@ -948,7 +976,6 @@ export class FileSystem {
     }
 
     async exportWorksheet(sheet, folderObj) {
-        trace("start export", sheet.name)
         let folder;
         let name;
         if (sheet) {

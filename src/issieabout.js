@@ -12,13 +12,13 @@ import { trace } from './log';
 
 export default function IssieAbout(props) {
 
-    const textStyle = { fontSize: 14, color: '#5c5c5c', textAlign: 'justify', marginLeft: 20 }
+    const textStyle = { fontSize: 14, color: '#5c5c5c', textAlign: 'left', marginLeft: 20 }
     const linkStyle = { fontSize: 14, color: 'blue', textAlign: 'left' }
     const titleStyle = { fontSize: 14, fontWeight: 'bold', color: '#183d72', textAlign: 'left', marginLeft: 20 }
     const headerStyle = { fontFamily: 'Bradley Hand', fontSize: 55, fontWeight: 'bold' }
 
     return <ScrollView style={{ backgroundColor: 'white', height: '100%' }}>
-        <View style={{ left: '5%', height: '100%', width: '90%' }}>
+        <View style={{ left: '5%', height: '100%', width: '90%'}}>
 
             <View style={{ flexDirection: 'row', alignSelf: 'center' }}><AppText style={[headerStyle, { color: '#fbaa19' }]}>Issie</AppText><AppText style={[headerStyle, { color: '#18b9ed' }]}>Docs</AppText></View>
             <AppText > </AppText>
@@ -43,7 +43,6 @@ export default function IssieAbout(props) {
             <AppText style={textStyle}>· Simple and appealing graphics</AppText>
             <AppText style={textStyle}>· AppText labels are paired with graphical icons for greater independence for users with reading difficulties</AppText>
 
-            <AppText > </AppText>
             <AppText > </AppText>
             <AppText > </AppText>
             <View style={{ flexDirection: 'row' }}>

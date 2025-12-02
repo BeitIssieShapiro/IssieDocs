@@ -1,0 +1,73 @@
+{
+    "code": "ENSCOCOAERRORDOMAIN516",
+    "nativeStackIOS": [
+        "0   IssieDocs.debug.dylib               0x0000000107111bc0 RCTJSErrorFromCodeMessageAndNSError + 100",
+        "1   IssieDocs.debug.dylib               0x0000000107437514 ___ZZN8facebook5react15ObjCTurboModule13createPromiseERNS_3jsi7RuntimeERKNSt3__112basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcEEEEU13block_pointerFvU13block_pointerFvP11objc_objectEU13block_pointerFvP8NSStringSJ_P7NSErrorEEENK3$_0clES4_RKNS2_5ValueEPSS_m_block_invoke.114 + 652",
+        "2   IssieDocs.debug.dylib               0x0000000106af2be8 -[RNFSManager reject:withError:] + 304",
+        "3   IssieDocs.debug.dylib               0x0000000106aee0e0 -[RNFSManager moveFile:destPath:options:resolver:rejecter:] + 256",
+        "4   CoreFoundation                      0x00000001804fa3b0 __invoking___ + 144",
+        "5   CoreFoundation                      0x00000001804f755c -[NSInvocation invoke] + 276",
+        "6   CoreFoundation                      0x00000001804f77e0 -[NSInvocation invokeWithTarget:] + 60",
+        "7   IssieDocs.debug.dylib               0x000000010742aa70 ___ZN8facebook5react15ObjCTurboModule23performMethodInvocationERNS_3jsi7RuntimeEbPKcP12NSInvocationP14NSMutableArray_block_invoke + 196",
+        "8   IssieDocs.debug.dylib               0x000000010743cc0c _ZZN8facebook5react15ObjCTurboModule23performMethodInvocationERNS_3jsi7RuntimeEbPKcP12NSInvocationP14NSMutableArrayENK3$_1clEv + 116",
+        "9   IssieDocs.debug.dylib               0x000000010743cb8c _ZNSt3__18__invokeB8de200100IRZN8facebook5react15ObjCTurboModule23performMethodInvocationERNS1_3jsi7RuntimeEbPKcP12NSInvocationP14NSMutableArrayE3$_1JEEEDTclclsr3stdE7declvalIT_EEspclsr3stdE7declvalIT0_EEEEOSF_DpOSG_ + 24",
+        "10  IssieDocs.debug.dylib               0x000000010743cb68 _ZNSt3__128__invoke_void_return_wrapperIvLb1EE6__callB8de200100IJRZN8facebook5react15ObjCTurboModule23performMethodInvocationERNS3_3jsi7RuntimeEbPKcP12NSInvocationP14NSMutableArrayE3$_1EEEvDpOT_ + 24",
+        "11  IssieDocs.debug.dylib               0x000000010743cb44 _ZNSt3__110__invoke_rB8de200100IvJRZN8facebook5react15ObjCTurboModule23performMethodInvocationERNS1_3jsi7RuntimeEbPKcP12NSInvocationP14NSMutableArrayE3$_1EEET_DpOT0_ + 24",
+        "12  IssieDocs.debug.dylib               0x000000010743cb20 _ZNSt3__110__function12__alloc_funcIZN8facebook5react15ObjCTurboModule23performMethodInvocationERNS2_3jsi7RuntimeEbPKcP12NSInvocationP14NSMutableArrayE3$_1NS_9allocatorISE_EEFvvEEclB8de200100Ev + 24",
+        "13  IssieDocs.debug.dylib               0x000000010743c2a4 _ZNSt3__110__function6__funcIZN8facebook5react15ObjCTurboModule23performMethodInvocationERNS2_3jsi7RuntimeEbPKcP12NSInvocationP14NSMutableArrayE3$_1NS_9allocatorISE_EEFvvEEclEv + 28",
+        "14  IssieDocs.debug.dylib               0x000000010696f498 _ZNKSt3__110__function12__value_funcIFvvEEclB8de200100Ev + 60",
+        "15  IssieDocs.debug.dylib               0x000000010696f450 _ZNKSt3__18functionIFvvEEclEv + 24",
+        "16  IssieDocs.debug.dylib               0x000000010744b3dc ___ZN12_GLOBAL__N_129ModuleNativeMethodCallInvoker11invokeAsyncERKNSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEEONS1_8functionIFvvEEE_block_invoke + 44",
+        "17  libdispatch.dylib                   0x00000001801b87a8 _dispatch_call_block_and_release + 24",
+        "18  libdispatch.dylib                   0x00000001801d34b0 _dispatch_client_callout + 12",
+        "19  libdispatch.dylib                   0x00000001801c1c28 _dispatch_lane_serial_drain + 984",
+        "20  libdispatch.dylib                   0x00000001801c26e8 _dispatch_lane_invoke + 396",
+        "21  libdispatch.dylib                   0x00000001801cd534 _dispatch_root_queue_drain_deferred_wlh + 288",
+        "22  libdispatch.dylib                   0x00000001801ccc74 _dispatch_workloop_worker_thread + 692",
+        "23  libsystem_pthread.dylib             0x0000000100792b8c _pthread_wqthread + 288",
+        "24  libsystem_pthread.dylib             0x000000010079198c start_wqthread + 8"
+    ],
+    "domain": "NSCocoaErrorDomain",
+    "userInfo": {
+        "NSSourceFilePathErrorKey": "/Users/i022021/Library/Developer/CoreSimulator/Devices/B43A984C-329C-42AB-90EF-EB71CA8DB569/data/Containers/Data/Application/1901BD92-C23B-4F11-872F-E82A9FF7FF35/Library/Caches/ReactNative_cropped_image_/82FD3FD2-6A07-498D-9D17-C4E306F46E7A.jpg",
+        "NSUserStringVariant": [
+            "Move"
+        ],
+        "NSDestinationFilePath": "/Users/i022021/Library/Developer/CoreSimulator/Devices/B43A984C-329C-42AB-90EF-EB71CA8DB569/data/Containers/Data/Application/1901BD92-C23B-4F11-872F-E82A9FF7FF35/Documents/folders/Default/Fonts.jpg",
+        "NSFilePath": "/Users/i022021/Library/Developer/CoreSimulator/Devices/B43A984C-329C-42AB-90EF-EB71CA8DB569/data/Containers/Data/Application/1901BD92-C23B-4F11-872F-E82A9FF7FF35/Library/Caches/ReactNative_cropped_image_/82FD3FD2-6A07-498D-9D17-C4E306F46E7A.jpg",
+        "NSUnderlyingError": {
+            "code": "17",
+            "message": "underlying error",
+            "nativeStackIOS": [
+                "0   IssieDocs.debug.dylib               0x0000000107111bc0 RCTJSErrorFromCodeMessageAndNSError + 100",
+                "1   IssieDocs.debug.dylib               0x0000000107111f0c RCTJSErrorFromCodeMessageAndNSError + 944",
+                "2   IssieDocs.debug.dylib               0x0000000107437514 ___ZZN8facebook5react15ObjCTurboModule13createPromiseERNS_3jsi7RuntimeERKNSt3__112basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcEEEEU13block_pointerFvU13block_pointerFvP11objc_objectEU13block_pointerFvP8NSStringSJ_P7NSErrorEEENK3$_0clES4_RKNS2_5ValueEPSS_m_block_invoke.114 + 652",
+                "3   IssieDocs.debug.dylib               0x0000000106af2be8 -[RNFSManager reject:withError:] + 304",
+                "4   IssieDocs.debug.dylib               0x0000000106aee0e0 -[RNFSManager moveFile:destPath:options:resolver:rejecter:] + 256",
+                "5   CoreFoundation                      0x00000001804fa3b0 __invoking___ + 144",
+                "6   CoreFoundation                      0x00000001804f755c -[NSInvocation invoke] + 276",
+                "7   CoreFoundation                      0x00000001804f77e0 -[NSInvocation invokeWithTarget:] + 60",
+                "8   IssieDocs.debug.dylib               0x000000010742aa70 ___ZN8facebook5react15ObjCTurboModule23performMethodInvocationERNS_3jsi7RuntimeEbPKcP12NSInvocationP14NSMutableArray_block_invoke + 196",
+                "9   IssieDocs.debug.dylib               0x000000010743cc0c _ZZN8facebook5react15ObjCTurboModule23performMethodInvocationERNS_3jsi7RuntimeEbPKcP12NSInvocationP14NSMutableArrayENK3$_1clEv + 116",
+                "10  IssieDocs.debug.dylib               0x000000010743cb8c _ZNSt3__18__invokeB8de200100IRZN8facebook5react15ObjCTurboModule23performMethodInvocationERNS1_3jsi7RuntimeEbPKcP12NSInvocationP14NSMutableArrayE3$_1JEEEDTclclsr3stdE7declvalIT_EEspclsr3stdE7declvalIT0_EEEEOSF_DpOSG_ + 24",
+                "11  IssieDocs.debug.dylib               0x000000010743cb68 _ZNSt3__128__invoke_void_return_wrapperIvLb1EE6__callB8de200100IJRZN8facebook5react15ObjCTurboModule23performMethodInvocationERNS3_3jsi7RuntimeEbPKcP12NSInvocationP14NSMutableArrayE3$_1EEEvDpOT_ + 24",
+                "12  IssieDocs.debug.dylib               0x000000010743cb44 _ZNSt3__110__invoke_rB8de200100IvJRZN8facebook5react15ObjCTurboModule23performMethodInvocationERNS1_3jsi7RuntimeEbPKcP12NSInvocationP14NSMutableArrayE3$_1EEET_DpOT0_ + 24",
+                "13  IssieDocs.debug.dylib               0x000000010743cb20 _ZNSt3__110__function12__alloc_funcIZN8facebook5react15ObjCTurboModule23performMethodInvocationERNS2_3jsi7RuntimeEbPKcP12NSInvocationP14NSMutableArrayE3$_1NS_9allocatorISE_EEFvvEEclB8de200100Ev + 24",
+                "14  IssieDocs.debug.dylib               0x000000010743c2a4 _ZNSt3__110__function6__funcIZN8facebook5react15ObjCTurboModule23performMethodInvocationERNS2_3jsi7RuntimeEbPKcP12NSInvocationP14NSMutableArrayE3$_1NS_9allocatorISE_EEFvvEEclEv + 28",
+                "15  IssieDocs.debug.dylib               0x000000010696f498 _ZNKSt3__110__function12__value_funcIFvvEEclB8de200100Ev + 60",
+                "16  IssieDocs.debug.dylib               0x000000010696f450 _ZNKSt3__18functionIFvvEEclEv + 24",
+                "17  IssieDocs.debug.dylib               0x000000010744b3dc ___ZN12_GLOBAL__N_129ModuleNativeMethodCallInvoker11invokeAsyncERKNSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEEONS1_8functionIFvvEEE_block_invoke + 44",
+                "18  libdispatch.dylib                   0x00000001801b87a8 _dispatch_call_block_and_release + 24",
+                "19  libdispatch.dylib                   0x00000001801d34b0 _dispatch_client_callout + 12",
+                "20  libdispatch.dylib                   0x00000001801c1c28 _dispatch_lane_serial_drain + 984",
+                "21  libdispatch.dylib                   0x00000001801c26e8 _dispatch_lane_invoke + 396",
+                "22  libdispatch.dylib                   0x00000001801cd534 _dispatch_root_queue_drain_deferred_wlh + 288",
+                "23  libdispatch.dylib                   0x00000001801ccc74 _dispatch_workloop_worker_thread + 692",
+                "24  libsystem_pthread.dylib             0x0000000100792b8c _pthread_wqthread + 288",
+                "25  libsystem_pthread.dylib             0x000000010079198c start_wqthread + 8"
+            ],
+            "domain": "NSPOSIXErrorDomain",
+            "userInfo": {}
+        }
+    }
+}

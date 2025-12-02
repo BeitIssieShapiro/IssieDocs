@@ -96,7 +96,7 @@ const App = (props) => {
   return (
     <MenuProvider>
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ gestureEnabled: false, headerShown: true, headerStyle: { position: "absolute", zIndex: 2000 } }}>
+        <Stack.Navigator screenOptions={{ gestureEnabled: false, headerShown: true, headerStyle: {  position: "absolute", zIndex: 2000 } }}>
           <Stack.Screen name="Home" component={FolderGallery}
             options={
               (props) => {
@@ -114,7 +114,8 @@ const App = (props) => {
                 let title = titleSetting;
                 let titleSavedCallback = { getTitleToSave: undefined };
                 const header = (() => <TopHeader
-                  actions={<View style={{ width: "100%", flexDirection: getRowDirection(), justifyContent: "flex-end", zIndex: 2000 }}>
+                  actions={<View style={{ 
+                    width: "100%", flexDirection: getRowDirection(), justifyContent: "flex-end", zIndex: 2000 }}>
                     {
                       props.route && props.route.params ?
                         getIconButton(() => {

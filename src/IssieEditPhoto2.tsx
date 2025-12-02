@@ -430,8 +430,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         Alert.alert("Error", err.message);
                     }
                     // Handle other errors or user cancellations if necessary
-                } 
-                
+                }
+
                 const doNotShow = getSetting("DoNotShowPDFAlert", false);
 
                 if (!doNotShow) {
@@ -440,7 +440,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                             {
                                 text: translate("Yes"), onPress: (doNotShow) => {
                                     if (doNotShow) {
-                                        Settings.set({"DoNotShowPDFAlert": true});
+                                        Settings.set({ "DoNotShowPDFAlert": true });
                                     }
                                     Share.open(shareOptions).then(successFunc).catch(failureFunc)
                                 },
@@ -1331,13 +1331,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                                 currentEditedRef.current = newCurrEdited
                                 setCurrentEdited(newCurrEdited);
                                 queue2state();
-                            }, "add", translate("AddPageMenuTitle"), 25, 35, { width: 180 }, undefined, undefined, undefined, true)
+                            }, "add", translate("AddPageMenuTitle"), 25, 35, { width: 180 }, undefined, undefined, undefined, true, undefined, "MI")
                         }
                         <Spacer />
                         {getRoundedButton(() => hideMessage(),
                             "cancel",
                             tableOverflow || isFontChange ? translate("BtnOK") : translate("BtnCancel"),
-                            25, 35, { width: 180 }, undefined, undefined, undefined, true)}
+                            25, 35, { width: 180 }, undefined, undefined, undefined, true, undefined, "MI")}
 
                     </View>
                 }
@@ -1619,7 +1619,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 const boldChanged = textElem.bold !== textBoldRef.current;
                 const italicChanged = textElem.italic !== textItalicRef.current;
                 const underlineChanged = textElem.underline !== textUnderlineRef.current;
-                
+
                 textElem.color = textColorRef.current;
                 textElem.fontSize = fontSizeRef.current / ratioRef.current;
                 textElem.alignment = textAlignmentRef.current;
@@ -1788,7 +1788,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const MoveButton = ({ rotate, onPress, style, disabled }: { rotate: number, onPress: () => void, style: any, disabled: boolean }) => (
             <TouchableOpacity style={[styles.moveCanvasButton, style, { transform: [{ rotate: rotate + 'deg' }] }]}
                 onPress={() => { console.log("presse move"); !disabled && onPress() }} >
-                <MyIcon info={{type:"MI",name:"play-arrow", size:70, color: disabled ? semanticColors.moveInZoomButtonDisabled : semanticColors.moveInZoomButton}}/>
+                <MyIcon info={{ type: "MI", name: "play-arrow", size: 70, color: disabled ? semanticColors.moveInZoomButtonDisabled : semanticColors.moveInZoomButton }} />
             </TouchableOpacity>
         );
 

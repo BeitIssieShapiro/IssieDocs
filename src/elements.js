@@ -540,7 +540,7 @@ export function FileNameDialog({
                     <AppText style={[styles.titleText, { textAlign }, { width: isLandscape ? '40%' : '30%' }]}>{translate("CaptionFolderNameList")}</AppText>
                     {getRoundedButton(() => navigation.navigate('CreateFolder',
                         { saveNewFolder: onSaveNewFolder, isMobile }),
-                        'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 220, height: 40 }, row, true)}
+                        'create-new-folder', translate("BtnNewFolder"), 30, 30, { width: 220, height: 40 }, row, true, undefined, undefined, undefined, "MI")}
                 </View>
                 <Spacer />
                 <RootFolderPicker onChangeFolder={onChangeFolder} folders={folders} currentFolder={folder} showSubFolders={true} showBuiltinFolders={true} />

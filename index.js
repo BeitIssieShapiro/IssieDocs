@@ -51,6 +51,7 @@ function SafeApp(props) {
     return <View style={{
         width: "100%",
         height: "100%",
+        direction: "ltr",
 
         paddingTop: insets.top,
         paddingBottom: insets.bottom,

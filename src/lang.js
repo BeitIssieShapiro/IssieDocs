@@ -156,7 +156,7 @@ var strings = {
         "ExportPDFWithAudioTitle": "שיתוף פ.ד.פ",
         "ExportPDFWithAudioWarning": "שיתוף כקובץ פדפ לא יכלול הקלטות ולא יאפשר עריכה, כדי לאפשר עריכה יש לשתף כדף עבודה. האם להמשיך בכל זאת?",
         "DoNotAskAgain":"אל תשאל שוב",
-
+        "DefaultFont":"פונט מערכת",
     },
     "ar": {
         "StartHere": "إضافة صفحات",
@@ -296,6 +296,7 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "ExportPDFWithAudioTitle": "شارك كملف PDF",
         "ExportPDFWithAudioWarning": "مشاركة كملف PDF لن تتضمن التسجيلات ولن تسمح بالتعديل. للسماح بالتعديل، فكر في المشاركة كملف ورقي. هل تريد المتابعة على أي حال",
         "DoNotAskAgain":"لا تسأل مرة أخرى",
+        "DefaultFont":"خط افتراضي",
     },
     "en": {
         "StartHere": "Add worksheets",
@@ -438,7 +439,8 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "Table": "Table",
         "ExportPDFWithAudioTitle": "Share as PDF",
         "ExportPDFWithAudioWarning": "Sharing as a PDF will not include recordings nor allow editing.\nTo allow editing consider sharing as a worksheet. Proceed anyway?",
-        "DoNotAskAgain":"Do not ask again"
+        "DoNotAskAgain":"Do not ask again",
+        "DefaultFont":"System Font",
     },
 }
 

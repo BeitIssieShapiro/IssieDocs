@@ -22,6 +22,7 @@ export default function FolderNew(props) {
     let caption = normalizeTitle(props.name);
     const asTitle = props.asTitle || props.asTree;
     const locatedAtTitle = props.asTitle;
+    const asTile = props.asTile !== false; // default to true for backward compatibility
     const sidePadding = props.asTree ? 5 : 30;
     const isCurrent = props.currentID == props.id || (!props.asTree && props.currentID?.startsWith(props.id + "/"));
     const isChild = props.id.includes("/");
@@ -42,10 +43,16 @@ export default function FolderNew(props) {
     }
 
     const { row, rowReverse, rtl } = getRowDirections();
-    const height = asTitle ? dimensions.folderAsTitleHeight : dimensions.folderHeight;
+    const height = asTitle ? dimensions.folderAsTitleHeight : (props.isOverview ?
+        (asTile ? dimensions.tileHeight * 2 / 3 : dimensions.lineHeight) :
+        dimensions.folderHeight);
     const textWidth = props.width - (6 + 45 + 5 + 25) - (isChild ? 20 : 0)
+
+    const tileFolderSize = 110;
+    const tileFolderIconSize = 48;
+
     return (
-        <React.Fragment>
+        <>
             <FolderDraxView
                 index={props.index}
                 id={props.id}
@@ -78,7 +85,7 @@ export default function FolderNew(props) {
                     }, rtl ? { left: 18 } : { right: 18 }]}>
                         <MyIcon info={{ type: "MDI", color: semanticColors.titleText, name: "delete-forever", size: 40 }} onPress={props.onDelete} />
                         <Spacer width={17} />
-                        <MyIcon info={{ type: "MDI", color: semanticColors.titleText, name: "edit", size: 40 }} onPress={props.onRename} />
+                        <MyIcon info={{ type: "MI", color: semanticColors.titleText, name: "edit", size: 40 }} onPress={props.onRename} />
                     </View> : null
                 }
 
@@ -90,12 +97,11 @@ export default function FolderNew(props) {
                     style={{
                         flexDirection: rowReverse,
                         backgroundColor: dragOver ? dragOverColor : (isCurrent ? semanticColors.selectedFolder : 'transparent'),
-                        height: '100%'
+                        height: '100%',
                     }}>
 
                     <View style={{
-                        flexDirection: rowReverse, alignItems: 'center'
-
+                        flexDirection: rowReverse, alignItems: 'center',
                     }}>
                         {asTitle ?
                             /**
@@ -123,7 +129,7 @@ export default function FolderNew(props) {
                                     <MyIcon info={{ name: "folder", size: 45, color: props.color }} />
                                     <View style={[{ position: 'absolute', top: 0, width: '100%', height: '100%' }, rtl ? { left: 0 } : { right: 0 }]}>
                                         <View style={{
-                                            width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', paddingTop: '7%',
+                                            width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', paddingTop: 7,
                                             flexDirection: rowReverse
                                         }}>
                                             {props.icon && props.icon.length > 0 ? <FolderIcon name={props.icon} size={20} color={'white'} /> : null}
@@ -147,27 +153,56 @@ export default function FolderNew(props) {
                             /**
                              * Side Panel View or overview
                              */
-                            <View
-                                style={{
-                                    flexDirection: 'column',
-                                    width: '100%'
-                                }}
-                            >
-                                <View style={{ flexDirection: row, justifyContent: 'center', width: '100%' }}>
-                                    <MyIcon info={{ name: "folder", size: 72, color: props.color }} />
-
-                                    <View style={{ position: 'absolute', left: 0, top: 25, width: '100%', height: '100%' }}>
-                                        <View style={{ width: '100%', justifyContent: 'center', flexDirection: rowReverse }}>
-                                            {props.icon && props.icon.length ? <FolderIcon name={props.icon} size={30} color='white' /> : null}
+                            props.isOverview && !asTile ?
+                                /**
+                                 * List Mode for folders in overview
+                                 */
+                                <View
+                                    style={{
+                                        flexDirection: rowReverse,
+                                        width: '100%',
+                                        height: "100%",
+                                        alignItems: 'center',
+                                        paddingHorizontal: 5,
+                                        borderWidth: 1, borderColor: "#D1CFCF",
+                                    }}
+                                >
+                                    <View style={{ position: 'relative', marginRight: rtl ? 0 : 8, marginLeft: rtl ? 8 : 0 }}>
+                                        <MyIcon info={{ name: "folder", size: 50, color: props.color }} />
+                                        <View style={{ position: 'absolute', left: 0, top: 19, width: '100%', height: '100%' }}>
+                                            <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                                                {props.icon && props.icon.length ? <FolderIcon name={props.icon} size={20} color='white' /> : null}
+                                            </View>
                                         </View>
                                     </View>
+                                    <AppText ellipsizeMode={true} numberOfLines={1} style={[FolderTextStyle,
+                                        { flex: 1, fontSize: 26, textAlign: rtl ? 'right' : 'left' }]} >{caption}</AppText>
+                                </View>
+                                :
+                                /**
+                                 * Tile Mode for folders
+                                 */
+                                <View
+                                    style={{
+                                        flexDirection: 'column',
+                                        width: '100%'
+                                    }}
+                                >
+                                    <View style={{ flexDirection: row, justifyContent: 'center', width: '100%' }}>
+                                        <MyIcon info={{ name: "folder", size: tileFolderSize, color: props.color }} />
 
-                                </View>
-                                <View style={{ flexDirection: rowReverse, width: '100%' }}>
-                                    <AppText ellipsizeMode={true} style={[FolderTextStyle,
-                                        { width: '100%', lineHeight: 28, textAlign: 'center' }]} >{caption}</AppText>
-                                </View>
-                            </View>}
+                                        <View style={{ position: 'absolute', left: 0, top: tileFolderSize / 3, width: '100%', height: '100%' }}>
+                                            <View style={{ width: '100%', justifyContent: 'center', flexDirection: rowReverse, margin: 2 }}>
+                                                {props.icon && props.icon.length ? <FolderIcon name={props.icon} size={tileFolderIconSize} color='white' /> : null}
+                                            </View>
+                                        </View>
+
+                                    </View>
+                                    <View style={{ flexDirection: rowReverse, width: '100%' }}>
+                                        <AppText ellipsizeMode={true} style={[FolderTextStyle,
+                                            { width: '100%', lineHeight: 28, textAlign: 'center' }]} >{caption}</AppText>
+                                    </View>
+                                </View>}
                     </View>
 
                 </TouchableOpacity>
@@ -175,9 +210,10 @@ export default function FolderNew(props) {
                     props.editMode && !props.fixedFolder && !asTitle && !props.isOverview ?
                         <View style={[
                             { position: 'absolute', top: 0, flexDirection: 'column', alignItems: 'center', marginTop: 10 },
-                            rtl ? { left: 0 } : { right: 0 }]}>
-                            <MyIcon info={{ name: "expand-less", size: 55, color: props.index == 0 ? 'gray' : 'black' }} onPress={props.index > 0 ? props.onMoveUp : undefined} />:
-                            <MyIcon info={{ name: "expand-more", size: 55, color: props.isLast ? 'gray' : 'black' }} onPress={props.isLast ? undefined : props.onMoveDown} />
+                            rtl ? { left: 0 } : { right: 0 }
+                        ]}>
+                            <MyIcon info={{ type: "MI", name: "expand-less", size: 55, color: props.index == 0 ? 'gray' : 'black' }} onPress={props.index > 0 ? props.onMoveUp : undefined} />
+                            <MyIcon info={{ type: "MI", name: "expand-more", size: 55, color: props.isLast ? 'gray' : 'black' }} onPress={props.isLast ? undefined : props.onMoveDown} />
                         </View> :
                         <View />
                 }
@@ -208,7 +244,7 @@ export default function FolderNew(props) {
                         isLandscape={props.isLandscape}
                     />))
             }
-        </React.Fragment>
+        </>
 
     );
 }

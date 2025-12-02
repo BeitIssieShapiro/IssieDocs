@@ -5,6 +5,7 @@ export interface FontInfo {
     name: string | undefined;
     displayName: string;
     preview: string;
+    supportedStyles: ("italic" | "bold" | "underline")[];
 }
 
 // https://alefalefalef.co.il/דנה-יד-פונט-חינמי/
@@ -13,9 +14,9 @@ export interface FontInfo {
 
 
 export const AVAILABLE_FONTS: FontInfo[] = [
-    { name: undefined, displayName: 'ברירת מחדל', preview: 'אב Ab أب' },
-    { name: "DanaYadAlefAlefAlef-Normal", displayName: 'כתב יד', preview: 'אב' },
-    { name: "Molhim", displayName: 'Molhim', preview: 'أب'  },
-    { name: "Satisfy", displayName: 'Satisfy', preview: 'Ab'  },
-    { name: "Schoolbell", displayName: 'Schoolbell', preview: 'Ab'  },
+    { name: undefined, displayName: 'ברירת מחדל', preview: "DefaultFont", supportedStyles: ["underline", "bold", "italic"] },
+    { name: "DanaYadAlefAlefAlef-Normal", displayName: 'כתב יד', preview: 'אב' , supportedStyles:["underline"]},
+    { name: "Molhim", displayName: 'Molhim', preview: 'أب' , supportedStyles:["underline"]},
+    { name: "Satisfy", displayName: 'Satisfy', preview: 'Ab' , supportedStyles:["underline"]},
+    { name: "Schoolbell", displayName: 'Schoolbell', preview: 'Ab' , supportedStyles:["underline"]},
 ];

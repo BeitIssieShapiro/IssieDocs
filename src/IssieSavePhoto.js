@@ -385,6 +385,25 @@ export default class IssieSavePhoto extends React.Component {
         trace("save: src - ", newPathToSave, "target:", filePath)
 
         let thumbnailSrc = undefined
+
+        // Verify that a file with that name does not exist (for multi-page as a single and vice-versa)
+        let exists = false;
+        if (filePath.endsWith(".jpg")) {
+          function stripExtension(fullPath) {
+            const lastDot = fullPath.lastIndexOf(".");
+            return lastDot === -1 ? fullPath : fullPath.substring(0, lastDot);
+          }
+          const folderPath = stripExtension(filePath)
+          exists = await FileSystem.exists(folderPath)
+        } else {
+          const fileToCheck = filePath + ".jpg"
+          exists = await FileSystem.exists(fileToCheck)
+        }
+        if (exists) {
+          Alert.alert(translate("PageAlreadyExists"))
+          return;
+        }
+
         if (this.state.multiPage) {
           //create a folder with the name of the file (happens implicitly)
           for (let i = 0; i < this.state.pages.length; i++) {
