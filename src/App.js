@@ -42,6 +42,7 @@ import { TopHeader } from './header';
 import { IssieEditPhoto2 } from './IssieEditPhoto2';
 import { MyIcon } from './common/icons';
 
+
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
   'Can\'t perform a React state update',

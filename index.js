@@ -11,6 +11,7 @@ import { GlobalContext } from './src/global-context.js';
 import { MessageBoxProvider } from './src/message';
 
 import TextEncoder from 'react-native-fast-encoder';
+import { firebaseInit } from './src/common/firebase';
 // @ts-ignore
 window.TextEncoder = TextEncoder;
 // @ts-ignore
@@ -28,7 +29,7 @@ window.TextDecoder = TextEncoder;
 
 // const wApp = Sentry.wrap(App);
 
-
+firebaseInit()
 
 function SafeAppContainer(props) {
     console.log("props.url", props.url)

@@ -79,3 +79,5 @@ uploadkey
 
 android/gradle.properties
 android/app/release
+
+debug-token.ts

@@ -664,7 +664,6 @@ function Canvas({
             ],
         };
     });
-    console.log("ratio", ratio)
 
     return (
         <Animated.View

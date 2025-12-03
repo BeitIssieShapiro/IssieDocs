@@ -197,7 +197,7 @@ export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, di
 
     let textExist = text && text.length > 0;
     const activeDirection = direction ? direction : getRowDirection();
-    const textAlign = icon ? (activeDirection == "row" ? "right" : "left") : (isRTL() ? "right" : "left");
+    const textAlign = icon ? (activeDirection == "row" ? "right" : "left") : "center";
 
     return <TouchableOpacity
         key={key}
