@@ -120,10 +120,13 @@ export function tableWidth(table: SketchTable): number {
     return lastVLine ? lastVLine - table.verticalLines[0] : 0;
 }
 
+const MIN_LINE_HEIGHT = 15;
 
-export function calcEffectiveHorizontalLines(table: SketchTable, texts?: SketchText[]): number[] {
+export function calcEffectiveHorizontalLines(table: SketchTable, maxHeight: number, texts?: SketchText[]): number[] {
     const tableTexts = texts?.filter(t => t.tableId == table.id);
     const result = [] as number[];
+
+    let maxLinePosition = maxHeight - MIN_LINE_HEIGHT * table.horizontalLines.length - 1;
 
     let dy = 0;
     for (let i = 0; i < table.horizontalLines.length; i++) {
@@ -133,12 +136,17 @@ export function calcEffectiveHorizontalLines(table: SketchTable, texts?: SketchT
                 const rowHeight = tableRowHeight(table, i - 1);
                 const maxTextHeight = Math.max(...rowTexts.map(rt => (rt.height ?? 0)));
                 if (maxTextHeight > rowHeight) {
-                    // emlarge row height and all next rows position
+                    // enlarge row height and all next rows position
                     dy += maxTextHeight - rowHeight + table.strokeWidth / 2;
                 }
             }
         }
-        result.push(table.horizontalLines[i] + dy);
+        let hl = table.horizontalLines[i] + dy;
+        if (hl > maxLinePosition) {
+            hl = maxLinePosition;
+        }
+        result.push(hl);
+        maxLinePosition += MIN_LINE_HEIGHT;
     }
     return result;
 }
@@ -250,7 +258,7 @@ export async function calcRatio(imgPath: string, minSideMargin: number, windowSi
 
                 const actualSize = { width: size.width * ratio, height: size.height * ratio };
                 const actualSideMargin = (windowSize.width - size.width * ratio) / 2;
-                resolve( {
+                resolve({
                     ratio,
                     actualSize,
                     actualSideMargin,

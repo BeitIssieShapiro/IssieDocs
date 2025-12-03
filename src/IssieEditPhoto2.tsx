@@ -285,7 +285,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             if (textElem.tableId) {
                 const table = tablesRef.current.find(t => t.id == textElem.tableId);
                 if (table) {
-                    const horizontalLines = calcEffectiveHorizontalLines(table, textsRef.current);
+                    const horizontalLines = calcEffectiveHorizontalLines(table, canvasSizeRef.current.height / ratioRef.current, textsRef.current);
                     elemBottom = horizontalLines[textElem.y] + elemHeight;
                 }
             }
@@ -960,7 +960,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 elem = tablesRef.current.find(table => table.id == id);
 
                 if (elem) {
-                    const horizontalLines = calcEffectiveHorizontalLines(elem, textsRef.current);
+                    const horizontalLines = calcEffectiveHorizontalLines(elem, canvasSizeRef.current.height/ ratioRef.current, textsRef.current);
 
                     return {
                         moveOffset: { x: -15, y: -15 },
@@ -1106,6 +1106,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     const delta = (x - imgElem.x) - imgElem.width;
                     imgElem.width += delta;
                     imgElem.height += delta / (imgElem.aspectRatio || 1)
+                    if (imgElem.width < 50) {
+                        imgElem.width = 50;
+                        imgElem.height = 50 / (imgElem.aspectRatio || 1)
+                    }
+
                 }
                 setImages([...imagesRef.current]);
             }
@@ -1131,7 +1136,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         return vLine + dx * ratio;
                     });
 
-                    const horizontalLines = calcEffectiveHorizontalLines(table, textsRef.current)
+                    const horizontalLines = calcEffectiveHorizontalLines(table, canvasSizeRef.current.height/ ratioRef.current, textsRef.current)
 
                     table.horizontalLines = horizontalLines.map((hLine, i) => {
                         if (i == 0) return hLine;
@@ -1209,7 +1214,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
             if (tableContext.hLine != undefined && tableContext.hLine > 0 && tableContext.hLine < table.horizontalLines.length - 1) {
                 // not allow move beyond the two adjecent lines
-                const horizontalLines = calcEffectiveHorizontalLines(table, textsRef.current)
+                const horizontalLines = calcEffectiveHorizontalLines(table, canvasSizeRef.current.height/ ratioRef.current, textsRef.current)
                 if (p[1] <= horizontalLines[tableContext.hLine - 1] || p[1] >= horizontalLines[tableContext.hLine + 1]) return;
 
                 // calculate the added size to all rows before this

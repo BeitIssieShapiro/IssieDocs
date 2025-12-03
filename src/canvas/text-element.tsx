@@ -21,6 +21,7 @@ interface TextElementProps {
     handleTextLayout: (e: LayoutChangeEvent, text: SketchText) => void;
     tables?: SketchTable[];
     texts: SketchText[];
+    canvasHeight: number;
 }
 
 function TextElement({
@@ -34,6 +35,7 @@ function TextElement({
     handleTextLayout,
     tables,
     texts,
+    canvasHeight
 }: TextElementProps, ref: any) {
     const [revision, setRevision] = useState<number>(0)
     //console.log("text ratio", ratio, actualWidth, text.fontSize)
@@ -66,7 +68,7 @@ function TextElement({
     // } else {
     //     console.log("text ",text)
     // }
-    const horizontalLines = table ? calcEffectiveHorizontalLines(table, texts) : [];
+    const horizontalLines = table ? calcEffectiveHorizontalLines(table, canvasHeight, texts) : [];
     const posStyle: any = table ?
         {
             position: "absolute",
@@ -78,6 +80,7 @@ function TextElement({
             top: (horizontalLines[text.y]) * ratio + table.strokeWidth / 2,
             width: tableColWidth(table, text.x) * ratio - table.strokeWidth,
             minHeight: tableRowHeight(table, text.y) * ratio - table.strokeWidth,
+            maxHeight: tableRowHeight(table, text.y) * ratio - table.strokeWidth,
         } :
         {
             position: "absolute",
@@ -89,7 +92,7 @@ function TextElement({
                 actualWidth - text.x * ratio - 3,
         };
 
-    const widthStyle = text.width? {width: text.width * ratio}:undefined;
+    const widthStyle = text.width ? { width: text.width * ratio } : undefined;
 
     const style: any = {
         color: text.color, fontSize: text.fontSize * ratio,
@@ -136,7 +139,7 @@ function TextElement({
                         style={[styles.textStyle, posStyle, style, { position: "absolute", [text.rtl ? "right" : "left"]: -10000, minHeight: 0 }, !table && { minWidth: 20 / ratio }]}
                         onLayout={(e) => {
                             handleTextLayout(e, text)
-                            setRevision(prev=>prev+1)
+                            setRevision(prev => prev + 1)
                         }}
                     >
                         {text.text}
@@ -150,9 +153,10 @@ function TextElement({
         <View key={text.id} style={posStyle}>
             <Text
                 allowFontScaling={false}
+                selectable={true}
                 style={[styles.textStyle, style,
                 table && { width: posStyle.width },
-                // !table && { textAlign: "left" }
+                    // !table && { textAlign: "left" }
                 ]}
                 onLayout={(e) => handleTextLayout(e, text)}
             >

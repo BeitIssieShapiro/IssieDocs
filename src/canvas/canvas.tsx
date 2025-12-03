@@ -330,7 +330,7 @@ function Canvas({
                     }
                     if (!elem && (
                         currentElementTypeRef.current === ElementTypes.Table || currentElementTypeRef.current === ElementTypes.Text)) {
-                        const tableContext = searchTable(...clickPoint);
+                        const tableContext = searchTable(...clickPoint, currentElementTypeRef.current === ElementTypes.Text);
                         if (tableContext) {
                             startSketchRef.current = { ...startSketchRef.current, initialPosition: tableContext.initialPosition, elem: tableContext };
                         }
@@ -537,35 +537,34 @@ function Canvas({
         ];
     }, []);
 
-    const searchTable = useCallback((cx: number, cy: number): TableContext | undefined => {
+    const searchTable = useCallback((cx: number, cy: number, searchCell: boolean): TableContext | undefined => {
         for (const table of tablesRef.current) {
             // 0. calculate effective hlines
-            const horizontalLines = calcEffectiveHorizontalLines(table, textsRef.current);
+            const horizontalLines = calcEffectiveHorizontalLines(table, canvasHeightRef.current / ratioRef.current, textsRef.current);
 
+            if (!searchCell) {
+                // 1. Check if near a vertical or horizontal line
+                for (let v = 1; v < table.verticalLines.length - 1; v++) {
+                    if (Math.abs(table.verticalLines[v] - cx) < TABLE_LINE_THRESHOLD) {
+                        return {
+                            elem: table,
+                            vLine: v,
+                            initialPosition: [table.verticalLines[v], table.verticalLines[v]]
+                        };
+                    }
+                }
 
-            // 1. Check if near a vertical or horizontal line
-            for (let v = 1; v < table.verticalLines.length - 1; v++) {
-                if (Math.abs(table.verticalLines[v] - cx) < TABLE_LINE_THRESHOLD) {
-                    return {
-                        elem: table,
-                        vLine: v,
-                        initialPosition: [table.verticalLines[v], table.verticalLines[v]]
-                    };
+                //console.log("xxx", cx, cy, table.verticalLines, horizontalLines)
+                for (let h = 1; h < horizontalLines.length - 1; h++) {
+                    if (Math.abs(horizontalLines[h] - cy) < TABLE_LINE_THRESHOLD) {
+                        return {
+                            elem: table,
+                            hLine: h,
+                            initialPosition: [horizontalLines[h], horizontalLines[h]]
+                        };
+                    }
                 }
             }
-
-            //console.log("xxx", cx, cy, table.verticalLines, horizontalLines)
-
-            for (let h = 1; h < horizontalLines.length - 1; h++) {
-                if (Math.abs(horizontalLines[h] - cy) < TABLE_LINE_THRESHOLD) {
-                    return {
-                        elem: table,
-                        hLine: h,
-                        initialPosition: [horizontalLines[h], horizontalLines[h]]
-                    };
-                }
-            }
-
 
             // 2. Not near a line – find the cell (if any) the click is in
             let cellX = -1;
@@ -631,7 +630,7 @@ function Canvas({
         if (text.tableId) {
             table = tablesRef.current?.find(table => table.id == text.tableId)
             if (table) {
-                tableEndY = arrLast(calcEffectiveHorizontalLines(table, textsRef.current)) ?? 0;
+                tableEndY = arrLast(calcEffectiveHorizontalLines(table, canvasHeightRef.current/ ratioRef.current, textsRef.current)) ?? 0;
             }
         }
 
@@ -644,7 +643,7 @@ function Canvas({
             // change in height passed end of page
             onTextYOverflow?.(text.id);
         } else if (table) {
-            const tableEndYAfter = arrLast(calcEffectiveHorizontalLines(table, textsRef.current)) ?? 0;
+            const tableEndYAfter = arrLast(calcEffectiveHorizontalLines(table, canvasHeightRef.current/ ratioRef.current, textsRef.current)) ?? 0;
 
             if (tableEndYAfter > normHeight && tableEndY <= normHeight) {
                 onTextYOverflow?.(text.id);
@@ -665,6 +664,7 @@ function Canvas({
             ],
         };
     });
+    console.log("ratio", ratio)
 
     return (
         <Animated.View
@@ -771,6 +771,7 @@ function Canvas({
                         moveContext={moveContext}
                         onTextChanged={onTextChanged}
                         handleTextLayout={handleTextLayout}
+                        canvasHeight={canvasHeight/ ratio}
                     />
                 })}
 
@@ -841,7 +842,7 @@ function Canvas({
                     {// Tables 
                     }
                     {tables?.map((table) => {
-                        const horizontalLines = calcEffectiveHorizontalLines(table, textsRef.current);
+                        const horizontalLines = calcEffectiveHorizontalLines(table, canvasHeightRef.current/ ratioRef.current, textsRef.current);
 
                         const lines = [];
                         const dashArray = table.strokeDash && table.strokeDash.map((v: number) => v * 5);
@@ -904,7 +905,7 @@ function Canvas({
                     />
                 })}
                 {currentElementType == ElementTypes.Table && tables?.map((table) => {
-                    const horizontalLines = calcEffectiveHorizontalLines(table, texts)
+                    const horizontalLines = calcEffectiveHorizontalLines(table, canvasHeightRef.current/ ratioRef.current, texts)
 
                     return <MoveIcon
                         key={`table-resize-${table.id}`}
