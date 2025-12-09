@@ -52,6 +52,7 @@ import { LogBox } from 'react-native';
 import { FileContextMenu } from './file-context-menu.js';
 import { FolderPanel } from './folder-panel.js';
 import { DDProvider, DDScrollView, DDView } from './dragdrop.js';
+import { AnalyticEvent, analyticEvent, categorizeCount } from './common/firebase';
 
 
 const SORT_BY_NAME = 0;
@@ -221,9 +222,11 @@ export default class FolderGallery extends React.Component {
         url = await FileSystem.contentUriToFilePath(url);
         trace("_handleOpenURL url=", url)
 
+        analyticEvent(AnalyticEvent.file_imported, { ext: url.endsWith(".zip") ? "zip" : "jpg" });
         if (url.endsWith(".zip")) {
             FileSystem.main.extractZipInfo(url).then(zipInfo => {
                 if (zipInfo.metadata.backup) {
+                    analyticEvent(AnalyticEvent.backup_restored);
                     this.setState({ progress: { percent: 0, message: translate("RestoreBackup") } });
                     FileSystem.main.RestoreFromBackup(zipInfo, (progress) => {
                         trace("restore progress" + progress)
@@ -387,8 +390,17 @@ export default class FolderGallery extends React.Component {
 
 
     selectFolder = (folder) => {
-        if (folder)
+        if (folder) {
             this.setEditEnabled(true);
+
+            // Track folder opened
+            analyticEvent(AnalyticEvent.folder_opened, {
+                item_count: categorizeCount(folder.items?.length || 0),
+                subfolder_count: categorizeCount(folder.folders?.length || 0),
+                nesting_level: (folder.ID.match(/\//g) || []).length
+            });
+        }
+
         this.setState({ currentFolder: folder, selected: undefined }, () => {
             setNavParam(this.props.navigation, 'showHome', () => {
                 this.unselectFolder();
@@ -455,6 +467,8 @@ export default class FolderGallery extends React.Component {
     ShareIssieDocs = () => {
         if (!this.state.selected) return;
         this.setState({ inprogress: true })
+        analyticEvent(AnalyticEvent.worksheet_exported);
+        
         FileSystem.main.exportWorksheet(this.state.selected).then(sheetArchivePath => {
             trace("share file", sheetArchivePath)
             const shareOptions = {
@@ -482,15 +496,23 @@ export default class FolderGallery extends React.Component {
 
     DeleteFolder = () => {
         if (!this.state.currentFolder) return;
+
+        const folderToDelete = this.state.currentFolder;
+
         Alert.alert(translate("DeleteFolderTitle"), translate("BeforeDeleteFolderQuestion"),
             [
                 {
                     text: translate("BtnDelete"), onPress: () => {
-                        FileSystem.main.deleteFolder(this.state.currentFolder.ID)
+                        analyticEvent(AnalyticEvent.folder_deleted, {
+                            item_count: categorizeCount(folderToDelete.items?.length || 0),
+                            subfolder_count: categorizeCount(folderToDelete.folders?.length || 0)
+                        });
+
+                        FileSystem.main.deleteFolder(folderToDelete.ID)
 
                         // try to go back on folder
-                        if (this.state.currentFolder.parent) {
-                            this.selectFolder(this.state.currentFolder.parent);
+                        if (folderToDelete.parent) {
+                            this.selectFolder(folderToDelete.parent);
                         } else {
                             this.unselectFolder();
                         }
@@ -516,6 +538,10 @@ export default class FolderGallery extends React.Component {
             [
                 {
                     text: translate("BtnDelete"), onPress: () => {
+                        analyticEvent(AnalyticEvent.page_deleted, {
+                            page_count: categorizeCount(page.count || 1)
+                        });
+
                         FileSystem.main.deleteFile(page.path);
                         try {
                             FileSystem.main.deleteFile(page.thumbnail);
@@ -582,6 +608,10 @@ export default class FolderGallery extends React.Component {
     DuplicatePage = () => {
         if (!this.state.selected) return;
 
+        analyticEvent(AnalyticEvent.page_duplicated, {
+            page_count: categorizeCount(this.state.selected.count || 1)
+        });
+
         this.props.navigation.navigate('SavePhoto', {
             sheet: this.state.selected,
             imageSource: SRC_DUPLICATE,
@@ -612,6 +642,10 @@ export default class FolderGallery extends React.Component {
             if (!originalFolderID) {
                 console.log("add folder")
                 await FileSystem.main.addFolder(newFolderName, newFolderIcon, newFolderColor, true, false, false, parentID);
+
+                analyticEvent(AnalyticEvent.folder_created, {
+                    nesting_level: parentID ? (parentID.match(/\//g) || []).length + 1 : 0
+                });
             } else {
                 console.log("rename folder", originalFolderID, "to", parentID, newFolderName)
                 let newID = "";
@@ -622,6 +656,7 @@ export default class FolderGallery extends React.Component {
                 trace("newID", newID)
                 await FileSystem.main.renameFolder(originalFolderID, newID, newFolderIcon, newFolderColor);
 
+                analyticEvent(AnalyticEvent.folder_renamed);
             }
         } catch (e) {
             Alert.alert(e);
@@ -666,6 +701,12 @@ export default class FolderGallery extends React.Component {
 
     }
     goEdit = (page, folder, share, pageIndex) => {
+        // Track page opened
+        analyticEvent(AnalyticEvent.page_opened, {
+            page_count: categorizeCount(page.count || 1),
+            from_folder: folder !== undefined
+        });
+
         this.props.navigation.navigate('EditPhoto', {
             page,
             pageIndex,
@@ -912,7 +953,7 @@ export default class FolderGallery extends React.Component {
 
         return (
             <DDProvider>
-                
+
 
                 <View style={styles.container}
                     onLayout={this.onLayout}>
@@ -1097,9 +1138,15 @@ export default class FolderGallery extends React.Component {
                                     zIndex: 1000
                                 }}>
                                     <Spacer width={3} />
-                                    {items.length > 0 && getSvgIconButton(() => this.setState({ sortBy: SORT_BY_DATE }), semanticColors.addButton, "sort-by-date", 45, undefined, undefined, (this.state.sortBy == SORT_BY_DATE))}
+                                    {items.length > 0 && getSvgIconButton(() => {
+                                        analyticEvent(AnalyticEvent.sort_changed, { sort_by: 'date' });
+                                        this.setState({ sortBy: SORT_BY_DATE });
+                                    }, semanticColors.addButton, "sort-by-date", 45, undefined, undefined, (this.state.sortBy == SORT_BY_DATE))}
                                     <Spacer width={3} />
-                                    {items.length > 0 && getSvgIconButton(() => this.setState({ sortBy: SORT_BY_NAME }), semanticColors.addButton, "sort-by-name", 45, undefined, undefined, (this.state.sortBy == SORT_BY_NAME))}
+                                    {items.length > 0 && getSvgIconButton(() => {
+                                        analyticEvent(AnalyticEvent.sort_changed, { sort_by: 'name' });
+                                        this.setState({ sortBy: SORT_BY_NAME });
+                                    }, semanticColors.addButton, "sort-by-name", 45, undefined, undefined, (this.state.sortBy == SORT_BY_NAME))}
                                     {items.length == 0 && <Spacer width={90} />}
 
                                     {this.state.currentFolder ? <FolderNew
@@ -1125,8 +1172,8 @@ export default class FolderGallery extends React.Component {
                                             onChangeText={(txt) => {
                                                 //Alert.alert("filter: "+ txt)
                                                 this.setState({ filterFolders: txt })
-                                            }
-                                            }
+                                                analyticEvent(AnalyticEvent.search_performed);
+                                            }}
                                         />}
 
 

@@ -39,6 +39,7 @@ import { getSetting } from './settings';
 import { useMessageBox } from './message';
 import { MyIcon } from './common/icons';
 import { generatePDF } from './pdf';
+import { AnalyticEvent, analyticEvent, categorizeCount } from './common/firebase';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -239,7 +240,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
     //trace("win-size", windowSize)
     useEffect(() => {
-        setNavParam(navigation, 'onMoreMenu', () => setOpenContextMenu(true));
+        setNavParam(navigation, 'onMoreMenu', () => {
+            analyticEvent(AnalyticEvent.context_menu_opened, { screen: 'editor' });
+            setOpenContextMenu(true);
+        });
         const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', _keyboardDidShow);
         const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', _keyboardDidHide);
 
@@ -761,11 +765,21 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 setPaths([...pathsRef.current]);
 
                 queue.current.pushPath(newPath)
+
+                // Track drawing
+                analyticEvent(eraseModeRef.current ? AnalyticEvent.eraser_used :
+                    (isMarkerMode() ? AnalyticEvent.marker_used : AnalyticEvent.brush_used), {
+                    stroke_width: categorizeCount(strokeWidth)
+                });
             }
         } else if (isRulerMode()) {
             const elem = arrLast(linesRef.current);
             if (!elem) return;
             queue.current.pushLine(elem);
+
+            analyticEvent(AnalyticEvent.ruler_used, {
+                stroke_width: categorizeCount(elem.strokeWidth)
+            });
         } else if (isTextMode()) {
             trace("text sketch release")
             dragToMoveCanvasRef.current = undefined;
@@ -802,6 +816,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     queue2state();
                     await save();
 
+                    // Track text added/edited
+                    analyticEvent(AnalyticEvent.text_edited, {
+                        font_size: categorizeCount(changedElem.fontSize),
+                        in_table: changedElem.tableId !== undefined
+                    });
                 }
                 const newCurrEdited = { ...currentEditedRef.current, textId: undefined }
                 currentEditedRef.current = newCurrEdited
@@ -814,6 +833,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     queue2state();
                     await save();
 
+                    // Track new text
+                    analyticEvent(AnalyticEvent.text_added, {
+                        font_size: categorizeCount(textElem.fontSize),
+                        in_table: textElem.tableId !== undefined
+                    });
                 }
                 const newCurrEdited = { ...currentEditedRef.current, textId: undefined }
                 currentEditedRef.current = newCurrEdited
@@ -960,7 +984,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 elem = tablesRef.current.find(table => table.id == id);
 
                 if (elem) {
-                    const horizontalLines = calcEffectiveHorizontalLines(elem, canvasSizeRef.current.height/ ratioRef.current, textsRef.current);
+                    const horizontalLines = calcEffectiveHorizontalLines(elem, canvasSizeRef.current.height / ratioRef.current, textsRef.current);
 
                     return {
                         moveOffset: { x: -15, y: -15 },
@@ -1136,7 +1160,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         return vLine + dx * ratio;
                     });
 
-                    const horizontalLines = calcEffectiveHorizontalLines(table, canvasSizeRef.current.height/ ratioRef.current, textsRef.current)
+                    const horizontalLines = calcEffectiveHorizontalLines(table, canvasSizeRef.current.height / ratioRef.current, textsRef.current)
 
                     table.horizontalLines = horizontalLines.map((hLine, i) => {
                         if (i == 0) return hLine;
@@ -1214,7 +1238,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
             if (tableContext.hLine != undefined && tableContext.hLine > 0 && tableContext.hLine < table.horizontalLines.length - 1) {
                 // not allow move beyond the two adjecent lines
-                const horizontalLines = calcEffectiveHorizontalLines(table, canvasSizeRef.current.height/ ratioRef.current, textsRef.current)
+                const horizontalLines = calcEffectiveHorizontalLines(table, canvasSizeRef.current.height / ratioRef.current, textsRef.current)
                 if (p[1] <= horizontalLines[tableContext.hLine - 1] || p[1] >= horizontalLines[tableContext.hLine + 1]) return;
 
                 // calculate the added size to all rows before this
@@ -1259,14 +1283,20 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             queue.current.pushDeleteLineNew(id);
             save();
             queue2state();
+
+            analyticEvent(AnalyticEvent.element_deleted, { element_type: 'ruler' });
         } else if (type == ElementTypes.Image) {
             queue.current.pushDeleteImage({ id });
             save();
             queue2state();
+
+            analyticEvent(AnalyticEvent.element_deleted, { element_type: 'image' });
         } else if (type == ElementTypes.Element && modeRef.current == EditModes.Audio) {
             queue.current.pushDeleteAudio({ id });
             queue2state();
             save();
+
+            analyticEvent(AnalyticEvent.element_deleted, { element_type: 'audio' });
         }
     }
 
@@ -1353,9 +1383,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     // -------------------------------------------------------------------------
     //                          TOOLBAR OR MODE HANDLERS
     // -------------------------------------------------------------------------
-    function afterUndoRedo() {
+    function afterUndoRedo(isUndo: boolean = true) {
         queue2state()
         save();
+
+        analyticEvent(isUndo ? AnalyticEvent.undo_used : AnalyticEvent.redo_used);
     }
 
     function handleEraserPressed() {
@@ -1432,6 +1464,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         currentEdited.imageId = img.id;
                         queue2state();
                         save();
+
+                        analyticEvent(AnalyticEvent.image_added, {
+                            source: srcType === SRC_CAMERA ? 'camera' : 'gallery'
+                        });
                     })
             }).finally(() => setBusy(false));
         },
@@ -1491,6 +1527,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     const TableActions = {
         delete: (id: string) => {
+            const table = tablesRef.current.find(t => t.id === id);
+            if (table) {
+                analyticEvent(AnalyticEvent.element_deleted, {
+                    element_type: 'table',
+                    columns: categorizeCount(table.verticalLines.length - 1),
+                    rows: categorizeCount(table.horizontalLines.length - 1)
+                });
+            }
+            
             trace("Delete table", id)
             queue.current.pushDeleteTableNew(id);
             queue2state()
@@ -1523,6 +1568,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             queue.current.pushTable(newTable);
             queue2state();
             save();
+
+            analyticEvent(AnalyticEvent.table_added, {
+                columns: categorizeCount(cols),
+                rows: categorizeCount(rows)
+            });
         },
         setRowsOrColumns: (newVal: number, isCols: boolean) => {
             if (newVal < 1) return;
@@ -1723,10 +1773,27 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     function handleAddBlankPage(blankType: number) {
-        FileSystem.main.getStaticPageTempFile(blankType).then(uri => addNewPage(uri, SRC_FILE, true));
+        FileSystem.main.getStaticPageTempFile(blankType).then(uri => {
+            const pageTypeMap: { [key: number]: string } = {
+                [FileSystem.StaticPages.Blank]: 'blank',
+                [FileSystem.StaticPages.Lines]: 'lines',
+                [FileSystem.StaticPages.Math]: 'math'
+            };
+            analyticEvent(AnalyticEvent.subpage_added, {
+                source: 'template',
+                page_type: pageTypeMap[blankType] || 'blank'
+            });
+
+            addNewPage(uri, SRC_FILE, true)
+        });
     }
 
     function addNewPage(uri: string, src: string, isBlank: boolean) {
+        if (!isBlank) {
+            analyticEvent(AnalyticEvent.subpage_added, {
+                source: src
+            });
+        }
         navigation.navigate('SavePhoto', {
             uri,
             isBlank,
@@ -1761,6 +1828,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             [
                 {
                     text: translate("BtnDelete"), onPress: async () => {
+                        analyticEvent(AnalyticEvent.subpage_deleted, {
+                            page_index: currPageIndexRef.current
+                        });
+
                         let updatedPage = await FileSystem.main.deletePageInSheet(pageRef.current, currPageIndexRef.current);
                         let index = currPageIndexRef.current;
                         if (index > 0) {
@@ -1829,6 +1900,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             newIndex = 0;
 
         if (newIndex >= pageRef.current.count) return;
+
+        analyticEvent(AnalyticEvent.page_navigation, {
+            direction: inc > 0 ? 'next' : 'previous',
+            page_index: newIndex
+        });
+
         await loadPage(pageRef.current, newIndex);
     }
 
@@ -1873,6 +1950,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             queue.current.pushAudio(audioElem);
             queue2state();
             save();
+
+            analyticEvent(AnalyticEvent.audio_recorded);
         }
     }
 
@@ -1886,6 +1965,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setMoveCanvas({ x: 0, y })
         } else if (newZoom > 1) {
             setZoom(newZoom);
+
+            analyticEvent(AnalyticEvent.zoom_used, {
+                zoom_level: newZoom
+            });
         }
     }
 
@@ -1974,13 +2057,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onGoBack={() => navigation.goBack()}
                 onUndo={() => {
                     if (queue.current.undo()) {
-                        afterUndoRedo();
+                        afterUndoRedo(true);
                     }
                 }}
                 canRedo={queue.current.canRedo()}
                 onRedo={() => {
                     if (queue.current.redo()) {
-                        afterUndoRedo();
+                        afterUndoRedo(false);
                     }
                 }}
                 Table={tables?.[0]} // example if you only use the first table

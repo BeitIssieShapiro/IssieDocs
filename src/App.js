@@ -41,6 +41,7 @@ import { TopHeader } from './header';
 // import { CanvasTest } from './canvas/CanvasTestGround';
 import { IssieEditPhoto2 } from './IssieEditPhoto2';
 import { MyIcon } from './common/icons';
+import { AnalyticEvent, analyticEvent } from './common/firebase';
 
 
 LogBox.ignoreLogs([
@@ -124,6 +125,7 @@ const App = (props) => {
                           if (execNavParam(props.route, "isEditEnabled")) {
                             if (editMode && titleSavedCallback.getTitleToSave) {
                               let newTitle = titleSavedCallback.getTitleToSave();
+                              analyticEvent(AnalyticEvent.app_title_edited)
                               Settings.set({ appTitle: newTitle });
                               //props.navigation.setParams({ saveTitle: true }); //to cause refresh
                             }

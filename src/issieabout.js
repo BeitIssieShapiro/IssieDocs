@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View } from 'react-native'
 import {
     semanticColors, getHeaderBackButton,
@@ -9,8 +9,12 @@ import {
     Linking, ScrollView
 } from 'react-native';
 import { trace } from './log';
+import { AnalyticEvent, analyticEvent } from './common/firebase';
 
 export default function IssieAbout(props) {
+    useEffect(() => {
+        analyticEvent(AnalyticEvent.about_screen_opened);
+    }, []);
 
     const textStyle = { fontSize: 14, color: '#5c5c5c', textAlign: 'left', marginLeft: 20 }
     const linkStyle = { fontSize: 14, color: 'blue', textAlign: 'left' }
@@ -80,4 +84,3 @@ export default function IssieAbout(props) {
     </ScrollView>
 
 }
-

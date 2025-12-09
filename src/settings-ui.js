@@ -28,7 +28,7 @@ import {
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { MyIcon } from './common/icons';
-import { AnalyticEvent, analyticEvent } from './common/firebase';
+import { AnalyticEvent, analyticEvent, categorizeCount } from './common/firebase';
 
 
 export default function SettingsMenu(props) {
@@ -60,7 +60,7 @@ export default function SettingsMenu(props) {
 
 
     useEffect(() => {
-        analyticEvent(AnalyticEvent.SettingsOpen);
+        analyticEvent(AnalyticEvent.settings_open);
     }, [])
 
     useEffect(() => {
@@ -73,6 +73,10 @@ export default function SettingsMenu(props) {
         Settings.set(obj)
         setViewStyle(view);
         props.onViewChange(view);
+        
+        analyticEvent(AnalyticEvent.view_mode_changed, {
+            view_mode: view === VIEW.list ? 'list' : 'tiles'
+        });
     }
 
     const setFoldersView = (view) => {
@@ -81,20 +85,37 @@ export default function SettingsMenu(props) {
         Settings.set(obj)
         setFoldersViewStyle(view);
         props.onFoldersViewChange(view);
+        
+        analyticEvent(AnalyticEvent.folder_mode_change, {
+            view_mode: view === FOLDERS_VIEW.tree ? 'tree' : 'column'
+        });
     }
 
     const setLanguage = (lang) => {
+        const langMap = {
+            [LANGUAGE.hebrew]: 'he',
+            [LANGUAGE.arabic]: 'ar',
+            [LANGUAGE.english]: 'en',
+            [LANGUAGE.default]: 'system'
+        };
+        
         let obj = {}
         obj[LANGUAGE.name] = lang;
         Settings.set(obj)
         setLang(lang);
         props.onLanguageChange(lang);
+        
+        analyticEvent(AnalyticEvent.language_changed, {
+            to_language: langMap[lang] || 'unknown'
+        });
     }
     const flipFeatureTougle = (feature) => {
         //Settings.set({ [FEATURES.name]: [] });return
         const item = featuresRef.current.find(f => f == feature);
         let newList = [...featuresRef.current];
-        if (item == undefined) {
+        const enabled = item === undefined;
+        
+        if (enabled) {
             newList.push(feature);
             console.log("feature", feature, "on")
         } else {
@@ -105,6 +126,11 @@ export default function SettingsMenu(props) {
         Settings.set({ [FEATURES.name]: newList })
 
         props.onFeaturesChange?.();
+        
+        analyticEvent(AnalyticEvent.feature_toggled, {
+            feature_name: feature,
+            enabled
+        });
     }
 
     const setUseColorHandler = (use) => {
@@ -132,12 +158,21 @@ export default function SettingsMenu(props) {
 
 
     const backup = () => {
+        analyticEvent(AnalyticEvent.backup_created);
         setBackupProgress(0);
         FileSystem.main.getRootFolders().then(rootFolders => FileSystem.main.getFoldersDeep(rootFolders).then(allFolders => {
             trace("all folders", allFolders);
 
+            const folderCount = allFolders.length;
+            const fileCount = allFolders.reduce((sum, folder) => sum + (folder.items?.length || 0), 0);
+
             FileSystem.main.exportAllWorksheets(allFolders, (percent) => setBackupProgress(percent))
                 .then((backupZipPath) => {
+                    analyticEvent(AnalyticEvent.backup_created, {
+                        folder_count_category: categorizeCount(folderCount),
+                        file_count_category: categorizeCount(fileCount)
+                    });
+                    
                     const shareOptions = {
                         title: translate("ShareWithTitle"),
                         subject: translate("ShareEmailSubject"),
@@ -155,7 +190,12 @@ export default function SettingsMenu(props) {
             .finally(() => setBackupProgress(undefined));
     }
 
-    return <TouchableOpacity onPress={props.onClose} style={{
+    const handleClose = () => {
+        analyticEvent(AnalyticEvent.settings_close);
+        props.onClose();
+    }
+
+    return <TouchableOpacity onPress={handleClose} style={{
         position: 'absolute',
         zIndex: 100, top: 0, width: '100%', height: '100%'
     }}>
