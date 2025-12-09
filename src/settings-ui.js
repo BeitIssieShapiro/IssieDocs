@@ -16,8 +16,8 @@ import * as Progress from 'react-native-progress';
 
 
 import FadeInView from './FadeInView'
-import { getRowReverseDirection, isRTL, translate } from './lang';
-import { addUserFeedback } from './common/firebase';
+import { isRTL, translate } from './lang';
+import { FeedbackDialog } from './common/user-feedback';
 
 import {
     VIEW, EDIT_TITLE, LANGUAGE, TEXT_BUTTON,
@@ -28,144 +28,8 @@ import {
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { MyIcon } from './common/icons';
+import { AnalyticEvent, analyticEvent } from './common/firebase';
 
-
-function FeedbackDialog(props) {
-    const [feedbackText, setFeedbackText] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        setFeedbackText("");
-    }, [props.visible]);
-
-    const handleSubmit = async () => {
-        // Validate feedback length
-        if (feedbackText.trim().length < 5) {
-            setError(translate("FeedbackMinLength"));
-            return;
-        }
-        if (feedbackText.trim().length > 1000) {
-            setError(translate("FeedbackMaxLength"));
-            return;
-        }
-
-        setIsSubmitting(true);
-        setError('');
-
-
-        await addUserFeedback(feedbackText.trim())
-            .then(() => Alert.alert(translate("FeedbackSubmitted")))
-            .catch(err => {
-                console.error("Feedback submission error:", err);
-                Alert.alert("Error", err)
-            })
-            .finally(() => setIsSubmitting(false))
-
-        props.onClose();
-
-    };
-
-    return (
-        <Modal
-            visible={props.visible}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={props.onClose}
-        >
-            <TouchableOpacity
-                activeOpacity={1}
-                onPress={props.onClose}
-                style={{
-                    flex: 1,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                }}
-            >
-                <TouchableOpacity
-                    activeOpacity={1}
-                    onPress={(e) => e.stopPropagation()}
-                    style={{
-                        backgroundColor: 'white',
-                        borderRadius: 10,
-                        padding: 20,
-                        width: '85%',
-                        maxWidth: 500,
-                        maxHeight: '80%',
-                        minHeight: "50%",
-                    }}
-                >
-                    <View style={{ flexDirection: getRowReverseDirection(), justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
-                        <AppText style={{ fontSize: 24, fontWeight: 'bold', color: semanticColors.titleText }}>
-                            {translate("UserFeedback")}
-                        </AppText>
-                        <MyIcon info={{ name: "close", size: 28 }} onPress={props.onClose} />
-                    </View>
-
-                    <TextInput
-                        style={{
-                            borderWidth: 1,
-                            borderColor: '#ccc',
-                            borderRadius: 8,
-                            padding: 12,
-                            minHeight: "30%",
-
-                            maxHeight: 500,
-                            fontSize: 18,
-                            textAlignVertical: 'top',
-                            writingDirection: isRTL() ? 'rtl' : 'ltr',
-                            textAlign: isRTL() ? 'right' : 'left'
-                        }}
-                        multiline
-                        autoFocus
-                        placeholder={translate("FeedbackPlaceholder")}
-                        value={feedbackText}
-                        onChangeText={(text) => {
-                            setFeedbackText(text);
-                            setError('');
-                        }}
-                        editable={!isSubmitting}
-                        maxLength={1000}
-                    />
-
-                    <View style={{ marginTop: 8, flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <AppText style={{ fontSize: 14, color: error ? 'red' : '#666' }}>
-                            {error || `${feedbackText.length}/1000`}
-                        </AppText>
-                    </View>
-
-                    <View style={{
-                        position: "absolute",
-                        bottom: 20, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-around'
-                    }}>
-                        {getRoundedButton(
-                            props.onClose,
-                            'cancel-red',
-                            translate("BtnCancel"),
-                            30,
-                            30,
-                            { width: 160, height: 40 }
-                        )}
-                        <Spacer width={15} />
-                        {isSubmitting ? (
-                            <ActivityIndicator size="large" color={semanticColors.titleText} />
-                        ) : (
-                            getRoundedButton(
-                                handleSubmit,
-                                'check-green',
-                                translate("BtnSubmitFeedback"),
-                                30,
-                                30,
-                                { width: 180, height: 40 }
-                            )
-                        )}
-                    </View>
-                </TouchableOpacity>
-            </TouchableOpacity>
-        </Modal>
-    );
-}
 
 export default function SettingsMenu(props) {
     const [backupProgress, setBackupProgress] = useState(undefined);
@@ -194,6 +58,10 @@ export default function SettingsMenu(props) {
     const [features, setFeatures] = useState(_features);
     const featuresRef = useRef(_features);
 
+
+    useEffect(() => {
+        analyticEvent(AnalyticEvent.SettingsOpen);
+    }, [])
 
     useEffect(() => {
         featuresRef.current = features;
