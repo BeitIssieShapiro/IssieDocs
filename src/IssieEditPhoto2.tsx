@@ -290,13 +290,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 const table = tablesRef.current.find(t => t.id == textElem.tableId);
                 if (table) {
                     const horizontalLines = calcEffectiveHorizontalLines(table, canvasSizeRef.current.height / ratioRef.current, textsRef.current);
-                    elemBottom = horizontalLines[textElem.y] + elemHeight;
+                    elemBottom = (horizontalLines[textElem.y] + elemHeight + moveCanvasRef.current.y) * ratioRef.current * zoomRef.current;
                 }
             }
             if (elemBottom > kbTop) {
-                trace("text behind kb", elemBottom, kbTop, elemHeight, "ratio", ratioRef.current, "zoom", zoomRef.current)
                 const dy = (kbTop - elemBottom) / (ratioRef.current * zoomRef.current);
-                handleMoveCanvas({ x: moveCanvasRef.current.x, y: moveCanvasRef.current.y + dy - 3 })
+                trace("text behind kb", elemBottom, dy, moveCanvasRef.current.y, kbTop, elemHeight, "ratio", ratioRef.current, "zoom", zoomRef.current)
+                if (dy < 0) {
+                    handleMoveCanvas({ x: moveCanvasRef.current.x, y: moveCanvasRef.current.y + dy - 3 });
+                }
             }
         }
     }
@@ -306,9 +308,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         setKeyboardTop(0)
         keyboardTopRef.current = 0
-        if (zoomRef.current == 1) {
-            setMoveCanvas({ x: 0, y: 0 });
-        }
     }
 
     async function loadMetadata(ratio: number, canvasSize: ImageSize) {
@@ -660,6 +659,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     async function beforeModeChange() {
         await saveText();
+        trace("curr mode", modeRef.current)
+        if (modeRef.current == EditModes.Text && zoomRef.current == 1) {
+            setMoveCanvas({ x: 0, y: 0 });
+        }
         if (modeRef.current == EditModes.Audio) {
             const audioElem = audiosRef.current.find(au => au.editMode)
             if (audioElem) {
@@ -1390,33 +1393,33 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         analyticEvent(isUndo ? AnalyticEvent.undo_used : AnalyticEvent.redo_used);
     }
 
-    function handleEraserPressed() {
+    async function handleEraserPressed() {
         trace("Eraser pressed");
         if (!eraseModeRef.current &&
             (modeRef.current === EditModes.Image || modeRef.current === EditModes.Table || modeRef.current === EditModes.Text)) {
-            beforeModeChange();
+            await beforeModeChange();
             setMode(EditModes.Brush);
             toolbarRef.current?.closePicker();
         }
         setEraseMode((prev) => !prev);
     }
 
-    function handleRulerMode() {
-        beforeModeChange();
+    async function handleRulerMode() {
+        await beforeModeChange();
         if (eraseModeRef.current) {
             setEraseMode(false);
         }
         setMode(EditModes.Ruler);
     }
-    function handleTextMode() {
-        beforeModeChange();
+    async function handleTextMode() {
+        await beforeModeChange();
         if (eraseModeRef.current) {
             setEraseMode(false);
         }
         setMode(EditModes.Text);
     }
-    function handleImageMode() {
-        beforeModeChange();
+    async function handleImageMode() {
+        await beforeModeChange();
         if (eraseModeRef.current) {
             setEraseMode(false);
         }
@@ -1430,8 +1433,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setCurrentEdited(newCurrEdited);
         }
     }
-    function handleAudioMode() {
-        beforeModeChange();
+    async function handleAudioMode() {
+        await beforeModeChange();
         if (eraseModeRef.current) {
             setEraseMode(false);
         }
@@ -1481,14 +1484,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     // Brush Mode
-    function onBrushMode() {
-        beforeModeChange();
+    async function onBrushMode() {
+        await beforeModeChange();
         setMode(EditModes.Brush);
     }
 
     // Marker Mode
-    function onMarkerMode() {
-        beforeModeChange();
+    async function onMarkerMode() {
+        await beforeModeChange();
         setMode(EditModes.Marker);
     }
 
@@ -1498,8 +1501,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     // Table Mode
-    function handleTableMode() {
-        beforeModeChange();
+    async function handleTableMode() {
+        await beforeModeChange();
         if (eraseModeRef.current) {
             setEraseMode(false);
         }
@@ -1535,7 +1538,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     rows: categorizeCount(table.horizontalLines.length - 1)
                 });
             }
-            
+
             trace("Delete table", id)
             queue.current.pushDeleteTableNew(id);
             queue2state()

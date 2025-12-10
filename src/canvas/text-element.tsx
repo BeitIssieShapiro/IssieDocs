@@ -37,7 +37,7 @@ function TextElement({
     texts,
     canvasHeight
 }: TextElementProps, ref: any) {
-    const [revision, setRevision] = useState<number>(0)
+    const [revision, setRevision] = useState<number>(0)   
     //console.log("text ratio", ratio, actualWidth, text.fontSize)
     const textBGColor = useSharedValue<ColorValue>("yellow");
     const moveIconDisplay = useSharedValue<'none' | 'flex' | undefined>("flex");
@@ -80,7 +80,7 @@ function TextElement({
             top: (horizontalLines[text.y]) * ratio + table.strokeWidth / 2,
             width: tableColWidth(table, text.x) * ratio - table.strokeWidth,
             minHeight: tableRowHeight(table, text.y) * ratio - table.strokeWidth,
-            maxHeight: tableRowHeight(table, text.y) * ratio - table.strokeWidth,
+            //maxHeight: tableRowHeight(table, text.y) * ratio - table.strokeWidth,
         } :
         {
             position: "absolute",

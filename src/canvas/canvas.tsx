@@ -630,7 +630,8 @@ function Canvas({
         if (text.tableId) {
             table = tablesRef.current?.find(table => table.id == text.tableId)
             if (table) {
-                tableEndY = arrLast(calcEffectiveHorizontalLines(table, canvasHeightRef.current/ ratioRef.current, textsRef.current)) ?? 0;
+                tableEndY = arrLast(calcEffectiveHorizontalLines(table, 99999, // in this case we don;t want to limit */, 
+                    textsRef.current)) ?? 0;
             }
         }
 
@@ -643,7 +644,8 @@ function Canvas({
             // change in height passed end of page
             onTextYOverflow?.(text.id);
         } else if (table) {
-            const tableEndYAfter = arrLast(calcEffectiveHorizontalLines(table, canvasHeightRef.current/ ratioRef.current, textsRef.current)) ?? 0;
+            const tableEndYAfter = arrLast(calcEffectiveHorizontalLines(table, 99999, // in this case we don;t want to limit */, 
+                textsRef.current)) ?? 0;
 
             if (tableEndYAfter > normHeight && tableEndY <= normHeight) {
                 onTextYOverflow?.(text.id);
@@ -770,7 +772,7 @@ function Canvas({
                         moveContext={moveContext}
                         onTextChanged={onTextChanged}
                         handleTextLayout={handleTextLayout}
-                        canvasHeight={canvasHeight/ ratio}
+                        canvasHeight={canvasHeight / ratio}
                     />
                 })}
 
@@ -841,7 +843,7 @@ function Canvas({
                     {// Tables 
                     }
                     {tables?.map((table) => {
-                        const horizontalLines = calcEffectiveHorizontalLines(table, canvasHeightRef.current/ ratioRef.current, textsRef.current);
+                        const horizontalLines = calcEffectiveHorizontalLines(table, canvasHeightRef.current / ratioRef.current, textsRef.current);
 
                         const lines = [];
                         const dashArray = table.strokeDash && table.strokeDash.map((v: number) => v * 5);
@@ -904,7 +906,7 @@ function Canvas({
                     />
                 })}
                 {currentElementType == ElementTypes.Table && tables?.map((table) => {
-                    const horizontalLines = calcEffectiveHorizontalLines(table, canvasHeightRef.current/ ratioRef.current, texts)
+                    const horizontalLines = calcEffectiveHorizontalLines(table, canvasHeightRef.current / ratioRef.current, texts)
 
                     return <MoveIcon
                         key={`table-resize-${table.id}`}
