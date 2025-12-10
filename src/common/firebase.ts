@@ -1,10 +1,9 @@
-
-
 import { ReactNativeFirebaseAppCheckProvider, initializeAppCheck } from '@react-native-firebase/app-check';
 import { getApp } from '@react-native-firebase/app';
 import { debugToken } from './debug-token.ts';
 import { getFunctions, httpsCallable } from '@react-native-firebase/functions';
 import { logEvent, logAppOpen, logScreenView, getAnalytics } from '@react-native-firebase/analytics';
+import { Platform, NativeModules } from 'react-native';
 import app from '../../app.json';
 
 const appName = app.name;
@@ -36,7 +35,77 @@ export function firebaseInit() {
     }).then(ac => {
         appCheck = ac
         console.log("Firebase init complete", debugToken)
-        analyticEvent(AnalyticEvent.application_start);
+        
+        // Import Settings dynamically to avoid circular dependencies
+        Promise.all([
+            import('../settings'),
+            import('../new-settings')
+        ]).then(([settingsModule, newSettingsModule]) => {
+            const { LANGUAGE, VIEW, FOLDERS_VIEW, FEATURES, USE_COLOR, TEXT_BUTTON, getFeaturesSetting } = settingsModule;
+            const Settings = (newSettingsModule as any).Settings;
+            
+            // Gather all settings context
+            const lang = Settings.get(LANGUAGE.name);
+            const langMap: { [key: number]: string } = {
+                [LANGUAGE.default]: 'default',
+                [LANGUAGE.hebrew]: 'hebrew',
+                [LANGUAGE.arabic]: 'arabic',
+                [LANGUAGE.english]: 'english'
+            };
+            
+            const viewMode = Settings.get(VIEW.name);
+            const viewModeMap: { [key: number]: string } = {
+                [VIEW.list]: 'list',
+                [VIEW.tiles]: 'tiles'
+            };
+            
+            const folderMode = Settings.get(FOLDERS_VIEW.name);
+            const folderModeMap: { [key: number]: string } = {
+                [FOLDERS_VIEW.column]: 'column',
+                [FOLDERS_VIEW.tree]: 'tree'
+            };
+            
+            const enabledFeatures = getFeaturesSetting();
+            
+            // Check which features are enabled
+            const rulerEnabled = enabledFeatures.includes(FEATURES.ruler);
+            const markerEnabled = enabledFeatures.includes(FEATURES.marker);
+            const tableEnabled = enabledFeatures.includes(FEATURES.table);
+            const imageEnabled = enabledFeatures.includes(FEATURES.image);
+            const voiceEnabled = enabledFeatures.includes(FEATURES.voice);
+            
+            const useColor = Settings.get(USE_COLOR.name);
+            const buttonDesign = useColor === USE_COLOR.yes ? 'color' : 'monochrome';
+            
+            const useText = Settings.get(TEXT_BUTTON.name);
+            const textButtons = useText === TEXT_BUTTON.yes ? 'enabled' : 'disabled';
+            
+            const editDesktopEnabled = Settings.get('editDesktopEnabled');
+            
+            // Get device language
+            const deviceLang = Platform.OS === 'ios' 
+                ? NativeModules.SettingsManager?.settings?.AppleLocale || NativeModules.SettingsManager?.settings?.AppleLanguages?.[0]
+                : NativeModules.I18nManager?.localeIdentifier;
+            
+            analyticEvent(AnalyticEvent.application_start, {
+                app_language: langMap[lang] || 'default',
+                device_language: deviceLang?.substring(0, 2) || 'unknown',
+                view_mode: viewModeMap[viewMode] || 'list',
+                folder_mode: folderModeMap[folderMode] || 'column',
+                ruler_enabled: rulerEnabled ? 1 : 0,
+                marker_enabled: markerEnabled ? 1 : 0,
+                table_enabled: tableEnabled ? 1 : 0,
+                image_enabled: imageEnabled ? 1 : 0,
+                voice_enabled: voiceEnabled ? 1 : 0,
+                button_design: buttonDesign,
+                text_buttons: textButtons,
+                edit_desktop_enabled: editDesktopEnabled ? 'yes' : 'no'
+            });
+        }).catch(err => {
+            console.error("Failed to load settings for analytics", err);
+            // Fallback to basic app start event
+            analyticEvent(AnalyticEvent.application_start);
+        });
     });
 }
 
@@ -132,6 +201,10 @@ export enum AnalyticEvent {
     
     // Screens
     about_screen_opened = "about_screen_opened",
+    
+    // Custom Selections
+    custom_color_selected = "custom_color_selected",
+    custom_text_size_selected = "custom_text_size_selected",
 }
 
 // Helper functions for categorizing data (privacy-safe)
@@ -191,7 +264,12 @@ export async function analyticEvent(eventName: AnalyticEvent | string, params?: 
     if (!analytics) return;
 
     if (eventName == AnalyticEvent.application_start) {
-        return logAppOpen(analytics);
+        // Enhanced with settings context - log as both app_open and with params
+        await logAppOpen(analytics);
+        if (params && Object.keys(params).length > 0) {
+            return logEvent(analytics, eventName, params);
+        }
+        return;
     }
 
     return logEvent(analytics, eventName, params)
