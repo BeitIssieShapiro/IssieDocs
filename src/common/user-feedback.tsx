@@ -27,8 +27,10 @@ interface FeedbackDialogProps {
 
 export function FeedbackDialog(props: FeedbackDialogProps) {
     const [feedbackText, setFeedbackText] = useState('');
+    const [email, setEmail] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [emailError, setEmailError] = useState('');
     const [keyboardHeight, setKeyboardHeight] = useState(0);
 
     useEffect(() => {
@@ -51,6 +53,14 @@ export function FeedbackDialog(props: FeedbackDialogProps) {
         };
     }, []);
 
+    const validateEmail = (email: string): boolean => {
+        if (!email.trim()) {
+            return true; // Email is optional
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email.trim());
+    };
+
     const handleSubmit = async () => {
         // Validate feedback length
         if (feedbackText.trim().length < 5) {
@@ -62,13 +72,21 @@ export function FeedbackDialog(props: FeedbackDialogProps) {
             return;
         }
 
+        // Validate email if provided
+        if (email.trim() && !validateEmail(email)) {
+            setEmailError(translate("InvalidEmail"));
+            return;
+        }
+
         setIsSubmitting(true);
         setError('');
+        setEmailError('');
 
         try {
-            await addUserFeedback(feedbackText.trim());
+            await addUserFeedback(feedbackText.trim(), email.trim() || undefined);
             Alert.alert(translate("FeedbackSubmitted"));
-            setFeedbackText(''); // Clear the text field
+            setFeedbackText('');
+            setEmail('');
             props.onClose();
         } catch (err) {
             console.error("Feedback submission error:", err);
@@ -80,7 +98,9 @@ export function FeedbackDialog(props: FeedbackDialogProps) {
 
     const handleClose = () => {
         setFeedbackText('');
+        setEmail('');
         setError('');
+        setEmailError('');
         props.onClose();
     };
 
@@ -91,20 +111,21 @@ export function FeedbackDialog(props: FeedbackDialogProps) {
             animationType="fade"
             onRequestClose={handleClose}
         >
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={200}
-                style={{ flex: 1 }}
+            <TouchableOpacity
+                activeOpacity={1}
+                onPress={handleClose}
+                style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}
             >
-                <TouchableOpacity
-                    activeOpacity={1}
-                    onPress={handleClose}
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={{
-                        flex: 1,
-                        backgroundColor: 'rgba(0,0,0,0.5)',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        paddingBottom: keyboardHeight
+                        width: '85%',
+                        maxWidth: 500,
                     }}
                 >
                     <TouchableOpacity
@@ -114,8 +135,11 @@ export function FeedbackDialog(props: FeedbackDialogProps) {
                             backgroundColor: 'white',
                             borderRadius: 10,
                             padding: 20,
-                            width: '85%',
-                            maxWidth: 500,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.25,
+                            shadowRadius: 3.84,
+                            elevation: 5,
                         }}
                     >
                         <View style={{
@@ -168,6 +192,39 @@ export function FeedbackDialog(props: FeedbackDialogProps) {
                             </AppText>
                         </View>
 
+                        {/* Email Input Field */}
+                        <View style={{ marginTop: 15 }}>
+                            <AppText style={{ fontSize: 16, marginBottom: 5, color: semanticColors.titleText }}>
+                                {translate("EmailTitle")}
+                            </AppText>
+                            <TextInput
+                                style={{
+                                    borderWidth: 1,
+                                    borderColor: emailError ? 'red' : '#ccc',
+                                    borderRadius: 8,
+                                    padding: 12,
+                                    fontSize: 16,
+                                    textAlign: isRTL() ? 'right' : 'left'
+                                }}
+                                placeholder={translate("EmailPlaceholder")}
+                                value={email}
+                                onChangeText={(text) => {
+                                    setEmail(text);
+                                    setEmailError('');
+                                }}
+                                editable={!isSubmitting}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                maxLength={100}
+                            />
+                            {emailError ? (
+                                <AppText style={{ fontSize: 14, color: 'red', marginTop: 4 }}>
+                                    {emailError}
+                                </AppText>
+                            ) : null}
+                        </View>
+
                         <View style={{
                             marginTop: 20,
                             flexDirection: 'row',
@@ -196,8 +253,8 @@ export function FeedbackDialog(props: FeedbackDialogProps) {
                             )}
                         </View>
                     </TouchableOpacity>
-                </TouchableOpacity>
-            </KeyboardAvoidingView>
+                </KeyboardAvoidingView>
+            </TouchableOpacity>
         </Modal>
     );
 }

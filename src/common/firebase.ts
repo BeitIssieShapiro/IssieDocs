@@ -109,14 +109,15 @@ export function firebaseInit() {
     });
 }
 
-export async function addUserFeedback(txt: string) {
+export async function addUserFeedback(txt: string, email?: string) {
     const app = getApp()
     const functions = getFunctions(app, "europe-west1");
     const addUserFeedbackFunc = httpsCallable(functions, "addUserFeedback");
 
     return addUserFeedbackFunc({
         appName: "IssieDocs",
-        feedbackText: txt
+        feedbackText: txt,
+        email: email
     });
 }
 
