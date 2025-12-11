@@ -60,6 +60,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [windowSize, setWindowSize] = useState<ImageSize>(Dimensions.get("window"));
 
     const [canvasSize, setCanvasSize] = useState<ImageSize>({ width: -1, height: -1 })
+    const [originalBgImageHeight, setOriginalBgImageHeight] = useState<number>(-1);
+    const [pageHeightAddition, setPageHeightAddition] = useState<number>(0);
     const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
     const [keyboardTop, setKeyboardTop] = useState<number>(0);
     const [toolbarHeight, setToolbarHeight] = useState<number>(dimensions.toolbarHeight);
@@ -197,26 +199,41 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     useEffect(() => {
         calcCanvasRatio(currentFileRef.current);
-    }, [toolbarHeight])
+    }, [toolbarHeight, pageHeightAddition])
 
     const { showMessageBox } = useMessageBox();
+
+    const availableheight= () => windowSizeRef.current.height - toolbarHeightRef.current - dimensions.toolbarMargin * 2 - headerHeight - insets.top - insets.bottom;
 
     async function calcCanvasRatio(imgPath: string) {
         const res = await calcRatio(imgPath, dimensions.minSideMargin,
             {
                 width: windowSizeRef.current.width,
-                height: windowSizeRef.current.height - toolbarHeightRef.current - dimensions.toolbarMargin * 2 - headerHeight - insets.top - insets.bottom
-            });
-        //trace("calcRatio", res, toolbarHeightRef.current)
+                height: availableheight()
+            }, pageHeightAddition);
+
         setCanvasSize(res.actualSize);
         canvasSizeRef.current = res.actualSize;
         setSideMargin(res.actualSideMargin);
         canvasTopRef.current = headerHeight + insets.top + toolbarHeight + dimensions.toolbarMargin
         setCanvasTop(canvasTopRef.current)
         setRatio(res.ratio);
-        setMoveCanvas({ ...moveCanvasRef.current })
         ratioRef.current = res.ratio;
 
+        // Store the original background image height (without pageHeightAddition)
+        setOriginalBgImageHeight(res.originalImageHeight);
+
+        // Only auto-scroll if the current scroll position would leave empty space at bottom
+        // (e.g., after undo shortened the page, or page expanded)
+        const currentBottomY = (res.actualSize.height / ratioRef.current) + moveCanvasRef.current.y;
+        const availableSpace = availableheight() / ratioRef.current;
+        
+        if (currentBottomY < availableSpace) {
+            // Page bottom is too high - adjust scroll to align bottom with bottom of screen
+            const newY = -(res.actualSize.height / ratioRef.current - availableSpace);
+            trace("Auto-scrolling to prevent empty space at bottom:", newY, "currentBottomY:", currentBottomY, "availableSpace:", availableSpace);
+            handleMoveCanvas({ x: moveCanvasRef.current.x, y: newY });
+        }
     }
 
     async function loadPage(newPage: any, index: number) {
@@ -276,13 +293,26 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setKeyboardHeight(newKbHeight);
         keyboardHeightRef.current = newKbHeight;
 
-        // check if a text box in edit:
-        const textElem = currentEditedRef.current.textId ? textsRef.current.find(t => t.id == currentEditedRef.current.textId) : undefined;
 
         let kbTop = (e.endCoordinates.screenY - (canvasTopRef.current));
 
         setKeyboardTop(kbTop)
         keyboardTopRef.current = kbTop
+        verifyCurrentEditTextIsVisible()
+        
+    }
+    function _keyboardDidHide() {
+        setKeyboardHeight(0);
+        keyboardHeightRef.current = 0;
+
+        setKeyboardTop(0)
+        keyboardTopRef.current = 0
+    }
+
+    function verifyCurrentEditTextIsVisible(){
+
+        // check if a text box in edit:
+        const textElem = currentEditedRef.current.textId ? textsRef.current.find(t => t.id == currentEditedRef.current.textId) : undefined;
         if (textElem) {
             const elemHeight = (textElem.height ?? 20);
             let elemBottom = (textElem.y + elemHeight + moveCanvasRef.current.y) * ratioRef.current * zoomRef.current;
@@ -293,21 +323,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     elemBottom = (horizontalLines[textElem.y] + elemHeight + moveCanvasRef.current.y) * ratioRef.current * zoomRef.current;
                 }
             }
-            if (elemBottom > kbTop) {
-                const dy = (kbTop - elemBottom) / (ratioRef.current * zoomRef.current);
-                trace("text behind kb", elemBottom, dy, moveCanvasRef.current.y, kbTop, elemHeight, "ratio", ratioRef.current, "zoom", zoomRef.current)
+            if (elemBottom > keyboardTopRef.current) {
+                const dy = (keyboardTopRef.current - elemBottom) / (ratioRef.current * zoomRef.current);
+                trace("text behind kb", elemBottom, dy, moveCanvasRef.current.y, keyboardTopRef.current, elemHeight, "ratio", ratioRef.current, "zoom", zoomRef.current)
                 if (dy < 0) {
                     handleMoveCanvas({ x: moveCanvasRef.current.x, y: moveCanvasRef.current.y + dy - 3 });
                 }
             }
         }
-    }
-    function _keyboardDidHide() {
-        setKeyboardHeight(0);
-        keyboardHeightRef.current = 0;
-
-        setKeyboardTop(0)
-        keyboardTopRef.current = 0
     }
 
     async function loadMetadata(ratio: number, canvasSize: ImageSize) {
@@ -498,6 +521,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         let rulerStrokeWidth
         let textColor
         let latestMode: EditModes | undefined
+        let _pageHeightAddition = 0;
 
         for (let i = 0; i < q.length; i++) {
             if (q[i].type === 'text') {
@@ -616,6 +640,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 if (elemIndex >= 0) {
                     _audio[elemIndex] = { ..._audio[elemIndex], ...q[i].elem }
                 }
+            } else if (q[i].type === 'changePageHeightAddition') {
+                // Handle page height change from queue
+                const newHeight = q[i].elem.height;
+                if (newHeight && newHeight > 0) {
+                    _pageHeightAddition = newHeight;
+                }
             }
         }
 
@@ -626,6 +656,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         tablesRef.current = _tables;
         audiosRef.current = _audio;
 
+        setPageHeightAddition(_pageHeightAddition);
         setPaths(_paths);
         setTexts(_texts);
         setLines(_rulers);
@@ -815,7 +846,22 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     changedElem.x != origElem.x ||
                     changedElem.y != origElem.y) {
 
-                    queue.current.pushText(changedElem);
+                    // Check if there's a pending page height increase
+                    if (origElem.pendingPageHeightIncrease) {
+                        const pendingHeight = origElem.pendingPageHeightIncrease;
+                        delete origElem.pendingPageHeightIncrease;
+
+                        // Push both text and page resize together
+                        queue.current.pushMany([
+                            { elem: changedElem, type: 'text' },
+                            { elem: { height: pendingHeight }, type: 'changePageHeightAddition' }
+                        ]);
+
+                        trace("Pushed text and page resize together:", pendingHeight);
+                    } else {
+                        queue.current.pushText(changedElem);
+                    }
+
                     queue2state();
                     await save();
 
@@ -832,7 +878,22 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             } else {
                 // new text element
                 if (textElem.text != "") {
-                    queue.current.pushText(textElem);
+                    // Check if there's a pending page height increase
+                    if (textElem.pendingPageHeightIncrease) {
+                        const pendingHeight = textElem.pendingPageHeightIncrease;
+                        delete textElem.pendingPageHeightIncrease;
+
+                        // Push both text and page resize together
+                        queue.current.pushMany([
+                            { elem: textElem, type: 'text' },
+                            { elem: { height: pendingHeight }, type: 'changePageHeightAddition' }
+                        ]);
+
+                        trace("Pushed new text and page resize together:", pendingHeight);
+                    } else {
+                        queue.current.pushText(textElem);
+                    }
+
                     queue2state();
                     await save();
 
@@ -955,6 +1016,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             textElem.text = newText;
         }
         setTexts([...textsRef.current]);
+
+        verifyCurrentEditTextIsVisible();
     }
 
 
@@ -1309,77 +1372,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     function handleTextYOverflow(elemId: string) {
         console.log("End of page reached", elemId);
 
-        RNSystemSounds.beep(RNSystemSounds.Beeps.Negative)
         const textElem = textsRef.current.find(t => t.id == elemId);
         if (textElem) {
-            const tableElem = textElem.tableId && tablesRef.current.find(t => t.id == textElem.tableId);
-            const tableOverflow = tableElem && textElem.y < tableElem.horizontalLines.length - 2;
-            const isFontChange = false; //todo
 
-            showMessage({
-                message: tableOverflow ? translate("TableOverflowsPage") :
-                    (isFontChange ? translate("FontChangeOverflowsPage") :
-                        translate("ReachedEndOfPage")),
-                type: "warning",
-                animated: true,
-                duration: 10000,
-                position: { top: 100, left: (windowSize.width - 450) / 2 },
-                titleStyle: { lineHeight: 35, fontSize: 25, height: 100, textAlign: "center", margin: 15, color: "black" },
-                style: { width: 450, height: 250 },
-
-                renderAfterContent: (opt) => {
-                    return <View style={{ flexDirection: "row", height: 50, width: "100%", justifyContent: 'center' }}>
-                        {!tableOverflow && !isFontChange && getRoundedButton(
-                            async () => {
-                                hideMessage()
-
-                                // take the last line - after NL
-                                let text = ""
-                                text = textElem.text;
-                                let nlPos = text.lastIndexOf("\n");
-                                if (nlPos === text.length - 1) {
-                                    nlPos = text.lastIndexOf("\n", nlPos - 1);
-                                }
-
-                                if (nlPos >= 0) {
-                                    text = text.substring(nlPos + 1);
-                                    textElem.text = textElem.text.substring(0, nlPos);
-                                } else {
-                                    textElem.text = "";
-                                }
-
-                                await saveText();
-
-                                const newUri = await FileSystem.main.cloneToTemp(currentFileRef.current);
-                                const updatedSheet = await FileSystem.main.addPageToSheet(pageRef.current, newUri, currPageIndexRef.current + 1);
-                                trace('add page at end of file', updatedSheet)
-                                pageRef.current = updatedSheet;
-                                await movePage(currPageIndexRef.current + 1);
-                                if (tableElem) {
-                                    queue.current.pushTable(tableElem);
-                                }
-                                const newTextElem = {
-                                    ...textElem,
-                                    text,
-                                    y: 0
-                                }
-
-                                queue.current.pushText(newTextElem);
-                                const newCurrEdited = { ...currentEditedRef.current, textId: newTextElem.id }
-                                currentEditedRef.current = newCurrEdited
-                                setCurrentEdited(newCurrEdited);
-                                queue2state();
-                            }, "add", translate("AddPageMenuTitle"), 25, 35, { width: 180 }, undefined, undefined, undefined, true, undefined, "MI")
-                        }
-                        <Spacer />
-                        {getRoundedButton(() => hideMessage(),
-                            "cancel",
-                            tableOverflow || isFontChange ? translate("BtnOK") : translate("BtnCancel"),
-                            25, 35, { width: 180 }, undefined, undefined, undefined, true, undefined, "MI")}
-
-                    </View>
-                }
-            })
+            // Update page height immediately for rendering
+            setPageHeightAddition(prev => {
+                textElem.pendingPageHeightIncrease = prev + 200
+                return textElem.pendingPageHeightIncrease;
+            });
+            trace("page height with addition", textElem.pendingPageHeightIncrease)
         }
     }
 
@@ -1858,8 +1859,24 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const sidesTop = Math.min(windowSize.height / 2 - 35, windowSize.height - keyboardHeight - 95);
         const upDownLeft = windowSize.width / 2 - 35; //half the size of the button
         const upDownTop = toolbarHeight + floatingToolbarHeight
-        const verticalMovePossible = zoom > 1;
+
+        // Calculate available height
+        const availableHeight = windowSize.height - toolbarHeight - dimensions.toolbarMargin * 2 - headerHeight - insets.top - insets.bottom;
+
+        // Vertical movement is possible if zoomed OR if page height exceeds available space
+        const pageHeightExceedsSpace = canvasSizeRef.current.height > availableHeight;
+        const verticalMovePossible = zoom > 1 || pageHeightExceedsSpace;
         const horizMovePossible = zoom > 1;
+
+        console.log("moveArrows debug:", {
+            canvasHeight: canvasSizeRef.current.height,
+            availableHeight,
+            pageHeightExceedsSpace,
+            verticalMovePossible,
+            zoom,
+            maxYOffset: maxYOffset(),
+            moveCanvasY: moveCanvas.y
+        });
 
         const disabledRight = -maxXOffset() >= moveCanvas.x;
         const disabledBottom = -maxYOffset() >= moveCanvas.y
@@ -1959,7 +1976,16 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     const maxXOffset = () => (canvasSizeRef.current.width * zoomRef.current - canvasSizeRef.current.width) / zoomRef.current
-    const maxYOffset = () => (canvasSizeRef.current.height * zoomRef.current - canvasSizeRef.current.height + keyboardHeightRef.current) / zoomRef.current
+    const maxYOffset = () => {
+        // When zoom is 1 and page height exceeds available space, we need to allow scrolling
+        if (zoomRef.current === 1) {
+            const excessHeight = canvasSizeRef.current.height - availableheight();
+            return Math.max(0, excessHeight / ratioRef.current + keyboardHeightRef.current);
+        }
+
+        // Normal zoom calculation
+        return (canvasSizeRef.current.height * zoomRef.current - canvasSizeRef.current.height + keyboardHeightRef.current) / zoomRef.current;
+    }
 
     function doZoom(newZoom: number) {
         if (zoomRef.current > 1 && newZoom <= 1) {
@@ -1976,10 +2002,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     function handleMoveCanvas(newOffset: Offset) {
-        if (zoomRef.current == 1 && modeRef.current != EditModes.Text) return;
+        const pageHeightExceedsSpace = canvasSizeRef.current.height > availableheight();
+
+        // Allow movement if zoomed, in text mode, or if page height exceeds space
+        if (zoomRef.current == 1 && modeRef.current != EditModes.Text && !pageHeightExceedsSpace) return;
+
         let { x, y } = newOffset;
         //trace("set move before", x, y)
-        const verticalOnly = (zoomRef.current == 1 && modeRef.current == EditModes.Text);
+        const verticalOnly = (zoomRef.current == 1 && (modeRef.current == EditModes.Text || pageHeightExceedsSpace));
 
         x = verticalOnly ? moveCanvasRef.current.x : Math.min(Math.max(x, -maxXOffset() / ratioRef.current), 0);
 
@@ -2162,6 +2192,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onDeleteElement={handleDelete}
                 onTextYOverflow={handleTextYOverflow}
                 imageSource={{ uri: currentFile }}
+                originalBgImageHeight={originalBgImageHeight}
                 currentElementType={mode2ElementType(mode)}
             />
             {/* </ViewShot> */}

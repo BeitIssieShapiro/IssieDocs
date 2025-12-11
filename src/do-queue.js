@@ -155,6 +155,11 @@ export default class DoQueue {
     this.clearUndo();
   }
 
+  pushChangePageHeightAddition(height) {
+    this.add({ type: 'changePageHeightAddition', elem: { height } });
+    this.clearUndo();
+  }
+
   add(queueElem) {
     this._doneQueue.push(queueElem);
   }

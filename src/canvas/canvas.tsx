@@ -126,6 +126,7 @@ interface CanvasProps {
     onDeleteElement: (type: ElementTypes, id: string) => void;
     onTextYOverflow?: (elemId: string) => void;
     imageSource?: ImageURISource;
+    originalBgImageHeight?: number;
     currentElementType: ElementTypes;
 
     //viewShotRef: any;
@@ -170,6 +171,7 @@ function Canvas({
     elementsAttr,
 
     imageSource,
+    originalBgImageHeight,
     zoom,
     offset,
     ratio,
@@ -623,7 +625,6 @@ function Canvas({
     const handleTextLayout = useCallback((e: LayoutChangeEvent, text: SketchText) => {
         const { width, height } = e.nativeEvent.layout;
         text.width = width / ratioRef.current;
-        trace("text width", width)
         let table: SketchTable | undefined = undefined;
         let tableEndY = 0
 
@@ -636,11 +637,12 @@ function Canvas({
         }
 
 
-        const prevHeight = text.height || 0;
+        //const prevHeight = text.height || 0;
         const normHeight = canvasHeightRef.current / ratioRef.current;
         text.height = height / ratioRef.current;
-        if (!text.tableId && text.y + height / ratioRef.current > normHeight &&
-            text.y + prevHeight <= normHeight) {
+        trace("handleTextLayout", normHeight, text.height, "bottom", text.y + height / ratioRef.current)
+        if (!text.tableId && text.y + height / ratioRef.current > normHeight) {
+            trace("non table y-overflow")
             // change in height passed end of page
             onTextYOverflow?.(text.id);
         } else if (table) {
@@ -713,7 +715,7 @@ function Canvas({
                             zIndex: 0,
                             position: "absolute",
                             width: Math.round(canvasWidth),
-                            height: Math.round(canvasHeight),
+                            height: Math.round(originalBgImageHeight && originalBgImageHeight > 0 ? originalBgImageHeight : canvasHeight),
                         }}
                     />
                 )}

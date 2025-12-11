@@ -53,6 +53,7 @@ export interface SketchText extends ElementBase {
     y: number;
     width?: number;
     height?: number;
+    pendingPageHeightIncrease?: number;
 
 }
 

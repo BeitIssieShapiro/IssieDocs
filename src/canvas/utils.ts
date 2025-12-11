@@ -245,9 +245,10 @@ export interface CalcRatioResponse {
     ratio: number;
     actualSize: ImageSize;
     actualSideMargin: number;
+    originalImageHeight: number;
 }
 
-export async function calcRatio(imgPath: string, minSideMargin: number, windowSize: ImageSize): Promise<CalcRatioResponse> {
+export async function calcRatio(imgPath: string, minSideMargin: number, windowSize: ImageSize, additionalHeight: number): Promise<CalcRatioResponse> {
     if (imgPath) {
         return new Promise((resolve) => {
             setTimeout(() => Image.getSize(imgPath).then((size) => {
@@ -256,12 +257,14 @@ export async function calcRatio(imgPath: string, minSideMargin: number, windowSi
                 let ratio = Math.min(ratioX, ratioY);
                 ratio = Math.floor((ratio + Number.EPSILON) * 100) / 100;
 
-                const actualSize = { width: size.width * ratio, height: size.height * ratio };
+                const actualSize = { width: size.width * ratio, height: (size.height + additionalHeight) * ratio };
                 const actualSideMargin = (windowSize.width - size.width * ratio) / 2;
+                const originalImageHeight = size.height * ratio;
                 resolve({
                     ratio,
                     actualSize,
                     actualSideMargin,
+                    originalImageHeight,
                 })
             }), 0);
         })
@@ -270,5 +273,6 @@ export async function calcRatio(imgPath: string, minSideMargin: number, windowSi
         ratio: 1,
         actualSize: windowSize,
         actualSideMargin: minSideMargin,
+        originalImageHeight: windowSize.height,
     };
 }
