@@ -40,6 +40,7 @@ import { useMessageBox } from './message';
 import { MyIcon } from './common/icons';
 import { generatePDF } from './pdf';
 import { AnalyticEvent, analyticEvent, categorizeCount } from './common/firebase';
+import { CanvasScroll } from './canvas/canvas-elements';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -2161,6 +2162,24 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             />
             <View style={styles.topMargin} />
             {/* <ViewShot ref={mainViewRef} options={{ format: "jpg", quality: 0.9, result: share ? "base64" : "tmpfile" }}> */}
+
+
+            <CanvasScroll
+                offset={moveCanvas}
+                canvasHeight={canvasSize.height}
+                originalBgImageHeight={originalBgImageHeight}
+                top={toolbarHeight + dimensions.toolbarMargin}
+                width={sideMargin}
+                ratio={ratio}
+                zoom={zoom}
+                onScroll={(amount) => {
+                    canvasRef.current.isMoving(true)
+                    handleMoveCanvas({ x: moveCanvas.x, y:  amount })
+                    //setTimeout(() => canvasRef.current.isMoving(false), 300);
+                }}
+                onScrollEnd={()=> canvasRef.current.isMoving(false)}
+            />
+
             <Canvas
                 ref={canvasRef}
                 style={{ overflow: 'hidden', backgroundColor: 'gray' }}

@@ -309,6 +309,9 @@ function Canvas({
                         }), 100)
             })
         },
+        isMoving: (val:boolean) => {
+            isMoving.current = val;
+        }
         //getViewOffset: () => viewOffset.current,
     }));
 
