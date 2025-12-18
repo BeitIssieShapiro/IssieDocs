@@ -166,6 +166,8 @@ export default class DoQueue {
 
   undo() {
     if (this._doneQueue.length > 0) {
+      if (this._doneQueue.length == 1 && this._doneQueue[0].type == "background") return false;
+
       const elem = this._doneQueue.pop();
       if (elem.withPrevious) {
         this.undo()
@@ -205,5 +207,12 @@ export default class DoQueue {
   clear() {
     this._doneQueue = []
     this.clearUndo();
+  }
+
+  static getBackgroundMetadata(pageType) {
+    return JSON.stringify({
+      version: "2.0",
+      elements: [{ type: 'background', elem: { type: pageType } }]
+    }, undefined, " ");
   }
 }

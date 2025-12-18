@@ -43,7 +43,7 @@ import {
     TableContext,
     TablePart,
 } from "./types";
-import { MoveIcon } from "./canvas-elements";
+import { Lines, MoveIcon, VLines } from "./canvas-elements";
 import {
     arrLast,
     calcEffectiveHorizontalLines,
@@ -62,6 +62,7 @@ import { dimensions } from "../elements";
 import { captureRef } from "react-native-view-shot";
 import { MyIcon } from "../common/icons";
 import { trace } from "../log";
+import { FileSystem } from "../filesystem";
 
 const TEXT_SEARCH_MARGIN = 0; // 15;
 const TABLE_LINE_THRESHOLD = 7;
@@ -126,6 +127,7 @@ interface CanvasProps {
     onDeleteElement: (type: ElementTypes, id: string) => void;
     onTextYOverflow?: (elemId: string) => void;
     imageSource?: ImageURISource;
+    background: number | undefined;
     originalBgImageHeight?: number;
     currentElementType: ElementTypes;
 
@@ -171,6 +173,7 @@ function Canvas({
     elementsAttr,
 
     imageSource,
+    background,
     originalBgImageHeight,
     zoom,
     offset,
@@ -719,6 +722,13 @@ function Canvas({
                         }}
                     />
                 )}
+
+                {(background == FileSystem.StaticPages.Lines || background == FileSystem.StaticPages.Math) && <Lines
+                    height={canvasHeight}
+                />}
+                {background == FileSystem.StaticPages.Math && <VLines
+                    width={canvasWidth}
+                />}
 
                 <SkiaCanvas
                     ref={skiaCanvasRef}

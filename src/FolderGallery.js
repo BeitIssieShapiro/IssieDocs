@@ -773,6 +773,7 @@ export default class FolderGallery extends React.Component {
             uri,
             isBlank: true,
             imageSource: SRC_FILE,
+            pageType: type,
             addToExistingPage: false,
             skipConfirm: true,
             folder: this.state.currentFolder,
@@ -786,6 +787,7 @@ export default class FolderGallery extends React.Component {
         this.props.navigation.navigate('SavePhoto', {
             uri: tempFileName,
             isBlank: true,
+            pageType,
             imageSource: SRC_FILE,
             addToExistingPage,
             folder: this.state.currentFolder,

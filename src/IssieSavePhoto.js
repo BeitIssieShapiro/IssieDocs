@@ -27,6 +27,8 @@ import { FileSystem } from './filesystem';
 import { assert, trace } from './log.js';
 import { normalizeFoAndroid } from './canvas/utils';
 import { MyIcon } from './common/icons';
+import DoQueue from './do-queue.js';
+import { Lines, VLines } from './canvas/canvas-elements';
 
 const OK_Cancel = 1;
 const PickName = 2;
@@ -180,13 +182,15 @@ export default class IssieSavePhoto extends React.Component {
     let folder = this.props.route.params.folder;
     let pageName = this.props.route.params.name;
     let addToExistingPage = this.props.route.params.addToExistingPage;
+    const blankPageType = this.props.route.params.pageType;
+
     let onConfirm = this.props.route.params.onConfirm;
     const skipConfirm = this.props.route.params.skipConfirm;
     let folders = await FileSystem.main.getRootFolders();
     folders = folders.filter(f => f.name !== FileSystem.DEFAULT_FOLDER.name);
 
     this.setState({
-      imageUri, pathToSave, pdf, currentPage: 0,
+      imageUri, pathToSave, pdf, currentPage: 0, blankPageType,
       folders, folder, pageName, addToExistingPage, multiPage, pages, onConfirm, phase: skipConfirm ? PickName : OK_Cancel,
     }, () => {
       if (!pdf) {
@@ -203,6 +207,7 @@ export default class IssieSavePhoto extends React.Component {
   isFile = () => this.props.route.params.imageSource === SRC_FILE;
   isDuplicate = () => this.props.route.params.imageSource === SRC_DUPLICATE;
   isBlankPage = () => this.props.route.params.isBlank === true;
+  getBlankPageType = () => this.state.blankPageType;
 
 
   updateImageDimension = async () => {
@@ -291,7 +296,12 @@ export default class IssieSavePhoto extends React.Component {
         //Current assumptions: only one page added (no pdf, no add multi page)
         let page = this.state.addToExistingPage;
         const newPathToAdd = await this.AdjustToOrientation(this.state.pathToSave);
-        FileSystem.main.addPageToSheet(page, newPathToAdd).then(() => {
+
+        const metadataContents = (this.state.blankPageType == FileSystem.StaticPages.Lines || this.state.blankPageType == FileSystem.StaticPages.Math) ?
+          DoQueue.getBackgroundMetadata(this.state.blankPageType) : undefined
+
+
+        FileSystem.main.addPageToSheet(page, newPathToAdd, -1, metadataContents).then(() => {
           trace("page added successfully")
           if (this.props.route.params.goHomeAndThenToEdit) {
             trace("go to edit")
@@ -415,6 +425,12 @@ export default class IssieSavePhoto extends React.Component {
           //move/copy entire folder, or save single file
           await FileSystem.main.saveFile(newPathToSave, filePath, this.isDuplicate());
           thumbnailSrc = filePath
+
+          // add initial queue for lines/math Page
+          if (this.isBlankPage() && this.getBlankPageType() != FileSystem.StaticPages.Blank) {
+            const contents = DoQueue.getBackgroundMetadata(this.getBlankPageType());
+            await FileSystem.main.writeFile(filePath + ".json", contents);
+          }
         }
 
         if (!this.isRename() && !this.isDuplicate()) {
@@ -759,6 +775,7 @@ export default class IssieSavePhoto extends React.Component {
     trace("SAVE: phase", this.state.phase)
     trace("PDF: size", this.state.pdfWidth, this.state.pdfHeight)
     trace("save img", this.state.imageUri)
+    trace("blank page type", this.getBlankPageType())
     return (
       <View style={styles.container}
         ref={v => this.topView = v}
@@ -807,6 +824,17 @@ export default class IssieSavePhoto extends React.Component {
               blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
               source={this.state?.pages && normalizeFoAndroid({ uri: this.state.pages[this.state.currentPage] })}
             />}
+          {
+            this.state.phase == OK_Cancel && this.isBlankPage() &&
+            (this.getBlankPageType() == FileSystem.StaticPages.Lines || this.getBlankPageType() == FileSystem.StaticPages.Math) &&
+            <Lines height={this.state.imgSize.h * this.state.scale} />
+          }
+
+          {
+            this.state.phase == OK_Cancel && this.isBlankPage() &&
+            this.getBlankPageType() == FileSystem.StaticPages.Math &&
+            <VLines width={this.state.imgSize.w * this.state.scale} />
+          }
 
           {cropFrame}
           {PageNameInput}

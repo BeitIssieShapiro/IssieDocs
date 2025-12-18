@@ -19,6 +19,7 @@ export type RootStackParamList = {
         uri?: string;
         name?:string,
         isBlank?: boolean;
+        pageType?: number | undefined;
         imageSource: string;
         addToExistingPage?: any;
         goHomeAndThenToEdit?: any;

@@ -55,6 +55,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [images, setImages] = useState<SketchImage[]>([]);
     const [tables, setTables] = useState<SketchTable[]>([]);
     const [audios, setAudios] = useState<SketchElement[]>([]);
+    const [background, setBackground] = useState<number | undefined>();
+
     const [currentEdited, setCurrentEdited] = useState<CurrentEdited>({});
 
     const [windowSize, setWindowSize] = useState<ImageSize>(Dimensions.get("window"));
@@ -203,7 +205,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     const { showMessageBox } = useMessageBox();
 
-    const availableheight= () => windowSizeRef.current.height - toolbarHeightRef.current - dimensions.toolbarMargin * 2 - headerHeight - insets.top - insets.bottom;
+    const availableheight = () => windowSizeRef.current.height - toolbarHeightRef.current - dimensions.toolbarMargin * 2 - headerHeight - insets.top - insets.bottom;
 
     async function calcCanvasRatio(imgPath: string) {
         const res = await calcRatio(imgPath, dimensions.minSideMargin,
@@ -227,7 +229,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         // (e.g., after undo shortened the page, or page expanded)
         const currentBottomY = (res.actualSize.height / ratioRef.current) + moveCanvasRef.current.y;
         const availableSpace = availableheight() / ratioRef.current;
-        
+
         if (currentBottomY < availableSpace) {
             // Page bottom is too high - adjust scroll to align bottom with bottom of screen
             const newY = -(res.actualSize.height / ratioRef.current - availableSpace);
@@ -299,7 +301,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setKeyboardTop(kbTop)
         keyboardTopRef.current = kbTop
         verifyCurrentEditTextIsVisible()
-        
+
     }
     function _keyboardDidHide() {
         setKeyboardHeight(0);
@@ -309,7 +311,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         keyboardTopRef.current = 0
     }
 
-    function verifyCurrentEditTextIsVisible(){
+    function verifyCurrentEditTextIsVisible() {
 
         // check if a text box in edit:
         const textElem = currentEditedRef.current.textId ? textsRef.current.find(t => t.id == currentEditedRef.current.textId) : undefined;
@@ -522,9 +524,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         let textColor
         let latestMode: EditModes | undefined
         let _pageHeightAddition = 0;
+        let _background = undefined;
 
         for (let i = 0; i < q.length; i++) {
-            if (q[i].type === 'text') {
+            if (q[i].type === "background") {
+                _background = q[i].elem.type;
+            } else if (q[i].type === 'text') {
                 const txtElem = cloneElem(q[i].elem);
 
                 //first try to find same ID and replace, or add it
@@ -663,6 +668,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setImages(_images);
         setTables(_tables);
         setAudios(_audio);
+        setBackground(_background);
 
         if (updateToolsState) {
             if (fontSize != undefined) setFontSize(fontSize * ratioRef.current);
@@ -1788,11 +1794,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 page_type: pageTypeMap[blankType] || 'blank'
             });
 
-            addNewPage(uri, SRC_FILE, true)
+            addNewPage(uri, SRC_FILE, true, blankType)
         });
     }
 
-    function addNewPage(uri: string, src: string, isBlank: boolean) {
+    function addNewPage(uri: string, src: string, isBlank: boolean, pageType: number | undefined) {
         if (!isBlank) {
             analyticEvent(AnalyticEvent.subpage_added, {
                 source: src
@@ -1801,6 +1807,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         navigation.navigate('SavePhoto', {
             uri,
             isBlank,
+            pageType,
             imageSource: src,
             addToExistingPage: pageRef.current,
             goHomeAndThenToEdit: route.params.goHomeAndThenToEdit,
@@ -1814,7 +1821,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             // OK
             (uri: string) => {
                 setBusy(true);
-                addNewPage(uri, srcType, false)
+                addNewPage(uri, srcType, false, undefined)
             },
             //cancel
             () => setBusy(false),
@@ -2192,6 +2199,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onDeleteElement={handleDelete}
                 onTextYOverflow={handleTextYOverflow}
                 imageSource={{ uri: currentFile }}
+                background={background}
                 originalBgImageHeight={originalBgImageHeight}
                 currentElementType={mode2ElementType(mode)}
             />

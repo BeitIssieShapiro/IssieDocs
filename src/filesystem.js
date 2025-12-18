@@ -599,7 +599,7 @@ export class FileSystem {
         return FileSystem.main.renameOrDuplicateThumbnail(srcPath, targetFileName, false);
     }
 
-    async addPageToSheet(sheet, newPagePath, addAtIndex) {
+    async addPageToSheet(sheet, newPagePath, addAtIndex, metadataContents) {
         trace("add page to sheet: ", sheet.path, " - ", newPagePath);
         //check if the path is already a folder:
 
@@ -627,6 +627,9 @@ export class FileSystem {
 
             console.log("add page: " + newFileName)
             await FileSystem.main.saveFile(newPagePath, newFileName, false);
+            if (metadataContents) {
+                await FileSystem.main.writeFile(newFileName + ".json", metadataContents);
+            }
             return await this._reloadBySheet(sheet);
         } else {
             //change to folder
@@ -640,6 +643,10 @@ export class FileSystem {
             });
 
             await FileSystem.main.saveFile(newPagePath, basePath + '/1.jpg', false);
+            if (metadataContents) {
+                await FileSystem.main.writeFile(basePath + "/1.jpg.json", metadataContents);
+            }
+
             let pathObj = this._parsePath(basePath + '/1.jpg');
             return await this._reloadByFolderID(pathObj.folderID, sheet.name);
         }
@@ -941,7 +948,7 @@ export class FileSystem {
     // size = {width, height}
     getStaticPageTempFile(pageType) {
         let tempFileName = FileSystem.getTempFileName("jpg");
-        return this._getStaticPage(tempFileName, pageType).then(() => tempFileName);
+        return this._getStaticPage(tempFileName, FileSystem.StaticPages.Blank).then(() => tempFileName);
     }
 
     async cloneToTemp(uri) {
