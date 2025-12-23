@@ -154,6 +154,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const moveCanvasRef = useRef(moveCanvas);
     const moveRepeatRef = useRef<{ offset: Offset, interval: NodeJS.Timeout } | undefined>();
     const zoomRef = useRef(zoom);
+    const pageHeightAdditionRef = useRef(0);
 
     const dragToMoveCanvasRef = useRef<{
         initialOffset: Offset;
@@ -201,6 +202,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }, [currentEdited])
 
     useEffect(() => {
+        pageHeightAdditionRef.current = pageHeightAddition;
         calcCanvasRatio(currentFileRef.current);
     }, [toolbarHeight, pageHeightAddition])
 
@@ -661,7 +663,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         imagesRef.current = _images;
         tablesRef.current = _tables;
         audiosRef.current = _audio;
-
         setPageHeightAddition(_pageHeightAddition);
         setPaths(_paths);
         setTexts(_texts);
@@ -2174,10 +2175,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 zoom={zoom}
                 onScroll={(amount) => {
                     canvasRef.current.isMoving(true)
-                    handleMoveCanvas({ x: moveCanvas.x, y:  amount })
-                    //setTimeout(() => canvasRef.current.isMoving(false), 300);
+                    handleMoveCanvas({ x: moveCanvas.x, y: amount })
                 }}
-                onScrollEnd={()=> canvasRef.current.isMoving(false)}
+                onScrollEnd={() => canvasRef.current.isMoving(false)}
             />
 
             <Canvas

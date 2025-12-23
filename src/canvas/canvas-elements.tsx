@@ -5,6 +5,7 @@ import { MyIcon } from "../common/icons";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import React from "react";
 import { trace } from "../log";
+import { semanticColors } from "../elements";
 
 interface MoveIconProps {
     style: any;
@@ -98,10 +99,7 @@ interface CanvasScrollProps {
     onScroll: (amount: number) => void;
     onScrollEnd: () => void;
 }
-const zeroPos = { dx: 0, dy: 0 }
-
 export function CanvasScroll({ offset, top, width, canvasHeight, originalBgImageHeight, ratio, onScroll, onScrollEnd, zoom }: CanvasScrollProps) {
-    if (originalBgImageHeight == canvasHeight) return null;
     const yOffsetRef = useRef(0);
     const yInitialOffsetRef = useRef(0);
 
@@ -109,11 +107,19 @@ export function CanvasScroll({ offset, top, width, canvasHeight, originalBgImage
         yOffsetRef.current = offset.y;
     }, [offset])
 
+    const [scrollRatio, setScrollRatio] = useState<number>(1);
+    const scrollRatioRef = useRef(originalBgImageHeight / canvasHeight);
+
+    useEffect(() => {
+        scrollRatioRef.current = originalBgImageHeight / canvasHeight;
+        setScrollRatio(scrollRatioRef.current)
+    }, [originalBgImageHeight, canvasHeight])
+
     const panResponder = useRef(
         PanResponder.create({
             onStartShouldSetPanResponder: () => false, // Do not activate on touch start
             onMoveShouldSetPanResponder: (evt, gestureState) => {
-                trace("Move canvas scroll onMoveShouldSet", gestureState.dy)
+                trace("Move canvas scroll onMoveShouldSet", { dy: gestureState.dy, scrollRatio: scrollRatioRef.current, diff: originalBgImageHeight - canvasHeight })
                 const threshold = 2; // Minimum movement in pixels to activate drag
                 return Math.abs(gestureState.dx) > threshold || Math.abs(gestureState.dy) > threshold;
             },
@@ -121,19 +127,20 @@ export function CanvasScroll({ offset, top, width, canvasHeight, originalBgImage
                 yInitialOffsetRef.current = yOffsetRef.current;
             },
             onPanResponderMove: (e, gestureState) => {
-                trace("Move canvas scroll", gestureState.dy)
-                onScroll(yInitialOffsetRef.current - gestureState.dy / scrollRatio * zoom)
+                trace("Move canvas scroll", { yInitialOffset: yInitialOffsetRef.current, dy: gestureState.dy, sr: scrollRatioRef.current, zoom })
+                onScroll(yInitialOffsetRef.current - gestureState.dy / scrollRatioRef.current * zoom)
             },
             onPanResponderRelease: (e, gestureState) => {
                 onScrollEnd()
             },
         })
     ).current;
+    if (originalBgImageHeight == canvasHeight) return null;
 
 
-    const scrollRatio = originalBgImageHeight / canvasHeight
     const markerSize = scrollRatio * originalBgImageHeight
     const markerTop = offset.y * ratio * scrollRatio;
+    trace("scroll render", {markerSize, markerTop, originalBgImageHeight, canvasHeight})
     return <View
         {...panResponder.panHandlers}
         style={{
@@ -146,7 +153,7 @@ export function CanvasScroll({ offset, top, width, canvasHeight, originalBgImage
         }} />
         <View style={{
             width: 10, position: "absolute", borderRadius: 6,
-            left: 13, top: -markerTop, height: markerSize, backgroundColor: "blue",
+            left: 13, top: -markerTop, height: markerSize, backgroundColor: semanticColors.actionButton,
         }} />
 
     </View>
