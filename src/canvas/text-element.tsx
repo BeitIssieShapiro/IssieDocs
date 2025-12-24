@@ -19,6 +19,7 @@ interface TextElementProps {
     moveContext: React.MutableRefObject<any>;
     onTextChanged: (id: string, text: string) => void;
     handleTextLayout: (e: LayoutChangeEvent, text: SketchText) => void;
+    handleCursorPositionChange: (newValue: number, text: SketchText) => void;
     tables?: SketchTable[];
     texts: SketchText[];
     canvasHeight: number;
@@ -35,10 +36,13 @@ function TextElement({
     handleTextLayout,
     tables,
     texts,
-    canvasHeight
+    canvasHeight,
+    handleCursorPositionChange
 }: TextElementProps, ref: any) {
-    const [revision, setRevision] = useState<number>(0)   
+    const [revision, setRevision] = useState<number>(0)
     //console.log("text ratio", ratio, actualWidth, text.fontSize)
+    const [selection, setSelection] = useState({ start: 0, end: 0 });
+    const [textTillSelection, setTextTillSelection] = useState<string>("");
     const textBGColor = useSharedValue<ColorValue>("yellow");
     const moveIconDisplay = useSharedValue<'none' | 'flex' | undefined>("flex");
     const table = text.tableId && tables?.find(table => table.id == text.tableId);
@@ -62,6 +66,10 @@ function TextElement({
         textBGColor.value = (text.color == '#fee100' ? "gray" : "yellow");
         moveIconDisplay.value = "flex";
     }, [text.color, editMode])
+
+    useEffect(()=>{
+        setTextTillSelection(text.text.substring(0, selection.start))
+    }, [selection]);
 
     // if (text.tableId) {
     //     console.log("text table",text.tableId, table)
@@ -104,7 +112,7 @@ function TextElement({
     };
 
     const moveIconStyle: any = { position: "absolute", ...(text.rtl ? { right: -25 } : { left: -25 }) }
-    console.log("text style", widthStyle)
+    // console.log("text style", widthStyle)
     if (editMode) {
         return (
             <Animated.View
@@ -132,6 +140,7 @@ function TextElement({
                         ]}
                         value={text.text}
                         onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
+                        onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
                     />
                     {/* Hidden Text to measure layout */}
                     <Text
@@ -143,6 +152,21 @@ function TextElement({
                         }}
                     >
                         {text.text}
+                    </Text>
+                    {/* Second Hidden Text for Cursor Tracking */}
+                    <Text
+                        allowFontScaling={false}
+                        style={[styles.textStyle, posStyle, style, { position: "absolute", [text.rtl ? "right" : "left"]: -10000, minHeight: 0 }, !table && { minWidth: 20 / ratio }]}
+                        onLayout={(e) => {
+
+                            const cursorHeightFromTop = e.nativeEvent.layout.height;
+                            // Use this value to trigger a scroll if it's too close to the keyboard
+                            handleCursorPositionChange(cursorHeightFromTop, text);
+                        }}
+                    >
+                        {/* Only render text up to the selection start */}
+                        {textTillSelection}
+                        {/* {text.text.substring(0, selection.start) + 'A'} */}
                     </Text>
                 </>
             </Animated.View>

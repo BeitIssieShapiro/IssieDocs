@@ -91,6 +91,7 @@ export function VLines({ width }: { width: number }) {
 interface CanvasScrollProps {
     offset: Offset;
     canvasHeight: number;
+    kbHeight: number;
     top: number;
     width: number;
     originalBgImageHeight: number;
@@ -99,7 +100,7 @@ interface CanvasScrollProps {
     onScroll: (amount: number) => void;
     onScrollEnd: () => void;
 }
-export function CanvasScroll({ offset, top, width, canvasHeight, originalBgImageHeight, ratio, onScroll, onScrollEnd, zoom }: CanvasScrollProps) {
+export function CanvasScroll({ offset, top, width, canvasHeight, kbHeight, originalBgImageHeight, ratio, onScroll, onScrollEnd, zoom }: CanvasScrollProps) {
     const yOffsetRef = useRef(0);
     const yInitialOffsetRef = useRef(0);
 
@@ -108,12 +109,12 @@ export function CanvasScroll({ offset, top, width, canvasHeight, originalBgImage
     }, [offset])
 
     const [scrollRatio, setScrollRatio] = useState<number>(1);
-    const scrollRatioRef = useRef(originalBgImageHeight / canvasHeight);
+    const scrollRatioRef = useRef(originalBgImageHeight / (canvasHeight - kbHeight));
 
     useEffect(() => {
-        scrollRatioRef.current = originalBgImageHeight / canvasHeight;
+        scrollRatioRef.current = (originalBgImageHeight - kbHeight) / canvasHeight;
         setScrollRatio(scrollRatioRef.current)
-    }, [originalBgImageHeight, canvasHeight])
+    }, [originalBgImageHeight, canvasHeight, kbHeight])
 
     const panResponder = useRef(
         PanResponder.create({
@@ -138,22 +139,23 @@ export function CanvasScroll({ offset, top, width, canvasHeight, originalBgImage
     if (originalBgImageHeight == canvasHeight) return null;
 
 
-    const markerSize = scrollRatio * originalBgImageHeight
-    const markerTop = offset.y * ratio * scrollRatio;
-    trace("scroll render", {markerSize, markerTop, originalBgImageHeight, canvasHeight})
+    const scrollHeight = originalBgImageHeight - kbHeight;
+    const markerSize = scrollRatio * scrollHeight
+    const markerTop = (offset.y / canvasHeight) * scrollHeight * ratio ;
+    trace("scroll render", { canvasHeight, ratio, kbHeight, originalBgImageHeight })
     return <View
         {...panResponder.panHandlers}
         style={{
-            position: "absolute", top, width, height: canvasHeight
+            position: "absolute", top, width, height: scrollHeight
         }}
     >
         <View style={{
             width: 16, position: "absolute", borderRadius: 6,
-            left: 10, top: 0, height: originalBgImageHeight, backgroundColor: "lightblue",
+            left: 10, top: 0, height: scrollHeight, backgroundColor: "lightblue",
         }} />
         <View style={{
             width: 10, position: "absolute", borderRadius: 6,
-            left: 13, top: -markerTop, height: markerSize, backgroundColor: semanticColors.actionButton,
+            left: 13, top: -markerTop + 3, height: markerSize - 6, backgroundColor: semanticColors.actionButton,
         }} />
 
     </View>

@@ -126,6 +126,7 @@ interface CanvasProps {
     onMoveTablePartEnd?: (tableContext: TableContext) => void;
     onDeleteElement: (type: ElementTypes, id: string) => void;
     onTextYOverflow?: (elemId: string) => void;
+    onTextCursorChange?:()=>void;
     imageSource?: ImageURISource;
     background: number | undefined;
     originalBgImageHeight?: number;
@@ -162,6 +163,7 @@ function Canvas({
     onMoveCanvas,
     onDeleteElement,
     onTextYOverflow,
+    onTextCursorChange,
     paths,
     texts,
     lines,
@@ -309,8 +311,8 @@ function Canvas({
                         }), 100)
             })
         },
-        isMoving: (val:boolean) => {
-            isMoving.current = val;
+        isMoving: (val: boolean) => {
+            isDragMoving.current = val;
         }
         //getViewOffset: () => viewOffset.current,
     }));
@@ -628,6 +630,12 @@ function Canvas({
         }
     }, []);
 
+    const handleCursorPositionChange = useCallback((top2cursorHeight:number, text: SketchText) => {
+        console.log("handleCursorPositionChange", top2cursorHeight)
+        text.tempTop2CursorHeight = top2cursorHeight / ratioRef.current;
+        onTextCursorChange?.();
+    }, []);
+
     const handleTextLayout = useCallback((e: LayoutChangeEvent, text: SketchText) => {
         const { width, height } = e.nativeEvent.layout;
         text.width = width / ratioRef.current;
@@ -642,7 +650,6 @@ function Canvas({
             }
         }
 
-
         //const prevHeight = text.height || 0;
         const normHeight = canvasHeightRef.current / ratioRef.current;
         text.height = height / ratioRef.current;
@@ -654,6 +661,7 @@ function Canvas({
         } else if (table) {
             const tableEndYAfter = arrLast(calcEffectiveHorizontalLines(table, 99999, // in this case we don;t want to limit */, 
                 textsRef.current)) ?? 0;
+            trace("table y-overflow", { normHeight, tableEndYAfter, tableEndY });
 
             if (tableEndYAfter > normHeight && tableEndY <= normHeight) {
                 onTextYOverflow?.(text.id);
@@ -787,6 +795,7 @@ function Canvas({
                         moveContext={moveContext}
                         onTextChanged={onTextChanged}
                         handleTextLayout={handleTextLayout}
+                        handleCursorPositionChange={handleCursorPositionChange}
                         canvasHeight={canvasHeight / ratio}
                     />
                 })}

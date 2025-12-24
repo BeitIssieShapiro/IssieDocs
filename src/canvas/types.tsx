@@ -27,7 +27,7 @@ export interface SketchPath extends ElementBase {
     points: PathCommand[];
     color: string;
     strokeWidth: number;
-    isMarker: boolean; 
+    isMarker: boolean;
 }
 
 export interface SketchLine extends ElementBase {
@@ -54,17 +54,17 @@ export interface SketchText extends ElementBase {
     width?: number;
     height?: number;
     pendingPageHeightIncrease?: number;
-
+    tempTop2CursorHeight?: number;
 }
 
 export interface SketchImage extends ElementBase {
     src?: ImageURISource;
-    imageData?:string;
+    imageData?: string;
     x: number;
     y: number;
     width: number;
     height: number;
-    aspectRatio?:number;
+    aspectRatio?: number;
 }
 
 export interface SketchTable extends ElementBase {
@@ -104,7 +104,7 @@ export interface MoveContext {
     type: MoveTypes;
     offsetX: number;
     offsetY: number;
-    lastPt?:SketchPoint;
+    lastPt?: SketchPoint;
 }
 
 export interface TableContext {

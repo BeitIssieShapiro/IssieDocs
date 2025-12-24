@@ -205,6 +205,8 @@ function EditorToolbar({
             if (!pickerTypeChanged) setShowPicker(oldVal => {
                 if (!oldVal) {
                     setMenuHeight(height);
+                } else {
+                    setMenuHeight(0);
                 }
                 return !oldVal
             });

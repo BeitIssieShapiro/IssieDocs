@@ -315,12 +315,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     function verifyCurrentEditTextIsVisible() {
-
+        trace("verifyCurrentEditTextIsVisible - enter")
+        if (keyboardTopRef.current == 0) return;
         // check if a text box in edit:
         const textElem = currentEditedRef.current.textId ? textsRef.current.find(t => t.id == currentEditedRef.current.textId) : undefined;
         if (textElem) {
-            const elemHeight = (textElem.height ?? 20);
+
+            const elemHeight = (textElem.tempTop2CursorHeight ?? 20);
             let elemBottom = (textElem.y + elemHeight + moveCanvasRef.current.y) * ratioRef.current * zoomRef.current;
+            const nonTableElemBottom = elemBottom
             if (textElem.tableId) {
                 const table = tablesRef.current.find(t => t.id == textElem.tableId);
                 if (table) {
@@ -328,6 +331,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     elemBottom = (horizontalLines[textElem.y] + elemHeight + moveCanvasRef.current.y) * ratioRef.current * zoomRef.current;
                 }
             }
+            trace("verifyCurrentEditTextIsVisible", {
+                elemHeight, elemBottom, nonTableElemBottom, kbTop: keyboardTopRef.current
+            })
+
             if (elemBottom > keyboardTopRef.current) {
                 const dy = (keyboardTopRef.current - elemBottom) / (ratioRef.current * zoomRef.current);
                 trace("text behind kb", elemBottom, dy, moveCanvasRef.current.y, keyboardTopRef.current, elemHeight, "ratio", ratioRef.current, "zoom", zoomRef.current)
@@ -854,6 +861,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     changedElem.x != origElem.x ||
                     changedElem.y != origElem.y) {
 
+                    // remove the current selection height temp attr
+                    delete origElem.tempTop2CursorHeight;
+
                     // Check if there's a pending page height increase
                     if (origElem.pendingPageHeightIncrease) {
                         const pendingHeight = origElem.pendingPageHeightIncrease;
@@ -1019,6 +1029,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     function handleTextChanged(id: string, newText: string) {
+        trace("handleTextChanged", newText)
         const textElem = textsRef.current.find(t => t.id == id);
         if (textElem) {
             textElem.text = newText;
@@ -1877,15 +1888,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const verticalMovePossible = zoom > 1 || pageHeightExceedsSpace;
         const horizMovePossible = zoom > 1;
 
-        console.log("moveArrows debug:", {
-            canvasHeight: canvasSizeRef.current.height,
-            availableHeight,
-            pageHeightExceedsSpace,
-            verticalMovePossible,
-            zoom,
-            maxYOffset: maxYOffset(),
-            moveCanvasY: moveCanvas.y
-        });
+        // console.log("moveArrows debug:", {
+        //     canvasHeight: canvasSizeRef.current.height,
+        //     availableHeight,
+        //     pageHeightExceedsSpace,
+        //     verticalMovePossible,
+        //     zoom,
+        //     maxYOffset: maxYOffset(),
+        //     moveCanvasY: moveCanvas.y
+        // });
 
         const disabledRight = -maxXOffset() >= moveCanvas.x;
         const disabledBottom = -maxYOffset() >= moveCanvas.y
@@ -1989,7 +2000,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         // When zoom is 1 and page height exceeds available space, we need to allow scrolling
         if (zoomRef.current === 1) {
             const excessHeight = canvasSizeRef.current.height - availableheight();
-            return Math.max(0, excessHeight / ratioRef.current + keyboardHeightRef.current);
+            trace("maxYOffset", {
+                h: canvasSizeRef.current.height,
+                excessHeight,
+                availH: availableheight(), 
+                kbH: keyboardHeightRef.current,
+                ratio: ratioRef.current,
+                max: Math.max(0, excessHeight  + keyboardHeightRef.current)
+            })
+            return Math.max(0, excessHeight  + keyboardHeightRef.current);
         }
 
         // Normal zoom calculation
@@ -2168,9 +2187,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             <CanvasScroll
                 offset={moveCanvas}
                 canvasHeight={canvasSize.height}
+                kbHeight={keyboardHeight}
                 originalBgImageHeight={originalBgImageHeight}
                 top={toolbarHeight + dimensions.toolbarMargin}
-                width={sideMargin}
+                width={Math.min(sideMargin, 50)}
                 ratio={ratio}
                 zoom={zoom}
                 onScroll={(amount) => {
@@ -2202,6 +2222,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 elementsAttr={handleElementsAttr}
                 currentEdited={currentEdited}
                 onTextChanged={handleTextChanged}
+                onTextCursorChange={() => {
+                    verifyCurrentEditTextIsVisible();
+                }}
                 onSketchStart={handleSketchStart}
                 onSketchStep={handleSketchStep}
                 onSketchEnd={handleSketchEnd}
