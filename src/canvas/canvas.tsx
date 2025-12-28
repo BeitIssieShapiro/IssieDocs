@@ -9,6 +9,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import FastImage from "@d11/react-native-fast-image";
 import Svg, { Path } from "react-native-svg";
 
 import {
@@ -126,7 +127,7 @@ interface CanvasProps {
     onMoveTablePartEnd?: (tableContext: TableContext) => void;
     onDeleteElement: (type: ElementTypes, id: string) => void;
     onTextYOverflow?: (elemId: string) => void;
-    onTextCursorChange?:()=>void;
+    onTextCursorChange?: () => void;
     imageSource?: ImageURISource;
     background: number | undefined;
     originalBgImageHeight?: number;
@@ -630,7 +631,7 @@ function Canvas({
         }
     }, []);
 
-    const handleCursorPositionChange = useCallback((top2cursorHeight:number, text: SketchText) => {
+    const handleCursorPositionChange = useCallback((top2cursorHeight: number, text: SketchText) => {
         console.log("handleCursorPositionChange", top2cursorHeight)
         text.tempTop2CursorHeight = top2cursorHeight / ratioRef.current;
         onTextCursorChange?.();
@@ -952,7 +953,8 @@ function Canvas({
                 {/* Images */}
                 {images?.map((image) => (
                     <React.Fragment key={image.id}>
-                        <Image
+                        <FastImage
+                            
                             style={[
                                 styles.imageStyle,
                                 {

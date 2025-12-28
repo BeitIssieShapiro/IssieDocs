@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@bam.tech/react-native-image-resizer": "^3.0.11",
+    "@d11/react-native-fast-image": "^8.13.0",
     "@dashdoc/react-native-system-sounds": "^1.1.1",
     "@react-native-community/image-editor": "^4.3.0",
     "@react-native-community/slider": "^5.1.1",

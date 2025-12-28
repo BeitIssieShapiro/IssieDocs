@@ -82,6 +82,7 @@ export default function CameraOverlay(props) {
                 zoom={1.0}
                 maxZoom={3.0}
                 resizeMode="contain"
+                maxPhotoQualityPrioritization={"quality"}
             />}
 
             {!permission && <AppText 
