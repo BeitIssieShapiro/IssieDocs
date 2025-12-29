@@ -1479,8 +1479,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                             x: canvasSizeRef.current.width / 2,
                             y: canvasSizeRef.current.height / 2,
                             file: imageAttachmentFile,
-                            width: Math.round(120 * ratio),
-                            height: 120,
+                            width: Math.round(120 * ratio / ratioRef.current),
+                            height: Math.round(120 / ratioRef.current),
                         };
 
                         queue.current.pushImage(img)
@@ -2003,12 +2003,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             trace("maxYOffset", {
                 h: canvasSizeRef.current.height,
                 excessHeight,
-                availH: availableheight(), 
+                availH: availableheight(),
                 kbH: keyboardHeightRef.current,
                 ratio: ratioRef.current,
-                max: Math.max(0, excessHeight  + keyboardHeightRef.current)
+                max: Math.max(0, excessHeight + keyboardHeightRef.current)
             })
-            return Math.max(0, excessHeight  + keyboardHeightRef.current);
+            return Math.max(0, excessHeight + keyboardHeightRef.current);
         }
 
         // Normal zoom calculation

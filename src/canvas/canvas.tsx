@@ -5,11 +5,11 @@ import {
     ImageURISource,
     LayoutChangeEvent,
     PanResponder,
+    PixelRatio,
     StyleSheet,
     TouchableOpacity,
     View,
 } from "react-native";
-import FastImage from "@d11/react-native-fast-image";
 import Svg, { Path } from "react-native-svg";
 
 import {
@@ -684,6 +684,7 @@ function Canvas({
         };
     });
 
+    
     return (
         <Animated.View
             ref={canvasRef}
@@ -719,7 +720,6 @@ function Canvas({
             {...sketchResponder.panHandlers}
         >
             <View style={{ direction: "ltr", flex: 1, backgroundColor: "white" }} collapsable={false} ref={viewShotRef}
-
             >
 
                 {/* Background Image */}
@@ -951,19 +951,25 @@ function Canvas({
                 })}
 
                 {/* Images */}
-                {images?.map((image) => (
-                    <React.Fragment key={image.id}>
-                        <FastImage
-                            
-                            style={[
-                                styles.imageStyle,
-                                {
-                                    left: image.x * ratio,
-                                    top: image.y * ratio,
-                                    width: Math.round(image.width * ratio),
-                                    height: Math.round(image.height * ratio),
-                                },
-                            ]}
+                {images?.map((image) => {
+                    const imgW = (image.width)
+                    const imgH = (image.height)
+                    const w = (imgW *ratio);
+                    const h = (imgH *ratio);
+                    if (!imgW || imgW === 0) return null;
+
+                    // The calculated key is crucial to overcome a bug that the image is blur at first - keep this!
+                    return <React.Fragment key={`${image.id}_${imgW}`} >
+                        <Image
+                            key={image.id}
+                            style={{
+                                position: "absolute",
+                                zIndex: 2,
+                                left:  (image.x * ratio),
+                                top: (image.y * ratio),
+                                width: w,
+                                height: h,
+                            }}
                             source={normalizeFoAndroid(image.src) || { uri: image.imageData }}
                         />
                         {currentElementTypeRef.current == ElementTypes.Image &&
@@ -995,7 +1001,8 @@ function Canvas({
                                 color="black"
                             />}
                     </React.Fragment>
-                ))}
+                }
+                )}
 
                 {/* General Elements */}
                 {elements?.map(elem => {
