@@ -194,6 +194,7 @@ function EditorToolbar({
     }, [showExtMenu, windowSize])
 
     onModeButtonClick = useCallback((type, height) => {
+        trace("mode button click", type, height )
         let pickerTypeChanged = false;
         if (type !== showPickerType) {
             pickerTypeChanged = (showPickerType != Pickers.NONE);

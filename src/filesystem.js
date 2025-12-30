@@ -686,7 +686,7 @@ export class FileSystem {
         let pagePath = sheet.getPage(pageIndex);
         const targetPath = pagePath + FileSystem.ATACHMENT_PREFIX + attachedFile;
         trace("deleteAttachedFile", targetPath);
-        await RNFS.unlink(targetPath);
+        await RNFS.unlink(targetPath).catch(ignore); // an attachment may be deleted more than once, for example if an image was resized
     }
 
 

@@ -3,9 +3,7 @@ Features 2025:
 - Migrate to newer react-native
 
 Bugs 2025:
-- when moving an image, and two images overlap it takes the first, not the one in focus or the last (most top)
-- when in image mode, selecting an image, and changing tool, the image remain
-  also when selecting image mode, maybe show the sub menu right away?
+- in iPhone, the sketch is not placed correctly on y-axis
 
 
 

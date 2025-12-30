@@ -220,8 +220,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setCanvasSize(res.actualSize);
         canvasSizeRef.current = res.actualSize;
         setSideMargin(res.actualSideMargin);
-        canvasTopRef.current = headerHeight + insets.top + toolbarHeight + dimensions.toolbarMargin
-        setCanvasTop(canvasTopRef.current)
+        const newCanvasTop = headerHeight + insets.top + toolbarHeightRef.current + dimensions.toolbarMargin;
+        canvasTopRef.current = newCanvasTop;
+        setCanvasTop(newCanvasTop);
         setRatio(res.ratio);
         ratioRef.current = res.ratio;
 
@@ -233,9 +234,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const currentBottomY = (res.actualSize.height / ratioRef.current) + moveCanvasRef.current.y;
         const availableSpace = availableheight() / ratioRef.current;
 
-        if (currentBottomY < availableSpace) {
+        if (currentBottomY < availableSpace - keyboardHeightRef.current) {
             // Page bottom is too high - adjust scroll to align bottom with bottom of screen
-            const newY = -(res.actualSize.height / ratioRef.current - availableSpace);
+            const newY = -(res.actualSize.height / ratioRef.current - availableSpace - keyboardHeightRef.current);
             trace("Auto-scrolling to prevent empty space at bottom:", newY, "currentBottomY:", currentBottomY, "availableSpace:", availableSpace);
             handleMoveCanvas({ x: moveCanvasRef.current.x, y: newY });
         }
@@ -1777,8 +1778,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     // NEW OR UPDATED: stub for handleToolbarDimensionChange
     function handleToolbarDimensionChange(height: number, floatingToolbarHeight: number) {
-        setToolbarHeight(height);
         toolbarHeightRef.current = height;
+        setToolbarHeight(height);
         setFloatingToolbarHeight(floatingToolbarHeight);
         console.log("Toolbar dimension changed:", height, floatingToolbarHeight);
     }
@@ -2046,7 +2047,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setMoveCanvas({ x, y });
     }
 
-
+    trace("Mode", mode, mode2ElementType(mode))
     return (
         <View
             style={styles.mainContainer}

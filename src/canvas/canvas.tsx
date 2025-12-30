@@ -54,7 +54,8 @@ import {
     isPointOnLineSegment,
     joinPath,
     normalizeFoAndroid,
-    IIF
+    IIF,
+    findLast
 } from "./utils";
 import TextElement from "./text-element"; // Example sub-component for text
 import { PinchHelperEvent, PinchSession } from "./pinch";
@@ -199,6 +200,7 @@ function Canvas({
     const translateY = useSharedValue(offset.y);
 
     const ratioRef = useRef(ratio);
+    const ratioSV = useSharedValue(ratio); // Shared value for worklets
     const zoomRef = useRef(zoom);
     const canvasHeightRef = useRef(canvasHeight)
     const sideMarginRef = useRef(sideMargin);
@@ -256,6 +258,7 @@ function Canvas({
     useEffect(() => {
         zoomRef.current = zoom;
         ratioRef.current = ratio;
+        ratioSV.value = ratio; // Sync shared value for worklets
         canvasHeightRef.current = canvasHeight;
         sideMarginRef.current = sideMargin;
         canvasTopRef.current = canvasTop;
@@ -392,8 +395,8 @@ function Canvas({
                                 // continue the previous sketch
 
                                 lastPathSV.value.moveTo(
-                                    parseFloat((startSketchRef.current.position[0] * ratioRef.current).toFixed(1)),
-                                    parseFloat((startSketchRef.current.position[1] * ratioRef.current).toFixed(1))
+                                    parseFloat((startSketchRef.current.position[0] * ratioSV.value).toFixed(1)),
+                                    parseFloat((startSketchRef.current.position[1] * ratioSV.value).toFixed(1))
                                 )
 
                                 sketchInProgressRef.current = true;
@@ -410,8 +413,8 @@ function Canvas({
                                 // init line
                                 lastPathSV.value.reset();
                                 lastPathSV.value.moveTo(
-                                    parseFloat((startSketchRef.current.position[0] * ratioRef.current).toFixed(1)),
-                                    parseFloat((startSketchRef.current.position[1] * ratioRef.current).toFixed(1))
+                                    parseFloat((startSketchRef.current.position[0] * ratioSV.value).toFixed(1)),
+                                    parseFloat((startSketchRef.current.position[1] * ratioSV.value).toFixed(1))
                                 )
                             }
 
@@ -453,7 +456,7 @@ function Canvas({
                     //console.log("sketch step")
                     lastPathSV.modify(p => {
                         "worklet"
-                        return p.lineTo(newPoint[0] * ratioRef.current, newPoint[1] * ratioRef.current) as any;
+                        return p.lineTo(newPoint[0] * ratioSV.value, newPoint[1] * ratioSV.value) as any;
                     })
                 } else if (currentElementTypeRef.current === ElementTypes.Line) {
                     onSketchStep(newPoint);
@@ -541,12 +544,13 @@ function Canvas({
     ).current;
 
     // Convert screen coordinates to canvas coordinates
-    const screen2Canvas = useCallback((x: number, y: number): SketchPoint => {
+    const screen2Canvas = (x: number, y: number): SketchPoint => {
+        trace("screen2Canvas", {canvasTop:canvasTopRef.current, ratio:ratioRef.current})
         return [
             (x - sideMarginRef.current) / (zoomRef.current * ratioRef.current) - offsetRef.current.x,
             (y - canvasTopRef.current) / (zoomRef.current * ratioRef.current) - offsetRef.current.y,
         ];
-    }, []);
+    }
 
     const searchTable = useCallback((cx: number, cy: number, searchCell: boolean): TableContext | undefined => {
         for (const table of tablesRef.current) {
@@ -620,7 +624,8 @@ function Canvas({
             return textsRef.current?.find(t => !t.tableId && inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
         }
         if (currentElementTypeRef.current === ElementTypes.Image) {
-            return imagesRef.current?.find(t => inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
+            //return imagesRef.current?.find(t => inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
+            return findLast(imagesRef.current, t => inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
         }
         if (currentElementTypeRef.current === ElementTypes.Line) {
             const THRESHOLD = 10; // how close to the line is acceptable?
@@ -781,7 +786,7 @@ function Canvas({
 
                 {/* Text Elements */}
                 {texts?.map((text) => {
-                    const editMode = (currentElementTypeRef.current == ElementTypes.Text || currentElementTypeRef.current == ElementTypes.Table)
+                    const editMode = (currentElementType == ElementTypes.Text || currentElementType == ElementTypes.Table)
                         && text.id == currentEdited.textId
                     return <TextElement
                         ref={editMode ? editTextRef : undefined}
@@ -802,7 +807,7 @@ function Canvas({
                 })}
 
                 {/* Lines in edit mode */}
-                {currentElementTypeRef.current == ElementTypes.Line && currentEdited.lineId &&
+                {currentElementType == ElementTypes.Line && currentEdited.lineId &&
                     lines?.filter(line => line.id == currentEdited.lineId)
                         .map((line) => {
                             const angle = calculateLineAngle(line.from, line.to);
@@ -959,20 +964,21 @@ function Canvas({
                     if (!imgW || imgW === 0) return null;
 
                     // The calculated key is crucial to overcome a bug that the image is blur at first - keep this!
-                    return <React.Fragment key={`${image.id}_${imgW}`} >
+                    return <React.Fragment key={image.id} >
                         <Image
-                            key={image.id}
-                            style={{
-                                position: "absolute",
-                                zIndex: 2,
-                                left:  (image.x * ratio),
-                                top: (image.y * ratio),
-                                width: w,
-                                height: h,
-                            }}
+                            key={`${image.id}_${imgW}`}
+                            style={[
+                                styles.imageStyle,
+                                {
+                                    left: image.x * ratio,
+                                    top: image.y * ratio,
+                                    width: PixelRatio.roundToNearestPixel(w),
+                                    height: PixelRatio.roundToNearestPixel(h),
+                                },
+                            ]}
                             source={normalizeFoAndroid(image.src) || { uri: image.imageData }}
                         />
-                        {currentElementTypeRef.current == ElementTypes.Image &&
+                        {currentElementType == ElementTypes.Image &&
                             currentEdited.imageId == image.id && <TouchableOpacity
                                 style={{
                                     position: "absolute",
@@ -985,7 +991,7 @@ function Canvas({
                                 <MyIcon info={{ type: "Ionicons", name: "trash-outline", size: 30, color: "blue" }} />
 
                             </TouchableOpacity>}
-                        {currentElementTypeRef.current == ElementTypes.Image &&
+                        {currentElementType == ElementTypes.Image &&
                             currentEdited.imageId == image.id && <MoveIcon
                                 style={[styles.moveIcon, visibleAnimatedStyle]}
                                 position={[

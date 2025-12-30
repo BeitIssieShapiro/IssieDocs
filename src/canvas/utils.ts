@@ -276,3 +276,20 @@ export async function calcRatio(imgPath: string, minSideMargin: number, windowSi
         originalImageHeight: windowSize.height,
     };
 }
+
+/**
+ * Finds the last element in an array that matches the predicate.
+ * @param {Array} array - The array to search through.
+ * @param {Function} predicate - Function to execute on each value (value, index, array).
+ * @returns {*} The last matching element, or undefined.
+ */
+export const findLast = (array: any[] | undefined, predicate: (elem: any, index: number, arr: any[]) => boolean) => {
+    if (!Array.isArray(array)) return undefined;
+
+    for (let i = array.length - 1; i >= 0; i--) {
+        if (predicate(array[i], i, array)) {
+            return array[i];
+        }
+    }
+    return undefined;
+};
