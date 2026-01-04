@@ -15,7 +15,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { semanticColors } from './elements';
 import { MyIcon } from './common/icons';
-import { analyticEvent, AnalyticEvent } from './common/firebase';
+import { analyticEvent, LocalAnalyticEvent } from './common/firebase';
+
 
 const zeroPos = { x0: 0, y0: 0, dx: 0, dy: 0 }
 export const BTN_BACK_COLOR = "#C8572A";
@@ -340,7 +341,7 @@ export const PlayButton = ({
         console.log("playing file ", audioFile)
         
         // Track audio playback
-        analyticEvent(AnalyticEvent.audio_played);
+        analyticEvent(LocalAnalyticEvent.audio_played);
         
         await playRecording(audioFile, (e) => {
             console.log("playing", e)

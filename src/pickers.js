@@ -20,7 +20,7 @@ import Slider from '@react-native-community/slider';
 import { TextAlignment } from './editor-toolbar';
 import { MyIcon } from './common/icons';
 import { AVAILABLE_FONTS } from './fonts.ts';
-import { analyticEvent, AnalyticEvent } from './common/firebase';
+import { analyticEvent, AnalyticEvent, LocalAnalyticEvent } from './common/firebase';
 
 
 const fontRowHeight = 60;
@@ -81,7 +81,7 @@ export function MyColorPicker(props) {
         props.onSelect(composedColor)
         
         // Track custom color selection
-        analyticEvent(AnalyticEvent.custom_color_selected, {
+        analyticEvent(LocalAnalyticEvent.custom_color_selected, {
             color: composedColor
         });
         
@@ -353,7 +353,7 @@ export function TextSizePicker(props) {
                     
                     // Track custom text size selection (only if not one of the preset sizes)
                     if (!textSizesAct.includes(val)) {
-                        analyticEvent(AnalyticEvent.custom_text_size_selected, {
+                        analyticEvent(LocalAnalyticEvent.custom_text_size_selected, {
                             size: val
                         });
                     }

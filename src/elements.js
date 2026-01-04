@@ -4,7 +4,6 @@ import {
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { translate, getLocalizedFoldersAndIcons, isRTL, getRowDirection, getRowDirections } from "./lang.js";
-import { getUseTextSetting } from './settings.js'
 
 import { getSvgIcon, SvgIcon } from './svg-icons.js'
 import { FileSystem } from './filesystem.js';
@@ -12,7 +11,7 @@ import { trace } from './log.js';
 import { isTooWhite } from './utils.js';
 import { normalizeFoAndroid } from './canvas/utils';
 import { MyIcon } from './common/icons.tsx';
-
+import { RoundedButton } from '@beitissieshapiro/issie-shared';
 
 export const dimensions = {
     headerHeight: 38,//Platform.OS == 'android'?48:38,
@@ -177,62 +176,41 @@ export function getEmbeddedSvgButton(callback, icon, iconSize, key, color) {
 
 export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction, dark, isMobile, forceText, key, iconType) {
 
-    if (getUseTextSetting() && !isMobile || forceText) {
-        return getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark, key, iconType)
-    } else {
-        let newDim = { width: dim.height, height: dim.height };
-        return getRoundedButtonInt(callback, icon, "", textSize, iconSize, newDim, direction, dark, key, iconType)
-    }
+    const calcIcon = icon?.startsWith("svg-") ?
+        <SvgIcon name={icon.substr(4)} size={iconSize} color={dark ? "white" : semanticColors.titleText} />
+        : icon
 
+    return <RoundedButton
+        key={key}
+        onPress={callback}
+        icon={calcIcon}
+        text={text}
+        iconSize={iconSize}
+        textSize={textSize}
+        size={dim}
+        direction={direction}
+        dark={dark}
+        isMobile={isMobile}
+        forceText={forceText}
+        iconType={iconType} />
 }
 export function getRoundedButtonInt(callback, icon, text, textSize, iconSize, dim, direction, dark, key, iconType) {
-    let color = dark ? "white" : semanticColors.titleText;
-    if (icon === 'check-green') {
-        color = 'green';
-        icon = 'check';
-    } else if (icon == 'cancel-red') {
-        color = 'red';
-        icon = 'close';
-    }
+    const calcIcon = icon?.startsWith("svg-") ?
+        <SvgIcon name={icon.substr(4)} size={iconSize} color={dark ? "white" : semanticColors.titleText} />
+        : icon
 
-    let textExist = text && text.length > 0;
-    const activeDirection = direction ? direction : getRowDirection();
-    const textAlign = icon ? (activeDirection == "row" ? "right" : "left") : "center";
-
-    return <TouchableOpacity
+    return <RoundedButton
         key={key}
-        activeOpacity={0.7}
         onPress={callback}
-        style={{ ...dim }}
-    >
-        <View
-            style={{
-                flex: 1,
-                zIndex: 6,
-                borderRadius: 25,
-                alignItems: 'center',
-                alignContent: 'center',
-                padding: 5,
-                justifyContent: textExist ? 'flex-end' : 'center',
-                backgroundColor: dark ? '#808080' : '#eeeded',
-                flexDirection: activeDirection,
-            }}>
-            {textExist ?
-                <AppText style={{
-                    marginEnd: (isRTL() ? 5 : 0), marginStart: (isRTL() ? 0 : 5),
-                    width: icon ? '80%' : '100%', fontSize: textSize, lineHeight: textSize + (isRTL() ? 5 : 0),
-                    color: dark ? "white" : semanticColors.titleText, textAlign
-                }}>{text}</AppText> : null
-            }
-            {icon?.startsWith("svg-") ?
-                <SvgIcon name={icon.substr(4)} size={iconSize} color={color} />
-                : icon && <MyIcon info={{ name: icon, size: iconSize, color, type: iconType }} />
-            }
-            {/* {textExist ?
-                <Spacer width={5} /> : null
-            } */}
-        </View>
-    </TouchableOpacity>
+        icon={calcIcon}
+        text={text}
+        iconSize={iconSize}
+        textSize={textSize}
+        size={dim}
+        direction={direction}
+        dark={dark}
+        forceText={true}
+        iconType={iconType} />
 }
 
 export function getMaterialCommunityIconButton(callback, color, icon, size, isText, iconSize, selected) {

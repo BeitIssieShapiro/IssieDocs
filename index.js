@@ -3,6 +3,7 @@
  */
 
 import { AppRegistry, View } from 'react-native';
+import { initLang, LANGUAGE_SETTINGS, loadLanguage, updateUISettings } from '@beitissieshapiro/issie-shared'
 import App from './src/App';
 import { name as appName } from './app.json';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +12,11 @@ import { GlobalContext } from './src/global-context.js';
 import { MessageBoxProvider } from './src/message';
 
 import TextEncoder from 'react-native-fast-encoder';
-import { firebaseInit } from './src/common/firebase';
+import { firebaseLocalInit } from './src/common/firebase';
+import { languageMap } from './src/lang.js';
+import { Settings } from "./src/new-settings"
+import { TEXT_BUTTON } from './src/settings.js';
+
 // @ts-ignore
 window.TextEncoder = TextEncoder;
 // @ts-ignore
@@ -29,7 +34,11 @@ window.TextDecoder = TextEncoder;
 
 // const wApp = Sentry.wrap(App);
 
-firebaseInit()
+firebaseLocalInit()
+
+initLang(languageMap, { languageTag: "he", isRTL: true });
+loadLanguage(Settings.get(LANGUAGE_SETTINGS.name));
+updateUISettings((Settings.get(TEXT_BUTTON.name) || TEXT_BUTTON.yes) == TEXT_BUTTON.yes);
 
 function SafeAppContainer(props) {
     console.log("props.url", props.url)

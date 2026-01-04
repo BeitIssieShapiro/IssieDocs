@@ -17,7 +17,6 @@ import * as Progress from 'react-native-progress';
 
 import FadeInView from './FadeInView'
 import { isRTL, translate } from './lang';
-import { FeedbackDialog } from './common/user-feedback';
 
 import {
     VIEW, EDIT_TITLE, LANGUAGE, TEXT_BUTTON,
@@ -28,7 +27,8 @@ import {
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { MyIcon } from './common/icons';
-import { AnalyticEvent, analyticEvent, categorizeCount } from './common/firebase';
+import { analyticEvent, categorizeCount, LocalAnalyticEvent } from './common/firebase';
+import { AnalyticEvent, FeedbackDialog } from '@beitissieshapiro/issie-shared';
 
 
 export default function SettingsMenu(props) {
@@ -73,8 +73,8 @@ export default function SettingsMenu(props) {
         Settings.set(obj)
         setViewStyle(view);
         props.onViewChange(view);
-        
-        analyticEvent(AnalyticEvent.view_mode_changed, {
+
+        analyticEvent(LocalAnalyticEvent.view_mode_changed, {
             view_mode: view === VIEW.list ? 'list' : 'tiles'
         });
     }
@@ -85,8 +85,8 @@ export default function SettingsMenu(props) {
         Settings.set(obj)
         setFoldersViewStyle(view);
         props.onFoldersViewChange(view);
-        
-        analyticEvent(AnalyticEvent.folder_mode_change, {
+
+        analyticEvent(LocalAnalyticEvent.folder_mode_change, {
             view_mode: view === FOLDERS_VIEW.tree ? 'tree' : 'column'
         });
     }
@@ -98,13 +98,13 @@ export default function SettingsMenu(props) {
             [LANGUAGE.english]: 'en',
             [LANGUAGE.default]: 'system'
         };
-        
+
         let obj = {}
         obj[LANGUAGE.name] = lang;
         Settings.set(obj)
         setLang(lang);
         props.onLanguageChange(lang);
-        
+
         analyticEvent(AnalyticEvent.language_changed, {
             to_language: langMap[lang] || 'unknown'
         });
@@ -114,7 +114,7 @@ export default function SettingsMenu(props) {
         const item = featuresRef.current.find(f => f == feature);
         let newList = [...featuresRef.current];
         const enabled = item === undefined;
-        
+
         if (enabled) {
             newList.push(feature);
             console.log("feature", feature, "on")
@@ -126,8 +126,8 @@ export default function SettingsMenu(props) {
         Settings.set({ [FEATURES.name]: newList })
 
         props.onFeaturesChange?.();
-        
-        analyticEvent(AnalyticEvent.feature_toggled, {
+
+        analyticEvent(LocalAnalyticEvent.feature_toggled, {
             feature_name: feature,
             enabled
         });
@@ -172,7 +172,7 @@ export default function SettingsMenu(props) {
                         folder_count_category: categorizeCount(folderCount),
                         file_count_category: categorizeCount(fileCount)
                     });
-                    
+
                     const shareOptions = {
                         title: translate("ShareWithTitle"),
                         subject: translate("ShareEmailSubject"),
@@ -383,6 +383,7 @@ export default function SettingsMenu(props) {
         </FadeInView>
 
         <FeedbackDialog
+            appName='IssieDocs'
             visible={showFeedbackDialog}
             onClose={() => setShowFeedbackDialog(false)}
         />

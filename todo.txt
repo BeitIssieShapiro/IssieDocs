@@ -1,10 +1,8 @@
 Features 2025:
 - Export a folder
 - Migrate to newer react-native
-
-Bugs 2025:
-- in iPhone, the sketch is not placed correctly on y-axis
-
+- user feedback
+- fonts
 
 
 

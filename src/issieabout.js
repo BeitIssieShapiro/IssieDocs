@@ -9,7 +9,8 @@ import {
     Linking, ScrollView
 } from 'react-native';
 import { trace } from './log';
-import { AnalyticEvent, analyticEvent } from './common/firebase';
+import {  analyticEvent } from './common/firebase';
+import { AnalyticEvent } from '@beitissieshapiro/issie-shared';
 
 export default function IssieAbout(props) {
     useEffect(() => {

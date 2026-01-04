@@ -18,7 +18,7 @@ import IssieAbout from './issieabout'
 import IssieCreateFolder from './create-folder';
 import { Spacer, getHeaderBackButton, getIconButton, getFont, dimensions, MoreButton } from './elements';
 
-import { fTranslate, getRowDirection, translate } from './lang.js';
+import { fTranslate, getRowDirection, translate } from '@beitissieshapiro/issie-shared'
 import {
   View, LogBox, 
   TouchableOpacity, useWindowDimensions, Text
@@ -41,7 +41,7 @@ import { TopHeader } from './header';
 // import { CanvasTest } from './canvas/CanvasTestGround';
 import { IssieEditPhoto2 } from './IssieEditPhoto2';
 import { MyIcon } from './common/icons';
-import { AnalyticEvent, analyticEvent } from './common/firebase';
+import { LocalAnalyticEvent as AnalyticEvent, analyticEvent } from './common/firebase';
 
 
 LogBox.ignoreLogs([

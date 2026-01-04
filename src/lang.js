@@ -1,15 +1,10 @@
-import { getLocales } from "react-native-localize";
-import { Alert } from "react-native";
-import { isSettingEmpty, LANGUAGE } from "./settings";
-import { isSimulator } from "./device";
-import { trace } from "./log";
-import { Settings } from "./new-settings"
-export var gCurrentLang = { languageTag: "he", isRTL: true }
-const DEFAULT_LANG = "he";
-let gPrefix = "";
+import { gCurrentLang } from "@beitissieshapiro/issie-shared";
 
+export { translate, fTranslate, isRTL, getRowDirection, 
+    getRowReverseDirection, getRowDirections, getFlexStart, getFlexEnd, gCurrentLang
+ } from "@beitissieshapiro/issie-shared";
 
-var strings = {
+export const languageMap = {
     "he": {
         "StartHere": "הוספת דפים",
         "DesktopEmpty": "שולחן העבודה ריק",
@@ -518,158 +513,6 @@ const foldersAndIcons = {
         { icon: 'music-note', text: 'Music' },
         { icon: 'svg-literature-course', text: 'Literature' }
     ]
-
-}
-
-function findMissing() {
-    let missing = ""
-    //English
-    console.log("Missing in English:")
-    Object.entries(strings.he).forEach(([key, value]) => {
-        if (!strings.en[key]) {
-            missing += "\"" + key + "\":" + "\"" + value + "\",\n";
-        }
-    })
-    console.log(missing);
-    missing = "";
-    console.log("\n\nMissing in Arabic:")
-    Object.entries(strings.he).forEach(([key, value]) => {
-        if (!strings.ar[key]) {
-            missing += "\"" + key + "\":" + "\"" + value + "\",\n";
-        }
-    })
-    console.log(missing);
-
-    missing = "";
-    console.log("\n\nMissing in Hebrew:")
-    Object.entries(strings.en).forEach(([key, value]) => {
-        if (!strings.he[key]) {
-            missing += "\"" + key + "\":" + "\"" + value + "\",\n";
-        }
-    })
-    console.log(missing);
-
-}
-
-let currStrings = strings[DEFAULT_LANG];
-
-
-export function registerLangEvent() {
-    //RNLocalize.addEventListener("change", loadLanguage);
-    loadLanguage();
-
-}
-
-export function unregisterLangEvent() {
-    //RNLocalize.removeEventListener("change", loadLanguage)
-}
-
-export function loadLanguage() {
-    let langSetting = Settings.get(LANGUAGE.name);
-    trace("langauge loaded", langSetting, langSetting + "" === LANGUAGE.default + "")
-    if (isSettingEmpty(langSetting) || langSetting === LANGUAGE.default) {
-        const locales = getLocales();
-        langSetting = LANGUAGE.english;
-
-        for (let i = 0; i < locales.length; i++) {
-            if (locales[i].languageCode === "en") {
-                langSetting = LANGUAGE.english;
-                break;
-            } else if (locales[i].languageCode === "he") {
-                langSetting = LANGUAGE.hebrew;
-                break;
-            } else if (locales[i].languageCode === "ar") {
-                langSetting = LANGUAGE.arabic;
-                break;
-            }
-        }
-    }
-
-    switch (langSetting) {
-        case LANGUAGE.hebrew:
-            gCurrentLang = { languageTag: "he", isRTL: true }
-            break;
-        case LANGUAGE.arabic:
-            gCurrentLang = { languageTag: "ar", isRTL: true }
-            break;
-        case LANGUAGE.english:
-            gCurrentLang = { languageTag: "en", isRTL: false }
-            break;
-        default:
-            gCurrentLang = { languageTag: "he", isRTL: true }
-            break;
-
-    }
-
-    currStrings = strings[gCurrentLang.languageTag];
-    if (!currStrings) {
-        //remove the specifics
-        let tag = gCurrentLang.languageTag.split("-");
-
-        if (tag.length == 2) {
-            currStrings = strings[tag[0]];
-        }
-        //default
-        if (!currStrings) {
-            currStrings = strings[DEFAULT_LANG];
-        }
-    }
-    trace("Lang set to ", currStrings["A"])
-
-    if (isSimulator()) {
-        //gPrefix = "."
-    }
-    //findMissing();
-
-}
-
-export function isRTL() {
-    return gCurrentLang.isRTL;
-}
-
-export function getRowDirection() {
-    return isRTL() ? "row" : "row-reverse";
-}
-
-export function getRowReverseDirection() {
-    return isRTL() ? "row-reverse" : "row";
-}
-
-export function getRowDirections() {
-    return isRTL() ?
-        {
-            row: 'row', rowReverse: 'row-reverse', flexStart: 'flex-start',
-            flexEnd: 'flex-end', textAlign: 'right', rtl: true, direction: 'rtl'
-        } :
-        {
-            row: 'row-reverse', rowReverse: 'row', flexStart: 'flex-end',
-            flexEnd: 'flex-start', textAlign: 'left', rtl: false, direction: 'ltr'
-        };
-}
-
-export function getFlexStart() {
-    return isRTL() ? "flex-start" : "flex-end";
-}
-
-export function getFlexEnd() {
-    return isRTL() ? "flex-end" : "flex-start";
-}
-
-export function translate(id, ...args) {
-    let s = currStrings[id];
-    if (!s) {
-        //not found, defaults to hebrew
-        s = strings[DEFAULT_LANG][id];
-        if (!s) {
-            s = id;
-        }
-    }
-
-    return gPrefix + s;
-}
-
-export function fTranslate(id, ...args) {
-    return replaceArgs(translate(id), args);
 }
 
 export function getLocalizedFoldersAndIcons() {
@@ -687,13 +530,4 @@ export function getLocalizedFoldersAndIcons() {
         }
     }
     return currFoldersAndIcon;
-}
-
-function replaceArgs(s, args) {
-    return s.replace(/{(\d+)}/g, function (match, number) {
-        return typeof args[number - 1] != 'undefined'
-            ? args[number - 1]
-            : match
-            ;
-    });
 }

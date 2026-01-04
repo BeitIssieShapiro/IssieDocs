@@ -18,9 +18,9 @@ import FileNew from './FileNew'
 import { GlobalContext } from './global-context.js';
 
 import {
-    registerLangEvent, unregisterLangEvent, translate, fTranslate, loadLanguage, gCurrentLang, getRowDirections,
+     translate, fTranslate, gCurrentLang, getRowDirections,
 } from "./lang.js"
-import { USE_COLOR, getUseColorSetting, EDIT_TITLE, VIEW, FOLDERS_VIEW, isSettingEmpty } from './settings.js'
+import { USE_COLOR, getUseColorSetting, EDIT_TITLE, VIEW, FOLDERS_VIEW, isSettingEmpty, TEXT_BUTTON } from './settings.js'
 import { setNavParam } from './utils'
 import {
     semanticColors,
@@ -52,7 +52,8 @@ import { LogBox } from 'react-native';
 import { FileContextMenu } from './file-context-menu.js';
 import { FolderPanel } from './folder-panel.js';
 import { DDProvider, DDScrollView, DDView } from './dragdrop.js';
-import { AnalyticEvent, analyticEvent, categorizeCount } from './common/firebase';
+import {  analyticEvent, categorizeCount, LocalAnalyticEvent } from './common/firebase';
+import { AnalyticEvent, loadLanguage, updateUISettings } from '@beitissieshapiro/issie-shared';
 
 
 const SORT_BY_NAME = 0;
@@ -113,8 +114,6 @@ export default class FolderGallery extends React.Component {
 
     componentDidMount = async () => {
         try {
-            registerLangEvent()
-
             this.dimSubscription = Dimensions.addEventListener('change', ({ window }) => this.setState({ windowSize: window }));
 
 
@@ -194,7 +193,6 @@ export default class FolderGallery extends React.Component {
     }
 
     componentWillUnmount = () => {
-        unregisterLangEvent()
         this.dimSubscription?.remove();
 
         Linking.removeAllListeners();
@@ -394,7 +392,7 @@ export default class FolderGallery extends React.Component {
             this.setEditEnabled(true);
 
             // Track folder opened
-            analyticEvent(AnalyticEvent.folder_opened, {
+            analyticEvent(LocalAnalyticEvent.folder_opened, {
                 item_count: categorizeCount(folder.items?.length || 0),
                 subfolder_count: categorizeCount(folder.folders?.length || 0),
                 nesting_level: (folder.ID.match(/\//g) || []).length
@@ -467,7 +465,7 @@ export default class FolderGallery extends React.Component {
     ShareIssieDocs = () => {
         if (!this.state.selected) return;
         this.setState({ inprogress: true })
-        analyticEvent(AnalyticEvent.worksheet_exported);
+        analyticEvent(LocalAnalyticEvent.worksheet_exported);
         
         FileSystem.main.exportWorksheet(this.state.selected).then(sheetArchivePath => {
             trace("share file", sheetArchivePath)
@@ -503,7 +501,7 @@ export default class FolderGallery extends React.Component {
             [
                 {
                     text: translate("BtnDelete"), onPress: () => {
-                        analyticEvent(AnalyticEvent.folder_deleted, {
+                        analyticEvent(LocalAnalyticEvent.folder_deleted, {
                             item_count: categorizeCount(folderToDelete.items?.length || 0),
                             subfolder_count: categorizeCount(folderToDelete.folders?.length || 0)
                         });
@@ -538,7 +536,7 @@ export default class FolderGallery extends React.Component {
             [
                 {
                     text: translate("BtnDelete"), onPress: () => {
-                        analyticEvent(AnalyticEvent.page_deleted, {
+                        analyticEvent(LocalAnalyticEvent.page_deleted, {
                             page_count: categorizeCount(page.count || 1)
                         });
 
@@ -608,7 +606,7 @@ export default class FolderGallery extends React.Component {
     DuplicatePage = () => {
         if (!this.state.selected) return;
 
-        analyticEvent(AnalyticEvent.page_duplicated, {
+        analyticEvent(LocalAnalyticEvent.page_duplicated, {
             page_count: categorizeCount(this.state.selected.count || 1)
         });
 
@@ -643,7 +641,7 @@ export default class FolderGallery extends React.Component {
                 console.log("add folder")
                 await FileSystem.main.addFolder(newFolderName, newFolderIcon, newFolderColor, true, false, false, parentID);
 
-                analyticEvent(AnalyticEvent.folder_created, {
+                analyticEvent(LocalAnalyticEvent.folder_created, {
                     nesting_level: parentID ? (parentID.match(/\//g) || []).length + 1 : 0
                 });
             } else {
@@ -656,7 +654,7 @@ export default class FolderGallery extends React.Component {
                 trace("newID", newID)
                 await FileSystem.main.renameFolder(originalFolderID, newID, newFolderIcon, newFolderColor);
 
-                analyticEvent(AnalyticEvent.folder_renamed);
+                analyticEvent(LocalAnalyticEvent.folder_renamed);
             }
         } catch (e) {
             Alert.alert(e);
@@ -702,7 +700,7 @@ export default class FolderGallery extends React.Component {
     }
     goEdit = (page, folder, share, pageIndex) => {
         // Track page opened
-        analyticEvent(AnalyticEvent.page_opened, {
+        analyticEvent(LocalAnalyticEvent.page_opened, {
             page_count: categorizeCount(page.count || 1),
             from_folder: folder !== undefined
         });
@@ -994,14 +992,16 @@ export default class FolderGallery extends React.Component {
                             onViewChange={(style) => this.setState({ viewStyle: style })}
                             onFoldersViewChange={(style) => this.setState({ foldersViewStyle: style })}
                             onLanguageChange={(lang) => {
-                                loadLanguage();
+                                loadLanguage(lang);
                                 setNavParam(this.props.navigation, "lang", gCurrentLang.languageTag)
                                 this.forceUpdate();
                             }}
                             onFolderColorChange={(folderColor) => {
                                 this.setState({ folderColor: (folderColor == USE_COLOR.yes) })
                             }}
-                            onTextBtnChange={(textBtn) => {/* nothing to do for now */ }}
+                            onTextBtnChange={(textBtn) => {
+                                updateUISettings(textBtn == TEXT_BUTTON.yes);
+                            }}
                         /> : null}
                     {/* header */}
                     <View style={{
@@ -1141,12 +1141,12 @@ export default class FolderGallery extends React.Component {
                                 }}>
                                     <Spacer width={3} />
                                     {items.length > 0 && getSvgIconButton(() => {
-                                        analyticEvent(AnalyticEvent.sort_changed, { sort_by: 'date' });
+                                        analyticEvent(LocalAnalyticEvent.sort_changed, { sort_by: 'date' });
                                         this.setState({ sortBy: SORT_BY_DATE });
                                     }, semanticColors.addButton, "sort-by-date", 45, undefined, undefined, (this.state.sortBy == SORT_BY_DATE))}
                                     <Spacer width={3} />
                                     {items.length > 0 && getSvgIconButton(() => {
-                                        analyticEvent(AnalyticEvent.sort_changed, { sort_by: 'name' });
+                                        analyticEvent(LocalAnalyticEvent.sort_changed, { sort_by: 'name' });
                                         this.setState({ sortBy: SORT_BY_NAME });
                                     }, semanticColors.addButton, "sort-by-name", 45, undefined, undefined, (this.state.sortBy == SORT_BY_NAME))}
                                     {items.length == 0 && <Spacer width={90} />}

@@ -39,8 +39,9 @@ import { getSetting } from './settings';
 import { useMessageBox } from './message';
 import { MyIcon } from './common/icons';
 import { generatePDF } from './pdf';
-import { AnalyticEvent, analyticEvent, categorizeCount } from './common/firebase';
+import {  analyticEvent, LocalAnalyticEvent } from './common/firebase';
 import { CanvasScroll } from './canvas/canvas-elements';
+import { categorizeCount } from '@beitissieshapiro/issie-shared';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -264,7 +265,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //trace("win-size", windowSize)
     useEffect(() => {
         setNavParam(navigation, 'onMoreMenu', () => {
-            analyticEvent(AnalyticEvent.context_menu_opened, { screen: 'editor' });
+            analyticEvent(LocalAnalyticEvent.context_menu_opened, { screen: 'editor' });
             setOpenContextMenu(true);
         });
         const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', _keyboardDidShow);
@@ -817,8 +818,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 queue.current.pushPath(newPath)
 
                 // Track drawing
-                analyticEvent(eraseModeRef.current ? AnalyticEvent.eraser_used :
-                    (isMarkerMode() ? AnalyticEvent.marker_used : AnalyticEvent.brush_used), {
+                analyticEvent(eraseModeRef.current ? LocalAnalyticEvent.eraser_used :
+                    (isMarkerMode() ? LocalAnalyticEvent.marker_used : LocalAnalyticEvent.brush_used), {
                     stroke_width: categorizeCount(strokeWidth)
                 });
             }
@@ -827,7 +828,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             if (!elem) return;
             queue.current.pushLine(elem);
 
-            analyticEvent(AnalyticEvent.ruler_used, {
+            analyticEvent(LocalAnalyticEvent.ruler_used, {
                 stroke_width: categorizeCount(elem.strokeWidth)
             });
         } else if (isTextMode()) {
@@ -885,7 +886,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     await save();
 
                     // Track text added/edited
-                    analyticEvent(AnalyticEvent.text_edited, {
+                    analyticEvent(LocalAnalyticEvent.text_edited, {
                         font_size: categorizeCount(changedElem.fontSize),
                         in_table: changedElem.tableId !== undefined
                     });
@@ -917,7 +918,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     await save();
 
                     // Track new text
-                    analyticEvent(AnalyticEvent.text_added, {
+                    analyticEvent(LocalAnalyticEvent.text_added, {
                         font_size: categorizeCount(textElem.fontSize),
                         in_table: textElem.tableId !== undefined
                     });
@@ -1370,19 +1371,19 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             save();
             queue2state();
 
-            analyticEvent(AnalyticEvent.element_deleted, { element_type: 'ruler' });
+            analyticEvent(LocalAnalyticEvent.element_deleted, { element_type: 'ruler' });
         } else if (type == ElementTypes.Image) {
             queue.current.pushDeleteImage({ id });
             save();
             queue2state();
 
-            analyticEvent(AnalyticEvent.element_deleted, { element_type: 'image' });
+            analyticEvent(LocalAnalyticEvent.element_deleted, { element_type: 'image' });
         } else if (type == ElementTypes.Element && modeRef.current == EditModes.Audio) {
             queue.current.pushDeleteAudio({ id });
             queue2state();
             save();
 
-            analyticEvent(AnalyticEvent.element_deleted, { element_type: 'audio' });
+            analyticEvent(LocalAnalyticEvent.element_deleted, { element_type: 'audio' });
         }
     }
 
@@ -1411,7 +1412,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         queue2state()
         save();
 
-        analyticEvent(isUndo ? AnalyticEvent.undo_used : AnalyticEvent.redo_used);
+        analyticEvent(isUndo ? LocalAnalyticEvent.undo_used : LocalAnalyticEvent.redo_used);
     }
 
     async function handleEraserPressed() {
@@ -1489,7 +1490,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         queue2state();
                         save();
 
-                        analyticEvent(AnalyticEvent.image_added, {
+                        analyticEvent(LocalAnalyticEvent.image_added, {
                             source: srcType === SRC_CAMERA ? 'camera' : 'gallery'
                         });
                     })
@@ -1553,7 +1554,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         delete: (id: string) => {
             const table = tablesRef.current.find(t => t.id === id);
             if (table) {
-                analyticEvent(AnalyticEvent.element_deleted, {
+                analyticEvent(LocalAnalyticEvent.element_deleted, {
                     element_type: 'table',
                     columns: categorizeCount(table.verticalLines.length - 1),
                     rows: categorizeCount(table.horizontalLines.length - 1)
@@ -1593,7 +1594,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             queue2state();
             save();
 
-            analyticEvent(AnalyticEvent.table_added, {
+            analyticEvent(LocalAnalyticEvent.table_added, {
                 columns: categorizeCount(cols),
                 rows: categorizeCount(rows)
             });
@@ -1803,7 +1804,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 [FileSystem.StaticPages.Lines]: 'lines',
                 [FileSystem.StaticPages.Math]: 'math'
             };
-            analyticEvent(AnalyticEvent.subpage_added, {
+            analyticEvent(LocalAnalyticEvent.subpage_added, {
                 source: 'template',
                 page_type: pageTypeMap[blankType] || 'blank'
             });
@@ -1814,7 +1815,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     function addNewPage(uri: string, src: string, isBlank: boolean, pageType: number | undefined) {
         if (!isBlank) {
-            analyticEvent(AnalyticEvent.subpage_added, {
+            analyticEvent(LocalAnalyticEvent.subpage_added, {
                 source: src
             });
         }
@@ -1853,7 +1854,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             [
                 {
                     text: translate("BtnDelete"), onPress: async () => {
-                        analyticEvent(AnalyticEvent.subpage_deleted, {
+                        analyticEvent(LocalAnalyticEvent.subpage_deleted, {
                             page_index: currPageIndexRef.current
                         });
 
@@ -1942,7 +1943,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         if (newIndex >= pageRef.current.count) return;
 
-        analyticEvent(AnalyticEvent.page_navigation, {
+        analyticEvent(LocalAnalyticEvent.page_navigation, {
             direction: inc > 0 ? 'next' : 'previous',
             page_index: newIndex
         });
@@ -1992,7 +1993,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             queue2state();
             save();
 
-            analyticEvent(AnalyticEvent.audio_recorded);
+            analyticEvent(LocalAnalyticEvent.audio_recorded);
         }
     }
 
@@ -2024,7 +2025,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         } else if (newZoom > 1) {
             setZoom(newZoom);
 
-            analyticEvent(AnalyticEvent.zoom_used, {
+            analyticEvent(LocalAnalyticEvent.zoom_used, {
                 zoom_level: newZoom
             });
         }
