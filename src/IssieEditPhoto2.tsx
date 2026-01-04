@@ -33,8 +33,6 @@ import { AudioElement2 } from './audio-elem-new';
 import { Text } from 'react-native';
 import { migrateMetadata } from './state-migrate';
 import { PathCommand } from '@shopify/react-native-skia';
-import RNSystemSounds from '@dashdoc/react-native-system-sounds';
-import { hideMessage, showMessage } from 'react-native-flash-message';
 import { getSetting } from './settings';
 import { useMessageBox } from './message';
 import { MyIcon } from './common/icons';

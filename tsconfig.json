@@ -9,7 +9,8 @@
     "resolveJsonModule": true,
     "allowJs": true, // Allows JavaScript files in the project
     "noEmit": true, // Prevent emitting JavaScript files
-    "isolatedModules": true
+    "isolatedModules": true,
+    "types": ["jest"]
   },
   "extends": "@react-native/typescript-config",
   "include": [
