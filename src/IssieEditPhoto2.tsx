@@ -1506,12 +1506,18 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     // Brush Mode
     async function onBrushMode() {
         await beforeModeChange();
+        if (eraseModeRef.current) {
+            setEraseMode(false);
+        }
         setMode(EditModes.Brush);
     }
 
     // Marker Mode
     async function onMarkerMode() {
         await beforeModeChange();
+        if (eraseModeRef.current) {
+            setEraseMode(false);
+        }
         setMode(EditModes.Marker);
     }
 
