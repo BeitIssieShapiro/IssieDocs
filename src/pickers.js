@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     View,
     StyleSheet,
@@ -14,7 +14,7 @@ import {
 import FadeInView from './FadeInView';
 import ColorPicker from 'react-native-wheel-color-picker'
 import { trace } from './log';
-import { translate, gCurrentLang } from './lang';
+import { translate, gCurrentLang, checkKeyboardLanguage, useKeyboardLanguage } from './lang';
 import { LAST_COLORS } from './settings';
 import Slider from '@react-native-community/slider';
 import { TextAlignment } from './editor-toolbar';
@@ -79,12 +79,12 @@ export function MyColorPicker(props) {
 
     const _handleSelect = useCallback(() => {
         props.onSelect(composedColor)
-        
+
         // Track custom color selection
         analyticEvent(LocalAnalyticEvent.custom_color_selected, {
             color: composedColor
         });
-        
+
         if (lastColors.find(lc => lc === composedColor)) {
             return
         }
@@ -232,7 +232,8 @@ export function TextSizePicker(props) {
     }, [openMore, props.open, totalHeight]);
 
     const availableStyles = AVAILABLE_FONTS.find(af => af.name == textFont)?.supportedStyles || [];
-
+    const kbLang = useKeyboardLanguage();
+    console.log("kb language2", kbLang)
     return <FadeInView
         overflow={"hidden"}
         height={props.open ? (simpleToolbarHeight + fontRowHeight + (openMore ? 80 : 0)) : 0}
@@ -279,15 +280,17 @@ export function TextSizePicker(props) {
             <View style={{ position: "absolute", left: 10 }}>
                 <IconButton onPress={() => setOpenMore(val => !val)} icon={openMore ? "expand-less" : "expand-more"} color="black" size={40} />
             </View>
-            {AVAILABLE_FONTS.map((font, i) => (
-                <FontButton
-                    key={i}
-                    font={font}
-                    selected={textFont === font.name}
-                    onSelect={() => onSelectFont(font.name)}
-                    size={42}
-                />
-            ))}
+            {AVAILABLE_FONTS
+                .filter(font => font.supportedLanguages.includes(kbLang))
+                .map((font, i) => (
+                    <FontButton
+                        key={i}
+                        font={font}
+                        selected={textFont === font.name}
+                        onSelect={() => onSelectFont(font.name)}
+                        size={42}
+                    />
+                ))}
             <Spacer width={20} />
             <View style={{ borderWidth: 1, borderStyle: "solid", height: 40, width: 1, color: "gray" }} />
             <Spacer width={20} />
@@ -350,14 +353,14 @@ export function TextSizePicker(props) {
                 onSlidingComplete={(val => {
                     console.log("onSlidingComplete", val)
                     val = Math.floor(val / 10) * 10 + 5;
-                    
+
                     // Track custom text size selection (only if not one of the preset sizes)
                     if (!textSizesAct.includes(val)) {
                         analyticEvent(LocalAnalyticEvent.custom_text_size_selected, {
                             size: val
                         });
                     }
-                    
+
                     props.onSelect(val, false);
                 })}
 

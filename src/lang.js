@@ -1,8 +1,60 @@
 import { gCurrentLang } from "@beitissieshapiro/issie-shared";
 
-export { translate, fTranslate, isRTL, getRowDirection, 
+export {
+    translate, fTranslate, isRTL, getRowDirection,
     getRowReverseDirection, getRowDirections, getFlexStart, getFlexEnd, gCurrentLang
- } from "@beitissieshapiro/issie-shared";
+} from "@beitissieshapiro/issie-shared";
+
+
+
+
+import { useEffect, useState } from 'react';
+import { NativeModules, NativeEventEmitter, Platform, Keyboard } from 'react-native';
+const { KeyboardLanguage } = NativeModules;
+
+const keyboardEventEmitter = new NativeEventEmitter(KeyboardLanguage);
+
+export const useKeyboardLanguage = () => {
+    const [language, setLanguage] = useState("en");
+
+    const setNormalizeLang = (lang) => {
+        console.log("KB Lang detected", lang)
+        if (lang.indexOf("he") >= 0) {
+            setLanguage("he")
+        } else if (lang.indexOf("ar") >= 0) {
+            setLanguage("ar")
+        } else setLanguage("en");
+    }
+    useEffect(() => {
+        // 1. Initial check
+        KeyboardLanguage.getCurrentLanguage().then(lang => setNormalizeLang(lang));
+
+        // 2. Setup iOS Listener (Native Event)
+        const languageListener = keyboardEventEmitter.addListener(
+            'keyboardLanguageDidChange',
+            (lang) => {
+                setNormalizeLang(lang)
+            }
+        );
+
+        // 3. Setup Android Listener (Workaround via Keyboard Visibility)
+        let androidListener;
+        if (Platform.OS === 'android') {
+            androidListener = Keyboard.addListener('keyboardDidShow', () => {
+                // Ask Native module to check and emit
+                KeyboardLanguage.checkAndEmit();
+            });
+        }
+
+        return () => {
+            languageListener.remove();
+            androidListener?.remove();
+        };
+    }, []);
+
+    return language;
+};
+
 
 export const languageMap = {
     "he": {
@@ -75,7 +127,7 @@ export const languageMap = {
         "Display": "תצוגת פריטים",
         "Language": "שפה",
         "AllowEditTitle": "עריכת כותרת",
-        "ShowScrollButtons":"חיצי עזר לגלילה",
+        "ShowScrollButtons": "חיצי עזר לגלילה",
         "TextInButtons": "עיצוב כפתורים",
         "FolderColors": "צבעי תיקיות",
         "Warning": "אזהרה",
@@ -141,7 +193,7 @@ export const languageMap = {
         "TableOverflowsPage": "הטבלה גולשת מעבר לסוף הדף",
         "FontChangeOverflowsPage": "שינוי גופן גורם לגלישה מעבר לסוף הדף",
         "BackupSuccessful": "גיבוי הסתיים בהצלחה",
-        "BackupInProgress":"גיבוי בתהליך...",
+        "BackupInProgress": "גיבוי בתהליך...",
 
         "ToolsSettings": "כלים",
         "Ruler": "סרגל",
@@ -152,8 +204,8 @@ export const languageMap = {
 
         "ExportPDFWithAudioTitle": "שיתוף פ.ד.פ",
         "ExportPDFWithAudioWarning": "שיתוף כקובץ פדפ לא יכלול הקלטות ולא יאפשר עריכה, כדי לאפשר עריכה יש לשתף כדף עבודה. האם להמשיך בכל זאת?",
-        "DoNotAskAgain":"אל תשאל שוב",
-        "DefaultFont":"פונט מערכת",
+        "DoNotAskAgain": "אל תשאל שוב",
+        "DefaultFont": "רגיל",
         "UserFeedback": "משוב משתמש",
         "FeedbackPlaceholder": "אנא שתף אותנו במחשבות, הצעות או דיווח על בעיות...",
         "FeedbackMinLength": "המשוב חייב להכיל לפחות 5 תווים",
@@ -229,7 +281,7 @@ export const languageMap = {
         "About": "عنا",
         "Language": "اللغة",
         "AllowEditTitle": "تحرير العنوان",
-        "ShowScrollButtons":"أسهم التنقل للزوم",
+        "ShowScrollButtons": "أسهم التنقل للزوم",
         "TextInButtons": "تصميم الأزرار",
         "CaptionFolderColor": "لون المجلد",
         "FolderColors": "ألوان المجلد",
@@ -286,7 +338,7 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "ColsCaption": "أعمدة",
         "BackupTitle": "نسخ احتياطي",
         "BackupBtn": "نسخ احتياطي للتطبيق",
-        "BackupInProgress":"جاري النسخ الاحتياطي...",
+        "BackupInProgress": "جاري النسخ الاحتياطي...",
         "ErrMoveIntoTwoLevelFolder": "لا يمكن نقل مجلد إلى مجلد داخل مجلد آخر",
         "ErrMoveFolderCOntainingFolders": "لا يمكن نقل مجلد يحتوي على مجلدات",
         "SuccessfulMoveFolderMsg": "تم نقل المجلد بنجاح",
@@ -304,8 +356,8 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "Table": "جدول",
         "ExportPDFWithAudioTitle": "شارك كملف PDF",
         "ExportPDFWithAudioWarning": "مشاركة كملف PDF لن تتضمن التسجيلات ولن تسمح بالتعديل. للسماح بالتعديل، فكر في المشاركة كملف ورقي. هل تريد المتابعة على أي حال",
-        "DoNotAskAgain":"لا تسأل مرة أخرى",
-        "DefaultFont":"خط افتراضي",
+        "DoNotAskAgain": "لا تسأل مرة أخرى",
+        "DefaultFont": "عادي",
         "UserFeedback": "ملاحظات المستخدم",
         "FeedbackPlaceholder": "يرجى مشاركة أفكارك أو اقتراحاتك أو الإبلاغ عن المشكلات...",
         "FeedbackMinLength": "يجب أن تحتوي الملاحظات على 5 أحرف على الأقل",
@@ -383,7 +435,7 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "Display": "Items Display",
         "Language": "Language",
         "AllowEditTitle": "Edit Desktop Name",
-        "ShowScrollButtons":"Zoom Nav. Buttons",
+        "ShowScrollButtons": "Zoom Nav. Buttons",
         "TextInButtons": "Button Design",
         "FolderColors": "Folder colors",
         "Warning": "Warning",
@@ -441,7 +493,7 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "ColsCaption": "Cols",
         "BackupTitle": "Backup",
         "BackupBtn": "Backup App",
-        "BackupInProgress":"Backup In Progress...",
+        "BackupInProgress": "Backup In Progress...",
 
         "ErrMoveIntoTwoLevelFolder": "Cannot move forder into a folder which is in another folder",
         "ErrMoveFolderCOntainingFolders": "Cannot move folder containing other folders into another folder",
@@ -460,8 +512,8 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
         "Table": "Table",
         "ExportPDFWithAudioTitle": "Share as PDF",
         "ExportPDFWithAudioWarning": "Sharing as a PDF will not include recordings nor allow editing.\nTo allow editing consider sharing as a worksheet. Proceed anyway?",
-        "DoNotAskAgain":"Do not ask again",
-        "DefaultFont":"System Font",
+        "DoNotAskAgain": "Do not ask again",
+        "DefaultFont": "Regular",
         "UserFeedback": "User Feedback",
         "FeedbackPlaceholder": "Please share your thoughts, suggestions, or report issues...",
         "FeedbackMinLength": "Feedback must be at least 5 characters",
