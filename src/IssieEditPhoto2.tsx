@@ -33,11 +33,11 @@ import { AudioElement2 } from './audio-elem-new';
 import { Text } from 'react-native';
 import { migrateMetadata } from './state-migrate';
 import { PathCommand } from '@shopify/react-native-skia';
-import { getSetting } from './settings';
+import { getSetting, SCROLL_BUTTONS } from './settings';
 import { useMessageBox } from './message';
 import { MyIcon } from './common/icons';
 import { generatePDF } from './pdf';
-import {  analyticEvent, LocalAnalyticEvent } from './common/firebase';
+import { analyticEvent, LocalAnalyticEvent } from './common/firebase';
 import { CanvasScroll } from './canvas/canvas-elements';
 import { categorizeCount } from '@beitissieshapiro/issie-shared';
 
@@ -154,6 +154,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const moveRepeatRef = useRef<{ offset: Offset, interval: NodeJS.Timeout } | undefined>();
     const zoomRef = useRef(zoom);
     const pageHeightAdditionRef = useRef(0);
+    const originalBgImageHeightRef = useRef(originalBgImageHeight);
 
     const dragToMoveCanvasRef = useRef<{
         initialOffset: Offset;
@@ -204,6 +205,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         pageHeightAdditionRef.current = pageHeightAddition;
         calcCanvasRatio(currentFileRef.current);
     }, [toolbarHeight, pageHeightAddition])
+
+    useEffect(() => {
+        originalBgImageHeightRef.current = originalBgImageHeight;
+    }, [originalBgImageHeight])
 
     const { showMessageBox } = useMessageBox();
 
@@ -416,14 +421,17 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         await wait(shareTimeMs);
         try {
+            // Capture the first page (which might be extended)
             const uri = await canvasRef.current?.toExport();
-            //let audioExists = audiosRef.current?.length > 0;
             dataUrls.push({
                 uri,
                 size: canvasSizeRef.current,
                 ratio: ratioRef.current,
+                originalPageHeight: originalBgImageHeightRef.current,
                 //audioFiles: await readAudioElements()
             });
+
+            // Process remaining pages
             for (let i = 1; i < pageRef.current.count; i++) {
                 setShareProgressPage(i + 1);
                 setShareProgress(i / pageRef.current.count)
@@ -435,6 +443,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     uri,
                     size: canvasSizeRef.current,
                     ratio: ratioRef.current,
+                    originalPageHeight: originalBgImageHeightRef.current,
                     // audioFiles: await readAudioElements()
                 });
 
@@ -785,8 +794,16 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     initialPt: p
                 }
             }
+
+            // When zoomed, allow both horizontal and vertical drag
+            // When not zoomed, only allow vertical drag
+            const dx = zoomRef.current > 1 ? (p[0] - dragToMoveCanvasRef.current.initialPt[0]) / ratioRef.current : 0;
             const dy = (p[1] - dragToMoveCanvasRef.current.initialPt[1]) / ratioRef.current;
-            handleMoveCanvas({ x: dragToMoveCanvasRef.current.initialOffset.x, y: dragToMoveCanvasRef.current.initialOffset.y + dy });
+
+            handleMoveCanvas({
+                x: dragToMoveCanvasRef.current.initialOffset.x + dx,
+                y: dragToMoveCanvasRef.current.initialOffset.y + dy
+            });
             trace("text sketch step", p)
 
         }
@@ -1824,6 +1841,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             });
         }
         navigation.navigate('SavePhoto', {
+            sheet: undefined,
+            folder: undefined,
             uri,
             isBlank,
             pageType,
@@ -1831,6 +1850,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             addToExistingPage: pageRef.current,
             goHomeAndThenToEdit: route.params.goHomeAndThenToEdit,
             pageIndex: pageRef.current.count,
+            returnFolderCallback: undefined,
+            saveNewFolder: undefined,
+            title: translate("AddPageMenuTitle"),
         })
     }
 
@@ -1882,6 +1904,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     const moveArrows = (windowSize: ImageSize, keyboardHeight: number, zoom: number, moveCanvas: Offset, toolbarHeight: number, floatingToolbarHeight: number, mode: EditModes) => {
+        // Check if scroll buttons are enabled in settings
+        const scrollButtonsEnabled = getSetting(SCROLL_BUTTONS.name, SCROLL_BUTTONS.yes) === SCROLL_BUTTONS.yes;
+
+        // If scroll buttons are disabled, don't render anything
+        if (!scrollButtonsEnabled) {
+            return null;
+        }
+
         const sidesTop = Math.min(windowSize.height / 2 - 35, windowSize.height - keyboardHeight - 95);
         const upDownLeft = windowSize.width / 2 - 35; //half the size of the button
         const upDownTop = toolbarHeight + floatingToolbarHeight
@@ -2043,6 +2073,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         let { x, y } = newOffset;
         //trace("set move before", x, y)
+
+        // When zoomed in, allow both horizontal and vertical movement
+        // When not zoomed, only allow vertical in text mode or when page height exceeds space
         const verticalOnly = (zoomRef.current == 1 && (modeRef.current == EditModes.Text || pageHeightExceedsSpace));
 
         x = verticalOnly ? moveCanvasRef.current.x : Math.min(Math.max(x, -maxXOffset() / ratioRef.current), 0);
@@ -2088,8 +2121,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
             {shareProgress >= 0 && <View style={globalStyles.progressBarHost}>
                 <Text style={{ fontSize: 28, marginBottom: 5 }}>{fTranslate("ExportProgress",
-                    shareProgressPage,
-                    (pageRef.current.count > 0 ? pageRef.current.count : 1))
+                    shareProgressPage.toString(),
+                    (pageRef.current.count > 0 ? pageRef.current.count : 1).toString())
                 }</Text>
                 <Progress.Bar width={windowSize.width * .6} progress={shareProgress} style={[isRTL() && { transform: [{ scaleX: -1 }] }]} />
             </View>}
@@ -2110,6 +2143,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onDeletePage={pageRef.current && pageRef.current.count > 1 ? handleDeletePage : undefined}
                 deletePageIndex={currPageIndex + 1}
                 pagesCount={pageRef.current.count}
+
+                onDelete={undefined}
+                onMove={undefined}
+                onShareImgs={undefined}
+                onShareIssieDocs={undefined}
+                onDuplicate={undefined}
 
                 onBlankPage={() => handleAddBlankPage(FileSystem.StaticPages.Blank)}
                 onLinesPage={() => handleAddBlankPage(FileSystem.StaticPages.Lines)}
@@ -2190,6 +2229,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             {/* <ViewShot ref={mainViewRef} options={{ format: "jpg", quality: 0.9, result: share ? "base64" : "tmpfile" }}> */}
 
 
+
             <CanvasScroll
                 offset={moveCanvas}
                 canvasHeight={canvasSize.height}
@@ -2200,11 +2240,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 ratio={ratio}
                 zoom={zoom}
                 onScroll={(amount) => {
-                    canvasRef.current.isMoving(true)
+                    canvasRef.current?.isMoving?.(true)
                     handleMoveCanvas({ x: moveCanvas.x, y: amount })
                 }}
-                onScrollEnd={() => canvasRef.current.isMoving(false)}
+                onScrollEnd={() => canvasRef.current?.isMoving?.(false)}
             />
+
 
             <Canvas
                 ref={canvasRef}

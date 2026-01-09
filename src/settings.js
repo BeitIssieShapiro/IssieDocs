@@ -49,6 +49,12 @@ export const EDIT_TITLE = {
     no: 2
 }
 
+export const SCROLL_BUTTONS = {
+    name: 'scrollButtons',
+    yes: 1,
+    no: 2
+}
+
 export const LAST_COLORS = {
     name: 'lastColors',
     max: 4

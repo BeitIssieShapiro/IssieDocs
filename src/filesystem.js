@@ -987,6 +987,10 @@ export class FileSystem {
         let name;
         if (sheet) {
             const pathObj = this._parsePath(sheet.defaultSrc);
+            if (!pathObj) {
+                console.log("Unexpected sheet in export", sheet)
+                return;
+            }
             folder = this.findFolderByID(pathObj.folderID);
             name = pathObj.folderID + "/" + sheet.name;
         } else {
@@ -1063,7 +1067,7 @@ export class FileSystem {
 
             const date = new Date()
             let fn = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + ('0' + date.getDate()).slice(-2) + ' ' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '-' + ('0' + date.getSeconds()).slice(-2);
-            trace("about to zip", allZipPaths)
+            // trace("about to zip", allZipPaths)
             const targetPath = _androidFileName(joinPaths(TemporaryDirectoryPath, "IssieDocs Backup-" + fn + ".zip"));
             await RNFS.unlink(targetPath).catch(ignore);
 

@@ -22,7 +22,8 @@ import {
     VIEW, EDIT_TITLE, LANGUAGE, TEXT_BUTTON,
     getSetting, getUseColorSetting, FOLDERS_VIEW,
     getFeaturesSetting,
-    FEATURES
+    FEATURES,
+    SCROLL_BUTTONS
 } from './settings'
 import { FileSystem } from './filesystem';
 import { trace } from './log';
@@ -49,6 +50,10 @@ export default function SettingsMenu(props) {
 
     let textBtnSetting = getSetting(TEXT_BUTTON.name, TEXT_BUTTON.yes);
     const [textBtn, setTextBtn] = useState(textBtnSetting);
+
+    let scrollButtonsSetting = getSetting(SCROLL_BUTTONS.name, SCROLL_BUTTONS.yes);
+    const [scrollButtons, setScrollButtons] = useState(scrollButtonsSetting);
+
 
     let useColorSetting = getUseColorSetting();
     const [useColor, setUseColor] = useState(useColorSetting);
@@ -156,6 +161,13 @@ export default function SettingsMenu(props) {
         setTextBtn(tb);
     }
 
+    const setScrollButtonsHandler = (tb) => {
+        let obj = {}
+        obj[SCROLL_BUTTONS.name] = tb;
+        Settings.set(obj)
+        setScrollButtons(tb);
+    }
+
 
     const backup = () => {
         analyticEvent(AnalyticEvent.backup_created);
@@ -200,10 +212,11 @@ export default function SettingsMenu(props) {
         zIndex: 100, top: 0, width: '100%', height: '100%'
     }}>
 
-        {backupProgress !== undefined && <View style={{
+        {backupProgress != null && <View style={{
             position: 'absolute', width: "100%", height: '100%', top: 0,
             zIndex: 1000, alignItems: "center", justifyContent: "center"
         }}>
+            <AppText>{translate("BackupInProgress")}</AppText>
             <Progress.Bar
                 radius={100}
                 width={props.windowSize.width * .6}
@@ -300,6 +313,15 @@ export default function SettingsMenu(props) {
                             callback: () => setTextBtnHandler(TEXT_BUTTON.no)
                         }
                     ])}
+
+                    {getCheckbox(translate("ShowScrollButtons"),
+                        () => {
+                            let newValue = scrollButtons == SCROLL_BUTTONS.yes ? SCROLL_BUTTONS.no : SCROLL_BUTTONS.yes;
+                            setScrollButtons(newValue);
+                            setScrollButtonsHandler(newValue)
+                        },
+                        scrollButtons == SCROLL_BUTTONS.yes)}
+
 
                     {getCheckbox(translate("AllowEditTitle"),
                         () => {
@@ -423,7 +445,7 @@ function getGroup(props, name, items, isCheckboxes) {
 function getCheckbox(name, callback, selected) {
     return <View style={{
         width: '100%', paddingTop: 25,
-        paddingStart: 25, alignItems: "flex-start"
+        paddingStart: 15, alignItems: "flex-start"
     }}>
         <TouchableOpacity
             style={{ flexDirection: "row", paddingStart: 0, paddingTop: 15, alignItems: 'center' }}
@@ -475,7 +497,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#979797',
     },
     SettingsHeaderText: {
-        fontSize: 27,
+        fontSize: 25,
         color: semanticColors.titleText,
         fontWeight: 'bold',
         paddingRight: 10,

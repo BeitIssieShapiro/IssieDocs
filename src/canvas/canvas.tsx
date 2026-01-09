@@ -308,7 +308,10 @@ function Canvas({
             return new Promise((resolve, reject) => {
                 setTimeout(() =>
                     captureRef(viewShotRef, { format: "jpg", quality: 0.9, result: "base64" })
-                        .then((uri) => resolve(uri))
+                        .then((uri) => {
+                            //console.log("exported-file", uri)
+                            resolve(uri)
+                        })
                         .catch((e) => reject(e))
                         .finally(() => {
                             setTimeout(() => moveIconDisplay.value = "flex");
@@ -545,7 +548,7 @@ function Canvas({
 
     // Convert screen coordinates to canvas coordinates
     const screen2Canvas = (x: number, y: number): SketchPoint => {
-        trace("screen2Canvas", {canvasTop:canvasTopRef.current, ratio:ratioRef.current})
+        trace("screen2Canvas", { canvasTop: canvasTopRef.current, ratio: ratioRef.current })
         return [
             (x - sideMarginRef.current) / (zoomRef.current * ratioRef.current) - offsetRef.current.x,
             (y - canvasTopRef.current) / (zoomRef.current * ratioRef.current) - offsetRef.current.y,
@@ -689,7 +692,7 @@ function Canvas({
         };
     });
 
-    
+
     return (
         <Animated.View
             ref={canvasRef}
@@ -959,8 +962,8 @@ function Canvas({
                 {images?.map((image) => {
                     const imgW = (image.width)
                     const imgH = (image.height)
-                    const w = (imgW *ratio);
-                    const h = (imgH *ratio);
+                    const w = (imgW * ratio);
+                    const h = (imgH * ratio);
                     if (!imgW || imgW === 0) return null;
 
                     // The calculated key is crucial to overcome a bug that the image is blur at first - keep this!
