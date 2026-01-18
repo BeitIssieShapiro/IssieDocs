@@ -219,7 +219,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             {
                 width: windowSizeRef.current.width,
                 height: availableheight()
-            }, pageHeightAddition);
+            }, pageHeightAdditionRef.current);
 
         setCanvasSize(res.actualSize);
         canvasSizeRef.current = res.actualSize;
