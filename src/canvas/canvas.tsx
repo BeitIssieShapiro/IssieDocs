@@ -876,7 +876,7 @@ function Canvas({
                     {// Tables 
                     }
                     {tables?.map((table) => {
-                        const horizontalLines = calcEffectiveHorizontalLines(table, canvasHeightRef.current / ratioRef.current, textsRef.current);
+                        const horizontalLines = calcEffectiveHorizontalLines(table, canvasHeight / ratio, texts);
 
                         const lines = [];
                         const dashArray = table.strokeDash && table.strokeDash.map((v: number) => v * 5);

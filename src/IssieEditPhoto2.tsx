@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -119,6 +119,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [shareProgress, setShareProgress] = useState<number>(-1)
     const [shareProgressPage, setShareProgressPage] = useState<number>(1)
 
+    // Share orchestration state
+    const [sharingPageIndex, setSharingPageIndex] = useState<number>(-1)
+    const [readyToCapture, setReadyToCapture] = useState<boolean>(false)
+    const sharingDataUrlsRef = useRef<any[]>([])
+    const sharingNameRef = useRef<string>('')
+
 
     // Corresponding Refs
     const linesRef = useRef(lines);
@@ -210,6 +216,78 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         originalBgImageHeightRef.current = originalBgImageHeight;
     }, [originalBgImageHeight])
 
+    // useLayoutEffect: Handles UI changes when sharing - loads page and triggers render
+    useLayoutEffect(() => {
+        if (sharingPageIndex < 0) return;
+
+        const loadPageForSharing = async () => {
+            try {
+                trace("Loading page for sharing:", sharingPageIndex);
+
+                // Load the page - this will update all UI state
+                await loadPage(pageRef.current, sharingPageIndex);
+
+                // Signal that layout is complete and ready to capture
+                setReadyToCapture(true);
+            } catch (e) {
+                console.log("Failed to load page for sharing", e);
+                setSharingPageIndex(-1);
+                setShareProgress(-1);
+            }
+        };
+
+        loadPageForSharing();
+    }, [sharingPageIndex]);
+
+    // useEffect: Responds to readyToCapture trigger - performs canvas capture
+    useEffect(() => {
+        if (!readyToCapture || sharingPageIndex < 0) return;
+
+        const captureCanvas = async () => {
+            try {
+                trace("Capturing canvas for page:", sharingPageIndex);
+
+                // Capture the canvas
+                const uri = await canvasRef.current?.toExport();
+                sharingDataUrlsRef.current.push({
+                    uri,
+                    size: canvasSizeRef.current,
+                    ratio: ratioRef.current,
+                    originalPageHeight: originalBgImageHeightRef.current,
+                });
+
+                // Reset capture trigger
+                setReadyToCapture(false);
+
+                const nextPageIndex = sharingPageIndex + 1;
+
+                if (nextPageIndex < pageRef.current.count) {
+                    // More pages to process - trigger next page load
+                    setShareProgressPage(nextPageIndex + 1);
+                    setShareProgress(nextPageIndex / pageRef.current.count);
+                    setSharingPageIndex(nextPageIndex);
+                } else {
+                    // All pages captured - finalize PDF
+                    trace("All pages captured, finalizing PDF");
+                    await finalizePDFShare(sharingNameRef.current, sharingDataUrlsRef.current);
+
+                    // Reset sharing state
+                    setSharingPageIndex(-1);
+                    setShareProgress(-1);
+                    sharingDataUrlsRef.current = [];
+                    sharingNameRef.current = '';
+                }
+            } catch (e) {
+                console.log("Canvas capture failed", e);
+                setSharingPageIndex(-1);
+                setShareProgress(-1);
+                sharingDataUrlsRef.current = [];
+            }
+        };
+
+        captureCanvas();
+    }, [readyToCapture]);
+
     const { showMessageBox } = useMessageBox();
 
     const availableheight = () => windowSizeRef.current.height - toolbarHeightRef.current - dimensions.toolbarMargin * 2 - headerHeight - insets.top - insets.bottom;
@@ -260,10 +338,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         pageRef.current = newPage;
         metaDataUri.current = newCurrentFile + ".json";
-
+        queue2state(true)
         await calcCanvasRatio(newCurrentFile);
 
-        await loadMetadata(ratioRef.current, canvasSizeRef.current).then(() => queue2state(true));
+        await loadMetadata(ratioRef.current, canvasSizeRef.current);
+
+        queue2state(true)
+
+        // Now calculate canvas ratio with the correct page height
+        //await calcCanvasRatio(newCurrentFile);
     }
     //trace("win-size", windowSize)
     useEffect(() => {
@@ -387,78 +470,30 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
     }
 
-    const doShare = async (name:string) => {
-        const shareTimeMs = 2000;
-
-        //iterates over all files and exports them
-        //this.setState({ sharing: true, shareProgress: 0, shareProgressPage: 1 });
-        const dataUrls = [];
+    const doShare = async (name: string) => {
+        trace("Starting share process");
+        setShareProgress(0);
         setShareProgressPage(1);
 
+        // Initialize sharing orchestration
+        sharingNameRef.current = name;
+        sharingDataUrlsRef.current = [];
 
-        // const readAudioElements = async () => {
-        //     const res = [];
-        //     for (const audio of audiosRef.current) {
-        //         const audioFile = FileSystem.main.getAttachmentBase(pageRef.current, currPageIndexRef.current) + audio.file;
-        //         const base64Audio = await readFile(audioFile, "base64");
-        //         const audioBuffer = Buffer.from(base64Audio, 'base64');
+        // Trigger useLayoutEffect to load first page
+        setSharingPageIndex(0);
+    }
 
-        //         res.push({
-        //             audioFileAnnotation: {
-        //                 src: audioBuffer,
-        //                 name: 'audio.mp3',
-        //                 description: 'Click to open and play the audio'
-        //             },
-        //             x: audio.x,
-        //             y: audio.y,
-        //             size: 80,
-        //         });
-        //     }
-        //     return res;
-        // }
-
-        setShareProgress(0);
-
-        await wait(shareTimeMs);
+    const finalizePDFShare = async (name: string, dataUrls: any[]) => {
         try {
-            // Capture the first page (which might be extended)
-            const uri = await canvasRef.current?.toExport();
-            dataUrls.push({
-                uri,
-                size: canvasSizeRef.current,
-                ratio: ratioRef.current,
-                originalPageHeight: originalBgImageHeightRef.current,
-                //audioFiles: await readAudioElements()
-            });
-
-            // Process remaining pages
-            for (let i = 1; i < pageRef.current.count; i++) {
-                setShareProgressPage(i + 1);
-                setShareProgress(i / pageRef.current.count)
-                await loadPage(pageRef.current, i);
-                await wait(shareTimeMs);
-                const uri = await canvasRef.current?.toExport();
-
-                dataUrls.push({
-                    uri,
-                    size: canvasSizeRef.current,
-                    ratio: ratioRef.current,
-                    originalPageHeight: originalBgImageHeightRef.current,
-                    // audioFiles: await readAudioElements()
-                });
-
-                //audioExists = audioExists || audiosRef.current?.length > 0;
-            }
-
             //avoid reshare again
             setNavParam(navigation, 'share', false);
-            // Always create PDF file
-            trace("about to generate PDF", dataUrls.length)
-            let shareUrl = "file://" + (await generatePDF(name, dataUrls));
-            shareUrl = await FileSystem.filePathToContentUri(shareUrl)
 
-            trace("about to share", shareUrl)
-            setShareProgress(-1);
+            // Always create PDF file
+            trace("about to generate PDF", dataUrls.length);
+            let shareUrl = "file://" + (await generatePDF(name, dataUrls));
+            shareUrl = await FileSystem.filePathToContentUri(shareUrl);
+
+            trace("about to share", shareUrl);
 
             if (shareUrl) {
                 // Define share options
@@ -476,8 +511,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     } else {
                         Alert.alert("Error", err.message);
                     }
-                    // Handle other errors or user cancellations if necessary
-                }
+                };
 
                 const doNotShow = getSetting("DoNotShowPDFAlert", false);
 
@@ -489,7 +523,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                                     if (doNotShow) {
                                         Settings.set({ "DoNotShowPDFAlert": true });
                                     }
-                                    Share.open(shareOptions).then(successFunc).catch(failureFunc)
+                                    Share.open(shareOptions).then(successFunc).catch(failureFunc);
                                 },
                                 style: "default"
                             },
@@ -509,9 +543,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 Alert.alert("Failed to generate PDF for sharing.");
             }
         } catch (e) {
-            console.log("Share failed", e)
-        } finally {
-            setShareProgress(-1);
+            console.log("Share finalization failed", e);
+            Alert.alert("Failed to generate PDF for sharing.");
         }
     }
 

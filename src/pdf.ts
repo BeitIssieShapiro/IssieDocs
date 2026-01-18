@@ -62,7 +62,7 @@ export async function generatePDF(name: string, base64Images: GeneratePDFProps[]
       for (let i = 0; i < base64Images.length; i++) {
         const base64 = base64Images[i].uri;
         const size = base64Images[i].size;
-        const r = base64Images[i].ratio;
+        //const r = base64Images[i].ratio;
         let originalPageHeight = size.height;
 
         // Determine if page needs to be split
@@ -103,7 +103,7 @@ export async function generatePDF(name: string, base64Images: GeneratePDFProps[]
           const yOffset = pageIdx * originalPageHeight;
 
           // Insert the image at (x=0, y=0), but crop to show only this section
-          doc.image(Buffer.from(cleanedBase64, 'base64'), 0, -yOffset * r, {
+          doc.image(Buffer.from(cleanedBase64, 'base64'), 0, -yOffset , {
             fit: [size.width, size.height],
             align: 'center',
             valign: 'top',
