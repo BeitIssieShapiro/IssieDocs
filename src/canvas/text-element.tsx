@@ -41,8 +41,8 @@ function TextElement({
 }: TextElementProps, ref: any) {
     const [revision, setRevision] = useState<number>(0)
     //console.log("text ratio", ratio, actualWidth, text.fontSize)
+    const [textTillSelection, setTextTillSelection] = useState<string>(text.text);
     const [selection, setSelection] = useState({ start: 0, end: 0 });
-    const [textTillSelection, setTextTillSelection] = useState<string>("");
     const textBGColor = useSharedValue<ColorValue>("yellow");
     const moveIconDisplay = useSharedValue<'none' | 'flex' | undefined>("flex");
     const table = text.tableId && tables?.find(table => table.id == text.tableId);
@@ -67,9 +67,17 @@ function TextElement({
         moveIconDisplay.value = "flex";
     }, [text.color, editMode])
 
-    useEffect(()=>{
-        setTextTillSelection(text.text.substring(0, selection.start))
+    useEffect(() => {
+        setTextTillSelection(text.text.substring(0, selection.end))
     }, [selection]);
+
+    useEffect(() => {
+        if (editMode) {
+            // when entering edit mode, the cursor at the end
+            setTextTillSelection(text.text)
+        }
+    }, [editMode]);
+
 
     // if (text.tableId) {
     //     console.log("text table",text.tableId, table)
