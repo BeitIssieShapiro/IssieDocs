@@ -25,10 +25,11 @@ export interface GeneratePDFProps {
  * Generates a PDF file from an array of base64 image strings.
  * Each image will occupy one page in the PDF.
  *
- * @param {any[]} base64Images - Array of base64-encoded image strings
+* @param {string} name - the file name to be used
+* @param {any[]} base64Images - Array of base64-encoded image strings
  * @return {Promise<string>} - A local file path to the generated PDF
  */
-export async function generatePDF(base64Images: GeneratePDFProps[]) {
+export async function generatePDF(name: string, base64Images: GeneratePDFProps[]) {
   return new Promise(async (resolve, reject) => {
     try {
       // 1. Create a new PDF document
@@ -46,7 +47,7 @@ export async function generatePDF(base64Images: GeneratePDFProps[]) {
         const pdfData = Buffer.concat(chunks); // Combine all data chunks
 
         // Write the PDF to the app's document directory
-        const fileName = `ShareWorksheet.pdf`;
+        const fileName = `${name}.pdf`;
         const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
 
         try {

@@ -283,7 +283,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const subscription = Dimensions.addEventListener('change', handleChange);
         loadPage(page, (pageIndex != undefined && pageIndex > 0 ? pageIndex : 0)).then(() => {
             if (share) {
-                doShare();
+                doShare(page.name);
             }
         })
 
@@ -387,7 +387,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
     }
 
-    const doShare = async () => {
+    const doShare = async (name:string) => {
         const shareTimeMs = 2000;
 
         //iterates over all files and exports them
@@ -454,7 +454,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setNavParam(navigation, 'share', false);
             // Always create PDF file
             trace("about to generate PDF", dataUrls.length)
-            let shareUrl = "file://" + (await generatePDF(dataUrls));
+            let shareUrl = "file://" + (await generatePDF(name, dataUrls));
             shareUrl = await FileSystem.filePathToContentUri(shareUrl)
 
             trace("about to share", shareUrl)
