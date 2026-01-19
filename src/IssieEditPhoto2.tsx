@@ -545,6 +545,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         } catch (e) {
             console.log("Share finalization failed", e);
             Alert.alert("Failed to generate PDF for sharing.");
+        } finally {
+            navigation.goBack();
         }
     }
 
