@@ -905,7 +905,7 @@ export function FolderIcon(props) {
             height: props.size
         }} />
     }
-    return <MyIcon info={{ name: props.name, size: props.size, color: props.color }} />
+    return <MyIcon info={{ name: props.name, size: props.size, color: props.color, type: "MI" }} />
 
 }
 

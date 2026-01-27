@@ -284,6 +284,7 @@ export function TextSizePicker(props) {
                 .filter(font => font.supportedLanguages.includes(kbLang))
                 .map((font, i) => (
                     <FontButton
+                        kbLang={kbLang}
                         key={i}
                         font={font}
                         selected={textFont === font.name}
@@ -431,7 +432,13 @@ function SelectedCircle({ size, children, selected, additionalStyle }) {
     >{children}</View>
 }
 
-function FontButton({ font, selected, onSelect, size }) {
+function getLangSpecificPreview(kbLang) {
+    if (kbLang == "he") return "אב";
+    if (kbLang == "ar") return "أب";
+    return "Ab"
+}
+
+function FontButton({ font, selected, onSelect, size, kbLang }) {
     return (
         <Pressable onPress={onSelect} activeOpacity={0.7}>
             <SelectedCircle additionalStyle={{ width: undefined, paddingHorizontal: 15, maring: 10 }} selected={selected} size={size}>
@@ -440,7 +447,7 @@ function FontButton({ font, selected, onSelect, size }) {
                     fontSize: size * 0.5,
                     lineHeight: size * 0.6
                 }}>
-                    {translate(font.preview)}
+                    {font.preview == "DefaultFont" ? getLangSpecificPreview(kbLang) : font.preview}
                 </AppText>
             </SelectedCircle>
         </Pressable>

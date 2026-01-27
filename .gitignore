@@ -82,3 +82,4 @@ android/app/release
 
 debug-token.ts
 .env
+opencode.json
