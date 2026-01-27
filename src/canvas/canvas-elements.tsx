@@ -101,12 +101,17 @@ interface CanvasScrollProps {
     onScrollEnd: () => void;
 }
 export function CanvasScroll({ offset, top, width, canvasHeight, kbHeight, originalBgImageHeight, ratio, onScroll, onScrollEnd, zoom }: CanvasScrollProps) {
-    const yOffsetRef = useRef(0);
+    const yOffsetRef = useRef(offset.y);
+    const ratioRef = useRef(ratio);
     const yInitialOffsetRef = useRef(0);
 
     useEffect(() => {
         yOffsetRef.current = offset.y;
     }, [offset])
+
+    useEffect(() => {
+        ratioRef.current = ratio;
+    }, [ratio])
 
     const [scrollRatio, setScrollRatio] = useState<number>(1);
     const scrollRatioRef = useRef(originalBgImageHeight / (canvasHeight - kbHeight));
@@ -129,7 +134,7 @@ export function CanvasScroll({ offset, top, width, canvasHeight, kbHeight, origi
             },
             onPanResponderMove: (e, gestureState) => {
                 trace("Move canvas scroll", { yInitialOffset: yInitialOffsetRef.current, dy: gestureState.dy, sr: scrollRatioRef.current, zoom })
-                onScroll(yInitialOffsetRef.current - gestureState.dy / scrollRatioRef.current * zoom)
+                onScroll((yInitialOffsetRef.current - gestureState.dy / scrollRatioRef.current * zoom) / ratioRef.current)
             },
             onPanResponderRelease: (e, gestureState) => {
                 onScrollEnd()
@@ -141,7 +146,7 @@ export function CanvasScroll({ offset, top, width, canvasHeight, kbHeight, origi
 
     const scrollHeight = originalBgImageHeight - kbHeight;
     const markerSize = scrollRatio * scrollHeight
-    const markerTop = (offset.y / canvasHeight) * scrollHeight * ratio ;
+    const markerTop = (offset.y / canvasHeight) * scrollHeight * ratio;
     trace("scroll render", { canvasHeight, ratio, kbHeight, originalBgImageHeight })
     return <View
         {...panResponder.panHandlers}
