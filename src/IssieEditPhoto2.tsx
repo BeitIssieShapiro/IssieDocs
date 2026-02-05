@@ -910,6 +910,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     changedElem.fontSize != origElem.fontSize ||
                     changedElem.rtl != origElem.rtl ||
                     changedElem.alignment != origElem.alignment ||
+                    changedElem.bold != origElem.bold ||
+                    changedElem.italic != origElem.italic ||
+                    changedElem.underline != origElem.underline ||
+                    changedElem.fontFamily != origElem.fontFamily ||
                     changedElem.x != origElem.x ||
                     changedElem.y != origElem.y) {
 
