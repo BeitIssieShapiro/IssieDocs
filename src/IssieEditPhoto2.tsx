@@ -1951,11 +1951,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const upDownLeft = windowSize.width / 2 - 35; //half the size of the button
         const upDownTop = toolbarHeight + floatingToolbarHeight
 
-        // Calculate available height
-        const availableHeight = windowSize.height - toolbarHeight - dimensions.toolbarMargin * 2 - headerHeight - insets.top - insets.bottom;
-
         // Vertical movement is possible if zoomed OR if page height exceeds available space
-        const pageHeightExceedsSpace = canvasSizeRef.current.height > availableHeight;
+        const pageHeightExceedsSpace = canvasSizeRef.current.height > availableheight();
         const verticalMovePossible = zoom > 1 || pageHeightExceedsSpace;
         const horizMovePossible = zoom > 1;
 
@@ -1969,8 +1966,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         //     moveCanvasY: moveCanvas.y
         // });
 
-        const disabledRight = -maxXOffset() >= moveCanvas.x;
-        const disabledBottom = -maxYOffset() >= moveCanvas.y
+        const disabledRight = moveCanvas.x <= -maxXOffset();
+        const disabledBottom = moveCanvas.y <= -maxYOffset();
 
         const MoveButton = ({ rotate, onPress, style, disabled }: { rotate: number, onPress: () => void, style: any, disabled: boolean }) => (
             <TouchableOpacity style={[styles.moveCanvasButton, style, { transform: [{ rotate: rotate + 'deg' }] }]}
@@ -2068,22 +2065,41 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     const maxXOffset = () => (canvasSizeRef.current.width * zoomRef.current - canvasSizeRef.current.width) / zoomRef.current
     const maxYOffset = () => {
-        // When zoom is 1 and page height exceeds available space, we need to allow scrolling
-        if (zoomRef.current === 1) {
-            const excessHeight = canvasSizeRef.current.height - availableheight();
-            trace("maxYOffset", {
-                h: canvasSizeRef.current.height,
-                excessHeight,
-                availH: availableheight(),
-                kbH: keyboardHeightRef.current,
-                ratio: ratioRef.current,
-                max: Math.max(0, excessHeight + keyboardHeightRef.current)
-            })
-            return Math.max(0, excessHeight + keyboardHeightRef.current);
-        }
-
-        // Normal zoom calculation
-        return (canvasSizeRef.current.height * zoomRef.current - canvasSizeRef.current.height + keyboardHeightRef.current) / zoomRef.current;
+        // canvasSizeRef.current.height is in screen pixels (scaled by ratio)
+        // moveCanvas.y is in canvas coordinates (unscaled)
+        // We need to return the max offset in canvas coordinates
+        
+        const scaledCanvasHeight = canvasSizeRef.current.height;
+        const availHeight = availableheight();
+        
+        // Convert both to canvas coordinates by dividing by ratio
+        const unscaledCanvasHeight = scaledCanvasHeight / ratioRef.current;
+        const unscaledAvailHeight = availHeight / ratioRef.current;
+        
+        // When zoomed, multiply by zoom to get visual height
+        const visualHeight = unscaledCanvasHeight * zoomRef.current;
+        
+        // Excess in canvas coordinates
+        const excessHeight = visualHeight - unscaledAvailHeight;
+        
+        // Divide by zoom to get scroll offset, add keyboard height in canvas coords
+        const maxOffset = Math.max(0, excessHeight / zoomRef.current + keyboardHeightRef.current / ratioRef.current);
+        
+        trace("maxYOffset", {
+            scaledCanvasH: scaledCanvasHeight,
+            unscaledCanvasH: unscaledCanvasHeight,
+            addHeight: pageHeightAdditionRef.current,
+            availH: availHeight,
+            unscaledAvailH: unscaledAvailHeight,
+            visualH: visualHeight,
+            excessH: excessHeight,
+            kbH: keyboardHeightRef.current,
+            ratio: ratioRef.current,
+            zoom: zoomRef.current,
+            maxOffset
+        });
+        
+        return maxOffset;
     }
 
     function doZoom(newZoom: number) {
