@@ -366,7 +366,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const subscription = Dimensions.addEventListener('change', handleChange);
         loadPage(page, (pageIndex != undefined && pageIndex > 0 ? pageIndex : 0)).then(() => {
             if (share) {
-                doShare(page.name);
+                doShareAsPDF(page.name);
             }
         })
 
@@ -470,8 +470,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
     }
 
-    const doShare = async (name: string) => {
-        trace("Starting share process");
+    const doShareAsPDF = async (name: string) => {
+        trace("Starting share as PDF process");
         setShareProgress(0);
         setShareProgressPage(1);
 
@@ -481,6 +481,37 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         // Trigger useLayoutEffect to load first page
         setSharingPageIndex(0);
+    }
+
+    const doShareAsWorksheet = async () => {
+        if (!pageRef.current) return;
+        
+        setBusy(true);
+        analyticEvent(LocalAnalyticEvent.worksheet_exported);
+
+        FileSystem.main
+            .exportWorksheet(pageRef.current)
+            .then(sheetArchivePath => {
+                trace('share worksheet file', sheetArchivePath);
+                const shareOptions = {
+                    title: translate('ShareWithTitle'),
+                    subject: translate('ShareEmailSubject'),
+                    urls: [sheetArchivePath],
+                };
+
+                Share.open(shareOptions)
+                    .then(() => {
+                        Alert.alert(translate('ShareSuccessful'));
+                    })
+                    .catch(err => {
+                        if (err && err.message !== 'User did not share') {
+                            Alert.alert(translate('ActionCancelled'));
+                        }
+                    });
+            })
+            .finally(() => {
+                setBusy(false);
+            });
     }
 
     const finalizePDFShare = async (name: string, dataUrls: any[]) => {
@@ -2186,6 +2217,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
             <FileContextMenu
                 item={pageRef.current}
+                folder={undefined}
                 isLandscape={windowSize.height < windowSize.width}
                 open={openContextMenu}
                 height={windowSize.height * .7}
@@ -2195,15 +2227,17 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 }}
                 inFoldersMode={false}
 
-                onRename={handleRename}
+                onRename={() => handleRename(true)}
                 onDeletePage={pageRef.current && pageRef.current.count > 1 ? handleDeletePage : undefined}
                 deletePageIndex={currPageIndex + 1}
                 pagesCount={pageRef.current.count}
 
                 onDelete={undefined}
                 onMove={undefined}
-                onShareImgs={undefined}
-                onShareIssieDocs={undefined}
+                onShareImgs={() => doShareAsPDF(pageRef.current.name)}
+                onShareIssieDocs={() => doShareAsWorksheet()}
+                onShareFolder={undefined}
+                shareCaption={undefined}
                 onDuplicate={undefined}
 
                 onBlankPage={() => handleAddBlankPage(FileSystem.StaticPages.Blank)}
