@@ -366,7 +366,7 @@ function EditorToolbar({
     }
 
     const modesMenu = [
-        <IconButton key={11} onPress={() => onModeButtonClick(Pickers.TEXT, 70)} icon={translate("A")} isText={true} selected={isTextMode}
+        <IconButton key={11} onPress={() => onModeButtonClick(Pickers.TEXT, 110)} icon={translate("A")} isText={true} selected={isTextMode}
             color={textColor} size={55} iconSize={rtl ? 45 : 40} ensureContrast={true}
         />,
         <IconButton key={13} onPress={() => onModeButtonClick(Pickers.BRUSH, 70)} icon={"edit"} size={55}

@@ -202,7 +202,7 @@ export function MyColorPicker(props) {
     </FadeInView>
 }
 
-const minTextSizePickerCollapsedSize = 80;
+const minTextSizePickerCollapsedSize = 110;
 
 
 export function TextSizePicker(props) {
@@ -220,8 +220,8 @@ export function TextSizePicker(props) {
 
     const textSizesAct = textSizes
     let buttonSize = (props.width) / ((textSizesAct.length + 1) * (props.isScreenNarrow ? .8 : 1.4));
-    const simpleToolbarHeight = Math.max(buttonSize + (props.isScreenNarrow ? 0 : 10), minTextSizePickerCollapsedSize);
-    const totalHeight = simpleToolbarHeight + (openMore ? 60 : 0);
+    const simpleToolbarHeight = Math.max(buttonSize +  (props.isScreenNarrow ? 0 : 10), minTextSizePickerCollapsedSize);
+    const totalHeight = simpleToolbarHeight + fontRowHeight + (openMore ? 80 : 0);
 
     useEffect(() => {
         if (props.open) {

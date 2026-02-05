@@ -1949,6 +1949,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         const sidesTop = Math.min(windowSize.height / 2 - 35, windowSize.height - keyboardHeight - 95);
         const upDownLeft = windowSize.width / 2 - 35; //half the size of the button
+        // Position arrows below both the main toolbar and any floating toolbar (pickers)
         const upDownTop = toolbarHeight + floatingToolbarHeight
 
         // Vertical movement is possible if zoomed OR if page height exceeds available space

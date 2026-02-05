@@ -447,7 +447,7 @@ export class FileSystem {
 
     let thumbnailFile = items.find(
       f =>
-        f.name.startsWith(pageName + '.') && f.name.endsWith(THUMBNAIL_SUFFIX),
+        f.name && f.name.startsWith(pageName + '.') && f.name.endsWith(THUMBNAIL_SUFFIX),
     );
 
     if (thumbnailFile) {
@@ -881,9 +881,9 @@ export class FileSystem {
     return await this._reloadBySheet(sheet);
   }
   _parsePath(filePath) {
-    if (!filePath) {
-      trace('unexpected empty filePath');
-      return;
+    if (!filePath || typeof filePath !== 'string') {
+      trace('unexpected empty or invalid filePath:', filePath);
+      return { fileName: '', folders: [], folderID: '', isWorksheetInFolder: false };
     }
     let lastSlashPos = filePath.lastIndexOf('/');
     let fileName = filePath.substr(lastSlashPos + 1);
@@ -895,7 +895,7 @@ export class FileSystem {
 
     //remove base path
     const ommitFilePath =
-      Platform.OS == 'android' && !filePath.startsWith('file://');
+      Platform.OS == 'android' && typeof filePath === 'string' && !filePath.startsWith('file://');
     let foldersPath = filePath.substring(
       this._basePath.length + (ommitFilePath ? -7 : 0),
       lastSlashPos,
@@ -949,7 +949,7 @@ export class FileSystem {
     }
     const files = await RNFS.readDir(filePrefix.substring(0, slashPos));
     const filesToIterate = files.filter(
-      file => file.path && file.path.startsWith(filePrefix),
+      file => file.path && typeof file.path === 'string' && file.path.startsWith(filePrefix),
     );
     const donePromises = filesToIterate.map(file => {
       const name = file.path.substring(
@@ -1207,16 +1207,24 @@ export class FileSystem {
         return undefined;
       }
       const pathObj = this._parsePath(sheet.defaultSrc);
-      if (!pathObj) {
+      if (!pathObj || !pathObj.folderID) {
         console.log('Unexpected sheet in export', sheet);
         return undefined;
       }
       folder = this.findFolderByID(pathObj.folderID);
+      if (!folder) {
+        console.log('Cannot find folder for sheet:', sheet.name, pathObj.folderID);
+        return undefined;
+      }
       // Use just the sheet name for the export file name
       name = sheet.name || 'Worksheet';
     } else {
       folder = folderObj;
-      name = folder.ID;
+      name = folder?.ID;
+      if (!name) {
+        console.log('Invalid folder object in export');
+        return undefined;
+      }
     }
     name = name.replaceAll('/', '_');
 
@@ -1232,21 +1240,25 @@ export class FileSystem {
     files.push(containingFolderInfoFileName);
     if (sheet) {
       if (sheet.path.endsWith('.jpg')) {
-        files.push(sheet.defaultSrc);
-        const jsonFileName = sheet.defaultSrc + '.json';
-        if (await RNFS.exists(jsonFileName)) {
-          files.push(jsonFileName);
+        if (sheet.defaultSrc) {
+          files.push(sheet.defaultSrc);
+          const jsonFileName = sheet.defaultSrc + '.json';
+          if (await RNFS.exists(jsonFileName)) {
+            files.push(jsonFileName);
+          }
+          await this._iterateAttachments(sheet.defaultSrc, srcAttachmentPath =>
+            files.push(srcAttachmentPath),
+          );
         }
-        await this._iterateAttachments(sheet.defaultSrc, srcAttachmentPath =>
-          files.push(srcAttachmentPath),
-        );
       } else {
         folderMetaData.subFolder = sheet.name;
         const items = await RNFS.readDir(sheet._path).catch(e =>
           console.log('readdir err', e),
         );
         for (let fi of items) {
-          files.push(fi.path);
+          if (fi.path) {
+            files.push(fi.path);
+          }
         }
       }
       if (sheet.thumbnail) {
@@ -1571,7 +1583,7 @@ export class FileSystem {
 
 export class FileSystemFolder {
   isParentOf(childID) {
-    if (!childID) return false;
+    if (!childID || typeof childID !== 'string') return false;
     const IdWithSlash = this.ID + '/';
     return childID.startsWith(IdWithSlash);
   }
@@ -1712,7 +1724,7 @@ export class FileSystemFolder {
         //find the newest thumbnail
         let thumbnails = items.filter(
           f =>
-            f.name.startsWith(name + '.') && f.name.endsWith(THUMBNAIL_SUFFIX),
+            f.name && f.name.startsWith(name + '.') && f.name.endsWith(THUMBNAIL_SUFFIX),
         );
         let newestFile;
         if (name == 'T3') trace(thumbnails);
