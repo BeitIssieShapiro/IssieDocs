@@ -16,6 +16,7 @@ import { firebaseLocalInit } from './src/common/firebase';
 import { languageMap } from './src/lang.js';
 import { Settings } from "./src/new-settings"
 import { TEXT_BUTTON } from './src/settings.js';
+import { InitCrashCatch } from './src/common/crash-catch';
 
 // @ts-ignore
 window.TextEncoder = TextEncoder;
@@ -39,6 +40,10 @@ firebaseLocalInit()
 initLang(languageMap, { languageTag: "he", isRTL: true });
 loadLanguage(Settings.get(LANGUAGE_SETTINGS.name));
 updateUISettings((Settings.get(TEXT_BUTTON.name) || TEXT_BUTTON.yes) == TEXT_BUTTON.yes);
+
+InitCrashCatch();
+
+
 
 function SafeAppContainer(props) {
     console.log("props.url", props.url)
