@@ -564,6 +564,20 @@ export default class FolderGallery extends React.Component {
     this.props.navigation.navigate('EditPhoto', {
       page: this.state.selected,
       folder: this.state.currentFolder,
+      shareAsImages: true,
+      goHome: () => {
+        this.unselectFolder();
+        this.props.navigation.goBack();
+      },
+    });
+  };
+
+  SharePDF = () => {
+    if (!this.state.selected) return;
+
+    this.props.navigation.navigate('EditPhoto', {
+      page: this.state.selected,
+      folder: this.state.currentFolder,
       share: true,
       goHome: () => {
         this.unselectFolder();
@@ -1341,6 +1355,11 @@ export default class FolderGallery extends React.Component {
             onShareImgs={
               this.state.selected && !this.state.selectedFolder
                 ? () => this.ShareImgs()
+                : undefined
+            }
+            onSharePDF={
+              this.state.selected && !this.state.selectedFolder
+                ? () => this.SharePDF()
                 : undefined
             }
             onShareIssieDocs={

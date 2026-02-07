@@ -159,6 +159,8 @@ export enum LocalAnalyticEvent {
   folder_mode_change = 'folder_mode_change',
 
   // Import/Export
+  worksheet_exported_pdf = 'worksheet_exported_pdf',
+  worksheet_exported_jpg = 'worksheet_exported_jpg',
   worksheet_exported = 'worksheet_exported',
   folder_exported = 'folder_exported',
 

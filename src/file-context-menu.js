@@ -26,6 +26,7 @@ export function FileContextMenu({
   onRename,
   onMove,
   onShareImgs,
+  onSharePDF,
   onShareIssieDocs,
   onShareFolder,
   shareCaption,
@@ -71,8 +72,8 @@ export function FileContextMenu({
     height < 400 || (isLandscape && height < 500)
       ? 0.6
       : height < 750
-      ? 0.8
-      : 1;
+        ? 0.8
+        : 1;
   trace('fcm', width, height);
   height = Math.floor(height);
   //return <View style={{position:"absolute", zIndex: 100, left:100, width:100, height:100, backgroundColor:"green"}}/>
@@ -235,43 +236,61 @@ export function FileContextMenu({
                   <Seperator />
                 </React.Fragment>
               )}
-              {onShareImgs && (
-                <React.Fragment>
-                  <OneMenu
-                    scale={scale}
-                    icon="share"
-                    onPress={callbackAndClose(onShareImgs)}
-                    text={translate('BtnShare')}
-                  />
-                  <Seperator />
-                </React.Fragment>
-              )}
-              {onShareIssieDocs && (
-                <React.Fragment>
-                  <OneMenu
-                    scale={scale}
-                    icon="ios-share"
-                    onPress={callbackAndClose(onShareIssieDocs)}
-                    text={translate('BtnShareIssieDocs')}
-                  />
-                  {(onShareFolder ||
-                    (!isFolder &&
-                      (onAddFromCamera ||
-                        onAddFromMediaLib ||
-                        onBlankPage ||
-                        onLinesPage ||
-                        onMathPage))) && <Seperator />}
-                </React.Fragment>
-              )}
-              {onShareFolder && (
-                <OneMenu
-                  scale={scale}
-                  icon="share"
-                  onPress={callbackAndClose(onShareFolder)}
-                  text={shareCaption || translate('BtnShareFolder')}
-                />
-              )}
+
             </MenuGroup>
+
+            {(onShareImgs || onSharePDF || onShareIssieDocs || onShareFolder) &&
+              <MenuGroup width={isLandscape ? '43%' : '90%'}
+                title={translate('ShareMenuTitle')}
+                scale={scale}
+              >
+                {onShareImgs &&
+                  <>
+                    <OneMenu
+                      scale={scale}
+                      icon="image"
+                      onPress={callbackAndClose(onShareImgs)}
+                      text={translate('BtnShareAsImages')}
+                    />
+                    <Seperator />
+                  </>
+                }
+                {onSharePDF &&
+                  <>
+                    <OneMenu
+                      scale={scale}
+                      icon="picture-as-pdf"
+                      onPress={callbackAndClose(onSharePDF)}
+                      text={translate('BtnShareAsPDF')}
+                    />
+                    <Seperator />
+                  </>
+                }
+                {onShareIssieDocs &&
+                  <>
+                    <OneMenu
+                      scale={scale}
+                      icon="ios-share"
+                      onPress={callbackAndClose(onShareIssieDocs)}
+                      text={translate('BtnShareIssieDocs')}
+                    />
+                    <Seperator />
+                  </>
+                }
+                {onShareFolder &&
+                  <>
+                    <OneMenu
+                      scale={scale}
+                      icon="share"
+                      onPress={callbackAndClose(onShareFolder)}
+                      text={shareCaption || translate('BtnShareFolder')}
+                    />
+                    <Seperator />
+                  </>
+                }
+              </MenuGroup>
+            }
+
             {!isFolder && (
               <MenuGroup
                 scale={scale}
@@ -327,7 +346,7 @@ export function FileContextMenu({
                 )}
               </MenuGroup>
             )}
-            
+
           </View>
         </TouchableOpacity>
       </FadeInView>

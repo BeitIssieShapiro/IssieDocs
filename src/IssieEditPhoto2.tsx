@@ -10,6 +10,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import * as RNFS from 'react-native-fs';
 
 import { Settings } from "./new-settings"
 import * as Progress from 'react-native-progress';
@@ -44,7 +45,7 @@ import { categorizeCount } from '@beitissieshapiro/issie-shared';
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
 export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
-    const { page, folder, share, goHome, pageIndex, insets, headerHeight } = route.params;
+    const { page, folder, share, shareAsImages, goHome, pageIndex, insets, headerHeight } = route.params;
 
     // -------------------------------------------------------------------------
     //                          STATE & REFS
@@ -121,6 +122,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     // Share orchestration state
     const [sharingPageIndex, setSharingPageIndex] = useState<number>(-1)
+    const [sharingMode, setSharingMode] = useState<'pdf' | 'images'>('pdf')
     const [readyToCapture, setReadyToCapture] = useState<boolean>(false)
     const sharingDataUrlsRef = useRef<any[]>([])
     const sharingNameRef = useRef<string>('')
@@ -267,13 +269,18 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     setShareProgress(nextPageIndex / pageRef.current.count);
                     setSharingPageIndex(nextPageIndex);
                 } else {
-                    // All pages captured - finalize PDF
-                    trace("All pages captured, finalizing PDF");
-                    await finalizePDFShare(sharingNameRef.current, sharingDataUrlsRef.current);
+                    // All pages captured - finalize share
+                    trace("All pages captured, finalizing share");
+                    if (sharingMode === 'pdf') {
+                        await finalizePDFShare(sharingNameRef.current, sharingDataUrlsRef.current);
+                    } else {
+                        await finalizeImagesShare(sharingNameRef.current, sharingDataUrlsRef.current);
+                    }
 
                     // Reset sharing state
                     setSharingPageIndex(-1);
                     setShareProgress(-1);
+                    setSharingMode('pdf');
                     sharingDataUrlsRef.current = [];
                     sharingNameRef.current = '';
                 }
@@ -367,6 +374,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         loadPage(page, (pageIndex != undefined && pageIndex > 0 ? pageIndex : 0)).then(() => {
             if (share) {
                 doShareAsPDF(page.name);
+            } else if (shareAsImages) {
+                doShareAsImages(page.name);
             }
         })
 
@@ -475,9 +484,28 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setShareProgress(0);
         setShareProgressPage(1);
 
+        analyticEvent(LocalAnalyticEvent.worksheet_exported_pdf);
+
         // Initialize sharing orchestration
         sharingNameRef.current = name;
         sharingDataUrlsRef.current = [];
+        setSharingMode('pdf');
+
+        // Trigger useLayoutEffect to load first page
+        setSharingPageIndex(0);
+    }
+
+    const doShareAsImages = async (name:string) => {
+        trace("Starting share as images process");
+        setShareProgress(0);
+        setShareProgressPage(1);
+
+        analyticEvent(LocalAnalyticEvent.worksheet_exported_jpg);
+
+        // Initialize sharing orchestration
+        sharingDataUrlsRef.current = [];
+        sharingNameRef.current = name;
+        setSharingMode('images');
 
         // Trigger useLayoutEffect to load first page
         setSharingPageIndex(0);
@@ -512,6 +540,67 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             .finally(() => {
                 setBusy(false);
             });
+    }
+
+    const finalizeImagesShare = async (name: string, dataUrls: any[]) => {
+        try {
+            //avoid reshare again
+            setNavParam(navigation, 'share', false);
+
+            trace("about to share images", dataUrls.length);
+
+            // Convert base64 images to file URIs
+            const imageFiles: string[] = [];
+            for (let i = 0; i < dataUrls.length; i++) {
+                const base64Data = dataUrls[i].uri.replace(/^data:image\/\w+;base64,/, '');
+                const fileName = `${name}_${i + 1}.jpg`;
+                const filePath = `${FileSystem.main.basePath}/../${fileName}`;
+                
+                await RNFS.writeFile(filePath, base64Data, 'base64');
+                let fileUri = await FileSystem.filePathToContentUri(filePath);
+                imageFiles.push(fileUri);
+            }
+
+            if (imageFiles.length > 0) {
+                // Define share options
+                const shareOptions = {
+                    title: translate("ShareWithTitle"),
+                    subject: translate("ShareEmailSubject"),
+                    urls: imageFiles,
+                };
+
+                const successFunc = () => {
+                    Alert.alert(translate("ShareSuccessful"));
+                    // Clean up temporary files
+                    imageFiles.forEach(uri => {
+                        const path = uri.replace('file://', '');
+                        RNFS.unlink(path).catch(() => {});
+                    });
+                };
+                
+                const failureFunc = (err: any) => {
+                    // Clean up temporary files
+                    imageFiles.forEach(uri => {
+                        const path = uri.replace('file://', '');
+                        RNFS.unlink(path).catch(() => {});
+                    });
+                    
+                    if (err && err.message !== 'User did not share') {
+                        Alert.alert(translate("ActionCancelled"));
+                    }
+                };
+
+                // Share the images
+                Share.open(shareOptions).then(successFunc).catch(failureFunc);
+            } else {
+                Alert.alert("Failed to generate images for sharing.");
+            }
+        } catch (e) {
+            console.log("Share finalization failed", e);
+            Alert.alert("Failed to generate images for sharing.");
+        } finally {
+            navigation.goBack();
+        }
     }
 
     const finalizePDFShare = async (name: string, dataUrls: any[]) => {
@@ -2099,7 +2188,27 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
     }
 
-    const maxXOffset = () => (canvasSizeRef.current.width * zoomRef.current - canvasSizeRef.current.width) / zoomRef.current
+    const maxXOffset = () => {
+        // Similar to maxYOffset, we need to account for available width
+        const scaledCanvasWidth = canvasSizeRef.current.width;
+        const availWidth = windowSizeRef.current.width - sideMarginRef.current * 2;
+        
+        // Convert both to canvas coordinates by dividing by ratio
+        const unscaledCanvasWidth = scaledCanvasWidth / ratioRef.current;
+        const unscaledAvailWidth = availWidth / ratioRef.current;
+        
+        // When zoomed, multiply by zoom to get visual width
+        const visualWidth = unscaledCanvasWidth * zoomRef.current;
+        
+        // Excess in canvas coordinates
+        const excessWidth = visualWidth - unscaledAvailWidth;
+        
+        // Divide by zoom to get scroll offset
+        const maxOffset = Math.max(0, excessWidth / zoomRef.current);
+        
+        return maxOffset;
+    }
+    
     const maxYOffset = () => {
         // canvasSizeRef.current.height is in screen pixels (scaled by ratio)
         // moveCanvas.y is in canvas coordinates (unscaled)
@@ -2234,7 +2343,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
                 onDelete={undefined}
                 onMove={undefined}
-                onShareImgs={() => doShareAsPDF(pageRef.current.name)}
+                onShareImgs={() => doShareAsImages(pageRef.current.name)}
+                onSharePDF={() => doShareAsPDF(pageRef.current.name)}
                 onShareIssieDocs={() => doShareAsWorksheet()}
                 onShareFolder={undefined}
                 shareCaption={undefined}
