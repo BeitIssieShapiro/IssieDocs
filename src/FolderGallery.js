@@ -1810,8 +1810,7 @@ export default class FolderGallery extends React.Component {
                       style={{
                         flexWrap: asTiles ? 'wrap' : 'nowrap',
                         flexDirection: asTiles ? rowReverse : 'column',
-                        width: '100%',
-                        alignItems: asTiles ? 'center' : 'stretch',
+                        minWidth: '100%',
                       }}
                     >
                       {(subFolders || folders).map((item, index) => (
