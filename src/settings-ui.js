@@ -196,7 +196,6 @@ export default function SettingsMenu(props) {
                         Alert.alert(translate("ActionCancelled"));
                     });
                 })
-                .catch((err) => Alert.alert("Backup failed: " + err))
                 .finally(() => setBackupProgress(undefined));
         }))
             .finally(() => setBackupProgress(undefined));

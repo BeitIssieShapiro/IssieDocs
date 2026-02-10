@@ -17,7 +17,7 @@ const { FileProviderModule } = NativeModules;
 
 const THUMBNAIL_SUFFIX = '.thumbnail.jpg';
 
-const ignore = () => {};
+const ignore = () => { };
 
 function joinPaths(...segments) {
   return segments.map(seg => seg.replace(/\/+$/, '')).join('/');
@@ -281,13 +281,13 @@ export class FileSystem {
       : '';
     console.log(
       'add folder: ' +
-        name +
-        ', color:' +
-        color +
-        ', icon=' +
-        icon +
-        ', in parent' +
-        parentPath,
+      name +
+      ', color:' +
+      color +
+      ', icon=' +
+      icon +
+      ', in parent' +
+      parentPath,
     );
     if (!name || name.length == 0) {
       throw translate('MissingFolderName');
@@ -537,7 +537,7 @@ export class FileSystem {
         //trace("delete prev. thumbnail", page.thumbnail)
         await RNFS.unlink(_androidFileName(page.thumbnail));
       }
-    } catch (e) {}
+    } catch (e) { }
 
     //console.log("mv", uri, thumbnailPath);
     return RNFS.moveFile(_androidFileName(uri), thumbnailPath).then(
@@ -868,11 +868,11 @@ export class FileSystem {
           await RNFS.moveFile(
             srcAttachmentPath,
             basePath +
-              '/' +
-              (i - 1) +
-              '.jpg' +
-              FileSystem.ATACHMENT_PREFIX +
-              attachmentName,
+            '/' +
+            (i - 1) +
+            '.jpg' +
+            FileSystem.ATACHMENT_PREFIX +
+            attachmentName,
           );
         },
       );
@@ -1083,9 +1083,9 @@ export class FileSystem {
     }
     reject(
       'Error saving file: ' +
-        (uri.length > 15 ? uri.substr(uri.length - 15) : uri) +
-        ', err: ' +
-        err,
+      (uri.length > 15 ? uri.substr(uri.length - 15) : uri) +
+      ', err: ' +
+      err,
     );
   }
 
@@ -1180,8 +1180,8 @@ export class FileSystem {
         pageType === FileSystem.StaticPages.Lines
           ? 'lines-page.png'
           : pageType === FileSystem.StaticPages.Math
-          ? 'math-page.png'
-          : 'blank-page.png';
+            ? 'math-page.png'
+            : 'blank-page.png';
 
       // Copy the asset file to filePath.
       await RNFS.copyFileAssets(pageName, filePath);
@@ -1216,8 +1216,8 @@ export class FileSystem {
         console.log('Cannot find folder for sheet:', sheet.name, pathObj.folderID);
         return undefined;
       }
-      // Use just the sheet name for the export file name
-      name = sheet.name || 'Worksheet';
+      // Encode folder path in the filename to prevent conflicts
+      name = folder.ID + '_' + (sheet.name || 'Worksheet');
     } else {
       folder = folderObj;
       name = folder?.ID;
@@ -1361,7 +1361,7 @@ export class FileSystem {
       if (folder) {
         trace('add items to backup for folder ', folder.ID);
         folder.items.forEach(sheet =>
-          exportedSheetsAsync.push(this.exportWorksheet(sheet)),
+          exportedSheetsAsync.push(this.exportWorksheet(sheet))
         );
         if (!folder.items?.length > 0) {
           // empty folder
@@ -1400,8 +1400,8 @@ export class FileSystem {
           joinPaths(TemporaryDirectoryPath, 'IssieDocs Backup-' + fn + '.zip'),
         );
         await RNFS.unlink(targetPath).catch(ignore);
-
-        return zip(allZipPaths, targetPath).then(path =>
+        const fileList = allZipPaths.filter(f => f != undefined);
+        return zip(fileList, targetPath).then(path =>
           _androidFileName(path),
         );
       },
