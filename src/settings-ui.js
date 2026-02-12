@@ -228,7 +228,7 @@ export default function SettingsMenu(props) {
         <FadeInView
 
             duration={500}
-            width={300}
+            width={340}
             style={[{
                 direction: isRTL() ? "rtl" : "ltr",
                 zIndex: 101, position: 'absolute', height: '100%',

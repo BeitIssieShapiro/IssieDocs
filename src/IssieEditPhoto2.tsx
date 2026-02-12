@@ -495,7 +495,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setSharingPageIndex(0);
     }
 
-    const doShareAsImages = async (name:string) => {
+    const doShareAsImages = async (name: string) => {
         trace("Starting share as images process");
         setShareProgress(0);
         setShareProgressPage(1);
@@ -513,7 +513,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     const doShareAsWorksheet = async () => {
         if (!pageRef.current) return;
-        
+
         setBusy(true);
         analyticEvent(LocalAnalyticEvent.worksheet_exported);
 
@@ -555,7 +555,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 const base64Data = dataUrls[i].uri.replace(/^data:image\/\w+;base64,/, '');
                 const fileName = `${name}_${i + 1}.jpg`;
                 const filePath = `${FileSystem.main.basePath}/../${fileName}`;
-                
+
                 await RNFS.writeFile(filePath, base64Data, 'base64');
                 let fileUri = await FileSystem.filePathToContentUri(filePath);
                 imageFiles.push(fileUri);
@@ -574,17 +574,17 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     // Clean up temporary files
                     imageFiles.forEach(uri => {
                         const path = uri.replace('file://', '');
-                        RNFS.unlink(path).catch(() => {});
+                        RNFS.unlink(path).catch(() => { });
                     });
                 };
-                
+
                 const failureFunc = (err: any) => {
                     // Clean up temporary files
                     imageFiles.forEach(uri => {
                         const path = uri.replace('file://', '');
-                        RNFS.unlink(path).catch(() => {});
+                        RNFS.unlink(path).catch(() => { });
                     });
-                    
+
                     if (err && err.message !== 'User did not share') {
                         Alert.alert(translate("ActionCancelled"));
                     }
@@ -2192,44 +2192,44 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         // Similar to maxYOffset, we need to account for available width
         const scaledCanvasWidth = canvasSizeRef.current.width;
         const availWidth = windowSizeRef.current.width - sideMarginRef.current * 2;
-        
+
         // Convert both to canvas coordinates by dividing by ratio
         const unscaledCanvasWidth = scaledCanvasWidth / ratioRef.current;
         const unscaledAvailWidth = availWidth / ratioRef.current;
-        
+
         // When zoomed, multiply by zoom to get visual width
         const visualWidth = unscaledCanvasWidth * zoomRef.current;
-        
+
         // Excess in canvas coordinates
         const excessWidth = visualWidth - unscaledAvailWidth;
-        
+
         // Divide by zoom to get scroll offset
         const maxOffset = Math.max(0, excessWidth / zoomRef.current);
-        
+
         return maxOffset;
     }
-    
+
     const maxYOffset = () => {
         // canvasSizeRef.current.height is in screen pixels (scaled by ratio)
         // moveCanvas.y is in canvas coordinates (unscaled)
         // We need to return the max offset in canvas coordinates
-        
+
         const scaledCanvasHeight = canvasSizeRef.current.height;
         const availHeight = availableheight();
-        
+
         // Convert both to canvas coordinates by dividing by ratio
         const unscaledCanvasHeight = scaledCanvasHeight / ratioRef.current;
         const unscaledAvailHeight = availHeight / ratioRef.current;
-        
+
         // When zoomed, multiply by zoom to get visual height
         const visualHeight = unscaledCanvasHeight * zoomRef.current;
-        
+
         // Excess in canvas coordinates
         const excessHeight = visualHeight - unscaledAvailHeight;
-        
+
         // Divide by zoom to get scroll offset, add keyboard height in canvas coords
         const maxOffset = Math.max(0, excessHeight / zoomRef.current + keyboardHeightRef.current / ratioRef.current);
-        
+
         trace("maxYOffset", {
             scaledCanvasH: scaledCanvasHeight,
             unscaledCanvasH: unscaledCanvasHeight,
@@ -2243,7 +2243,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             zoom: zoomRef.current,
             maxOffset
         });
-        
+
         return maxOffset;
     }
 
@@ -2329,7 +2329,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 folder={undefined}
                 isLandscape={windowSize.height < windowSize.width}
                 open={openContextMenu}
-                height={windowSize.height * .7}
+                height={windowSize.height * (windowSize.height < windowSize.width ? .65 : .8)}
                 width={windowSize.width * .75}
                 onClose={() => {
                     setOpenContextMenu(false);

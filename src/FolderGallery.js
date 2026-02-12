@@ -681,7 +681,7 @@ export default class FolderGallery extends React.Component {
             FileSystem.main.deleteFile(page.path);
             try {
               FileSystem.main.deleteFile(page.thumbnail);
-            } catch {} // tollerant to not having thumbnail
+            } catch { } // tollerant to not having thumbnail
 
             this.setState({ selected: undefined });
           },
@@ -1037,9 +1037,9 @@ export default class FolderGallery extends React.Component {
           } else {
             console.log(
               'goHomeAndThenToEdit - no page ' +
-                fileName +
-                ' in folder ' +
-                this.state.currentFolder.name,
+              fileName +
+              ' in folder ' +
+              this.state.currentFolder.name,
             );
           }
         }, 10);
@@ -1279,8 +1279,8 @@ export default class FolderGallery extends React.Component {
       ? this.isLandscape()
         ? 220
         : this.isMobile()
-        ? 100
-        : 220
+          ? 100
+          : 220
       : 0;
     let pagesContainerWidth = this.state.windowSize.width - treeWidth;
     if (this.state.currentFolder?.parent && !asTree) {
@@ -1315,12 +1315,15 @@ export default class FolderGallery extends React.Component {
 
     let isEmptyApp = !this.state.folders || this.state.folders.length == 0;
     if (isEmptyApp) console.log('empty app');
+    const contextMenuHeightFactor = (this.state.selectedFolder ? 0.55 :
+      (this.isLandscape() ? .7 : .9))
+
 
     return (
       <DDProvider>
         <View style={styles.container} onLayout={this.onLayout}>
           <FileContextMenu
-            width={this.state.windowSize.width * 0.75}
+            width={this.state.windowSize.width * .85}
             inFoldersMode={true}
             isLandscape={this.isLandscape()}
             item={this.state.selected}
@@ -1329,11 +1332,7 @@ export default class FolderGallery extends React.Component {
               this.state.selected !== undefined ||
               this.state.selectedFolder !== undefined
             }
-            height={
-              this.state.selectedFolder
-                ? this.state.windowSize.height * 0.5
-                : this.state.windowSize.height * 0.8
-            }
+            height={this.state.windowSize.height * contextMenuHeightFactor}
             onClose={() => {
               this.setState({ selected: undefined, selectedFolder: undefined });
             }}
@@ -1391,28 +1390,28 @@ export default class FolderGallery extends React.Component {
             onBlankPage={
               this.state.selected && !this.state.selectedFolder
                 ? () =>
-                    this.addEmptyPageToPage(
-                      this.state.selected,
-                      FileSystem.StaticPages.Blank,
-                    )
+                  this.addEmptyPageToPage(
+                    this.state.selected,
+                    FileSystem.StaticPages.Blank,
+                  )
                 : undefined
             }
             onLinesPage={
               this.state.selected && !this.state.selectedFolder
                 ? () =>
-                    this.addEmptyPageToPage(
-                      this.state.selected,
-                      FileSystem.StaticPages.Lines,
-                    )
+                  this.addEmptyPageToPage(
+                    this.state.selected,
+                    FileSystem.StaticPages.Lines,
+                  )
                 : undefined
             }
             onMathPage={
               this.state.selected && !this.state.selectedFolder
                 ? () =>
-                    this.addEmptyPageToPage(
-                      this.state.selected,
-                      FileSystem.StaticPages.Math,
-                    )
+                  this.addEmptyPageToPage(
+                    this.state.selected,
+                    FileSystem.StaticPages.Math,
+                  )
                 : undefined
             }
           />

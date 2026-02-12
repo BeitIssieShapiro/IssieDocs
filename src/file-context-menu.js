@@ -68,14 +68,15 @@ export function FileContextMenu({
     },
     [onClose],
   );
-  const scale =
-    height < 400 || (isLandscape && height < 500)
-      ? 0.6
-      : height < 750
-        ? 0.8
-        : 1;
+  const scale = isLandscape ? .8 : 1
+    // height < 400 || (isLandscape && height < 500)
+    //   ? 0.6
+    //   : height < 750
+    //     ? 0.8
+    //     : 1;
   trace('fcm', width, height);
   height = Math.floor(height);
+  const menuGroupWidth = isLandscape ? '46%' : '90%'
   //return <View style={{position:"absolute", zIndex: 100, left:100, width:100, height:100, backgroundColor:"green"}}/>
   return (
     <TouchableOpacity
@@ -168,13 +169,14 @@ export function FileContextMenu({
 
           <View
             style={{
-              flexDirection: isLandscape ? getRowReverseDirection() : 'column',
-              justifyContent: 'space-evenly',
-              alignItems: isLandscape ? 'flex-start' : 'center',
+              flexDirection:  'column',
+              flexWrap:  isLandscape ?'wrap' :'nowrap',
+              alignItems:"center",
+              width:"100%"
             }}
           >
             {/** Menu */}
-            <MenuGroup scale={scale} width={isLandscape ? '43%' : '90%'}>
+            <MenuGroup scale={scale} width={menuGroupWidth}>
               {onRename && (
                 <React.Fragment>
                   <OneMenu
@@ -240,7 +242,7 @@ export function FileContextMenu({
             </MenuGroup>
 
             {(onShareImgs || onSharePDF || onShareIssieDocs || onShareFolder) &&
-              <MenuGroup width={isLandscape ? '43%' : '90%'}
+              <MenuGroup width={menuGroupWidth}
                 title={translate('ShareMenuTitle')}
                 scale={scale}
               >
@@ -294,7 +296,7 @@ export function FileContextMenu({
             {!isFolder && (
               <MenuGroup
                 scale={scale}
-                width={isLandscape ? '43%' : '90%'}
+                width={menuGroupWidth}
                 title={translate('AddPageMenuTitle')}
                 icon="menu-new-empty-page"
                 iconType="svg"
