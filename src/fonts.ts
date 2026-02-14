@@ -16,7 +16,7 @@ export interface FontInfo {
 
 export const AVAILABLE_FONTS: FontInfo[] = [
     { name: undefined, displayName: 'ברירת מחדל', preview: "DefaultFont", supportedStyles: ["underline", "bold", "italic"], supportedLanguages:["en", "he", "ar"] },
-    { name: "DanaYadAlefAlefAlef-Normal", displayName: 'כתב יד', preview: 'אב' , supportedStyles:["underline"], supportedLanguages:["he"]},
+    { name: "GveretLevinAlefAlefAlef-Regular", displayName: 'כתב יד', preview: 'אב' , supportedStyles:["underline"], supportedLanguages:["he"]},
     { name: "Molhim", displayName: 'Molhim', preview: 'أب' , supportedStyles:["underline"], supportedLanguages:["ar"]},
     { name: "Satisfy", displayName: 'Satisfy', preview: 'Ab' , supportedStyles:["underline"], supportedLanguages:["en"]},
     { name: "Schoolbell", displayName: 'Schoolbell', preview: 'Ab' , supportedStyles:["underline"], supportedLanguages:["en"]},

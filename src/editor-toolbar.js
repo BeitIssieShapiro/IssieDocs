@@ -442,6 +442,7 @@ function EditorToolbar({
                                         {
                                             fontSize: previewFontSize,
                                             width: "100%",
+                                            padding:3,
                                             lineHeight: previewFontSize + 8,
                                             color: textColor,
                                             textAlignVertical: 'center'

@@ -21,6 +21,7 @@
 		6A6D66272ED6063000332E5F /* Alef_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D661A2ED6063000332E5F /* Alef_Bold.ttf */; };
 		6A6D66282ED6063000332E5F /* Satisfy-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D661F2ED6063000332E5F /* Satisfy-Regular.ttf */; };
 		6A6D662A2EE044AF00332E5F /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D66292EE044AF00332E5F /* GoogleService-Info.plist */; };
+		6ADAC3B22F3F43A000C85EBD /* Gveret Levin AlefAlefAlef-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6ADAC3B12F3F43A000C85EBD /* Gveret Levin AlefAlefAlef-Regular.ttf */; };
 		6AE84D442ECB2D40000D1578 /* LaunchScreen2.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6AE84D432ECB2D40000D1578 /* LaunchScreen2.storyboard */; };
 		6AFC2B122F1142C100CBAF24 /* keyboardLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AFC2B112F1142B700CBAF24 /* keyboardLanguage.swift */; };
 		6AFC2B162F11432E00CBAF24 /* KeyboardLanguage.m in Sources */ = {isa = PBXBuildFile; fileRef = 6AFC2B152F11432E00CBAF24 /* KeyboardLanguage.m */; };
@@ -48,6 +49,7 @@
 		6A6D661F2ED6063000332E5F /* Satisfy-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Satisfy-Regular.ttf"; sourceTree = "<group>"; };
 		6A6D66202ED6063000332E5F /* Schoolbell.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Schoolbell.ttf; sourceTree = "<group>"; };
 		6A6D66292EE044AF00332E5F /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		6ADAC3B12F3F43A000C85EBD /* Gveret Levin AlefAlefAlef-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Gveret Levin AlefAlefAlef-Regular.ttf"; sourceTree = "<group>"; };
 		6AE84D402ECB2AA8000D1578 /* IssieDocs-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IssieDocs-Bridging-Header.h"; sourceTree = "<group>"; };
 		6AE84D432ECB2D40000D1578 /* LaunchScreen2.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen2.storyboard; sourceTree = "<group>"; };
 		6AE84D452ECB2F48000D1578 /* IssieDocs.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = IssieDocs.entitlements; path = IssieDocs/IssieDocs.entitlements; sourceTree = "<group>"; };
@@ -133,6 +135,7 @@
 				6A6D661A2ED6063000332E5F /* Alef_Bold.ttf */,
 				6A6D661B2ED6063000332E5F /* Alef_Regular.ttf */,
 				6A6D661C2ED6063000332E5F /* DanaYadAlefAlefAlef-Normal.otf */,
+				6ADAC3B12F3F43A000C85EBD /* Gveret Levin AlefAlefAlef-Regular.ttf */,
 				6A6D661D2ED6063000332E5F /* DroidSans.ttf */,
 				6A6D661E2ED6063000332E5F /* Molhim Regular.ttf */,
 				6A6D661F2ED6063000332E5F /* Satisfy-Regular.ttf */,
@@ -246,6 +249,7 @@
 				6AE84D442ECB2D40000D1578 /* LaunchScreen2.storyboard in Resources */,
 				6A6D66092ED3026000332E5F /* InfoPlist.strings in Resources */,
 				6A6D662A2EE044AF00332E5F /* GoogleService-Info.plist in Resources */,
+				6ADAC3B22F3F43A000C85EBD /* Gveret Levin AlefAlefAlef-Regular.ttf in Resources */,
 				6A6D66052ED3024600332E5F /* InfoPlist.strings in Resources */,
 				6A6D66222ED6063000332E5F /* DroidSans.ttf in Resources */,
 				6A6D66232ED6063000332E5F /* Alef_Regular.ttf in Resources */,
@@ -409,7 +413,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 24;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = IssieDocs/Info.plist;
@@ -444,7 +448,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 24;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				INFOPLIST_FILE = IssieDocs/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";

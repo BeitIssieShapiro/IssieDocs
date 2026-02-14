@@ -1,9 +1,13 @@
 Features 2025:
+- User feedback
+- support for fonts/bold/italic
 - Export a folder
-- Migrate to newer react-native
-- user feedback
-- fonts
-
+- Export as image
+- exploring folders and file - some UI changes
+- page expansion when reaching button of page in text editing
+- technical: Migrate to newer react-native
+- internal: add analytics on usage
+- bugs: support copy/paste in input-text 
 
 
 android:

@@ -77,6 +77,7 @@ export function FileContextMenu({
   trace('fcm', width, height);
   height = Math.floor(height);
   const menuGroupWidth = isLandscape ? '46%' : '90%'
+  const left = isLandscape ? '46%' : '90%'
   //return <View style={{position:"absolute", zIndex: 100, left:100, width:100, height:100, backgroundColor:"green"}}/>
   return (
     <TouchableOpacity
@@ -86,17 +87,18 @@ export function FileContextMenu({
         top: 0,
         width: '100%',
         height: '100%',
+        alignItems:"center",
+        justifyContent:"flex-end",
       }}
       onPress={onClose}
     >
       <FadeInView
         style={{
-          position: 'absolute',
           bottom: 0,
           backgroundColor: 'white',
           zIndex: 1000,
           width,
-          left: '12.5%',
+          //left: '12.5%',
           shadowColor: '#171717',
           shadowOffset: { width: 3, height: -5 },
           shadowOpacity: 0.2,

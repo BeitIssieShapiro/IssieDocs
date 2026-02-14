@@ -1316,7 +1316,7 @@ export default class FolderGallery extends React.Component {
     let isEmptyApp = !this.state.folders || this.state.folders.length == 0;
     if (isEmptyApp) console.log('empty app');
     const contextMenuHeightFactor = (this.state.selectedFolder ? 0.55 :
-      (this.isLandscape() ? .7 : .9))
+      (this.isLandscape() ? .7 : .92))
 
 
     return (
