@@ -1,5 +1,5 @@
 import React, { useCallback,  useState } from 'react';
-import {  Pressable, StyleSheet, View } from 'react-native';
+import {  Pressable, StyleSheet, View, Platform, PermissionsAndroid } from 'react-native';
 import { audioRecorderPlayer } from "./App";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 
@@ -111,6 +111,30 @@ export const RecordButton2 = ({
     const INITIAL_SIZE = size - 15;
     const FINAL_SIZE = (size - 15) / 5;
 
+    // Function to request audio recording permission on Android
+    const requestAudioPermission = async () => {
+        if (Platform.OS === 'android') {
+            try {
+                const granted = await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+                    {
+                        title: 'Audio Recording Permission',
+                        message: 'This app needs access to your microphone to record audio.',
+                        buttonNeutral: 'Ask Me Later',
+                        buttonNegative: 'Cancel',
+                        buttonPositive: 'OK',
+                    }
+                );
+                return granted === PermissionsAndroid.RESULTS.GRANTED;
+            } catch (err) {
+                console.warn('Permission request error:', err);
+                return false;
+            }
+        }
+        // iOS handles permissions differently (automatically prompts)
+        return true;
+    };
+
     // Function to start recording
     const _startRecording = async () => {
         try {
@@ -138,6 +162,13 @@ export const RecordButton2 = ({
     // Function to handle button press
     const _onPress = async () => {
         if (progress.value === 0) {
+            // Request permission before starting recording
+            const hasPermission = await requestAudioPermission();
+            if (!hasPermission) {
+                console.log("Audio recording permission denied");
+                return;
+            }
+
             // Start recording
             progress.value = withTiming(1, {
                 duration: 500,

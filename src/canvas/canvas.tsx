@@ -62,6 +62,9 @@ import { PinchHelperEvent, PinchSession } from "./pinch";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { dimensions } from "../elements";
 import { captureRef } from "react-native-view-shot";
+
+// Create animated TouchableOpacity for use with reanimated styles
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 import { MyIcon } from "../common/icons";
 import { trace } from "../log";
 import { FileSystem } from "../filesystem";
@@ -843,7 +846,7 @@ function Canvas({
                                         color={line.color}
                                     />
 
-                                    <TouchableOpacity
+                                    <AnimatedTouchableOpacity
                                         key={`${line.id}-trash`}
                                         style={[{
                                             position: "absolute",
@@ -854,7 +857,7 @@ function Canvas({
                                         onPress={() => onDeleteElement?.(ElementTypes.Line, line.id)}
                                     >
                                         <MyIcon info={{ type: "Ionicons", name: "trash-outline", size: 22, color: "blue" }} />
-                                    </TouchableOpacity>
+                                    </AnimatedTouchableOpacity>
                                 </View>
                             );
                         })}
@@ -1037,7 +1040,7 @@ function Canvas({
                         }}
                     >
                         {renderElements?.(elem)}
-                        {elementsAttr?.(elem)?.showDelete && <TouchableOpacity
+                        {elementsAttr?.(elem)?.showDelete && <AnimatedTouchableOpacity
                             style={[{
                                 position: "absolute",
                                 left: -20,
@@ -1046,7 +1049,7 @@ function Canvas({
                             onPress={() => onDeleteElement?.(ElementTypes.Element, elem.id)}
                         >
                             <MyIcon info={{ type: "Ionicons", name: "trash-outline", size: 22, color: "blue" }} />
-                        </TouchableOpacity>}
+                        </AnimatedTouchableOpacity>}
                     </View>
                 })}
             </View>

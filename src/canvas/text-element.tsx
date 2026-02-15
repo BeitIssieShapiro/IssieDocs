@@ -141,6 +141,7 @@ function TextElement({
                         allowFontScaling={false}
                         multiline
                         autoFocus
+                        textAlignVertical="top"
                         style={[styles.textStyle, style, bgAnimatedStyle,
                         !table && widthStyle,
                         table && { width: posStyle.width },
@@ -159,7 +160,7 @@ function TextElement({
                             setRevision(prev => prev + 1)
                         }}
                     >
-                        {text.text}
+                        {text.text + "M"}
                     </Text>
                     {/* Second Hidden Text for Cursor Tracking */}
                     <Text

@@ -1,0 +1,158 @@
+{
+  "project_info": {
+    "project_number": "821810142864",
+    "project_id": "myissiesign",
+    "storage_bucket": "myissiesign.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821810142864:android:e7913c1db485f3dc450215",
+        "android_client_info": {
+          "package_name": "com.issieshapiro.issiesignarabic"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "821810142864-irdchnt0hr2g53cvg33pp185mjou3na1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvDloBhbVKTi1n7h_Ewk7WTXN9ja1144A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "821810142864-irdchnt0hr2g53cvg33pp185mjou3na1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "821810142864-aug2d0ip4lnk54qnjp3hm2crjmcvradc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.issieshapiro.myissiesign",
+                "app_store_id": "1526487786"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821810142864:android:ec47c87a9ea1458c450215",
+        "android_client_info": {
+          "package_name": "com.issieshapiro.myissiesign"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "821810142864-irdchnt0hr2g53cvg33pp185mjou3na1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvDloBhbVKTi1n7h_Ewk7WTXN9ja1144A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "821810142864-irdchnt0hr2g53cvg33pp185mjou3na1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "821810142864-aug2d0ip4lnk54qnjp3hm2crjmcvradc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.issieshapiro.myissiesign",
+                "app_store_id": "1526487786"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821810142864:android:fdca7dd4ec2d260d450215",
+        "android_client_info": {
+          "package_name": "org.issieshapiro.issiedocs"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "821810142864-irdchnt0hr2g53cvg33pp185mjou3na1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvDloBhbVKTi1n7h_Ewk7WTXN9ja1144A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "821810142864-irdchnt0hr2g53cvg33pp185mjou3na1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "821810142864-aug2d0ip4lnk54qnjp3hm2crjmcvradc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.issieshapiro.myissiesign",
+                "app_store_id": "1526487786"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821810142864:android:0a66f34a4c7470cd450215",
+        "android_client_info": {
+          "package_name": "org.issieshapiro.signlang2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "821810142864-irdchnt0hr2g53cvg33pp185mjou3na1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvDloBhbVKTi1n7h_Ewk7WTXN9ja1144A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "821810142864-irdchnt0hr2g53cvg33pp185mjou3na1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "821810142864-aug2d0ip4lnk54qnjp3hm2crjmcvradc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.issieshapiro.myissiesign",
+                "app_store_id": "1526487786"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

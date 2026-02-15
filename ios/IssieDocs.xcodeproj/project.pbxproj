@@ -7,8 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0292BF4BA5024C7990370986 /* Alef_Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D24D3F6F222547DBAE257E9A /* Alef_Regular.ttf */; };
+		1287C109672A492397BC4DF9 /* DanaYadAlefAlefAlef-Normal.otf in Resources */ = {isa = PBXBuildFile; fileRef = 5E7C83ADFD414AB7AF9575C4 /* DanaYadAlefAlefAlef-Normal.otf */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		17AE43BD2D6B4DABBFB9332C /* Gveret Levin AlefAlefAlef-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FB0798EFD5C74438AED00891 /* Gveret Levin AlefAlefAlef-Regular.ttf */; };
+		3F04CBDDFFED476B8E3159DD /* Satisfy-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B5DB5CED86494BE6A902D632 /* Satisfy-Regular.ttf */; };
 		6030035AF028AD6095653F4D /* Pods_IssieDocs.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0781E06337A40B9C80E35AEB /* Pods_IssieDocs.framework */; };
+		6217349A322B4490B0C3D9D9 /* DroidSans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 87DFBBA1B0C743FE8B99058C /* DroidSans.ttf */; };
 		6A6D65F12ECEEEF200332E5F /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D65F02ECEEEF200332E5F /* Localizable.xcstrings */; };
 		6A6D66012ED3023700332E5F /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D65FF2ED3023700332E5F /* InfoPlist.strings */; };
 		6A6D66052ED3024600332E5F /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D66032ED3024600332E5F /* InfoPlist.strings */; };
@@ -26,7 +31,12 @@
 		6AFC2B122F1142C100CBAF24 /* keyboardLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AFC2B112F1142B700CBAF24 /* keyboardLanguage.swift */; };
 		6AFC2B162F11432E00CBAF24 /* KeyboardLanguage.m in Sources */ = {isa = PBXBuildFile; fileRef = 6AFC2B152F11432E00CBAF24 /* KeyboardLanguage.m */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
+		82FCBA3A8A6D4E7D9B74BC55 /* Alef_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 58A5366CED9D42DDA82F8AE7 /* Alef_Bold.ttf */; };
+		C9647A1D327449658A7BF485 /* Schoolbell.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B61282189C0947769FB39689 /* Schoolbell.ttf */; };
+		E6249349C87C4F0BA78E6042 /* Verdana_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C7CD9F42D8754EC2BBAE25B2 /* Verdana_Bold.ttf */; };
 		F2B5DE0035FDB875A5A77A98 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		F5641446F230423486EB55FD /* Molhim Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7721C2B5E73F44F184B707B5 /* Molhim Regular.ttf */; };
+		FB97E427D4C745F28CA21DBB /* Verdana.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3E2487496E2841A49EAF445E /* Verdana.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,7 +46,10 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = IssieDocs/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = IssieDocs/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-IssieDocs.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs.debug.xcconfig"; path = "Target Support Files/Pods-IssieDocs/Pods-IssieDocs.debug.xcconfig"; sourceTree = "<group>"; };
+		3E2487496E2841A49EAF445E /* Verdana.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Verdana.ttf; path = ../fonts/Verdana.ttf; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-IssieDocs.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs.release.xcconfig"; path = "Target Support Files/Pods-IssieDocs/Pods-IssieDocs.release.xcconfig"; sourceTree = "<group>"; };
+		58A5366CED9D42DDA82F8AE7 /* Alef_Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Alef_Bold.ttf; path = ../fonts/Alef_Bold.ttf; sourceTree = "<group>"; };
+		5E7C83ADFD414AB7AF9575C4 /* DanaYadAlefAlefAlef-Normal.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "DanaYadAlefAlefAlef-Normal.otf"; path = "../fonts/DanaYadAlefAlefAlef-Normal.otf"; sourceTree = "<group>"; };
 		6A6D65F02ECEEEF200332E5F /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = Localizable.xcstrings; path = IssieDocs/Localizable.xcstrings; sourceTree = "<group>"; };
 		6A6D65FE2ED3023700332E5F /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = InfoPlist.strings; sourceTree = "<group>"; };
 		6A6D66022ED3024600332E5F /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = InfoPlist.strings; sourceTree = "<group>"; };
@@ -56,7 +69,14 @@
 		6AFC2B112F1142B700CBAF24 /* keyboardLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = keyboardLanguage.swift; sourceTree = "<group>"; };
 		6AFC2B152F11432E00CBAF24 /* KeyboardLanguage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = KeyboardLanguage.m; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = IssieDocs/AppDelegate.swift; sourceTree = "<group>"; };
+		7721C2B5E73F44F184B707B5 /* Molhim Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Molhim Regular.ttf"; path = "../fonts/Molhim Regular.ttf"; sourceTree = "<group>"; };
+		87DFBBA1B0C743FE8B99058C /* DroidSans.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = DroidSans.ttf; path = ../fonts/DroidSans.ttf; sourceTree = "<group>"; };
+		B5DB5CED86494BE6A902D632 /* Satisfy-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Satisfy-Regular.ttf"; path = "../fonts/Satisfy-Regular.ttf"; sourceTree = "<group>"; };
+		B61282189C0947769FB39689 /* Schoolbell.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Schoolbell.ttf; path = ../fonts/Schoolbell.ttf; sourceTree = "<group>"; };
+		C7CD9F42D8754EC2BBAE25B2 /* Verdana_Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Verdana_Bold.ttf; path = ../fonts/Verdana_Bold.ttf; sourceTree = "<group>"; };
+		D24D3F6F222547DBAE257E9A /* Alef_Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Alef_Regular.ttf; path = ../fonts/Alef_Regular.ttf; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		FB0798EFD5C74438AED00891 /* Gveret Levin AlefAlefAlef-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Gveret Levin AlefAlefAlef-Regular.ttf"; path = "../fonts/Gveret Levin AlefAlefAlef-Regular.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -91,6 +111,23 @@
 				6AE84D402ECB2AA8000D1578 /* IssieDocs-Bridging-Header.h */,
 			);
 			name = IssieDocs;
+			sourceTree = "<group>";
+		};
+		2AA9C7E682934D3FB089F9CA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				5E7C83ADFD414AB7AF9575C4 /* DanaYadAlefAlefAlef-Normal.otf */,
+				7721C2B5E73F44F184B707B5 /* Molhim Regular.ttf */,
+				87DFBBA1B0C743FE8B99058C /* DroidSans.ttf */,
+				D24D3F6F222547DBAE257E9A /* Alef_Regular.ttf */,
+				58A5366CED9D42DDA82F8AE7 /* Alef_Bold.ttf */,
+				C7CD9F42D8754EC2BBAE25B2 /* Verdana_Bold.ttf */,
+				B61282189C0947769FB39689 /* Schoolbell.ttf */,
+				FB0798EFD5C74438AED00891 /* Gveret Levin AlefAlefAlef-Regular.ttf */,
+				B5DB5CED86494BE6A902D632 /* Satisfy-Regular.ttf */,
+				3E2487496E2841A49EAF445E /* Verdana.ttf */,
+			);
+			name = Resources;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
@@ -160,6 +197,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				2AA9C7E682934D3FB089F9CA /* Resources */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -262,6 +300,16 @@
 				6A6D65F12ECEEEF200332E5F /* Localizable.xcstrings in Resources */,
 				F2B5DE0035FDB875A5A77A98 /* PrivacyInfo.xcprivacy in Resources */,
 				6A6D66012ED3023700332E5F /* InfoPlist.strings in Resources */,
+				1287C109672A492397BC4DF9 /* DanaYadAlefAlefAlef-Normal.otf in Resources */,
+				F5641446F230423486EB55FD /* Molhim Regular.ttf in Resources */,
+				6217349A322B4490B0C3D9D9 /* DroidSans.ttf in Resources */,
+				0292BF4BA5024C7990370986 /* Alef_Regular.ttf in Resources */,
+				82FCBA3A8A6D4E7D9B74BC55 /* Alef_Bold.ttf in Resources */,
+				E6249349C87C4F0BA78E6042 /* Verdana_Bold.ttf in Resources */,
+				C9647A1D327449658A7BF485 /* Schoolbell.ttf in Resources */,
+				17AE43BD2D6B4DABBFB9332C /* Gveret Levin AlefAlefAlef-Regular.ttf in Resources */,
+				3F04CBDDFFED476B8E3159DD /* Satisfy-Regular.ttf in Resources */,
+				FB97E427D4C745F28CA21DBB /* Verdana.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -413,7 +461,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 26;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = IssieDocs/Info.plist;
@@ -448,7 +496,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = IssieDocs/IssieDocs.entitlements;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 26;
 				DEVELOPMENT_TEAM = SKNJT9TD9G;
 				INFOPLIST_FILE = IssieDocs/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";

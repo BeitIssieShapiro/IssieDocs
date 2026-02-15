@@ -45,7 +45,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
-	<string></string>
+	<string/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -75,7 +75,7 @@
 	<key>NSAppleMusicUsageDescription</key>
 	<string>Allow IssieDocs load images as IssieDocs pages and save pages as images</string>
 	<key>NSCameraUsageDescription</key>
-	<string>The Camera will be used to allow you capture photos that you&apos;ll embed in IssieDocs pages</string>
+	<string>The Camera will be used to allow you capture photos that you'll embed in IssieDocs pages</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Allow IssieDocs to record voice messages to place on worksheets</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
@@ -100,6 +100,9 @@
 		<string>FontAwesome6_Brands.ttf</string>
 		<string>FontAwesome6_Regular.ttf</string>
 		<string>FontAwesome6_Solid.ttf</string>
+		<string>DroidSans.ttf</string>
+		<string>Verdana_Bold.ttf</string>
+		<string>Verdana.ttf</string>
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>

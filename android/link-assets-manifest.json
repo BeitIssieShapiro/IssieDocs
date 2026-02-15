@@ -1,0 +1,45 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "fonts/Molhim Regular.ttf",
+      "sha1": "bdac05195d6f5b89e7d3d3bd7682d8fde1284364"
+    },
+    {
+      "path": "fonts/DroidSans.ttf",
+      "sha1": "62f2841f61e4be66a0303cd1567ed2d300b4e31c"
+    },
+    {
+      "path": "fonts/Alef_Regular.ttf",
+      "sha1": "ade252fecc66e709bd659b12089a7356d042f8f7"
+    },
+    {
+      "path": "fonts/Alef_Bold.ttf",
+      "sha1": "50211e0d95141f6c9fbff07e4cb49162fdc037cc"
+    },
+    {
+      "path": "fonts/Verdana_Bold.ttf",
+      "sha1": "fe5e9cfe72f1cbf07b4190f7fc4702cd15f452d1"
+    },
+    {
+      "path": "fonts/Schoolbell.ttf",
+      "sha1": "207d11963fa6c9016cfd54c023f5a2a0dd0c60a0"
+    },
+    {
+      "path": "fonts/Gveret Levin AlefAlefAlef-Regular.ttf",
+      "sha1": "faf00f61c84d4c1d4d4362a795bd0083562a57a8"
+    },
+    {
+      "path": "fonts/DanaYadAlefAlefAlef-Normal.otf",
+      "sha1": "625c5b6b020f6ab9f4ae39594fdbf77b762a875a"
+    },
+    {
+      "path": "fonts/Satisfy-Regular.ttf",
+      "sha1": "d7f89a936f78eb6843e8b994e77b7acf03e3c85a"
+    },
+    {
+      "path": "fonts/Verdana.ttf",
+      "sha1": "be932e0c84172e3a56332c910aca708be0323401"
+    }
+  ]
+}

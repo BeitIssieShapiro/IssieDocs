@@ -365,9 +365,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', _keyboardDidHide);
 
         const handleChange = ({ window }: any) => {
-            setWindowSize(window);
-            windowSizeRef.current = window;
-            calcCanvasRatio(currentFileRef.current);
+            // Use requestAnimationFrame to ensure layout has completed before updating
+            // This prevents getting stale/swapped dimensions on rotation
+            requestAnimationFrame(() => {
+                const currentDims = Dimensions.get('window');
+                setWindowSize(currentDims);
+                windowSizeRef.current = currentDims;
+                calcCanvasRatio(currentFileRef.current);
+            });
         };
 
         const subscription = Dimensions.addEventListener('change', handleChange);
@@ -1143,14 +1148,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 const newTextElem: SketchText = {
                     id: getId("T"),
                     text: "",
-                    color: brushColorRef.current,
+                    color: textColorRef.current,
                     rtl: textAlignmentRef.current == 'Right',
                     alignment: textAlignmentRef.current,
                     fontSize: fontSizeRef.current / ratioRef.current,
-                    fontFamily: textFont,
-                    bold: textBold,
-                    italic: textItalic,
-                    underline: textUnderline,
+                    fontFamily: textFontRef.current,
+                    bold: textBoldRef.current,
+                    italic: textItalicRef.current,
+                    underline: textUnderlineRef.current,
                     x: p[0],
                     y: p[1],
                 };
@@ -2281,7 +2286,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setMoveCanvas({ x, y });
     }
 
-    trace("Mode", mode, mode2ElementType(mode))
+    trace("windowSize", windowSize)
     return (
         <View
             style={styles.mainContainer}

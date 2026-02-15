@@ -7,7 +7,10 @@ import com.facebook.react.uimanager.ViewManager
 
 class CustomReactPackage : ReactPackage {
     override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
-        return listOf(FileProviderModule(reactContext))
+        return listOf(
+            FileProviderModule(reactContext),
+            KeyboardLanguageModule(reactContext)
+        )
     }
 
     override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {
