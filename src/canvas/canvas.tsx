@@ -6,6 +6,7 @@ import {
     LayoutChangeEvent,
     PanResponder,
     PixelRatio,
+    Pressable,
     StyleSheet,
     TouchableOpacity,
     View,
@@ -194,6 +195,7 @@ function Canvas({
 }: CanvasProps, ref: any) {
     // Refs & State
     const isMoving = useRef(false);
+    const elemMoveStart = useRef<{ x: number; y: number } | null>(null);
     const isDragMoving = useRef(false);
     const canvasRef = useRef<View | null>(null);
     //const viewOffset = useRef<Offset>({ x: 0, y: 0 });
@@ -234,6 +236,8 @@ function Canvas({
     const imagesRef = useRef<SketchImage[]>(images || []);
     const tablesRef = useRef<SketchTable[]>(tables || []);
     const linesRef = useRef<SketchLine[]>(lines || []);
+    const elementsRef = useRef<SketchElement[]>(elements || []);
+    const currentEditedRef = useRef(currentEdited);
 
     const viewShotRef = useRef(null);
 
@@ -243,7 +247,9 @@ function Canvas({
         imagesRef.current = images || [];
         tablesRef.current = tables || [];
         linesRef.current = lines || [];
-    }, [texts, images, tables, lines]);
+        elementsRef.current = elements || [];
+        currentEditedRef.current = currentEdited;
+    }, [texts, images, tables, lines, elements, currentEdited]);
 
     useEffect(() => {
         // verify the last path is the same as lastPathSV
@@ -328,11 +334,58 @@ function Canvas({
     }));
 
 
+    const isTouchOnInteractive = (x0: number, y0: number) => {
+        const pt = screen2Canvas(x0, y0);
+        const iconSize = 30 / ratioRef.current;
+
+        // Check general elements (e.g. audio)
+        if (elementsRef.current?.length) {
+            const elemSize = 80 / ratioRef.current;
+            const padding = currentElementTypeRef.current === ElementTypes.Element ? iconSize : 0;
+            if (elementsRef.current.some(el =>
+                pt[0] >= el.x - padding && pt[0] <= el.x + elemSize &&
+                pt[1] >= el.y && pt[1] <= el.y + elemSize
+            )) return true;
+        }
+
+        // Check image delete icon area (visible when image is selected)
+        if (currentElementTypeRef.current === ElementTypes.Image && currentEditedRef.current?.imageId) {
+            const image = imagesRef.current?.find(img => img.id === currentEditedRef.current?.imageId);
+            if (image) {
+                // Delete icon at (image.x - 30/ratio, image.y)
+                if (pt[0] >= image.x - iconSize && pt[0] <= image.x &&
+                    pt[1] >= image.y && pt[1] <= image.y + iconSize) return true;
+                // Resize icon at (image.x + image.width, image.y + image.height)
+                if (pt[0] >= image.x + image.width - iconSize && pt[0] <= image.x + image.width + iconSize &&
+                    pt[1] >= image.y + image.height - iconSize && pt[1] <= image.y + image.height + iconSize) return true;
+            }
+        }
+
+        // Check line delete icon area (visible when line is selected)
+        if (currentElementTypeRef.current === ElementTypes.Line && currentEditedRef.current?.lineId) {
+            const line = linesRef.current?.find(l => l.id === currentEditedRef.current?.lineId);
+            if (line) {
+                const midX = (line.from[0] + line.to[0]) / 2;
+                const midY = (line.from[1] + line.to[1]) / 2;
+                if (pt[0] >= midX - iconSize && pt[0] <= midX + iconSize &&
+                    pt[1] >= midY - iconSize && pt[1] <= midY + iconSize) return true;
+            }
+        }
+
+        return false;
+    };
+
     // PanResponder for sketching
     const sketchResponder = useRef(
         PanResponder.create({
-            onStartShouldSetPanResponder: () => !isMoving.current,
-            onMoveShouldSetPanResponder: () => !isMoving.current,
+            onStartShouldSetPanResponder: (e) => {
+                if (isMoving.current) return false;
+                return !isTouchOnInteractive(e.nativeEvent.pageX, e.nativeEvent.pageY);
+            },
+            onMoveShouldSetPanResponder: (e) => {
+                if (isMoving.current) return false;
+                return !isTouchOnInteractive(e.nativeEvent.pageX, e.nativeEvent.pageY);
+            },
             onPanResponderGrant: (e, gState) => {
                 const clickPoint = screen2Canvas(gState.x0, gState.y0);
                 startSketchRef.current = { position: clickPoint, initialOffset: offsetRef.current };
@@ -1019,14 +1072,20 @@ function Canvas({
                 {/* General Elements */}
                 {elements?.map(elem => {
                     return <View key={elem.id} style={[styles.elementStyle, { left: elem.x * ratio, top: elem.y * ratio }]}
-                        onMoveShouldSetResponder={(e) => {
-                            const touchPoint = screen2Canvas(e.nativeEvent.locationX, e.nativeEvent.locationY);
-                            const threshold = 5; // Minimum movement in pixels to activate drag
-                            const ret = Math.abs(touchPoint[0] - elem.x) > threshold || Math.abs(touchPoint[1] - elem.y) > threshold;
-                            if (ret) {
-                                isMoving.current = true;
+                    onMoveShouldSetResponder={(e) => {
+                            const { pageX, pageY } = e.nativeEvent;
+                            if (!elemMoveStart.current) {
+                                elemMoveStart.current = { x: pageX, y: pageY };
+                                return false;
                             }
-                            return ret;
+                            const dx = pageX - elemMoveStart.current.x;
+                            const dy = pageY - elemMoveStart.current.y;
+                            const threshold = 10;
+                            if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
+                                isMoving.current = true;
+                                return true;
+                            }
+                            return false;
                         }}
                         onResponderMove={(e) => {
                             if (e.nativeEvent) {
@@ -1034,9 +1093,17 @@ function Canvas({
                                 onMoveElement?.(MoveTypes.ElementMove, elem.id, touchPoint);
                             }
                         }}
-                        onResponderRelease={(e) => {
+                        onResponderRelease={() => {
                             isMoving.current = false;
+                            elemMoveStart.current = null;
                             onMoveEnd?.(MoveTypes.ElementMove, elem.id)
+                        }}
+                        onResponderTerminate={() => {
+                            isMoving.current = false;
+                            elemMoveStart.current = null;
+                        }}
+                        onTouchEnd={() => {
+                            elemMoveStart.current = null;
                         }}
                     >
                         {renderElements?.(elem)}

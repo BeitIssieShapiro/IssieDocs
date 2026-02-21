@@ -1641,6 +1641,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
 
         setMode(EditModes.Audio);
+        setAudios([...audiosRef.current]);
     }
     function handleAddAudio() {
         console.log("Add audio not implemented yet");
@@ -1979,6 +1980,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         if (mode == EditModes.Brush || mode == EditModes.Marker) {
             return ElementTypes.Sketch
         }
+        if (mode == EditModes.Audio) {
+            return ElementTypes.Element
+        }
         return mode as unknown as ElementTypes;
     }
 
@@ -2161,7 +2165,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     function handleElementsAttr(elem: SketchElement): SketchElementAttributes | undefined {
-        if (elem.type == "audio" && modeRef.current == EditModes.Audio) {
+        if (elem.type == "audio" && mode == EditModes.Audio) {
             return { showDelete: true };
         }
     }

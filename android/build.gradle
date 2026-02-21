@@ -20,3 +20,14 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// Fix for libraries using the removed compileSdkVersion method (Gradle 9 + AGP 8.10+)
+subprojects { subproject ->
+    plugins.withId("com.android.library") {
+        android {
+            if (!android.compileSdk) {
+                compileSdk rootProject.ext.compileSdkVersion
+            }
+        }
+    }
+}

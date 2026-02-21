@@ -14,6 +14,7 @@ import Animated, {
     interpolateColor,
 } from 'react-native-reanimated';
 import { semanticColors } from './elements';
+import { _androidFileName } from './filesystem';
 
 export const BTN_BACK_COLOR = "#C8572A";
 
@@ -22,7 +23,7 @@ async function playRecording(audioFile, playbackListener) {
     try {
         // Start player and handle potential errors
         await audioRecorderPlayer.stopPlayer();
-        await audioRecorderPlayer.startPlayer("file://" + audioFile);
+        await audioRecorderPlayer.startPlayer(_androidFileName (audioFile));
         console.log('Player started', audioFile);
 
         // Add playback listener if provided
