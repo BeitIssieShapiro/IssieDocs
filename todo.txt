@@ -10,6 +10,16 @@ Features 2025:
 - bugs: support copy/paste in input-text 
 
 
+next version:
+1. Inside Your Own App (inputAccessoryView)
+If you only want this button to appear above the keyboard while the user is typing inside your app, this is completely possible and very common.
+You can attach a custom view (like a toolbar with your button) to the top of the keyboard. This view will slide up seamlessly alongside the system keyboard.
+In SwiftUI: You use the .toolbar modifier with a ToolbarItem(placement: .keyboard).
+In UIKit: You assign a custom view to the inputAccessoryView property of your UITextField or UITextView.
+
+
+
+
 android:
 - test share 
 V- background of textedit is not according to text color

@@ -303,7 +303,7 @@ function Canvas({
             editTextRef.current?.prepareForThumbnail();
             return new Promise(resolve => {
                 setTimeout(() =>
-                    captureRef(viewShotRef, { format: "jpg", quality: 0.6, height: dimensions.tileHeight, width: dimensions.tileWidth })
+                    captureRef(viewShotRef.current, { format: "jpg", quality: 0.6, height: dimensions.tileHeight, width: dimensions.tileWidth })
                         .then((uri) => resolve(uri))
                         .finally(() => {
                             setTimeout(() => moveIconDisplay.value = "flex");
@@ -316,7 +316,7 @@ function Canvas({
             editTextRef.current?.prepareForThumbnail();
             return new Promise((resolve, reject) => {
                 setTimeout(() =>
-                    captureRef(viewShotRef, { format: "jpg", quality: 0.9, result: "base64" })
+                    captureRef(viewShotRef.current, { format: "jpg", quality: 0.9, result: "base64" })
                         .then((uri) => {
                             //console.log("exported-file", uri)
                             resolve(uri)

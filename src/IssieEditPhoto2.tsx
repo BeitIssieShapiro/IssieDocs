@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -9,6 +9,7 @@ import {
     StyleSheet,
     TouchableOpacity,
     View,
+    useWindowDimensions,
 } from 'react-native';
 import * as RNFS from 'react-native-fs';
 
@@ -60,6 +61,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     const [currentEdited, setCurrentEdited] = useState<CurrentEdited>({});
 
+    // Track window size with state for reliable updates on rotation
     const [windowSize, setWindowSize] = useState<ImageSize>(Dimensions.get("window"));
 
     const [canvasSize, setCanvasSize] = useState<ImageSize>({ width: -1, height: -1 })
@@ -77,6 +79,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [mode, setMode] = useState<EditModes>(EditModes.Text);
     const [eraseMode, setEraseMode] = useState<boolean>(false);
     const [openContextMenu, setOpenContextMenu] = useState<boolean>(false);
+    const [hasLock, setHasLock] = useState<boolean>(false);
     const [currentFile, setCurrentFile] = useState<string>(page.defaultSrc);
     const [currPageIndex, setCurrPageIndex] = useState<number>(pageIndex ?? 0);
     const [busy, setBusy] = useState<boolean>(false);
@@ -356,6 +359,20 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         //await calcCanvasRatio(newCurrentFile);
     }
     //trace("win-size", windowSize)
+
+    const handleDimensionChange = useCallback(() => {
+        // Use requestAnimationFrame to ensure layout has completed before updating
+        // This prevents getting stale/swapped dimensions on rotation
+        requestAnimationFrame(() => {
+            const currentDims = Dimensions.get('window');
+            trace("Dimension change", currentDims)
+            setWindowSize(currentDims);
+            windowSizeRef.current = currentDims;
+            calcCanvasRatio(currentFileRef.current);
+        });
+    }, []);
+
+
     useEffect(() => {
         setNavParam(navigation, 'onMoreMenu', () => {
             analyticEvent(LocalAnalyticEvent.context_menu_opened, { screen: 'editor' });
@@ -364,18 +381,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', _keyboardDidShow);
         const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', _keyboardDidHide);
 
-        const handleChange = ({ window }: any) => {
-            // Use requestAnimationFrame to ensure layout has completed before updating
-            // This prevents getting stale/swapped dimensions on rotation
-            requestAnimationFrame(() => {
-                const currentDims = Dimensions.get('window');
-                setWindowSize(currentDims);
-                windowSizeRef.current = currentDims;
-                calcCanvasRatio(currentFileRef.current);
-            });
-        };
 
-        const subscription = Dimensions.addEventListener('change', handleChange);
+
         loadPage(page, (pageIndex != undefined && pageIndex > 0 ? pageIndex : 0)).then(() => {
             if (share) {
                 doShareAsPDF(page.name);
@@ -385,9 +392,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         })
 
         return () => {
-            // Cleanup 
+            // Cleanup
             saveText();
-            subscription?.remove()
             keyboardDidShowListener.remove();
             keyboardDidHideListener.remove();
         };
@@ -678,6 +684,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     const queue2state = (updateToolsState?: boolean) => {
         let q = queue.current.getAll();
+
+        // Update lock state
+        setHasLock(queue.current.hasLock());
 
         //console.log("Queue:", q.map(elem=>`${elem.type}: ${elem.elem.from+","+elem.elem.to}\n`))
 
@@ -1594,6 +1603,30 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         analyticEvent(isUndo ? LocalAnalyticEvent.undo_used : LocalAnalyticEvent.redo_used);
     }
 
+    // Undo All - undo all changes until start or lock (moves to redo queue)
+    function handleUndoAll() {
+        const undoCount = queue.current.undoAll();
+        if (undoCount > 0) {
+            queue2state();
+            save();
+        }
+    }
+
+    // Lock current state - prevent undo beyond this point
+    function handleLockPage() {
+        queue.current.lock();
+        setHasLock(true);
+        save();
+    }
+
+    // Unlock - remove the lock marker
+    function handleUnlockPage() {
+        if (queue.current.unlock()) {
+            setHasLock(false);
+            save();
+        }
+    }
+
     async function handleEraserPressed() {
         trace("Eraser pressed");
         if (!eraseModeRef.current &&
@@ -2294,13 +2327,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     return (
         <View
             style={styles.mainContainer}
-        // onLayout={(e) => {
-        //     trace("onLayout")
-        //     const { y, width, height } = e.nativeEvent.layout;
-        //     trace("onLayout", width, height, y)
-        //     //setViewTop(y);
-        // }}
-
+            onLayout={() => {
+                handleDimensionChange();
+            }}
         >
             {/* <View style={{ position: "absolute", left: sideMargin, top: 100, height: 5, width: canvasSize.width, backgroundColor: "green", zIndex: 10000 }} />
 
@@ -2334,12 +2363,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
 
             <FileContextMenu
+                key={`${windowSize.width}-${windowSize.height}`}
                 item={pageRef.current}
                 folder={undefined}
                 isLandscape={windowSize.height < windowSize.width}
                 open={openContextMenu}
-                height={windowSize.height * (windowSize.height < windowSize.width ? .65 : .8)}
+                height={windowSize.height * (windowSize.height < windowSize.width ? .70 : .80)}
                 width={windowSize.width * .75}
+                windowSize={windowSize}
                 onClose={() => {
                     setOpenContextMenu(false);
                 }}
@@ -2359,6 +2390,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 shareCaption={undefined}
                 onDuplicate={undefined}
 
+                onUndoAll={handleUndoAll}
+                onLockPage={handleLockPage}
+                onUnlockPage={handleUnlockPage}
+                hasLock={hasLock}
+
                 onBlankPage={() => handleAddBlankPage(FileSystem.StaticPages.Blank)}
                 onLinesPage={() => handleAddBlankPage(FileSystem.StaticPages.Lines)}
                 onMathPage={() => handleAddBlankPage(FileSystem.StaticPages.Math)}
@@ -2375,6 +2411,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         afterUndoRedo(true);
                     }
                 }}
+                canUndo={queue.current.canUndo()}
                 canRedo={queue.current.canRedo()}
                 onRedo={() => {
                     if (queue.current.redo()) {

@@ -8,6 +8,7 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
+    "deploy:android:issiedocs": "PROJECT_ROOT=$(pwd) ../issie-shared/android/deploy.sh issiedocs org.issieshapiro.issiedocs",
     "postinstall": "patch-package"
   },
   "dependencies": {

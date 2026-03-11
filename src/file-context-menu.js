@@ -11,9 +11,10 @@ import { MyIcon } from './common/icons';
 
 export function FileContextMenu({
   width,
+  height,
+  windowSize,
   item,
   folder,
-  height,
   isLandscape,
   open,
   onClose,
@@ -37,6 +38,12 @@ export function FileContextMenu({
   onBlankPage,
   onLinesPage,
   onMathPage,
+
+  // Page editing actions
+  onUndoAll,
+  onLockPage,
+  onUnlockPage,
+  hasLock,
 }) {
   if (!open) {
     return <View />;
@@ -68,16 +75,17 @@ export function FileContextMenu({
     },
     [onClose],
   );
-  const scale = isLandscape ? .8 : 1
-    // height < 400 || (isLandscape && height < 500)
-    //   ? 0.6
-    //   : height < 750
-    //     ? 0.8
-    //     : 1;
-  trace('fcm', width, height);
-  height = Math.floor(height);
-  const menuGroupWidth = isLandscape ? '46%' : '90%'
-  const left = isLandscape ? '46%' : '90%'
+
+  // Recalculate isLandscape based on windowSize dimensions, not the scaled menu width/height
+  const actualIsLandscape = windowSize ? windowSize.width > windowSize.height : width > height;
+  const scale = actualIsLandscape ? .7 : .9;
+
+  console.log('FileContextMenu render - windowSize:', windowSize, 'width:', width, 'height:', height, 'actualIsLandscape:', actualIsLandscape);
+
+  trace('fcm', width, height, 'landscape:', actualIsLandscape);
+  const menuHeight = Math.floor(height);
+  const menuGroupWidth = actualIsLandscape ? '46%' : '90%';
+
   //return <View style={{position:"absolute", zIndex: 100, left:100, width:100, height:100, backgroundColor:"green"}}/>
   return (
     <TouchableOpacity
@@ -87,8 +95,8 @@ export function FileContextMenu({
         top: 0,
         width: '100%',
         height: '100%',
-        alignItems:"center",
-        justifyContent:"flex-end",
+        alignItems: "center",
+        justifyContent: "flex-end",
       }}
       onPress={onClose}
     >
@@ -107,7 +115,7 @@ export function FileContextMenu({
           borderTopRightRadius: 15,
         }}
         overflow={'visible'}
-        height={open ? height : 0}
+        height={open ? menuHeight : 0}
         duration={400}
       >
         {/** Close button */}
@@ -171,10 +179,11 @@ export function FileContextMenu({
 
           <View
             style={{
-              flexDirection:  'column',
-              flexWrap:  isLandscape ?'wrap' :'nowrap',
-              alignItems:"center",
-              width:"100%"
+              flexDirection: actualIsLandscape ? 'row' : 'column',
+              flexWrap: actualIsLandscape ? 'wrap' : 'nowrap',
+              alignItems: actualIsLandscape ? 'flex-start' : 'center',
+              justifyContent: 'center',
+              width: "100%"
             }}
           >
             {/** Menu */}
@@ -202,7 +211,7 @@ export function FileContextMenu({
                       pagesCount,
                     )}
                   />
-                  {inFoldersMode && <Seperator />}
+                  <Seperator />
                 </React.Fragment>
               )}
               {inFoldersMode && onDelete && (
@@ -236,6 +245,40 @@ export function FileContextMenu({
                     iconType={'MDI'}
                     onPress={callbackAndClose(onDuplicate)}
                     text={translate('BtnDuplicate')}
+                  />
+                  <Seperator />
+                </React.Fragment>
+              )}
+              {onUndoAll && (
+                <React.Fragment>
+                  <OneMenu
+                    scale={scale}
+                    icon="undo-variant"
+                    iconType={'MDI'}
+                    onPress={callbackAndClose(onUndoAll)}
+                    text={translate('BtnUndoAll')}
+                  />
+                  <Seperator />
+                </React.Fragment>
+              )}
+              {onLockPage && !hasLock && (
+                <React.Fragment>
+                  <OneMenu
+                    scale={scale}
+                    icon="lock"
+                    onPress={callbackAndClose(onLockPage)}
+                    text={translate('BtnLockChanges')}
+                  />
+                  <Seperator />
+                </React.Fragment>
+              )}
+              {onUnlockPage && hasLock && (
+                <React.Fragment>
+                  <OneMenu
+                    scale={scale}
+                    icon="lock-open"
+                    onPress={callbackAndClose(onUnlockPage)}
+                    text={translate('BtnUnlockChanges')}
                   />
                   <Seperator />
                 </React.Fragment>

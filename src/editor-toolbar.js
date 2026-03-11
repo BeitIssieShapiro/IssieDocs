@@ -58,6 +58,7 @@ function EditorToolbar({
     onGoBack,
     onUndo,
     onRedo,
+    canUndo,
     canRedo,
     eraseMode,
     onEraser,
@@ -412,7 +413,7 @@ function EditorToolbar({
         }}>
             <IconButton onPress={onGoBack} color={semanticColors.editPhotoButton} icon="folder" size={55} iconSize={45} />
             <Spacer width={45} />
-            <IconButton onPress={onUndo} color={semanticColors.editPhotoButton} iconType="MDI" icon={rtl ? "undo" : "redo"} size={55} />
+            <IconButton onPress={onUndo} color={canUndo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} iconType="MDI" icon={rtl ? "undo" : "redo"} size={55} />
             <Spacer width={23} />
             <IconButton onPress={onRedo} color={canRedo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} iconType="MDI" icon={rtl ? "redo" : "undo"} size={55} />
             <Spacer width={23} />
