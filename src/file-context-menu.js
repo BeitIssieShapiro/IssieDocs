@@ -78,7 +78,7 @@ export function FileContextMenu({
 
   // Recalculate isLandscape based on windowSize dimensions, not the scaled menu width/height
   const actualIsLandscape = windowSize ? windowSize.width > windowSize.height : width > height;
-  const scale = actualIsLandscape ? .7 : .9;
+  const scale = actualIsLandscape ? .6 : .75;
 
   console.log('FileContextMenu render - windowSize:', windowSize, 'width:', width, 'height:', height, 'actualIsLandscape:', actualIsLandscape);
 
@@ -91,7 +91,7 @@ export function FileContextMenu({
     <TouchableOpacity
       style={{
         position: 'absolute',
-        zIndex: 100,
+        zIndex: 200000,
         top: 0,
         width: '100%',
         height: '100%',
@@ -104,7 +104,7 @@ export function FileContextMenu({
         style={{
           bottom: 0,
           backgroundColor: 'white',
-          zIndex: 1000,
+          zIndex: 200000,
           width,
           //left: '12.5%',
           shadowColor: '#171717',
@@ -143,14 +143,14 @@ export function FileContextMenu({
             style={{
               flexDirection: getRowReverseDirection(),
               alignItems: 'center',
-              padding: 15,
+              padding: 15 * scale,
             }}
           >
             {isFolder ? (
               <MyIcon
                 info={{
                   name: 'folder',
-                  size: 70,
+                  size: 70 * scale,
                   color: folder.color || semanticColors.titleText,
                 }}
               />
@@ -158,17 +158,17 @@ export function FileContextMenu({
               <Image
                 source={normalizeFoAndroid({ uri: item.thumbnail })}
                 style={{
-                  height: 70,
-                  width: 50,
+                  height: 70 * scale,
+                  width: 50 * scale,
                   resizeMode: 'stretch',
                   borderColor: 'gray',
                   borderWidth: 1,
                 }}
               />
             )}
-            <Spacer width={10} />
+            <Spacer width={10 * scale} />
             <AppText
-              style={{ fontSize: 35, width: width - 100 }}
+              style={{ fontSize: 35 * scale, width: width - 100 }}
               ellipsizeMode={true}
             >
               {displayItem.name}
@@ -249,6 +249,7 @@ export function FileContextMenu({
                   <Seperator />
                 </React.Fragment>
               )}
+              {/* Temporarily disabled: undo all feature
               {onUndoAll && (
                 <React.Fragment>
                   <OneMenu
@@ -261,6 +262,7 @@ export function FileContextMenu({
                   <Seperator />
                 </React.Fragment>
               )}
+              
               {onLockPage && !hasLock && (
                 <React.Fragment>
                   <OneMenu
@@ -272,6 +274,7 @@ export function FileContextMenu({
                   <Seperator />
                 </React.Fragment>
               )}
+
               {onUnlockPage && hasLock && (
                 <React.Fragment>
                   <OneMenu
@@ -283,7 +286,7 @@ export function FileContextMenu({
                   <Seperator />
                 </React.Fragment>
               )}
-
+            */}
             </MenuGroup>
 
             {(onShareImgs || onSharePDF || onShareIssieDocs || onShareFolder) &&
