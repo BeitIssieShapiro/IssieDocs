@@ -29,7 +29,7 @@ import { getNewPage, SRC_CAMERA, SRC_FILE, SRC_GALLERY, SRC_RENAME } from './new
 import { EditModes, RootStackParamList } from './types';
 import { backupElement, calcEffectiveHorizontalLines, calcRatio, cloneElem, getId, joinPath, restoreElement, tableColWidth, tableHeight, tableRowHeight, tableWidth, wait } from './canvas/utils';
 import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
-import { fTranslate, isRTL, translate } from './lang';
+import { fTranslate, isRTL, translate, useKeyboardLanguage } from './lang';
 import { FileContextMenu } from './file-context-menu';
 import { AudioElement2 } from './audio-elem-new';
 import { Text } from 'react-native';
@@ -67,6 +67,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [canvasSize, setCanvasSize] = useState<ImageSize>({ width: -1, height: -1 })
     const [originalBgImageHeight, setOriginalBgImageHeight] = useState<number>(-1);
     const [pageHeightAddition, setPageHeightAddition] = useState<number>(0);
+    const kbLanguage = useKeyboardLanguage();
     const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
     const [keyboardTop, setKeyboardTop] = useState<number>(0);
     const [toolbarHeight, setToolbarHeight] = useState<number>(dimensions.toolbarHeight);
@@ -2537,6 +2538,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 background={background}
                 originalBgImageHeight={originalBgImageHeight}
                 currentElementType={mode2ElementType(mode)}
+                language={kbLanguage}
             />
             {/* </ViewShot> */}
 

@@ -14,6 +14,8 @@
 		3F04CBDDFFED476B8E3159DD /* Satisfy-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B5DB5CED86494BE6A902D632 /* Satisfy-Regular.ttf */; };
 		6030035AF028AD6095653F4D /* Pods_IssieDocs.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0781E06337A40B9C80E35AEB /* Pods_IssieDocs.framework */; };
 		6217349A322B4490B0C3D9D9 /* DroidSans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 87DFBBA1B0C743FE8B99058C /* DroidSans.ttf */; };
+		6A265BAD2F70164300C08AE6 /* SpeechTranscription.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A265BAB2F70164300C08AE6 /* SpeechTranscription.m */; };
+		6A265BAE2F70164300C08AE6 /* SpeechTranscription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A265BAC2F70164300C08AE6 /* SpeechTranscription.swift */; };
 		6A6D65F12ECEEEF200332E5F /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D65F02ECEEEF200332E5F /* Localizable.xcstrings */; };
 		6A6D66012ED3023700332E5F /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D65FF2ED3023700332E5F /* InfoPlist.strings */; };
 		6A6D66052ED3024600332E5F /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6A6D66032ED3024600332E5F /* InfoPlist.strings */; };
@@ -50,6 +52,8 @@
 		5709B34CF0A7D63546082F79 /* Pods-IssieDocs.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IssieDocs.release.xcconfig"; path = "Target Support Files/Pods-IssieDocs/Pods-IssieDocs.release.xcconfig"; sourceTree = "<group>"; };
 		58A5366CED9D42DDA82F8AE7 /* Alef_Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Alef_Bold.ttf; path = ../fonts/Alef_Bold.ttf; sourceTree = "<group>"; };
 		5E7C83ADFD414AB7AF9575C4 /* DanaYadAlefAlefAlef-Normal.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "DanaYadAlefAlefAlef-Normal.otf"; path = "../fonts/DanaYadAlefAlefAlef-Normal.otf"; sourceTree = "<group>"; };
+		6A265BAB2F70164300C08AE6 /* SpeechTranscription.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SpeechTranscription.m; sourceTree = "<group>"; };
+		6A265BAC2F70164300C08AE6 /* SpeechTranscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechTranscription.swift; sourceTree = "<group>"; };
 		6A6D65F02ECEEEF200332E5F /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = Localizable.xcstrings; path = IssieDocs/Localizable.xcstrings; sourceTree = "<group>"; };
 		6A6D65FE2ED3023700332E5F /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = InfoPlist.strings; sourceTree = "<group>"; };
 		6A6D66022ED3024600332E5F /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = InfoPlist.strings; sourceTree = "<group>"; };
@@ -94,6 +98,8 @@
 		13B07FAE1A68108700A75B9A /* IssieDocs */ = {
 			isa = PBXGroup;
 			children = (
+				6A265BAB2F70164300C08AE6 /* SpeechTranscription.m */,
+				6A265BAC2F70164300C08AE6 /* SpeechTranscription.swift */,
 				6A6D66292EE044AF00332E5F /* GoogleService-Info.plist */,
 				6A6D66212ED6063000332E5F /* fonts */,
 				6AE84D452ECB2F48000D1578 /* IssieDocs.entitlements */,
@@ -418,6 +424,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6A265BAD2F70164300C08AE6 /* SpeechTranscription.m in Sources */,
+				6A265BAE2F70164300C08AE6 /* SpeechTranscription.swift in Sources */,
 				6AFC2B122F1142C100CBAF24 /* keyboardLanguage.swift in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 				6AFC2B162F11432E00CBAF24 /* KeyboardLanguage.m in Sources */,

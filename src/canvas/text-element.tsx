@@ -1,10 +1,11 @@
 // TextElement.tsx
-import React, { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import { View, Text, TextInput, StyleSheet, LayoutChangeEvent, TextInputProps, ViewProps, ColorValue } from "react-native";
 import { SketchText, MoveTypes, SketchPoint, SketchTable } from "./types";
 import { calcEffectiveHorizontalLines, tableColWidth, tableRowHeight } from "./utils";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { MyIcon } from "../common/icons";
+import { useTranscription } from "../use-transcription";
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 const AnimatedIcon = Animated.createAnimatedComponent(MyIcon);
@@ -23,6 +24,7 @@ interface TextElementProps {
     tables?: SketchTable[];
     texts: SketchText[];
     canvasHeight: number;
+    language?: string;
 }
 
 function TextElement({
@@ -37,7 +39,8 @@ function TextElement({
     tables,
     texts,
     canvasHeight,
-    handleCursorPositionChange
+    handleCursorPositionChange,
+    language
 }: TextElementProps, ref: any) {
     const [revision, setRevision] = useState<number>(0)
     //console.log("text ratio", ratio, actualWidth, text.fontSize)
@@ -77,6 +80,18 @@ function TextElement({
             setTextTillSelection(text.text)
         }
     }, [editMode]);
+
+    const handleTranscriptionText = useCallback((newText: string) => {
+        onTextChanged(text.id, newText);
+    }, [text.id, onTextChanged]);
+
+    const { isRecording } = useTranscription({
+        text: text.text,
+        selectionEnd: selection.end,
+        onTextChanged: handleTranscriptionText,
+        language: language || 'en',
+        enabled: editMode,
+    });
 
 
     // if (text.tableId) {
@@ -136,6 +151,7 @@ function TextElement({
                 {!table && <AnimatedIcon style={[moveIconStyle, visibleAnimatedStyle]} info={{ type: "Ionicons", name: "move", size: 25, color: "blue" }} />}
                 <>
                     <AnimatedTextInput
+                        disableKeyboardShortcuts={true}
                         autoCapitalize="none"
                         autoCorrect={false}
                         allowFontScaling={false}

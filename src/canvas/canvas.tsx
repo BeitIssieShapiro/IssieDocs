@@ -137,6 +137,7 @@ interface CanvasProps {
     background: number | undefined;
     originalBgImageHeight?: number;
     currentElementType: ElementTypes;
+    language?: string;
 
     //viewShotRef: any;
 }
@@ -191,6 +192,7 @@ function Canvas({
     canvasWidth,
     canvasHeight,
     currentElementType,
+    language,
 
 }: CanvasProps, ref: any) {
     // Refs & State
@@ -862,6 +864,7 @@ function Canvas({
                         handleTextLayout={handleTextLayout}
                         handleCursorPositionChange={handleCursorPositionChange}
                         canvasHeight={canvasHeight / ratio}
+                        language={language}
                     />
                 })}
 

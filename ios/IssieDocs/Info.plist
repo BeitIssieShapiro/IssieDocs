@@ -82,6 +82,8 @@
 	<string>Allow IssieDocs save pages as photos in the Photo Library</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow IssieDocs loading photos from the Photo Library into IssieDocs pages</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Allow IssieDocs to convert speech to text when editing worksheets</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>

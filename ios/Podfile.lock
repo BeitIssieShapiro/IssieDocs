@@ -92,7 +92,7 @@ PODS:
   - GoogleUtilities/UserDefaults (8.1.0):
     - GoogleUtilities/Logger
     - GoogleUtilities/Privacy
-  - GTMSessionFetcher/Core (5.0.0)
+  - GTMSessionFetcher/Core (5.1.0)
   - hermes-engine (0.14.0):
     - hermes-engine/Pre-built (= 0.14.0)
   - hermes-engine/Pre-built (0.14.0)
@@ -3907,7 +3907,7 @@ SPEC CHECKSUMS:
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   GoogleAppMeasurement: 1e718274b7e015cefd846ac1fcf7820c70dc017d
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
-  GTMSessionFetcher: 02d6e866e90bc236f48a703a041dfe43e6221a29
+  GTMSessionFetcher: b8ab00db932816e14b0a0664a08cb73dda6d164b
   hermes-engine: 7745af18f32438a9f1a5589aba5c92324bebeac0
   MMKVCore: f2dd4c9befea04277a55e84e7812f930537993df
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
@@ -4011,7 +4011,7 @@ SPEC CHECKSUMS:
   RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
   RNGestureHandler: 0a53b5fb4320b3afc0926ae719d2442d340398df
   RNLocalize: a0bf70cf27f116db4e32be09a6f549715db0686d
-  RNPermissions: e37a1eeafc332760c9e239f4d049eceefc3b1a60
+  RNPermissions: 309ec4ca40f2ad6d0c390d1f8d742df589df655f
   RNReanimated: fbcb7fd8da5b0b088401542c58fb5d266388f1cf
   RNScreens: 98771ad898d1c0528fc8139606bbacf5a2e9d237
   RNShare: 13d33f3c13a812f928186aecf8a2a29dcd36aa51
@@ -4022,6 +4022,6 @@ SPEC CHECKSUMS:
   SSZipArchive: c69881e8ac5521f0e622291387add5f60f30f3c4
   Yoga: faec420ba5f8a2bd196f26048a0557882d40e5b9
 
-PODFILE CHECKSUM: 2cd3747d83aa881d45283fae5ed17e1755c8fa37
+PODFILE CHECKSUM: c16f6d51952d2daa7185da17872f171ea9d370e3
 
 COCOAPODS: 1.15.2
