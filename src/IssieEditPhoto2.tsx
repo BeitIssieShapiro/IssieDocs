@@ -23,13 +23,15 @@ import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { arrLast, pageTitleAddition, setNavParam } from './utils';
-import { colors, dimensions, getImageDimensions, getRoundedButton, globalStyles, Icon, semanticColors, Spacer } from './elements';
+import { colors, dimensions, getImageDimensions, getRoundedButton, globalStyles, Icon, semanticColors, Spacer, textSizes } from './elements';
 import EditorToolbar from './editor-toolbar';
 import { getNewPage, SRC_CAMERA, SRC_FILE, SRC_GALLERY, SRC_RENAME } from './newPage';
 import { EditModes, RootStackParamList } from './types';
 import { backupElement, calcEffectiveHorizontalLines, calcRatio, cloneElem, getId, joinPath, restoreElement, tableColWidth, tableHeight, tableRowHeight, tableWidth, wait } from './canvas/utils';
 import { MARKER_TRANSPARENCY_CONSTANT } from './svg-icons';
 import { fTranslate, isRTL, translate, useKeyboardLanguage } from './lang';
+import { speechTranscriptionEmitter, SpeechTranscription } from './use-transcription';
+import { AVAILABLE_FONTS } from './fonts';
 import { FileContextMenu } from './file-context-menu';
 import { AudioElement2 } from './audio-elem-new';
 import { Text } from 'react-native';
@@ -208,6 +210,56 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }, [mode, fontSize, textAlignment, textFont, textBold, textItalic, textUnderline, strokeWidth, rulerStrokeWidth, markerWidth, sideMargin,
         brushColor, rulerColor, markerColor, textColor, tableColor, canvasSize,
         currPageIndex, currentFile, moveCanvas, zoom, keyboardHeight, eraseMode]);
+
+    // Sync formatting state to native keyboard toolbar
+    useEffect(() => {
+        if (Platform.OS !== 'ios' || !SpeechTranscription) return;
+        const availableStyles = AVAILABLE_FONTS.find(af => af.name == textFont)?.supportedStyles || [];
+        SpeechTranscription.updateFormattingState({
+            bold: textBold,
+            italic: textItalic,
+            underline: textUnderline,
+            rtl: textAlignment === 'Right',
+            availableStyles,
+            uiRTL: isRTL(),
+        });
+    }, [textBold, textItalic, textUnderline, textAlignment, textFont]);
+
+    // Listen for native keyboard toolbar formatting actions
+    useEffect(() => {
+        if (Platform.OS !== 'ios' || !speechTranscriptionEmitter) return;
+
+        const sub = speechTranscriptionEmitter.addListener('onToolbarAction', (event: { action: string; value?: boolean }) => {
+            switch (event.action) {
+                case 'bold':
+                    setTextBold(event.value ?? false);
+                    break;
+                case 'italic':
+                    setTextItalic(event.value ?? false);
+                    break;
+                case 'underline':
+                    setTextUnderline(event.value ?? false);
+                    break;
+                case 'rtl':
+                    setTextAlignment(event.value ? 'Right' : 'Left');
+                    break;
+                case 'fontUp': {
+                    const currentSize = fontSizeRef.current;
+                    const nextSize = textSizes.find((s: number) => s > currentSize);
+                    if (nextSize) setFontSize(nextSize);
+                    break;
+                }
+                case 'fontDown': {
+                    const currentSize = fontSizeRef.current;
+                    const prevSize = [...textSizes].reverse().find((s: number) => s < currentSize);
+                    if (prevSize) setFontSize(prevSize);
+                    break;
+                }
+            }
+        });
+
+        return () => sub.remove();
+    }, []);
 
     useEffect(() => {
         currentEditedRef.current = currentEdited;

@@ -20,10 +20,31 @@ class SpeechTranscription: RCTEventEmitter {
 
   // MARK: - Native Toolbar
 
-  private var micToolbar: UIToolbar?
-  private var micButton: UIBarButtonItem?
+  private var micToolbar: UIView?
   private var micIconButton: UIButton?
   private var blinkTimer: Timer?
+
+  // Formatting buttons
+  private var boldButton: UIButton?
+  private var italicButton: UIButton?
+  private var underlineButton: UIButton?
+  private var ltrButton: UIButton?
+  private var rtlButton: UIButton?
+  private var fontUpButton: UIButton?
+  private var fontDownButton: UIButton?
+
+  // Track which styles are available for the current font
+  private var showBold = true
+  private var showItalic = true
+  private var showUnderline = true
+
+  // Current formatting state
+  private var isBold = false
+  private var isItalic = false
+  private var isUnderline = false
+  private var isRTL = false
+  private var uiRTL = false
+  private var kbLanguage = "en"
 
   override init() {
     super.init()
@@ -36,39 +57,209 @@ class SpeechTranscription: RCTEventEmitter {
   override func stopObserving() { hasListeners = false }
 
   override func supportedEvents() -> [String]! {
-    return ["onTranscription", "onTranscriptionEnd", "onTranscriptionError", "onTranscriptionStart"]
+    return [
+      "onTranscription", "onTranscriptionEnd", "onTranscriptionError", "onTranscriptionStart",
+      "onToolbarAction"
+    ]
   }
 
   @objc override static func requiresMainQueueSetup() -> Bool { return true }
 
   // MARK: - Toolbar Management
 
-  private func createToolbar() -> UIToolbar {
-    let toolbar = UIToolbar(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 44))
-    toolbar.barStyle = .default
-    toolbar.sizeToFit()
+  private func createToolbar() -> UIView {
+    let barHeight: CGFloat = 44
+    let container = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: barHeight))
+    container.backgroundColor = UIColor(red: 0.82, green: 0.84, blue: 0.86, alpha: 1.0)
 
-    let button = UIButton(type: .system)
-    button.setImage(UIImage(systemName: "mic.fill"), for: .normal)
-    button.tintColor = UIColor.systemBlue
-    button.frame = CGRect(x: 0, y: 0, width: 44, height: 44)
-    button.addTarget(self, action: #selector(micButtonTapped), for: .touchUpInside)
-    self.micIconButton = button
+    // Mic button
+    let micBtn = UIButton(type: .custom)
+    micBtn.setImage(UIImage(systemName: "mic.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18, weight: .medium)), for: .normal)
+    micBtn.tintColor = UIColor.systemBlue
+    micBtn.backgroundColor = UIColor.white.withAlphaComponent(0.6)
+    micBtn.layer.cornerRadius = 8
+    micBtn.clipsToBounds = false
+    micBtn.layer.shadowColor = UIColor.black.cgColor
+    micBtn.layer.shadowOffset = CGSize(width: 0, height: 1)
+    micBtn.layer.shadowOpacity = 0.15
+    micBtn.layer.shadowRadius = 2
+    micBtn.addTarget(self, action: #selector(micButtonTapped), for: .touchUpInside)
+    self.micIconButton = micBtn
 
-    let barButton = UIBarButtonItem(customView: button)
-    self.micButton = barButton
+    // Formatting buttons
+    self.boldButton = makeFormattingButton(systemName: "bold", action: #selector(boldTapped))
+    self.italicButton = makeFormattingButton(systemName: "italic", action: #selector(italicTapped))
+    self.underlineButton = makeFormattingButton(systemName: "underline", action: #selector(underlineTapped))
+    self.ltrButton = makeFormattingButton(systemName: "text.alignleft", action: #selector(ltrTapped))
+    self.rtlButton = makeFormattingButton(systemName: "text.alignright", action: #selector(rtlTapped))
+    self.fontUpButton = makeFontSizeButton(label: "A", fontSize: 20, action: #selector(fontUpTapped))
+    self.fontDownButton = makeFontSizeButton(label: "A", fontSize: 13, action: #selector(fontDownTapped))
 
-    let flex = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
-    toolbar.items = [barButton, flex]
+    updateFormattingButtons()
+    layoutToolbarButtons(in: container)
 
-    return toolbar
+    return container
+  }
+
+  private func layoutToolbarButtons(in container: UIView) {
+    // Remove old subviews
+    container.subviews.forEach { $0.removeFromSuperview() }
+
+    let btnSize: CGFloat = 34
+    let spacing: CGFloat = 8
+    let margin: CGFloat = 8
+    let btnY: CGFloat = (container.bounds.height - btnSize) / 2
+    let containerWidth = container.bounds.width
+
+    // Collect visible buttons in logical order (mic first, then formatting)
+    var visibleButtons: [UIButton] = []
+    if let micBtn = micIconButton { visibleButtons.append(micBtn) }
+
+    let formattingButtons: [(UIButton?, Bool)] = [
+      (boldButton, showBold),
+      (italicButton, showItalic),
+      (underlineButton, showUnderline),
+      (rtlButton, true),
+      (ltrButton, true),
+      (fontUpButton, true),
+      (fontDownButton, true),
+    ]
+    for (btn, show) in formattingButtons {
+      guard let btn = btn, show else { continue }
+      visibleButtons.append(btn)
+    }
+
+    // Layout from start edge based on UI direction
+    if uiRTL {
+      var x = containerWidth - margin - btnSize
+      for btn in visibleButtons {
+        btn.frame = CGRect(x: x, y: btnY, width: btnSize, height: btnSize)
+        container.addSubview(btn)
+        x -= btnSize + spacing
+      }
+    } else {
+      var x = margin
+      for btn in visibleButtons {
+        btn.frame = CGRect(x: x, y: btnY, width: btnSize, height: btnSize)
+        container.addSubview(btn)
+        x += btnSize + spacing
+      }
+    }
+  }
+
+  private func makeFormattingButton(systemName: String, action: Selector) -> UIButton {
+    let btn = UIButton(type: .custom)
+    let config = UIImage.SymbolConfiguration(pointSize: 16, weight: .medium)
+    let img = UIImage(systemName: systemName, withConfiguration: config)
+    btn.setImage(img, for: .normal)
+    btn.tintColor = UIColor.label
+    btn.frame = CGRect(x: 0, y: 0, width: 34, height: 34)
+    btn.backgroundColor = UIColor.white.withAlphaComponent(0.6)
+    btn.layer.cornerRadius = 8
+    btn.clipsToBounds = false
+    btn.layer.shadowColor = UIColor.black.cgColor
+    btn.layer.shadowOffset = CGSize(width: 0, height: 1)
+    btn.layer.shadowOpacity = 0.15
+    btn.layer.shadowRadius = 2
+    btn.addTarget(self, action: action, for: .touchUpInside)
+    return btn
+  }
+
+  private func makeFontSizeButton(label: String, fontSize: CGFloat, action: Selector) -> UIButton {
+    let btn = UIButton(type: .custom)
+    btn.setTitle(label, for: .normal)
+    btn.titleLabel?.font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
+    btn.setTitleColor(UIColor.label, for: .normal)
+    btn.frame = CGRect(x: 0, y: 0, width: 34, height: 34)
+    btn.backgroundColor = UIColor.white.withAlphaComponent(0.6)
+    btn.layer.cornerRadius = 8
+    btn.clipsToBounds = false
+    btn.layer.shadowColor = UIColor.black.cgColor
+    btn.layer.shadowOffset = CGSize(width: 0, height: 1)
+    btn.layer.shadowOpacity = 0.15
+    btn.layer.shadowRadius = 2
+    btn.addTarget(self, action: action, for: .touchUpInside)
+    return btn
+  }
+
+  private func applySelectedStyle(_ button: UIButton?, selected: Bool) {
+    guard let btn = button else { return }
+    if selected {
+      btn.tintColor = UIColor.systemBlue
+      btn.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.2)
+      btn.layer.shadowOpacity = 0.25
+    } else {
+      btn.tintColor = UIColor.label
+      btn.backgroundColor = UIColor.white.withAlphaComponent(0.6)
+      btn.layer.shadowOpacity = 0.15
+    }
+  }
+
+  private func updateFormattingButtons() {
+    applySelectedStyle(boldButton, selected: isBold)
+    applySelectedStyle(italicButton, selected: isItalic)
+    applySelectedStyle(underlineButton, selected: isUnderline)
+    applySelectedStyle(ltrButton, selected: !isRTL)
+    applySelectedStyle(rtlButton, selected: isRTL)
+  }
+
+  @objc private func boldTapped() {
+    isBold = !isBold
+    updateFormattingButtons()
+    if hasListeners {
+      sendEvent(withName: "onToolbarAction", body: ["action": "bold", "value": isBold])
+    }
+  }
+
+  @objc private func italicTapped() {
+    isItalic = !isItalic
+    updateFormattingButtons()
+    if hasListeners {
+      sendEvent(withName: "onToolbarAction", body: ["action": "italic", "value": isItalic])
+    }
+  }
+
+  @objc private func underlineTapped() {
+    isUnderline = !isUnderline
+    updateFormattingButtons()
+    if hasListeners {
+      sendEvent(withName: "onToolbarAction", body: ["action": "underline", "value": isUnderline])
+    }
+  }
+
+  @objc private func ltrTapped() {
+    isRTL = false
+    updateFormattingButtons()
+    if hasListeners {
+      sendEvent(withName: "onToolbarAction", body: ["action": "rtl", "value": false])
+    }
+  }
+
+  @objc private func rtlTapped() {
+    isRTL = true
+    updateFormattingButtons()
+    if hasListeners {
+      sendEvent(withName: "onToolbarAction", body: ["action": "rtl", "value": true])
+    }
+  }
+
+  @objc private func fontUpTapped() {
+    if hasListeners {
+      sendEvent(withName: "onToolbarAction", body: ["action": "fontUp"])
+    }
+  }
+
+  @objc private func fontDownTapped() {
+    if hasListeners {
+      sendEvent(withName: "onToolbarAction", body: ["action": "fontDown"])
+    }
   }
 
   @objc private func micButtonTapped() {
-    NSLog("[SpeechTranscription] micButtonTapped, isRecording=%d, toolbar=%@, items=%d",
+    NSLog("[SpeechTranscription] micButtonTapped, isRecording=%d, toolbar=%@, subviews=%d",
           isRecording,
           String(describing: micToolbar),
-          micToolbar?.items?.count ?? 0)
+          micToolbar?.subviews.count ?? 0)
     if isRecording {
       stopTranscription()
     } else {
@@ -131,6 +322,44 @@ class SpeechTranscription: RCTEventEmitter {
   // MARK: - Public Methods
 
   @objc
+  func updateFormattingState(_ state: NSDictionary) {
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self else { return }
+      if let bold = state["bold"] as? Bool { self.isBold = bold }
+      if let italic = state["italic"] as? Bool { self.isItalic = italic }
+      if let underline = state["underline"] as? Bool { self.isUnderline = underline }
+      if let rtl = state["rtl"] as? Bool { self.isRTL = rtl }
+      self.updateFormattingButtons()
+
+      var needsRelayout = false
+
+      // UI direction
+      if let newUIRTL = state["uiRTL"] as? Bool, newUIRTL != self.uiRTL {
+        self.uiRTL = newUIRTL
+        needsRelayout = true
+      }
+
+      // Show/hide bold/italic/underline based on font's available styles
+      if let styles = state["availableStyles"] as? [String] {
+        let newShowBold = styles.contains("bold")
+        let newShowItalic = styles.contains("italic")
+        let newShowUnderline = styles.contains("underline")
+
+        if newShowBold != self.showBold || newShowItalic != self.showItalic || newShowUnderline != self.showUnderline {
+          self.showBold = newShowBold
+          self.showItalic = newShowItalic
+          self.showUnderline = newShowUnderline
+          needsRelayout = true
+        }
+      }
+
+      if needsRelayout, let container = self.micToolbar {
+        self.layoutToolbarButtons(in: container)
+      }
+    }
+  }
+
+  @objc
   func setLanguage(_ lang: String) {
     let locale: Locale
     switch lang {
@@ -141,6 +370,19 @@ class SpeechTranscription: RCTEventEmitter {
 
     if let recognizer = SFSpeechRecognizer(locale: locale) {
       speechRecognizer = recognizer
+    }
+
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self else { return }
+      self.kbLanguage = lang
+      let label: String
+      switch lang {
+      case "he": label = "א"
+      case "ar": label = "أ"
+      default:   label = "A"
+      }
+      self.fontUpButton?.setTitle(label, for: .normal)
+      self.fontDownButton?.setTitle(label, for: .normal)
     }
   }
 

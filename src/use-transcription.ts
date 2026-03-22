@@ -7,6 +7,9 @@ const emitter = Platform.OS === 'ios' && SpeechTranscription
   ? new NativeEventEmitter(SpeechTranscription)
   : null;
 
+// Export emitter for use by IssieEditPhoto2
+export { emitter as speechTranscriptionEmitter, SpeechTranscription };
+
 interface UseTranscriptionProps {
   text: string;
   selectionEnd: number;
@@ -26,9 +29,7 @@ export function useTranscription({
   const textRef = useRef(text);
   const selectionEndRef = useRef(selectionEnd);
   const onTextChangedRef = useRef(onTextChanged);
-  // Track what the recognizer has produced so far in this session
   const lastTranscriptRef = useRef('');
-  // Track the insertion point where this session started inserting
   const sessionInsertPosRef = useRef<number | null>(null);
 
   // Keep refs in sync
@@ -71,14 +72,9 @@ export function useTranscription({
       const prevTranscript = lastTranscriptRef.current;
       let insertPos = sessionInsertPosRef.current ?? selectionEndRef.current;
 
-      // Detect recognizer reset: if the new text doesn't start with the
-      // beginning of the previous transcript, the recognizer started fresh.
-      // Commit the previous text and start a new segment after it.
       if (prevTranscript.length > 0 && !event.text.startsWith(prevTranscript.substring(0, Math.min(3, prevTranscript.length)))) {
-        // Commit previous: advance insert position past it
         insertPos = insertPos + prevTranscript.length;
         sessionInsertPosRef.current = insertPos;
-        // Add a space separator between segments
         const sep = ' ';
         const beforeSep = currentText.substring(0, insertPos);
         const afterSep = currentText.substring(insertPos);
@@ -86,7 +82,6 @@ export function useTranscription({
         insertPos += sep.length;
         sessionInsertPosRef.current = insertPos;
         textRef.current = textWithSep;
-        // Now insert the new text at the new position
         const before = textWithSep.substring(0, insertPos);
         const after = textWithSep.substring(insertPos);
         const newText = before + event.text + after;
@@ -94,7 +89,6 @@ export function useTranscription({
         textRef.current = newText;
         onTextChangedRef.current(newText);
       } else {
-        // Normal case: replace previous partial with updated text
         const before = currentText.substring(0, insertPos);
         const after = currentText.substring(insertPos + prevTranscript.length);
         const newText = before + event.text + after;
@@ -136,7 +130,7 @@ export function useTranscription({
     };
   }, [enabled]);
 
-  // Stop transcription on unmount (cleanup orphaned sessions)
+  // Stop transcription on unmount
   useEffect(() => {
     if (Platform.OS !== 'ios' || !SpeechTranscription || !enabled) return;
     return () => {

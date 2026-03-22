@@ -40,7 +40,7 @@ function TextElement({
     texts,
     canvasHeight,
     handleCursorPositionChange,
-    language
+    language,
 }: TextElementProps, ref: any) {
     const [revision, setRevision] = useState<number>(0)
     //console.log("text ratio", ratio, actualWidth, text.fontSize)

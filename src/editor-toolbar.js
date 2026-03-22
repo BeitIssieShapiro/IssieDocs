@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import Svg, { Line } from "react-native-svg";
 import { AppText, availableColorPicker, colors, dimensions, getEraserIcon, getIconButton, IconButton, semanticColors, Spacer, textSizes } from "./elements";
 import FadeInView from "./FadeInView";
-import { getRowDirections, translate } from "./lang";
+import { getRowDirections, translate, useKeyboardLanguage } from "./lang";
 import { trace } from "./log";
 import { BrushSizePicker, MyColorPicker, TextSizePicker } from "./pickers";
 import { getSvgIcon, MarkerStroke } from "./svg-icons";
@@ -126,6 +126,8 @@ function EditorToolbar({
     const [menuHeight, setMenuHeight] = useState(0);
 
     const featuresRef = useRef(getFeaturesSetting());
+
+    const kbLanguage = useKeyboardLanguage();
 
 
     const [tableCols, setTableCols] = useState(Table ? Table.verticalLines.length - 1 : 3);
@@ -452,7 +454,7 @@ function EditorToolbar({
                                     ]
                                     //,rtl ? {} : { fontWeight: 'bold' }]
                                 }
-                            >{translate("A B C")}</AppText>
+                            >{kbLanguage === "he" ? "אבג" : kbLanguage === "ar" ? "أبج" : "ABC"}</AppText>
                             {previewFontSizePlus &&
                                 <View style={[{
                                     position: 'absolute',
