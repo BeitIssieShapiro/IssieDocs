@@ -249,7 +249,6 @@ export function FileContextMenu({
                   <Seperator />
                 </React.Fragment>
               )}
-              {/* Temporarily disabled: undo all feature
               {onUndoAll && (
                 <React.Fragment>
                   <OneMenu
@@ -286,7 +285,7 @@ export function FileContextMenu({
                   <Seperator />
                 </React.Fragment>
               )}
-            */}
+            
             </MenuGroup>
 
             {(onShareImgs || onSharePDF || onShareIssieDocs || onShareFolder) &&
