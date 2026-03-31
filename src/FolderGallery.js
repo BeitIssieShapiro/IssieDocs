@@ -10,6 +10,8 @@ import {
   NativeModules,
   ActivityIndicator,
   Platform,
+  TouchableOpacity,
+  Modal,
 } from 'react-native';
 
 import { Settings } from './new-settings';
@@ -47,15 +49,8 @@ import {
   getSvgIconButton,
   renderMenuOption,
   getRoundedButton,
-  IDMenuOptionsStyle,
   globalStyles,
 } from './elements';
-import {
-  Menu,
-  MenuOptions,
-  MenuOption,
-  MenuTrigger,
-} from 'react-native-popup-menu';
 import SplashScreen from 'react-native-splash-screen';
 
 import {
@@ -1105,85 +1100,93 @@ export default class FolderGallery extends React.Component {
       : (a, b) => a.name.localeCompare(b.name);
   };
 
+  openNewPageMenu = () => {
+    if (this._newPageBtnRef) {
+      this._newPageBtnRef.measureInWindow((x, y, width, height) => {
+        this.setState({
+          showNewPageMenu: true,
+          newPageMenuPos: { x, y: y + height },
+        });
+      });
+    }
+  };
+
   newPageButton = rtl => {
     return (
-      <Menu ref={ref => (this.menu = ref)} key="6">
-        <MenuTrigger>
-          {getSvgIconButton(
-            () => this.menu.open(),
-            semanticColors.addButton,
-            'menu-new-empty-page',
-            40,
-          )}
-        </MenuTrigger>
-        <MenuOptions
-          {...IDMenuOptionsStyle({
-            top: dimensions.toolbarHeight - 12,
-            width: 240,
-          })}
-        >
-          <MenuOption
-            onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Blank)}
-          >
-            {renderMenuOption(
-              translate('MenuNewPageEmpty'),
-              'page-empty',
-              'svg',
-              rtl,
-            )}
-          </MenuOption>
-          {/* <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Blank)}>
-                        {renderMenuOption(translate("MenuNewPageEmptyLandscape"), "page-empty", "svg", rtl)}
-                    </MenuOption> */}
-
-          <MenuOption
-            onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Lines)}
-          >
-            {renderMenuOption(
-              translate('MenuNewPageLines'),
-              'page-lines',
-              'svg',
-              rtl,
-            )}
-          </MenuOption>
-          {/* <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Lines)}>
-                        {renderMenuOption(translate("MenuNewPageLinesLandscape"), "page-lines", "svg", rtl)}
-                    </MenuOption> */}
-          <MenuOption
-            onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Math)}
-          >
-            {renderMenuOption(
-              translate('MenuNewPageMath'),
-              'page-math',
-              'svg',
-              rtl,
-            )}
-          </MenuOption>
-          {/* <MenuOption onSelect={() => this.addEmptyPage(FileSystem.StaticPages.Math)}>
-                        {renderMenuOption(translate("MenuNewPageMathLandscape"), "page-math", "svg", rtl)}
-                    </MenuOption> */}
-
-          <Spacer />
-          <View
-            style={{
-              flex: 1,
-              width: '100%',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}
-          >
-            {getRoundedButton(
-              () => this.menu.close(),
-              'cancel-red',
-              translate('BtnCancel'),
-              30,
-              30,
-              { width: 150, height: 40 },
-            )}
-          </View>
-          <Spacer width={5} />
-        </MenuOptions>
-      </Menu>
+      <View key="6" ref={ref => this._newPageBtnRef = ref} collapsable={false}>
+        {getSvgIconButton(
+          () => this.openNewPageMenu(),
+          semanticColors.addButton,
+          'menu-new-empty-page',
+          40,
+        )}
+        {this.state.showNewPageMenu && this.state.newPageMenuPos && (
+          <Modal transparent animationType="fade" onRequestClose={() => this.setState({ showNewPageMenu: false })}>
+            <TouchableOpacity
+              style={{ flex: 1 }}
+              activeOpacity={1}
+              onPress={() => this.setState({ showNewPageMenu: false })}
+            >
+              <View
+                style={{
+                  position: 'absolute',
+                  top: this.state.newPageMenuPos.y,
+                  left: this.state.newPageMenuPos.x,
+                  width: 240,
+                  backgroundColor: 'white',
+                  borderRadius: 10,
+                  shadowColor: 'black',
+                  shadowOpacity: 0.26,
+                  shadowOffset: { width: 0, height: 2 },
+                  elevation: 3,
+                  alignItems: 'center',
+                  paddingVertical: 10,
+                }}
+              >
+                <TouchableOpacity
+                  style={{ width: '100%', paddingVertical: 8, paddingHorizontal: 15 }}
+                  onPress={() => {
+                    this.setState({ showNewPageMenu: false });
+                    this.addEmptyPage(FileSystem.StaticPages.Blank);
+                  }}
+                >
+                  {renderMenuOption(translate('MenuNewPageEmpty'), 'page-empty', 'svg', rtl)}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={{ width: '100%', paddingVertical: 8, paddingHorizontal: 15 }}
+                  onPress={() => {
+                    this.setState({ showNewPageMenu: false });
+                    this.addEmptyPage(FileSystem.StaticPages.Lines);
+                  }}
+                >
+                  {renderMenuOption(translate('MenuNewPageLines'), 'page-lines', 'svg', rtl)}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={{ width: '100%', paddingVertical: 8, paddingHorizontal: 15 }}
+                  onPress={() => {
+                    this.setState({ showNewPageMenu: false });
+                    this.addEmptyPage(FileSystem.StaticPages.Math);
+                  }}
+                >
+                  {renderMenuOption(translate('MenuNewPageMath'), 'page-math', 'svg', rtl)}
+                </TouchableOpacity>
+                <Spacer />
+                <View style={{ flex: 1, width: '100%', flexDirection: 'column', alignItems: 'center' }}>
+                  {getRoundedButton(
+                    () => this.setState({ showNewPageMenu: false }),
+                    'cancel-red',
+                    translate('BtnCancel'),
+                    30,
+                    30,
+                    { width: 150, height: 40 },
+                  )}
+                </View>
+                <Spacer width={5} />
+              </View>
+            </TouchableOpacity>
+          </Modal>
+        )}
+      </View>
     );
   };
 

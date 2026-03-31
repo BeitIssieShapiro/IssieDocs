@@ -1,8 +1,10 @@
 - template
-- text toolbar - default off
+V- text toolbar - default off
 V- delete all
-- add speak button on kb toolbar. - add "Speak and Dictate" buttons
+V- add speak button on kb toolbar. - add "Speak and Dictate" buttons
 - compare Verdana (current) with Arial
+V- dictation language?
+
 
 
 Features 2025:

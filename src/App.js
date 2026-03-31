@@ -32,7 +32,7 @@ import TitleEdit from './title-edit.js'
 
 import { setIsSimulator } from './device';
 import { TextInput } from 'react-native-gesture-handler';
-import { MenuProvider } from 'react-native-popup-menu';
+
 import CameraModal from './CameraOverlay';
 import { SvgIcon } from './svg-icons';
 import FlashMessage from "react-native-flash-message";
@@ -96,7 +96,7 @@ const App = (props) => {
   //return <CanvasTest />
 
   return (
-    <MenuProvider>
+    <>
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ gestureEnabled: false, headerShown: true, headerStyle: {  position: "absolute", zIndex: 2000 } }}>
           <Stack.Screen name="Home" component={FolderGallery}
@@ -249,7 +249,7 @@ const App = (props) => {
           fontSize: 18,
           textAlign: 'center',
         }} />
-    </MenuProvider >
+    </>
   );
 };
 
