@@ -142,7 +142,7 @@ export const languageMap = {
     AllowEditTitle: 'עריכת כותרת',
     ShowScrollButtons: 'גלילה בעזרת הקשה',
     KeyboardToolbar: 'סרגל כלים במקלדת',
-    TextTools: 'כלי עיצוב',
+    TextTools: 'כלי עיצוב טקסט',
     SpeakAndDictate: 'דיבור והכתבה',
     TextInButtons: 'עיצוב כפתורים',
     FolderColors: 'צבעי תיקיות',

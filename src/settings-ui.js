@@ -57,7 +57,7 @@ export default function SettingsMenu(props) {
     let scrollButtonsSetting = getSetting(SCROLL_BUTTONS.name, SCROLL_BUTTONS.yes);
     const [scrollButtons, setScrollButtons] = useState(scrollButtonsSetting);
 
-    let kbToolbarSetting = getSetting(KB_TOOLBAR.name, KB_TOOLBAR.yes);
+    let kbToolbarSetting = getSetting(KB_TOOLBAR.name, KB_TOOLBAR.no);
     const [kbToolbar, setKbToolbar] = useState(kbToolbarSetting);
 
     let kbTextToolsSetting = getSetting(KB_TEXT_TOOLS.name, KB_TEXT_TOOLS.no);
@@ -354,30 +354,6 @@ export default function SettingsMenu(props) {
                         },
                         scrollButtons == SCROLL_BUTTONS.yes)}
 
-                    {getCheckbox(translate("KeyboardToolbar"),
-                        () => {
-                            let newValue = kbToolbar == KB_TOOLBAR.yes ? KB_TOOLBAR.no : KB_TOOLBAR.yes;
-                            setKbToolbar(newValue);
-                            setKbToolbarHandler(newValue)
-                        },
-                        kbToolbar == KB_TOOLBAR.yes)}
-
-                    {kbToolbar == KB_TOOLBAR.yes && getCheckbox(translate("TextTools"),
-                        () => {
-                            let newValue = kbTextTools == KB_TEXT_TOOLS.yes ? KB_TEXT_TOOLS.no : KB_TEXT_TOOLS.yes;
-                            setKbTextTools(newValue);
-                            setKbTextToolsHandler(newValue)
-                        },
-                        kbTextTools == KB_TEXT_TOOLS.yes, 40)}
-
-                    {kbToolbar == KB_TOOLBAR.yes && getCheckbox(translate("SpeakAndDictate"),
-                        () => {
-                            let newValue = kbSpeakDictate == KB_SPEAK_DICTATE.yes ? KB_SPEAK_DICTATE.no : KB_SPEAK_DICTATE.yes;
-                            setKbSpeakDictate(newValue);
-                            setKbSpeakDictateHandler(newValue)
-                        },
-                        kbSpeakDictate == KB_SPEAK_DICTATE.yes, 40)}
-
 
                     {getCheckbox(translate("AllowEditTitle"),
                         () => {
@@ -386,6 +362,26 @@ export default function SettingsMenu(props) {
                             setEditTitleHandler(newValue)
                         },
                         editTitle == EDIT_TITLE.yes)}
+
+                    <View style={{ width: '100%', paddingTop: 25, paddingStart: 25, alignItems: "flex-start" }}>
+                        <AppText style={styles.SettingsHeaderText}>{translate("KeyboardToolbar") + ":"}</AppText>
+                    </View>
+
+                    {getCheckbox(translate("TextTools"),
+                        () => {
+                            let newValue = kbTextTools == KB_TEXT_TOOLS.yes ? KB_TEXT_TOOLS.no : KB_TEXT_TOOLS.yes;
+                            setKbTextTools(newValue);
+                            setKbTextToolsHandler(newValue)
+                        },
+                        kbTextTools == KB_TEXT_TOOLS.yes, 40)}
+
+                    {getCheckbox(translate("SpeakAndDictate"),
+                        () => {
+                            let newValue = kbSpeakDictate == KB_SPEAK_DICTATE.yes ? KB_SPEAK_DICTATE.no : KB_SPEAK_DICTATE.yes;
+                            setKbSpeakDictate(newValue);
+                            setKbSpeakDictateHandler(newValue)
+                        },
+                        kbSpeakDictate == KB_SPEAK_DICTATE.yes, 40)}
 
 
                     {/** Feature toggles */}
@@ -501,17 +497,18 @@ function getGroup(props, name, items, isCheckboxes) {
 function getCheckbox(name, callback, selected, indent) {
     return <View style={{
         width: '100%', paddingTop: indent ? 10 : 25,
-        paddingStart: indent || 15, alignItems: "flex-start"
+        paddingStart: indent ? 25 : 15, alignItems: "flex-start"
     }}>
         <TouchableOpacity
-            style={{ flexDirection: "row", paddingStart: 0, paddingTop: 15, alignItems: 'center' }}
+            style={{ flexDirection: indent ? "row-reverse" : "row", paddingStart: indent ? 35 : 0, paddingTop: 15, alignItems: 'center' }}
             onPress={callback}
         >
-            <Spacer />
+            {indent ? <AppText style={styles.radioText}>{name}</AppText> : <Spacer />}
+            {indent && <Spacer />}
             <View style={styles.box}>
                 {selected && <View style={styles.checkedBox} />}
             </View>
-            <AppText style={indent ? styles.radioText : styles.SettingsHeaderText}>{name}</AppText>
+            {!indent && <AppText style={styles.SettingsHeaderText}>{name}</AppText>}
         </TouchableOpacity>
     </View>
 }
