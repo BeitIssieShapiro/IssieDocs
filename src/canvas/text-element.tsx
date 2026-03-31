@@ -223,15 +223,6 @@ function TextElement({
             >
                 {!table && <AnimatedIcon style={[moveIconStyle, visibleAnimatedStyle]} info={{ type: "Ionicons", name: "move", size: 25, color: "blue" }} />}
                 <>
-                    {isSpeaking && (
-                        <Animated.View style={[bgAnimatedStyle,
-                            !table && widthStyle,
-                            table && { width: posStyle.width },
-                            !table && { minWidth: Math.max(text.fontSize * ratio, 20 / ratio) }
-                        ]}>
-                            {highlightedTextSpans}
-                        </Animated.View>
-                    )}
                     <AnimatedTextInput
                         disableKeyboardShortcuts={true}
                         autoCapitalize="none"
@@ -239,18 +230,27 @@ function TextElement({
                         allowFontScaling={false}
                         multiline
                         autoFocus
-                        editable={!isSpeaking}
                         textAlignVertical="top"
                         style={[styles.textStyle, style, bgAnimatedStyle,
                         !table && widthStyle,
                         table && { width: posStyle.width },
                         !table && { minWidth: Math.max(text.fontSize * ratio, 20 / ratio) },
-                        isSpeaking && { position: 'absolute', left: -10000 }
+                        isSpeaking && { opacity: 0 }
                         ]}
                         value={text.text}
                         onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
                         onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
                     />
+                    {isSpeaking && (
+                        <Animated.View style={[bgAnimatedStyle,
+                            { position: 'absolute', top: 0, left: 0, right: 0 },
+                            !table && widthStyle,
+                            table && { width: posStyle.width },
+                            !table && { minWidth: Math.max(text.fontSize * ratio, 20 / ratio) }
+                        ]}>
+                            {highlightedTextSpans}
+                        </Animated.View>
+                    )}
                     {/* Hidden Text to measure layout */}
                     <Text
                         allowFontScaling={false}
