@@ -1,6 +1,6 @@
 // TextElement.tsx
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
-import { View, Text, TextInput, StyleSheet, LayoutChangeEvent, TextInputProps, ViewProps, ColorValue } from "react-native";
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import { View, Text, TextInput, StyleSheet, LayoutChangeEvent, TextInputProps, ViewProps, ColorValue, Platform } from "react-native";
 import { SketchText, MoveTypes, SketchPoint, SketchTable } from "./types";
 import { calcEffectiveHorizontalLines, tableColWidth, tableRowHeight } from "./utils";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
@@ -97,6 +97,80 @@ function TextElement({
         speakDictateEnabled: kbToolbarOn && getSetting(KB_SPEAK_DICTATE.name, KB_SPEAK_DICTATE.yes) === KB_SPEAK_DICTATE.yes,
     });
 
+    const [isSpeaking, setIsSpeaking] = useState(false);
+    const [highlightRange, setHighlightRange] = useState<{ location: number; length: number } | null>(null);
+
+    // Listen for toolbar speak action and TTS events
+    useEffect(() => {
+        if (Platform.OS !== 'ios' || !editMode) return;
+
+        const { NativeModules: NM, NativeEventEmitter } = require('react-native');
+        const { SpeechTranscription: ST } = NM;
+        if (!ST) return;
+
+        const em = new NativeEventEmitter(ST);
+
+        const toolbarSub = em.addListener('onToolbarAction', (event: { action: string }) => {
+            if (event.action === 'speak') {
+                if (text.text.length > 0) {
+                    ST.startSpeaking(text.text, language || 'en');
+                }
+            } else if (event.action === 'stopSpeaking') {
+                ST.stopSpeaking();
+            }
+        });
+
+        const startSub = em.addListener('onSpeakingStart', () => {
+            setIsSpeaking(true);
+            setHighlightRange(null);
+        });
+
+        const wordSub = em.addListener('onSpeakingWord', (event: { location: number; length: number }) => {
+            setHighlightRange({ location: event.location, length: event.length });
+        });
+
+        const endSub = em.addListener('onSpeakingEnd', () => {
+            setIsSpeaking(false);
+            setHighlightRange(null);
+        });
+
+        return () => {
+            toolbarSub.remove();
+            startSub.remove();
+            wordSub.remove();
+            endSub.remove();
+        };
+    }, [editMode, text.text, language]);
+
+    // Stop speaking on unmount or when leaving edit mode
+    useEffect(() => {
+        if (Platform.OS !== 'ios') return;
+        const { NativeModules: NM } = require('react-native');
+        const { SpeechTranscription: ST } = NM;
+        if (!ST) return;
+
+        return () => {
+            ST.stopSpeaking();
+        };
+    }, [editMode]);
+
+    const highlightedTextSpans = useMemo(() => {
+        if (!isSpeaking || !highlightRange) {
+            return <Text style={[styles.textStyle, style]}>{text.text}</Text>;
+        }
+        const { location, length } = highlightRange;
+        const before = text.text.substring(0, location);
+        const word = text.text.substring(location, location + length);
+        const after = text.text.substring(location + length);
+        return (
+            <Text style={[styles.textStyle, style]}>
+                {before}
+                <Text style={{ backgroundColor: '#FFD700' }}>{word}</Text>
+                {after}
+            </Text>
+        );
+    }, [isSpeaking, highlightRange, text.text, style]);
+
 
     // if (text.tableId) {
     //     console.log("text table",text.tableId, table)
@@ -154,23 +228,33 @@ function TextElement({
             >
                 {!table && <AnimatedIcon style={[moveIconStyle, visibleAnimatedStyle]} info={{ type: "Ionicons", name: "move", size: 25, color: "blue" }} />}
                 <>
-                    <AnimatedTextInput
-                        disableKeyboardShortcuts={true}
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        allowFontScaling={false}
-                        multiline
-                        autoFocus
-                        textAlignVertical="top"
-                        style={[styles.textStyle, style, bgAnimatedStyle,
-                        !table && widthStyle,
-                        table && { width: posStyle.width },
-                        !table && { minWidth: Math.max(text.fontSize * ratio, 20 / ratio) }
-                        ]}
-                        value={text.text}
-                        onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
-                        onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
-                    />
+                    {isSpeaking ? (
+                        <Animated.View style={[bgAnimatedStyle,
+                            !table && widthStyle,
+                            table && { width: posStyle.width },
+                            !table && { minWidth: Math.max(text.fontSize * ratio, 20 / ratio) }
+                        ]}>
+                            {highlightedTextSpans}
+                        </Animated.View>
+                    ) : (
+                        <AnimatedTextInput
+                            disableKeyboardShortcuts={true}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            allowFontScaling={false}
+                            multiline
+                            autoFocus
+                            textAlignVertical="top"
+                            style={[styles.textStyle, style, bgAnimatedStyle,
+                            !table && widthStyle,
+                            table && { width: posStyle.width },
+                            !table && { minWidth: Math.max(text.fontSize * ratio, 20 / ratio) }
+                            ]}
+                            value={text.text}
+                            onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
+                            onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
+                        />
+                    )}
                     {/* Hidden Text to measure layout */}
                     <Text
                         allowFontScaling={false}
