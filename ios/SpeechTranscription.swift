@@ -3,6 +3,7 @@ import Speech
 import AVFoundation
 import AudioToolbox
 import UIKit
+import NaturalLanguage
 import React
 
 @objc(SpeechTranscription)
@@ -55,8 +56,12 @@ class SpeechTranscription: RCTEventEmitter {
   private var isSpeaking = false
   private var speakBlinkTimer: Timer?
 
+  private var speechSynthesizer = AVSpeechSynthesizer()
+  private var currentUtterance: AVSpeechUtterance?
+
   override init() {
     super.init()
+    speechSynthesizer.delegate = self
     speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en"))
     NotificationCenter.default.addObserver(
       self,
@@ -598,6 +603,11 @@ class SpeechTranscription: RCTEventEmitter {
 
       self.stopBlinkAnimation()
 
+      if self.speechSynthesizer.isSpeaking {
+        self.speechSynthesizer.stopSpeaking(at: .immediate)
+      }
+      self.stopSpeakBlinkAnimation()
+
       guard let firstResponder = self.findFirstResponder() else { return }
 
       if let textField = firstResponder as? UITextField {
@@ -651,6 +661,70 @@ class SpeechTranscription: RCTEventEmitter {
     }
     if hasListeners {
       sendEvent(withName: "onTranscriptionEnd", body: [:])
+    }
+  }
+
+  // MARK: - Text-to-Speech
+
+  @objc
+  func startSpeaking(_ text: String, fallbackLanguage: String) {
+    DispatchQueue.main.async { [weak self] in
+        guard let self = self else { return }
+        if text.isEmpty { return }
+
+        // Stop any current speech
+        if self.speechSynthesizer.isSpeaking {
+            self.speechSynthesizer.stopSpeaking(at: .immediate)
+        }
+
+        // Stop any active transcription
+        if self.isRecording {
+            self.stopTranscription()
+        }
+
+        // Detect language
+        let recognizer = NLLanguageRecognizer()
+        recognizer.processString(text)
+        let detectedLang = recognizer.dominantLanguage
+
+        let voiceLocale: String
+        if let lang = detectedLang {
+            switch lang {
+            case .hebrew: voiceLocale = "he-IL"
+            case .arabic: voiceLocale = "ar-SA"
+            case .english: voiceLocale = "en-US"
+            default:
+                switch fallbackLanguage {
+                case "he": voiceLocale = "he-IL"
+                case "ar": voiceLocale = "ar-SA"
+                default: voiceLocale = "en-US"
+                }
+            }
+        } else {
+            switch fallbackLanguage {
+            case "he": voiceLocale = "he-IL"
+            case "ar": voiceLocale = "ar-SA"
+            default: voiceLocale = "en-US"
+            }
+        }
+
+        let utterance = AVSpeechUtterance(string: text)
+        utterance.voice = AVSpeechSynthesisVoice(language: voiceLocale)
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+        self.currentUtterance = utterance
+        self.isSpeaking = true
+        self.updateSpeakAppearance()
+        self.speechSynthesizer.speak(utterance)
+    }
+  }
+
+  @objc
+  func stopSpeaking() {
+    DispatchQueue.main.async { [weak self] in
+        guard let self = self else { return }
+        if self.speechSynthesizer.isSpeaking {
+            self.speechSynthesizer.stopSpeaking(at: .immediate)
+        }
     }
   }
 
@@ -967,4 +1041,47 @@ class SpeechTranscription: RCTEventEmitter {
       .findFirstResponder()
       ?? UIApplication.shared.keyWindow?.findFirstResponder()
   }
+}
+
+// MARK: - AVSpeechSynthesizerDelegate
+
+extension SpeechTranscription: AVSpeechSynthesizerDelegate {
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {
+        if hasListeners {
+            sendEvent(withName: "onSpeakingStart", body: [:])
+        }
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, willSpeakRangeOfSpeechString characterRange: NSRange, utterance: AVSpeechUtterance) {
+        if hasListeners {
+            sendEvent(withName: "onSpeakingWord", body: [
+                "location": characterRange.location,
+                "length": characterRange.length
+            ])
+        }
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.isSpeaking = false
+            self.currentUtterance = nil
+            self.updateSpeakAppearance()
+        }
+        if hasListeners {
+            sendEvent(withName: "onSpeakingEnd", body: [:])
+        }
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.isSpeaking = false
+            self.currentUtterance = nil
+            self.updateSpeakAppearance()
+        }
+        if hasListeners {
+            sendEvent(withName: "onSpeakingEnd", body: [:])
+        }
+    }
 }
