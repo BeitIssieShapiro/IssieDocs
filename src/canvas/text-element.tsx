@@ -6,7 +6,7 @@ import { calcEffectiveHorizontalLines, tableColWidth, tableRowHeight } from "./u
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { MyIcon } from "../common/icons";
 import { useTranscription } from "../use-transcription";
-import { getSetting, KB_TOOLBAR } from "../settings";
+import { getSetting, KB_TOOLBAR, KB_TEXT_TOOLS, KB_SPEAK_DICTATE } from "../settings";
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 const AnimatedIcon = Animated.createAnimatedComponent(MyIcon);
@@ -86,13 +86,15 @@ function TextElement({
         onTextChanged(text.id, newText);
     }, [text.id, onTextChanged]);
 
+    const kbToolbarOn = getSetting(KB_TOOLBAR.name, KB_TOOLBAR.yes) === KB_TOOLBAR.yes;
     const { isRecording } = useTranscription({
         text: text.text,
         selectionEnd: selection.end,
         onTextChanged: handleTranscriptionText,
         language: language || 'en',
         enabled: editMode,
-        toolbarEnabled: getSetting(KB_TOOLBAR.name, KB_TOOLBAR.yes) === KB_TOOLBAR.yes,
+        textToolsEnabled: kbToolbarOn && getSetting(KB_TEXT_TOOLS.name, KB_TEXT_TOOLS.no) === KB_TEXT_TOOLS.yes,
+        speakDictateEnabled: kbToolbarOn && getSetting(KB_SPEAK_DICTATE.name, KB_SPEAK_DICTATE.yes) === KB_SPEAK_DICTATE.yes,
     });
 
 
