@@ -24,7 +24,9 @@ import {
     getFeaturesSetting,
     FEATURES,
     SCROLL_BUTTONS,
-    KB_TOOLBAR
+    KB_TOOLBAR,
+    KB_TEXT_TOOLS,
+    KB_SPEAK_DICTATE
 } from './settings'
 import { FileSystem } from './filesystem';
 import { trace } from './log';
@@ -57,6 +59,12 @@ export default function SettingsMenu(props) {
 
     let kbToolbarSetting = getSetting(KB_TOOLBAR.name, KB_TOOLBAR.yes);
     const [kbToolbar, setKbToolbar] = useState(kbToolbarSetting);
+
+    let kbTextToolsSetting = getSetting(KB_TEXT_TOOLS.name, KB_TEXT_TOOLS.no);
+    const [kbTextTools, setKbTextTools] = useState(kbTextToolsSetting);
+
+    let kbSpeakDictateSetting = getSetting(KB_SPEAK_DICTATE.name, KB_SPEAK_DICTATE.yes);
+    const [kbSpeakDictate, setKbSpeakDictate] = useState(kbSpeakDictateSetting);
 
 
     let useColorSetting = getUseColorSetting();
@@ -177,6 +185,20 @@ export default function SettingsMenu(props) {
         obj[KB_TOOLBAR.name] = tb;
         Settings.set(obj)
         setKbToolbar(tb);
+    }
+
+    const setKbTextToolsHandler = (tb) => {
+        let obj = {}
+        obj[KB_TEXT_TOOLS.name] = tb;
+        Settings.set(obj)
+        setKbTextTools(tb);
+    }
+
+    const setKbSpeakDictateHandler = (tb) => {
+        let obj = {}
+        obj[KB_SPEAK_DICTATE.name] = tb;
+        Settings.set(obj)
+        setKbSpeakDictate(tb);
     }
 
 
@@ -340,6 +362,22 @@ export default function SettingsMenu(props) {
                         },
                         kbToolbar == KB_TOOLBAR.yes)}
 
+                    {kbToolbar == KB_TOOLBAR.yes && getCheckbox(translate("TextTools"),
+                        () => {
+                            let newValue = kbTextTools == KB_TEXT_TOOLS.yes ? KB_TEXT_TOOLS.no : KB_TEXT_TOOLS.yes;
+                            setKbTextTools(newValue);
+                            setKbTextToolsHandler(newValue)
+                        },
+                        kbTextTools == KB_TEXT_TOOLS.yes, 40)}
+
+                    {kbToolbar == KB_TOOLBAR.yes && getCheckbox(translate("SpeakAndDictate"),
+                        () => {
+                            let newValue = kbSpeakDictate == KB_SPEAK_DICTATE.yes ? KB_SPEAK_DICTATE.no : KB_SPEAK_DICTATE.yes;
+                            setKbSpeakDictate(newValue);
+                            setKbSpeakDictateHandler(newValue)
+                        },
+                        kbSpeakDictate == KB_SPEAK_DICTATE.yes, 40)}
+
 
                     {getCheckbox(translate("AllowEditTitle"),
                         () => {
@@ -460,10 +498,10 @@ function getGroup(props, name, items, isCheckboxes) {
     </View>
 }
 
-function getCheckbox(name, callback, selected) {
+function getCheckbox(name, callback, selected, indent) {
     return <View style={{
-        width: '100%', paddingTop: 25,
-        paddingStart: 15, alignItems: "flex-start"
+        width: '100%', paddingTop: indent ? 10 : 25,
+        paddingStart: indent || 15, alignItems: "flex-start"
     }}>
         <TouchableOpacity
             style={{ flexDirection: "row", paddingStart: 0, paddingTop: 15, alignItems: 'center' }}
@@ -473,7 +511,7 @@ function getCheckbox(name, callback, selected) {
             <View style={styles.box}>
                 {selected && <View style={styles.checkedBox} />}
             </View>
-            <AppText style={styles.SettingsHeaderText}>{name}</AppText>
+            <AppText style={indent ? styles.radioText : styles.SettingsHeaderText}>{name}</AppText>
         </TouchableOpacity>
     </View>
 }
