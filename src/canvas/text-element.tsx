@@ -245,7 +245,7 @@ function TextElement({
                         !table && widthStyle,
                         table && { width: posStyle.width },
                         !table && { minWidth: Math.max(text.fontSize * ratio, 20 / ratio) },
-                        isSpeaking && { height: 0, overflow: 'hidden', position: 'absolute', opacity: 0 }
+                        isSpeaking && { position: 'absolute', left: -10000 }
                         ]}
                         value={text.text}
                         onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
