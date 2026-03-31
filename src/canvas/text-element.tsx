@@ -1,11 +1,11 @@
 // TextElement.tsx
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { View, Text, TextInput, StyleSheet, LayoutChangeEvent, TextInputProps, ViewProps, ColorValue, Platform } from "react-native";
 import { SketchText, MoveTypes, SketchPoint, SketchTable } from "./types";
 import { calcEffectiveHorizontalLines, tableColWidth, tableRowHeight } from "./utils";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { MyIcon } from "../common/icons";
-import { useTranscription } from "../use-transcription";
+import { useTranscription, speechTranscriptionEmitter, SpeechTranscription } from "../use-transcription";
 import { getSetting, KB_TOOLBAR, KB_TEXT_TOOLS, KB_SPEAK_DICTATE } from "../settings";
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
@@ -99,37 +99,35 @@ function TextElement({
 
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [highlightRange, setHighlightRange] = useState<{ location: number; length: number } | null>(null);
+    const textTextRef = useRef(text.text);
+    const languageRef = useRef(language);
+    useEffect(() => { textTextRef.current = text.text; }, [text.text]);
+    useEffect(() => { languageRef.current = language; }, [language]);
 
     // Listen for toolbar speak action and TTS events
     useEffect(() => {
-        if (Platform.OS !== 'ios' || !editMode) return;
+        if (Platform.OS !== 'ios' || !speechTranscriptionEmitter || !SpeechTranscription || !editMode) return;
 
-        const { NativeModules: NM, NativeEventEmitter } = require('react-native');
-        const { SpeechTranscription: ST } = NM;
-        if (!ST) return;
-
-        const em = new NativeEventEmitter(ST);
-
-        const toolbarSub = em.addListener('onToolbarAction', (event: { action: string }) => {
+        const toolbarSub = speechTranscriptionEmitter.addListener('onToolbarAction', (event: { action: string }) => {
             if (event.action === 'speak') {
-                if (text.text.length > 0) {
-                    ST.startSpeaking(text.text, language || 'en');
+                if (textTextRef.current.length > 0) {
+                    SpeechTranscription.startSpeaking(textTextRef.current, languageRef.current || 'en');
                 }
             } else if (event.action === 'stopSpeaking') {
-                ST.stopSpeaking();
+                SpeechTranscription.stopSpeaking();
             }
         });
 
-        const startSub = em.addListener('onSpeakingStart', () => {
+        const startSub = speechTranscriptionEmitter.addListener('onSpeakingStart', () => {
             setIsSpeaking(true);
             setHighlightRange(null);
         });
 
-        const wordSub = em.addListener('onSpeakingWord', (event: { location: number; length: number }) => {
+        const wordSub = speechTranscriptionEmitter.addListener('onSpeakingWord', (event: { location: number; length: number }) => {
             setHighlightRange({ location: event.location, length: event.length });
         });
 
-        const endSub = em.addListener('onSpeakingEnd', () => {
+        const endSub = speechTranscriptionEmitter.addListener('onSpeakingEnd', () => {
             setIsSpeaking(false);
             setHighlightRange(null);
         });
@@ -140,17 +138,14 @@ function TextElement({
             wordSub.remove();
             endSub.remove();
         };
-    }, [editMode, text.text, language]);
+    }, [editMode]);
 
     // Stop speaking on unmount or when leaving edit mode
     useEffect(() => {
-        if (Platform.OS !== 'ios') return;
-        const { NativeModules: NM } = require('react-native');
-        const { SpeechTranscription: ST } = NM;
-        if (!ST) return;
+        if (Platform.OS !== 'ios' || !SpeechTranscription) return;
 
         return () => {
-            ST.stopSpeaking();
+            SpeechTranscription.stopSpeaking();
         };
     }, [editMode]);
 
