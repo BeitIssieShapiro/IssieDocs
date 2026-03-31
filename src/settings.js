@@ -61,6 +61,18 @@ export const KB_TOOLBAR = {
     no: 2
 }
 
+export const KB_TEXT_TOOLS = {
+    name: 'kbTextTools',
+    yes: 1,
+    no: 2
+}
+
+export const KB_SPEAK_DICTATE = {
+    name: 'kbSpeakDictate',
+    yes: 1,
+    no: 2
+}
+
 export const LAST_COLORS = {
     name: 'lastColors',
     max: 4
