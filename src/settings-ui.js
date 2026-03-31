@@ -23,7 +23,8 @@ import {
     getSetting, getUseColorSetting, FOLDERS_VIEW,
     getFeaturesSetting,
     FEATURES,
-    SCROLL_BUTTONS
+    SCROLL_BUTTONS,
+    KB_TOOLBAR
 } from './settings'
 import { FileSystem } from './filesystem';
 import { trace } from './log';
@@ -53,6 +54,9 @@ export default function SettingsMenu(props) {
 
     let scrollButtonsSetting = getSetting(SCROLL_BUTTONS.name, SCROLL_BUTTONS.yes);
     const [scrollButtons, setScrollButtons] = useState(scrollButtonsSetting);
+
+    let kbToolbarSetting = getSetting(KB_TOOLBAR.name, KB_TOOLBAR.yes);
+    const [kbToolbar, setKbToolbar] = useState(kbToolbarSetting);
 
 
     let useColorSetting = getUseColorSetting();
@@ -166,6 +170,13 @@ export default function SettingsMenu(props) {
         obj[SCROLL_BUTTONS.name] = tb;
         Settings.set(obj)
         setScrollButtons(tb);
+    }
+
+    const setKbToolbarHandler = (tb) => {
+        let obj = {}
+        obj[KB_TOOLBAR.name] = tb;
+        Settings.set(obj)
+        setKbToolbar(tb);
     }
 
 
@@ -320,6 +331,14 @@ export default function SettingsMenu(props) {
                             setScrollButtonsHandler(newValue)
                         },
                         scrollButtons == SCROLL_BUTTONS.yes)}
+
+                    {getCheckbox(translate("KeyboardToolbar"),
+                        () => {
+                            let newValue = kbToolbar == KB_TOOLBAR.yes ? KB_TOOLBAR.no : KB_TOOLBAR.yes;
+                            setKbToolbar(newValue);
+                            setKbToolbarHandler(newValue)
+                        },
+                        kbToolbar == KB_TOOLBAR.yes)}
 
 
                     {getCheckbox(translate("AllowEditTitle"),

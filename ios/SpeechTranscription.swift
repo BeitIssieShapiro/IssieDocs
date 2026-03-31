@@ -21,6 +21,7 @@ class SpeechTranscription: RCTEventEmitter {
   // MARK: - Native Toolbar
 
   private var micToolbar: UIView?
+  private var micFloatingButton: UIView?  // mic-only container when toolbar disabled
   private var micIconButton: UIButton?
   private var blinkTimer: Timer?
 
@@ -45,10 +46,32 @@ class SpeechTranscription: RCTEventEmitter {
   private var isRTL = false
   private var uiRTL = false
   private var kbLanguage = "en"
+  private var toolbarEnabled = true
+  private var showMic = true
+  private var isAttached = false
 
   override init() {
     super.init()
     speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en"))
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(inputModeDidChange),
+      name: UITextInputMode.currentInputModeDidChangeNotification,
+      object: nil
+    )
+  }
+
+  deinit {
+    NotificationCenter.default.removeObserver(self)
+  }
+
+  @objc private func inputModeDidChange(_ notification: Notification) {
+    guard isAttached else { return }
+    // Re-attach with the same toolbarEnabled setting to re-evaluate IssieBoard detection
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+      guard let self = self, self.isAttached else { return }
+      self.attachToKeyboard(self.toolbarEnabled)
+    }
   }
 
   // MARK: - React Native Boilerplate
@@ -66,6 +89,55 @@ class SpeechTranscription: RCTEventEmitter {
   @objc override static func requiresMainQueueSetup() -> Bool { return true }
 
   // MARK: - Toolbar Management
+
+  /// Check if the active keyboard is an IssieBoard custom keyboard
+  private func isIssieBoardKeyboard() -> Bool {
+    // Third-party keyboards expose their bundle identifier in UITextInputMode
+    // Check the active input modes for one containing "IssieBoard"
+    guard let firstResponder = findFirstResponder() else { return false }
+
+    if let mode = firstResponder.textInputMode,
+       let identifier = mode.value(forKey: "identifier") as? String,
+       identifier.contains("IssieBoard") {
+      return true
+    }
+
+    // Also check all active input modes
+    for mode in UITextInputMode.activeInputModes {
+      if let identifier = mode.value(forKey: "identifier") as? String,
+         identifier.contains("IssieBoard") {
+        // Only return true if this mode appears to be the current one
+        if let frMode = firstResponder.textInputMode, frMode == mode {
+          return true
+        }
+      }
+    }
+
+    return false
+  }
+
+  private func createMicOnlyView() -> UIView {
+    let btnSize: CGFloat = 34
+    let container = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: btnSize + 10))
+    container.backgroundColor = UIColor.clear
+
+    let micBtn = UIButton(type: .custom)
+    micBtn.setImage(UIImage(systemName: "mic.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18, weight: .medium)), for: .normal)
+    micBtn.tintColor = UIColor.systemBlue
+    micBtn.backgroundColor = UIColor.white.withAlphaComponent(0.6)
+    micBtn.layer.cornerRadius = 8
+    micBtn.clipsToBounds = false
+    micBtn.layer.shadowColor = UIColor.black.cgColor
+    micBtn.layer.shadowOffset = CGSize(width: 0, height: 1)
+    micBtn.layer.shadowOpacity = 0.15
+    micBtn.layer.shadowRadius = 2
+    micBtn.addTarget(self, action: #selector(micButtonTapped), for: .touchUpInside)
+    micBtn.frame = CGRect(x: 8, y: 5, width: btnSize, height: btnSize)
+    self.micIconButton = micBtn
+    container.addSubview(micBtn)
+
+    return container
+  }
 
   private func createToolbar() -> UIView {
     let barHeight: CGFloat = 44
@@ -113,7 +185,7 @@ class SpeechTranscription: RCTEventEmitter {
 
     // Collect visible buttons in logical order (mic first, then formatting)
     var visibleButtons: [UIButton] = []
-    if let micBtn = micIconButton { visibleButtons.append(micBtn) }
+    if let micBtn = micIconButton, showMic { visibleButtons.append(micBtn) }
 
     let formattingButtons: [(UIButton?, Bool)] = [
       (boldButton, showBold),
@@ -387,35 +459,58 @@ class SpeechTranscription: RCTEventEmitter {
   }
 
   @objc
-  func attachToKeyboard() {
+  func attachToKeyboard(_ enabled: Bool) {
     DispatchQueue.main.async { [weak self] in
       guard let self = self else { return }
+      self.toolbarEnabled = enabled
+      self.isAttached = true
 
       guard let firstResponder = self.findFirstResponder() else {
         NSLog("[SpeechTranscription] attachToKeyboard: no first responder found")
         return
       }
 
-      NSLog("[SpeechTranscription] attachToKeyboard: firstResponder type = %@", String(describing: type(of: firstResponder)))
+      NSLog("[SpeechTranscription] attachToKeyboard: firstResponder type = %@, toolbarEnabled = %d", String(describing: type(of: firstResponder)), enabled)
 
-      if self.micToolbar == nil {
-        self.micToolbar = self.createToolbar()
+      let isIssieBoard = self.isIssieBoardKeyboard()
+      NSLog("[SpeechTranscription] isIssieBoardKeyboard = %d", isIssieBoard)
+
+      // Clear previous toolbar references
+      self.micToolbar = nil
+      self.micFloatingButton = nil
+      self.micIconButton = nil
+
+      var accessoryView: UIView? = nil
+
+      if enabled {
+        // Full toolbar: show mic only if IssieBoard (no built-in dictation)
+        self.showMic = isIssieBoard
+        let toolbar = self.createToolbar()
+        self.micToolbar = toolbar
+        accessoryView = toolbar
+      } else {
+        // Toolbar disabled: show mic-only if IssieBoard, nothing otherwise
+        if isIssieBoard {
+          let micView = self.createMicOnlyView()
+          self.micFloatingButton = micView
+          accessoryView = micView
+        }
       }
 
       // Try to set inputAccessoryView via common text input types and KVC fallback
       if let textField = firstResponder as? UITextField {
-        textField.inputAccessoryView = self.micToolbar
+        textField.inputAccessoryView = accessoryView
         textField.reloadInputViews()
         NSLog("[SpeechTranscription] attached to UITextField, accessoryView=%@", String(describing: textField.inputAccessoryView))
       } else if let textView = firstResponder as? UITextView {
-        textView.inputAccessoryView = self.micToolbar
+        textView.inputAccessoryView = accessoryView
         textView.reloadInputViews()
         NSLog("[SpeechTranscription] attached to UITextView, accessoryView=%@", String(describing: textView.inputAccessoryView))
       } else if let view = firstResponder as? UIView {
         // RN Fabric may use a wrapper; look for a UITextView child
         if let textView = self.findTextView(in: view) {
           NSLog("[SpeechTranscription] attachToKeyboard: found child UITextView in %@", String(describing: type(of: view)))
-          textView.inputAccessoryView = self.micToolbar
+          textView.inputAccessoryView = accessoryView
           textView.reloadInputViews()
         } else {
           NSLog("[SpeechTranscription] attachToKeyboard: no UITextView found in view hierarchy")
@@ -437,6 +532,7 @@ class SpeechTranscription: RCTEventEmitter {
     NSLog("[SpeechTranscription] detachFromKeyboard called, isRecording=%d", isRecording)
     DispatchQueue.main.async { [weak self] in
       guard let self = self else { return }
+      self.isAttached = false
 
       if self.isRecording {
         self.stopTranscription()

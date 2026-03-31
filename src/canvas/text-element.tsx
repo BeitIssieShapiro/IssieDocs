@@ -6,6 +6,7 @@ import { calcEffectiveHorizontalLines, tableColWidth, tableRowHeight } from "./u
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { MyIcon } from "../common/icons";
 import { useTranscription } from "../use-transcription";
+import { getSetting, KB_TOOLBAR } from "../settings";
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 const AnimatedIcon = Animated.createAnimatedComponent(MyIcon);
@@ -91,6 +92,7 @@ function TextElement({
         onTextChanged: handleTranscriptionText,
         language: language || 'en',
         enabled: editMode,
+        toolbarEnabled: getSetting(KB_TOOLBAR.name, KB_TOOLBAR.yes) === KB_TOOLBAR.yes,
     });
 
 

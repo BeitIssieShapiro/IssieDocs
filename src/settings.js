@@ -55,6 +55,12 @@ export const SCROLL_BUTTONS = {
     no: 2
 }
 
+export const KB_TOOLBAR = {
+    name: 'kbToolbar',
+    yes: 1,
+    no: 2
+}
+
 export const LAST_COLORS = {
     name: 'lastColors',
     max: 4

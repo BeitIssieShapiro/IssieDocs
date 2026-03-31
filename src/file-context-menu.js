@@ -262,7 +262,7 @@ export function FileContextMenu({
                 </React.Fragment>
               )}
               
-              {onLockPage && !hasLock && (
+              {/* {onLockPage && !hasLock && (
                 <React.Fragment>
                   <OneMenu
                     scale={scale}
@@ -284,7 +284,7 @@ export function FileContextMenu({
                   />
                   <Seperator />
                 </React.Fragment>
-              )}
+              )} */}
             
             </MenuGroup>
 

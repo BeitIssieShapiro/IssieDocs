@@ -16,6 +16,7 @@ interface UseTranscriptionProps {
   onTextChanged: (newText: string) => void;
   language: string;
   enabled: boolean;
+  toolbarEnabled: boolean;
 }
 
 export function useTranscription({
@@ -24,6 +25,7 @@ export function useTranscription({
   onTextChanged,
   language,
   enabled,
+  toolbarEnabled,
 }: UseTranscriptionProps) {
   const [isRecording, setIsRecording] = useState(false);
   const textRef = useRef(text);
@@ -48,14 +50,14 @@ export function useTranscription({
     if (Platform.OS !== 'ios' || !SpeechTranscription || !enabled) return;
 
     const timer = setTimeout(() => {
-      SpeechTranscription.attachToKeyboard();
+      SpeechTranscription.attachToKeyboard(toolbarEnabled);
     }, 300);
 
     return () => {
       clearTimeout(timer);
       SpeechTranscription.detachFromKeyboard();
     };
-  }, [enabled]);
+  }, [enabled, toolbarEnabled]);
 
   // Listen for transcription events
   useEffect(() => {

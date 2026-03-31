@@ -1,3 +1,10 @@
+- template
+- text toolbar - default off
+V- delete all
+- add speak button on kb toolbar. - add "Speak and Dictate" buttons
+- compare Verdana (current) with Arial
+
+
 Features 2025:
 - User feedback
 - support for fonts/bold/italic
