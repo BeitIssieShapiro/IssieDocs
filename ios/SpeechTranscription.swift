@@ -49,6 +49,11 @@ class SpeechTranscription: RCTEventEmitter {
   private var toolbarEnabled = true
   private var showMic = true
   private var isAttached = false
+  private var textToolsEnabled = true
+  private var speakDictateEnabled = true
+  private var speakButton: UIButton?
+  private var isSpeaking = false
+  private var speakBlinkTimer: Timer?
 
   override init() {
     super.init()
@@ -70,7 +75,7 @@ class SpeechTranscription: RCTEventEmitter {
     // Re-attach with the same toolbarEnabled setting to re-evaluate IssieBoard detection
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
       guard let self = self, self.isAttached else { return }
-      self.attachToKeyboard(self.toolbarEnabled)
+      self.attachToKeyboard(self.textToolsEnabled, speakDictateEnabled: self.speakDictateEnabled)
     }
   }
 
@@ -82,7 +87,8 @@ class SpeechTranscription: RCTEventEmitter {
   override func supportedEvents() -> [String]! {
     return [
       "onTranscription", "onTranscriptionEnd", "onTranscriptionError", "onTranscriptionStart",
-      "onToolbarAction"
+      "onToolbarAction",
+      "onSpeakingStart", "onSpeakingWord", "onSpeakingEnd"
     ]
   }
 
@@ -158,6 +164,20 @@ class SpeechTranscription: RCTEventEmitter {
     micBtn.addTarget(self, action: #selector(micButtonTapped), for: .touchUpInside)
     self.micIconButton = micBtn
 
+    // Speak button (TTS)
+    let speakBtn = UIButton(type: .custom)
+    speakBtn.setImage(UIImage(systemName: "speaker.wave.2", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18, weight: .medium)), for: .normal)
+    speakBtn.tintColor = UIColor.systemGreen
+    speakBtn.backgroundColor = UIColor.white.withAlphaComponent(0.6)
+    speakBtn.layer.cornerRadius = 8
+    speakBtn.clipsToBounds = false
+    speakBtn.layer.shadowColor = UIColor.black.cgColor
+    speakBtn.layer.shadowOffset = CGSize(width: 0, height: 1)
+    speakBtn.layer.shadowOpacity = 0.15
+    speakBtn.layer.shadowRadius = 2
+    speakBtn.addTarget(self, action: #selector(speakButtonTapped), for: .touchUpInside)
+    self.speakButton = speakBtn
+
     // Formatting buttons
     self.boldButton = makeFormattingButton(systemName: "bold", action: #selector(boldTapped))
     self.italicButton = makeFormattingButton(systemName: "italic", action: #selector(italicTapped))
@@ -174,7 +194,6 @@ class SpeechTranscription: RCTEventEmitter {
   }
 
   private func layoutToolbarButtons(in container: UIView) {
-    // Remove old subviews
     container.subviews.forEach { $0.removeFromSuperview() }
 
     let btnSize: CGFloat = 34
@@ -183,39 +202,45 @@ class SpeechTranscription: RCTEventEmitter {
     let btnY: CGFloat = (container.bounds.height - btnSize) / 2
     let containerWidth = container.bounds.width
 
-    // Collect visible buttons in logical order (mic first, then formatting)
     var visibleButtons: [UIButton] = []
-    if let micBtn = micIconButton, showMic { visibleButtons.append(micBtn) }
 
-    let formattingButtons: [(UIButton?, Bool)] = [
-      (boldButton, showBold),
-      (italicButton, showItalic),
-      (underlineButton, showUnderline),
-      (rtlButton, true),
-      (ltrButton, true),
-      (fontUpButton, true),
-      (fontDownButton, true),
-    ]
-    for (btn, show) in formattingButtons {
-      guard let btn = btn, show else { continue }
-      visibleButtons.append(btn)
+    // Speak & Dictate group
+    if speakDictateEnabled {
+        if let micBtn = micIconButton, showMic { visibleButtons.append(micBtn) }
+        if let spkBtn = speakButton { visibleButtons.append(spkBtn) }
     }
 
-    // Layout from start edge based on UI direction
+    // Text tools group
+    if textToolsEnabled {
+        let formattingButtons: [(UIButton?, Bool)] = [
+            (boldButton, showBold),
+            (italicButton, showItalic),
+            (underlineButton, showUnderline),
+            (rtlButton, true),
+            (ltrButton, true),
+            (fontUpButton, true),
+            (fontDownButton, true),
+        ]
+        for (btn, show) in formattingButtons {
+            guard let btn = btn, show else { continue }
+            visibleButtons.append(btn)
+        }
+    }
+
     if uiRTL {
-      var x = containerWidth - margin - btnSize
-      for btn in visibleButtons {
-        btn.frame = CGRect(x: x, y: btnY, width: btnSize, height: btnSize)
-        container.addSubview(btn)
-        x -= btnSize + spacing
-      }
+        var x = containerWidth - margin - btnSize
+        for btn in visibleButtons {
+            btn.frame = CGRect(x: x, y: btnY, width: btnSize, height: btnSize)
+            container.addSubview(btn)
+            x -= btnSize + spacing
+        }
     } else {
-      var x = margin
-      for btn in visibleButtons {
-        btn.frame = CGRect(x: x, y: btnY, width: btnSize, height: btnSize)
-        container.addSubview(btn)
-        x += btnSize + spacing
-      }
+        var x = margin
+        for btn in visibleButtons {
+            btn.frame = CGRect(x: x, y: btnY, width: btnSize, height: btnSize)
+            container.addSubview(btn)
+            x += btnSize + spacing
+        }
     }
   }
 
@@ -339,6 +364,18 @@ class SpeechTranscription: RCTEventEmitter {
     }
   }
 
+  @objc private func speakButtonTapped() {
+    if isSpeaking {
+      if hasListeners {
+        sendEvent(withName: "onToolbarAction", body: ["action": "stopSpeaking"])
+      }
+    } else {
+      if hasListeners {
+        sendEvent(withName: "onToolbarAction", body: ["action": "speak"])
+      }
+    }
+  }
+
   private func startTranscriptionFromToolbar() {
     if isRecording { return }
 
@@ -389,6 +426,35 @@ class SpeechTranscription: RCTEventEmitter {
     blinkTimer?.invalidate()
     blinkTimer = nil
     micIconButton?.imageView?.alpha = 1.0
+  }
+
+  private func updateSpeakAppearance() {
+    guard let button = speakButton else { return }
+    if isSpeaking {
+      button.tintColor = UIColor.systemOrange
+      startSpeakBlinkAnimation()
+    } else {
+      button.tintColor = UIColor.systemGreen
+      stopSpeakBlinkAnimation()
+      button.alpha = 1.0
+    }
+  }
+
+  private func startSpeakBlinkAnimation() {
+    stopSpeakBlinkAnimation()
+    guard let button = speakButton else { return }
+    speakBlinkTimer = Timer.scheduledTimer(withTimeInterval: 0.6, repeats: true) { [weak button] _ in
+      guard let imageView = button?.imageView else { return }
+      UIView.animate(withDuration: 0.3) {
+        imageView.alpha = imageView.alpha > 0.5 ? 0.3 : 1.0
+      }
+    }
+  }
+
+  private func stopSpeakBlinkAnimation() {
+    speakBlinkTimer?.invalidate()
+    speakBlinkTimer = nil
+    speakButton?.imageView?.alpha = 1.0
   }
 
   // MARK: - Public Methods
@@ -459,10 +525,12 @@ class SpeechTranscription: RCTEventEmitter {
   }
 
   @objc
-  func attachToKeyboard(_ enabled: Bool) {
+  func attachToKeyboard(_ textToolsEnabled: Bool, speakDictateEnabled: Bool) {
     DispatchQueue.main.async { [weak self] in
       guard let self = self else { return }
-      self.toolbarEnabled = enabled
+      self.textToolsEnabled = textToolsEnabled
+      self.speakDictateEnabled = speakDictateEnabled
+      self.toolbarEnabled = textToolsEnabled || speakDictateEnabled
       self.isAttached = true
 
       guard let firstResponder = self.findFirstResponder() else {
@@ -470,26 +538,23 @@ class SpeechTranscription: RCTEventEmitter {
         return
       }
 
-      NSLog("[SpeechTranscription] attachToKeyboard: firstResponder type = %@, toolbarEnabled = %d", String(describing: type(of: firstResponder)), enabled)
+      NSLog("[SpeechTranscription] attachToKeyboard: textTools=%d, speakDictate=%d", textToolsEnabled, speakDictateEnabled)
 
       let isIssieBoard = self.isIssieBoardKeyboard()
-      NSLog("[SpeechTranscription] isIssieBoardKeyboard = %d", isIssieBoard)
 
-      // Clear previous toolbar references
       self.micToolbar = nil
       self.micFloatingButton = nil
       self.micIconButton = nil
+      self.speakButton = nil
 
       var accessoryView: UIView? = nil
 
-      if enabled {
-        // Full toolbar: show mic only if IssieBoard (no built-in dictation)
+      if textToolsEnabled || speakDictateEnabled {
         self.showMic = isIssieBoard
         let toolbar = self.createToolbar()
         self.micToolbar = toolbar
         accessoryView = toolbar
       } else {
-        // Toolbar disabled: show mic-only if IssieBoard, nothing otherwise
         if isIssieBoard {
           let micView = self.createMicOnlyView()
           self.micFloatingButton = micView
@@ -497,23 +562,16 @@ class SpeechTranscription: RCTEventEmitter {
         }
       }
 
-      // Try to set inputAccessoryView via common text input types and KVC fallback
       if let textField = firstResponder as? UITextField {
         textField.inputAccessoryView = accessoryView
         textField.reloadInputViews()
-        NSLog("[SpeechTranscription] attached to UITextField, accessoryView=%@", String(describing: textField.inputAccessoryView))
       } else if let textView = firstResponder as? UITextView {
         textView.inputAccessoryView = accessoryView
         textView.reloadInputViews()
-        NSLog("[SpeechTranscription] attached to UITextView, accessoryView=%@", String(describing: textView.inputAccessoryView))
       } else if let view = firstResponder as? UIView {
-        // RN Fabric may use a wrapper; look for a UITextView child
         if let textView = self.findTextView(in: view) {
-          NSLog("[SpeechTranscription] attachToKeyboard: found child UITextView in %@", String(describing: type(of: view)))
           textView.inputAccessoryView = accessoryView
           textView.reloadInputViews()
-        } else {
-          NSLog("[SpeechTranscription] attachToKeyboard: no UITextView found in view hierarchy")
         }
       }
     }
