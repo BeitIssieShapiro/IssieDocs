@@ -149,23 +149,6 @@ function TextElement({
         };
     }, [editMode]);
 
-    const highlightedTextSpans = useMemo(() => {
-        if (!isSpeaking || !highlightRange) {
-            return <Text style={[styles.textStyle, style]}>{text.text}</Text>;
-        }
-        const { location, length } = highlightRange;
-        const before = text.text.substring(0, location);
-        const word = text.text.substring(location, location + length);
-        const after = text.text.substring(location + length);
-        return (
-            <Text style={[styles.textStyle, style]}>
-                {before}
-                <Text style={{ backgroundColor: '#FFD700' }}>{word}</Text>
-                {after}
-            </Text>
-        );
-    }, [isSpeaking, highlightRange, text.text, style]);
-
 
     // if (text.tableId) {
     //     console.log("text table",text.tableId, table)
@@ -206,6 +189,23 @@ function TextElement({
         fontStyle: text.italic ? 'italic' : 'normal',
         textDecorationLine: text.underline ? 'underline' : 'none',
     };
+
+    const highlightedTextSpans = useMemo(() => {
+        if (!isSpeaking || !highlightRange) {
+            return <Text style={[styles.textStyle, style]}>{text.text}</Text>;
+        }
+        const { location, length } = highlightRange;
+        const before = text.text.substring(0, location);
+        const word = text.text.substring(location, location + length);
+        const after = text.text.substring(location + length);
+        return (
+            <Text style={[styles.textStyle, style]}>
+                {before}
+                <Text style={{ backgroundColor: '#FFD700' }}>{word}</Text>
+                {after}
+            </Text>
+        );
+    }, [isSpeaking, highlightRange, text.text, style]);
 
     const moveIconStyle: any = { position: "absolute", ...(text.rtl ? { right: -25 } : { left: -25 }) }
     // console.log("text style", widthStyle)
