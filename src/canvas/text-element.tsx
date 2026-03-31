@@ -223,7 +223,7 @@ function TextElement({
             >
                 {!table && <AnimatedIcon style={[moveIconStyle, visibleAnimatedStyle]} info={{ type: "Ionicons", name: "move", size: 25, color: "blue" }} />}
                 <>
-                    {isSpeaking ? (
+                    {isSpeaking && (
                         <Animated.View style={[bgAnimatedStyle,
                             !table && widthStyle,
                             table && { width: posStyle.width },
@@ -231,25 +231,26 @@ function TextElement({
                         ]}>
                             {highlightedTextSpans}
                         </Animated.View>
-                    ) : (
-                        <AnimatedTextInput
-                            disableKeyboardShortcuts={true}
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                            allowFontScaling={false}
-                            multiline
-                            autoFocus
-                            textAlignVertical="top"
-                            style={[styles.textStyle, style, bgAnimatedStyle,
-                            !table && widthStyle,
-                            table && { width: posStyle.width },
-                            !table && { minWidth: Math.max(text.fontSize * ratio, 20 / ratio) }
-                            ]}
-                            value={text.text}
-                            onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
-                            onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
-                        />
                     )}
+                    <AnimatedTextInput
+                        disableKeyboardShortcuts={true}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        allowFontScaling={false}
+                        multiline
+                        autoFocus
+                        editable={!isSpeaking}
+                        textAlignVertical="top"
+                        style={[styles.textStyle, style, bgAnimatedStyle,
+                        !table && widthStyle,
+                        table && { width: posStyle.width },
+                        !table && { minWidth: Math.max(text.fontSize * ratio, 20 / ratio) },
+                        isSpeaking && { height: 0, overflow: 'hidden', position: 'absolute', opacity: 0 }
+                        ]}
+                        value={text.text}
+                        onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
+                        onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
+                    />
                     {/* Hidden Text to measure layout */}
                     <Text
                         allowFontScaling={false}
