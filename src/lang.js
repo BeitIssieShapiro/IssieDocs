@@ -28,9 +28,9 @@ export const useKeyboardLanguage = () => {
 
   const setNormalizeLang = lang => {
     console.log('KB Lang detected', lang);
-    if (lang.indexOf('he') >= 0) {
+    if (lang.startsWith('he')) {
       setLanguage('he');
-    } else if (lang.indexOf('ar') >= 0) {
+    } else if (lang.startsWith('ar')) {
       setLanguage('ar');
     } else setLanguage('en');
   };
@@ -47,17 +47,34 @@ export const useKeyboardLanguage = () => {
     );
 
     // 3. Setup Android Listener (Workaround via Keyboard Visibility)
-    let androidListener;
+    // Android has no native event for keyboard language changes, so we poll
+    // while the keyboard is visible to catch mid-session language switches.
+    let androidShowListener;
+    let androidHideListener;
+    let androidPollTimer;
     if (Platform.OS === 'android') {
-      androidListener = Keyboard.addListener('keyboardDidShow', () => {
-        // Ask Native module to check and emit
+      androidShowListener = Keyboard.addListener('keyboardDidShow', () => {
         KeyboardLanguage.checkAndEmit();
+        // Poll every 2 seconds while keyboard is open
+        if (!androidPollTimer) {
+          androidPollTimer = setInterval(() => {
+            KeyboardLanguage.checkAndEmit();
+          }, 2000);
+        }
+      });
+      androidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+        if (androidPollTimer) {
+          clearInterval(androidPollTimer);
+          androidPollTimer = null;
+        }
       });
     }
 
     return () => {
       languageListener.remove();
-      androidListener?.remove();
+      androidShowListener?.remove();
+      androidHideListener?.remove();
+      if (androidPollTimer) clearInterval(androidPollTimer);
     };
   }, []);
 

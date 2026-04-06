@@ -225,6 +225,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         });
     }, [textBold, textItalic, textUnderline, textAlignment, textFont]);
 
+    // Reset font to default if current font is not compatible with keyboard language
+    useEffect(() => {
+        if (textFont === undefined) return; // default font supports all languages
+        const fontInfo = AVAILABLE_FONTS.find(af => af.name === textFont);
+        if (fontInfo && !fontInfo.supportedLanguages.includes(kbLanguage)) {
+            setTextFont(undefined);
+        }
+    }, [kbLanguage]);
+
     // Listen for native keyboard toolbar formatting actions
     useEffect(() => {
         if (Platform.OS !== 'ios' || !speechTranscriptionEmitter) return;

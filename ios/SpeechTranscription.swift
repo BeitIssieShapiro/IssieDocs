@@ -63,21 +63,18 @@ class SpeechTranscription: RCTEventEmitter {
     super.init()
     speechSynthesizer.delegate = self
     speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en"))
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(inputModeDidChange),
-      name: UITextInputMode.currentInputModeDidChangeNotification,
-      object: nil
-    )
   }
 
   deinit {
     NotificationCenter.default.removeObserver(self)
   }
 
-  @objc private func inputModeDidChange(_ notification: Notification) {
+  // Called from JS when keyboard language changes, to re-evaluate toolbar
+  // (e.g. IssieBoard detection). This replaces the native notification observer
+  // to avoid reloadInputViews() interfering with keyboard language detection.
+  @objc
+  func refreshToolbar() {
     guard isAttached else { return }
-    // Re-attach with the same toolbarEnabled setting to re-evaluate IssieBoard detection
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
       guard let self = self, self.isAttached else { return }
       self.attachToKeyboard(self.textToolsEnabled, speakDictateEnabled: self.speakDictateEnabled)

@@ -41,10 +41,13 @@ export function useTranscription({
   useEffect(() => { selectionEndRef.current = selectionEnd; }, [selectionEnd]);
   useEffect(() => { onTextChangedRef.current = onTextChanged; }, [onTextChanged]);
 
-  // Set language when it changes
+  // Set language when it changes, and refresh the native toolbar
+  // (toolbar refresh was previously done via a native notification observer,
+  // but that caused reloadInputViews() to interfere with keyboard language detection)
   useEffect(() => {
     if (Platform.OS !== 'ios' || !SpeechTranscription || !enabled) return;
     SpeechTranscription.setLanguage(language);
+    SpeechTranscription.refreshToolbar();
   }, [language, enabled]);
 
   // Attach/detach native toolbar when entering/leaving edit mode
