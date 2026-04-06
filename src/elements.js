@@ -32,7 +32,7 @@ export const dimensions = {
 
 
 export function getFont() {
-    return isRTL() ? 'Alef' : 'Verdana';
+    return isRTL() ? 'Alef' : 'Arial';
 }
 export function getFontFamily() {
     return { fontFamily: getFont() }

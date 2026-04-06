@@ -6,6 +6,7 @@ import { AudioWaveForm } from "./audio-progress";
 import { isRTL } from "./lang";
 import { audioRecorderPlayer } from "./App";
 import { MyIcon } from "./common/icons";
+import { AppText } from "./elements";
 
 
 
@@ -237,7 +238,7 @@ export function RecordButton({ audioFile, backgroundColor, size, height, revisio
             </TouchableOpacity>
             <View style={{ flexDirection: "column", height: 70, width: size * 2 }}>
                 {recording && <AudioWaveForm width={size * 2} height={40} infiniteProgress={recordProgress} color={BTN_BACK_COLOR} baseColor={"lightgray"} />}
-                {recording && <Text allowFontScaling={false} style={{ fontSize: 16, width: size * 2, height: 30, textAlign: "center" }}>{state.recordTime?.substring(0, 5) || ""}</Text>}
+                {recording && <AppText allowFontScaling={false} style={{ fontSize: 16, width: size * 2, height: 30, textAlign: "center" }}>{state.recordTime?.substring(0, 5) || ""}</Text>}
             </View>
 
         </View>

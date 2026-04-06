@@ -33,6 +33,10 @@ export function FileContextMenu({
   shareCaption,
   onDuplicate,
 
+  onSaveAsTemplate,
+  onEditTemplate,
+  isTemplate,
+
   onAddFromCamera,
   onAddFromMediaLib,
   onBlankPage,
@@ -245,6 +249,30 @@ export function FileContextMenu({
                     iconType={'MDI'}
                     onPress={callbackAndClose(onDuplicate)}
                     text={translate('BtnDuplicate')}
+                  />
+                  <Seperator />
+                </React.Fragment>
+              )}
+              {onSaveAsTemplate && !isTemplate && (
+                <React.Fragment>
+                  <OneMenu
+                    scale={scale}
+                    icon="file-document-check"
+                    iconType={'MDI'}
+                    onPress={callbackAndClose(onSaveAsTemplate)}
+                    text={translate('BtnSaveAsTemplate')}
+                  />
+                  <Seperator />
+                </React.Fragment>
+              )}
+              {onEditTemplate && isTemplate && (
+                <React.Fragment>
+                  <OneMenu
+                    scale={scale}
+                    icon="file-document-edit"
+                    iconType={'MDI'}
+                    onPress={callbackAndClose(onEditTemplate)}
+                    text={translate('BtnEditTemplate')}
                   />
                   <Seperator />
                 </React.Fragment>

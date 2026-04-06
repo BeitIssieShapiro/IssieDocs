@@ -5,6 +5,7 @@ export const SRC_GALLERY = 'gallery';
 export const SRC_FILE = 'file';
 export const SRC_RENAME = 'rename'
 export const SRC_DUPLICATE = 'duplicate'
+export const SRC_FROM_TEMPLATE = 'fromTemplate'
 
 import { translate } from './lang';
 import { trace } from './log';

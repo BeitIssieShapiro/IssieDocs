@@ -19,11 +19,12 @@ import {
 } from './elements'
 import ImageResizer from '@bam.tech/react-native-image-resizer';
 
-import { getNewPage, SRC_RENAME, SRC_DUPLICATE, SRC_FILE } from './newPage'
+import { getNewPage, SRC_RENAME, SRC_DUPLICATE, SRC_FROM_TEMPLATE, SRC_FILE } from './newPage'
 
 import Scroller from './scroller';
 
 import { FileSystem } from './filesystem';
+import RNFS from 'react-native-fs';
 import { assert, trace } from './log.js';
 import { normalizeFoAndroid } from './canvas/utils';
 import { MyIcon } from './common/icons';
@@ -151,7 +152,7 @@ export default class IssieSavePhoto extends React.Component {
     let multiPage = false;
     let imageUri, pathToSave, pages = [];
     let pdf = false;
-    if (this.isRename() || this.isDuplicate()) {
+    if (this.isRename() || this.isCopyMode()) {
       imageUri = decodeURI(this.props.route.params.sheet.defaultSrc);
       pathToSave = decodeURI(this.props.route.params.sheet.path);
     } else {
@@ -197,7 +198,7 @@ export default class IssieSavePhoto extends React.Component {
         this.updateImageDimension();
       }
     });
-    if (this.isRename() || this.isDuplicate()) {
+    if (this.isRename() || this.isCopyMode()) {
       setTimeout(() => this.setState({ phase: PickName }), 50);
     }
     this.onLayout(pdf);
@@ -206,6 +207,8 @@ export default class IssieSavePhoto extends React.Component {
   isRename = () => this.props.route.params.imageSource === SRC_RENAME;
   isFile = () => this.props.route.params.imageSource === SRC_FILE;
   isDuplicate = () => this.props.route.params.imageSource === SRC_DUPLICATE;
+  isFromTemplate = () => this.props.route.params.imageSource === SRC_FROM_TEMPLATE;
+  isCopyMode = () => this.isDuplicate() || this.isFromTemplate();
   isBlankPage = () => this.props.route.params.isBlank === true;
   getBlankPageType = () => this.state.blankPageType;
 
@@ -215,7 +218,7 @@ export default class IssieSavePhoto extends React.Component {
     //setTimeout(async () => {
     try {
       let imgSize =
-        (this.isDuplicate() || this.isRename()) ?
+        (this.isCopyMode() || this.isRename()) ?
           { w: 0, h: 0 } :
           await getImageDimensions(this.state.imageUri);
 
@@ -385,7 +388,7 @@ export default class IssieSavePhoto extends React.Component {
         let filePath = targetFolder + "/" + fileName;
 
         //add .jpg only if not rename or dup
-        if (this.isDuplicate() || this.isRename()) {
+        if (this.isCopyMode() || this.isRename()) {
           if (newPathToSave.endsWith(".jpg")) {
             filePath += ".jpg";
           }
@@ -423,7 +426,7 @@ export default class IssieSavePhoto extends React.Component {
           thumbnailSrc = filePath + "/0" + ".jpg";
         } else {
           //move/copy entire folder, or save single file
-          await FileSystem.main.saveFile(newPathToSave, filePath, this.isDuplicate());
+          await FileSystem.main.saveFile(newPathToSave, filePath, this.isCopyMode());
           thumbnailSrc = filePath
 
           // add initial queue for lines/math Page
@@ -433,27 +436,70 @@ export default class IssieSavePhoto extends React.Component {
           }
         }
 
-        if (!this.isRename() && !this.isDuplicate()) {
+        if (!this.isRename() && !this.isCopyMode()) {
           await FileSystem.main.saveThumbnail(thumbnailSrc);
         }
 
 
-        if ((this.isRename() || this.isDuplicate()) && newPathToSave.endsWith('.jpg')) {
+        if ((this.isRename() || this.isCopyMode()) && newPathToSave.endsWith('.jpg')) {
           //single existing file
           try {
-            await FileSystem.main.saveFile(newPathToSave + ".json", filePath + ".json", this.isDuplicate());
+            await FileSystem.main.saveFile(newPathToSave + ".json", filePath + ".json", this.isCopyMode());
           } catch (e) {
             //ignore, as maybe json is missing
           }
 
           // rename/move attachments
           await FileSystem.main._iterateAttachments(newPathToSave, async (srcAttachmentPath, attachmentName) => {
-            await FileSystem.main.saveFile(srcAttachmentPath, filePath + FileSystem.ATACHMENT_PREFIX + attachmentName, this.isDuplicate());
+            await FileSystem.main.saveFile(srcAttachmentPath, filePath + FileSystem.ATACHMENT_PREFIX + attachmentName, this.isCopyMode());
           })
         }
 
-        if (this.isRename() || this.isDuplicate()) {
-          await FileSystem.main.renameOrDuplicateThumbnail(newPathToSave, filePath, this.isDuplicate());
+        if (this.isRename() || this.isCopyMode()) {
+          await FileSystem.main.renameOrDuplicateThumbnail(newPathToSave, filePath, this.isCopyMode());
+        }
+
+        // For templates: lock the undo queue in each copied page's metadata
+        if (this.isFromTemplate()) {
+          try {
+            if (filePath.endsWith('.jpg')) {
+              // Single-page worksheet
+              await this._lockPageMetadata(filePath + '.json');
+            } else {
+              // Multi-page worksheet (directory)
+              const pages = await RNFS.readDir(filePath);
+              for (const page of pages) {
+                if (page.name.endsWith('.json')) {
+                  await this._lockPageMetadata(page.path);
+                }
+              }
+            }
+          } catch (e) {
+            trace('template lock error', e);
+          }
+          // Reload folder so in-memory WorkSheet reflects isTemplate removal
+          await folder.reload();
+          FileSystem.main._notify();
+        }
+
+        // For "Save as Template": mark the copied worksheet's first page JSON
+        if (this.props.route.params.saveAsTemplate) {
+          try {
+            const jsonPath = filePath.endsWith('.jpg') ? filePath + '.json' : filePath + '/0.jpg.json';
+            let data = { version: '2.0', elements: [] };
+            const jsonExists = await RNFS.exists(jsonPath);
+            if (jsonExists) {
+              const content = await RNFS.readFile(jsonPath, 'utf8');
+              data = JSON.parse(content);
+            }
+            data.isTemplate = true;
+            await FileSystem.main.writeFile(jsonPath, JSON.stringify(data, undefined, ' '));
+          } catch (e) {
+            trace('save as template mark error', e);
+          }
+          // Reload folder so in-memory WorkSheet reflects isTemplate flag
+          await folder.reload();
+          FileSystem.main._notify();
         }
 
         let returnFolderCallback = this.props.route.params.returnFolderCallback;
@@ -476,6 +522,27 @@ export default class IssieSavePhoto extends React.Component {
       this.saveInProgress = false;
     }
   }
+
+  _lockPageMetadata = async (jsonPath) => {
+    try {
+      const content = await FileSystem.main.loadFile(jsonPath);
+      const data = JSON.parse(content);
+      if (data.elements) {
+        // Add a lock at the end of the elements if not already locked
+        const hasLock = data.elements.some(e => e.type === 'lock');
+        if (!hasLock) {
+          data.elements.push({ type: 'lock', timestamp: Date.now() });
+        }
+      }
+      // Remove template flag from the copy
+      delete data.isTemplate;
+      await FileSystem.main.writeFile(jsonPath, JSON.stringify(data, undefined, ' '));
+    } catch (e) {
+      // JSON may not exist for some pages, ignore
+      trace('_lockPageMetadata skip', jsonPath, e);
+    }
+  }
+
   //zero based page number
   exportPdfPage = async (page) => {
     return new Promise((resolve, reject) => {

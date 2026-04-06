@@ -554,6 +554,24 @@ export class FileSystem {
     return RNFS.exists(fullPath);
   }
 
+  async setTemplate(sheet, isTemplate) {
+    const jsonPath = sheet.defaultSrc + '.json';
+    try {
+      let data = { version: '2.0', elements: [] };
+      const exists = await RNFS.exists(jsonPath);
+      if (exists) {
+        const content = await RNFS.readFile(jsonPath, 'utf8');
+        data = JSON.parse(content);
+      }
+      data.isTemplate = isTemplate;
+      await RNFS.writeFile(jsonPath, JSON.stringify(data, undefined, ' '));
+      sheet.setTemplate(isTemplate);
+    } catch (e) {
+      trace('setTemplate error', e);
+    }
+    this._notify();
+  }
+
   async saveFile(uri, filePath, isCopy) {
     trace('saveFile', arguments);
     //asserts that the filePath is in this filesystem:
@@ -948,8 +966,9 @@ export class FileSystem {
       return [];
     }
     const files = await RNFS.readDir(filePrefix.substring(0, slashPos));
+    const attachPrefix = filePrefix + FileSystem.ATACHMENT_PREFIX;
     const filesToIterate = files.filter(
-      file => file.path && typeof file.path === 'string' && file.path.startsWith(filePrefix),
+      file => file.path && typeof file.path === 'string' && file.path.startsWith(attachPrefix),
     );
     const donePromises = filesToIterate.map(file => {
       const name = file.path.substring(
@@ -1756,6 +1775,20 @@ export class FileSystemFolder {
           sheet.setThumbnail(_androidFileName(newestFile.path));
         }
         sheet.lastUpdate = lastUpdate;
+
+        // Check if this worksheet is marked as a template via its first page JSON
+        try {
+          const jsonFile = sheet.defaultSrc + '.json';
+          if (await RNFS.exists(jsonFile)) {
+            const content = await RNFS.readFile(jsonFile, 'utf8');
+            const data = JSON.parse(content);
+            if (data.isTemplate) {
+              sheet.setTemplate(true);
+            }
+          }
+        } catch (e) {
+          // ignore parse errors
+        }
 
         this._files.push(sheet);
       }

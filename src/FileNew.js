@@ -6,14 +6,7 @@ import {
     AppText, colors, semanticColors, dimensions
 } from './elements'
 import { isRTL } from './lang';
-// import { translate } from './lang.js'
-
-// import {
-//     Menu,
-//     MenuOptions,
-//     MenuOption,
-//     MenuTrigger,
-// } from 'react-native-popup-menu';
+import { MyIcon } from './common/icons.tsx';
 
 
 const TILE_PADDING = 30
@@ -47,6 +40,15 @@ export default function FileNew(props) {
 
                         <View style={{ flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
                             <PageImage src={imageSrc} multiPage={props.count > 1} width={"100%"} height={"80%"} />
+                            {props.page.isTemplate && (
+                                <View style={{
+                                    position: 'absolute', top: 4, right: 4,
+                                    backgroundColor: '#4A90D9', borderRadius: 4,
+                                    paddingHorizontal: 4, paddingVertical: 2,
+                                }}>
+                                    <MyIcon info={{ type: 'MDI', name: 'file-document-check', size: 16, color: 'white' }} />
+                                </View>
+                            )}
                             <View style={{ height: '20%', backgroundColor: '#a7a7a7', justifyContent: "space-between", alignItems: "center", width: '100%', flexDirection: props.rowDir }} >
                                 <MoreButton onPress={props.onContextMenu} size={30} color={"white"} />
                                 <AppText style={{
@@ -72,6 +74,15 @@ export default function FileNew(props) {
                     <View style={{ flexDirection: props.rowRevDir, alignItems: 'center', paddingTop: 3 }}>
                         <View style={{ borderWidth: .5, borderColor: colors.lightBlue }}>
                             <PageImage src={imageSrc} multiPage={props.count > 1} width={40} height={50} />
+                            {props.page.isTemplate && (
+                                <View style={{
+                                    position: 'absolute', top: 2, right: 2,
+                                    backgroundColor: '#4A90D9', borderRadius: 3,
+                                    paddingHorizontal: 2, paddingVertical: 1,
+                                }}>
+                                    <MyIcon info={{ type: 'MDI', name: 'file-document-check', size: 12, color: 'white' }} />
+                                </View>
+                            )}
                         </View>
                         <AppText
                             style={{ paddingRight: 20, paddingLeft: 20, fontSize: 25, color: semanticColors.titleText ,

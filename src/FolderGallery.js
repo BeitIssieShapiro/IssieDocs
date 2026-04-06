@@ -58,6 +58,7 @@ import {
   SRC_GALLERY,
   SRC_RENAME,
   SRC_DUPLICATE,
+  SRC_FROM_TEMPLATE,
   getNewPage,
   SRC_FILE,
 } from './newPage';
@@ -888,6 +889,58 @@ export default class FolderGallery extends React.Component {
     });
   };
 
+  SaveAsTemplate = () => {
+    if (!this.state.selected) return;
+    this.props.navigation.navigate('SavePhoto', {
+      sheet: this.state.selected,
+      imageSource: SRC_DUPLICATE,
+      saveAsTemplate: true,
+      folder: this.state.currentFolder,
+      returnFolderCallback: f => this.setReturnFolder(f),
+      saveNewFolder: (newFolder, color, icon) =>
+        this.saveNewFolder(newFolder, color, icon, false),
+      title: translate('TemplatePageFormTitle'),
+    });
+  };
+
+  EditTemplate = () => {
+    if (!this.state.selected) return;
+    this.goEdit(this.state.selected, this.state.currentFolder, false);
+  };
+
+  OpenFromTemplate = (item) => {
+    this.props.navigation.navigate('SavePhoto', {
+      sheet: item,
+      imageSource: SRC_FROM_TEMPLATE,
+      folder: this.state.currentFolder,
+      returnFolderCallback: f => this.setReturnFolder(f),
+      saveNewFolder: (newFolder, color, icon) =>
+        this.saveNewFolder(newFolder, color, icon, false),
+      title: translate('TemplatePageFormTitle'),
+      goHomeAndThenToEdit: (path, pIndex) => {
+        setTimeout(async () => {
+          this.props.navigation.dispatch(StackActions.popToTop());
+          let fileName = FileSystem.getFileNameFromPath(path, false);
+          const folder = this.state.currentFolder;
+          let page;
+          if (folder) {
+            page = await folder.getItem(fileName);
+          } else {
+            const defFolder = this.state.folders?.find(
+              f => f.name == FileSystem.DEFAULT_FOLDER.name,
+            );
+            if (defFolder) {
+              page = await defFolder.getItem(fileName);
+            }
+          }
+          if (page) {
+            this.goEdit(page, this.state.currentFolder, false, pIndex);
+          }
+        }, 10);
+      },
+    });
+  };
+
   setReturnFolder = folderID => {
     trace('setReturnFolder', folderID);
     if (folderID === FileSystem.DEFAULT_FOLDER.name) {
@@ -1380,6 +1433,17 @@ export default class FolderGallery extends React.Component {
                 ? () => this.DuplicatePage()
                 : undefined
             }
+            onSaveAsTemplate={
+              this.state.selected && !this.state.selectedFolder
+                ? () => this.SaveAsTemplate()
+                : undefined
+            }
+            onEditTemplate={
+              this.state.selected && !this.state.selectedFolder
+                ? () => this.EditTemplate()
+                : undefined
+            }
+            isTemplate={this.state.selected?.isTemplate}
             onAddFromCamera={
               this.state.selected && !this.state.selectedFolder
                 ? () => this.AddToPageFromCamera(this.state.selected)
@@ -1546,9 +1610,9 @@ export default class FolderGallery extends React.Component {
           {/** Progress */}
           {this.state.progress && (
             <View style={globalStyles.progressBarHost}>
-              <Text style={{ fontSize: 28, marginBottom: 5 }}>
+              <AppText style={{ fontSize: 28, marginBottom: 5 }}>
                 {this.state.progress.message}
-              </Text>
+              </AppText>
               <Progress.Bar
                 width={this.state.windowSize.width * 0.6}
                 progress={this.state.progress.percent / 100}
@@ -1882,11 +1946,13 @@ export default class FolderGallery extends React.Component {
                             editMode: this.state.editMode,
                             //selected: this.isSelected(item),
                             onPress: () =>
-                              this.goEdit(
-                                item,
-                                this.state.currentFolder,
-                                false,
-                              ),
+                              item.isTemplate
+                                ? this.OpenFromTemplate(item)
+                                : this.goEdit(
+                                    item,
+                                    this.state.currentFolder,
+                                    false,
+                                  ),
                             onContextMenu: () => this.setSelected(item),
                             count: item.count,
                           })}

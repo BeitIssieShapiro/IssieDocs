@@ -23,7 +23,7 @@ import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
 import { trace } from './log';
 import { arrLast, pageTitleAddition, setNavParam } from './utils';
-import { colors, dimensions, getImageDimensions, getRoundedButton, globalStyles, Icon, semanticColors, Spacer, textSizes } from './elements';
+import { AppText, colors, dimensions, getImageDimensions, getRoundedButton, globalStyles, Icon, semanticColors, Spacer, textSizes } from './elements';
 import EditorToolbar from './editor-toolbar';
 import { getNewPage, SRC_CAMERA, SRC_FILE, SRC_GALLERY, SRC_RENAME } from './newPage';
 import { EditModes, RootStackParamList } from './types';
@@ -2407,10 +2407,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             }
 
             {shareProgress >= 0 && <View style={globalStyles.progressBarHost}>
-                <Text style={{ fontSize: 28, marginBottom: 5 }}>{fTranslate("ExportProgress",
+                <AppText style={{ fontSize: 28, marginBottom: 5 }}>{fTranslate("ExportProgress",
                     shareProgressPage.toString(),
                     (pageRef.current.count > 0 ? pageRef.current.count : 1).toString())
-                }</Text>
+                }</AppText>
                 <Progress.Bar width={windowSize.width * .6} progress={shareProgress} style={[isRTL() && { transform: [{ scaleX: -1 }] }]} />
             </View>}
 

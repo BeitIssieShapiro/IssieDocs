@@ -6,6 +6,7 @@ export class WorkSheet {
     _name;
     _path;
     _thumbnail;
+    _isTemplate = false;
     lastUpdate;
 
     constructor(path, name) {
@@ -27,6 +28,14 @@ export class WorkSheet {
 
     get path() {
         return this._path;
+    }
+
+    get isTemplate() {
+        return this._isTemplate;
+    }
+
+    setTemplate(val) {
+        this._isTemplate = val;
     }
 
     get defaultSrc() {
