@@ -73,6 +73,11 @@ export const KB_SPEAK_DICTATE = {
     no: 2
 }
 
+export const SPEECH_RATE = {
+    name: 'speechRate',
+    default: 0.5
+}
+
 export const LAST_COLORS = {
     name: 'lastColors',
     max: 4
@@ -90,6 +95,11 @@ export function getFeaturesSetting() {
 
 export function getUseTextSetting() {
     return getSetting(TEXT_BUTTON.name, TEXT_BUTTON.yes) === TEXT_BUTTON.yes;
+}
+
+export function getSpeechRateSetting() {
+    const rate = getSetting(SPEECH_RATE.name, SPEECH_RATE.default);
+    return typeof rate === 'number' ? rate : SPEECH_RATE.default;
 }
 
 export function getSetting(name, def) {

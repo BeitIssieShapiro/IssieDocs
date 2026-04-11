@@ -47,7 +47,7 @@ export function useTranscription({
   useEffect(() => {
     if (Platform.OS !== 'ios' || !SpeechTranscription || !enabled) return;
     SpeechTranscription.setLanguage(language);
-    SpeechTranscription.refreshToolbar();
+    SpeechTranscription.refreshToolbar?.();
   }, [language, enabled]);
 
   // Attach/detach native toolbar when entering/leaving edit mode
@@ -98,7 +98,13 @@ export function useTranscription({
       } else {
         const before = currentText.substring(0, insertPos);
         const after = currentText.substring(insertPos + prevTranscript.length);
-        const newText = before + event.text + after;
+        // Add a space before the first transcription if needed
+        const needsSpace = prevTranscript.length === 0 && before.length > 0 && !before.endsWith(' ') && !before.endsWith('\n');
+        const prefix = needsSpace ? ' ' : '';
+        const newText = before + prefix + event.text + after;
+        if (needsSpace) {
+          sessionInsertPosRef.current = insertPos + 1;
+        }
         lastTranscriptRef.current = event.text;
         textRef.current = newText;
         onTextChangedRef.current(newText);

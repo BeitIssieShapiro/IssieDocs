@@ -1,12 +1,13 @@
 // TextElement.tsx
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { View, Text, TextInput, StyleSheet, LayoutChangeEvent, TextInputProps, ViewProps, ColorValue, Platform } from "react-native";
+import { View, Text, TextInput, StyleSheet, LayoutChangeEvent, TextInputProps, ViewProps, ColorValue, Platform, Alert } from "react-native";
 import { SketchText, MoveTypes, SketchPoint, SketchTable } from "./types";
 import { calcEffectiveHorizontalLines, tableColWidth, tableRowHeight } from "./utils";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { MyIcon } from "../common/icons";
 import { useTranscription, speechTranscriptionEmitter, SpeechTranscription } from "../use-transcription";
-import { getSetting, KB_TEXT_TOOLS, KB_SPEAK_DICTATE } from "../settings";
+import { translate } from "../lang";
+import { getSetting, KB_TEXT_TOOLS, KB_SPEAK_DICTATE, SPEECH_RATE, getSpeechRateSetting } from "../settings";
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 const AnimatedIcon = Animated.createAnimatedComponent(MyIcon);
@@ -46,7 +47,7 @@ function TextElement({
     const [revision, setRevision] = useState<number>(0)
     //console.log("text ratio", ratio, actualWidth, text.fontSize)
     const [textTillSelection, setTextTillSelection] = useState<string>(text.text);
-    const [selection, setSelection] = useState({ start: 0, end: 0 });
+    const [selection, setSelection] = useState({ start: text.text.length, end: text.text.length });
     const textBGColor = useSharedValue<ColorValue>("yellow");
     const moveIconDisplay = useSharedValue<'none' | 'flex' | undefined>("flex");
     const table = text.tableId && tables?.find(table => table.id == text.tableId);
@@ -110,7 +111,7 @@ function TextElement({
         const toolbarSub = speechTranscriptionEmitter.addListener('onToolbarAction', (event: { action: string }) => {
             if (event.action === 'speak') {
                 if (textTextRef.current.length > 0) {
-                    SpeechTranscription.startSpeaking(textTextRef.current, languageRef.current || 'en');
+                    SpeechTranscription.startSpeaking(textTextRef.current, languageRef.current || 'en', getSpeechRateSetting());
                 }
             } else if (event.action === 'stopSpeaking') {
                 SpeechTranscription.stopSpeaking();
@@ -131,11 +132,16 @@ function TextElement({
             setHighlightRange(null);
         });
 
+        const volumeSub = speechTranscriptionEmitter.addListener('onLowVolume', () => {
+            Alert.alert(translate("LowVolumeWarning"));
+        });
+
         return () => {
             toolbarSub.remove();
             startSub.remove();
             wordSub.remove();
             endSub.remove();
+            volumeSub.remove();
         };
     }, [editMode]);
 
@@ -191,14 +197,14 @@ function TextElement({
 
     const highlightedTextSpans = useMemo(() => {
         if (!isSpeaking || !highlightRange) {
-            return <Text style={[styles.textStyle, style]}>{text.text}</Text>;
+            return <Text allowFontScaling={false} style={[styles.textStyle, style]}>{text.text}</Text>;
         }
         const { location, length } = highlightRange;
         const before = text.text.substring(0, location);
         const word = text.text.substring(location, location + length);
         const after = text.text.substring(location + length);
         return (
-            <Text style={[styles.textStyle, style]}>
+            <Text allowFontScaling={false} style={[styles.textStyle, style]}>
                 {before}
                 <Text style={{ backgroundColor: '#FFD700' }}>{word}</Text>
                 {after}

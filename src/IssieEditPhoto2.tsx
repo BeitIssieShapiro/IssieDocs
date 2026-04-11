@@ -21,7 +21,7 @@ import { CurrentEdited, ElementBase, ElementTypes, MoveTypes, Offset, SketchElem
 import Canvas from './canvas/canvas';
 import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
-import { trace } from './log';
+//import { trace } from './log';
 import { arrLast, pageTitleAddition, setNavParam } from './utils';
 import { AppText, colors, dimensions, getImageDimensions, getRoundedButton, globalStyles, Icon, semanticColors, Spacer, textSizes } from './elements';
 import EditorToolbar from './editor-toolbar';
@@ -94,7 +94,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const currPageIndexRef = useRef(pageIndex ?? 0);
     const currentFileRef = useRef(currentFile);
     const queue = useRef(new DoQueue(async (attachName: string) => {
-        console.log("File Evicted from queue");
+        //console.log("File Evicted from queue");
         await FileSystem.main.deleteAttachedFile(pageRef.current, currPageIndexRef.current, attachName);
     }));
 
@@ -289,7 +289,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         const loadPageForSharing = async () => {
             try {
-                trace("Loading page for sharing:", sharingPageIndex);
+                //trace("Loading page for sharing:", sharingPageIndex);
 
                 // Load the page - this will update all UI state
                 await loadPage(pageRef.current, sharingPageIndex);
@@ -297,7 +297,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 // Signal that layout is complete and ready to capture
                 setReadyToCapture(true);
             } catch (e) {
-                console.log("Failed to load page for sharing", e);
+                //console.log("Failed to load page for sharing", e);
                 setSharingPageIndex(-1);
                 setShareProgress(-1);
             }
@@ -312,7 +312,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         const captureCanvas = async () => {
             try {
-                trace("Capturing canvas for page:", sharingPageIndex);
+                //trace("Capturing canvas for page:", sharingPageIndex);
 
                 // Capture the canvas
                 const uri = await canvasRef.current?.toExport();
@@ -335,7 +335,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     setSharingPageIndex(nextPageIndex);
                 } else {
                     // All pages captured - finalize share
-                    trace("All pages captured, finalizing share");
+                    //trace("All pages captured, finalizing share");
                     if (sharingMode === 'pdf') {
                         await finalizePDFShare(sharingNameRef.current, sharingDataUrlsRef.current);
                     } else {
@@ -350,7 +350,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     sharingNameRef.current = '';
                 }
             } catch (e) {
-                console.log("Canvas capture failed", e);
+                //console.log("Canvas capture failed", e);
                 setSharingPageIndex(-1);
                 setShareProgress(-1);
                 sharingDataUrlsRef.current = [];
@@ -391,7 +391,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         if (currentBottomY < availableSpace - keyboardHeightRef.current) {
             // Page bottom is too high - adjust scroll to align bottom with bottom of screen
             const newY = -(res.actualSize.height / ratioRef.current - availableSpace - keyboardHeightRef.current);
-            trace("Auto-scrolling to prevent empty space at bottom:", newY, "currentBottomY:", currentBottomY, "availableSpace:", availableSpace);
+            //trace("Auto-scrolling to prevent empty space at bottom:", newY, "currentBottomY:", currentBottomY, "availableSpace:", availableSpace);
             handleMoveCanvas({ x: moveCanvasRef.current.x, y: newY });
         }
     }
@@ -403,7 +403,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setZoom(1);
         setMoveCanvas({ x: 0, y: 0 });
 
-        trace("EditPhoto CurrentFile: ", newCurrentFile);
+        //trace("EditPhoto CurrentFile: ", newCurrentFile);
         if (newPage.count > 0) {
             setNavParam(navigation, 'pageTitleAddition', pageTitleAddition(newPage.count, index));
         }
@@ -427,7 +427,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         // This prevents getting stale/swapped dimensions on rotation
         requestAnimationFrame(() => {
             const currentDims = Dimensions.get('window');
-            trace("Dimension change", currentDims)
+            //trace("Dimension change", currentDims)
             setWindowSize(currentDims);
             windowSizeRef.current = currentDims;
             calcCanvasRatio(currentFileRef.current);
@@ -471,12 +471,22 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         let kbTop = (e.endCoordinates.screenY - (canvasTopRef.current));
 
+        console.log("[KB-SCROLL] keyboardDidShow: kbHeight=", newKbHeight, "kbTop=", kbTop, "screenY=", e.endCoordinates.screenY, "canvasTop=", canvasTopRef.current);
+
+        // Ignore bogus keyboard geometry (e.g. custom keyboard reporting
+        // an oversized initial height where screenY goes negative)
+        if (e.endCoordinates.screenY <= 0) {
+            console.log("[KB-SCROLL] skipping scroll — invalid screenY");
+            return;
+        }
+
         setKeyboardTop(kbTop)
         keyboardTopRef.current = kbTop
         verifyCurrentEditTextIsVisible()
 
     }
     function _keyboardDidHide() {
+        console.log("[KB-SCROLL] keyboardDidHide");
         setKeyboardHeight(0);
         keyboardHeightRef.current = 0;
 
@@ -485,32 +495,44 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     function verifyCurrentEditTextIsVisible() {
-        trace("verifyCurrentEditTextIsVisible - enter")
+        console.log("[KB-SCROLL] verifyCurrentEditTextIsVisible - kbTop=", keyboardTopRef.current, "moveCanvas.y=", moveCanvasRef.current.y);
         if (keyboardTopRef.current == 0) return;
         // check if a text box in edit:
         const textElem = currentEditedRef.current.textId ? textsRef.current.find(t => t.id == currentEditedRef.current.textId) : undefined;
         if (textElem) {
 
             const elemHeight = (textElem.tempTop2CursorHeight ?? 20);
-            let elemBottom = (textElem.y + elemHeight + moveCanvasRef.current.y) * ratioRef.current * zoomRef.current;
-            const nonTableElemBottom = elemBottom
+            // Element bottom in unscrolled canvas coordinates
+            let elemCanvasBottom = textElem.y + elemHeight;
             if (textElem.tableId) {
                 const table = tablesRef.current.find(t => t.id == textElem.tableId);
                 if (table) {
                     const horizontalLines = calcEffectiveHorizontalLines(table, canvasSizeRef.current.height / ratioRef.current, textsRef.current);
-                    elemBottom = (horizontalLines[textElem.y] + elemHeight + moveCanvasRef.current.y) * ratioRef.current * zoomRef.current;
+                    elemCanvasBottom = horizontalLines[textElem.y] + elemHeight;
                 }
             }
-            trace("verifyCurrentEditTextIsVisible", {
-                elemHeight, elemBottom, nonTableElemBottom, kbTop: keyboardTopRef.current
-            })
 
-            if (elemBottom > keyboardTopRef.current) {
-                const dy = (keyboardTopRef.current - elemBottom) / (ratioRef.current * zoomRef.current);
-                trace("text behind kb", elemBottom, dy, moveCanvasRef.current.y, keyboardTopRef.current, elemHeight, "ratio", ratioRef.current, "zoom", zoomRef.current)
-                if (dy < 0) {
-                    handleMoveCanvas({ x: moveCanvasRef.current.x, y: moveCanvasRef.current.y + dy - 3 });
-                }
+            // The scroll offset needed so that elemCanvasBottom lands exactly at kbTop:
+            //   (elemCanvasBottom + scrollY) * ratio * zoom = kbTop
+            //   scrollY = kbTop / (ratio * zoom) - elemCanvasBottom
+            const scale = ratioRef.current * zoomRef.current;
+            const requiredY = keyboardTopRef.current / scale - elemCanvasBottom - 3;
+
+            // Current effective scroll (what's rendered or what we already requested)
+            const currentY = moveCanvasRef.current.y;
+
+            console.log("[KB-SCROLL] verify:", { elemHeight, elemCanvasBottom, kbTop: keyboardTopRef.current, scale, requiredY, currentY });
+
+            // Only scroll if the element is actually behind the keyboard
+            // i.e., the required scroll is more negative than where we already are
+            if (requiredY < currentY) {
+                console.log("[KB-SCROLL] scrolling DOWN: requiredY=", requiredY, "currentY=", currentY);
+                handleMoveCanvas({ x: moveCanvasRef.current.x, y: requiredY });
+            } else if (requiredY > currentY && currentY < 0) {
+                // Keyboard shrank — we're over-scrolled. Scroll back up but not past 0.
+                const newY = Math.min(requiredY, 0);
+                console.log("[KB-SCROLL] scrolling UP (kb shrank): requiredY=", requiredY, "currentY=", currentY, "newY=", newY);
+                handleMoveCanvas({ x: moveCanvasRef.current.x, y: newY });
             }
         }
     }
@@ -530,7 +552,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         for (let i = 0; i < elements.length; i++) {
             queue.current.add(elements[i]);
         }
-        trace("load metadata - end", new Date().toISOString());
+        //trace("load metadata - end", new Date().toISOString());
     }
 
     const save = async () => {
@@ -548,12 +570,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 .then((uri: string) => {
                     // do not block for saving the thumbnail
                     setTimeout(() => FileSystem.main.saveThumbnail(uri, pageRef.current));
-                }).catch((e: any) => trace("error save thumbnail", e));
+                }).catch((e: any) => {/*trace("error save thumbnail", e)*/});
         }
     }
 
     const doShareAsPDF = async (name: string) => {
-        trace("Starting share as PDF process");
+        //trace("Starting share as PDF process");
         setShareProgress(0);
         setShareProgressPage(1);
 
@@ -569,7 +591,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     const doShareAsImages = async (name: string) => {
-        trace("Starting share as images process");
+        //trace("Starting share as images process");
         setShareProgress(0);
         setShareProgressPage(1);
 
@@ -593,7 +615,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         FileSystem.main
             .exportWorksheet(pageRef.current)
             .then(sheetArchivePath => {
-                trace('share worksheet file', sheetArchivePath);
+                //trace('share worksheet file', sheetArchivePath);
                 const shareOptions = {
                     title: translate('ShareWithTitle'),
                     subject: translate('ShareEmailSubject'),
@@ -620,7 +642,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             //avoid reshare again
             setNavParam(navigation, 'share', false);
 
-            trace("about to share images", dataUrls.length);
+            //trace("about to share images", dataUrls.length);
 
             // Convert base64 images to file URIs
             const imageFiles: string[] = [];
@@ -669,7 +691,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 Alert.alert("Failed to generate images for sharing.");
             }
         } catch (e) {
-            console.log("Share finalization failed", e);
+            //console.log("Share finalization failed", e);
             Alert.alert("Failed to generate images for sharing.");
         } finally {
             navigation.goBack();
@@ -682,11 +704,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setNavParam(navigation, 'share', false);
 
             // Always create PDF file
-            trace("about to generate PDF", dataUrls.length);
+            //trace("about to generate PDF", dataUrls.length);
             let shareUrl = "file://" + (await generatePDF(name, dataUrls));
             shareUrl = await FileSystem.filePathToContentUri(shareUrl);
 
-            trace("about to share", shareUrl);
+            //trace("about to share", shareUrl);
 
             if (shareUrl) {
                 // Define share options
@@ -736,7 +758,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 Alert.alert("Failed to generate PDF for sharing.");
             }
         } catch (e) {
-            console.log("Share finalization failed", e);
+            //console.log("Share finalization failed", e);
             Alert.alert("Failed to generate PDF for sharing.");
         } finally {
             navigation.goBack();
@@ -945,7 +967,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     async function beforeModeChange() {
         await saveText();
-        trace("curr mode", modeRef.current)
+        //trace("curr mode", modeRef.current)
         if (modeRef.current == EditModes.Text && zoomRef.current == 1) {
             setMoveCanvas({ x: 0, y: 0 });
         }
@@ -962,7 +984,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //                          SKETCH HANDLERS
     // -------------------------------------------------------------------------
     function handleSketchStart(p: SketchPoint) {
-        console.log("Sketch Start", modeRef.current, p);
+        //console.log("Sketch Start", modeRef.current, p);
         if (modeRef.current === EditModes.Marker || modeRef.current === EditModes.Brush) {
             let color = isMarkerMode() ? markerColorRef.current + MARKER_TRANSPARENCY_CONSTANT : brushColorRef.current;
             let strokeWidth = isMarkerMode() ? markerWidthRef.current : strokeWidthRef.current;
@@ -970,7 +992,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 color = '#00000000';
                 strokeWidth = (strokeWidth * 3 < 15 ? 15 : strokeWidth * 3)
             }
-            trace("selected stroke width", strokeWidth)
+            //trace("selected stroke width", strokeWidth)
             const newPath: SketchPath = {
                 id: getId("S"),
                 points: [p],
@@ -997,7 +1019,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setCurrentEdited(newCurrEdited);
 
         } else if (modeRef.current === EditModes.Text) {
-            trace("sketch start text")
+            //trace("sketch start text")
 
         }
     }
@@ -1035,14 +1057,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 x: dragToMoveCanvasRef.current.initialOffset.x + dx,
                 y: dragToMoveCanvasRef.current.initialOffset.y + dy
             });
-            trace("text sketch step", p)
+            //trace("text sketch step", p)
 
         }
     }
 
     function handleSketchEnd(commands?: PathCommand[]) {
         if (isBrushMode() || isMarkerMode()) {
-            trace("Sketch End, elem being saved")
+            //trace("Sketch End, elem being saved")
             let color = isMarkerMode() ? markerColorRef.current + MARKER_TRANSPARENCY_CONSTANT : brushColorRef.current;
             let strokeWidth = isMarkerMode() ? markerWidthRef.current : strokeWidthRef.current;
             if (eraseModeRef.current) {
@@ -1078,7 +1100,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 stroke_width: categorizeCount(elem.strokeWidth)
             });
         } else if (isTextMode()) {
-            trace("text sketch release")
+            //trace("text sketch release")
             dragToMoveCanvasRef.current = undefined;
             return;
         }
@@ -1127,7 +1149,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                             { elem: { height: pendingHeight }, type: 'changePageHeightAddition' }
                         ]);
 
-                        trace("Pushed text and page resize together:", pendingHeight);
+                        //trace("Pushed text and page resize together:", pendingHeight);
                     } else {
                         queue.current.pushText(changedElem);
                     }
@@ -1159,7 +1181,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                             { elem: { height: pendingHeight }, type: 'changePageHeightAddition' }
                         ]);
 
-                        trace("Pushed new text and page resize together:", pendingHeight);
+                        //trace("Pushed new text and page resize together:", pendingHeight);
                     } else {
                         queue.current.pushText(textElem);
                     }
@@ -1215,7 +1237,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         return;
                     }
                 }
-                trace("new text", fontSizeRef.current, ratioRef.current)
+                //trace("new text", fontSizeRef.current, ratioRef.current)
                 const newTextElem: SketchText = {
                     id: getId("T"),
                     text: "",
@@ -1253,7 +1275,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 setLines([...linesRef.current]);
             }
         } else if (modeRef.current === EditModes.Image && elem && "id" in elem) {
-            trace("set current image")
+            //trace("set current image")
             const newCurrEdited = { ...currentEditedRef.current, imageId: elem.id }
             currentEditedRef.current = newCurrEdited
             setCurrentEdited(newCurrEdited);
@@ -1281,7 +1303,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     function handleTextChanged(id: string, newText: string) {
-        trace("handleTextChanged", newText)
+        //trace("handleTextChanged", newText)
         const textElem = textsRef.current.find(t => t.id == id);
         if (textElem) {
             textElem.text = newText;
@@ -1348,7 +1370,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 return box
             }
 
-            trace("Default elem box")
+            //trace("Default elem box")
             return { x, y, width: 0, height: 0, moveIconOnRight: false, moveOffset };
         }
 
@@ -1357,7 +1379,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const marginRight = type === MoveTypes.Text ? (elemBox.moveIconOnRight ? 15 : 20) : 0;
 
         if (x + elemBox.moveOffset.x < 0) {
-            trace("hit left", x + elemBox.moveOffset.x, 0)
+            //trace("hit left", x + elemBox.moveOffset.x, 0)
             x = 0 - elemBox.moveOffset.x;
         }
         let xRight = x + (elemBox.moveIconOnRight ? 0 : elemBox.width);
@@ -1365,7 +1387,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
 
         if ((xRight - elemBox.moveOffset.x - marginRight) * r > cw) {
-            trace("hit right", (xRight - elemBox.moveOffset.x) * r, cw, marginRight)
+            //trace("hit right", (xRight - elemBox.moveOffset.x) * r, cw, marginRight)
             x = cw / r + elemBox.moveOffset.x + marginRight;
             if (!elemBox.moveIconOnRight) {
                 x -= elemBox.width;
@@ -1375,36 +1397,36 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         if (y < 0) y = 0;
         if ((y + elemBox.height - elemBox.moveOffset.y) * r > ch) {
-            trace("hit bottom", elemBox, cw, ch)
+            //trace("hit bottom", elemBox, cw, ch)
             y = ch / r - elemBox.height + elemBox.moveOffset.y;;
         }
 
         let rMoveX = 0;
         let rMoveY = 0;
         if ((x + offx + mr) / z < 30) {
-            trace("push left")
+            //trace("push left")
             rMoveX = 25;
         }
 
         if ((y - 15 + offy - dimensions.toolbarMargin) / z < 5) {
-            trace("push up")
+            //trace("push up")
             rMoveY = 25;
         }
 
         const yBottom = (y + elemBox.height) * r;
 
         const dy = yBottom + offy * r - (ch + pm) / z;
-        trace("move info", dy, kbh)
+        //trace("move info", dy, kbh)
 
         if (dy + kbh / z > -5) {
-            trace("push down")
+            //trace("push down")
             rMoveY = -25;
         }
 
         const dx = xRight * r + offx * r - (cw + mr) / z;
 
         if (dx > 0) {
-            trace("push right")
+            //trace("push right")
             rMoveX = -25;
         }
 
@@ -1412,7 +1434,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         if (!moveRepeatRef.current && ((rMoveX && rMoveX != 0) || (rMoveY && rMoveY != 0))) {
             moveRepeatRef.current = {
                 interval: setInterval(() => {
-                    trace("repeat", moveRepeatRef.current?.offset)
+                    //trace("repeat", moveRepeatRef.current?.offset)
                     if (moveRepeatRef.current?.offset) {
                         handleMoveCanvas({
                             x: moveCanvasRef.current.x + moveRepeatRef.current.offset.x,
@@ -1522,14 +1544,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     function handleMoveEnd(type: MoveTypes, id: string) {
         if (moveRepeatRef.current) {
-            trace("end repeat")
+            //trace("end repeat")
             clearInterval(moveRepeatRef.current.interval);
             moveRepeatRef.current = undefined;
         }
 
 
         if (type === MoveTypes.LineStart || type === MoveTypes.LineEnd || type === MoveTypes.LineMove) {
-            console.log("Move end", linesRef.current);
+            //console.log("Move end", linesRef.current);
             const line = linesRef.current.find(line => line.id == id);
             if (line) {
                 queue.current.pushLine(restoreElement(line));
@@ -1567,7 +1589,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     function handleMoveTablePart(p: SketchPoint, tableContext: TableContext) {
         const table = tablesRef.current.find(t => t.id == tableContext.elem.id);
         if (table) {
-            trace("Table part move", p, tableContext)
+            //trace("Table part move", p, tableContext)
             if (!table.backup) {
                 backupElement(table);
             }
@@ -1586,7 +1608,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 for (let rowText of rowTexts) {
                     if (rowText.height && p[1] - horizontalLines[tableContext.hLine - 1] < rowText.height) {
                         // trying to resize the line smaller than the heighest text in the row
-                        trace("limit resize row", rowText.height, p[1] - table.horizontalLines[tableContext.hLine - 1])
+                        //trace("limit resize row", rowText.height, p[1] - table.horizontalLines[tableContext.hLine - 1])
                         return;
                     }
                 }
@@ -1641,7 +1663,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //                          TEXT OVERFLOW
     // -------------------------------------------------------------------------
     function handleTextYOverflow(elemId: string) {
-        console.log("End of page reached", elemId);
+        //console.log("End of page reached", elemId);
 
         const textElem = textsRef.current.find(t => t.id == elemId);
         if (textElem) {
@@ -1651,7 +1673,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 textElem.pendingPageHeightIncrease = prev + 200
                 return textElem.pendingPageHeightIncrease;
             });
-            trace("page height with addition", textElem.pendingPageHeightIncrease)
+            //trace("page height with addition", textElem.pendingPageHeightIncrease)
         }
     }
 
@@ -1690,7 +1712,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     async function handleEraserPressed() {
-        trace("Eraser pressed");
+        //trace("Eraser pressed");
         if (!eraseModeRef.current &&
             (modeRef.current === EditModes.Image || modeRef.current === EditModes.Table || modeRef.current === EditModes.Text)) {
             await beforeModeChange();
@@ -1739,7 +1761,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setAudios([...audiosRef.current]);
     }
     function handleAddAudio() {
-        console.log("Add audio not implemented yet");
+        //console.log("Add audio not implemented yet");
     }
 
     function addImage(srcType: string) {
@@ -1800,7 +1822,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     // Voice Mode
     function onVoiceMode() {
-        console.log("Not implemented yet");
+        //console.log("Not implemented yet");
     }
 
     // Table Mode
@@ -1842,7 +1864,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 });
             }
 
-            trace("Delete table", id)
+            //trace("Delete table", id)
             queue.current.pushDeleteTableNew(id);
             queue2state()
             save();
@@ -1870,7 +1892,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             for (let i = 0; i <= rows; i++) {
                 newTable.horizontalLines.push(topMargin + i * rowHeight);
             }
-            trace("Add Table")
+            //trace("Add Table")
             queue.current.pushTable(newTable);
             queue2state();
             save();
@@ -1927,7 +1949,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         accDelta = isGrowing ?
                             accDelta + (elemSize / newArray.length) :
                             accDelta - (lastElemSize / (newArray.length - 1))
-                        trace("change ", i, accDelta)
+                        //trace("change ", i, accDelta)
                         newArray[i - 1] += accDelta;
                     }
                 } else {
@@ -1994,7 +2016,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 // Force width remeasurement when font or styling changes by clearing width
                 if (fontChanged || boldChanged || italicChanged || underlineChanged) {
                     textElem.width = undefined;
-                    console.log("style changed - recalc width")
+                    //console.log("style changed - recalc width")
                 }
                 setTexts([...textsRef.current]);
             }
@@ -2063,7 +2085,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         toolbarHeightRef.current = height;
         setToolbarHeight(height);
         setFloatingToolbarHeight(floatingToolbarHeight);
-        console.log("Toolbar dimension changed:", height, floatingToolbarHeight);
+        //console.log("Toolbar dimension changed:", height, floatingToolbarHeight);
     }
 
     // -------------------------------------------------------------------------
@@ -2120,7 +2142,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     function handleNewPage(srcType: string) {
-        trace("handleNewPage", srcType);
+        //trace("handleNewPage", srcType);
         getNewPage(srcType,
             // OK
             (uri: string) => {
@@ -2200,7 +2222,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         const MoveButton = ({ rotate, onPress, style, disabled }: { rotate: number, onPress: () => void, style: any, disabled: boolean }) => (
             <TouchableOpacity style={[styles.moveCanvasButton, style, { transform: [{ rotate: rotate + 'deg' }] }]}
-                onPress={() => { console.log("presse move"); !disabled && onPress() }} >
+                onPress={() => { /*console.log("presse move");*/ !disabled && onPress() }} >
                 <MyIcon info={{ type: "MI", name: "play-arrow", size: 70, color: disabled ? semanticColors.moveInZoomButtonDisabled : semanticColors.moveInZoomButton }} />
             </TouchableOpacity>
         );
@@ -2334,19 +2356,19 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         // Divide by zoom to get scroll offset, add keyboard height in canvas coords
         const maxOffset = Math.max(0, excessHeight / zoomRef.current + keyboardHeightRef.current / ratioRef.current);
 
-        trace("maxYOffset", {
-            scaledCanvasH: scaledCanvasHeight,
-            unscaledCanvasH: unscaledCanvasHeight,
-            addHeight: pageHeightAdditionRef.current,
-            availH: availHeight,
-            unscaledAvailH: unscaledAvailHeight,
-            visualH: visualHeight,
-            excessH: excessHeight,
-            kbH: keyboardHeightRef.current,
-            ratio: ratioRef.current,
-            zoom: zoomRef.current,
-            maxOffset
-        });
+        //trace("maxYOffset", {
+        //    scaledCanvasH: scaledCanvasHeight,
+        //    unscaledCanvasH: unscaledCanvasHeight,
+        //    addHeight: pageHeightAdditionRef.current,
+        //    availH: availHeight,
+        //    unscaledAvailH: unscaledAvailHeight,
+        //    visualH: visualHeight,
+        //    excessH: excessHeight,
+        //    kbH: keyboardHeightRef.current,
+        //    ratio: ratioRef.current,
+        //    zoom: zoomRef.current,
+        //    maxOffset
+        //});
 
         return maxOffset;
     }
@@ -2381,11 +2403,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         x = verticalOnly ? moveCanvasRef.current.x : Math.min(Math.max(x, -maxXOffset() / ratioRef.current), 0);
 
         y = Math.min(Math.max(y, -maxYOffset() / ratioRef.current), 0);
-        //trace("set move", x, y, -maxYOffset())
+        console.log("[KB-SCROLL] handleMoveCanvas: requested y=", newOffset.y, "clamped y=", y, "maxYOffset=", maxYOffset());
+        // Eagerly update ref so rapid keyboardDidShow events see the latest value
+        // (useEffect sync only runs after paint, which is too late)
+        moveCanvasRef.current = { x, y };
         setMoveCanvas({ x, y });
     }
 
-    trace("windowSize", windowSize)
+    //trace("windowSize", windowSize)
     return (
         <View
             style={styles.mainContainer}

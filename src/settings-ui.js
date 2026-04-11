@@ -17,6 +17,7 @@ import * as Progress from 'react-native-progress';
 
 import FadeInView from './FadeInView'
 import { isRTL, translate } from './lang';
+import Slider from '@react-native-community/slider';
 
 import {
     VIEW, EDIT_TITLE, LANGUAGE, TEXT_BUTTON,
@@ -26,7 +27,9 @@ import {
     SCROLL_BUTTONS,
     KB_TOOLBAR,
     KB_TEXT_TOOLS,
-    KB_SPEAK_DICTATE
+    KB_SPEAK_DICTATE,
+    SPEECH_RATE,
+    getSpeechRateSetting
 } from './settings'
 import { FileSystem } from './filesystem';
 import { trace } from './log';
@@ -65,6 +68,8 @@ export default function SettingsMenu(props) {
 
     let kbSpeakDictateSetting = getSetting(KB_SPEAK_DICTATE.name, KB_SPEAK_DICTATE.yes);
     const [kbSpeakDictate, setKbSpeakDictate] = useState(kbSpeakDictateSetting);
+
+    const [speechRate, setSpeechRate] = useState(getSpeechRateSetting());
 
 
     let useColorSetting = getUseColorSetting();
@@ -199,6 +204,11 @@ export default function SettingsMenu(props) {
         obj[KB_SPEAK_DICTATE.name] = tb;
         Settings.set(obj)
         setKbSpeakDictate(tb);
+    }
+
+    const setSpeechRateHandler = (value) => {
+        Settings.set({ [SPEECH_RATE.name]: value })
+        setSpeechRate(value);
     }
 
 
@@ -382,6 +392,21 @@ export default function SettingsMenu(props) {
                             setKbSpeakDictateHandler(newValue)
                         },
                         kbSpeakDictate == KB_SPEAK_DICTATE.yes, 40)}
+
+                    {kbSpeakDictate == KB_SPEAK_DICTATE.yes && <View style={{ width: '100%', paddingStart: 60, paddingEnd: 25, paddingTop: 10, direction:'ltr' }}>
+                        <AppText style={styles.radioText}>{translate("SpeechRate")}</AppText>
+                        <Slider
+                            style={{  width: '100%', height: 40 }}
+                            inverted={!isRTL()}
+                            minimumValue={0.0}
+                            maximumValue={1.0}
+                            step={0.05}
+                            value={speechRate}
+                            onSlidingComplete={setSpeechRateHandler}
+                            minimumTrackTintColor={semanticColors.titleText}
+                            maximumTrackTintColor='#ACACAC'
+                        />
+                    </View>}
 
 
                     {/** Feature toggles */}

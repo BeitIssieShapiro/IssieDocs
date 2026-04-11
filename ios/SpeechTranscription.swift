@@ -90,7 +90,8 @@ class SpeechTranscription: RCTEventEmitter {
     return [
       "onTranscription", "onTranscriptionEnd", "onTranscriptionError", "onTranscriptionStart",
       "onToolbarAction",
-      "onSpeakingStart", "onSpeakingWord", "onSpeakingEnd"
+      "onSpeakingStart", "onSpeakingWord", "onSpeakingEnd",
+      "onLowVolume"
     ]
   }
 
@@ -199,7 +200,7 @@ class SpeechTranscription: RCTEventEmitter {
     container.subviews.forEach { $0.removeFromSuperview() }
 
     let btnSize: CGFloat = 34
-    let spacing: CGFloat = 8
+    let minSpacing: CGFloat = 8
     let margin: CGFloat = 8
     let btnY: CGFloat = (container.bounds.height - btnSize) / 2
     let containerWidth = container.bounds.width
@@ -228,6 +229,16 @@ class SpeechTranscription: RCTEventEmitter {
             visibleButtons.append(btn)
         }
     }
+
+    let count = CGFloat(visibleButtons.count)
+    guard count > 0 else { return }
+
+    let totalButtonsWidth = count * btnSize
+    let availableForSpacing = containerWidth - 2 * margin - totalButtonsWidth
+    let maxSpacing: CGFloat = 16
+    let spacing: CGFloat = count > 1
+        ? min(max(availableForSpacing / (count - 1), minSpacing), maxSpacing)
+        : minSpacing
 
     if uiRTL {
         var x = containerWidth - margin - btnSize
@@ -664,7 +675,7 @@ class SpeechTranscription: RCTEventEmitter {
   // MARK: - Text-to-Speech
 
   @objc
-  func startSpeaking(_ text: String, fallbackLanguage: String) {
+  func startSpeaking(_ text: String, fallbackLanguage: String, speechRate: Float) {
     DispatchQueue.main.async { [weak self] in
         guard let self = self else { return }
         if text.isEmpty { return }
@@ -707,7 +718,25 @@ class SpeechTranscription: RCTEventEmitter {
 
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: voiceLocale)
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+        utterance.rate = speechRate >= 0 ? speechRate : AVSpeechUtteranceDefaultSpeechRate
+
+        // Configure audio session for playback
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .default, options: .duckOthers)
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            NSLog("[SpeechTranscription] Failed to set audio session for speaking: %@", error.localizedDescription)
+        }
+
+        // Check volume level (not reliable on Simulator)
+        #if !targetEnvironment(simulator)
+        let volume = AVAudioSession.sharedInstance().outputVolume
+        if volume < 0.1 && self.hasListeners {
+            self.sendEvent(withName: "onLowVolume", body: [:])
+        }
+        #endif
+
         self.currentUtterance = utterance
         self.isSpeaking = true
         self.updateSpeakAppearance()

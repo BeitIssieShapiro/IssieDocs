@@ -10,7 +10,7 @@ RCT_EXTERN_METHOD(attachToKeyboard:(BOOL)textToolsEnabled speakDictateEnabled:(B
 RCT_EXTERN_METHOD(detachFromKeyboard)
 RCT_EXTERN_METHOD(refreshToolbar)
 RCT_EXTERN_METHOD(updateFormattingState:(NSDictionary *)state)
-RCT_EXTERN_METHOD(startSpeaking:(NSString *)text fallbackLanguage:(NSString *)fallbackLanguage)
+RCT_EXTERN_METHOD(startSpeaking:(NSString *)text fallbackLanguage:(NSString *)fallbackLanguage speechRate:(float)speechRate)
 RCT_EXTERN_METHOD(stopSpeaking)
 
 @end
