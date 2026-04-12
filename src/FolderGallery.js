@@ -481,10 +481,9 @@ export default class FolderGallery extends React.Component {
         }
       });
   };
-  onLayout = () => {
-    let windowSize = Dimensions.get('window');
-    this.setState({ windowSize });
-    //Alert.alert(JSON.stringify(windowSize));
+  onLayout = (e) => {
+    const { width, height } = e?.nativeEvent?.layout ?? Dimensions.get('window');
+    this.setState({ windowSize: { width, height } });
   };
 
   isScreenNarrow = () => this.state.windowSize.width < 500;
