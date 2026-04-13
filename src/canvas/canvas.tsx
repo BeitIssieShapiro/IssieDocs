@@ -546,6 +546,12 @@ function Canvas({
                 const elem = startSketchRef.current?.elem;
 
                 if (!elem && currentElementTypeRef.current === ElementTypes.Sketch) {
+                    // Add the final point on the JS thread to avoid race with UI-thread worklet
+                    const finalPoint = screen2Canvas(gState.moveX, gState.moveY);
+                    lastPathSV.value.lineTo(
+                        parseFloat((finalPoint[0] * ratioRef.current).toFixed(1)),
+                        parseFloat((finalPoint[1] * ratioRef.current).toFixed(1))
+                    );
                     const commands = toCmds(lastPathSV.value, ratioRef.current);
                     sketchInProgressRef.current = false;
                     sketchTimerRef.current = setTimeout(() => {
@@ -1025,10 +1031,8 @@ function Canvas({
                     const h = (imgH * ratio);
                     if (!imgW || imgW === 0) return null;
 
-                    // The calculated key is crucial to overcome a bug that the image is blur at first - keep this!
                     return <React.Fragment key={image.id} >
-                        <Image
-                            key={`${image.id}_${imgW}`}
+                        <View
                             style={[
                                 styles.imageStyle,
                                 {
@@ -1038,8 +1042,16 @@ function Canvas({
                                     height: PixelRatio.roundToNearestPixel(h),
                                 },
                             ]}
-                            source={normalizeFoAndroid(image.src) || { uri: image.imageData }}
-                        />
+                        >
+                            <Image
+                                style={{
+                                    width: PixelRatio.roundToNearestPixel(w),
+                                    height: PixelRatio.roundToNearestPixel(h),
+                                }}
+                                source={normalizeFoAndroid(image.src) || { uri: image.imageData }}
+                                resizeMode="contain"
+                            />
+                        </View>
                         {currentElementType == ElementTypes.Image &&
                             currentEdited.imageId == image.id && <TouchableOpacity
                                 style={{

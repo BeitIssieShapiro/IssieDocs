@@ -36,14 +36,15 @@ import { FileContextMenu } from './file-context-menu';
 import { AudioElement2 } from './audio-elem-new';
 import { Text } from 'react-native';
 import { migrateMetadata } from './state-migrate';
-import { PathCommand } from '@shopify/react-native-skia';
-import { getSetting, SCROLL_BUTTONS } from './settings';
+import { PathCommand, scale } from '@shopify/react-native-skia';
+import { getSetting, SCROLL_BUTTONS, KB_SPEAK_DICTATE, getSpeechRateSetting } from './settings';
 import { useMessageBox } from './message';
 import { MyIcon } from './common/icons';
 import { generatePDF } from './pdf';
 import { analyticEvent, LocalAnalyticEvent } from './common/firebase';
 import { CanvasScroll } from './canvas/canvas-elements';
 import { categorizeCount } from '@beitissieshapiro/issie-shared';
+import FloatingSpeechButtons from './FloatingSpeechButtons';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -72,6 +73,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const kbLanguage = useKeyboardLanguage();
     const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
     const [keyboardTop, setKeyboardTop] = useState<number>(0);
+    const [isRecording, setIsRecording] = useState<boolean>(false);
+    const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
     const [toolbarHeight, setToolbarHeight] = useState<number>(dimensions.toolbarHeight);
     const [floatingToolbarHeight, setFloatingToolbarHeight] = useState<number>(0);
 
@@ -493,6 +496,55 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setKeyboardTop(0)
         keyboardTopRef.current = 0
     }
+
+    // Speech/dictation floating buttons: track recording & speaking state
+    const speakDictateEnabled = getSetting(KB_SPEAK_DICTATE.name, KB_SPEAK_DICTATE.yes) === KB_SPEAK_DICTATE.yes;
+
+    useEffect(() => {
+        if (Platform.OS !== 'ios' || !speechTranscriptionEmitter) return;
+
+        const recStartSub = speechTranscriptionEmitter.addListener('onTranscriptionStart', () => setIsRecording(true));
+        const recEndSub = speechTranscriptionEmitter.addListener('onTranscriptionEnd', () => setIsRecording(false));
+        const recErrSub = speechTranscriptionEmitter.addListener('onTranscriptionError', () => setIsRecording(false));
+        const speakStartSub = speechTranscriptionEmitter.addListener('onSpeakingStart', () => setIsSpeaking(true));
+        const speakEndSub = speechTranscriptionEmitter.addListener('onSpeakingEnd', () => setIsSpeaking(false));
+
+        return () => {
+            recStartSub.remove();
+            recEndSub.remove();
+            recErrSub.remove();
+            speakStartSub.remove();
+            speakEndSub.remove();
+        };
+    }, []);
+
+    const handleMicPress = useCallback(() => {
+        if (!SpeechTranscription) return;
+        if (isSpeaking) SpeechTranscription.stopSpeaking();
+        if (isRecording) {
+            SpeechTranscription.stopTranscription();
+        } else {
+            SpeechTranscription.setLanguage(kbLanguage);
+            SpeechTranscription.startTranscription().catch((err: any) => {
+                console.warn('startTranscription failed:', err);
+            });
+        }
+    }, [isRecording, isSpeaking, kbLanguage]);
+
+    const handleSpeakPress = useCallback(() => {
+        if (!SpeechTranscription) return;
+        if (isRecording) SpeechTranscription.stopTranscription();
+        if (isSpeaking) {
+            SpeechTranscription.stopSpeaking();
+        } else {
+            const textElem = currentEditedRef.current.textId
+                ? textsRef.current.find(t => t.id === currentEditedRef.current.textId)
+                : undefined;
+            if (textElem?.text?.length) {
+                SpeechTranscription.startSpeaking(textElem.text, kbLanguage, getSpeechRateSetting());
+            }
+        }
+    }, [isSpeaking, isRecording, kbLanguage]);
 
     function verifyCurrentEditTextIsVisible() {
         console.log("[KB-SCROLL] verifyCurrentEditTextIsVisible - kbTop=", keyboardTopRef.current, "moveCanvas.y=", moveCanvasRef.current.y);
@@ -2627,6 +2679,17 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 language={kbLanguage}
             />
             {/* </ViewShot> */}
+
+            <FloatingSpeechButtons
+                visible={speakDictateEnabled && !!currentEdited.textId && mode === EditModes.Text}
+                isRecording={isRecording}
+                isSpeaking={isSpeaking}
+                onMicPress={handleMicPress}
+                onSpeakPress={handleSpeakPress}
+                keyboardHeight={keyboardHeight}
+                windowSize={windowSize}
+                sideMargin={sideMargin}
+            />
 
             {/** previous page button */}
             {

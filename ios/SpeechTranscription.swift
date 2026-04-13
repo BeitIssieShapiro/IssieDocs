@@ -22,9 +22,6 @@ class SpeechTranscription: RCTEventEmitter {
   // MARK: - Native Toolbar
 
   private var micToolbar: UIView?
-  private var micFloatingButton: UIView?  // mic-only container when toolbar disabled
-  private var micIconButton: UIButton?
-  private var blinkTimer: Timer?
 
   // Formatting buttons
   private var boldButton: UIButton?
@@ -48,13 +45,9 @@ class SpeechTranscription: RCTEventEmitter {
   private var uiRTL = false
   private var kbLanguage = "en"
   private var toolbarEnabled = true
-  private var showMic = true
   private var isAttached = false
   private var textToolsEnabled = true
-  private var speakDictateEnabled = true
-  private var speakButton: UIButton?
   private var isSpeaking = false
-  private var speakBlinkTimer: Timer?
 
   private var speechSynthesizer = AVSpeechSynthesizer()
   private var currentUtterance: AVSpeechUtterance?
@@ -70,14 +63,12 @@ class SpeechTranscription: RCTEventEmitter {
   }
 
   // Called from JS when keyboard language changes, to re-evaluate toolbar
-  // (e.g. IssieBoard detection). This replaces the native notification observer
-  // to avoid reloadInputViews() interfering with keyboard language detection.
   @objc
   func refreshToolbar() {
     guard isAttached else { return }
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
       guard let self = self, self.isAttached else { return }
-      self.attachToKeyboard(self.textToolsEnabled, speakDictateEnabled: self.speakDictateEnabled)
+      self.attachToKeyboard(self.textToolsEnabled, speakDictateEnabled: false)
     }
   }
 
@@ -99,87 +90,10 @@ class SpeechTranscription: RCTEventEmitter {
 
   // MARK: - Toolbar Management
 
-  /// Check if the active keyboard is an IssieBoard custom keyboard
-  private func isIssieBoardKeyboard() -> Bool {
-    // Third-party keyboards expose their bundle identifier in UITextInputMode
-    // Check the active input modes for one containing "IssieBoard"
-    guard let firstResponder = findFirstResponder() else { return false }
-
-    if let mode = firstResponder.textInputMode,
-       let identifier = mode.value(forKey: "identifier") as? String,
-       identifier.contains("IssieBoard") {
-      return true
-    }
-
-    // Also check all active input modes
-    for mode in UITextInputMode.activeInputModes {
-      if let identifier = mode.value(forKey: "identifier") as? String,
-         identifier.contains("IssieBoard") {
-        // Only return true if this mode appears to be the current one
-        if let frMode = firstResponder.textInputMode, frMode == mode {
-          return true
-        }
-      }
-    }
-
-    return false
-  }
-
-  private func createMicOnlyView() -> UIView {
-    let btnSize: CGFloat = 34
-    let container = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: btnSize + 10))
-    container.backgroundColor = UIColor.clear
-
-    let micBtn = UIButton(type: .custom)
-    micBtn.setImage(UIImage(systemName: "mic.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18, weight: .medium)), for: .normal)
-    micBtn.tintColor = UIColor.systemBlue
-    micBtn.backgroundColor = UIColor.white.withAlphaComponent(0.6)
-    micBtn.layer.cornerRadius = 8
-    micBtn.clipsToBounds = false
-    micBtn.layer.shadowColor = UIColor.black.cgColor
-    micBtn.layer.shadowOffset = CGSize(width: 0, height: 1)
-    micBtn.layer.shadowOpacity = 0.15
-    micBtn.layer.shadowRadius = 2
-    micBtn.addTarget(self, action: #selector(micButtonTapped), for: .touchUpInside)
-    micBtn.frame = CGRect(x: 8, y: 5, width: btnSize, height: btnSize)
-    self.micIconButton = micBtn
-    container.addSubview(micBtn)
-
-    return container
-  }
-
   private func createToolbar() -> UIView {
     let barHeight: CGFloat = 44
     let container = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: barHeight))
     container.backgroundColor = UIColor(red: 0.82, green: 0.84, blue: 0.86, alpha: 1.0)
-
-    // Mic button
-    let micBtn = UIButton(type: .custom)
-    micBtn.setImage(UIImage(systemName: "mic.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18, weight: .medium)), for: .normal)
-    micBtn.tintColor = UIColor.systemBlue
-    micBtn.backgroundColor = UIColor.white.withAlphaComponent(0.6)
-    micBtn.layer.cornerRadius = 8
-    micBtn.clipsToBounds = false
-    micBtn.layer.shadowColor = UIColor.black.cgColor
-    micBtn.layer.shadowOffset = CGSize(width: 0, height: 1)
-    micBtn.layer.shadowOpacity = 0.15
-    micBtn.layer.shadowRadius = 2
-    micBtn.addTarget(self, action: #selector(micButtonTapped), for: .touchUpInside)
-    self.micIconButton = micBtn
-
-    // Speak button (TTS)
-    let speakBtn = UIButton(type: .custom)
-    speakBtn.setImage(UIImage(systemName: "speaker.wave.2", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18, weight: .medium)), for: .normal)
-    speakBtn.tintColor = UIColor.systemGreen
-    speakBtn.backgroundColor = UIColor.white.withAlphaComponent(0.6)
-    speakBtn.layer.cornerRadius = 8
-    speakBtn.clipsToBounds = false
-    speakBtn.layer.shadowColor = UIColor.black.cgColor
-    speakBtn.layer.shadowOffset = CGSize(width: 0, height: 1)
-    speakBtn.layer.shadowOpacity = 0.15
-    speakBtn.layer.shadowRadius = 2
-    speakBtn.addTarget(self, action: #selector(speakButtonTapped), for: .touchUpInside)
-    self.speakButton = speakBtn
 
     // Formatting buttons
     self.boldButton = makeFormattingButton(systemName: "bold", action: #selector(boldTapped))
@@ -206,12 +120,6 @@ class SpeechTranscription: RCTEventEmitter {
     let containerWidth = container.bounds.width
 
     var visibleButtons: [UIButton] = []
-
-    // Speak & Dictate group
-    if speakDictateEnabled {
-        if let micBtn = micIconButton, showMic { visibleButtons.append(micBtn) }
-        if let spkBtn = speakButton { visibleButtons.append(spkBtn) }
-    }
 
     // Text tools group
     if textToolsEnabled {
@@ -365,111 +273,6 @@ class SpeechTranscription: RCTEventEmitter {
     }
   }
 
-  @objc private func micButtonTapped() {
-    NSLog("[SpeechTranscription] micButtonTapped, isRecording=%d, toolbar=%@, subviews=%d",
-          isRecording,
-          String(describing: micToolbar),
-          micToolbar?.subviews.count ?? 0)
-    if isRecording {
-      stopTranscription()
-    } else {
-      startTranscriptionFromToolbar()
-    }
-  }
-
-  @objc private func speakButtonTapped() {
-    if isSpeaking {
-      if hasListeners {
-        sendEvent(withName: "onToolbarAction", body: ["action": "stopSpeaking"])
-      }
-    } else {
-      if hasListeners {
-        sendEvent(withName: "onToolbarAction", body: ["action": "speak"])
-      }
-    }
-  }
-
-  private func startTranscriptionFromToolbar() {
-    if isRecording { return }
-
-    requestPermissions { [weak self] granted, errorMessage in
-      guard let self = self else { return }
-
-      if !granted {
-        DispatchQueue.main.async {
-          if self.hasListeners {
-            self.sendEvent(withName: "onTranscriptionError", body: ["message": errorMessage ?? "Permission denied"])
-          }
-        }
-        return
-      }
-
-      DispatchQueue.main.async {
-        self.startRecognitionInternal()
-      }
-    }
-  }
-
-  private func updateMicAppearance() {
-    guard let button = micIconButton else { return }
-
-    if isRecording {
-      button.tintColor = UIColor.systemRed
-      startBlinkAnimation()
-    } else {
-      button.tintColor = UIColor.systemBlue
-      stopBlinkAnimation()
-      button.alpha = 1.0
-    }
-  }
-
-  private func startBlinkAnimation() {
-    stopBlinkAnimation()
-    guard let button = micIconButton else { return }
-    // Animate only the button's imageView, keeping the button itself fully tappable
-    blinkTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak button] _ in
-      guard let imageView = button?.imageView else { return }
-      UIView.animate(withDuration: 1.0) {
-        imageView.alpha = imageView.alpha > 0.5 ? 0.3 : 1.0
-      }
-    }
-  }
-
-  private func stopBlinkAnimation() {
-    blinkTimer?.invalidate()
-    blinkTimer = nil
-    micIconButton?.imageView?.alpha = 1.0
-  }
-
-  private func updateSpeakAppearance() {
-    guard let button = speakButton else { return }
-    if isSpeaking {
-      button.tintColor = UIColor.systemOrange
-      startSpeakBlinkAnimation()
-    } else {
-      button.tintColor = UIColor.systemGreen
-      stopSpeakBlinkAnimation()
-      button.alpha = 1.0
-    }
-  }
-
-  private func startSpeakBlinkAnimation() {
-    stopSpeakBlinkAnimation()
-    guard let button = speakButton else { return }
-    speakBlinkTimer = Timer.scheduledTimer(withTimeInterval: 0.6, repeats: true) { [weak button] _ in
-      guard let imageView = button?.imageView else { return }
-      UIView.animate(withDuration: 0.3) {
-        imageView.alpha = imageView.alpha > 0.5 ? 0.3 : 1.0
-      }
-    }
-  }
-
-  private func stopSpeakBlinkAnimation() {
-    speakBlinkTimer?.invalidate()
-    speakBlinkTimer = nil
-    speakButton?.imageView?.alpha = 1.0
-  }
-
   // MARK: - Public Methods
 
   @objc
@@ -542,8 +345,7 @@ class SpeechTranscription: RCTEventEmitter {
     DispatchQueue.main.async { [weak self] in
       guard let self = self else { return }
       self.textToolsEnabled = textToolsEnabled
-      self.speakDictateEnabled = speakDictateEnabled
-      self.toolbarEnabled = textToolsEnabled || speakDictateEnabled
+      self.toolbarEnabled = textToolsEnabled
       self.isAttached = true
 
       guard let firstResponder = self.findFirstResponder() else {
@@ -551,28 +353,16 @@ class SpeechTranscription: RCTEventEmitter {
         return
       }
 
-      NSLog("[SpeechTranscription] attachToKeyboard: textTools=%d, speakDictate=%d", textToolsEnabled, speakDictateEnabled)
-
-      let isIssieBoard = self.isIssieBoardKeyboard()
+      NSLog("[SpeechTranscription] attachToKeyboard: textTools=%d", textToolsEnabled)
 
       self.micToolbar = nil
-      self.micFloatingButton = nil
-      self.micIconButton = nil
-      self.speakButton = nil
 
       var accessoryView: UIView? = nil
 
-      if textToolsEnabled || speakDictateEnabled {
-        self.showMic = isIssieBoard
+      if textToolsEnabled {
         let toolbar = self.createToolbar()
         self.micToolbar = toolbar
         accessoryView = toolbar
-      } else {
-        if isIssieBoard {
-          let micView = self.createMicOnlyView()
-          self.micFloatingButton = micView
-          accessoryView = micView
-        }
       }
 
       if let textField = firstResponder as? UITextField {
@@ -609,12 +399,9 @@ class SpeechTranscription: RCTEventEmitter {
         self.stopTranscription()
       }
 
-      self.stopBlinkAnimation()
-
       if self.speechSynthesizer.isSpeaking {
         self.speechSynthesizer.stopSpeaking(at: .immediate)
       }
-      self.stopSpeakBlinkAnimation()
 
       guard let firstResponder = self.findFirstResponder() else { return }
 
@@ -664,9 +451,6 @@ class SpeechTranscription: RCTEventEmitter {
     guard isRecording else { return }
     stopRecognitionInternal()
     playEndSound()
-    DispatchQueue.main.async { [weak self] in
-      self?.updateMicAppearance()
-    }
     if hasListeners {
       sendEvent(withName: "onTranscriptionEnd", body: [:])
     }
@@ -739,7 +523,6 @@ class SpeechTranscription: RCTEventEmitter {
 
         self.currentUtterance = utterance
         self.isSpeaking = true
-        self.updateSpeakAppearance()
         self.speechSynthesizer.speak(utterance)
     }
   }
@@ -781,120 +564,6 @@ class SpeechTranscription: RCTEventEmitter {
 
   // MARK: - Recognition
 
-  /// Called from the native toolbar button tap (no promise)
-  private func startRecognitionInternal() {
-    guard let speechRecognizer = speechRecognizer, speechRecognizer.isAvailable else {
-      if hasListeners {
-        sendEvent(withName: "onTranscriptionError", body: ["message": "Speech recognizer not available"])
-      }
-      return
-    }
-
-    let audioSession = AVAudioSession.sharedInstance()
-    if audioSession.isOtherAudioPlaying {
-      if hasListeners {
-        sendEvent(withName: "onTranscriptionError", body: ["message": "Another audio session is active"])
-      }
-      return
-    }
-
-    stopRecognitionInternal()
-
-    // Play start sound BEFORE switching audio session to record mode
-    // Use completion handler to ensure sound finishes first
-    AudioServicesPlaySystemSoundWithCompletion(1110) { [weak self] in
-      DispatchQueue.main.async {
-        self?.continueStartRecognition()
-      }
-    }
-  }
-
-  private func continueStartRecognition() {
-    guard let speechRecognizer = speechRecognizer else { return }
-
-    let audioSession = AVAudioSession.sharedInstance()
-    do {
-      try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
-      try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-    } catch {
-      if hasListeners {
-        sendEvent(withName: "onTranscriptionError", body: ["message": "Audio session error: \(error.localizedDescription)"])
-      }
-      return
-    }
-
-    recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
-    guard let recognitionRequest = recognitionRequest else { return }
-
-    recognitionRequest.shouldReportPartialResults = true
-    recognitionRequest.requiresOnDeviceRecognition = true
-
-    recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
-      guard let self = self else { return }
-
-      if let result = result {
-        let text = result.bestTranscription.formattedString
-        let isFinal = result.isFinal
-
-        self.resetSilenceTimer()
-
-        if self.hasListeners {
-          self.sendEvent(withName: "onTranscription", body: [
-            "text": text,
-            "isFinal": isFinal
-          ])
-        }
-
-        if isFinal {
-          self.stopRecognitionInternal()
-          self.playEndSound()
-          DispatchQueue.main.async {
-            self.updateMicAppearance()
-          }
-          if self.hasListeners {
-            self.sendEvent(withName: "onTranscriptionEnd", body: [:])
-          }
-        }
-      }
-
-      if let error = error {
-        if self.isRecording {
-          if self.hasListeners {
-            self.sendEvent(withName: "onTranscriptionError", body: ["message": error.localizedDescription])
-          }
-          self.stopRecognitionInternal()
-          DispatchQueue.main.async {
-            self.updateMicAppearance()
-          }
-          if self.hasListeners {
-            self.sendEvent(withName: "onTranscriptionEnd", body: [:])
-          }
-        }
-      }
-    }
-
-    let inputNode = audioEngine.inputNode
-    let recordingFormat = inputNode.outputFormat(forBus: 0)
-    inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
-      self?.recognitionRequest?.append(buffer)
-    }
-
-    do {
-      audioEngine.prepare()
-      try audioEngine.start()
-      isRecording = true
-      startSilenceTimer()
-      updateMicAppearance()
-      if hasListeners {
-        sendEvent(withName: "onTranscriptionStart", body: [:])
-      }
-    } catch {
-      if hasListeners {
-        sendEvent(withName: "onTranscriptionError", body: ["message": "Audio engine error: \(error.localizedDescription)"])
-      }
-    }
-  }
-
   private func startRecognition(resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     guard let speechRecognizer = speechRecognizer, speechRecognizer.isAvailable else {
       if hasListeners {
@@ -916,7 +585,7 @@ class SpeechTranscription: RCTEventEmitter {
     stopRecognitionInternal()
 
     do {
-      try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
+      try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker])
       try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
     } catch {
       if hasListeners {
@@ -954,9 +623,6 @@ class SpeechTranscription: RCTEventEmitter {
         if isFinal {
           self.stopRecognitionInternal()
           self.playEndSound()
-          DispatchQueue.main.async {
-            self.updateMicAppearance()
-          }
           if self.hasListeners {
             self.sendEvent(withName: "onTranscriptionEnd", body: [:])
           }
@@ -969,15 +635,15 @@ class SpeechTranscription: RCTEventEmitter {
             self.sendEvent(withName: "onTranscriptionError", body: ["message": error.localizedDescription])
           }
           self.stopRecognitionInternal()
-          DispatchQueue.main.async {
-            self.updateMicAppearance()
-          }
           if self.hasListeners {
             self.sendEvent(withName: "onTranscriptionEnd", body: [:])
           }
         }
       }
     }
+
+    // Play start sound before installing audio tap (engine suppresses system sounds)
+    playStartSound()
 
     let inputNode = audioEngine.inputNode
     let recordingFormat = inputNode.outputFormat(forBus: 0)
@@ -989,9 +655,10 @@ class SpeechTranscription: RCTEventEmitter {
       audioEngine.prepare()
       try audioEngine.start()
       isRecording = true
-      playStartSound()
+      if hasListeners {
+        sendEvent(withName: "onTranscriptionStart", body: [:])
+      }
       startSilenceTimer()
-      updateMicAppearance()
       resolve(nil)
     } catch {
       if hasListeners {
@@ -1029,9 +696,6 @@ class SpeechTranscription: RCTEventEmitter {
       guard let self = self, self.isRecording else { return }
       self.stopRecognitionInternal()
       self.playEndSound()
-      DispatchQueue.main.async {
-        self.updateMicAppearance()
-      }
       if self.hasListeners {
         self.sendEvent(withName: "onTranscriptionEnd", body: [:])
       }
@@ -1092,7 +756,6 @@ extension SpeechTranscription: AVSpeechSynthesizerDelegate {
             guard let self = self else { return }
             self.isSpeaking = false
             self.currentUtterance = nil
-            self.updateSpeakAppearance()
         }
         if hasListeners {
             sendEvent(withName: "onSpeakingEnd", body: [:])
@@ -1104,7 +767,6 @@ extension SpeechTranscription: AVSpeechSynthesizerDelegate {
             guard let self = self else { return }
             self.isSpeaking = false
             self.currentUtterance = nil
-            self.updateSpeakAppearance()
         }
         if hasListeners {
             sendEvent(withName: "onSpeakingEnd", body: [:])

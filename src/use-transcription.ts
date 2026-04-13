@@ -55,7 +55,7 @@ export function useTranscription({
     if (Platform.OS !== 'ios' || !SpeechTranscription || !enabled) return;
 
     const timer = setTimeout(() => {
-      SpeechTranscription.attachToKeyboard(textToolsEnabled, speakDictateEnabled);
+      SpeechTranscription.attachToKeyboard(textToolsEnabled, false);
     }, 300);
 
     return () => {

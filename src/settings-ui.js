@@ -397,7 +397,7 @@ export default function SettingsMenu(props) {
                         <AppText style={styles.radioText}>{translate("SpeechRate")}</AppText>
                         <Slider
                             style={{  width: '100%', height: 40 }}
-                            inverted={!isRTL()}
+                            inverted={isRTL()}
                             minimumValue={0.0}
                             maximumValue={1.0}
                             step={0.05}

@@ -7,7 +7,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-na
 import { MyIcon } from "../common/icons";
 import { useTranscription, speechTranscriptionEmitter, SpeechTranscription } from "../use-transcription";
 import { translate } from "../lang";
-import { getSetting, KB_TEXT_TOOLS, KB_SPEAK_DICTATE, SPEECH_RATE, getSpeechRateSetting } from "../settings";
+import { getSetting, KB_TEXT_TOOLS, KB_SPEAK_DICTATE } from "../settings";
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 const AnimatedIcon = Animated.createAnimatedComponent(MyIcon);
@@ -99,24 +99,10 @@ function TextElement({
 
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [highlightRange, setHighlightRange] = useState<{ location: number; length: number } | null>(null);
-    const textTextRef = useRef(text.text);
-    const languageRef = useRef(language);
-    useEffect(() => { textTextRef.current = text.text; }, [text.text]);
-    useEffect(() => { languageRef.current = language; }, [language]);
 
-    // Listen for toolbar speak action and TTS events
+    // Listen for TTS events (word highlight, start/end, low volume)
     useEffect(() => {
-        if (Platform.OS !== 'ios' || !speechTranscriptionEmitter || !SpeechTranscription || !editMode) return;
-
-        const toolbarSub = speechTranscriptionEmitter.addListener('onToolbarAction', (event: { action: string }) => {
-            if (event.action === 'speak') {
-                if (textTextRef.current.length > 0) {
-                    SpeechTranscription.startSpeaking(textTextRef.current, languageRef.current || 'en', getSpeechRateSetting());
-                }
-            } else if (event.action === 'stopSpeaking') {
-                SpeechTranscription.stopSpeaking();
-            }
-        });
+        if (Platform.OS !== 'ios' || !speechTranscriptionEmitter || !editMode) return;
 
         const startSub = speechTranscriptionEmitter.addListener('onSpeakingStart', () => {
             setIsSpeaking(true);
@@ -137,7 +123,6 @@ function TextElement({
         });
 
         return () => {
-            toolbarSub.remove();
             startSub.remove();
             wordSub.remove();
             endSub.remove();
