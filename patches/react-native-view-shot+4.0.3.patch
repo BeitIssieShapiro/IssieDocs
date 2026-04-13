@@ -1,0 +1,59 @@
+diff --git a/node_modules/react-native-view-shot/ios/RNViewShot.mm b/node_modules/react-native-view-shot/ios/RNViewShot.mm
+index 2cf632f..43c6a51 100644
+--- a/node_modules/react-native-view-shot/ios/RNViewShot.mm
++++ b/node_modules/react-native-view-shot/ios/RNViewShot.mm
+@@ -4,7 +4,9 @@
+ #import <React/UIView+React.h>
+ #import <React/RCTUtils.h>
+ #import <React/RCTConvert.h>
++#if __has_include(<React/RCTScrollView.h>)
+ #import <React/RCTScrollView.h>
++#endif
+ #import <React/RCTUIManager.h>
+ #if __has_include(<React/RCTUIManagerUtils.h>)
+ #import <React/RCTUIManagerUtils.h>
+@@ -21,6 +23,28 @@ RCT_EXPORT_MODULE()
+ 
+ @synthesize bridge = _bridge;
+ 
++static UIScrollView *RNViewShotResolveScrollView(UIView *view)
++{
++#ifndef RCT_REMOVE_LEGACY_ARCH
++  if ([view isKindOfClass:[RCTScrollView class]]) {
++    return ((RCTScrollView *)view).scrollView;
++  }
++#endif
++
++  if ([view isKindOfClass:[UIScrollView class]]) {
++    return (UIScrollView *)view;
++  }
++
++  for (UIView *subview in view.subviews) {
++    UIScrollView *nestedScrollView = RNViewShotResolveScrollView(subview);
++    if (nestedScrollView != nil) {
++      return nestedScrollView;
++    }
++  }
++
++  return nil;
++}
++
+ - (dispatch_queue_t)methodQueue
+ {
+   return RCTGetUIManagerQueue();
+@@ -80,12 +104,11 @@ RCT_EXPORT_METHOD(captureRef:(nonnull NSNumber *)target
+     UIView* rendered;
+     UIScrollView* scrollView;
+     if (snapshotContentContainer) {
+-      if (![view isKindOfClass:[RCTScrollView class]]) {
+-        reject(RCTErrorUnspecified, [NSString stringWithFormat:@"snapshotContentContainer can only be used on a RCTScrollView. instead got: %@", view], nil);
++      scrollView = RNViewShotResolveScrollView(view);
++      if (scrollView == nil) {
++        reject(RCTErrorUnspecified, [NSString stringWithFormat:@"snapshotContentContainer can only be used on a scrollable view. Instead got: %@", view], nil);
+         return;
+       }
+-      RCTScrollView* rctScrollView = view;
+-      scrollView = rctScrollView.scrollView;
+       rendered = scrollView;
+     }
+     else {
