@@ -479,30 +479,37 @@ class SpeechTranscription: RCTEventEmitter {
         recognizer.processString(text)
         let detectedLang = recognizer.dominantLanguage
 
-        let voiceLocale: String
+        // Map detected/fallback language to a language code (e.g. "en", "he", "ar")
+        let langCode: String
         if let lang = detectedLang {
-            switch lang {
-            case .hebrew: voiceLocale = "he-IL"
-            case .arabic: voiceLocale = "ar-SA"
-            case .english: voiceLocale = "en-US"
-            default:
-                switch fallbackLanguage {
-                case "he": voiceLocale = "he-IL"
-                case "ar": voiceLocale = "ar-SA"
-                default: voiceLocale = "en-US"
-                }
-            }
+            langCode = lang.rawValue  // e.g. "en", "he", "ar"
         } else {
-            switch fallbackLanguage {
+            langCode = fallbackLanguage
+        }
+
+        // Find the user's preferred locale for this language from system settings
+        // e.g. if device is set to en-GB, prefer "en-GB" over "en-US"
+        let voiceLocale: String
+        if let preferred = Locale.preferredLanguages.first(where: { $0.hasPrefix(langCode) }) {
+            voiceLocale = preferred
+        } else {
+            // Fallback to common defaults
+            switch langCode {
             case "he": voiceLocale = "he-IL"
             case "ar": voiceLocale = "ar-SA"
-            default: voiceLocale = "en-US"
+            default: voiceLocale = "\(langCode)-US"
             }
         }
 
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: voiceLocale)
         utterance.rate = speechRate >= 0 ? speechRate : AVSpeechUtteranceDefaultSpeechRate
+        utterance.prefersAssistiveTechnologySettings = true
+
+        NSLog("[SpeechTranscription] Speaking with voice: %@, language: %@, quality: %d",
+              utterance.voice?.name ?? "nil",
+              utterance.voice?.language ?? voiceLocale,
+              utterance.voice?.quality.rawValue ?? -1)
 
         // Configure audio session for playback
         do {

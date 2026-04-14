@@ -12,10 +12,10 @@ import { MyIcon } from './common/icons';
 import { isRTL } from './lang';
 import { getSetting, KB_TEXT_TOOLS } from './settings';
 
-const BUTTON_WIDTH = 44;
-const BUTTON_HEIGHT = 44;
-const BORDER_RADIUS = 12;
-const GAP = 10;
+const BUTTON_WIDTH = 55;
+const BUTTON_HEIGHT = 55;
+const BORDER_RADIUS = 15;
+const GAP = 12;
 
 interface FloatingSpeechButtonsProps {
     visible: boolean;
@@ -73,7 +73,7 @@ function SpeechButton({
                     info={{
                         type: 'Ionicons',
                         name: active ? activeIconName : iconName,
-                        size: 22,
+                        size: 28,
                         color: 'white',
                     }}
                 />
