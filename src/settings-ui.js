@@ -28,6 +28,7 @@ import {
     KB_TOOLBAR,
     KB_TEXT_TOOLS,
     KB_SPEAK_DICTATE,
+    SPEAK_DICTATE_MODE,
     SPEECH_RATE,
     getSpeechRateSetting
 } from './settings'
@@ -70,6 +71,9 @@ export default function SettingsMenu(props) {
     const [kbSpeakDictate, setKbSpeakDictate] = useState(kbSpeakDictateSetting);
 
     const [speechRate, setSpeechRate] = useState(getSpeechRateSetting());
+
+    let speakDictateModeSetting = getSetting(SPEAK_DICTATE_MODE.name, SPEAK_DICTATE_MODE.floating);
+    const [speakDictateMode, setSpeakDictateMode] = useState(speakDictateModeSetting);
 
 
     let useColorSetting = getUseColorSetting();
@@ -209,6 +213,11 @@ export default function SettingsMenu(props) {
     const setSpeechRateHandler = (value) => {
         Settings.set({ [SPEECH_RATE.name]: value })
         setSpeechRate(value);
+    }
+
+    const setSpeakDictateModeHandler = (mode) => {
+        Settings.set({ [SPEAK_DICTATE_MODE.name]: mode })
+        setSpeakDictateMode(mode);
     }
 
 
@@ -373,27 +382,15 @@ export default function SettingsMenu(props) {
                         },
                         editTitle == EDIT_TITLE.yes)}
 
-                    <View style={{ width: '100%', paddingTop: 25, paddingStart: 25, alignItems: "flex-start" }}>
-                        <AppText style={styles.SettingsHeaderText}>{translate("KeyboardToolbar") + ":"}</AppText>
-                    </View>
-
-                    {getCheckbox(translate("TextTools"),
-                        () => {
-                            let newValue = kbTextTools == KB_TEXT_TOOLS.yes ? KB_TEXT_TOOLS.no : KB_TEXT_TOOLS.yes;
-                            setKbTextTools(newValue);
-                            setKbTextToolsHandler(newValue)
-                        },
-                        kbTextTools == KB_TEXT_TOOLS.yes, 40)}
-
                     {getCheckbox(translate("SpeakAndDictate"),
                         () => {
                             let newValue = kbSpeakDictate == KB_SPEAK_DICTATE.yes ? KB_SPEAK_DICTATE.no : KB_SPEAK_DICTATE.yes;
                             setKbSpeakDictate(newValue);
                             setKbSpeakDictateHandler(newValue)
                         },
-                        kbSpeakDictate == KB_SPEAK_DICTATE.yes, 40)}
+                        kbSpeakDictate == KB_SPEAK_DICTATE.yes)}
 
-                    {kbSpeakDictate == KB_SPEAK_DICTATE.yes && <View style={{ width: '100%', paddingStart: 60, paddingEnd: 25, paddingTop: 10, direction:'ltr' }}>
+                    {kbSpeakDictate == KB_SPEAK_DICTATE.yes && <View style={{ width: '100%', paddingStart: 40, paddingEnd: 25, paddingTop: 10, alignItems: "flex-start", }}>
                         <AppText style={styles.radioText}>{translate("SpeechRate")}</AppText>
                         <Slider
                             style={{  width: '100%', height: 40 }}
@@ -406,6 +403,31 @@ export default function SettingsMenu(props) {
                             minimumTrackTintColor={semanticColors.titleText}
                             maximumTrackTintColor='#ACACAC'
                         />
+                    </View>}
+
+                    {kbSpeakDictate == KB_SPEAK_DICTATE.yes && <View style={{ width: '100%', paddingStart: 40, paddingTop: 5, alignItems: "flex-start" }}>
+                        <View style={{ flexDirection: "row-reverse", alignItems: 'center' }}>
+                            <TouchableOpacity
+                                style={{ flexDirection: "row-reverse", paddingEnd: 15, alignItems: 'center' }}
+                                onPress={() => setSpeakDictateModeHandler(SPEAK_DICTATE_MODE.floating)}
+                            >
+                                <AppText style={styles.radioText}>{translate("SpeakDictateFloating")}</AppText>
+                                <Spacer />
+                                <View style={styles.circle}>
+                                    {speakDictateMode == SPEAK_DICTATE_MODE.floating && <View style={styles.checkedCircle} />}
+                                </View>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={{ flexDirection: "row-reverse", paddingEnd: 15, alignItems: 'center' }}
+                                onPress={() => setSpeakDictateModeHandler(SPEAK_DICTATE_MODE.toolbar)}
+                            >
+                                <AppText style={styles.radioText}>{translate("SpeakDictateToolbar")}</AppText>
+                                <Spacer />
+                                <View style={styles.circle}>
+                                    {speakDictateMode == SPEAK_DICTATE_MODE.toolbar && <View style={styles.checkedCircle} />}
+                                </View>
+                            </TouchableOpacity>
+                        </View>
                     </View>}
 
 
@@ -435,6 +457,15 @@ export default function SettingsMenu(props) {
                             icon: <AppText style={{ fontSize: 25 }}>{translate("Voice")}</AppText>,
                             callback: () => { flipFeatureTougle(FEATURES.voice) },
                             selected: features?.includes(FEATURES.voice)
+                        },
+                        {
+                            icon: <AppText style={{ fontSize: 25 }}>{translate("KeyboardTextTools")}</AppText>,
+                            callback: () => {
+                                let newValue = kbTextTools == KB_TEXT_TOOLS.yes ? KB_TEXT_TOOLS.no : KB_TEXT_TOOLS.yes;
+                                setKbTextTools(newValue);
+                                setKbTextToolsHandler(newValue)
+                            },
+                            selected: kbTextTools == KB_TEXT_TOOLS.yes
                         }
                     ], true)}
 

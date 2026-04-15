@@ -73,6 +73,12 @@ export const KB_SPEAK_DICTATE = {
     no: 2
 }
 
+export const SPEAK_DICTATE_MODE = {
+    name: 'speakDictateMode',
+    floating: 1,
+    toolbar: 2
+}
+
 export const SPEECH_RATE = {
     name: 'speechRate',
     default: 0.5

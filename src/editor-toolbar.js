@@ -7,7 +7,7 @@ import { getRowDirections, translate, useKeyboardLanguage } from "./lang";
 import { trace } from "./log";
 import { BrushSizePicker, MyColorPicker, TextSizePicker } from "./pickers";
 import { getSvgIcon, MarkerStroke } from "./svg-icons";
-import { FEATURES, getFeaturesSetting } from "./settings";
+import { FEATURES, getFeaturesSetting, getSetting, KB_SPEAK_DICTATE, SPEAK_DICTATE_MODE } from "./settings";
 import { IIF } from "./canvas/utils";
 import { MyIcon } from "./common/icons";
 
@@ -28,6 +28,7 @@ const Pickers = {
     VOICE: 9,
     RULER: 10,
     AUDIO: 11,
+    SPEAK_DICTATE: 12,
 }
 
 const availableBrushSize = [
@@ -114,6 +115,11 @@ function EditorToolbar({
     onSelectTextBold,
     onSelectTextItalic,
     onSelectTextUnderline,
+
+    onMicPress,
+    onSpeakPress,
+    isRecording,
+    isSpeaking,
 
 }, ref) {
     const [showPicker, setShowPicker] = useState(false);
@@ -362,9 +368,18 @@ function EditorToolbar({
         extMenu.push(rullerBtn);
     }
 
+    const speakDictateEnabled = getSetting(KB_SPEAK_DICTATE.name, KB_SPEAK_DICTATE.yes) === KB_SPEAK_DICTATE.yes;
+    const speakDictateToolbar = getSetting(SPEAK_DICTATE_MODE.name, SPEAK_DICTATE_MODE.floating) === SPEAK_DICTATE_MODE.toolbar;
+    if (speakDictateEnabled && speakDictateToolbar) {
+        extMenu.push(<IconButton onPress={() => onSelectButtonClick(Pickers.SPEAK_DICTATE, false, 55)}
+            iconType="Ionicons" icon="chatbubble-ellipses" size={47} iconSize={40}
+            color={isRecording || isSpeaking ? '#FF3B30' : semanticColors.editPhotoButton}
+            selected={showPickerType === Pickers.SPEAK_DICTATE && showPicker} />);
+    }
+
     const zoomBtn = <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM, false, 55)} color={semanticColors.editPhotoButton}
         icon="zoom-in" size={50} iconSize={45} />;
-    if (extMenu.length > 0) {
+    if (extMenu.length > 0 && !isScreenNarrow()) {
         extMenu.push(zoomBtn);
     }
 
@@ -376,9 +391,10 @@ function EditorToolbar({
             color={brushColor} iconSize={45} selected={isBrushMode} ensureContrast={true} />,
         <IconButton onPress={() => onSelectButtonClick(Pickers.COLOR, true, 70)} iconType="MI" icon={"color-lens"}
             size={55} iconSize={45} color={semanticColors.editPhotoButton} />,
+        isScreenNarrow() && extMenu.length > 0 ? zoomBtn : null,
         extMenu.length > 0 ? <IconButton onPress={() => setShowExtMenu(currVal => !currVal)} iconType="MI" icon={showExtMenu ? "expand-less" : "expand-more"}
             size={45} color={semanticColors.editPhotoButton} /> : zoomBtn,
-    ]
+    ].filter(Boolean)
 
     // calc preview-window position: (width 120)
     // const folderUndoRedo = 55 * 3 + 23 * 2;
@@ -591,6 +607,16 @@ function EditorToolbar({
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 <IconButton onPress={onZoomOut} icon={"zoom-out"} size={55} iconSize={45} />
                 <IconButton onPress={onZoomIn} icon={"zoom-in"} size={55} iconSize={45} />
+            </View>
+        </FadeInView>
+
+        {/*View for speak/dictate*/}
+        <FadeInView height={showPickerType === Pickers.SPEAK_DICTATE && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '30%', right: '30%' }]}>
+            <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
+                <IconButton onPress={onMicPress} iconType="Ionicons" icon="mic"
+                    size={55} iconSize={40} color={isRecording ? '#FF3B30' : '#007AFF'} />
+                <IconButton onPress={onSpeakPress} iconType="Ionicons" icon="volume-high"
+                    size={55} iconSize={40} color={isSpeaking ? '#FF9500' : '#34C759'} />
             </View>
         </FadeInView>
 

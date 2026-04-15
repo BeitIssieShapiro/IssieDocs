@@ -37,7 +37,7 @@ import { AudioElement2 } from './audio-elem-new';
 import { Text } from 'react-native';
 import { migrateMetadata } from './state-migrate';
 import { PathCommand, scale } from '@shopify/react-native-skia';
-import { getSetting, SCROLL_BUTTONS, KB_SPEAK_DICTATE, getSpeechRateSetting } from './settings';
+import { getSetting, SCROLL_BUTTONS, KB_SPEAK_DICTATE, SPEAK_DICTATE_MODE, getSpeechRateSetting } from './settings';
 import { useMessageBox } from './message';
 import { MyIcon } from './common/icons';
 import { generatePDF } from './pdf';
@@ -499,6 +499,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     // Speech/dictation floating buttons: track recording & speaking state
     const speakDictateEnabled = getSetting(KB_SPEAK_DICTATE.name, KB_SPEAK_DICTATE.yes) === KB_SPEAK_DICTATE.yes;
+    const speakDictateFloating = getSetting(SPEAK_DICTATE_MODE.name, SPEAK_DICTATE_MODE.floating) === SPEAK_DICTATE_MODE.floating;
 
     useEffect(() => {
         if (Platform.OS !== 'ios' || !speechTranscriptionEmitter) return;
@@ -2609,6 +2610,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onSelectMarkerSize={onMarkerSize}
                 onToolBarDimensionsChange={handleToolbarDimensionChange}
                 maxFloatingHeight={windowSize.height - keyboardHeight}
+                onMicPress={handleMicPress}
+                onSpeakPress={handleSpeakPress}
+                isRecording={isRecording}
+                isSpeaking={isSpeaking}
             />
             <View style={styles.topMargin} />
             {/* <ViewShot ref={mainViewRef} options={{ format: "jpg", quality: 0.9, result: share ? "base64" : "tmpfile" }}> */}
@@ -2681,7 +2686,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             {/* </ViewShot> */}
 
             <FloatingSpeechButtons
-                visible={speakDictateEnabled && !!currentEdited.textId && mode === EditModes.Text}
+                visible={speakDictateEnabled && speakDictateFloating && !!currentEdited.textId && mode === EditModes.Text}
                 isRecording={isRecording}
                 isSpeaking={isSpeaking}
                 onMicPress={handleMicPress}
