@@ -390,19 +390,25 @@ export default function SettingsMenu(props) {
                         },
                         kbSpeakDictate == KB_SPEAK_DICTATE.yes)}
 
-                    {kbSpeakDictate == KB_SPEAK_DICTATE.yes && <View style={{ width: '100%', paddingStart: 40, paddingEnd: 25, paddingTop: 10, alignItems: "flex-start", }}>
+                    { false && kbSpeakDictate == KB_SPEAK_DICTATE.yes && <View style={{ width: '100%', paddingStart: 40, paddingEnd: 25, paddingTop: 10, alignItems: "flex-start", }}>
                         <AppText style={styles.radioText}>{translate("SpeechRate")}</AppText>
-                        <Slider
-                            style={{  width: '100%', height: 40 }}
-                            inverted={isRTL()}
-                            minimumValue={0.0}
-                            maximumValue={1.0}
-                            step={0.05}
-                            value={speechRate}
-                            onSlidingComplete={setSpeechRateHandler}
-                            minimumTrackTintColor={semanticColors.titleText}
-                            maximumTrackTintColor='#ACACAC'
-                        />
+                        <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
+                            <MyIcon info={{ type: "MDI",name:"tortoise", size: 28, color: semanticColors.titleText }} />
+                            <Spacer />
+                            <Slider
+                                style={{ flex: 1, height: 40 }}
+                                inverted={isRTL()}
+                                minimumValue={0.0}
+                                maximumValue={1.0}
+                                step={0.05}
+                                value={speechRate}
+                                onSlidingComplete={setSpeechRateHandler}
+                                minimumTrackTintColor={semanticColors.titleText}
+                                maximumTrackTintColor='#ACACAC'
+                            />
+                            <Spacer />
+                            <MyIcon info={{ type: "MDI",name:"rabbit", size: 28, color: semanticColors.titleText }} />
+                        </View>
                     </View>}
 
                     {kbSpeakDictate == KB_SPEAK_DICTATE.yes && <View style={{ width: '100%', paddingStart: 40, paddingTop: 5, alignItems: "flex-start" }}>

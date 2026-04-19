@@ -15,7 +15,7 @@ import { getSetting, KB_TEXT_TOOLS } from './settings';
 const BUTTON_WIDTH = 55;
 const BUTTON_HEIGHT = 55;
 const BORDER_RADIUS = 15;
-const GAP = 12;
+const GAP = BUTTON_HEIGHT / 2 + 12;
 
 interface FloatingSpeechButtonsProps {
     visible: boolean;
