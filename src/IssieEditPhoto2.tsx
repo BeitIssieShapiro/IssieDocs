@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import {
     ActivityIndicator,
     Alert,
-    Dimensions,
     ImageSize,
     Keyboard,
     Platform,
@@ -64,8 +63,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     const [currentEdited, setCurrentEdited] = useState<CurrentEdited>({});
 
-    // Track window size with state for reliable updates on rotation
-    const [windowSize, setWindowSize] = useState<ImageSize>(Dimensions.get("window"));
+    const windowSize = useWindowDimensions();
 
     const [canvasSize, setCanvasSize] = useState<ImageSize>({ width: -1, height: -1 })
     const [originalBgImageHeight, setOriginalBgImageHeight] = useState<number>(-1);
@@ -105,6 +103,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const canvasRef = useRef<any>(null);
     const toolbarRef = useRef<any>(null);
     const windowSizeRef = useRef(windowSize);
+    useEffect(() => {
+        windowSizeRef.current = windowSize;
+        calcCanvasRatio(currentFileRef.current);
+    }, [windowSize.width, windowSize.height]);
     const toolbarHeightRef = useRef(toolbarHeight);
     const canvasTopRef = useRef(canvasTop);
 
@@ -425,17 +427,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
     //trace("win-size", windowSize)
 
-    const handleDimensionChange = useCallback(() => {
-        // Use requestAnimationFrame to ensure layout has completed before updating
-        // This prevents getting stale/swapped dimensions on rotation
-        requestAnimationFrame(() => {
-            const currentDims = Dimensions.get('window');
-            //trace("Dimension change", currentDims)
-            setWindowSize(currentDims);
-            windowSizeRef.current = currentDims;
-            calcCanvasRatio(currentFileRef.current);
-        });
-    }, []);
 
 
     useEffect(() => {
@@ -2467,9 +2458,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     return (
         <View
             style={styles.mainContainer}
-            onLayout={() => {
-                handleDimensionChange();
-            }}
         >
             {/* <View style={{ position: "absolute", left: sideMargin, top: 100, height: 5, width: canvasSize.width, backgroundColor: "green", zIndex: 10000 }} />
 

@@ -8,6 +8,7 @@ import React, { useCallback } from 'react';
 import { trace } from './log';
 import { normalizeFoAndroid } from './canvas/utils';
 import { MyIcon } from './common/icons';
+import { FontWeight } from '@shopify/react-native-skia';
 
 export function FileContextMenu({
   width,
@@ -172,7 +173,7 @@ export function FileContextMenu({
             )}
             <Spacer width={10 * scale} />
             <AppText
-              style={{ fontSize: 35 * scale, width: width - 100 }}
+              style={{ fontSize: 38 * scale, width: width - 100, fontWeight:"600" }}
               ellipsizeMode={true}
             >
               {displayItem.name}
@@ -187,7 +188,8 @@ export function FileContextMenu({
               flexWrap: actualIsLandscape ? 'wrap' : 'nowrap',
               alignItems: actualIsLandscape ? 'flex-start' : 'center',
               justifyContent: 'center',
-              width: "100%"
+              width: "100%",
+              paddingTop: 10,
             }}
           >
             {/** Menu */}
@@ -200,7 +202,7 @@ export function FileContextMenu({
                     onPress={callbackAndClose(onRename)}
                     text={translate('BtnChangeName')}
                   />
-                  <Seperator />
+                  <Seperator95 />
                 </React.Fragment>
               )}
               {onDeletePage && (
@@ -215,7 +217,7 @@ export function FileContextMenu({
                       pagesCount,
                     )}
                   />
-                  <Seperator />
+                  <Seperator95 />
                 </React.Fragment>
               )}
               {inFoldersMode && onDelete && (
@@ -226,7 +228,7 @@ export function FileContextMenu({
                     onPress={callbackAndClose(onDelete)}
                     text={translate('BtnDelete')}
                   />
-                  <Seperator />
+                  <Seperator95 />
                 </React.Fragment>
               )}
               {onMove && (
@@ -238,7 +240,7 @@ export function FileContextMenu({
                     onPress={callbackAndClose(onMove)}
                     text={translate('BtnMove')}
                   />
-                  <Seperator />
+                  <Seperator95 />
                 </React.Fragment>
               )}
               {onDuplicate && (
@@ -250,7 +252,7 @@ export function FileContextMenu({
                     onPress={callbackAndClose(onDuplicate)}
                     text={translate('BtnDuplicate')}
                   />
-                  <Seperator />
+                  <Seperator95 />
                 </React.Fragment>
               )}
               {onSaveAsTemplate && !isTemplate && (
@@ -262,7 +264,7 @@ export function FileContextMenu({
                     onPress={callbackAndClose(onSaveAsTemplate)}
                     text={translate('BtnSaveAsTemplate')}
                   />
-                  <Seperator />
+                  <Seperator95 />
                 </React.Fragment>
               )}
               {onEditTemplate && isTemplate && (
@@ -274,7 +276,7 @@ export function FileContextMenu({
                     onPress={callbackAndClose(onEditTemplate)}
                     text={translate('BtnEditTemplate')}
                   />
-                  <Seperator />
+                  <Seperator95 />
                 </React.Fragment>
               )}
               {onUndoAll && (
@@ -286,10 +288,10 @@ export function FileContextMenu({
                     onPress={callbackAndClose(onUndoAll)}
                     text={translate('BtnUndoAll')}
                   />
-                  <Seperator />
+                  <Seperator95 />
                 </React.Fragment>
               )}
-              
+
               {/* {onLockPage && !hasLock && (
                 <React.Fragment>
                   <OneMenu
@@ -313,7 +315,7 @@ export function FileContextMenu({
                   <Seperator />
                 </React.Fragment>
               )} */}
-            
+
             </MenuGroup>
 
             {(onShareImgs || onSharePDF || onShareIssieDocs || onShareFolder) &&
@@ -329,7 +331,7 @@ export function FileContextMenu({
                       onPress={callbackAndClose(onShareImgs)}
                       text={translate('BtnShareAsImages')}
                     />
-                    <Seperator />
+                    <Seperator95 />
                   </>
                 }
                 {onSharePDF &&
@@ -340,7 +342,7 @@ export function FileContextMenu({
                       onPress={callbackAndClose(onSharePDF)}
                       text={translate('BtnShareAsPDF')}
                     />
-                    <Seperator />
+                    <Seperator95 />
                   </>
                 }
                 {onShareIssieDocs &&
@@ -351,7 +353,7 @@ export function FileContextMenu({
                       onPress={callbackAndClose(onShareIssieDocs)}
                       text={translate('BtnShareIssieDocs')}
                     />
-                    <Seperator />
+                    <Seperator95 />
                   </>
                 }
                 {onShareFolder &&
@@ -362,7 +364,7 @@ export function FileContextMenu({
                       onPress={callbackAndClose(onShareFolder)}
                       text={shareCaption || translate('BtnShareFolder')}
                     />
-                    <Seperator />
+                    <Seperator95 />
                   </>
                 }
               </MenuGroup>
@@ -377,49 +379,64 @@ export function FileContextMenu({
                 iconType="svg"
               >
                 {onAddFromCamera && (
-                  <OneMenu
-                    scale={scale}
-                    icon="new-camera"
-                    iconType={'svg'}
-                    onPress={callbackAndClose(onAddFromCamera)}
-                    text={translate('MenuFromCamera')}
-                  />
+                  <>
+                    <OneMenu
+                      scale={scale}
+                      icon="new-camera"
+                      iconType={'svg'}
+                      onPress={callbackAndClose(onAddFromCamera)}
+                      text={translate('MenuFromCamera')}
+                    />
+                    <Seperator95 />
+                  </>
                 )}
                 {onAddFromMediaLib && (
-                  <OneMenu
-                    scale={scale}
-                    icon="new-image"
-                    iconType={'svg'}
-                    onPress={callbackAndClose(onAddFromMediaLib)}
-                    text={translate('MenuFromMediaLib')}
-                  />
+                  <>
+                    <OneMenu
+                      scale={scale}
+                      icon="new-image"
+                      iconType={'svg'}
+                      onPress={callbackAndClose(onAddFromMediaLib)}
+                      text={translate('MenuFromMediaLib')}
+                    />
+                    <Seperator95 />
+                  </>
                 )}
                 {onBlankPage && (
-                  <OneMenu
-                    scale={scale}
-                    icon="page-empty"
-                    iconType={'svg'}
-                    onPress={callbackAndClose(onBlankPage)}
-                    text={translate('MenuNewPageEmpty')}
-                  />
+                  <>
+                    <OneMenu
+                      scale={scale}
+                      icon="page-empty"
+                      iconType={'svg'}
+                      onPress={callbackAndClose(onBlankPage)}
+                      text={translate('MenuNewPageEmpty')}
+                    />
+                    <Seperator95 />
+                  </>
                 )}
                 {onLinesPage && (
-                  <OneMenu
-                    scale={scale}
-                    icon="page-lines"
-                    iconType={'svg'}
-                    onPress={callbackAndClose(onLinesPage)}
-                    text={translate('MenuNewPageLines')}
-                  />
+                  <>
+                    <OneMenu
+                      scale={scale}
+                      icon="page-lines"
+                      iconType={'svg'}
+                      onPress={callbackAndClose(onLinesPage)}
+                      text={translate('MenuNewPageLines')}
+                    />
+                    <Seperator95 />
+                  </>
                 )}
                 {onMathPage && (
-                  <OneMenu
-                    scale={scale}
-                    icon="page-math"
-                    iconType={'svg'}
-                    onPress={callbackAndClose(onMathPage)}
-                    text={translate('MenuNewPageMath')}
-                  />
+                  <>
+                    <OneMenu
+                      scale={scale}
+                      icon="page-math"
+                      iconType={'svg'}
+                      onPress={callbackAndClose(onMathPage)}
+                      text={translate('MenuNewPageMath')}
+                    />
+                    <Seperator95 />
+                  </>
                 )}
               </MenuGroup>
             )}
@@ -440,12 +457,13 @@ function MenuGroup(props) {
         backgroundColor: '#F1F2F4',
         borderRadius: 10,
         width: props.width,
+        paddingBottom: 5,
       }}
     >
       {props.title && (
-        <View style={{ marginHorizontal: 15 }}>
-          <AppText style={{ fontSize: 35 * props.scale }}>
-            {props.title}
+        <View style={{ marginHorizontal: 15, minHeight: 30 , justifyContent:"center"}}>
+          <AppText style={{ fontSize: 35 * props.scale , fontWeight:"500"}}>
+            {props.title}:
           </AppText>
         </View>
       )}
@@ -497,5 +515,20 @@ function Seperator() {
         borderBottomWidth: 1,
       }}
     />
+  );
+}
+
+function Seperator95() {
+  return (
+    <View style={{ width: "100%", alignItems: "center" }}>
+      <View
+        style={{
+          width: "95%",
+          marginTop: 4,
+          borderBottomColor: 'lightgray',
+          borderBottomWidth: 1,
+        }}
+      />
+    </View>
   );
 }

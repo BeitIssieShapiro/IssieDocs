@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, Fragment, useState, useRef } from "react";
-import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text, Pressable } from "react-native";
 import Svg, { Line } from "react-native-svg";
 import { AppText, availableColorPicker, colors, dimensions, getEraserIcon, getIconButton, IconButton, semanticColors, Spacer, textSizes } from "./elements";
 import FadeInView from "./FadeInView";
@@ -52,6 +52,7 @@ function spread(btns) {
         ))}
     </Fragment>);
 }
+
 
 function EditorToolbar({
     windowSize,
@@ -355,7 +356,10 @@ function EditorToolbar({
     if (featuresRef.current.includes(FEATURES.voice)) {
         extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.AUDIO, 70)
         } color={semanticColors.editPhotoButton}
-            iconType="MDI" icon={"microphone"} size={47} iconSize={45} selected={isAudioMode} />)
+            //iconType="MI" icon={"multitrack-audio"} 
+            //iconType="Ionicons" icon={"recording-outline"}
+            iconType="svg" icon={"audio-mode"}
+            size={47} iconSize={45} selected={isAudioMode} />)
     }
 
     if (featuresRef.current.includes(FEATURES.table)) {

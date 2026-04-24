@@ -1,5 +1,5 @@
 import React from 'react';
-import { Svg, Path, Line, Rect, Polygon, G, Text, Ellipse } from 'react-native-svg'
+import { Svg, Path, Line, Rect, Polygon, G, Text, Ellipse, Circle } from 'react-native-svg'
 import { translate } from "./lang.js"
 
 export const MARKER_TRANSPARENCY_CONSTANT = "40";
@@ -105,6 +105,14 @@ export function SvgIcon({ name, width, height, color, strokeWidth, size }) {
                 <Ellipse cx="53.5" cy="53.5" rx="53.5" ry="53.5" fill="#ffffff" stroke="#000000" />
                 <Ellipse cx="54" cy="54" rx="40" ry="40" fill="#ffffff" stroke="#000000" strokeWidth="4" />
             </Svg>);
+        case 'audio-mode':
+            return <Svg viewBox="0 0 64 64" {...props}>
+                <Circle cx={32} cy={32} r={30} fill={color}/>
+                <Circle cx={32} cy={32} r={30} fill="none" stroke="white" strokeWidth={2}/>
+                <Circle cx={32} cy={32} r={24} fill={color}/>
+                <Circle cx={32} cy={32} r={24} fill="none" stroke="white" strokeWidth={2}/>
+                <Text x={32} y={40} textAnchor="middle" fill="white" fontSize={20} fontWeight="bold">REC</Text>
+            </Svg>
         case 'lang-system':
             return <Svg viewBox="0 0 64 64" {...props}>
                 <Path d="M33,59.974V33H59.974a28.2,28.2,0,0,1-.58,4.824l1.957.413A29.968,29.968,0,1,0,38.2,61.358L37.79,59.4A28.181,28.181,0,0,1,33,59.974ZM20.987,49.256A27.963,27.963,0,0,1,31,47.023v12.9C26.942,59.344,23.359,55.3,20.987,49.256ZM31,45.023a29.975,29.975,0,0,0-10.693,2.35A49.18,49.18,0,0,1,18.013,33H31ZM33,4.079c4.058.577,7.641,4.623,10.013,10.665A27.963,27.963,0,0,1,33,16.977Zm-2,0v12.9a27.963,27.963,0,0,1-10.013-2.233C23.359,8.7,26.942,4.656,31,4.079Zm0,14.9V31H18.013a49.18,49.18,0,0,1,2.294-14.373A29.975,29.975,0,0,0,31,18.977Zm2,0a29.975,29.975,0,0,0,10.693-2.35A49.18,49.18,0,0,1,45.987,31H33ZM59.975,31H47.987a50.754,50.754,0,0,0-2.459-15.221,30.029,30.029,0,0,0,5.9-3.918A27.914,27.914,0,0,1,59.975,31ZM49.927,10.512a28,28,0,0,1-5.09,3.371,23.581,23.581,0,0,0-5.892-9.01A27.929,27.929,0,0,1,49.927,10.512ZM19.163,13.883a28,28,0,0,1-5.09-3.371A27.929,27.929,0,0,1,25.055,4.873,23.581,23.581,0,0,0,19.163,13.883Zm-6.586-2.022a30.029,30.029,0,0,0,5.9,3.918A50.754,50.754,0,0,0,16.013,31H4.025A27.914,27.914,0,0,1,12.577,11.861ZM4.025,33H16.013a50.754,50.754,0,0,0,2.459,15.221,30.029,30.029,0,0,0-5.9,3.918A27.914,27.914,0,0,1,4.025,33ZM14.073,53.488a28,28,0,0,1,5.09-3.371,23.581,23.581,0,0,0,5.892,9.01A27.929,27.929,0,0,1,14.073,53.488Z" />
