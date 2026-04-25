@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
+import { NativeModules, NativeEventEmitter, DeviceEventEmitter, Platform } from 'react-native';
 
 const { SpeechTranscription } = NativeModules;
 
-const emitter = Platform.OS === 'ios' && SpeechTranscription
-  ? new NativeEventEmitter(SpeechTranscription)
+// On Android, DeviceEventManagerModule emits to DeviceEventEmitter directly.
+// On iOS, NativeEventEmitter scopes to the module.
+const emitter = SpeechTranscription
+  ? (Platform.OS === 'android' ? DeviceEventEmitter : new NativeEventEmitter(SpeechTranscription))
   : null;
 
 // Export emitter for use by IssieEditPhoto2
@@ -45,12 +47,12 @@ export function useTranscription({
   // (toolbar refresh was previously done via a native notification observer,
   // but that caused reloadInputViews() to interfere with keyboard language detection)
   useEffect(() => {
-    if (Platform.OS !== 'ios' || !SpeechTranscription || !enabled) return;
+    if (!SpeechTranscription || !enabled) return;
     SpeechTranscription.setLanguage(language);
-    SpeechTranscription.refreshToolbar?.();
+    if (Platform.OS === 'ios') SpeechTranscription.refreshToolbar?.();
   }, [language, enabled]);
 
-  // Attach/detach native toolbar when entering/leaving edit mode
+  // Attach/detach native toolbar when entering/leaving edit mode (iOS only)
   useEffect(() => {
     if (Platform.OS !== 'ios' || !SpeechTranscription || !enabled) return;
 
@@ -66,7 +68,7 @@ export function useTranscription({
 
   // Listen for transcription events
   useEffect(() => {
-    if (Platform.OS !== 'ios' || !emitter || !enabled) return;
+    if (!emitter || !enabled) return;
 
     const startSub = emitter.addListener('onTranscriptionStart', () => {
       setIsRecording(true);
@@ -145,7 +147,7 @@ export function useTranscription({
 
   // Stop transcription on unmount
   useEffect(() => {
-    if (Platform.OS !== 'ios' || !SpeechTranscription || !enabled) return;
+    if (!SpeechTranscription || !enabled) return;
     return () => {
       SpeechTranscription.stopTranscription();
     };

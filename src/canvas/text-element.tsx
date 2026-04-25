@@ -102,7 +102,7 @@ function TextElement({
 
     // Listen for TTS events (word highlight, start/end, low volume)
     useEffect(() => {
-        if (Platform.OS !== 'ios' || !speechTranscriptionEmitter || !editMode) return;
+        if (!speechTranscriptionEmitter || !editMode) return;
 
         const startSub = speechTranscriptionEmitter.addListener('onSpeakingStart', () => {
             setIsSpeaking(true);
@@ -132,7 +132,7 @@ function TextElement({
 
     // Stop speaking on unmount or when leaving edit mode
     useEffect(() => {
-        if (Platform.OS !== 'ios' || !SpeechTranscription) return;
+        if (!SpeechTranscription) return;
 
         return () => {
             SpeechTranscription.stopSpeaking();

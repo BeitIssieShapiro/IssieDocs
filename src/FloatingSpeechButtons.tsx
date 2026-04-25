@@ -92,7 +92,7 @@ export default function FloatingSpeechButtons({
     windowSize,
     sideMargin,
 }: FloatingSpeechButtonsProps) {
-    if (Platform.OS !== 'ios' || !visible) return null;
+    if (!visible) return null;
 
     const rtl = isRTL();
 

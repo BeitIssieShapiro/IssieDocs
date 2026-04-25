@@ -241,7 +241,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     // Listen for native keyboard toolbar formatting actions
     useEffect(() => {
-        if (Platform.OS !== 'ios' || !speechTranscriptionEmitter) return;
+        if (!speechTranscriptionEmitter) return;
 
         const sub = speechTranscriptionEmitter.addListener('onToolbarAction', (event: { action: string; value?: boolean }) => {
             switch (event.action) {
@@ -493,7 +493,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const speakDictateFloating = getSetting(SPEAK_DICTATE_MODE.name, SPEAK_DICTATE_MODE.floating) === SPEAK_DICTATE_MODE.floating;
 
     useEffect(() => {
-        if (Platform.OS !== 'ios' || !speechTranscriptionEmitter) return;
+        if (!speechTranscriptionEmitter) return;
 
         const recStartSub = speechTranscriptionEmitter.addListener('onTranscriptionStart', () => setIsRecording(true));
         const recEndSub = speechTranscriptionEmitter.addListener('onTranscriptionEnd', () => setIsRecording(false));

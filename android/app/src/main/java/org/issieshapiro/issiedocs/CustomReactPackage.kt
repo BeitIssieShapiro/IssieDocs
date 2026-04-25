@@ -9,7 +9,8 @@ class CustomReactPackage : ReactPackage {
     override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
         return listOf(
             FileProviderModule(reactContext),
-            KeyboardLanguageModule(reactContext)
+            KeyboardLanguageModule(reactContext),
+            SpeechTranscriptionModule(reactContext)
         )
     }
 
