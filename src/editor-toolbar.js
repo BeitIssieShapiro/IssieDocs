@@ -307,6 +307,11 @@ function EditorToolbar({
             }
             setShowPickerType(type);
             setShowPicker(true);
+
+            if (type == Pickers.SPEAK_DICTATE) {
+                onTextMode()
+            }
+
             if (setMenuHeight) {
                 setMenuHeight(height)
             }

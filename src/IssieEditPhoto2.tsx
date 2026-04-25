@@ -1774,6 +1774,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setMode(EditModes.Ruler);
     }
     async function handleTextMode() {
+        if (modeRef.current == EditModes.Text) return;
         await beforeModeChange();
         if (eraseModeRef.current) {
             setEraseMode(false);
