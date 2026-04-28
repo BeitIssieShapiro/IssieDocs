@@ -10,7 +10,11 @@ The terms used in this Privacy Policy have the same meanings as in our Terms and
 
 **Information Collection and Use**
 
-For a better experience, while using our App, we may require you to provide us with certain personally identifiable information. The information that we request will be retained on your device and is not collected by us in any way.
+All documents and files created within the app remain on the user's device and are not sent to any server.
+
+The app uses Google Analytics to collect anonymized usage data (such as which features are used). No personally identifiable information is collected through analytics.
+
+The app includes an optional feedback form where users may submit a title, description, and optionally their email address. This information is sent directly to the development team and is not posted publicly.
 
 
 **Log Data**
@@ -42,9 +46,13 @@ we value your trust in providing us your Personal Information, thus we are striv
 
 This App may contain links to other sites. If you click on a third-party link, you will be directed to that site. Note that these external sites are not operated by us. Therefore, we strongly advise you to review the Privacy Policy of these websites. we have no control over and assume no responsibility for the content, privacy policies, or practices of any third-party sites or services.
 
+**Sharing**
+
+The app allows users to share documents they have created. Sharing is always user-initiated: the app presents the sharing options available on the device (such as email apps, WhatsApp, save to file, and others) and the user selects their preferred method. No data is shared automatically or without the user’s explicit action.
+
 **Children’s Privacy**
 
-we do not knowingly collect personally identifiable information from children under 13 years of age. In the case we discover that a child under 13 has provided us with personal information, we immediately delete this from our servers. If you are a parent or guardian and you are aware that your child has provided us with personal information, please contact us so that we will be able to do necessary actions.
+This app is designed for pupils with special needs and their teachers. The app does not knowingly collect personally identifiable information from children. Analytics data is fully anonymized. The optional feedback form may include an email address if the user chooses to provide one, but this is not required and is used only to respond to the feedback.
 
 **Changes to This Privacy Policy**
 
@@ -54,4 +62,4 @@ This policy is effective as of 2021-01-01
 
 **Contact Us**
 
-If you have any questions or suggestions about our Privacy Policy, do not hesitate to contact us at shapiroissie@gmail.com.
+If you have any questions or suggestions about our Privacy Policy, please visit: https://beitissie.org.il/en/contact-us/
