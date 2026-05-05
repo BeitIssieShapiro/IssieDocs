@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@bam.tech/react-native-image-resizer": "^3.0.11",
-    "@beitissieshapiro/issie-shared": "^1.0.0",
+    "@beitissieshapiro/issie-shared": "^1.0.4",
     "@react-native-community/image-editor": "^4.3.0",
     "@react-native-community/slider": "^5.2.0",
     "@react-native-documents/picker": "11.0.4",
