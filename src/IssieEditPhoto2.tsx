@@ -170,7 +170,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const textColorRef = useRef(textColor);
     const tableColorRef = useRef(tableColor);
     const moveCanvasRef = useRef(moveCanvas);
-    const moveRepeatRef = useRef<{ offset: Offset, interval: NodeJS.Timeout } | undefined>();
+    const moveRepeatRef = useRef<{ offset: Offset, interval: ReturnType<typeof setInterval> } | undefined>(undefined);
+    const isDraggingElementRef = useRef(false);
     const zoomRef = useRef(zoom);
     const pageHeightAdditionRef = useRef(0);
     const originalBgImageHeightRef = useRef(originalBgImageHeight);
@@ -178,7 +179,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const dragToMoveCanvasRef = useRef<{
         initialOffset: Offset;
         initialPt: SketchPoint;
-    } | undefined>()
+    } | undefined>(undefined)
 
 
     // -------------------------------------------------------------------------
@@ -541,6 +542,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     function verifyCurrentEditTextIsVisible() {
         console.log("[KB-SCROLL] verifyCurrentEditTextIsVisible - kbTop=", keyboardTopRef.current, "moveCanvas.y=", moveCanvasRef.current.y);
         if (keyboardTopRef.current == 0) return;
+        if (isDraggingElementRef.current) return;
         // check if a text box in edit:
         const textElem = currentEditedRef.current.textId ? textsRef.current.find(t => t.id == currentEditedRef.current.textId) : undefined;
         if (textElem) {
@@ -1362,6 +1364,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //                          MOVE / DRAG HANDLERS
     // -------------------------------------------------------------------------
     function handleMove(type: MoveTypes, id: string, p: SketchPoint) {
+        isDraggingElementRef.current = true;
         let [x, y] = p;
         const r = ratioRef.current;
         const z = zoomRef.current;
@@ -1587,11 +1590,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     function handleMoveEnd(type: MoveTypes, id: string) {
+        isDraggingElementRef.current = false;
         if (moveRepeatRef.current) {
             //trace("end repeat")
             clearInterval(moveRepeatRef.current.interval);
             moveRepeatRef.current = undefined;
         }
+        verifyCurrentEditTextIsVisible();
 
 
         if (type === MoveTypes.LineStart || type === MoveTypes.LineEnd || type === MoveTypes.LineMove) {
@@ -2430,6 +2435,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 zoom_level: newZoom
             });
         }
+        setTimeout(() => verifyCurrentEditTextIsVisible(), 50);
     }
 
     function handleMoveCanvas(newOffset: Offset) {
