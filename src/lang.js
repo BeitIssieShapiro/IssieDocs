@@ -223,8 +223,7 @@ export const languageMap = {
     InvalidZipFile: 'קובץ ZIP לא תקין',
 
     //todo: translate
-    MissingCameraPermission: `לא ניתנה רשות לשימוש במצלמה לאפליקציה
-        למתן רשות יש לגשת להגדרות -> פרטיות -> מצלמה, ולאפשר שימוש עבור IssieDocs`,
+    MissingCameraPermission: `לא ניתנה רשות לשימוש במצלמה לאפליקציה`,
     EditPhotoTitle: 'עריכת תמונה',
 
     ShowTableCaption: 'הוספה',
@@ -396,9 +395,7 @@ export const languageMap = {
 
     ImportProgress: 'استيراد الصفحة {1} من {2}',
     ExportProgress: 'تصدير الصفحة {1} من {2}',
-    MissingCameraPermission: `Missing Permission to use Camera.
-to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
-    EditPhotoTitle: 'تعديل الصورة',
+    MissingCameraPermission: `Missing Permission to use Camera`,
 
     ImportQuestionTitle: 'استيراد صفحة عمل جديدة {1}',
     BtnPreserveImportFolder: 'حفظ في المجلد {1}',
@@ -585,8 +582,7 @@ to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
     ImportSuccessful: 'Worksheet {1} saved succesfully',
     RestoreSuccessful: 'Backup file {1} restored successfully',
 
-    MissingCameraPermission: `Missing Permission to use Camera.
-to allow, goto Settings->Privacy->Camera and allow IssieDocs`,
+    MissingCameraPermission: `Missing Permission to use Camera`,
 
     ShowTableCaption: 'Add',
     DeleteTableCaption: 'Delete',
