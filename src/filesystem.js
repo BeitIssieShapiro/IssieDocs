@@ -554,17 +554,23 @@ export class FileSystem {
     return RNFS.exists(fullPath);
   }
 
+  static templateSentinelPath(sheet) {
+    // Single-page: basepath/image1.jpg -> basepath/image1.jpg.istemplate
+    // Multi-page:  basepath/fileFolder  -> basepath/fileFolder/istemplate
+    if (sheet.path.endsWith('.jpg')) {
+      return sheet.path + '.istemplate';
+    }
+    return sheet.path + '/istemplate';
+  }
+
   async setTemplate(sheet, isTemplate) {
-    const jsonPath = sheet.defaultSrc + '.json';
+    const sentinelPath = FileSystem.templateSentinelPath(sheet);
     try {
-      let data = { version: '2.0', elements: [] };
-      const exists = await RNFS.exists(jsonPath);
-      if (exists) {
-        const content = await RNFS.readFile(jsonPath, 'utf8');
-        data = JSON.parse(content);
+      if (isTemplate) {
+        await RNFS.writeFile(_androidFileName(sentinelPath), '');
+      } else {
+        await RNFS.unlink(_androidFileName(sentinelPath)).catch(ignore);
       }
-      data.isTemplate = isTemplate;
-      await RNFS.writeFile(jsonPath, JSON.stringify(data, undefined, ' '));
       sheet.setTemplate(isTemplate);
     } catch (e) {
       trace('setTemplate error', e);
@@ -709,6 +715,13 @@ export class FileSystem {
         .saveFile(
           _androidFileName(srcPath + '.json'),
           targetFileName + '.json',
+          false,
+        )
+        .catch(ignore);
+      await FileSystem.main
+        .saveFile(
+          _androidFileName(srcPath + '.istemplate'),
+          targetFileName + '.istemplate',
           false,
         )
         .catch(ignore);
@@ -944,6 +957,7 @@ export class FileSystem {
 
     await RNFS.unlink(_androidFileName(filePath));
     await RNFS.unlink(_androidFileName(filePath + '.json')).catch(ignore);
+    await RNFS.unlink(_androidFileName(filePath + '.istemplate')).catch(ignore);
     await this._iterateAttachments(filePath, async srcAttachmentPath => {
       await RNFS.unlink(srcAttachmentPath);
     });
@@ -1693,7 +1707,8 @@ export class FileSystemFolder {
         !f.name.includes(FileSystem.ATACHMENT_PREFIX) &&
         f.name !== ORDER_FILE_NAME &&
         f.name !== '.metadata' &&
-        !f.name.endsWith('thumbnail.jpg'),
+        !f.name.endsWith('thumbnail.jpg') &&
+        !f.name.endsWith('.istemplate'),
     );
     this._files = [];
     this._folders = [];
@@ -1713,17 +1728,19 @@ export class FileSystemFolder {
         let sheet = new WorkSheet(_androidFileName(fi.path), name);
 
         let lastUpdate = _lastUpdate(fi);
+        let pages;
 
         if (fi.isDirectory()) {
           //read all pages
-          const pages = await RNFS.readDir(_androidFileName(fi.path));
+          pages = await RNFS.readDir(_androidFileName(fi.path));
 
           for (let i = 0; i < pages.length; i++) {
             lastUpdate = Math.max(lastUpdate, _lastUpdate(pages[i]));
 
             if (
               !pages[i].name.endsWith('.json') &&
-              !pages[i].name.includes(FileSystem.ATACHMENT_PREFIX)
+              !pages[i].name.includes(FileSystem.ATACHMENT_PREFIX) &&
+              pages[i].name !== 'istemplate'
             ) {
               sheet.addPage(_androidFileName(pages[i].path));
             }
@@ -1776,18 +1793,15 @@ export class FileSystemFolder {
         }
         sheet.lastUpdate = lastUpdate;
 
-        // Check if this worksheet is marked as a template via its first page JSON
-        try {
-          const jsonFile = sheet.defaultSrc + '.json';
-          if (await RNFS.exists(jsonFile)) {
-            const content = await RNFS.readFile(jsonFile, 'utf8');
-            const data = JSON.parse(content);
-            if (data.isTemplate) {
-              sheet.setTemplate(true);
-            }
+        // Detect template via sentinel file (zero extra I/O — data already in directory listing)
+        if (fi.isDirectory()) {
+          if (pages.some(p => p.name === 'istemplate')) {
+            sheet.setTemplate(true);
           }
-        } catch (e) {
-          // ignore parse errors
+        } else {
+          if (items.some(f => f.name === fi.name + '.istemplate')) {
+            sheet.setTemplate(true);
+          }
         }
 
         this._files.push(sheet);

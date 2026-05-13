@@ -448,6 +448,11 @@ export default class IssieSavePhoto extends React.Component {
           } catch (e) {
             //ignore, as maybe json is missing
           }
+          try {
+            await FileSystem.main.saveFile(newPathToSave + ".istemplate", filePath + ".istemplate", this.isCopyMode());
+          } catch (e) {
+            //ignore, sentinel may not exist
+          }
 
           // rename/move attachments
           await FileSystem.main._iterateAttachments(newPathToSave, async (srcAttachmentPath, attachmentName) => {
@@ -463,10 +468,8 @@ export default class IssieSavePhoto extends React.Component {
         if (this.isFromTemplate()) {
           try {
             if (filePath.endsWith('.jpg')) {
-              // Single-page worksheet
               await this._lockPageMetadata(filePath + '.json');
             } else {
-              // Multi-page worksheet (directory)
               const pages = await RNFS.readDir(filePath);
               for (const page of pages) {
                 if (page.name.endsWith('.json')) {
@@ -474,6 +477,9 @@ export default class IssieSavePhoto extends React.Component {
                 }
               }
             }
+            // Remove sentinel from the copy so it's not itself a template
+            const sentinelPath = FileSystem.templateSentinelPath({ path: filePath });
+            await RNFS.unlink(sentinelPath).catch(() => {});
           } catch (e) {
             trace('template lock error', e);
           }
@@ -482,18 +488,11 @@ export default class IssieSavePhoto extends React.Component {
           FileSystem.main._notify();
         }
 
-        // For "Save as Template": mark the copied worksheet's first page JSON
+        // For "Save as Template": write sentinel file
         if (this.props.route.params.saveAsTemplate) {
           try {
-            const jsonPath = filePath.endsWith('.jpg') ? filePath + '.json' : filePath + '/0.jpg.json';
-            let data = { version: '2.0', elements: [] };
-            const jsonExists = await RNFS.exists(jsonPath);
-            if (jsonExists) {
-              const content = await RNFS.readFile(jsonPath, 'utf8');
-              data = JSON.parse(content);
-            }
-            data.isTemplate = true;
-            await FileSystem.main.writeFile(jsonPath, JSON.stringify(data, undefined, ' '));
+            const sentinelPath = FileSystem.templateSentinelPath({ path: filePath });
+            await RNFS.writeFile(sentinelPath, '');
           } catch (e) {
             trace('save as template mark error', e);
           }
