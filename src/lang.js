@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 const { KeyboardLanguage } = NativeModules;
 
-const keyboardEventEmitter = new NativeEventEmitter(KeyboardLanguage);
+const keyboardEventEmitter = KeyboardLanguage ? new NativeEventEmitter(KeyboardLanguage) : null;
 
 export const useKeyboardLanguage = () => {
   const [language, setLanguage] = useState('en');
@@ -35,6 +35,7 @@ export const useKeyboardLanguage = () => {
     } else setLanguage('en');
   };
   useEffect(() => {
+    if (!KeyboardLanguage || !keyboardEventEmitter) return;
     // 1. Initial check
     KeyboardLanguage.getCurrentLanguage().then(lang => setNormalizeLang(lang));
 

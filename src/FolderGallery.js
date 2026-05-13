@@ -170,7 +170,7 @@ export default class FolderGallery extends React.Component {
         this.toggleEditMode(),
       );
       this.setEditEnabled(false);
-      Linking.addEventListener('url', this._handleOpenURL);
+      this.linkingListener = Linking.addEventListener('url', this._handleOpenURL);
 
       if (this.context?.url) {
         trace('open with URL:', this.context);
@@ -223,7 +223,7 @@ export default class FolderGallery extends React.Component {
   componentWillUnmount = () => {
     this.dimSubscription?.remove();
 
-    Linking.removeAllListeners();
+    this.linkingListener?.remove();
     this.fileListener?.remove();
     this.props.navigation.removeAllListeners();
   };
