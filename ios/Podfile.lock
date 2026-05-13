@@ -2329,7 +2329,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNReanimated (4.3.0):
+  - RNReanimated (4.3.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2350,11 +2350,11 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNReanimated/apple (= 4.3.0)
-    - RNReanimated/common (= 4.3.0)
+    - RNReanimated/apple (= 4.3.1)
+    - RNReanimated/common (= 4.3.1)
     - RNWorklets
     - Yoga
-  - RNReanimated/apple (4.3.0):
+  - RNReanimated/apple (4.3.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2377,7 +2377,7 @@ PODS:
     - ReactNativeDependencies
     - RNWorklets
     - Yoga
-  - RNReanimated/common (4.3.0):
+  - RNReanimated/common (4.3.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2509,7 +2509,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNWorklets (0.8.1):
+  - RNWorklets (0.8.3):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2530,10 +2530,10 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNWorklets/apple (= 0.8.1)
-    - RNWorklets/common (= 0.8.1)
+    - RNWorklets/apple (= 0.8.3)
+    - RNWorklets/common (= 0.8.3)
     - Yoga
-  - RNWorklets/apple (0.8.1):
+  - RNWorklets/apple (0.8.3):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2555,7 +2555,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNWorklets/common (0.8.1):
+  - RNWorklets/common (0.8.3):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3069,11 +3069,11 @@ SPEC CHECKSUMS:
   RNGestureHandler: 6648e32034d01db6778502badd0ee23f9b7cf7a7
   RNLocalize: 403eea011fa5cdc0a6c8c3e02baf6343c5f6e79c
   RNPermissions: 012855d76a44b4b11f3c83f5b036a1c2f43bbf1b
-  RNReanimated: 6539590b578caeef531a21d37f77f036b124addd
+  RNReanimated: 669dcac7a77261e2c491333be34dd2eb9a5206c3
   RNScreens: d0b84395f70841b48de7af26e45704ed4a24c62e
   RNShare: 4db97500d742393e28dbf603c5e858b76222653b
   RNSVG: 80ea43654e32127636e6d3db6045bf98945ad9cd
-  RNWorklets: d81ce0ab67cad347511abab5a32cffa1eb52139d
+  RNWorklets: b1ca1c26210b8be65e4036bd114259d1c85e5283
   RNZipArchive: f2806ba80e24cf1984d6a7cb361d8a07d734997d
   SSZipArchive: c69881e8ac5521f0e622291387add5f60f30f3c4
   Yoga: 9d8e8094a2bed6a175d9e6001a0546d5dae663ee

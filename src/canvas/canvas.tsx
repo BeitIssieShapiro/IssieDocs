@@ -550,23 +550,29 @@ function Canvas({
                 const elem = startSketchRef.current?.elem;
 
                 if (!elem && currentElementTypeRef.current === ElementTypes.Sketch) {
-                    // Add the final point on the JS thread to avoid race with UI-thread worklet
                     const finalPoint = screen2Canvas(gState.moveX, gState.moveY);
-                    lastPathSV.value.lineTo(
-                        parseFloat((finalPoint[0] * ratioRef.current).toFixed(1)),
-                        parseFloat((finalPoint[1] * ratioRef.current).toFixed(1))
-                    );
-                    const commands = toCmds(lastPathSV.value, ratioRef.current);
+                    const finalX = parseFloat((finalPoint[0] * ratioRef.current).toFixed(1));
+                    const finalY = parseFloat((finalPoint[1] * ratioRef.current).toFixed(1));
                     sketchInProgressRef.current = false;
-                    sketchTimerRef.current = setTimeout(() => {
-                        //console.log("sketch timeout")
-                        sketchTimerRef.current = undefined;
-                        if (!sketchInProgressRef.current) {
-                            //console.log("call sketch end")
-                            sketchPathInSaveProgressRef.current = true;
-                            onSketchEnd(commands);
-                        }
-                    }, 300);
+
+                    // Add the final point via modify() so it queues after all in-flight worklet lineTo calls.
+                    // Then read back on JS thread via setTimeout(0) — by then the worklet queue has flushed.
+                    lastPathSV.modify(p => {
+                        "worklet";
+                        p.lineTo(finalX, finalY);
+                        return p;
+                    });
+
+                    setTimeout(() => {
+                        const commands = toCmds(lastPathSV.value, ratioRef.current);
+                        sketchTimerRef.current = setTimeout(() => {
+                            sketchTimerRef.current = undefined;
+                            if (!sketchInProgressRef.current) {
+                                sketchPathInSaveProgressRef.current = true;
+                                onSketchEnd(commands);
+                            }
+                        }, 300);
+                    }, 0);
                 } else if (!elem && currentElementTypeRef.current === ElementTypes.Line) {
                     onSketchEnd();
                 } else if (elem) {
@@ -616,7 +622,7 @@ function Canvas({
 
     // Convert screen coordinates to canvas coordinates
     const screen2Canvas = (x: number, y: number): SketchPoint => {
-        trace("screen2Canvas", { canvasTop: canvasTopRef.current, ratio: ratioRef.current })
+        // trace("screen2Canvas", { canvasTop: canvasTopRef.current, ratio: ratioRef.current })
         return [
             (x - sideMarginRef.current) / (zoomRef.current * ratioRef.current) - offsetRef.current.x,
             (y - canvasTopRef.current) / (zoomRef.current * ratioRef.current) - offsetRef.current.y,

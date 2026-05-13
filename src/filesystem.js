@@ -163,7 +163,68 @@ export class FileSystem {
 
       await _sortRootFolders(this._folders);
     });
+    await this._migrateTemplatesIfNeeded();
     this._notify();
+  }
+
+  async _migrateTemplatesIfNeeded() {
+    const markerPath = _androidFileName(this._basePath + 'filesystem.version.6.23');
+    if (await RNFS.exists(markerPath)) return;
+
+    trace('migrating templates to sentinel files');
+    for (const folder of this._folders) {
+      await this._migrateFolderTemplates(folder);
+      if (folder.folders) {
+        for (const sub of folder.folders) {
+          await this._migrateFolderTemplates(sub);
+        }
+      }
+    }
+
+    await RNFS.writeFile(markerPath, '');
+    trace('template migration complete');
+  }
+
+  async _migrateFolderTemplates(folder) {
+    try {
+      const items = await RNFS.readDir(this._basePath + folder.path);
+      for (const fi of items) {
+        if (fi.name.endsWith('.json') || fi.name.endsWith('.istemplate') ||
+            fi.name.endsWith('thumbnail.jpg') || fi.name === ORDER_FILE_NAME ||
+            fi.name === '.metadata' || fi.name === FileSystem.FOLDERS_PATH) continue;
+
+        if (fi.isDirectory()) {
+          // multi-page: check 0.jpg.json inside
+          const jsonFile = _androidFileName(fi.path + '/0.jpg.json');
+          if (await RNFS.exists(jsonFile)) {
+            try {
+              const data = JSON.parse(await RNFS.readFile(jsonFile, 'utf8'));
+              if (data.isTemplate) {
+                await RNFS.writeFile(_androidFileName(fi.path + '/istemplate'), '');
+                delete data.isTemplate;
+                await RNFS.writeFile(_androidFileName(jsonFile), JSON.stringify(data, undefined, ' '));
+                trace('migrated template (multi-page):', fi.name);
+              }
+            } catch (e) { /* ignore */ }
+          }
+        } else if (fi.name.endsWith('.jpg')) {
+          const jsonFile = _androidFileName(fi.path + '.json');
+          if (await RNFS.exists(jsonFile)) {
+            try {
+              const data = JSON.parse(await RNFS.readFile(jsonFile, 'utf8'));
+              if (data.isTemplate) {
+                await RNFS.writeFile(_androidFileName(fi.path + '.istemplate'), '');
+                delete data.isTemplate;
+                await RNFS.writeFile(_androidFileName(jsonFile), JSON.stringify(data, undefined, ' '));
+                trace('migrated template (single-page):', fi.name);
+              }
+            } catch (e) { /* ignore */ }
+          }
+        }
+      }
+    } catch (e) {
+      trace('_migrateFolderTemplates error', folder.path, e);
+    }
   }
 
   async _reloadFolder(ID) {
