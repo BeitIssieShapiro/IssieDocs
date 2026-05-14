@@ -4,6 +4,7 @@ import {
     Alert,
     ImageSize,
     Keyboard,
+    PermissionsAndroid,
     Platform,
     StyleSheet,
     TouchableOpacity,
@@ -511,12 +512,18 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         };
     }, []);
 
-    const handleMicPress = useCallback(() => {
+    const handleMicPress = useCallback(async () => {
         if (!SpeechTranscription) return;
         if (isSpeaking) SpeechTranscription.stopSpeaking();
         if (isRecording) {
             SpeechTranscription.stopTranscription();
         } else {
+            if (Platform.OS === 'android') {
+                const granted = await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.RECORD_AUDIO
+                );
+                if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
+            }
             SpeechTranscription.setLanguage(kbLanguage);
             SpeechTranscription.startTranscription().catch((err: any) => {
                 console.warn('startTranscription failed:', err);
@@ -750,9 +757,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setNavParam(navigation, 'share', false);
 
             // Always create PDF file
-            //trace("about to generate PDF", dataUrls.length);
-            let shareUrl = "file://" + (await generatePDF(name, dataUrls));
-            shareUrl = await FileSystem.filePathToContentUri(shareUrl);
+            const pdfPath = await generatePDF(name, dataUrls);
+            const shareUrl = "file://" + pdfPath;
 
             //trace("about to share", shareUrl);
 
@@ -804,7 +810,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 Alert.alert("Failed to generate PDF for sharing.");
             }
         } catch (e) {
-            //console.log("Share finalization failed", e);
             Alert.alert("Failed to generate PDF for sharing.");
         } finally {
             navigation.goBack();
