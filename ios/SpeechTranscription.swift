@@ -55,7 +55,7 @@ class SpeechTranscription: RCTEventEmitter {
   override init() {
     super.init()
     speechSynthesizer.delegate = self
-    speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en"))
+    speechRecognizer = bestRecognizer(forBaseLang: "en")
   }
 
   deinit {
@@ -315,15 +315,14 @@ class SpeechTranscription: RCTEventEmitter {
 
   @objc
   func setLanguage(_ lang: String) {
-    let locale: Locale
-    switch lang {
-    case "he": locale = Locale(identifier: "he-IL")
-    case "ar": locale = Locale(identifier: "ar-SA")
-    default:   locale = Locale(identifier: "en-US")
-    }
-
-    if let recognizer = SFSpeechRecognizer(locale: locale) {
-      speechRecognizer = recognizer
+    let recognizer = bestRecognizer(forBaseLang: lang)
+    speechRecognizer = recognizer
+    if recognizer == nil {
+      NSLog("[SpeechTranscription] No supported recognizer for base lang %@", lang)
+    } else if !(recognizer?.isAvailable ?? false) {
+      NSLog("[SpeechTranscription] Recognizer for %@ not available right now", recognizer?.locale.identifier ?? lang)
+    } else {
+      NSLog("[SpeechTranscription] Using recognizer locale: %@", recognizer?.locale.identifier ?? "?")
     }
 
     DispatchQueue.main.async { [weak self] in
@@ -338,6 +337,47 @@ class SpeechTranscription: RCTEventEmitter {
       self.fontUpButton?.setTitle(label, for: .normal)
       self.fontDownButton?.setTitle(label, for: .normal)
     }
+  }
+
+  // Picks the best SFSpeechRecognizer for a base language code (e.g. "en", "ar", "he").
+  // Strategy:
+  //   1. Intersect SFSpeechRecognizer.supportedLocales() with the requested base lang.
+  //   2. Prefer a supported locale that matches the device's preferredLanguages
+  //      (covers users with en-GB, ar-EG, etc. — gives best accent match).
+  //   3. Fall back to a canonical default (en-US / ar-SA / he-IL) if it's supported.
+  //   4. Fall back to any supported locale for that base lang.
+  // Returns nil if no recognizer can be built — caller emits LANG_NOT_SUPPORTED.
+  private func bestRecognizer(forBaseLang lang: String) -> SFSpeechRecognizer? {
+    let supported = SFSpeechRecognizer.supportedLocales()
+    let candidates = supported.filter { $0.identifier.hasPrefix("\(lang)-") || $0.identifier == lang }
+    if candidates.isEmpty { return nil }
+
+    // Match user's preferred languages first (e.g. device en-GB → en-GB)
+    for pref in Locale.preferredLanguages {
+      let prefBase = pref.split(separator: "-").first.map(String.init) ?? pref
+      guard prefBase == lang else { continue }
+      if let exact = candidates.first(where: { $0.identifier.caseInsensitiveCompare(pref) == .orderedSame }) {
+        return SFSpeechRecognizer(locale: exact)
+      }
+    }
+
+    // Canonical defaults
+    let canonical: String
+    switch lang {
+    case "he": canonical = "he-IL"
+    case "ar": canonical = "ar-SA"
+    case "en": canonical = "en-US"
+    default:   canonical = lang
+    }
+    if let preferred = candidates.first(where: { $0.identifier.caseInsensitiveCompare(canonical) == .orderedSame }) {
+      return SFSpeechRecognizer(locale: preferred)
+    }
+
+    // Any supported variant for this base lang
+    if let any = candidates.first {
+      return SFSpeechRecognizer(locale: any)
+    }
+    return nil
   }
 
   @objc
@@ -427,16 +467,14 @@ class SpeechTranscription: RCTEventEmitter {
       return
     }
 
-    requestPermissions { [weak self] granted, errorMessage in
+    requestPermissions { [weak self] granted, errorCode in
       guard let self = self else { return }
 
       if !granted {
         DispatchQueue.main.async {
-          if self.hasListeners {
-            self.sendEvent(withName: "onTranscriptionError", body: ["message": errorMessage ?? "Permission denied"])
-          }
+          self.emitError(code: errorCode ?? "PERMISSION_DENIED")
         }
-        reject("PERMISSION_DENIED", errorMessage, nil)
+        reject("PERMISSION_DENIED", errorCode, nil)
         return
       }
 
@@ -554,17 +592,17 @@ class SpeechTranscription: RCTEventEmitter {
           if allowed {
             completion(true, nil)
           } else {
-            completion(false, "Microphone permission denied")
+            completion(false, "MIC_PERMISSION_DENIED")
           }
         }
       case .denied:
-        completion(false, "Speech recognition permission denied. Please enable it in Settings.")
+        completion(false, "SPEECH_PERMISSION_DENIED")
       case .restricted:
-        completion(false, "Speech recognition is restricted on this device")
+        completion(false, "SPEECH_RESTRICTED")
       case .notDetermined:
-        completion(false, "Speech recognition permission not determined")
+        completion(false, "SPEECH_PERMISSION_NOT_DETERMINED")
       @unknown default:
-        completion(false, "Unknown speech recognition authorization status")
+        completion(false, "SPEECH_PERMISSION_UNKNOWN")
       }
     }
   }
@@ -572,22 +610,19 @@ class SpeechTranscription: RCTEventEmitter {
   // MARK: - Recognition
 
   private func startRecognition(resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-    guard let speechRecognizer = speechRecognizer, speechRecognizer.isAvailable else {
-      if hasListeners {
-        sendEvent(withName: "onTranscriptionError", body: ["message": "Speech recognizer not available"])
-      }
-      reject("NOT_AVAILABLE", "Speech recognizer not available", nil)
+    guard let speechRecognizer = speechRecognizer else {
+      emitError(code: "LANG_NOT_SUPPORTED", lang: kbLanguage)
+      reject("NOT_AVAILABLE", "Speech recognition not supported for \(kbLanguage)", nil)
+      return
+    }
+
+    guard speechRecognizer.isAvailable else {
+      emitError(code: "RECOGNIZER_UNAVAILABLE", lang: kbLanguage)
+      reject("NOT_AVAILABLE", "Recognizer unavailable", nil)
       return
     }
 
     let audioSession = AVAudioSession.sharedInstance()
-    if audioSession.isOtherAudioPlaying {
-      if hasListeners {
-        sendEvent(withName: "onTranscriptionError", body: ["message": "Another audio session is active"])
-      }
-      reject("AUDIO_CONFLICT", "Another audio session is active", nil)
-      return
-    }
 
     stopRecognitionInternal()
 
@@ -595,9 +630,7 @@ class SpeechTranscription: RCTEventEmitter {
       try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker])
       try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
     } catch {
-      if hasListeners {
-        sendEvent(withName: "onTranscriptionError", body: ["message": "Audio session error: \(error.localizedDescription)"])
-      }
+      emitError(code: "AUDIO_SESSION_ERROR", details: error.localizedDescription)
       reject("AUDIO_SESSION_ERROR", error.localizedDescription, error)
       return
     }
@@ -609,7 +642,15 @@ class SpeechTranscription: RCTEventEmitter {
     }
 
     recognitionRequest.shouldReportPartialResults = true
-    recognitionRequest.requiresOnDeviceRecognition = true
+    // On-device recognition is faster/private but not available for all locales.
+    // Force-requiring it caused dictation to silently fail for users whose device
+    // lacked an on-device model (esp. Hebrew/Arabic). Only enable when supported.
+    if speechRecognizer.supportsOnDeviceRecognition {
+      recognitionRequest.requiresOnDeviceRecognition = true
+    } else {
+      recognitionRequest.requiresOnDeviceRecognition = false
+      NSLog("[SpeechTranscription] On-device recognition not supported for %@, using server.", kbLanguage)
+    }
 
     recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
       guard let self = self else { return }
@@ -638,9 +679,19 @@ class SpeechTranscription: RCTEventEmitter {
 
       if let error = error {
         if self.isRecording {
-          if self.hasListeners {
-            self.sendEvent(withName: "onTranscriptionError", body: ["message": error.localizedDescription])
+          let nsErr = error as NSError
+          let code: String
+          if nsErr.domain == "kAFAssistantErrorDomain" {
+            switch nsErr.code {
+            case 203: code = "NO_SPEECH_DETECTED"
+            case 1101, 1107, 1110: code = "LANG_NOT_SUPPORTED"
+            case 1700: code = "NETWORK_REQUIRED"
+            default:   code = "RECOGNITION_FAILED"
+            }
+          } else {
+            code = "RECOGNITION_FAILED"
           }
+          self.emitError(code: code, lang: self.kbLanguage, details: "\(nsErr.domain):\(nsErr.code)")
           self.stopRecognitionInternal()
           if self.hasListeners {
             self.sendEvent(withName: "onTranscriptionEnd", body: [:])
@@ -654,6 +705,12 @@ class SpeechTranscription: RCTEventEmitter {
 
     let inputNode = audioEngine.inputNode
     let recordingFormat = inputNode.outputFormat(forBus: 0)
+    guard recordingFormat.sampleRate > 0 else {
+      emitError(code: "MIC_NOT_READY")
+      stopRecognitionInternal()
+      reject("ENGINE_ERROR", "Mic not ready", nil)
+      return
+    }
     inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
       self?.recognitionRequest?.append(buffer)
     }
@@ -668,11 +725,18 @@ class SpeechTranscription: RCTEventEmitter {
       startSilenceTimer()
       resolve(nil)
     } catch {
-      if hasListeners {
-        sendEvent(withName: "onTranscriptionError", body: ["message": "Audio engine error: \(error.localizedDescription)"])
-      }
+      emitError(code: "ENGINE_ERROR", details: error.localizedDescription)
+      stopRecognitionInternal()
       reject("ENGINE_ERROR", error.localizedDescription, error)
     }
+  }
+
+  private func emitError(code: String, lang: String? = nil, details: String? = nil) {
+    guard hasListeners else { return }
+    var body: [String: Any] = ["code": code]
+    if let lang = lang { body["lang"] = lang }
+    if let details = details { body["details"] = details }
+    sendEvent(withName: "onTranscriptionError", body: body)
   }
 
   private func stopRecognitionInternal() {

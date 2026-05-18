@@ -178,8 +178,10 @@ function TextElement({
         text.fontFamily === 'Gveret Levin AlefAlefAlef-Regular';
     const fontPadding = isHandwritingFont
         ? {
-            paddingHorizontal: text.fontSize * ratio * 0.15,
-            paddingVertical: text.fontSize * ratio * 0.1,
+            paddingLeft: text.fontSize * ratio * 0.35 + 10,
+            paddingRight: text.fontSize * ratio * 0.15,
+            paddingTop: text.fontSize * ratio * 0.1,
+            paddingBottom: text.fontSize * ratio * 0.1 + 2,
         }
         : undefined;
 

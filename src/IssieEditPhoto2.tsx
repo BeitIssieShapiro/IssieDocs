@@ -499,7 +499,32 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         const recStartSub = speechTranscriptionEmitter.addListener('onTranscriptionStart', () => setIsRecording(true));
         const recEndSub = speechTranscriptionEmitter.addListener('onTranscriptionEnd', () => setIsRecording(false));
-        const recErrSub = speechTranscriptionEmitter.addListener('onTranscriptionError', () => setIsRecording(false));
+        const recErrSub = speechTranscriptionEmitter.addListener('onTranscriptionError', (event: { code?: string; lang?: string; details?: string; message?: string }) => {
+            setIsRecording(false);
+            const code = event?.code;
+            const codeToKey: { [k: string]: string } = {
+                LANG_NOT_SUPPORTED: 'DictationLangNotSupported',
+                RECOGNIZER_UNAVAILABLE: 'DictationRecognizerUnavailable',
+                NO_SPEECH_DETECTED: 'DictationNoSpeech',
+                NETWORK_REQUIRED: 'DictationNetworkRequired',
+                RECOGNITION_FAILED: 'DictationRecognitionFailed',
+                MIC_NOT_READY: 'DictationMicNotReady',
+                AUDIO_SESSION_ERROR: 'DictationAudioSessionError',
+                ENGINE_ERROR: 'DictationEngineError',
+                MIC_PERMISSION_DENIED: 'DictationMicPermissionDenied',
+                SPEECH_PERMISSION_DENIED: 'DictationSpeechPermissionDenied',
+                SPEECH_RESTRICTED: 'DictationSpeechRestricted',
+                SPEECH_PERMISSION_NOT_DETERMINED: 'DictationPermissionNotDetermined',
+                SPEECH_PERMISSION_UNKNOWN: 'DictationRecognitionFailed',
+                PERMISSION_DENIED: 'DictationSpeechPermissionDenied',
+            };
+            const key = code ? codeToKey[code] : undefined;
+            const msg = key ? translate(key) : (event?.message || translate('DictationRecognitionFailed'));
+            // NO_SPEECH_DETECTED is benign — silenced to avoid noisy popup on idle stop
+            if (code !== 'NO_SPEECH_DETECTED') {
+                Alert.alert(translate('DictationFailedTitle'), msg);
+            }
+        });
         const speakStartSub = speechTranscriptionEmitter.addListener('onSpeakingStart', () => setIsSpeaking(true));
         const speakEndSub = speechTranscriptionEmitter.addListener('onSpeakingEnd', () => setIsSpeaking(false));
 

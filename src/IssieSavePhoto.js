@@ -1,7 +1,7 @@
 
 import React from 'react';
 import {
-  ImageBackground, TouchableOpacity, StyleSheet, View, Text,
+  TouchableOpacity, StyleSheet, View, Text,
   Alert, Dimensions, PanResponder,
   Image
 } from 'react-native';
@@ -704,6 +704,7 @@ export default class IssieSavePhoto extends React.Component {
       });
   }
 
+
   movePage = (inc) => {
     this.setState({ currentPage: this.state.currentPage + inc });
   }
@@ -881,15 +882,23 @@ export default class IssieSavePhoto extends React.Component {
               ref={v => this._cropWrapper = v}
               collapsable={false}
               style={{
-              width: this.state.imgSize.w * this.state.scale,
-              height: this.state.imgSize.h * this.state.scale,
+              width: Math.round(this.state.imgSize.w * this.state.scale),
+              height: Math.round(this.state.imgSize.h * this.state.scale),
               backgroundColor: 'white',
             }}>
-              <ImageBackground
-                style={{ width: '100%', height: '100%', backgroundColor: 'white' }}
-                imageStyle={{ resizeMode: 'stretch' }}
+              <Image
+                key={`${this.state.pages?.[this.state.currentPage]}_${Math.round(this.state.imgSize.w * this.state.scale)}x${Math.round(this.state.imgSize.h * this.state.scale)}`}
+                style={{
+                  position: 'absolute', top: 0, left: 0,
+                  width: Math.round(this.state.imgSize.w * this.state.scale),
+                  height: Math.round(this.state.imgSize.h * this.state.scale),
+                }}
+                resizeMode="contain"
                 blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
-                source={this.state?.pages && normalizeFoAndroid({ uri: this.state.pages[this.state.currentPage] })}
+                fadeDuration={0}
+                source={this.state?.pages && normalizeFoAndroid({
+                  uri: this.state.pages[this.state.currentPage],
+                })}
               />
               {this.state.cropping && (
                 <View

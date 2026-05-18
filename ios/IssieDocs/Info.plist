@@ -83,7 +83,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow IssieDocs loading photos from the Photo Library into IssieDocs pages</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Allow IssieDocs to convert speech to text when editing worksheets</string>
+	<string>Allow IssieDocs to convert speech to text when editing worksheets. Audio may be processed by Apple's speech recognition service.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>
