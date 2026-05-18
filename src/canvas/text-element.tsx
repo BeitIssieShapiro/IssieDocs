@@ -171,6 +171,18 @@ function TextElement({
 
     const widthStyle = text.width ? { width: text.width * ratio } : undefined;
 
+    // Gveret Levin handwriting font has glyphs that extend beyond the advance box
+    // (e.g. נ tail). Pad the box so descenders/swashes are not clipped.
+    const isHandwritingFont =
+        text.fontFamily === 'GveretLevinAlefAlefAlef-Regular' ||
+        text.fontFamily === 'Gveret Levin AlefAlefAlef-Regular';
+    const fontPadding = isHandwritingFont
+        ? {
+            paddingHorizontal: text.fontSize * ratio * 0.15,
+            paddingVertical: text.fontSize * ratio * 0.1,
+        }
+        : undefined;
+
     const style: any = {
         color: text.color, fontSize: text.fontSize * ratio,
         textAlign: text.alignment.toLowerCase(),
@@ -178,6 +190,7 @@ function TextElement({
         fontWeight: text.bold ? 'bold' : 'normal',
         fontStyle: text.italic ? 'italic' : 'normal',
         textDecorationLine: text.underline ? 'underline' : 'none',
+        ...fontPadding,
     };
 
     const highlightedTextSpans = useMemo(() => {
