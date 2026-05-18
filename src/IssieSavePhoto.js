@@ -95,55 +95,92 @@ export default class IssieSavePhoto extends React.Component {
       onStartShouldSetPanResponderCapture: (evt, gestureState) => this.state.cropping,
       onMoveShouldSetPanResponder: (evt, gestureState) => this.state.cropping,
       onMoveShouldSetPanResponderCapture: (evt, gestureState) => this.state.cropping,
-      onPanResponderMove: (evt, gestureState) => {
-        if (this.state.cropping) {
-          let panStartX = gestureState.x0, panStartY = gestureState.y0 - this.state.topView - headerHeight;
-
-          let msg = ("x:" + panStartX + " d-" + gestureState.dx + ", y:" + panStartY + " d-" + gestureState.dy);
-          let cd = this.state.cropData;
-          if (this.state.panStartX != panStartX && this.state.panStartY != panStartY) {
-            let panStartCD = {};
-            Object.assign(panStartCD, cd);
-            this.setState({
-              panStartX: panStartX,
-              panStartY: panStartY,
-              panStartCropData: panStartCD,
-              msg
-            })
-            return;
-          }
-          let moved = false;
-          let ocd = this.state.panStartCropData;
-          let left = panStartX - ocd.x;
-          let right = ocd.x + ocd.width - panStartX;
-          let top = panStartY - ocd.y;
-          let bottom = ocd.y + ocd.height - panStartY;
-
-          if (left - this.state.cropXOffset < panBroderDistance) {
-            cd.x = ocd.x + gestureState.dx;
-            cd.width = ocd.width - gestureState.dx;
-            moved = true
-          } else if (right < panBroderDistance) {
-            cd.width = ocd.width + gestureState.dx;
-            moved = true;
-          }
-
-          if (top < panBroderDistance) {
-            cd.y = ocd.y + gestureState.dy;
-            cd.height = ocd.height - gestureState.dy;
-            moved = true
-          } else if (bottom < panBroderDistance) {
-            cd.height = ocd.height + gestureState.dy;
-            moved = true;
-          }
-
-          if (!moved) {
-            cd.x = ocd.x + gestureState.dx;
-            cd.y = ocd.y + gestureState.dy;
-          }
-          this.setState({ cropData: cd });;
+      onPanResponderGrant: (evt, gestureState) => {
+        if (!this.state.cropping) return;
+        // Measure the wrapper's actual screen position. Computing it from
+        // windowSize/scale was unreliable across rotation and safe-area changes.
+        const computeOffsets = (wrapperScreenX, wrapperScreenY) => {
+          this._panStartX = gestureState.x0 - wrapperScreenX;
+          this._panStartY = gestureState.y0 - wrapperScreenY;
+          this._panStartCropData = { ...this.state.cropData };
+        };
+        if (this._cropWrapper && this._cropWrapper.measureInWindow) {
+          this._cropWrapper.measureInWindow((x, y) => computeOffsets(x, y));
+        } else {
+          // Fallback to computed offsets
+          const winW = this.state.windowSize.width;
+          const dispW = this.state.imgSize.w * this.state.scale;
+          computeOffsets((winW - dispW) / 2, this.state.topView + headerHeight);
         }
-      }
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        if (!this.state.cropping) return;
+        if (!this._panStartCropData) return;
+
+        const scale = this.state.scale || 1;
+        // panStart* are in display pixels (wrapper-relative). cropData is in
+        // natural image pixels. Convert touch coords to natural-pixel space
+        // for edge detection.
+        const panStartXImg = this._panStartX / scale;
+        const panStartYImg = this._panStartY / scale;
+        const ocd = this._panStartCropData;
+        const cd = { ...this.state.cropData };
+        const dxImg = gestureState.dx / scale;
+        const dyImg = gestureState.dy / scale;
+        const borderImg = panBroderDistance / scale;
+
+        const left = panStartXImg - ocd.x;
+        const right = ocd.x + ocd.width - panStartXImg;
+        const top = panStartYImg - ocd.y;
+        const bottom = ocd.y + ocd.height - panStartYImg;
+
+        let moved = false;
+
+        if (left < borderImg) {
+          cd.x = ocd.x + dxImg;
+          cd.width = ocd.width - dxImg;
+          moved = true;
+        } else if (right < borderImg) {
+          cd.width = ocd.width + dxImg;
+          moved = true;
+        }
+
+        if (top < borderImg) {
+          cd.y = ocd.y + dyImg;
+          cd.height = ocd.height - dyImg;
+          moved = true;
+        } else if (bottom < borderImg) {
+          cd.height = ocd.height + dyImg;
+          moved = true;
+        }
+
+        if (!moved) {
+          cd.x = ocd.x + dxImg;
+          cd.y = ocd.y + dyImg;
+        }
+
+        // Clamp to natural image bounds
+        const imgW = this.state.imgSize.w;
+        const imgH = this.state.imgSize.h;
+        const minSize = 20 / scale;
+        if (cd.width < minSize) {
+          cd.width = minSize;
+          cd.x = ocd.x + ocd.width - minSize;
+        }
+        if (cd.height < minSize) {
+          cd.height = minSize;
+          cd.y = ocd.y + ocd.height - minSize;
+        }
+        if (cd.x < 0) { cd.width += cd.x; cd.x = 0; }
+        if (cd.y < 0) { cd.height += cd.y; cd.y = 0; }
+        if (cd.x + cd.width > imgW) cd.width = imgW - cd.x;
+        if (cd.y + cd.height > imgH) cd.height = imgH - cd.y;
+
+        this.setState({ cropData: cd });
+      },
+      onPanResponderRelease: () => {
+        this._panStartCropData = null;
+      },
     });
 
   }
@@ -241,6 +278,7 @@ export default class IssieSavePhoto extends React.Component {
       }
       trace("updateImageDimension", { imgSize, scale, windowSize })
       this.setState({ imgSize, scale, windowSize, fullWindowSize, orientationLandscape })
+      return { imgSize, scale, windowSize };
     } catch (err) {
       Alert.alert("Error measuring file" + err.toString())
       trace("Error measuring file", JSON.stringify(err))
@@ -590,40 +628,28 @@ export default class IssieSavePhoto extends React.Component {
   rotateLeft = () => this.rotate(-90);
   rotateRight = () => this.rotate(90);
   crop = () => {
-    let winSize = this.state.windowSize;
     let imgSize = this.state.imgSize;
-    let cropXOffset = (winSize.width - imgSize.w * this.state.scale) / 2;
     this.setState({
       cropping: true,
-      cropXOffset,
+      cropXOffset: 0,
+      // cropData stored in NATURAL image pixels (not display pixels) so it
+      // survives device rotation / scale changes without rescaling.
       cropData: {
         x: 0,
         y: 0,
-        width: imgSize.w * this.state.scale,
-        height: imgSize.h * this.state.scale
+        width: imgSize.w,
+        height: imgSize.h
       }
     });
   }
   cancelCrop = () => this.setState({ cropping: false });
   acceptCrop = () => {
     let cd = this.state.cropData;
-    let windowSize = this.state.windowSize;
-    let targetSizeScale = 1;
-    if (cd.width < windowSize.width || cd.height < windowSize.height) {
-      targetSizeScale = Math.min(
-        windowSize.width / cd.width,
-        windowSize.height / cd.height
-      );
-    }
 
+    // cropData stored in natural image pixels — pass through directly.
     let cropData = {
-      offset: { x: cd.x / this.state.scale, y: cd.y / this.state.scale },
-      size: { width: cd.width / this.state.scale, height: cd.height / this.state.scale },
-      displaySize: {
-        width: cd.width * targetSizeScale,
-        height: cd.height * targetSizeScale
-      },
-      resizeMode: 'stretch'
+      offset: { x: cd.x, y: cd.y },
+      size: { width: cd.width, height: cd.height },
     };
 
     let uri = this.state.imageUri;
@@ -643,7 +669,7 @@ export default class IssieSavePhoto extends React.Component {
     )
   }
 
-  replaceLast = (uri) => {
+  replaceLast = (uri, opts = {}) => {
     const pages = this.state.pages;
     let pathToSave = this.state.pathToSave;
     if (!this.state.multiPage) {
@@ -653,19 +679,25 @@ export default class IssieSavePhoto extends React.Component {
     pages.push(uri);
     //console.log("replaceLast", this.state.pathToSave, pathToSave, JSON.stringify(pages))
 
-    this.setState({ pathToSave, imageUri: uri, pages, cropping: false }, this.updateImageDimension);
+    const wasCropping = this.state.cropping;
+    const restartCrop = opts.keepCropping && wasCropping;
 
+    this.setState({ pathToSave, imageUri: uri, pages, cropping: false }, () => {
+      this.updateImageDimension().then(() => {
+        if (restartCrop) {
+          // setState in updateImageDimension may not have flushed; defer.
+          setTimeout(() => this.crop(), 0);
+        }
+      });
+    });
   }
 
   rotate = (deg) => {
+    const wasCropping = this.state.cropping;
     //width and height are echanged as we rotate by 90 deg
     ImageResizer.createResizedImage(this.state.imageUri, this.state.imgSize.h, this.state.imgSize.w, "JPEG", 100, deg, null).then(
       (response) => {
-        this.replaceLast(response.path);
-        // response.uri is the URI of the new image that can now be displayed, uploaded...
-        // response.path is the path of the new image
-        // response.name is the name of the new image with the extension
-        // response.size is the size of the new image
+        this.replaceLast(response.path, { keepCropping: wasCropping });
       })
       .catch(err => {
         Alert.alert("Rotate failed: " + err)
@@ -762,9 +794,9 @@ export default class IssieSavePhoto extends React.Component {
           {this.state.cropping ? getIconButton(this.cancelCrop, semanticColors.addButton, 'close', 45) : <View />}
           {this.state.cropping ? <Spacer width={10} /> : null}
           {this.state.cropping ? getIconButton(this.acceptCrop, semanticColors.addButton, "check", 45) : <View />}
-          {this.state.cropping ? <View /> : getIconButton(this.rotateLeft, semanticColors.addButton, "rotate-left", 45)}
+          {getIconButton(this.rotateLeft, semanticColors.addButton, "rotate-left", 45)}
           <Spacer width={10} />
-          {this.state.cropping ? <View /> : getIconButton(this.rotateRight, semanticColors.addButton, "rotate-right", 45)}
+          {getIconButton(this.rotateRight, semanticColors.addButton, "rotate-right", 45)}
         </View> : null}
       </View>
     // let transformY = { translateY: this.state.yOffset }
@@ -801,40 +833,6 @@ export default class IssieSavePhoto extends React.Component {
 
 
         </Scroller>
-    }
-
-    let cropFrame = <View />;
-    if (this.state.cropping) {
-      cropFrame = <View
-        style={{
-          position: 'absolute',
-          width: this.state.cropData.width,
-          height: this.state.cropData.height,
-          top: this.state.cropData.y,
-          left: this.state.cropData.x + this.state.cropXOffset,
-
-          borderColor: 'black',
-          borderWidth: 5,
-          borderStyle: 'dashed',
-        }}
-        {...this._panResponder.panHandlers}
-      >
-        {/* <Text>{JSON.stringify(this.state.cropData)}</Text> */}
-
-        <View style={{ position: 'absolute', left: 5, top: 5 }}>
-          <MyIcon info={{ type: "MI", name: "border-style", size: 45 }} />
-
-        </View>
-        <View style={{ position: 'absolute', transform: [{ rotate: 90 + 'deg' }], right: 5, top: 5 }}>
-          <MyIcon info={{ type: "MI", name: "border-style", size: 45 }} />
-        </View>
-        <View style={{ position: 'absolute', transform: [{ rotate: 180 + 'deg' }], right: 5, bottom: 5 }}>
-          <MyIcon info={{ type: "MI", name: "border-style", size: 45 }} />
-        </View>
-        <View style={{ position: 'absolute', transform: [{ rotate: 270 + 'deg' }], left: 5, bottom: 5 }}>
-          <MyIcon info={{ type: "MI", name: "border-style", size: 45 }} />
-        </View>
-      </View>
     }
 
 
@@ -879,17 +877,49 @@ export default class IssieSavePhoto extends React.Component {
             onChangeOrientation={(orientationLandscape) => this.setState({ orientationLandscape })}
           />}
           {this.state.phase == OK_Cancel &&
-            <ImageBackground
+            <View
+              ref={v => this._cropWrapper = v}
+              collapsable={false}
               style={{
-                width: '100%',
-                height: '100%',
-                backgroundColor: "white",
-              }}
-
-              imageStyle={{ resizeMode: 'contain' }}
-              blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
-              source={this.state?.pages && normalizeFoAndroid({ uri: this.state.pages[this.state.currentPage] })}
-            />}
+              width: this.state.imgSize.w * this.state.scale,
+              height: this.state.imgSize.h * this.state.scale,
+              backgroundColor: 'white',
+            }}>
+              <ImageBackground
+                style={{ width: '100%', height: '100%', backgroundColor: 'white' }}
+                imageStyle={{ resizeMode: 'stretch' }}
+                blurRadius={this.state.phase == OK_Cancel ? 0 : 20}
+                source={this.state?.pages && normalizeFoAndroid({ uri: this.state.pages[this.state.currentPage] })}
+              />
+              {this.state.cropping && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    width: this.state.cropData.width * this.state.scale,
+                    height: this.state.cropData.height * this.state.scale,
+                    top: this.state.cropData.y * this.state.scale,
+                    left: this.state.cropData.x * this.state.scale,
+                    borderColor: 'black',
+                    borderWidth: 5,
+                    borderStyle: 'dashed',
+                  }}
+                  {...this._panResponder.panHandlers}
+                >
+                  <View style={{ position: 'absolute', left: 5, top: 5 }}>
+                    <MyIcon info={{ type: "MI", name: "border-style", size: 45 }} />
+                  </View>
+                  <View style={{ position: 'absolute', transform: [{ rotate: 90 + 'deg' }], right: 5, top: 5 }}>
+                    <MyIcon info={{ type: "MI", name: "border-style", size: 45 }} />
+                  </View>
+                  <View style={{ position: 'absolute', transform: [{ rotate: 180 + 'deg' }], right: 5, bottom: 5 }}>
+                    <MyIcon info={{ type: "MI", name: "border-style", size: 45 }} />
+                  </View>
+                  <View style={{ position: 'absolute', transform: [{ rotate: 270 + 'deg' }], left: 5, bottom: 5 }}>
+                    <MyIcon info={{ type: "MI", name: "border-style", size: 45 }} />
+                  </View>
+                </View>
+              )}
+            </View>}
           {
             this.state.phase == OK_Cancel && this.isBlankPage() &&
             (this.getBlankPageType() == FileSystem.StaticPages.Lines || this.getBlankPageType() == FileSystem.StaticPages.Math) &&
@@ -902,7 +932,6 @@ export default class IssieSavePhoto extends React.Component {
             <VLines width={this.state.imgSize.w * this.state.scale} />
           }
 
-          {cropFrame}
           {PageNameInput}
         </View>
 
