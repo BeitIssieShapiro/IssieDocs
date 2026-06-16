@@ -838,7 +838,7 @@ export class FileSystem {
       }
 
       let newFileName =
-        basePath + (!!addAtIndex ? addAtIndex : sheet.count) + '.jpg';
+        basePath + (addAtIndex >= 0 ? addAtIndex : sheet.count) + '.jpg';
 
       console.log('add page: ' + newFileName);
       await FileSystem.main.saveFile(newPagePath, newFileName, false);
