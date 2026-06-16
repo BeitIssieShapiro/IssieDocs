@@ -813,6 +813,9 @@ export class FileSystem {
     if (pathInfo.isDirectory()) {
       //add file by page's Index
       let lastPagePath = _androidFileName(sheet.getPage(0));
+      if (!lastPagePath) {
+        throw new Error('addPageToSheet: sheet directory is empty, cannot determine base path');
+      }
       let basePathEnd = lastPagePath.lastIndexOf('/');
 
       let basePath = lastPagePath.substring(0, basePathEnd + 1);
@@ -828,7 +831,7 @@ export class FileSystem {
           await this._iterateAttachments(
             fileAtI,
             async (srcAttachmentPath, attachmentName) => {
-              await FileSystem.main.saveFile(
+              await RNFS.moveFile(
                 srcAttachmentPath,
                 fileAtIPlus1 + FileSystem.ATACHMENT_PREFIX + attachmentName,
               );
@@ -922,7 +925,7 @@ export class FileSystem {
   async deletePageInSheet(sheet, deleteIndex) {
     if (sheet.count < 2) {
       console.warn('cannot delete last page of sheet');
-      return;
+      return sheet;
     }
     let pagePath = sheet.getPage(deleteIndex);
     trace(
