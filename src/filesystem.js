@@ -1868,6 +1868,11 @@ export class FileSystemFolder {
           }
         }
 
+        if (fi.isDirectory() && sheet.count === 0) {
+          trace('skipping empty worksheet directory', fi.path);
+          continue;
+        }
+
         this._files.push(sheet);
       }
     }
