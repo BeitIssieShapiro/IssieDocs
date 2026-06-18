@@ -157,7 +157,7 @@ export default class IssieCreateFolder extends React.Component {
             }
             <Spacer width={10} />
             {  //Save
-                getRoundedButton(() => this.Save(), 'check-green', translate("BtnSave"), 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isMobile())
+                getRoundedButton(() => this.Save(), 'check-green', translate("BtnSave"), 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isMobile(), undefined, undefined, undefined, 'folder-save-btn')
             }
         </View>
 
@@ -276,6 +276,7 @@ export default class IssieCreateFolder extends React.Component {
 
 
                                 <TextInput style={[globalStyles.textInput, { direction, textAlign }, getFontFamily()]} value={this.state.name}
+                                    testID="folder-name-input"
                                     allowFontScaling={false}
                                     onChangeText={(txt) => this.setState({ name: txt })}
                                 />

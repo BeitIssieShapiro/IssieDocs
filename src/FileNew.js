@@ -19,6 +19,7 @@ export default function FileNew(props) {
     return (
         <TouchableOpacity
             key={props.name}
+            testID={`worksheet-item-${props.name}`}
             onPress={props.onPress}
             activeOpacity={0.8}
             style={{ width, height: props.asTile ? dimensions.tileHeight : dimensions.lineHeight }}
@@ -50,7 +51,7 @@ export default function FileNew(props) {
                                 </View>
                             )}
                             <View style={{ height: '20%', backgroundColor: '#a7a7a7', justifyContent: "space-between", alignItems: "center", width: '100%', flexDirection: props.rowDir }} >
-                                <MoreButton onPress={props.onContextMenu} size={30} color={"white"} />
+                                <MoreButton testID={`worksheet-more-btn-${props.name}`} onPress={props.onContextMenu} size={30} color={"white"} />
                                 <AppText style={{
                                     paddingStart: 3,
                                     paddingEnd: 3,
@@ -100,7 +101,7 @@ export default function FileNew(props) {
                             alignItems: 'center'
                         }}>
                             {/* {props.selected ? getActionButtons(props) : null} */}
-                            <MoreButton onPress={props.onContextMenu} size={30} color={semanticColors.titleText} />
+                            <MoreButton testID={`worksheet-more-btn-${props.name}`} onPress={props.onContextMenu} size={30} color={semanticColors.titleText} />
                         </View>
                     </View>
                 </View>}

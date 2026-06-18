@@ -149,10 +149,12 @@ export function getIcon(name, size, color) {
 export function MoreButton({
     onPress,
     size,
-    color
+    color,
+    testID
 }) {
 
     return <TouchableOpacity
+        testID={testID}
         style={{
             borderRadius: size / 2,
             width: size,
@@ -174,7 +176,7 @@ export function getEmbeddedSvgButton(callback, icon, iconSize, key, color) {
 }
 
 
-export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction, dark, isMobile, forceText, key, iconType) {
+export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, direction, dark, isMobile, forceText, key, iconType, testID) {
 
     const calcIcon = icon?.startsWith("svg-") ?
         <SvgIcon name={icon.substr(4)} size={iconSize} color={dark ? "white" : semanticColors.titleText} />
@@ -182,6 +184,7 @@ export function getRoundedButton(callback, icon, text, textSize, iconSize, dim, 
 
     return <RoundedButton
         key={key}
+        testID={testID}
         onPress={callback}
         icon={calcIcon}
         text={text}
@@ -217,8 +220,18 @@ export function getMaterialCommunityIconButton(callback, color, icon, size, isTe
     return getIconButton(callback, color, icon, size, isText, iconSize, selected, "MDI")
 }
 
-export function getSvgIconButton(callback, color, icon, size, isText, iconSize, selected) {
-    return getIconButton(callback, color, icon, size, isText, iconSize, selected, "svg")
+export function getSvgIconButton(callback, color, icon, size, isText, iconSize, selected, testID) {
+    return <IconButton
+        onPress={callback}
+        color={color}
+        icon={icon}
+        size={size}
+        isText={isText}
+        iconSize={iconSize}
+        selected={selected}
+        iconType="svg"
+        testID={testID}
+    />
 }
 export function getIconButton(callback, color, icon, size, isText, iconSize, selected, iconType, notPressable, key) {
     return <IconButton
@@ -245,6 +258,7 @@ export function IconButton({
     backgroundColor,
     ensureContrast,
     rotateDeg,
+    testID,
 }) {
     iconType = iconType || "MI";
     let isSvg = iconType === "svg";
@@ -288,6 +302,7 @@ export function IconButton({
             </View>
             :
             <TouchableOpacity
+                testID={testID}
                 activeOpacity={0.7}
                 onPress={onPress}
                 style={viewStyle}
@@ -487,6 +502,7 @@ export function FileNameDialog({
             <View style={{ flex: 1, width: '100%' }}>
                 <AppText style={[styles.titleText, { textAlign }, { marginVertical: 7 }]}>{translate("CaptionPageName")}</AppText>
                 <TextInput style={[globalStyles.textInput, { direction, textAlign }, getFontFamily()]}
+                    testID="worksheet-name-input"
                     onChangeText={onChangeName}
                     value={name}
                     allowFontScaling={false}
@@ -540,7 +556,9 @@ function renderFolderLine(rowData, index, currentFolder, onChangeFolder, showSub
     // trace("pickerRenderRow", rowData.ID, expanded, expandedFolders)
     trace(currentFolder.ID, rowData)
 
-    return [<TouchableOpacity key={index} style={{
+    return [<TouchableOpacity key={index}
+        testID={`move-target-${rowData.name}`}
+        style={{
         height: 65, width: '100%',
         justifyContent: flexEnd
     }}
@@ -877,7 +895,7 @@ export const globalStyles = StyleSheet.create({
 
 export function getHeaderBackButton(callback) {
     return <View >
-        <TouchableOpacity onPress={callback}
+        <TouchableOpacity testID="folder-home-btn" onPress={callback}
             activeOpacity={1}
             style={{ flexDirection: 'row', alignItems: 'center' }}>
             {/* <Icon name='keyboard-arrow-left' color='white' size={35} /> */}
@@ -932,16 +950,17 @@ export function AppText(props) {
 }
 
 export function getColorButton(callback, color, size, selected, index) {
-    return getColorButtonInt(callback, color, size, selected ? "check" : undefined, index)
+    return getColorButtonInt(callback, color, size, selected ? "check" : undefined, index, undefined, `color-btn-${color}`)
 }
 
-export function getColorButtonInt(callback, color, size, icon, index, iconColor) {
+export function getColorButtonInt(callback, color, size, icon, index, iconColor, testID) {
     let borderStyle = {}
     if (isTooWhite(color)) {
         borderStyle = { borderWidth: 1, borderColor: "gray" }
     }
 
     return <TouchableOpacity
+        testID={testID}
         onPress={callback}
         activeOpacity={0.7}
         key={"" + index}

@@ -93,13 +93,13 @@ export default function CameraOverlay(props) {
                 position: 'absolute', alignItems: 'center',
                 top: '2%', width: '100%', backgroundColor: 'transparent'
             }}>
-                {getRoundedButton(cancel, 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 })}
+                {getRoundedButton(cancel, 'cancel-red', translate("BtnCancel"), 30, 30, { width: 150, height: 40 }, undefined, undefined, undefined, undefined, undefined, undefined, 'camera-cancel-btn')}
             </View>
             <View style={{
                 position: 'absolute', alignItems: 'center',
                 bottom: '2%', width: '100%', backgroundColor: 'transparent'
             }}>
-                {getSvgIconButton(takePicture, semanticColors.addButton, "camera-take-photo", 80
+                {getSvgIconButton(takePicture, semanticColors.addButton, "camera-take-photo", 80, undefined, undefined, undefined, 'camera-capture-btn'
                 )}
             </View>
         </View>

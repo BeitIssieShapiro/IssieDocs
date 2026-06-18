@@ -107,6 +107,7 @@ export default function FolderNew(props) {
             ]}
           >
             <MoreButton
+              testID={`folder-more-btn-${props.name}`}
               onPress={props.onContextMenu}
               size={35}
               color={semanticColors.titleText}
@@ -115,6 +116,7 @@ export default function FolderNew(props) {
         ) : null}
 
         <TouchableOpacity
+          testID={`folder-item-${props.name}`}
           activeOpacity={asTitle ? 1 : 0.7}
           onPress={props.onPress ? () => props.onPress(props.id) : undefined}
           onLongPress={
@@ -313,6 +315,7 @@ export default function FolderNew(props) {
                   }}
                 >
                   <MoreButton
+                    testID={`folder-more-btn-${props.name}`}
                     onPress={props.onContextMenu}
                     size={30}
                     color={semanticColors.titleText}
@@ -383,6 +386,7 @@ export default function FolderNew(props) {
                   }}
                 >
                   <MoreButton
+                    testID={`folder-more-btn-${props.name}`}
                     onPress={props.onContextMenu}
                     size={25}
                     color={semanticColors.titleText}

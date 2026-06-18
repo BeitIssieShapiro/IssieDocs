@@ -372,6 +372,7 @@ export function FileContextMenu({
 
             {!isFolder && (
               <MenuGroup
+                testID="add-page-menu"
                 scale={scale}
                 width={menuGroupWidth}
                 title={translate('AddPageMenuTitle')}
@@ -451,6 +452,7 @@ export function FileContextMenu({
 function MenuGroup(props) {
   return (
     <View
+      testID={props.testID}
       style={{
         flexDirection: 'column',
         margin: 20 * props.scale,

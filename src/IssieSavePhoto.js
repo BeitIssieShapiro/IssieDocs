@@ -763,7 +763,7 @@ export default class IssieSavePhoto extends React.Component {
           }
           <Spacer width={10} />
           {  //Save
-            getRoundedButton(this.OK, 'check-green', translate("BtnSave") + saveMoreThanOne, 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isScreenNarrow())
+            getRoundedButton(this.OK, 'check-green', translate("BtnSave") + saveMoreThanOne, 30, 30, { width: 150, height: 40 }, undefined, undefined, this.isScreenNarrow(), undefined, undefined, undefined, 'save-photo-save-btn')
           }
 
           { //Add page

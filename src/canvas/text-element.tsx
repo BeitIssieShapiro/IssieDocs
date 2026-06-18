@@ -219,6 +219,7 @@ function TextElement({
             <Animated.View
                 //direction={text.rtl ? "rtl" : "ltr"}
                 key={text.id}
+                testID="text-element-edit"
                 style={[styles.textInputHost, posStyle, { zIndex: 500 }, table && bgAnimatedStyle]}
                 {...(table ? {} : moveResponder.panHandlers)}
                 onStartShouldSetResponder={(e) => {
@@ -229,6 +230,7 @@ function TextElement({
                 {!table && <AnimatedIcon style={[moveIconStyle, visibleAnimatedStyle]} info={{ type: "Ionicons", name: "move", size: 25, color: "blue" }} />}
                 <>
                     <AnimatedTextInput
+                        testID="text-input-active"
                         disableKeyboardShortcuts={true}
                         autoCapitalize="none"
                         autoCorrect={false}

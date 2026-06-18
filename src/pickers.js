@@ -404,6 +404,7 @@ export function TextSizePicker(props) {
 
 function getTextSizePicker(color, size, textSize, selected, index, fontSize4Toolbar, callback) {
     return <Pressable
+        testID={`text-size-btn-${textSize}`}
         onPress={() => callback(textSize)}
         activeOpacity={0.7}
         key={"" + index}

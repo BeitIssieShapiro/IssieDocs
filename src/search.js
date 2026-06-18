@@ -39,6 +39,7 @@ export default function Search(props) {
             justifyContent:'center',
         }}>
             <TextInput
+                testID="search-input"
                 placeholder={'  ' + translate("Search")}
                 onChangeText={props.onChangeText}
                 allowFontScaling={false}

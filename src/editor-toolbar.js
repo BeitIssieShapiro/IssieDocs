@@ -393,12 +393,12 @@ function EditorToolbar({
     }
 
     const modesMenu = [
-        <IconButton key={11} onPress={() => onModeButtonClick(Pickers.TEXT, 110)} icon={translate("A")} isText={true} selected={isTextMode}
+        <IconButton key={11} testID="toolbar-text-btn" onPress={() => onModeButtonClick(Pickers.TEXT, 110)} icon={translate("A")} isText={true} selected={isTextMode}
             color={textColor} size={55} iconSize={rtl ? 45 : 40} ensureContrast={true}
         />,
-        <IconButton key={13} onPress={() => onModeButtonClick(Pickers.BRUSH, 70)} icon={"edit"} size={55}
+        <IconButton key={13} testID="toolbar-brush-btn" onPress={() => onModeButtonClick(Pickers.BRUSH, 70)} icon={"edit"} size={55}
             color={brushColor} iconSize={45} selected={isBrushMode} ensureContrast={true} />,
-        <IconButton onPress={() => onSelectButtonClick(Pickers.COLOR, true, 70)} iconType="MI" icon={"color-lens"}
+        <IconButton testID="toolbar-color-btn" onPress={() => onSelectButtonClick(Pickers.COLOR, true, 70)} iconType="MI" icon={"color-lens"}
             size={55} iconSize={45} color={semanticColors.editPhotoButton} />,
         isScreenNarrow() && extMenu.length > 0 ? zoomBtn : null,
         extMenu.length > 0 ? <IconButton onPress={() => setShowExtMenu(currVal => !currVal)} iconType="MI" icon={showExtMenu ? "expand-less" : "expand-more"}

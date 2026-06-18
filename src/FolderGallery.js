@@ -225,7 +225,7 @@ export default class FolderGallery extends React.Component {
 
     this.linkingListener?.remove();
     this.fileListener?.remove();
-    this.props.navigation.removeAllListeners();
+    this.props.navigation?.removeAllListeners();
   };
 
   _menuHandler = () => {
@@ -1165,7 +1165,7 @@ export default class FolderGallery extends React.Component {
 
   newPageButton = rtl => {
     return (
-      <View key="6" ref={ref => this._newPageBtnRef = ref} collapsable={false}>
+      <View key="6" testID="new-page-btn" ref={ref => this._newPageBtnRef = ref} collapsable={false}>
         {getSvgIconButton(
           () => this.openNewPageMenu(),
           semanticColors.addButton,
@@ -1538,6 +1538,10 @@ export default class FolderGallery extends React.Component {
               semanticColors.addButton,
               'new-camera',
               40,
+              undefined,
+              undefined,
+              undefined,
+              'new-camera-btn',
             )}
             <Spacer />
             {getSvgIconButton(
@@ -1578,6 +1582,10 @@ export default class FolderGallery extends React.Component {
               semanticColors.addButton,
               'new-folder',
               45,
+              undefined,
+              undefined,
+              undefined,
+              'new-folder-btn',
             )}
             <Spacer />
             {this.newPageButton(rtl)}
@@ -1839,6 +1847,7 @@ export default class FolderGallery extends React.Component {
 
                 <DDScrollView
                   rtl={rtl}
+                  testID="home-scroll-view"
                   scrollEnabled={true}
                   showsVerticalScrollIndicator={false}
                   style={{

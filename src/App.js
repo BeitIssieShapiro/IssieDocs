@@ -174,7 +174,7 @@ const App = (props) => {
                 actions={<View />}
                 titleText={fileName + multiPageTitleAddition}
                 nav={<View style={{ flex: 1, flexDirection: getRowDirection() }}>
-                  <TouchableOpacity onPress={() => {
+                  <TouchableOpacity testID="header-home-button" onPress={() => {
                     props.route.params.goHome ? props.route.params.goHome() : {}
                   }}
                     activeOpacity={1}
@@ -183,6 +183,7 @@ const App = (props) => {
                   </TouchableOpacity>
                   <Spacer />
                   <MoreButton
+                    testID="editor-more-btn"
                     size={30} color={"white"}
                     onPress={() => {
                       props.route.params.onMoreMenu ? props.route.params.onMoreMenu() : {}

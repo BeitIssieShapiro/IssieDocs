@@ -138,6 +138,7 @@ interface CanvasProps {
     originalBgImageHeight?: number;
     currentElementType: ElementTypes;
     language?: string;
+    testID?: string;
 
     //viewShotRef: any;
 }
@@ -193,6 +194,7 @@ function Canvas({
     canvasHeight,
     currentElementType,
     language,
+    testID,
 
 }: CanvasProps, ref: any) {
     // Refs & State
@@ -259,7 +261,8 @@ function Canvas({
             const cmds = toCmds(lastPathSV.value, ratioRef.current);
             const lastPath = paths[paths.length - 1];
             //console.log("xx", cmds[0],  lastPath.points[0])
-            if (cmds.length > 0 && cmds[0][1] == lastPath.points[0][1] &&
+            if (cmds.length > 0 && lastPath.points.length > 0 &&
+                cmds[0][1] == lastPath.points[0][1] &&
                 cmds[0][2] == lastPath.points[0][2]) {
                 lastPathSV.value.reset();
             }
@@ -770,6 +773,7 @@ function Canvas({
     return (
         <Animated.View
             ref={canvasRef}
+            testID={testID}
             style={[
                 styles.container,
                 style,

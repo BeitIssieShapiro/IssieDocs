@@ -1,0 +1,50 @@
+appId: com.issieshapiro.issiedoc.IssieDoc
+---
+# ── Step 1: Launch app (preserve real user data) ──────────────────────────────
+- launchApp:
+    clearState: false
+
+# ── Step 2: Create a blank worksheet ─────────────────────────────────────────
+- tapOn:
+    id: "new-page-btn"
+- tapOn: "Blank"
+
+# ── Step 3: Name the worksheet and save ───────────────────────────────────────
+- tapOn: "Name"
+- clearText
+- inputText: "E2E Test Sheet"
+- tapOn: "Save"
+
+# ── Step 4: Assert we landed in the editor ────────────────────────────────────
+- assertVisible: "E2E Test Sheet"
+
+# ── Step 5: Open editor context menu ─────────────────────────────────────────
+- tapOn:
+    id: "editor-more-btn"
+
+# ── Step 6: Tap "Blank" in the Add Page section ───────────────────────────────
+- assertVisible: "Add Page"
+- tapOn: "Blank"
+
+# ── Step 7: Confirm on SavePhoto screen ───────────────────────────────────────
+- tapOn: "Add"
+
+# ── Step 8: Assert page 2 of 2 ────────────────────────────────────────────────
+# Nav title becomes "E2E Test Sheet - 2/2" after successful page add.
+# This is the key assertion — the bug causes this to be missing.
+- assertVisible: "2/2"
+
+# ── Step 9: Go home ───────────────────────────────────────────────────────────
+- tapOn:
+    id: "header-home-button"
+
+# ── Step 10: Open context menu for the worksheet ──────────────────────────────
+- tapOn:
+    id: "worksheet-more-btn-E2E Test Sheet"
+
+# ── Step 11: Delete the worksheet ─────────────────────────────────────────────
+- tapOn: "Delete"
+- tapOn: "Delete"
+
+# ── Step 12: Assert worksheet is gone (re-run safe) ───────────────────────────
+- assertNotVisible: "E2E Test Sheet"

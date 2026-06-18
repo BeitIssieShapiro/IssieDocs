@@ -2664,6 +2664,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
             <Canvas
                 ref={canvasRef}
+                testID="editor-canvas"
                 style={{ overflow: 'hidden', backgroundColor: 'gray' }}
                 offset={moveCanvas}
                 canvasWidth={canvasSize.width}
@@ -2725,7 +2726,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             {
                 pageRef.current && pageRef.current.count > 0 && currentFile !== pageRef.current.getPage(0) ?
                     <View style={{ position: 'absolute', bottom: 50, left: 10, width: 155, height: 40, zIndex: 100 }}>
-                        {getRoundedButton(() => movePage(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 125, height: 40 }, 'row-reverse', true, undefined, undefined, undefined, "MI")}
+                        {getRoundedButton(() => movePage(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 125, height: 40 }, 'row-reverse', true, undefined, undefined, undefined, "MI", "nav-prev-page")}
                     </View> :
                     null
             }
@@ -2734,7 +2735,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 pageRef.current && pageRef.current.count > 1 &&
                     currentFile !== pageRef.current.getPage(pageRef.current.count - 1) ?
                     <View style={{ position: 'absolute', bottom: 50, right: 10, height: 40, zIndex: 100 }}>
-                        {getRoundedButton(() => movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 125, height: 40 }, 'row', true, undefined, undefined, undefined, "MI")}
+                        {getRoundedButton(() => movePage(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 125, height: 40 }, 'row', true, undefined, undefined, undefined, "MI", "nav-next-page")}
                     </View> :
                     null
             }

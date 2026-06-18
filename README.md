@@ -92,3 +92,48 @@ in `android/app/build.gradle`
 - copy lunchScreen, fonts, info.plist, entitlelemts, assets
 
 
+# E2E Testing (Detox)
+
+E2E tests run on iOS simulator using [Detox](https://wix.github.io/Detox/).
+
+## Prerequisites
+
+- `xcpretty` is optional but recommended: `gem install xcpretty`
+- Metro must be running: `npm start`
+- Target simulator: **iPad (A16)**
+
+## Build the test binary
+
+Only needed when native code changes (Swift, Pods, new native modules). JS/TS changes are picked up by Metro automatically.
+
+```bash
+npm run test:e2e:build
+```
+
+## Run tests
+
+```bash
+npm run test:e2e
+```
+
+## Adding a new test
+
+1. Create `e2e/<your-test>.test.ts`
+2. Use `testID` props to target elements — add them to components as needed
+3. Use `waitFor(...).toBeVisible().withTimeout(...)` before any tap on elements that appear asynchronously
+4. Avoid `swipe('right', ...)` on the canvas — it conflicts with the navigation back gesture; use `swipe('down', ...)` instead
+5. Always clean up state in `afterAll` so the test is re-runnable
+
+## Finding testIDs
+
+To see all testIDs currently in the source:
+
+```bash
+grep -rn 'testID=' src/ --include="*.js" --include="*.tsx" --include="*.ts"
+```
+
+Dynamic testIDs (e.g. `worksheet-item-{name}`, `color-btn-{hex}`) are generated at render time — search for the pattern to find where they're defined:
+
+```bash
+grep -rn 'testID=.*{' src/ --include="*.js" --include="*.tsx" --include="*.ts"
+```
