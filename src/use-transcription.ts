@@ -79,10 +79,13 @@ export function useTranscription({
     const transcriptionSub = emitter.addListener('onTranscription', (event: { text: string; isFinal: boolean }) => {
       const currentText = textRef.current;
       const prevTranscript = lastTranscriptRef.current;
-      let insertPos = sessionInsertPosRef.current ?? selectionEndRef.current;
+      let insertPos = Math.min(
+        sessionInsertPosRef.current ?? selectionEndRef.current,
+        currentText.length
+      );
 
       if (prevTranscript.length > 0 && !event.text.startsWith(prevTranscript.substring(0, Math.min(3, prevTranscript.length)))) {
-        insertPos = insertPos + prevTranscript.length;
+        insertPos = Math.min(insertPos + prevTranscript.length, currentText.length);
         sessionInsertPosRef.current = insertPos;
         const sep = ' ';
         const beforeSep = currentText.substring(0, insertPos);
@@ -99,7 +102,7 @@ export function useTranscription({
         onTextChangedRef.current(newText);
       } else {
         const before = currentText.substring(0, insertPos);
-        const after = currentText.substring(insertPos + prevTranscript.length);
+        const after = currentText.substring(Math.min(insertPos + prevTranscript.length, currentText.length));
         // Add a space before the first transcription if needed
         const needsSpace = prevTranscript.length === 0 && before.length > 0 && !before.endsWith(' ') && !before.endsWith('\n');
         const prefix = needsSpace ? ' ' : '';
