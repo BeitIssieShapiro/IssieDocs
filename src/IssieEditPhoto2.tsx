@@ -467,12 +467,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         let kbTop = (e.endCoordinates.screenY - (canvasTopRef.current));
 
-        console.log("[KB-SCROLL] keyboardDidShow: kbHeight=", newKbHeight, "kbTop=", kbTop, "screenY=", e.endCoordinates.screenY, "canvasTop=", canvasTopRef.current);
 
         // Ignore bogus keyboard geometry (e.g. custom keyboard reporting
         // an oversized initial height where screenY goes negative)
         if (e.endCoordinates.screenY <= 0) {
-            console.log("[KB-SCROLL] skipping scroll — invalid screenY");
             return;
         }
 
@@ -482,7 +480,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     }
     function _keyboardDidHide() {
-        console.log("[KB-SCROLL] keyboardDidHide");
         setKeyboardHeight(0);
         keyboardHeightRef.current = 0;
 
@@ -572,7 +569,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }, [isSpeaking, isRecording, kbLanguage]);
 
     function verifyCurrentEditTextIsVisible() {
-        console.log("[KB-SCROLL] verifyCurrentEditTextIsVisible - kbTop=", keyboardTopRef.current, "moveCanvas.y=", moveCanvasRef.current.y);
         if (keyboardTopRef.current == 0) return;
         if (isDraggingElementRef.current) return;
         // check if a text box in edit:
@@ -599,18 +595,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             // Current effective scroll (what's rendered or what we already requested)
             const currentY = moveCanvasRef.current.y;
 
-            console.log("[KB-SCROLL] verify:", { elemHeight, elemCanvasBottom, kbTop: keyboardTopRef.current, scale, requiredY, currentY });
-
-            // Only scroll if the element is actually behind the keyboard
-            // i.e., the required scroll is more negative than where we already are
+            // Only scroll down if cursor is behind the keyboard
             if (requiredY < currentY) {
-                console.log("[KB-SCROLL] scrolling DOWN: requiredY=", requiredY, "currentY=", currentY);
                 handleMoveCanvas({ x: moveCanvasRef.current.x, y: requiredY });
-            } else if (requiredY > currentY && currentY < 0) {
-                // Keyboard shrank — we're over-scrolled. Scroll back up but not past 0.
-                const newY = Math.min(requiredY, 0);
-                console.log("[KB-SCROLL] scrolling UP (kb shrank): requiredY=", requiredY, "currentY=", currentY, "newY=", newY);
-                handleMoveCanvas({ x: moveCanvasRef.current.x, y: newY });
             }
         }
     }
@@ -1437,7 +1424,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             }
             if (elem) {
                 const box = {
-                    x: elem.x, y: elem.y, width: Math.max(elem.width, 20), height: elem.height,
+                    x: elem.x, y: elem.y,
+                    // Text elements reflow as they move, so don't use their width for boundary checks
+                    width: type === MoveTypes.Text ? 0 : Math.max(elem.width, 20),
+                    height: elem.height,
                     moveIconOnRight: false,
                     moveOffset,
                 };
@@ -2484,7 +2474,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         x = verticalOnly ? moveCanvasRef.current.x : Math.min(Math.max(x, -maxXOffset() / ratioRef.current), 0);
 
         y = Math.min(Math.max(y, -maxYOffset() / ratioRef.current), 0);
-        console.log("[KB-SCROLL] handleMoveCanvas: requested y=", newOffset.y, "clamped y=", y, "maxYOffset=", maxYOffset());
         // Eagerly update ref so rapid keyboardDidShow events see the latest value
         // (useEffect sync only runs after paint, which is too late)
         moveCanvasRef.current = { x, y };

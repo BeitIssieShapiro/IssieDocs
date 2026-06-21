@@ -273,7 +273,7 @@ function TextElement({
                     {/* Second Hidden Text for Cursor Tracking */}
                     <Text
                         allowFontScaling={false}
-                        style={[styles.textStyle, posStyle, style, { position: "absolute", [text.rtl ? "right" : "left"]: -10000, minHeight: 0 }, !table && { minWidth: 20 / ratio }]}
+                        style={[styles.textStyle, posStyle, style, { position: "absolute", [text.rtl ? "right" : "left"]: -10000, minHeight: 0 }, !table && widthStyle, !table && { minWidth: 20 / ratio }]}
                         onLayout={(e) => {
 
                             const cursorHeightFromTop = e.nativeEvent.layout.height;
