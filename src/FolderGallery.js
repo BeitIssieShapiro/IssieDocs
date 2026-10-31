@@ -135,11 +135,6 @@ export default class FolderGallery extends React.Component {
 
   componentDidMount = async () => {
     try {
-      this.dimSubscription = Dimensions.addEventListener(
-        'change',
-        ({ window }) => this.setState({ windowSize: window }),
-      );
-
       this.props.navigation.addListener('focus', async () => {
         //this.refresh();
         this.setState({ selected: undefined });
@@ -221,8 +216,6 @@ export default class FolderGallery extends React.Component {
   };
 
   componentWillUnmount = () => {
-    this.dimSubscription?.remove();
-
     this.linkingListener?.remove();
     this.fileListener?.remove();
     this.props.navigation?.removeAllListeners();
@@ -483,6 +476,8 @@ export default class FolderGallery extends React.Component {
   };
   onLayout = (e) => {
     const { width, height } = e?.nativeEvent?.layout ?? Dimensions.get('window');
+    const { windowSize } = this.state;
+    if (windowSize.width === width && windowSize.height === height) return;
     this.setState({ windowSize: { width, height } });
   };
 

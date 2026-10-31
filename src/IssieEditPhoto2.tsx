@@ -2465,6 +2465,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         if (zoomRef.current == 1 && modeRef.current != EditModes.Text && !pageHeightExceedsSpace) return;
 
         let { x, y } = newOffset;
+        // A NaN offset would stick (clamping preserves it) and reach native transforms
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return;
         //trace("set move before", x, y)
 
         // When zoomed in, allow both horizontal and vertical movement

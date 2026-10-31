@@ -83,6 +83,9 @@ export class PinchSession {
         // Ratio of current distance to initial distance
         const touchZoom = distance / initialDistance;
 
+        // A touch can be missing (undefined coords) or both can start on the same point
+        if (!Number.isFinite(touchZoom)) return;
+
         let newZoom = touchZoom * initialZoom;
 
         if (newZoom < this.initialObj.minZoom) {

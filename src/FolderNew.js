@@ -47,7 +47,7 @@ export default function FolderNew(props) {
   }, [props.currentID]);
 
   const expandTreeElement = () => {
-    props.onCollapseExpand(!expanded);
+    props.onCollapseExpand?.(!expanded);
     setExpanded(prev => !prev);
   };
 
