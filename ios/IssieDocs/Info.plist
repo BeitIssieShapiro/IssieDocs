@@ -75,7 +75,7 @@
 	<key>NSAppleMusicUsageDescription</key>
 	<string>Allow IssieDocs load images as IssieDocs pages and save pages as images</string>
 	<key>NSCameraUsageDescription</key>
-	<string>The Camera will be used to allow you capture photos that you&apos;ll embed in IssieDocs pages</string>
+	<string>The Camera will be used to allow you capture photos that you'll embed in IssieDocs pages</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Allow IssieDocs to record voice messages to place on worksheets</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
@@ -115,7 +115,17 @@
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 		<key>UISceneConfigurations</key>
-		<dict/>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>Default Configuration</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+				</dict>
+			</array>
+		</dict>
 	</dict>
 	<key>UIBackgroundModes</key>
 	<array>

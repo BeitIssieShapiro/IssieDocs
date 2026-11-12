@@ -16,6 +16,8 @@ import Svg, { Path } from "react-native-svg";
 import {
     Canvas as SkiaCanvas,
     Path as SkiaPath,
+    Image as SkiaImage,
+    Rect as SkiaRect,
     useCanvasRef,
     Skia,
     SkPath,
@@ -38,6 +40,7 @@ import {
     SketchElementAttributes,
     SketchImage,
     SketchLine,
+    SketchOverlay,
     SketchPath,
     SketchPoint,
     SketchTable,
@@ -56,7 +59,8 @@ import {
     joinPath,
     normalizeFoAndroid,
     IIF,
-    findLast
+    findLast,
+    isPointOnImage,
 } from "./utils";
 import TextElement from "./text-element"; // Example sub-component for text
 import { PinchHelperEvent, PinchSession } from "./pinch";
@@ -69,6 +73,7 @@ const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpaci
 import { MyIcon } from "../common/icons";
 import { trace } from "../log";
 import { FileSystem } from "../filesystem";
+import { cutShapePath, getOverlayImage, getUriImage, NormRect } from "./raster";
 
 const TEXT_SEARCH_MARGIN = 0; // 15;
 const TABLE_LINE_THRESHOLD = 7;
@@ -102,6 +107,10 @@ interface CanvasProps {
     images?: SketchImage[];
     elements?: SketchElement[]; // generic elements
     tables?: SketchTable[];
+    overlays?: SketchOverlay[]; // fills and cuts
+    selectionRect?: NormRect;
+    selectionLasso?: SketchPoint[];
+    showCutWhiteouts?: boolean;
 
     currentEdited: CurrentEdited;
     renderElements?: (elem: SketchElement) => any;
@@ -178,6 +187,10 @@ function Canvas({
     images,
     elements,
     tables,
+    overlays,
+    selectionRect,
+    selectionLasso,
+    showCutWhiteouts,
     currentEdited,
     renderElements,
     elementsAttr,
@@ -358,7 +371,8 @@ function Canvas({
         }
 
         // Check image delete icon area (visible when image is selected)
-        if (currentElementTypeRef.current === ElementTypes.Image && currentEditedRef.current?.imageId) {
+        if ((currentElementTypeRef.current === ElementTypes.Image || currentElementTypeRef.current === ElementTypes.Cut)
+            && currentEditedRef.current?.imageId) {
             const image = imagesRef.current?.find(img => img.id === currentEditedRef.current?.imageId);
             if (image) {
                 // Delete icon at (image.x - 30/ratio, image.y)
@@ -488,7 +502,8 @@ function Canvas({
 
                             sketchInProgressRef.current = true;
 
-                        } else if (currentElementTypeRef.current === ElementTypes.Line) {
+                        } else if (currentElementTypeRef.current === ElementTypes.Line ||
+                            currentElementTypeRef.current === ElementTypes.Cut) {
                             onSketchStart(startSketchRef.current.position);
                         }
                         startSketchRef.current = null;
@@ -526,7 +541,8 @@ function Canvas({
                         "worklet"
                         return p.lineTo(newPoint[0] * ratioSV.value, newPoint[1] * ratioSV.value) as any;
                     })
-                } else if (currentElementTypeRef.current === ElementTypes.Line) {
+                } else if (currentElementTypeRef.current === ElementTypes.Line ||
+                    currentElementTypeRef.current === ElementTypes.Cut) {
                     onSketchStep(newPoint);
                 } else {
                     // pass a screen point, as offset may change during...
@@ -576,7 +592,8 @@ function Canvas({
                             }
                         }, 300);
                     }, 0);
-                } else if (!elem && currentElementTypeRef.current === ElementTypes.Line) {
+                } else if (!elem && (currentElementTypeRef.current === ElementTypes.Line ||
+                    currentElementTypeRef.current === ElementTypes.Cut)) {
                     onSketchEnd();
                 } else if (elem) {
                     if ("id" in elem) {
@@ -707,6 +724,9 @@ function Canvas({
             //return imagesRef.current?.find(t => inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
             return findLast(imagesRef.current, t => inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
         }
+        if (currentElementTypeRef.current === ElementTypes.Cut) {
+            return findLast(imagesRef.current, t => !!t.isCutPiece && isPointOnImage(t, cx, cy));
+        }
         if (currentElementTypeRef.current === ElementTypes.Line) {
             const THRESHOLD = 10; // how close to the line is acceptable?
 
@@ -758,6 +778,28 @@ function Canvas({
     imageSource = normalizeFoAndroid(imageSource)
     //console.log("canvas render", ratio, canvasWidth)
     const isEraser = (color: string) => color === "#00000000";
+
+    const showImageControls = (image: SketchImage) => currentEdited.imageId == image.id &&
+        (currentElementType == ElementTypes.Image || (currentElementType == ElementTypes.Cut && image.isCutPiece));
+
+    const [, setImagesLoaded] = useState(0);
+    const renderOverlays = (afterPath: number) => overlays?.filter(o => o.afterPath === afterPath).map(o => {
+        const rect = { x: o.x * ratio, y: o.y * ratio, width: o.width * ratio, height: o.height * ratio };
+        if (o.kind === "piece") {
+            // the selected piece follows its live position while being moved
+            const live = images?.find(i => i.id === o.id) ?? o;
+            const image = o.src ? getUriImage(o.src, () => setImagesLoaded(n => n + 1)) : null;
+            return image && <SkiaImage key={o.id} image={image} fit="fill"
+                x={live.x * ratio} y={live.y * ratio} width={live.width * ratio} height={live.height * ratio} />;
+        }
+        if (o.kind === "cut") {
+            return o.points ?
+                <SkiaPath key={o.id} path={cutShapePath(o, ratio)} color="black" blendMode="dstOut" /> :
+                <SkiaRect key={o.id} {...rect} color="black" blendMode="dstOut" />;
+        }
+        const image = getOverlayImage(o);
+        return image && <SkiaImage key={o.id} image={image} {...rect} fit="fill" />;
+    });
 
     const transformStyle = useAnimatedStyle(() => {
         return {
@@ -821,6 +863,14 @@ function Canvas({
                     />
                 )}
 
+                {/* Areas cut out of the background */}
+                {showCutWhiteouts && overlays?.some(o => o.kind === "cut") &&
+                    <Svg height="100%" width="100%" style={{ position: "absolute", zIndex: 0 }} pointerEvents="none">
+                        {overlays.filter(o => o.kind === "cut").map(c => (
+                            <Path key={c.id} d={cutShapePath(c, ratio).toSVGString()} fill="white" />
+                        ))}
+                    </Svg>}
+
                 {(background == FileSystem.StaticPages.Lines || background == FileSystem.StaticPages.Math) && <Lines
                     height={canvasHeight}
                 />}
@@ -839,21 +889,24 @@ function Canvas({
                     }}
                 >
                     {/* Re-draw each path in the order they appear */}
-                    {paths?.map((p) => {
+                    {paths?.map((p, i) => {
                         //console.log("createSkiaPath", ratioRef.current, actualWidth, actualHeight)
                         const skPath = createSkiaPath(p.points, ratio);
 
                         return (
-                            <SkiaPath
-                                key={p.id}
-                                path={skPath}
-                                color={isEraser(p.color) ? "black" : p.color}
-                                style={"stroke"}
-                                strokeWidth={p.strokeWidth}
-                                blendMode={isEraser(p.color) ? "dstOut" : "srcOver"}
-                            />
+                            <React.Fragment key={p.id}>
+                                {renderOverlays(i)}
+                                <SkiaPath
+                                    path={skPath}
+                                    color={isEraser(p.color) ? "black" : p.color}
+                                    style={"stroke"}
+                                    strokeWidth={p.strokeWidth}
+                                    blendMode={isEraser(p.color) ? "dstOut" : "srcOver"}
+                                />
+                            </React.Fragment>
                         );
                     })}
+                    {renderOverlays(paths?.length ?? 0)}
 
                     <SkiaPath
                         path={lastPathSV}
@@ -1037,6 +1090,18 @@ function Canvas({
                     />
                 })}
 
+                {selectionRect && <View pointerEvents="none" style={{
+                    position: "absolute", zIndex: 2000,
+                    left: selectionRect.x * ratio, top: selectionRect.y * ratio,
+                    width: selectionRect.width * ratio, height: selectionRect.height * ratio,
+                    borderWidth: 2, borderStyle: "dashed", borderColor: "#1E90FF",
+                }} />}
+                {selectionLasso && selectionLasso.length > 1 &&
+                    <Svg height="100%" width="100%" style={{ position: "absolute", zIndex: 2000 }} pointerEvents="none">
+                        <Path d={joinPath(selectionLasso, ratio) + " Z"} stroke="#1E90FF" strokeWidth={2}
+                            strokeDasharray={[6, 4]} fill="rgba(30,144,255,0.08)" />
+                    </Svg>}
+
                 {/* Images */}
                 {images?.map((image) => {
                     const imgW = (image.width)
@@ -1046,7 +1111,8 @@ function Canvas({
                     if (!imgW || imgW === 0) return null;
 
                     return <React.Fragment key={image.id} >
-                        <View
+                        {/* cut pieces are drawn in the sketch layer */}
+                        {!image.isCutPiece && <View
                             style={[
                                 styles.imageStyle,
                                 {
@@ -1065,9 +1131,25 @@ function Canvas({
                                 source={normalizeFoAndroid(image.src) || { uri: image.imageData }}
                                 resizeMode="contain"
                             />
-                        </View>
-                        {currentElementType == ElementTypes.Image &&
-                            currentEdited.imageId == image.id && <TouchableOpacity
+                        </View>}
+                        {showImageControls(image) && (image.outline ?
+                            <Animated.View pointerEvents="none" style={[styles.moveIcon, {
+                                position: "absolute", left: image.x * ratio, top: image.y * ratio, width: w, height: h,
+                            }, visibleAnimatedStyle]}>
+                                <Svg width={w} height={h}>
+                                    <Path d={joinPath(image.outline.map(([fx, fy]) => [fx * w, fy * h] as SketchPoint), 1) + " Z"}
+                                        stroke="#1E90FF" strokeWidth={2} strokeDasharray={[6, 4]} fill="none" />
+                                </Svg>
+                            </Animated.View> :
+                            <Animated.View pointerEvents="none" style={[styles.moveIcon, {
+                                position: "absolute",
+                                left: image.x * ratio - 2,
+                                top: image.y * ratio - 2,
+                                width: w + 4,
+                                height: h + 4,
+                                borderWidth: 2, borderStyle: "dashed", borderColor: "#1E90FF",
+                            }, visibleAnimatedStyle]} />)}
+                        {showImageControls(image) && <TouchableOpacity
                                 style={{
                                     position: "absolute",
                                     zIndex: 30,
@@ -1079,8 +1161,7 @@ function Canvas({
                                 <MyIcon info={{ type: "Ionicons", name: "trash-outline", size: 30, color: "blue" }} />
 
                             </TouchableOpacity>}
-                        {currentElementType == ElementTypes.Image &&
-                            currentEdited.imageId == image.id && <MoveIcon
+                        {showImageControls(image) && <MoveIcon
                                 style={[styles.moveIcon, visibleAnimatedStyle]}
                                 position={[
                                     (image.x + image.width) * ratio - 20,

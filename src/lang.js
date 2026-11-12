@@ -251,6 +251,8 @@ export const languageMap = {
 
     ToolsSettings: 'כלים',
     Ruler: 'סרגל',
+    FillTool: 'מילוי צבע',
+    CutTool: 'גזירה',
     Image: 'תמונה',
     Marker: 'מדגש',
     Voice: 'הקלטה',
@@ -442,6 +444,8 @@ export const languageMap = {
     BackupSuccessful: 'تم النسخ الاحتياطي بنجاح',
     ToolsSettings: 'أدوات',
     Ruler: 'خط مستقيم', // or "مسطرة رسم"
+    FillTool: 'تعبئة لون',
+    CutTool: 'قص',
     Image: 'صورة',
     Marker: 'محدد',
     Voice: 'تسجيل',
@@ -635,6 +639,8 @@ export const languageMap = {
     BackupSuccessful: 'Backup successful',
     ToolsSettings: 'Tools',
     Ruler: 'Ruler',
+    FillTool: 'Fill',
+    CutTool: 'Cut',
     Image: 'Image',
     Marker: 'Marker',
     Voice: 'Recording',

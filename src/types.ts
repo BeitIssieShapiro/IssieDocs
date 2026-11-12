@@ -41,4 +41,6 @@ export enum EditModes {
     Marker = "marker",
     Audio = "audio",
     Voice = "voice",
+    Cut = ElementTypes.Cut,
+    Fill = ElementTypes.Fill,
 }

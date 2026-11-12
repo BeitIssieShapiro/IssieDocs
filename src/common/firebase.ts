@@ -122,6 +122,8 @@ export enum LocalAnalyticEvent {
   marker_used = 'marker_used',
   eraser_used = 'eraser_used',
   ruler_used = 'ruler_used',
+  fill_used = 'fill_used',
+  cut_used = 'cut_used',
 
   // Text Operations
   text_added = 'text_added',

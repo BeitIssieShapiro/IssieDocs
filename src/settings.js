@@ -29,6 +29,8 @@ export const FEATURES = {
     table: 3,
     image: 4,
     voice: 5,
+    cut: 6,
+    fill: 7,
 }
 
 
@@ -96,7 +98,7 @@ export function getUseColorSetting() {
 export function getFeaturesSetting() {
     const features = getSetting(FEATURES.name)
     if (features && Array.isArray(features)) return features;
-    return [FEATURES.image, FEATURES.marker, FEATURES.ruler, FEATURES.table, FEATURES.voice];
+    return [FEATURES.image, FEATURES.marker, FEATURES.ruler, FEATURES.table, FEATURES.voice, FEATURES.cut, FEATURES.fill];
 }
 
 export function getUseTextSetting() {

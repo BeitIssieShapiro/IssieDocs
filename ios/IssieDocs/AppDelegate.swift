@@ -12,6 +12,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   
   var reactNativeDelegate: ReactNativeDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
+  private var launchTime: Double = 0
   
   
   
@@ -31,34 +32,37 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
      reactNativeDelegate = delegate
      reactNativeFactory = factory
 
-     window = UIWindow(frame: UIScreen.main.bounds)
+     launchTime = Date().timeIntervalSince1970 * 1000 // ms
+     return true
+   }
 
-     let launchTime = Date().timeIntervalSince1970 * 1000 // ms
+  // Called by SceneDelegate: UIKit in the iOS 27 SDK requires the scene lifecycle, so the window
+  // and any launch URL only become available once the scene connects.
+  func startReactNative(in window: UIWindow, launchURL: URL?) {
+     self.window = window
 
      // Extract and prepare initial URL if exists
      var initialProps: [AnyHashable: Any] = ["nativeStartTime": launchTime]
-     if let url = launchOptions?[.url] as? URL,
+     if let url = launchURL,
         let tempURL = securelyCopyToTemp(url: url) {
        initialProps["url"] = tempURL.absoluteString
      }
 
-     factory.startReactNative(
+     reactNativeFactory?.startReactNative(
        withModuleName: "IssieDocs",
        in: window,
        initialProperties: initialProps,
-       launchOptions: launchOptions
+       launchOptions: nil
      )
 
      RNSplashScreen.show()
-     return true
    }
-  
-  
-  func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-      guard let tempURL = securelyCopyToTemp(url: url) else { return false }
-      return RCTLinkingManager.application(app, open: tempURL, options: options)
+
+  func open(url: URL) {
+      guard let tempURL = securelyCopyToTemp(url: url) else { return }
+      RCTLinkingManager.application(UIApplication.shared, open: tempURL, options: [:])
     }
-  
+
   private func securelyCopyToTemp(url: URL) -> URL? {
     let hasAccess = url.startAccessingSecurityScopedResource()
     defer {
@@ -85,6 +89,29 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
   }
   
+}
+
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+  var window: UIWindow?
+
+  func scene(
+    _ scene: UIScene,
+    willConnectTo session: UISceneSession,
+    options connectionOptions: UIScene.ConnectionOptions
+  ) {
+    guard let windowScene = scene as? UIWindowScene,
+          let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
+
+    let window = UIWindow(windowScene: windowScene)
+    self.window = window
+    appDelegate.startReactNative(in: window, launchURL: connectionOptions.urlContexts.first?.url)
+  }
+
+  func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+    guard let url = URLContexts.first?.url,
+          let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
+    appDelegate.open(url: url)
+  }
 }
 
 class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {

@@ -39,6 +39,22 @@ export function calculateMidpoint(from: SketchPoint, to: SketchPoint): SketchPoi
 /**
  * Returns true if point (px, py) is within `threshold` distance of the line segment from->to.
  */
+/** Ray-casting point-in-polygon test */
+export function isPointInPolygon(x: number, y: number, polygon: SketchPoint[]): boolean {
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const [xi, yi] = polygon[i], [xj, yj] = polygon[j];
+        if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+}
+
+/** Whether a point (normalized) hits an image, using the lasso outline of cut pieces */
+export function isPointOnImage(image: { x: number; y: number; width: number; height: number; outline?: SketchPoint[] }, x: number, y: number): boolean {
+    if (x < image.x || x > image.x + image.width || y < image.y || y > image.y + image.height) return false;
+    return !image.outline || isPointInPolygon((x - image.x) / image.width, (y - image.y) / image.height, image.outline);
+}
+
 export function isPointOnLineSegment(
     from: [number, number],
     to: [number, number],

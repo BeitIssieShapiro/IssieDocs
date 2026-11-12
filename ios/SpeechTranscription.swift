@@ -496,6 +496,25 @@ class SpeechTranscription: RCTEventEmitter {
 
   // MARK: - Text-to-Speech
 
+  // Short text is often misdetected (e.g. "dog" as Danish, "apple" as Turkish), which reads it
+  // with a foreign voice. Unless detection is confident, choose only among the languages this
+  // user is likely to write: keyboard, device languages and the app's main languages.
+  private func detectSpeechLanguage(_ text: String, fallbackLanguage: String) -> String {
+    let recognizer = NLLanguageRecognizer()
+    recognizer.processString(text)
+    if let top = recognizer.languageHypotheses(withMaximum: 1).first, top.value >= 0.8 {
+      return top.key.rawValue
+    }
+
+    let deviceLanguages = Locale.preferredLanguages.compactMap { $0.split(separator: "-").first.map(String.init) }
+    let candidates = Set([fallbackLanguage, "en", "he", "ar"] + deviceLanguages)
+
+    recognizer.reset()
+    recognizer.languageConstraints = candidates.map { NLLanguage(rawValue: $0) }
+    recognizer.processString(text)
+    return recognizer.dominantLanguage?.rawValue ?? fallbackLanguage
+  }
+
   @objc
   func startSpeaking(_ text: String, fallbackLanguage: String, speechRate: Float) {
     DispatchQueue.main.async { [weak self] in
@@ -512,18 +531,8 @@ class SpeechTranscription: RCTEventEmitter {
             self.stopTranscription()
         }
 
-        // Detect language
-        let recognizer = NLLanguageRecognizer()
-        recognizer.processString(text)
-        let detectedLang = recognizer.dominantLanguage
-
-        // Map detected/fallback language to a language code (e.g. "en", "he", "ar")
-        let langCode: String
-        if let lang = detectedLang {
-            langCode = lang.rawValue  // e.g. "en", "he", "ar"
-        } else {
-            langCode = fallbackLanguage
-        }
+        // Language code of the text (e.g. "en", "he", "ar")
+        let langCode = self.detectSpeechLanguage(text, fallbackLanguage: fallbackLanguage)
 
         // Find the user's preferred locale for this language from system settings
         // e.g. if device is set to en-GB, prefer "en-GB" over "en-US"

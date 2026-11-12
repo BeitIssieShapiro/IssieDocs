@@ -15,6 +15,8 @@ export enum ElementTypes {
     Image = "image",
     Table = "table",
     Element = "element",
+    Cut = "cut",
+    Fill = "fill",
 }
 
 export interface ElementBase {
@@ -65,6 +67,23 @@ export interface SketchImage extends ElementBase {
     width: number;
     height: number;
     aspectRatio?: number;
+    isCutPiece?: boolean;
+    outline?: SketchPoint[]; // lasso cut pieces: outline as fractions (0..1) of width/height
+}
+
+// Fills and cuts are drawn in the sketch (Skia) layer, interleaved with paths:
+// afterPath is the number of paths drawn before the overlay.
+export interface SketchOverlay extends ElementBase {
+    kind: "fill" | "cut" | "piece";
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    afterPath: number;
+    imageData?: string; // base64 png (fill only)
+    points?: SketchPoint[]; // lasso outline (cut only), otherwise the cut is the rect
+    src?: string; // image file uri (piece only)
+    color?: string; // fill only
 }
 
 export interface SketchTable extends ElementBase {

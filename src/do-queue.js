@@ -123,6 +123,19 @@ export default class DoQueue {
     this.clearUndo();
   }
 
+  pushFill(elem) {
+    this.add({ elem: elem, type: 'fill' });
+    this.clearUndo();
+  }
+
+  // a cut-out area and the image piece taken from it - undone together
+  pushCut(cutElem, pieceElem) {
+    this.pushMany([
+      { elem: cutElem, type: 'cut' },
+      { elem: pieceElem, type: 'image' },
+    ]);
+  }
+
   pushTable(elem) {
     delete elem.minHeights;
     delete elem.clone;

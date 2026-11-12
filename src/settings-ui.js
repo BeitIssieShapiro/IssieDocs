@@ -465,6 +465,16 @@ export default function SettingsMenu(props) {
                             selected: features?.includes(FEATURES.voice)
                         },
                         {
+                            icon: <AppText style={{ fontSize: 25 }}>{translate("FillTool")}</AppText>,
+                            callback: () => { flipFeatureTougle(FEATURES.fill) },
+                            selected: features?.includes(FEATURES.fill)
+                        },
+                        {
+                            icon: <AppText style={{ fontSize: 25 }}>{translate("CutTool")}</AppText>,
+                            callback: () => { flipFeatureTougle(FEATURES.cut) },
+                            selected: features?.includes(FEATURES.cut)
+                        },
+                        {
                             icon: <AppText style={{ fontSize: 25 }}>{translate("KeyboardTextTools")}</AppText>,
                             callback: () => {
                                 let newValue = kbTextTools == KB_TEXT_TOOLS.yes ? KB_TEXT_TOOLS.no : KB_TEXT_TOOLS.yes;

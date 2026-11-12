@@ -5,6 +5,7 @@ import {
     ImageSize,
     Keyboard,
     PermissionsAndroid,
+    PixelRatio,
     Platform,
     StyleSheet,
     TouchableOpacity,
@@ -17,7 +18,8 @@ import { Settings } from "./new-settings"
 import * as Progress from 'react-native-progress';
 import Share from 'react-native-share';
 import { StackScreenProps } from '@react-navigation/stack';
-import { CurrentEdited, ElementBase, ElementTypes, MoveTypes, Offset, SketchElement, SketchElementAttributes, SketchImage, SketchLine, SketchPath, SketchPoint, SketchTable, SketchText, TableContext } from './canvas/types';
+import { CurrentEdited, ElementBase, ElementTypes, MoveTypes, Offset, SketchElement, SketchElementAttributes, SketchImage, SketchLine, SketchOverlay, SketchPath, SketchPoint, SketchTable, SketchText, TableContext } from './canvas/types';
+import { capturePiece, computeFill, NormRect, PageSnapshot } from './canvas/raster';
 import Canvas from './canvas/canvas';
 import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
@@ -60,6 +62,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [images, setImages] = useState<SketchImage[]>([]);
     const [tables, setTables] = useState<SketchTable[]>([]);
     const [audios, setAudios] = useState<SketchElement[]>([]);
+    const [overlays, setOverlays] = useState<SketchOverlay[]>([]);
+    const [selectionRect, setSelectionRect] = useState<NormRect | undefined>();
+    const [selectionLasso, setSelectionLasso] = useState<SketchPoint[] | undefined>();
+    const [cutShape, setCutShape] = useState<"rect" | "lasso">("rect");
     const [background, setBackground] = useState<number | undefined>();
 
     const [currentEdited, setCurrentEdited] = useState<CurrentEdited>({});
@@ -128,6 +134,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [markerColor, setMarkerColor] = useState<string>(colors.yellow);
     const [textColor, setTextColor] = useState<string>(colors.black);
     const [tableColor, setTableColor] = useState<string>(colors.blue);
+    const [fillColor, setFillColor] = useState<string>(colors.yellow);
 
     const [shareProgress, setShareProgress] = useState<number>(-1)
     const [shareProgressPage, setShareProgressPage] = useState<number>(1)
@@ -147,6 +154,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const imagesRef = useRef(images);
     const tablesRef = useRef(tables);
     const audiosRef = useRef(audios);
+    const overlaysRef = useRef(overlays);
+    const backgroundRef = useRef(background);
+    const selectionStartRef = useRef<SketchPoint | undefined>(undefined);
+    const selectionRectRef = useRef<NormRect | undefined>(undefined);
+    const selectionLassoRef = useRef<SketchPoint[] | undefined>(undefined);
+    const cutShapeRef = useRef(cutShape);
+    const rasterBusyRef = useRef(false);
+    // the cut piece that can still be moved; once dropped, pieces are part of the page
+    const activePieceIdRef = useRef<string | undefined>(undefined);
     const currentEditedRef = useRef<CurrentEdited>(currentEdited);
     const canvasSizeRef = useRef<ImageSize>(canvasSize);
     const eraseModeRef = useRef<boolean>(false);
@@ -170,6 +186,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const markerColorRef = useRef(markerColor);
     const textColorRef = useRef(textColor);
     const tableColorRef = useRef(tableColor);
+    const fillColorRef = useRef(fillColor);
     const moveCanvasRef = useRef(moveCanvas);
     const moveRepeatRef = useRef<{ offset: Offset, interval: ReturnType<typeof setInterval> } | undefined>(undefined);
     const isDraggingElementRef = useRef(false);
@@ -205,6 +222,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         markerColorRef.current = markerColor;
         textColorRef.current = textColor;
         tableColorRef.current = tableColor;
+        fillColorRef.current = fillColor;
+        cutShapeRef.current = cutShape;
         canvasSizeRef.current = canvasSize;
         currPageIndexRef.current = currPageIndex;
         currentFileRef.current = currentFile;
@@ -215,7 +234,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         updateCurrentEditedElements();
     }, [mode, fontSize, textAlignment, textFont, textBold, textItalic, textUnderline, strokeWidth, rulerStrokeWidth, markerWidth, sideMargin,
-        brushColor, rulerColor, markerColor, textColor, tableColor, canvasSize,
+        brushColor, rulerColor, markerColor, textColor, tableColor, fillColor, cutShape, canvasSize,
         currPageIndex, currentFile, moveCanvas, zoom, keyboardHeight, eraseMode]);
 
     // Sync formatting state to native keyboard toolbar
@@ -416,6 +435,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
 
         pageRef.current = newPage;
+        activePieceIdRef.current = undefined;
         metaDataUri.current = newCurrentFile + ".json";
         queue2state(true)
         await calcCanvasRatio(newCurrentFile);
@@ -843,6 +863,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         let _paths = [] as SketchPath[];
         let _rulers = [] as SketchLine[];
         let _audio = [] as SketchElement[];
+        let _overlays = [] as SketchOverlay[];
 
         let fontSize
         let fontName = undefined
@@ -935,9 +956,21 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         ...(elem.file ? { src: { uri: FileSystem.main.getAttachmentBase(pageRef.current, currPageIndexRef.current) + elem.file } } : {})
                     }
                 }
-                _images.push(elem);
+                if (elem.isCutPiece) {
+                    _overlays.push({
+                        id: elem.id, kind: "piece", x: elem.x, y: elem.y, width: elem.width, height: elem.height,
+                        src: elem.src?.uri, afterPath: _paths.length,
+                    });
+                    if (elem.id === activePieceIdRef.current) _images.push(elem);
+                } else {
+                    _images.push(elem);
+                }
                 //latestMode = EditModes.Image;
             } else if (q[i].type === 'imagePosition') {
+                const piece = _overlays.find(o => o.kind === "piece" && o.id === q[i].elem.id);
+                if (piece) {
+                    Object.assign(piece, { x: q[i].elem.x, y: q[i].elem.y, width: q[i].elem.width, height: q[i].elem.height });
+                }
                 const elemIndex = _images.findIndex(ci => ci.id === q[i].elem.id);
                 if (elemIndex >= 0) {
                     const updatedImage = {
@@ -951,6 +984,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     //latestMode = EditModes.Image;
                 }
             } else if (q[i].type === 'imageDelete') {
+                _overlays = _overlays.filter(o => !(o.kind === "piece" && o.id === q[i].elem.id));
                 const elemIndex = _images.findIndex(ci => ci.id === q[i].elem.id);
                 if (elemIndex >= 0) {
                     _images.splice(elemIndex, 1);
@@ -980,6 +1014,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 if (elemIndex >= 0) {
                     _audio[elemIndex] = { ..._audio[elemIndex], ...q[i].elem }
                 }
+            } else if (q[i].type === 'fill' || q[i].type === 'cut') {
+                _overlays.push({ ...q[i].elem, kind: q[i].type, afterPath: _paths.length });
             } else if (q[i].type === 'changePageHeightAddition') {
                 // Handle page height change from queue
                 const newHeight = q[i].elem.height;
@@ -995,6 +1031,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         imagesRef.current = _images;
         tablesRef.current = _tables;
         audiosRef.current = _audio;
+        overlaysRef.current = _overlays;
+        backgroundRef.current = _background;
         setPageHeightAddition(_pageHeightAddition);
         setPaths(_paths);
         setTexts(_texts);
@@ -1002,6 +1040,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         setImages(_images);
         setTables(_tables);
         setAudios(_audio);
+        setOverlays(_overlays);
         setBackground(_background);
 
         if (updateToolsState) {
@@ -1030,6 +1069,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     async function beforeModeChange() {
         await saveText();
+        dropCutPiece();
         //trace("curr mode", modeRef.current)
         if (modeRef.current == EditModes.Text && zoomRef.current == 1) {
             setMoveCanvas({ x: 0, y: 0 });
@@ -1081,6 +1121,16 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             currentEditedRef.current = newCurrEdited
             setCurrentEdited(newCurrEdited);
 
+        } else if (modeRef.current === EditModes.Cut) {
+            dropCutPiece();
+            selectionStartRef.current = p;
+            if (cutShapeRef.current === "lasso") {
+                selectionLassoRef.current = [p];
+                setSelectionLasso(selectionLassoRef.current);
+            } else {
+                selectionRectRef.current = { x: p[0], y: p[1], width: 0, height: 0 };
+                setSelectionRect(selectionRectRef.current);
+            }
         } else if (modeRef.current === EditModes.Text) {
             //trace("sketch start text")
 
@@ -1101,6 +1151,23 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             if (lastLine) {
                 lastLine.to = p;
                 setLines([...linesRef.current]);
+            }
+        } else if (modeRef.current === EditModes.Cut && selectionStartRef.current) {
+            const [sx, sy] = selectionStartRef.current;
+            const maxX = canvasSizeRef.current.width / ratioRef.current;
+            const maxY = canvasSizeRef.current.height / ratioRef.current;
+            const x = Math.min(Math.max(p[0], 0), maxX);
+            const y = Math.min(Math.max(p[1], 0), maxY);
+            if (selectionLassoRef.current) {
+                const last = arrLast(selectionLassoRef.current)!;
+                // skip points too close to the previous one
+                if (Math.hypot(x - last[0], y - last[1]) * ratioRef.current >= 3) {
+                    selectionLassoRef.current = [...selectionLassoRef.current, [x, y]];
+                    setSelectionLasso(selectionLassoRef.current);
+                }
+            } else {
+                selectionRectRef.current = { x: Math.min(sx, x), y: Math.min(sy, y), width: Math.abs(x - sx), height: Math.abs(y - sy) };
+                setSelectionRect(selectionRectRef.current);
             }
         } else if (isTextMode()) {
 
@@ -1162,6 +1229,22 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             analyticEvent(LocalAnalyticEvent.ruler_used, {
                 stroke_width: categorizeCount(elem.strokeWidth)
             });
+        } else if (modeRef.current === EditModes.Cut) {
+            const rect = selectionRectRef.current;
+            const lasso = selectionLassoRef.current;
+            selectionStartRef.current = undefined;
+            selectionRectRef.current = undefined;
+            selectionLassoRef.current = undefined;
+            setSelectionRect(undefined);
+            setSelectionLasso(undefined);
+            if (rect) {
+                performCut(rect);
+            } else if (lasso && lasso.length > 2) {
+                const xs = lasso.map(pt => pt[0]), ys = lasso.map(pt => pt[1]);
+                const x = Math.min(...xs), y = Math.min(...ys);
+                performCut({ x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y }, lasso);
+            }
+            return;
         } else if (isTextMode()) {
             //trace("text sketch release")
             dragToMoveCanvasRef.current = undefined;
@@ -1171,6 +1254,90 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         save();
         queue2state();
+    }
+
+    // -------------------------------------------------------------------------
+    //                          FILL / CUT
+    // -------------------------------------------------------------------------
+    function pageSnapshot(): PageSnapshot {
+        const normHeight = canvasSizeRef.current.height / ratioRef.current;
+        return {
+            bgUri: currentFileRef.current,
+            hasPhotoBg: backgroundRef.current === undefined,
+            canvasWidth: canvasSizeRef.current.width,
+            canvasHeight: canvasSizeRef.current.height,
+            bgHeight: originalBgImageHeightRef.current > 0 ? originalBgImageHeightRef.current : canvasSizeRef.current.height,
+            ratio: ratioRef.current,
+            paths: pathsRef.current,
+            overlays: overlaysRef.current,
+            lines: linesRef.current,
+            tables: tablesRef.current.map(t => ({
+                ...t, horizontalLines: calcEffectiveHorizontalLines(t, normHeight, textsRef.current),
+            })),
+            images: imagesRef.current,
+        };
+    }
+
+    async function withRasterBusy(action: () => Promise<void>) {
+        if (rasterBusyRef.current) return;
+        rasterBusyRef.current = true;
+        setBusy(true);
+        // let the busy indicator render before the (synchronous) raster work
+        await wait(10);
+        try {
+            await action();
+        } catch (e) {
+            //trace("raster operation failed", e)
+        } finally {
+            rasterBusyRef.current = false;
+            setBusy(false);
+        }
+    }
+
+    // The moved piece becomes part of the page - it can no longer be selected or moved
+    function dropCutPiece() {
+        if (!activePieceIdRef.current) return;
+        activePieceIdRef.current = undefined;
+        const newCurrEdited = { ...currentEditedRef.current, imageId: undefined }
+        currentEditedRef.current = newCurrEdited
+        setCurrentEdited(newCurrEdited);
+        queue2state();
+    }
+
+    function performFill(p: SketchPoint) {
+        return withRasterBusy(async () => {
+            const fill = await computeFill(pageSnapshot(), p, fillColorRef.current, PixelRatio.get());
+            if (!fill) return; // not an enclosed shape
+            queue.current.pushFill({ id: getId("F"), ...fill });
+            queue2state();
+            save();
+            analyticEvent(LocalAnalyticEvent.fill_used);
+        });
+    }
+
+    function performCut(rect: NormRect, lasso?: SketchPoint[]) {
+        // ignore tiny selections (accidental drags)
+        if (rect.width * ratioRef.current < 15 || rect.height * ratioRef.current < 15) return;
+        return withRasterBusy(async () => {
+            const piece = await capturePiece(pageSnapshot(), rect, PixelRatio.get(), lasso);
+            if (!piece) return;
+            const tmpFile = `${RNFS.TemporaryDirectoryPath}/cut-${Date.now()}.${piece.ext}`;
+            await RNFS.writeFile(tmpFile, piece.base64, 'base64');
+            const file = await FileSystem.main.attachedFileToPage(tmpFile, pageRef.current, currPageIndexRef.current, piece.ext);
+
+            const pieceElem = {
+                id: getId("I"), ...rect, file, isCutPiece: true,
+                ...(lasso ? { outline: lasso.map(([px, py]) => [(px - rect.x) / rect.width, (py - rect.y) / rect.height]) } : {}),
+            };
+            queue.current.pushCut({ id: getId("C"), ...rect, ...(lasso ? { points: lasso } : {}) }, pieceElem);
+            activePieceIdRef.current = pieceElem.id;
+            const newCurrEdited = { ...currentEditedRef.current, imageId: pieceElem.id }
+            currentEditedRef.current = newCurrEdited
+            setCurrentEdited(newCurrEdited);
+            queue2state();
+            save();
+            analyticEvent(LocalAnalyticEvent.cut_used);
+        });
     }
 
     // -------------------------------------------------------------------------
@@ -1336,6 +1503,13 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 currentEditedRef.current = newCurrEdited
                 setCurrentEdited(newCurrEdited);
                 setLines([...linesRef.current]);
+            }
+        } else if (modeRef.current === EditModes.Fill) {
+            performFill(p);
+        } else if (modeRef.current === EditModes.Cut) {
+            // tapping outside the moveable piece drops it
+            if (!(elem && "id" in elem && elem.id === activePieceIdRef.current)) {
+                dropCutPiece();
             }
         } else if (modeRef.current === EditModes.Image && elem && "id" in elem) {
             //trace("set current image")
@@ -1634,6 +1808,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 delete changed.imageData;
                 delete changed.aspectRatio;
                 delete changed.src;
+                delete (changed as any).file; // otherwise evicting this from the redo queue deletes the image file
                 queue.current.pushImagePosition(changed);
                 save();
                 queue2state();
@@ -1783,7 +1958,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     async function handleEraserPressed() {
         //trace("Eraser pressed");
         if (!eraseModeRef.current &&
-            (modeRef.current === EditModes.Image || modeRef.current === EditModes.Table || modeRef.current === EditModes.Text)) {
+            [EditModes.Image, EditModes.Table, EditModes.Text, EditModes.Cut, EditModes.Fill].includes(modeRef.current)) {
             await beforeModeChange();
             setMode(EditModes.Brush);
             toolbarRef.current?.closePicker();
@@ -1888,6 +2063,22 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setEraseMode(false);
         }
         setMode(EditModes.Marker);
+    }
+
+    async function handleCutMode() {
+        await beforeModeChange();
+        if (eraseModeRef.current) {
+            setEraseMode(false);
+        }
+        setMode(EditModes.Cut);
+    }
+
+    async function handleFillMode() {
+        await beforeModeChange();
+        if (eraseModeRef.current) {
+            setEraseMode(false);
+        }
+        setMode(EditModes.Fill);
     }
 
     // Voice Mode
@@ -2112,6 +2303,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setTextColor(newColor);
         } else if (isMarkerMode()) {
             setMarkerColor(newColor);
+        } else if (modeRef.current === EditModes.Fill) {
+            setFillColor(newColor);
 
         } else if (isTableMode()) {
             setTableColor(newColor);
@@ -2589,6 +2782,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onMarkerMode={onMarkerMode}
                 onVoiceMode={onVoiceMode}
                 onTableMode={handleTableMode}
+                onCutMode={handleCutMode}
+                onFillMode={handleFillMode}
                 onAddImageFromGallery={() => addImage(SRC_GALLERY)}
                 onAddImageFromCamera={() => addImage(SRC_CAMERA)}
                 TableActions={TableActions}
@@ -2600,6 +2795,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 isImageMode={mode === EditModes.Image}
                 isVoiceMode={false}
                 isBrushMode={mode === EditModes.Brush}
+                isCutMode={mode === EditModes.Cut}
+                isFillMode={mode === EditModes.Fill}
+                fillColor={fillColor}
+                cutShape={cutShape}
+                onSelectCutShape={setCutShape}
                 fontSize={fontSize}
                 textAlignment={textAlignment}
                 showCenterTextAlignment={currentEdited.textId && texts.find(t => t.id == currentEdited.textId)?.tableId}
@@ -2671,6 +2871,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 lines={lines}
                 images={images}
                 tables={tables}
+                overlays={overlays}
+                selectionRect={selectionRect}
+                selectionLasso={selectionLasso}
+                showCutWhiteouts={background === undefined}
                 elements={audios}
                 renderElements={handleRenderElements}
                 elementsAttr={handleElementsAttr}

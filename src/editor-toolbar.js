@@ -29,6 +29,8 @@ const Pickers = {
     RULER: 10,
     AUDIO: 11,
     SPEAK_DICTATE: 12,
+    CUT: 13,
+    FILL: 14,
 }
 
 const availableBrushSize = [
@@ -72,6 +74,8 @@ function EditorToolbar({
     onAddImageFromGallery,
     onMarkerMode,
     onTableMode,
+    onCutMode,
+    onFillMode,
     TableActions,
     onBrushMode,
     onVoiceMode,
@@ -91,6 +95,8 @@ function EditorToolbar({
     isTableMode,
     isVoiceMode,
     isRulerMode,
+    isCutMode,
+    isFillMode,
     Table,
     fontSize,
 
@@ -99,6 +105,9 @@ function EditorToolbar({
     rulerColor,
     textColor,
     tableColor,
+    fillColor,
+    cutShape,
+    onSelectCutShape,
     strokeWidth,
     markerWidth,
 
@@ -285,8 +294,26 @@ function EditorToolbar({
                     onRulerMode();
                 }
                 break;
+            case Pickers.CUT:
+                if (isCutMode) {
+                    checkPickerChange()
+                } else {
+                    onCutMode();
+                    // show the selection-shape options
+                    setMenuHeight(height);
+                    setShowPicker(true);
+                }
+                break;
+            case Pickers.FILL:
+                if (isFillMode) {
+                    // the fill tool's only option is its color
+                    onSelectButtonClick(Pickers.COLOR, false, height);
+                } else {
+                    onFillMode();
+                }
+                break;
         }
-    }, [isVoiceMode, isTextMode, isBrushMode, isTableMode, isImageMode, isAudioMode, isMarkerMode, showPickerType, showPicker]);
+    }, [isVoiceMode, isTextMode, isBrushMode, isTableMode, isImageMode, isAudioMode, isMarkerMode, isRulerMode, isCutMode, isFillMode, showPickerType, showPicker]);
 
 
     onSelectButtonClick = useCallback((type, preservePrevious, height) => {
@@ -376,6 +403,14 @@ function EditorToolbar({
     if (featuresRef.current.includes(FEATURES.ruler)) {
         extMenu.push(rullerBtn);
     }
+    if (featuresRef.current.includes(FEATURES.fill)) {
+        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.FILL, 70)} color={fillColor}
+            iconType="MDI" icon="format-color-fill" size={49} iconSize={45} selected={isFillMode} ensureContrast={true} />);
+    }
+    if (featuresRef.current.includes(FEATURES.cut)) {
+        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.CUT, 70)} color={semanticColors.editPhotoButton}
+            iconType="MDI" icon="content-cut" size={49} iconSize={42} selected={isCutMode} />);
+    }
 
     const speakDictateEnabled = getSetting(KB_SPEAK_DICTATE.name, KB_SPEAK_DICTATE.yes) === KB_SPEAK_DICTATE.yes;
     const speakDictateToolbar = getSetting(SPEAK_DICTATE_MODE.name, SPEAK_DICTATE_MODE.floating) === SPEAK_DICTATE_MODE.toolbar;
@@ -417,7 +452,8 @@ function EditorToolbar({
         [isBrushMode, brushColor],
         [isMarkerMode, markerColor],
         [isRulerMode, rulerColor],
-        [isTableMode, tableColor])
+        [isTableMode, tableColor],
+        [isFillMode, fillColor])
 
 
     {/* Toolbar */ }
@@ -496,7 +532,7 @@ function EditorToolbar({
                                     }}>+</AppText>
                                 </View>}
                         </View> :
-                        !isImageMode && !isTableMode && (isMarkerMode ?
+                        !isImageMode && !isTableMode && !isCutMode && !isFillMode && (isMarkerMode ?
                             <MarkerStroke color={colorByMode}
                                 strokeWidth={markerWidth} />
                             :
@@ -634,6 +670,16 @@ function EditorToolbar({
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 <IconButton onPress={onAddImageFromGallery} icon={"new-image"} size={55} iconSize={45} iconType="svg" color="black" />
                 <IconButton onPress={onAddImageFromCamera} icon={"new-camera"} size={55} iconSize={45} iconType="svg" color="black" />
+            </View>
+        </FadeInView>
+
+        {/*View for cut selection shape*/}
+        <FadeInView height={showPickerType === Pickers.CUT && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
+            <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
+                <IconButton onPress={() => { onSelectCutShape("rect"); setShowPicker(false); setMenuHeight(0); }}
+                    iconType="MDI" icon="select" size={55} iconSize={45} selected={cutShape === "rect"} color={semanticColors.editPhotoButton} />
+                <IconButton onPress={() => { onSelectCutShape("lasso"); setShowPicker(false); setMenuHeight(0); }}
+                    iconType="MDI" icon="lasso" size={55} iconSize={45} selected={cutShape === "lasso"} color={semanticColors.editPhotoButton} />
             </View>
         </FadeInView>
 
