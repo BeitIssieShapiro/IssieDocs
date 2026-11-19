@@ -235,6 +235,10 @@ export default class FolderGallery extends React.Component {
       this.setState({ progress: undefined });
       Alert.alert(msg);
     };
+    const handleImportError = error => {
+      this.setState({ progress: undefined });
+      Alert.alert(translate('ImportError'), String(error?.message || error));
+    };
 
     url = await FileSystem.contentUriToFilePath(url);
     trace('_handleOpenURL url=', url);
@@ -243,7 +247,7 @@ export default class FolderGallery extends React.Component {
       ext: url.endsWith('.zip') ? 'zip' : 'jpg',
     });
     if (url.endsWith('.zip')) {
-      FileSystem.main.extractZipInfo(url).then(zipInfo => {
+      return FileSystem.main.extractZipInfo(url).then(zipInfo => {
         if (!zipInfo) {
           Alert.alert(translate('ImportError'), translate('InvalidZipFile'));
           return;
@@ -254,7 +258,7 @@ export default class FolderGallery extends React.Component {
           this.setState({
             progress: { percent: 0, message: translate('RestoreBackup') },
           });
-          FileSystem.main
+          return FileSystem.main
             .RestoreFromBackup(zipInfo, progress => {
               trace('restore progress' + progress);
               this.setState({
@@ -269,7 +273,7 @@ export default class FolderGallery extends React.Component {
         } else if (zipInfo.metadata && zipInfo.metadata.folderExport) {
           // Handle folder export
           analyticEvent(LocalAnalyticEvent.folder_opened);
-          FileSystem.main
+          return FileSystem.main
             .RestoreFromBackup(zipInfo, progress => {
               trace('restore folder progress' + progress);
               this.setState({
@@ -291,20 +295,22 @@ export default class FolderGallery extends React.Component {
               onPress: () =>
                 FileSystem.main
                   .importWorhsheetWithInfo(zipInfo, true)
-                  .then(handleDoneMessage),
+                  .then(handleDoneMessage)
+                  .catch(handleImportError),
             },
             {
               text: translate('BtnIgnoreImportFolder'),
               onPress: () =>
                 FileSystem.main
                   .importWorhsheetWithInfo(zipInfo, false)
-                  .then(handleDoneMessage),
+                  .then(handleDoneMessage)
+                  .catch(handleImportError),
             },
             { text: translate('BtnCancel'), type: 'cancel' },
           ];
           Alert.alert(title, undefined, buttons);
         }
-      });
+      }).catch(handleImportError);
     } else {
       const tempUrl = await FileSystem.main.cloneToTemp(url);
       trace('openURL', url, tempUrl);
@@ -997,7 +1003,7 @@ export default class FolderGallery extends React.Component {
         analyticEvent(LocalAnalyticEvent.folder_renamed);
       }
     } catch (e) {
-      Alert.alert(e);
+      Alert.alert(String(e?.message || e));
       return false;
     }
     trace('save new folder ', newFolderName, 'completed');

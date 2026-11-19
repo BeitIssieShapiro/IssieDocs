@@ -172,4 +172,7 @@ export enum LocalAnalyticEvent {
   // Custom Selections
   custom_color_selected = 'custom_color_selected',
   custom_text_size_selected = 'custom_text_size_selected',
+
+  // Errors
+  folder_load_failed = 'folder_load_failed',
 }

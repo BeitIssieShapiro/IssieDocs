@@ -1,0 +1,127 @@
+require 'dotenv'
+require 'shellwords'
+require 'xcodeproj'
+require 'rbconfig'
+
+default_platform(:ios)
+
+ROOT = File.expand_path('../..', __dir__)
+IOS_PROJECT = File.join(ROOT, 'ios/IssieDocs.xcodeproj')
+APP_IDENTIFIER = 'com.issieshapiro.issiedoc.IssieDoc'
+Dotenv.load(File.join(ROOT, '.env'))
+
+def deploy_settings
+  required = %w[ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_PATH APPLE_TEAM_ID]
+  missing = required.select { |key| ENV[key].to_s.strip.empty? }
+  UI.user_error!("Fill these settings in #{ROOT}/.env: #{missing.join(', ')}") unless missing.empty?
+
+  key_path = File.expand_path(ENV.fetch('ASC_KEY_PATH'), ROOT)
+  UI.user_error!('ASC_KEY_PATH must point to a readable App Store Connect .p8 key') unless File.file?(key_path) && File.readable?(key_path)
+  UI.user_error!('Install JavaScript dependencies with npm ci') unless File.directory?(File.join(ROOT, 'node_modules'))
+
+  project = Xcodeproj::Project.open(IOS_PROJECT)
+  target = project.targets.find { |item| item.name == 'IssieDocs' }
+  release = target.build_configurations.find { |item| item.name == 'Release' }.build_settings
+  version = ENV.fetch('IOS_VERSION', release.fetch('MARKETING_VERSION'))
+  UI.user_error!('IOS_VERSION must be a numeric version such as 1.7 or 1.7.1') unless version.match?(/\A[0-9]+([.][0-9]+){0,2}\z/)
+
+  { key_path: key_path, version: version, local_build: release.fetch('CURRENT_PROJECT_VERSION').to_i }
+end
+
+platform :ios do
+  desc 'Run deployment regression tests with Apple actions stubbed'
+  lane :test do
+    sh(RbConfig.ruby, File.join(ROOT, 'ios/fastlane/tests/deploy_test.rb'))
+  end
+
+  desc 'Check iOS deployment settings and App Store Connect access'
+  lane :check do
+    settings = deploy_settings
+    sh('xcodebuild', '-version')
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch('ASC_KEY_ID'),
+      issuer_id: ENV.fetch('ASC_ISSUER_ID'),
+      key_filepath: settings[:key_path]
+    )
+    latest_build = latest_testflight_build_number(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      version: settings[:version],
+      initial_build_number: 0
+    )
+    UI.success("IssieDocs #{settings[:version]} deployment is configured. Latest TestFlight build: #{latest_build}")
+  end
+
+  desc 'Archive IssieDocs and upload the next build to TestFlight'
+  lane :beta do
+    settings = deploy_settings
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch('ASC_KEY_ID'),
+      issuer_id: ENV.fetch('ASC_ISSUER_ID'),
+      key_filepath: settings[:key_path]
+    )
+
+    latest_build = latest_testflight_build_number(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      version: settings[:version],
+      initial_build_number: 0
+    )
+    build_number = [latest_build, settings[:local_build]].max + 1
+    UI.message("Building IssieDocs #{settings[:version]} (#{build_number})")
+
+    cocoapods(podfile: File.join(ROOT, 'ios/Podfile'), deployment: true)
+    signing_directory = File.join(ROOT, 'ios/build/signing')
+    get_certificates(api_key: api_key, team_id: ENV.fetch('APPLE_TEAM_ID'), output_path: signing_directory)
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      team_id: ENV.fetch('APPLE_TEAM_ID'),
+      output_path: signing_directory
+    )
+    profile_name = lane_context[SharedValues::SIGH_NAME]
+
+    project_file = File.join(IOS_PROJECT, 'project.pbxproj')
+    original_project = File.binread(project_file)
+    begin
+      update_code_signing_settings(
+        path: IOS_PROJECT,
+        targets: ['IssieDocs'],
+        build_configurations: ['Release'],
+        use_automatic_signing: false,
+        team_id: ENV.fetch('APPLE_TEAM_ID'),
+        code_sign_identity: 'Apple Distribution',
+        profile_name: profile_name
+      )
+      ipa = build_app(
+        workspace: File.join(ROOT, 'ios/IssieDocs.xcworkspace'),
+        scheme: 'IssieDocs',
+        configuration: 'Release',
+        export_method: 'app-store',
+        output_directory: File.join(ROOT, 'ios/build'),
+        output_name: 'IssieDocs.ipa',
+        export_options: {
+          signingStyle: 'manual',
+          teamID: ENV.fetch('APPLE_TEAM_ID'),
+          provisioningProfiles: { APP_IDENTIFIER => profile_name }
+        },
+        xcargs: Shellwords.join([
+          "MARKETING_VERSION=#{settings[:version]}",
+          "CURRENT_PROJECT_VERSION=#{build_number}"
+        ])
+      )
+    ensure
+      # Signing overrides apply to this archive, including when the build fails.
+      File.binwrite(project_file, original_project)
+    end
+
+    upload_to_testflight(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      apple_id: '1469032311',
+      ipa: ipa,
+      skip_waiting_for_build_processing: true
+    )
+    UI.success("Uploaded IssieDocs #{settings[:version]} (#{build_number}) to TestFlight")
+  end
+end

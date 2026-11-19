@@ -56,12 +56,21 @@ export class WorkSheet {
         this._thumbnail = path;
     }
 
+    relocate(oldFolderPath, newFolderPath) {
+        const replacePath = path => path?.startsWith(oldFolderPath + '/')
+            ? newFolderPath + path.substring(oldFolderPath.length)
+            : path;
+        this._path = replacePath(this._path);
+        this._pages = this._pages.map(replacePath);
+        this._thumbnail = replacePath(this._thumbnail);
+    }
+
     addPage(path) {
         this._pages.push(path);
 
         //sort
         this._pages.sort((a,b)=> {
-            getNumber = (elem)=>{
+            const getNumber = (elem)=>{
                 let ls = elem.lastIndexOf('/');
                 ls = elem.substring(ls+1, elem.length - 4)
                 return parseInt(ls);

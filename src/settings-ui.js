@@ -230,7 +230,7 @@ export default function SettingsMenu(props) {
             const folderCount = allFolders.length;
             const fileCount = allFolders.reduce((sum, folder) => sum + (folder.items?.length || 0), 0);
 
-            FileSystem.main.exportAllWorksheets(allFolders, (percent) => setBackupProgress(percent))
+            return FileSystem.main.exportAllWorksheets(allFolders, (percent) => setBackupProgress(percent))
                 .then((backupZipPath) => {
                     analyticEvent(AnalyticEvent.backup_created, {
                         folder_count_category: categorizeCount(folderCount),
@@ -250,6 +250,7 @@ export default function SettingsMenu(props) {
                 })
                 .finally(() => setBackupProgress(undefined));
         }))
+            .catch(err => Alert.alert(translate("BackupTitle"), String(err?.message || err)))
             .finally(() => setBackupProgress(undefined));
     }
 

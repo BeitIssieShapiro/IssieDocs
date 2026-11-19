@@ -144,6 +144,7 @@ export const DDView = ({
         const dimListner = Dimensions.addEventListener('change', () => handleLayoutChange());
 
         return () => {
+            clearTimeout(activationTimeout.current);
             unregisterTarget(localID.current);
             dimListner.remove();
         }
@@ -154,11 +155,16 @@ export const DDView = ({
         state.current = dragState;
     }, [dragState]);
 
+    const cancelDragActivation = () => {
+        clearTimeout(activationTimeout.current);
+        isPanResponderActive.current = false;
+    };
+
     const panResponder = useRef(
         PanResponder.create({
             onStartShouldSetPanResponderCapture: (e, gestureState) => {
                 //onStartShouldSetPanResponder: (e, gestureState) => {
-                isPanResponderActive.current = false;
+                cancelDragActivation();
                 if (!isDragSource) return false;
                 activationTimeout.current = setTimeout(() => {
                     trace("DDView ready to drag")
@@ -168,14 +174,11 @@ export const DDView = ({
                 return false; // Let parent take precedence initially
             },
             onMoveShouldSetPanResponder: (e, gestureState) => {
-                if (isPanResponderActive.current)
-                    if (Math.abs(gestureState.dx) < scrollThreashold || Math.abs(gestureState.dy) < scrollThreashold) {
-                        trace("DDView about to take the panResponder")
-                        setIsDragging(true);
-                        return true;
-                    } else {
-                        isPanResponderActive.current = false;
-                    }
+                if (isPanResponderActive.current) return true;
+                // Moving before the long press completes is a scroll gesture.
+                if (Math.abs(gestureState.dx) > scrollThreashold || Math.abs(gestureState.dy) > scrollThreashold) {
+                    cancelDragActivation();
+                }
                 return false;
             },
             onPanResponderTerminationRequest: () => {
@@ -223,6 +226,7 @@ export const DDView = ({
                 checkHover(localID.current, moveX, moveY);
             },
             onPanResponderRelease: (e, gestureState) => {
+                cancelDragActivation();
                 if (isDragSource) {
                     const { moveX, moveY } = gestureState;
                     if (handleDrop(localID.current, moveX, moveY, state.current)) {
@@ -242,8 +246,8 @@ export const DDView = ({
             onPanResponderTerminate: () => {
                 // Clean up if gesture is interrupted
                 trace("DDView cleanup")
-                clearTimeout(activationTimeout.current);
-                isPanResponderActive.current = false;
+                cancelDragActivation();
+                setIsDragging(false);
             },
         })
     ).current;
@@ -282,6 +286,8 @@ export const DDView = ({
                 }}
                 {...(isDragSource ? panResponder.panHandlers : {})} // Apply handlers only if a isDragSource
                 {...props}
+                onTouchEnd={cancelDragActivation}
+                onTouchCancel={cancelDragActivation}
             >
                 {children}
             </View >

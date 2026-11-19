@@ -12,13 +12,14 @@ export const pageTitleAddition = (count, index) => count > 1 ? " - " + (index + 
 export function PromiseAllProgress(proms, progress_cb) {
   let d = 0;
   progress_cb(0);
-  for (const p of proms) {
-    p.then(() => {
+  if (proms.length === 0) progress_cb(100);
+  return Promise.all(proms.map(p =>
+    Promise.resolve(p).then(result => {
       d++;
       progress_cb((d * 100) / proms.length);
-    });
-  }
-  return Promise.all(proms);
+      return result;
+    }),
+  ));
 }
 
 export function isTooWhite(color) {

@@ -540,7 +540,7 @@ export function FolderDraxView(props) {
                   duration: 5000,
                 }),
               )
-              .catch(e => Alert.alert(translate('ErrorMoveFolder'), e));
+              .catch(e => Alert.alert(translate('ErrorMoveFolder'), String(e?.message || e)));
           }
         } else {
           FileSystem.main.movePage(payload.item, props.id).then(() => {

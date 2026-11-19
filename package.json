@@ -9,6 +9,8 @@
     "start": "react-native start",
     "test": "jest",
     "deploy:android:issiedocs": "PROJECT_ROOT=$(pwd) ../issie-shared/android/deploy.sh issiedocs org.issieshapiro.issiedocs",
+    "deploy:ios": "bash scripts/deploy-ios.sh",
+    "deploy:ios:issiedocs": "bash scripts/deploy-ios.sh",
     "test:e2e:build": "detox build --configuration ios.sim.debug",
     "test:e2e": "detox test --configuration ios.sim.debug",
     "postinstall": "patch-package"

@@ -94,6 +94,10 @@ in `android/app/build.gradle`
 
 # E2E Testing (Detox)
 
+Automated TestFlight uploads are available through `npm run deploy:ios`. [iOS deployment setup](docs/ios-deployment.md)
+
+The file-operation review documents Jest commands, regression coverage, remaining findings and device validation steps. [File operations review and tests](docs/file-operations-review.md)
+
 E2E tests run on iOS simulator using [Detox](https://wix.github.io/Detox/).
 
 ## Prerequisites

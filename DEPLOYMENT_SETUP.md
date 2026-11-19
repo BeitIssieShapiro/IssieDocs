@@ -1,5 +1,7 @@
 # IssieDocs Setup for Centralized Deployment
 
+For automated iOS uploads to TestFlight, use `npm run deploy:ios`. Setup, API-key instructions and validation commands are documented in the iOS deployment guide. [iOS deployment](docs/ios-deployment.md)
+
 IssieDocs has been configured to use the centralized deployment system from `issie-shared`.
 
 ## Changes Made

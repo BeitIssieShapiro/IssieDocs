@@ -13,6 +13,7 @@ import { TemporaryDirectoryPath } from 'react-native-fs';
 import { PromiseAllProgress } from './utils';
 import uuid from 'react-native-uuid';
 import { NativeModules } from 'react-native';
+import { analyticEvent, LocalAnalyticEvent } from './common/firebase';
 const { FileProviderModule } = NativeModules;
 
 const THUMBNAIL_SUFFIX = '.thumbnail.jpg';
@@ -108,14 +109,18 @@ export class FileSystem {
   async getRootFolders() {
     //trace("Load root folders")
     if (!this._loaded) {
-      await this._loadRootFolders();
+      // share one load between concurrent callers, so folders are not added twice
+      if (!this._loadingRoot) {
+        this._loadingRoot = this._loadRootFolders().finally(() => (this._loadingRoot = undefined));
+      }
+      await this._loadingRoot;
     }
     return this._folders;
   }
 
   async readFolder(fsFolder, parentFolder) {
     if (fsFolder.isDirectory()) {
-      metadata = await this._readFolderMetaData(fsFolder.path);
+      const metadata = await this._readFolderMetaData(fsFolder.path);
       console.log(
         'readFolder',
         fsFolder.name,
@@ -153,17 +158,23 @@ export class FileSystem {
   }
 
   async _loadRootFolders() {
-    this._loaded = true;
     this._folders = [];
-    await RNFS.readDir(this._basePath).then(async folders => {
+    try {
+      const folders = await readDirAt('root', this._basePath);
       for (let folder of folders) {
         trace('reading folder', folder.name);
         await this.readFolder(folder);
       }
 
       await _sortRootFolders(this._folders);
-    });
-    await this._migrateTemplatesIfNeeded();
+      await this._migrateTemplatesIfNeeded();
+      // only mark loaded on success, so the next getRootFolders() retries
+      this._loaded = true;
+    } catch (e) {
+      trace('load root folders failed', e);
+      reportFolderLoadFailed(e, 'root', false);
+      return;
+    }
     this._notify();
   }
 
@@ -337,6 +348,7 @@ export class FileSystem {
   ) {
     trace('addFolder', arguments);
     const parent = this.findFolderByID(parentID);
+    if (parentID && !parent) throw new Error('Parent folder not found');
     const parentPath = parent
       ? parent.path + '/' + FileSystem.FOLDERS_PATH + '/'
       : '';
@@ -369,7 +381,8 @@ export class FileSystem {
       newFolder = false;
       fsf = this.findFolder(name, parentID);
       if (!fsf) {
-        trace('unexpected not finding folder:', name, parentID);
+        fsf = new FileSystemFolder(name, parent, this, await this._readFolderMetaData(folderPath));
+        this.pushFolder(fsf, parentID);
       }
     } else {
       trace('Folder ', name, ' is about to be created');
@@ -407,84 +420,71 @@ export class FileSystem {
     return fsf;
   }
 
-  async renameFolder(ID, newID, icon, color) {
+  renameFolder(ID, newID, icon, color) {
+    // Serialize moves so two drops cannot change the same folder tree concurrently.
+    this._folderMove = (this._folderMove || Promise.resolve())
+      .catch(ignore)
+      .then(() => this._renameFolder(ID, newID, icon, color));
+    return this._folderMove;
+  }
+
+  async _renameFolder(ID, newID, icon, color) {
+    await this.getRootFolders();
     const newParts = newID.split('/');
-    const parts = ID.split('/');
     const newName = newParts.pop();
-    const name = parts.pop();
+    const parentID = newParts.join('/');
+    if (!newName) throw translate('MissingFolderName');
+    if (!this._validPathPart(newName)) throw translate('IllegalCharacterInFolderName');
+    if (newParts.length >= 2) throw translate('ErrMoveIntoTwoLevelFolder');
 
-    let parentID = newParts.length && newParts.join('/');
-    const folder = this.findFolder(ID);
-
-    if (ID !== newID) {
-      trace('rename folder', ID, newID);
-
-      // Verify that target folder is not level 2
-      const parts = newID.split('/');
-      if (parts.length >= 3) {
-        throw translate('ErrMoveIntoTwoLevelFolder');
-      }
-
-      // Verify target is not child of folderID
-
-      if (parts.length > 1) {
-        // Verify that the renamed folder does not contain a folder in it, to prevent 3 levels
-        const checkPath =
-          this._basePath + folder.path + '/' + FileSystem.FOLDERS_PATH;
-        let files = undefined;
-        try {
-          files = await RNFS.readDir(checkPath);
-        } catch (e) {
-          //intentioanlly ignored
-        }
-
-        if (files?.length > 0) {
-          throw translate('ErrMoveFolderCOntainingFolders');
-        }
-      }
+    const parent = this.findFolderByID(parentID);
+    if (parentID && !parent) throw new Error(translate('ErrorMoveFolder'));
+    await parent?.reloadedIfNeeded();
+    const folder = this.findFolderByID(ID);
+    if (!folder) throw new Error(translate('ErrorMoveFolder'));
+    if (parentID === ID || folder.isParentOf(parentID)) {
+      throw translate('ErrMoveFolderCOntainingFolders');
+    }
+    await this.getFoldersDeep([folder]);
+    if (parent && folder.folders.length > 0) {
+      throw translate('ErrMoveFolderCOntainingFolders');
     }
 
-    await this.addFolder(
-      newName,
-      icon,
-      color,
-      ID !== newID,
-      false,
-      true,
-      parentID,
-    );
-    //move all files and delete old folder
-    if (ID !== newID) {
-      const newFolder = this.findFolder(newID);
-
-      try {
-        const files = await RNFS.readDir(this._basePath + folder.path);
-        for (let f of files) {
-          trace('iterate files', f);
-          if (f.name !== '.metadata') {
-            // skip meta data as it was created already
-            trace('move files', f.name, newFolder.path + '/' + f.name);
-            await RNFS.moveFile(
-              _androidFileName(f.path),
-              this._basePath + newFolder.path + '/' + f.name,
-            );
-          }
-        }
-      } catch (e) {
-        trace('renameFolder', e);
-      }
-
-      await this.deleteFolder(ID);
-
-      if (newParts.length == 1 && parts.length == 1) {
-        await _renameFolderOrders(name, newName);
-        await _sortRootFolders(this._folders);
-      } else if (parts.length == 1) {
-        await _renameFolderOrders(name);
-      }
-      await this._reloadFolder(newID);
+    const sourcePath = this._basePath + folder.path;
+    const targetParentPath = parent
+      ? this._basePath + parent.path + '/' + FileSystem.FOLDERS_PATH
+      : this._basePath;
+    const targetPath = joinPaths(targetParentPath, newName);
+    if (ID !== newID && await RNFS.exists(targetPath)) {
+      throw translate('FolderAlreadyExists');
     }
-    this._notify();
+
+    // Metadata failures must surface before moving any worksheet data.
+    folder.metadata = await this._writeFolderMetaData(sourcePath, color, icon);
+    if (ID !== newID) {
+      await RNFS.mkdir(targetParentPath);
+      // Both paths are in the app's documents directory. Move the complete tree
+      // in one filesystem operation, preserving the source if that operation fails.
+      await RNFS.moveFile(sourcePath, targetPath);
+
+      const oldParent = folder.parent;
+      if (oldParent !== parent) {
+        const siblings = oldParent ? oldParent.folders : this._folders;
+        const index = siblings.indexOf(folder);
+        if (index >= 0) siblings.splice(index, 1);
+      }
+      folder._relocate(newName, parent);
+      if (oldParent !== parent) this.pushFolder(folder, parentID);
+      if (oldParent) oldParent.hasChildren = oldParent.folders.length > 0;
+      if (parent) parent.hasChildren = true;
+    }
+    // Keep the UI consistent with the successful directory move even if saving
+    // the display order fails afterwards.
+    try {
+      await saveFolderOrder(this._folders);
+    } finally {
+      this._notify();
+    }
   }
 
   loadFile(path) {
@@ -647,6 +647,9 @@ export class FileSystem {
     }
 
     let pathObj = this._parsePath(filePath);
+    if (pathObj.folders.some(part => !this._validPathPart(part))) {
+      throw translate('IllegalCharacterInPageName');
+    }
     if (!pathObj.fileName || pathObj.fileName.length == 0) {
       throw translate('MissingPageName');
     }
@@ -682,6 +685,9 @@ export class FileSystem {
     }
 
     await this._verifyFolderExists(filePath);
+    if (await RNFS.exists(filePath)) {
+      throw translate('PageAlreadyExists');
+    }
 
     let folder = this.findFolderByID(pathObj.folderID);
     if (!folder) {
@@ -733,8 +739,8 @@ export class FileSystem {
             async () => {
               //check of the file was moved from another folder
               if (!isCopy && uri.startsWith(this._basePath)) {
-                parseObjFrom = this._parsePath(uri);
-                parseObjTo = this._parsePath(filePath);
+                const parseObjFrom = this._parsePath(uri);
+                const parseObjTo = this._parsePath(filePath);
                 if (parseObjFrom.folderID != parseObjTo.folderID) {
                   let srcFolder = this.findFolderByID(parseObjFrom.folderID);
                   await srcFolder.reload();
@@ -1096,7 +1102,7 @@ export class FileSystem {
       //on error
       err => {
         trace('fail writing metadata', err);
-        Promise.reject(err);
+        throw err;
       },
     );
   }
@@ -1128,8 +1134,7 @@ export class FileSystem {
       await RNFS.mkdir(dst);
 
       let items = await RNFS.readDir(_androidFileName(src));
-      for (index in items) {
-        const item = items[index];
+      for (const item of items) {
         trace('xx', dst);
         await RNFS.copyFile(
           _androidFileName(item.path),
@@ -1199,7 +1204,7 @@ export class FileSystem {
   }
 
   _validPathPart(PathPart) {
-    if (!PathPart || PathPart.length == 0) {
+    if (!PathPart || PathPart.length == 0 || PathPart === '.' || PathPart === '..') {
       return false;
     }
     if (PathPart.includes('/')) {
@@ -1294,7 +1299,7 @@ export class FileSystem {
     }
   }
 
-  async exportWorksheet(sheet, folderObj) {
+  async exportWorksheet(sheet, folderObj, archiveName) {
     let folder;
     let name;
     if (sheet) {
@@ -1343,6 +1348,10 @@ export class FileSystem {
           if (await RNFS.exists(jsonFileName)) {
             files.push(jsonFileName);
           }
+          const templateFileName = FileSystem.templateSentinelPath(sheet);
+          if (await RNFS.exists(templateFileName)) {
+            files.push(templateFileName);
+          }
           await this._iterateAttachments(sheet.defaultSrc, srcAttachmentPath =>
             files.push(srcAttachmentPath),
           );
@@ -1367,18 +1376,20 @@ export class FileSystem {
     const mdStr = JSON.stringify(folderMetaData);
     await FileSystem.main.writeFile(containingFolderInfoFileName, mdStr);
     const targetFile = _androidFileName(
-      joinPaths(TemporaryDirectoryPath, name + '.zip'),
+      joinPaths(TemporaryDirectoryPath, (archiveName || name) + '.zip'),
     );
     // delete if exists before
     await RNFS.unlink(targetFile).catch(ignore);
 
-    return zip(files, targetFile).then(path => {
+    return zip([...new Set(files)], targetFile).then(path => {
       return _androidFileName(path);
     });
   }
 
   async exportFolder(folder) {
     if (!folder) return;
+    await folder.reloadedIfNeeded();
+    if (!folder._loaded) throw new Error('Unable to read folder for export');
 
     const exportedSheetsAsync = [];
 
@@ -1452,20 +1463,25 @@ export class FileSystem {
   }
 
   async exportAllWorksheets(folderIDs, progressCB) {
+    await this.getRootFolders();
     const exportedSheetsAsync = [];
-    folderIDs.forEach(folderID => {
-      const folder = this.findFolderByID(folderID);
-      if (folder) {
-        trace('add items to backup for folder ', folder.ID);
-        folder.items.forEach(sheet =>
-          exportedSheetsAsync.push(this.exportWorksheet(sheet))
-        );
-        if (!folder.items?.length > 0) {
-          // empty folder
-          exportedSheetsAsync.push(this.exportWorksheet(undefined, folder));
-        }
+    const archivePrefix = FileSystem.getFileNameFromPath(FileSystem.getTempFileName('backup'));
+    const folders = folderIDs.map(folderID => this.findFolderByID(folderID)).filter(Boolean);
+    for (const folder of folders) {
+      await folder.reloadedIfNeeded();
+      if (!folder._loaded) throw new Error('Unable to read folder for backup');
+    }
+    for (const folder of folders) {
+      trace('add items to backup for folder ', folder.ID);
+      for (const sheet of folder.items) {
+        const archiveName = archivePrefix + '-worksheet-' + exportedSheetsAsync.length;
+        exportedSheetsAsync.push(this.exportWorksheet(sheet, undefined, archiveName));
       }
-    });
+      if (folder.items.length === 0) {
+        const archiveName = archivePrefix + '-folder-' + exportedSheetsAsync.length;
+        exportedSheetsAsync.push(this.exportWorksheet(undefined, folder, archiveName));
+      }
+    }
     trace('wait for all zips');
 
     return PromiseAllProgress(exportedSheetsAsync, progressCB).then(
@@ -1565,44 +1581,48 @@ export class FileSystem {
   }
 
   async RestoreFromBackup(zipInfo, monitorCB) {
-    const unzipTargetPath = RNFS.TemporaryDirectoryPath + 'imported';
+    await this.getRootFolders();
     const items = await RNFS.readDir(_androidFileName(zipInfo.unzipPath));
-
-    const allWorkSheetImports = [];
     const worksheetItems = items.filter(f => f.name.endsWith('.zip'));
+    monitorCB(0);
     for (let i = 0; i < worksheetItems.length; i++) {
-      let wsi = worksheetItems[i];
-      trace('add zip: ' + wsi.path);
-      const targetUnzipForWorksheet = unzipTargetPath + '/' + i;
-      allWorkSheetImports.push(
-        this.importWorhsheet(wsi.path, targetUnzipForWorksheet),
-      );
+      const targetPath = joinPaths(zipInfo.unzipPath, 'worksheet-' + i);
+      // Imports create shared folders and update their metadata. Complete each
+      // import before starting the next one, including on a fresh installation.
+      await this.importWorhsheet(worksheetItems[i].path, targetPath);
+      monitorCB(((i + 1) * 100) / worksheetItems.length);
     }
-    return PromiseAllProgress(allWorkSheetImports, monitorCB).then(() => {
-      // Return appropriate success message based on import type
-      if (zipInfo.metadata && zipInfo.metadata.folderExport) {
-        return fTranslate(
-          'ImportFolderSuccessful',
-          zipInfo.metadata.folderName || zipInfo.name,
-        );
-      } else {
-        return fTranslate('RestoreSuccessful', zipInfo.name);
-      }
-    });
+    if (worksheetItems.length === 0) monitorCB(100);
+    if (zipInfo.metadata && zipInfo.metadata.folderExport) {
+      return fTranslate('ImportFolderSuccessful', zipInfo.metadata.folderName || zipInfo.name);
+    }
+    return fTranslate('RestoreSuccessful', zipInfo.name);
   }
 
   async importWorhsheet(zipPath, unzipInPath) {
-    return this.extractZipInfo(zipPath, unzipInPath).then(info =>
-      this.importWorhsheetWithInfo(info, true),
-    );
+    const info = await this.extractZipInfo(zipPath, unzipInPath);
+    if (!info) throw new Error(translate('InvalidZipFile'));
+    if (info.metadata?.folderExport || info.metadata?.backup) {
+      return this.RestoreFromBackup(info, () => {});
+    }
+    return this.importWorhsheetWithInfo(info, true);
   }
 
   async importWorhsheetWithInfo(zipInfo, preserveFolder) {
+    const metadata = zipInfo?.metadata;
+    if (!metadata || typeof metadata.name !== 'string' ||
+        !metadata.name.split('/').every(part => this._validPathPart(part)) ||
+        (metadata.subFolder && !this._validPathPart(metadata.subFolder))) {
+      throw new Error(translate('InvalidZipFile'));
+    }
+    await this.getRootFolders();
     const items = await RNFS.readDir(_androidFileName(zipInfo.unzipPath));
     let targetPath = this._basePath;
     const folderID = preserveFolder
       ? zipInfo.metadata.name
       : FileSystem.DEFAULT_FOLDER.name;
+    const containingFolderID = folderID.split('/').slice(0, -1).join('/');
+    await this.findFolderByID(containingFolderID)?.reloadedIfNeeded();
     trace(
       'Importing a worksheet',
       zipInfo,
@@ -1612,6 +1632,11 @@ export class FileSystem {
     );
 
     let folder = this.findFolderByID(folderID);
+    // Parents created while restoring a child have no metadata until their own
+    // archive is restored. This also works when retrying after an app restart.
+    if (folder && preserveFolder && !await RNFS.exists(this._basePath + folder.path + '/.metadata')) {
+      folder.metadata = await this._writeFolderMetaData(this._basePath + folder.path, zipInfo.metadata.color, zipInfo.metadata.icon);
+    }
     if (!folder) {
       const parts = folderID.split('/');
       const folderName = parts.pop();
@@ -1659,20 +1684,17 @@ export class FileSystem {
 
     // copy all other files
     const filesItems = items.filter(f => !f.name.endsWith('.metadata'));
-    for (let fi of filesItems) {
-      try {
-        if (fi.name.endsWith('thumbnail.jpg')) {
-          // if in subfolder, needs to save thumbnail one up
-          await RNFS.moveFile(fi.path, targetPath + fi.name);
-        } else {
-          await RNFS.moveFile(fi.path, targetPath2 + fi.name);
-        }
-      } catch (e) {
-        trace('error copy file', e, fi.path, targetPath);
+    try {
+      for (let fi of filesItems) {
+        const destination = (fi.name.endsWith('thumbnail.jpg') ? targetPath : targetPath2) + fi.name;
+        // Keep existing worksheets when restoring again after a partial import.
+        if (await RNFS.exists(destination)) continue;
+        await RNFS.moveFile(fi.path, destination);
       }
+    } finally {
+      await folder.reload();
+      this._notify();
     }
-    await folder.reload();
-    this._notify();
 
     return fTranslate('ImportSuccessful', zipInfo.name);
   }
@@ -1701,6 +1723,22 @@ export class FileSystemFolder {
 
   set metadata(md) {
     this._metadata = md;
+  }
+
+  _relocate(name, parent) {
+    const oldPath = this._fs.basePath + this._path;
+    this._name = name;
+    this._parent = parent;
+    this._path = parent
+      ? parent.path + '/' + FileSystem.FOLDERS_PATH + '/' + name
+      : name;
+    const newPath = this._fs.basePath + this._path;
+    for (const sheet of this._files) {
+      sheet.relocate(oldPath, newPath);
+    }
+    for (const child of this._folders) {
+      child._relocate(child.name, this);
+    }
   }
 
   get parent() {
@@ -1737,13 +1775,13 @@ export class FileSystemFolder {
   get items() {
     if (!this._loaded && !this._loading) {
       trace('triger reload from items');
-      this.reload().then(() => this._fs._notify(this.ID));
+      this.reload();
     }
     return this._files;
   }
 
   async reloadedIfNeeded() {
-    if (!this._loaded) {
+    if (!this._loaded || this._loading) {
       await this.reload();
     }
     return { files: this._files, folders: this._folders };
@@ -1751,19 +1789,41 @@ export class FileSystemFolder {
 
   async getItem(name) {
     name = FileSystem.getFileNameFromPath(name, true);
-    if (!this._files) {
-      console.log('get.item: reloading...');
-      await this.reload();
-    }
+    await this.reloadedIfNeeded();
     console.log('get.item: ' + name + 'files count: ' + this._files.length);
     return this._files.find(f => f.name == name);
   }
 
-  async reload() {
-    if (this._loading) return;
+  reload() {
+    if (!this._reloadPromise) {
+      this._reloadPromise = this._performReload().finally(() => {
+        this._reloadPromise = undefined;
+      });
+    }
+    return this._reloadPromise;
+  }
 
+  async _performReload() {
     this._loading = true;
     console.log('reload folder: ' + this._path, this._name);
+    // A failed read must not leave _loading set: reload() would then never run again and
+    // the folder would stay empty until the app restarts.
+    try {
+      await this._reload();
+      this._loaded = true;
+    } catch (e) {
+      // no notify: it would re-render, and the items getter would retry in a loop.
+      // the next render retries instead.
+      trace('reload folder failed', this._path, e);
+      reportFolderLoadFailed(e, 'folder', this._name === FileSystem.DEFAULT_FOLDER.name);
+      return;
+    } finally {
+      this._loading = false;
+    }
+    this._fs._notify();
+  }
+
+  async _reload() {
     const items = await RNFS.readDir(this._fs.basePath + this._path);
     const filesItems = items.filter(
       f =>
@@ -1774,13 +1834,14 @@ export class FileSystemFolder {
         !f.name.endsWith('thumbnail.jpg') &&
         !f.name.endsWith('.istemplate'),
     );
-    this._files = [];
+    // fill a new list and swap it in at the end, so a failure keeps the current content
+    const files = [];
     this._folders = [];
     for (let fi of filesItems) {
       if (fi.name === FileSystem.FOLDERS_PATH) {
         const foldersBasePath = this._path + '/' + FileSystem.FOLDERS_PATH;
         //trace("read sub folders for ", this.name, " in ", foldersBasePath);
-        const subFoldersItems = await RNFS.readDir(
+        const subFoldersItems = await readDirAt('subfolders',
           this._fs.basePath + foldersBasePath,
         );
         trace('found: ', subFoldersItems.length);
@@ -1796,7 +1857,7 @@ export class FileSystemFolder {
 
         if (fi.isDirectory()) {
           //read all pages
-          pages = await RNFS.readDir(_androidFileName(fi.path));
+          pages = await readDirAt('worksheet', _androidFileName(fi.path));
 
           for (let i = 0; i < pages.length; i++) {
             lastUpdate = Math.max(lastUpdate, _lastUpdate(pages[i]));
@@ -1873,13 +1934,30 @@ export class FileSystemFolder {
           continue;
         }
 
-        this._files.push(sheet);
+        files.push(sheet);
       }
     }
-    this._loading = false;
-    this._loaded = true;
-    this._fs._notify();
+    this._files = files;
   }
+}
+
+// tags a failed read with the step it belongs to, for the folder_load_failed event
+async function readDirAt(stage, path) {
+  try {
+    return await RNFS.readDir(path);
+  } catch (e) {
+    if (e && typeof e === 'object') e.stage = stage;
+    throw e;
+  }
+}
+
+function reportFolderLoadFailed(e, stage, isDefault) {
+  // no path or message: they contain folder and worksheet names
+  analyticEvent(LocalAnalyticEvent.folder_load_failed, {
+    stage: e?.stage || stage,
+    is_default: isDefault ? 'yes' : 'no',
+    error: String(e?.code || 'unknown').substring(0, 100),
+  }).catch(() => { });
 }
 
 //todo check with deep folders
@@ -1887,7 +1965,7 @@ export class FileSystemFolder {
 const ORDER_FILE_NAME = 'order.json';
 
 export async function saveFolderOrder(folders) {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     let order = [];
     if (folders) {
       for (let i = 0; i < folders.length; i++) {
@@ -1981,7 +2059,7 @@ async function pushFolderOrder(folderName) {
   order.unshift(folderName);
   //Alert.alert(order)
 
-  RNFS.writeFile(
+  return RNFS.writeFile(
     _androidFileName(FileSystem.main.basePath + ORDER_FILE_NAME),
     JSON.stringify(order),
     'utf8',
@@ -1991,40 +2069,4 @@ async function pushFolderOrder(folderName) {
     //on error
     err => Promise.reject(err),
   );
-}
-
-// to remove set toFolder to undefined
-async function _renameFolderOrders(fromFolder, toFolder) {
-  let orderStr = '[]';
-  try {
-    orderStr = await RNFS.readFile(
-      FileSystem.main.basePath + ORDER_FILE_NAME,
-      'utf8',
-    );
-  } catch (e) {
-    //intentionally ignored, as sort.json is missing
-  }
-  // /Alert.alert(orderStr.toString('utf-8'))
-  let order = JSON.parse(orderStr.toString('utf8'));
-
-  //verify this folderName is not in the array:
-  let inx = order.findIndex(f => f === fromFolder);
-  if (inx != -1) {
-    if (toFolder) {
-      order[inx] = toFolder;
-    } else {
-      order = order.splice(inx, 1);
-    }
-
-    RNFS.writeFile(
-      _androidFileName(FileSystem.main.basePath + ORDER_FILE_NAME),
-      JSON.stringify(order),
-      'utf8',
-    ).then(
-      //Success
-      undefined,
-      //on error
-      err => Promise.reject(err),
-    );
-  }
 }
