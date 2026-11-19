@@ -1340,28 +1340,9 @@ export default class FolderGallery extends React.Component {
     let numColumnsForTiles = Math.floor(
       pagesContainerWidth / dimensions.tileWidth,
     );
-    let foldersCount = folders.length;
-    let foldersHeightSize = (foldersCount + 1) * dimensions.folderHeight;
-    //        let needFoldersScroll = foldersHeightSize > this.state.windowSize.height;
     const pagesTitleHeight = this.isScreenLow()
       ? dimensions.pagesTitleLow
       : dimensions.pagesTitleHigh;
-
-    const foldersTilesListHeight =
-      Math.ceil(foldersCount / numColumnsForTiles) * dimensions.folderHeight;
-
-    let pagesCount = items.length;
-    let pagesLines = asTiles
-      ? Math.ceil(pagesCount / numColumnsForTiles)
-      : pagesCount;
-    let pageHeight = asTiles ? dimensions.tileHeight : dimensions.lineHeight;
-    //let pagesAreaWindowHeight = this.state.windowSize.height - dimensions.topView + dimensions.toolbarHeight - pagesTitleHeight - 20;
-    let pagesHeightSize = (pagesLines + 1) * pageHeight;
-    //let needPagesScroll = true;//pagesHeightSize > pagesAreaWindowHeight;
-
-    const scrollerHeight =
-      pagesHeightSize +
-      (!this.state.currentFolder ? foldersTilesListHeight : 0); //+ dimensions.toolbarHeight;
 
     let isEmptyApp = !this.state.folders || this.state.folders.length == 0;
     if (isEmptyApp) console.log('empty app');
@@ -1841,6 +1822,11 @@ export default class FolderGallery extends React.Component {
                 )}
 
                 <DDScrollView
+                  contentKey={JSON.stringify([
+                    this.state.currentFolder?.ID,
+                    this.state.currentFolder ? undefined : this.state.filterFolders,
+                    asTiles,
+                  ])}
                   rtl={rtl}
                   testID="home-scroll-view"
                   scrollEnabled={true}
@@ -1851,10 +1837,10 @@ export default class FolderGallery extends React.Component {
                   }}
                   bounces={false}
                   contentContainerStyle={{
-                    height: scrollerHeight,
+                    minHeight: '100%',
                     backgroundColor: semanticColors.mainAreaBG,
                     top: 0,
-                    sminWidth: '100%',
+                    minWidth: '100%',
                   }}
                 >
                   {this.state.filterFolders?.length > 0 &&

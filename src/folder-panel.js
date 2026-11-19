@@ -1,6 +1,5 @@
 import { Alert, TouchableOpacity, View } from "react-native";
 import { SvgIcon } from "./svg-icons";
-import {  dimensions } from "./elements";
 import FolderNew, { FolderDraxView } from "./FolderNew";
 import { FileSystem } from "./filesystem";
 import { useState } from "react";
@@ -27,7 +26,6 @@ export function FolderPanel({
 }) {
     const [homeDragOver, setHomeDragOver] = useState(false)
     const { rtl } = getRowDirections();
-    let foldersHeightSize = (folders.length + 1) * dimensions.folderHeight;
     let curFolderFullName = "", curFolderColor = "", curFolderIcon = "";
     if (currentFolder) {
         curFolderFullName = currentFolder.name;
@@ -79,7 +77,7 @@ export function FolderPanel({
             bounces={false}
 
             contentContainerStyle={{
-                height: foldersHeightSize
+                minHeight: '100%'
             }}>
 
             {

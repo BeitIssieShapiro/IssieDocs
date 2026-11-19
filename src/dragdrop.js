@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useRef, useEffect } from 'react';
+import React, { createContext, useState, useContext, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import {
     Animated,
     PanResponder,
@@ -313,14 +313,23 @@ export const DDView = ({
 };
 
 
-export const DDScrollView = ({ children, style, contentContainerStyle }) => {
+export const DDScrollView = ({ children, style, contentContainerStyle, contentKey, testID }) => {
     const scrollOffset = useRef({ x: 0, y: 0 }); // Track scroll offset
     const [scrollY, setScrollY] = useState(0);
-    const innerViewSizeY = useRef(1000);
-    const hostHeight = useRef(1000);
-    useEffect(() => {
-        scrollOffset.current.y = scrollY;
-    }, [scrollY])
+    const innerViewSizeY = useRef(0);
+    const hostHeight = useRef(0);
+    const setScrollPosition = useCallback(y => {
+        const maxY = Math.max(0, innerViewSizeY.current - hostHeight.current);
+        const nextY = Math.max(0, Math.min(y, maxY));
+        scrollOffset.current.y = nextY;
+        setScrollY(nextY);
+    }, []);
+
+    useLayoutEffect(() => {
+        // A newly selected folder or search starts at the top, even at the same height.
+        scrollOffset.current.y0 = 0;
+        setScrollPosition(0);
+    }, [contentKey, setScrollPosition]);
 
     const panResponder = useRef(
         PanResponder.create({
@@ -338,13 +347,7 @@ export const DDScrollView = ({ children, style, contentContainerStyle }) => {
                 scrollOffset.current.y0 = scrollOffset.current.y;
             },
             onPanResponderMove: (e, gestureState) => {
-                let y = scrollOffset.current.y0 - gestureState.dy;
-                if (y < 0) {
-                    y = 0;
-                } else if (y > innerViewSizeY.current - hostHeight.current + 15) {
-                    y = innerViewSizeY.current - hostHeight.current + 15;
-                }
-                setScrollY(y)
+                setScrollPosition(scrollOffset.current.y0 - gestureState.dy);
             },
             onPanResponderRelease: () => {
 
@@ -354,10 +357,11 @@ export const DDScrollView = ({ children, style, contentContainerStyle }) => {
 
 
     return (
-        <View {...panResponder.panHandlers} style={[styles.scrollContainer, style]}
+        <View {...panResponder.panHandlers} testID={testID} style={[styles.scrollContainer, style]}
             onLayout={(e) => {
                 const { x, y, width, height } = e.nativeEvent.layout;
                 hostHeight.current = height;
+                setScrollPosition(scrollOffset.current.y);
             }}
         >
             <View style={[contentContainerStyle, {
@@ -366,6 +370,7 @@ export const DDScrollView = ({ children, style, contentContainerStyle }) => {
                 onLayout={(e) => {
                     const { x, y, width, height } = e.nativeEvent.layout;
                     innerViewSizeY.current = height;
+                    setScrollPosition(scrollOffset.current.y);
                 }}>
                 <ScrollProvider scrollPos={scrollOffset}>
                     {children}
