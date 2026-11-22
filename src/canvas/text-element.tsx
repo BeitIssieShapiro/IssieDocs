@@ -27,6 +27,11 @@ interface TextElementProps {
     texts: SketchText[];
     canvasHeight: number;
     language?: string;
+    // view points the text is shifted by while the piece it belongs to is dragged
+    dragOffset?: { dx: number; dy: number };
+    // false: touches pass through to the canvas (select tool: a drag on the text moves its piece,
+    // instead of starting the system's drag of selectable text, which hides the text meanwhile)
+    touchable?: boolean;
 }
 
 function TextElement({
@@ -43,6 +48,8 @@ function TextElement({
     canvasHeight,
     handleCursorPositionChange,
     language,
+    dragOffset,
+    touchable = true,
 }: TextElementProps, ref: any) {
     const [revision, setRevision] = useState<number>(0)
     //console.log("text ratio", ratio, actualWidth, text.fontSize)
@@ -291,10 +298,13 @@ function TextElement({
     }
 
     return (
-        <View key={text.id} style={posStyle}>
+        // zIndex: above the drawing canvas also when this view is kept (moving, pass-through) - otherwise
+        // React Native flattens it away and the text (zIndex 13) lands above the canvas on its own
+        <View key={text.id} pointerEvents={touchable ? "auto" : "none"}
+            style={[posStyle, { zIndex: 13 }, dragOffset && { transform: [{ translateX: dragOffset.dx }, { translateY: dragOffset.dy }] }]}>
             <Text
                 allowFontScaling={false}
-                selectable={true}
+                selectable={touchable}
                 style={[styles.textStyle, style,
                 table && { width: posStyle.width },
                     // !table && { textAlign: "left" }

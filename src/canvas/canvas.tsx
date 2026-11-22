@@ -18,6 +18,8 @@ import {
     Path as SkiaPath,
     Image as SkiaImage,
     Rect as SkiaRect,
+    Group as SkiaGroup,
+    BlurMask,
     useCanvasRef,
     Skia,
     SkPath,
@@ -73,7 +75,8 @@ const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpaci
 import { MyIcon } from "../common/icons";
 import { trace } from "../log";
 import { FileSystem } from "../filesystem";
-import { cutShapePath, getOverlayImage, getUriImage, NormRect } from "./raster";
+import { cutShapePath, getOverlayImage, getUriImage, NormRect, pieceClipPath } from "./raster";
+import { buildDrawLayers, DrawItem, topPieceAt } from "./pieces";
 
 const TEXT_SEARCH_MARGIN = 0; // 15;
 const TABLE_LINE_THRESHOLD = 7;
@@ -140,6 +143,7 @@ interface CanvasProps {
     onMoveTablePart?: (p: SketchPoint, tableContext: TableContext) => void;
     onMoveTablePartEnd?: (tableContext: TableContext) => void;
     onDeleteElement: (type: ElementTypes, id: string) => void;
+    onCopyElement?: (id: string) => void; // cut pieces
     onTextYOverflow?: (elemId: string) => void;
     onTextCursorChange?: () => void;
     imageSource?: ImageURISource;
@@ -179,6 +183,7 @@ function Canvas({
     onZoom,
     onMoveCanvas,
     onDeleteElement,
+    onCopyElement,
     onTextYOverflow,
     onTextCursorChange,
     paths,
@@ -378,6 +383,10 @@ function Canvas({
                 // Delete icon at (image.x - 30/ratio, image.y)
                 if (pt[0] >= image.x - iconSize && pt[0] <= image.x &&
                     pt[1] >= image.y && pt[1] <= image.y + iconSize) return true;
+                // Copy icon (pieces) below it
+                const copyTop = image.y + 40 / ratioRef.current;
+                if (image.isCutPiece && pt[0] >= image.x - iconSize && pt[0] <= image.x &&
+                    pt[1] >= copyTop && pt[1] <= copyTop + iconSize) return true;
                 // Resize icon at (image.x + image.width, image.y + image.height)
                 if (pt[0] >= image.x + image.width - iconSize && pt[0] <= image.x + image.width + iconSize &&
                     pt[1] >= image.y + image.height - iconSize && pt[1] <= image.y + image.height + iconSize) return true;
@@ -725,7 +734,7 @@ function Canvas({
             return findLast(imagesRef.current, t => inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
         }
         if (currentElementTypeRef.current === ElementTypes.Cut) {
-            return findLast(imagesRef.current, t => !!t.isCutPiece && isPointOnImage(t, cx, cy));
+            return topPieceAt(imagesRef.current, cx, cy);
         }
         if (currentElementTypeRef.current === ElementTypes.Line) {
             const THRESHOLD = 10; // how close to the line is acceptable?
@@ -783,15 +792,30 @@ function Canvas({
         (currentElementType == ElementTypes.Image || (currentElementType == ElementTypes.Cut && image.isCutPiece));
 
     const [, setImagesLoaded] = useState(0);
-    const renderOverlays = (afterPath: number) => overlays?.filter(o => o.afterPath === afterPath).map(o => {
-        const rect = { x: o.x * ratio, y: o.y * ratio, width: o.width * ratio, height: o.height * ratio };
-        if (o.kind === "piece") {
-            // the selected piece follows its live position while being moved
-            const live = images?.find(i => i.id === o.id) ?? o;
-            const image = o.src ? getUriImage(o.src, () => setImagesLoaded(n => n + 1)) : null;
-            return image && <SkiaImage key={o.id} image={image} fit="fill"
-                x={live.x * ratio} y={live.y * ratio} width={live.width * ratio} height={live.height * ratio} />;
+
+    // A piece being dragged runs ahead of where its content was laid out: offset (view points)
+    const pieceDelta = (pieceId?: string | null) => {
+        const piece = pieceId ? images?.find(i => i.id === pieceId) : undefined;
+        if (!piece) return undefined;
+        const dx = (piece.x - (piece.originX ?? piece.x)) * ratio;
+        const dy = (piece.y - (piece.originY ?? piece.y)) * ratio;
+        return dx || dy ? { dx, dy } : undefined;
+    };
+
+    const renderDrawItem = (it: DrawItem) => {
+        if (it.path) {
+            const p = it.path;
+            return <SkiaPath
+                key={p.id}
+                path={createSkiaPath(p.points, ratio)}
+                color={isEraser(p.color) ? "black" : p.color}
+                style={"stroke"}
+                strokeWidth={p.strokeWidth}
+                blendMode={isEraser(p.color) ? "dstOut" : "srcOver"}
+            />;
         }
+        const o = it.overlay!;
+        const rect = { x: o.x * ratio, y: o.y * ratio, width: o.width * ratio, height: o.height * ratio };
         if (o.kind === "cut") {
             return o.points ?
                 <SkiaPath key={o.id} path={cutShapePath(o, ratio)} color="black" blendMode="dstOut" /> :
@@ -799,7 +823,43 @@ function Canvas({
         }
         const image = getOverlayImage(o);
         return image && <SkiaImage key={o.id} image={image} {...rect} fit="fill" />;
-    });
+    };
+
+    // A piece: its paper, then its own paint and ink in a layer of their own,
+    // so its erasers clear only its ink. Paint stays inside the piece's outline.
+    const renderPiece = (piece: SketchImage, items: DrawItem[], layerIndex: number) => {
+        const ox = piece.originX ?? piece.x, oy = piece.originY ?? piece.y;
+        const d = pieceDelta(piece.id);
+        const clip = pieceClipPath(piece, ratio, ox, oy);
+        const image = piece.src?.uri ? getUriImage(piece.src.uri, () => setImagesLoaded(n => n + 1)) : null;
+        // with the select tool, pieces look raised: a soft shadow and a thin outline
+        const marked = currentElementType == ElementTypes.Cut;
+        return <SkiaGroup key={"layer-" + layerIndex} transform={[{ translateX: d?.dx ?? 0 }, { translateY: d?.dy ?? 0 }]}>
+            {marked && <SkiaGroup clip={clip} invertClip>
+                {/* outside the piece only: a transparent piece (blank page) does not show it through */}
+                <SkiaGroup transform={[{ translateX: 2 }, { translateY: 3 }]}>
+                    <SkiaPath path={clip} color="rgba(0,0,0,0.35)"><BlurMask blur={5} style="normal" /></SkiaPath>
+                </SkiaGroup>
+            </SkiaGroup>}
+            {image && <SkiaGroup clip={clip}>
+                <SkiaImage image={image} fit="fill"
+                    x={ox * ratio} y={oy * ratio} width={piece.width * ratio} height={piece.height * ratio} />
+            </SkiaGroup>}
+            {items.length > 0 && <SkiaGroup layer>
+                {items.map(it => it.overlay?.kind === "fill" ?
+                    <SkiaGroup key={it.overlay.id} clip={clip}>{renderDrawItem(it)}</SkiaGroup> :
+                    renderDrawItem(it))}
+            </SkiaGroup>}
+            {marked && <SkiaPath path={clip} style="stroke" strokeWidth={1} color="rgba(30,144,255,0.7)" />}
+        </SkiaGroup>;
+    };
+
+    // A piece being dragged is on top while it moves (it is brought to the top when dropped)
+    const isDragged = (img: SketchImage) => img.x !== (img.originX ?? img.x) || img.y !== (img.originY ?? img.y);
+    const drawLayers = buildDrawLayers(paths, overlays,
+        images?.map(img => img.isCutPiece && isDragged(img) ? { ...img, z: Number.MAX_SAFE_INTEGER } : img));
+    // Layers are keyed by position, not id: when the order changes the layers update in place
+    // rather than being moved, which the Skia renderer does not reliably reorder.
 
     const transformStyle = useAnimatedStyle(() => {
         return {
@@ -888,25 +948,13 @@ function Canvas({
                         zIndex: 8,
                     }}
                 >
-                    {/* Re-draw each path in the order they appear */}
-                    {paths?.map((p, i) => {
-                        //console.log("createSkiaPath", ratioRef.current, actualWidth, actualHeight)
-                        const skPath = createSkiaPath(p.points, ratio);
-
-                        return (
-                            <React.Fragment key={p.id}>
-                                {renderOverlays(i)}
-                                <SkiaPath
-                                    path={skPath}
-                                    color={isEraser(p.color) ? "black" : p.color}
-                                    style={"stroke"}
-                                    strokeWidth={p.strokeWidth}
-                                    blendMode={isEraser(p.color) ? "dstOut" : "srcOver"}
-                                />
-                            </React.Fragment>
-                        );
-                    })}
-                    {renderOverlays(paths?.length ?? 0)}
+                    {/* Base ink and paint, and pieces on top of them - in the order last touched */}
+                    {drawLayers.map((layer, i) => layer.piece ?
+                        renderPiece(layer.piece, layer.items, i) :
+                        <SkiaGroup key={"layer-" + i} layer>
+                            {layer.items.map(renderDrawItem)}
+                            {layer.erasers.map(it => <React.Fragment key={"clear-" + (it.path ?? it.overlay)!.id}>{renderDrawItem(it)}</React.Fragment>)}
+                        </SkiaGroup>)}
 
                     <SkiaPath
                         path={lastPathSV}
@@ -922,7 +970,8 @@ function Canvas({
                 {texts?.map((text) => {
                     const editMode = (currentElementType == ElementTypes.Text || currentElementType == ElementTypes.Table)
                         && text.id == currentEdited.textId
-                    return <TextElement
+                    const d = pieceDelta(text.pieceId);
+                    const textElement = <TextElement
                         ref={editMode ? editTextRef : undefined}
                         key={text.id}
                         text={text}
@@ -938,7 +987,10 @@ function Canvas({
                         handleCursorPositionChange={handleCursorPositionChange}
                         canvasHeight={canvasHeight / ratio}
                         language={language}
+                        dragOffset={d}
+                        touchable={currentElementType != ElementTypes.Cut}
                     />
+                    return textElement;
                 })}
 
                 {/* Lines in edit mode */}
@@ -1103,12 +1155,13 @@ function Canvas({
                     </Svg>}
 
                 {/* Images */}
-                {images?.map((image) => {
+                {images && [...images].sort((a, b) => (a.z ?? 0) - (b.z ?? 0)).map((image) => {
                     const imgW = (image.width)
                     const imgH = (image.height)
                     const w = (imgW * ratio);
                     const h = (imgH * ratio);
                     if (!imgW || imgW === 0) return null;
+                    const d = pieceDelta(image.pieceId);
 
                     return <React.Fragment key={image.id} >
                         {/* cut pieces are drawn in the sketch layer */}
@@ -1116,8 +1169,8 @@ function Canvas({
                             style={[
                                 styles.imageStyle,
                                 {
-                                    left: image.x * ratio,
-                                    top: image.y * ratio,
+                                    left: image.x * ratio + (d?.dx ?? 0),
+                                    top: image.y * ratio + (d?.dy ?? 0),
                                     width: PixelRatio.roundToNearestPixel(w),
                                     height: PixelRatio.roundToNearestPixel(h),
                                 },
@@ -1161,7 +1214,19 @@ function Canvas({
                                 <MyIcon info={{ type: "Ionicons", name: "trash-outline", size: 30, color: "blue" }} />
 
                             </TouchableOpacity>}
-                        {showImageControls(image) && <MoveIcon
+                        {showImageControls(image) && image.isCutPiece && <TouchableOpacity
+                                testID="piece-copy"
+                                style={{
+                                    position: "absolute",
+                                    zIndex: 30,
+                                    left: image.x * ratio - 30,
+                                    top: image.y * ratio + 40,
+                                }}
+                                onPress={() => onCopyElement?.(image.id)}
+                            >
+                                <MyIcon info={{ type: "MDI", name: "content-copy", size: 30, color: "blue" }} />
+                            </TouchableOpacity>}
+                        {showImageControls(image) && !image.isCutPiece && <MoveIcon
                                 style={[styles.moveIcon, visibleAnimatedStyle]}
                                 position={[
                                     (image.x + image.width) * ratio - 20,

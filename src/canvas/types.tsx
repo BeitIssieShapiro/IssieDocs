@@ -23,6 +23,11 @@ export interface ElementBase {
     id: string;
     editMode?: boolean;
     backup?: any;
+    // Paper pieces: the cut piece this element belongs to (moves, copies and deletes with it).
+    // null in a queue entry: moved off its piece, onto the page
+    pieceId?: string | null;
+    // drawing order: position in the page's queue when created (pieces: when last moved)
+    z?: number;
 }
 
 export interface SketchPath extends ElementBase {
@@ -69,20 +74,22 @@ export interface SketchImage extends ElementBase {
     aspectRatio?: number;
     isCutPiece?: boolean;
     outline?: SketchPoint[]; // lasso cut pieces: outline as fractions (0..1) of width/height
+    // cut pieces: areas cut out of this piece by later cuts, relative to its x/y
+    holes?: SketchPoint[][];
+    // cut pieces: position the piece's content was laid out at; while dragging, x/y run ahead of it
+    originX?: number;
+    originY?: number;
 }
 
-// Fills and cuts are drawn in the sketch (Skia) layer, interleaved with paths:
-// afterPath is the number of paths drawn before the overlay.
+// Fills (paint) and cuts (holes in the paper) are drawn in the sketch (Skia) layer, ordered by z with the paths
 export interface SketchOverlay extends ElementBase {
-    kind: "fill" | "cut" | "piece";
+    kind: "fill" | "cut";
     x: number;
     y: number;
     width: number;
     height: number;
-    afterPath: number;
     imageData?: string; // base64 png (fill only)
     points?: SketchPoint[]; // lasso outline (cut only), otherwise the cut is the rect
-    src?: string; // image file uri (piece only)
     color?: string; // fill only
 }
 

@@ -22,6 +22,7 @@ import { CurrentEdited, ElementBase, ElementTypes, MoveTypes, Offset, SketchElem
 import { capturePiece, computeFill, NormRect, PageSnapshot } from './canvas/raster';
 import Canvas from './canvas/canvas';
 import { replayPageQueue } from './canvas/page-state';
+import { cutPolygon, cutPlanIsEmpty, planCut, textCenter, topPieceAt } from './canvas/pieces';
 import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
 //import { trace } from './log';
@@ -164,8 +165,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const selectionLassoRef = useRef<SketchPoint[] | undefined>(undefined);
     const cutShapeRef = useRef(cutShape);
     const rasterBusyRef = useRef(false);
-    // the cut piece that can still be moved; once dropped, pieces are part of the page
+    // the selected paper piece (select tool): shows its move/copy/delete controls
     const activePieceIdRef = useRef<string | undefined>(undefined);
+    // A selection (select tool) not yet acted on: its cut is the last queue entry, but nothing is
+    // changed until it is moved, deleted or copied - deselecting discards it, and it is never saved.
+    const pendingCutRef = useRef<{ cutId: string; pieceId: string; entry: any } | undefined>(undefined);
     const currentEditedRef = useRef<CurrentEdited>(currentEdited);
     const canvasSizeRef = useRef<ImageSize>(canvasSize);
     const eraseModeRef = useRef<boolean>(false);
@@ -426,6 +430,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     async function loadPage(newPage: any, index: number) {
+        discardPendingCut(); // a selection does not survive leaving the page
         const newCurrentFile = newPage.getPage(index);
         setCurrentFile(newCurrentFile);
         setCurrPageIndex(index);
@@ -644,7 +649,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     }
 
     const save = async () => {
-        let elements = queue.current.getAll();
+        // a selection not yet acted on is not a change
+        let elements = queue.current.getAll().filter(e => !pendingCutRef.current || e.elem?.id !== pendingCutRef.current.cutId);
         const content = JSON.stringify({
             version: "2.0",
             elements: elements
@@ -884,7 +890,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             latestMode: latestMode,
             pageHeightAddition: _pageHeightAddition,
             background: _background,
-        } = replayPageQueue(q, FileSystem.main.getAttachmentBase(pageRef.current, currPageIndexRef.current), activePieceIdRef.current);
+        } = replayPageQueue(q, FileSystem.main.getAttachmentBase(pageRef.current, currPageIndexRef.current));
 
         pathsRef.current = _paths;
         textsRef.current = _texts;
@@ -930,7 +936,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
     async function beforeModeChange() {
         await saveText();
-        dropCutPiece();
+        deselectPiece();
         //trace("curr mode", modeRef.current)
         if (modeRef.current == EditModes.Text && zoomRef.current == 1) {
             setMoveCanvas({ x: 0, y: 0 });
@@ -983,7 +989,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setCurrentEdited(newCurrEdited);
 
         } else if (modeRef.current === EditModes.Cut) {
-            dropCutPiece();
+            deselectPiece();
             selectionStartRef.current = p;
             if (cutShapeRef.current === "lasso") {
                 selectionLassoRef.current = [p];
@@ -1063,12 +1069,16 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 strokeWidth = Math.max(15, strokeWidth * 3)
             }
             if (commands) {
+                // a stroke belongs to the piece it starts on
+                const start = commands[0] as unknown as [number, number, number] | undefined;
+                const pieceId = start ? pieceAt([start[1], start[2]]) : undefined;
                 const newPath: SketchPath = {
                     id: getId("S"),
                     points: commands,
                     color,
                     strokeWidth,
                     isMarker: isMarkerMode(),
+                    ...(pieceId ? { pieceId } : {}),
                 };
 
                 pathsRef.current.push(newPath);
@@ -1155,50 +1165,116 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
     }
 
-    // The moved piece becomes part of the page - it can no longer be selected or moved
-    function dropCutPiece() {
+    function selectPiece(id: string) {
+        // selecting another piece drops a selection that was not acted on
+        if (pendingCutRef.current && pendingCutRef.current.pieceId !== id) discardPendingCut();
+        activePieceIdRef.current = id;
+        const newCurrEdited = { ...currentEditedRef.current, imageId: id }
+        currentEditedRef.current = newCurrEdited
+        setCurrentEdited(newCurrEdited);
+    }
+
+    // Drops a selection that was not acted on: the page is as before
+    function discardPendingCut(removeFile = true) {
+        const pending = pendingCutRef.current;
+        if (!pending) return;
+        pendingCutRef.current = undefined;
+        if (queue.current.discardLast(pending.cutId, removeFile)) {
+            queue2state();
+        }
+    }
+
+    // Acting on the selection (move/delete) keeps its cut; the action is undone together with it
+    function commitPendingCut(pieceId: string) {
+        if (pendingCutRef.current?.pieceId !== pieceId) return false;
+        pendingCutRef.current = undefined;
+        return true;
+    }
+
+    function deselectPiece() {
+        if (pendingCutRef.current && pendingCutRef.current.pieceId === activePieceIdRef.current) {
+            discardPendingCut();
+        }
         if (!activePieceIdRef.current) return;
         activePieceIdRef.current = undefined;
         const newCurrEdited = { ...currentEditedRef.current, imageId: undefined }
         currentEditedRef.current = newCurrEdited
         setCurrentEdited(newCurrEdited);
-        queue2state();
     }
+
+    // the paper piece new ink/text/paint at a point belongs to, if any
+    const pieceAt = (p: SketchPoint) => topPieceAt(imagesRef.current, p[0], p[1])?.id;
+    // a text belongs to the paper it lies on (null: the page) - moving it off a piece takes it off
+    const textOwner = (t: SketchText) => t.tableId ? null : (pieceAt(textCenter(t)) ?? null);
 
     function performFill(p: SketchPoint) {
         return withRasterBusy(async () => {
-            const fill = await computeFill(pageSnapshot(), p, fillColorRef.current, PixelRatio.get());
+            const pieceId = pieceAt(p);
+            const fill = await computeFill(pageSnapshot(), p, fillColorRef.current, PixelRatio.get(), pieceId);
             if (!fill) return; // not an enclosed shape
-            queue.current.pushFill({ id: getId("F"), ...fill });
+            queue.current.pushFill({ id: getId("F"), ...fill, ...(pieceId ? { pieceId } : {}) });
             queue2state();
             save();
             analyticEvent(LocalAnalyticEvent.fill_used);
         });
     }
 
+    // Cuts the base paper: the paper inside becomes a piece (an image), and the annotations
+    // inside go with it - strokes crossing the edge are split. One queue entry, one undo.
     function performCut(rect: NormRect, lasso?: SketchPoint[]) {
         // ignore tiny selections (accidental drags)
         if (rect.width * ratioRef.current < 15 || rect.height * ratioRef.current < 15) return;
         return withRasterBusy(async () => {
-            const piece = await capturePiece(pageSnapshot(), rect, PixelRatio.get(), lasso);
-            if (!piece) return;
-            const tmpFile = `${RNFS.TemporaryDirectoryPath}/cut-${Date.now()}.${piece.ext}`;
-            await RNFS.writeFile(tmpFile, piece.base64, 'base64');
-            const file = await FileSystem.main.attachedFileToPage(tmpFile, pageRef.current, currPageIndexRef.current, piece.ext);
+            const polygon = cutPolygon(rect, lasso);
+            const plan = planCut(polygon, pathsRef.current, textsRef.current, imagesRef.current, getId);
+            const paper = await capturePiece(pageSnapshot(), rect, PixelRatio.get(), lasso);
+            if (!paper || (!paper.hasContent && cutPlanIsEmpty(plan))) return; // nothing to cut
+            const tmpFile = `${RNFS.TemporaryDirectoryPath}/cut-${Date.now()}.${paper.ext}`;
+            await RNFS.writeFile(tmpFile, paper.base64, 'base64');
+            const file = await FileSystem.main.attachedFileToPage(tmpFile, pageRef.current, currPageIndexRef.current, paper.ext);
 
-            const pieceElem = {
-                id: getId("I"), ...rect, file, isCutPiece: true,
+            const piece = {
+                id: getId("I"), ...rect, file,
                 ...(lasso ? { outline: lasso.map(([px, py]) => [(px - rect.x) / rect.width, (py - rect.y) / rect.height]) } : {}),
             };
-            queue.current.pushCut({ id: getId("C"), ...rect, ...(lasso ? { points: lasso } : {}) }, pieceElem);
-            activePieceIdRef.current = pieceElem.id;
-            const newCurrEdited = { ...currentEditedRef.current, imageId: pieceElem.id }
-            currentEditedRef.current = newCurrEdited
-            setCurrentEdited(newCurrEdited);
+            const cutElem = { id: getId("C"), ...rect, ...(lasso ? { points: lasso } : {}), piece, ...plan };
+            queue.current.pushCut(cutElem);
+            // only a selection until it is moved, deleted or copied
+            pendingCutRef.current = { cutId: cutElem.id, pieceId: piece.id, entry: cutElem };
             queue2state();
-            save();
+            selectPiece(piece.id);
             analyticEvent(LocalAnalyticEvent.cut_used);
         });
+    }
+
+
+
+
+
+
+    // A copy of the piece and everything on it, a little off the original.
+    // Copying a selection leaves the page as it was: only the copy is a piece.
+    function handleCopyPiece(id: string) {
+        const piece = imagesRef.current.find(img => img.id === id && img.isCutPiece);
+        if (!piece) return;
+        const offset = 30 / ratioRef.current;
+        const maxX = canvasSizeRef.current.width / ratioRef.current - piece.width;
+        const x = Math.max(0, Math.min(piece.x + offset, maxX)), y = piece.y + offset;
+        const copyId = getId("I");
+        const pending = pendingCutRef.current?.pieceId === id ? pendingCutRef.current.entry : undefined;
+        if (pending) {
+            discardPendingCut(false); // its image file is the copy's
+            queue.current.pushCut({
+                ...pending, id: getId("C"),
+                piece: { ...pending.piece, id: copyId, x, y },
+                copy: { dx: x - pending.piece.x, dy: y - pending.piece.y },
+            });
+        } else {
+            queue.current.pushPieceCopy({ id: copyId, from: id, x, y });
+        }
+        queue2state();
+        selectPiece(copyId);
+        save();
     }
 
     // -------------------------------------------------------------------------
@@ -1228,6 +1304,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
                     // remove the current selection height temp attr
                     delete origElem.tempTop2CursorHeight;
+                    changedElem.pieceId = textOwner(changedElem);
 
                     // Check if there's a pending page height increase
                     if (origElem.pendingPageHeightIncrease) {
@@ -1261,6 +1338,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             } else {
                 // new text element
                 if (textElem.text != "") {
+                    textElem.pieceId = textOwner(textElem);
                     // Check if there's a pending page height increase
                     if (textElem.pendingPageHeightIncrease) {
                         const pendingHeight = textElem.pendingPageHeightIncrease;
@@ -1343,8 +1421,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     x: p[0],
                     y: p[1],
                 };
+                // a text belongs to the piece it is typed on
+                const textPieceId = pieceAt(p);
+                if (textPieceId) newTextElem.pieceId = textPieceId;
                 if (elem && "cell" in elem) {
                     // clicked a table
+                    delete newTextElem.pieceId;
                     const tableContext = elem as TableContext;
                     newTextElem.tableId = tableContext.elem.id;
                     newTextElem.x = tableContext.cell && tableContext.cell[0] || 0;
@@ -1368,9 +1450,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         } else if (modeRef.current === EditModes.Fill) {
             performFill(p);
         } else if (modeRef.current === EditModes.Cut) {
-            // tapping outside the moveable piece drops it
-            if (!(elem && "id" in elem && elem.id === activePieceIdRef.current)) {
-                dropCutPiece();
+            // tapping a piece selects it, tapping elsewhere deselects
+            if (elem && "id" in elem && (elem as SketchImage).isCutPiece) {
+                selectPiece(elem.id);
+            } else {
+                deselectPiece();
             }
         } else if (modeRef.current === EditModes.Image && elem && "id" in elem) {
             //trace("set current image")
@@ -1578,6 +1662,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             }
 
         } else if (type === MoveTypes.ImageMove || type === MoveTypes.ImageResize) {
+            // dragging a piece selects it right away (this may drop another selection, replaying the page)
+            if (activePieceIdRef.current !== id && imagesRef.current.some(image => image.id == id && image.isCutPiece)) {
+                selectPiece(id);
+            }
             const imgElem = imagesRef.current.find(image => image.id == id);
             if (imgElem) {
                 if (!imgElem.backup) {
@@ -1670,9 +1758,21 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 delete changed.aspectRatio;
                 delete changed.src;
                 delete (changed as any).file; // otherwise evicting this from the redo queue deletes the image file
-                queue.current.pushImagePosition(changed);
+                delete changed.originX;
+                delete changed.originY;
+                delete changed.z;
+                delete changed.outline;
+                delete changed.holes;
+                if (!changed.isCutPiece) {
+                    // an image belongs to the paper it is dropped on
+                    changed.pieceId = pieceAt([changed.x + changed.width / 2, changed.y + changed.height / 2]) ?? null;
+                }
+                // moving a selection cuts it out: one undo step for both
+                queue.current.pushImagePosition(changed, changed.isCutPiece && commitPendingCut(changed.id));
                 save();
                 queue2state();
+                // a moved piece stays selected
+                if (changed.isCutPiece) selectPiece(changed.id);
             }
         } else if (type === MoveTypes.TableMove || type === MoveTypes.TableResize) {
             const table = tablesRef.current.find(table => table.id == id);
@@ -1750,7 +1850,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
             analyticEvent(LocalAnalyticEvent.element_deleted, { element_type: 'ruler' });
         } else if (type == ElementTypes.Image) {
-            queue.current.pushDeleteImage({ id });
+            // deleting a selection cuts it out: one undo step for both
+            queue.current.pushDeleteImage({ id }, commitPendingCut(id));
+            if (id === activePieceIdRef.current) deselectPiece();
             save();
             queue2state();
 
@@ -1786,7 +1888,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     //                          TOOLBAR OR MODE HANDLERS
     // -------------------------------------------------------------------------
     function afterUndoRedo(isUndo: boolean = true) {
+        // an undone selection is gone
+        if (pendingCutRef.current && !queue.current.getAll().some((e: any) => e.elem?.id === pendingCutRef.current!.cutId)) {
+            pendingCutRef.current = undefined;
+        }
         queue2state()
+        // the selected piece may have been undone
+        if (activePieceIdRef.current && !imagesRef.current.some(img => img.id === activePieceIdRef.current)) {
+            deselectPiece();
+        }
         save();
 
         analyticEvent(isUndo ? LocalAnalyticEvent.undo_used : LocalAnalyticEvent.redo_used);
@@ -2776,6 +2886,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onMoveTablePart={handleMoveTablePart}
                 onMoveTablePartEnd={handleMoveTablePartEnd}
                 onDeleteElement={handleDelete}
+                onCopyElement={handleCopyPiece}
                 onTextYOverflow={handleTextYOverflow}
                 imageSource={{ uri: currentFile }}
                 background={background}

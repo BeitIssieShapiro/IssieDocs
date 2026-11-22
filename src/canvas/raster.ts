@@ -3,11 +3,12 @@
 // multiplied by `ratio` (view points). Rasters are rendered at `scale` pixels per view point.
 
 import {
-    AlphaType, BlendMode, ClipOp, ColorType, ImageFormat, PaintStyle, PathVerb,
+    AlphaType, BlendMode, ClipOp, ColorType, ImageFormat, PaintStyle, PathOp, PathVerb,
     Skia, SkCanvas, SkImage, SkPath, SkRect,
 } from "@shopify/react-native-skia";
 import { SketchImage, SketchLine, SketchOverlay, SketchPath, SketchPoint } from "./types";
 import { computeFillRegion, gapConnectors } from "./flood-fill";
+import { buildDrawLayers, DrawItem, isEraserPath, pieceHoles, pieceOutline } from "./pieces";
 
 const FILL_GAP_POINTS = 8; // shapes with openings up to ~2x this are considered closed
 const FILL_STROKE_END_GAP_POINTS = 30; // a pen stroke ending this close to a stroke is treated as connected
@@ -39,6 +40,15 @@ export function polygonPath(points: SketchPoint[], scale: number): SkPath {
     const path = Skia.Path.Make();
     points.forEach(([x, y], i) => i == 0 ? path.moveTo(x * scale, y * scale) : path.lineTo(x * scale, y * scale));
     path.close();
+    return path;
+}
+
+/** A piece's paper: its outline minus its holes, at position (x, y), multiplied by `scale` */
+export function pieceClipPath(piece: SketchImage, scale: number, x = piece.x, y = piece.y): SkPath {
+    const path = polygonPath(pieceOutline(piece, x, y), scale);
+    for (const hole of pieceHoles(piece, x, y)) {
+        path.op(polygonPath(hole, scale), PathOp.Difference);
+    }
     return path;
 }
 
@@ -109,15 +119,85 @@ const differs = (px: Uint8Array, i: number, r: number, g: number, b: number) =>
 
 interface RenderOptions {
     includeBg: boolean;
-    includeFills: boolean;
     includeVectors: boolean; // rulers, tables, inserted images
+    // all: ink, paint and pieces as on screen. paper: the base paper's paint and holes only (what a cut takes)
+    sketch: "all" | "paper";
     clip?: SketchPoint[]; // lasso polygon, normalized
-    penOnly?: boolean; // only pen strokes (and erasers/cuts applied to them), on white - the fill boundaries
 }
 
-// Renders the page area `rect` (view points) into an offscreen image
-async function renderPage(page: PageSnapshot, rect: SkRect, scale: number, opts: RenderOptions): Promise<SkImage | undefined> {
-    const r = page.ratio;
+const isPenStroke = (p: SketchPath) => !p.isMarker && p.color.length <= 7;
+
+function strokePaint(p: SketchPath) {
+    const paint = Skia.Paint();
+    paint.setAntiAlias(true);
+    paint.setStyle(PaintStyle.Stroke);
+    paint.setStrokeWidth(p.strokeWidth);
+    paint.setColor(Skia.Color(isEraserPath(p) ? "black" : p.color));
+    if (isEraserPath(p)) paint.setBlendMode(BlendMode.DstOut);
+    return paint;
+}
+
+function strokePath(p: SketchPath, r: number) {
+    const path = Skia.Path.Make();
+    for (const [verb, x, y] of p.points) {
+        if (verb == PathVerb.Move) path.moveTo(x * r, y * r);
+        else if (verb == PathVerb.Line) path.lineTo(x * r, y * r);
+    }
+    return path;
+}
+
+// One item of the sketch layer. `ink: false` skips strokes but keeps erasers (they clear paint too)
+function drawItem(canvas: SkCanvas, it: DrawItem, r: number, ink: boolean) {
+    if (it.path) {
+        if (!ink && !isEraserPath(it.path)) return;
+        canvas.drawPath(strokePath(it.path, r), strokePaint(it.path));
+        return;
+    }
+    const o = it.overlay!;
+    if (o.kind === "cut") {
+        const clear = Skia.Paint();
+        clear.setBlendMode(BlendMode.DstOut);
+        canvas.drawPath(cutShapePath(o, r), clear);
+    } else {
+        const img = getOverlayImage(o);
+        if (img) drawImageAt(canvas, img, Skia.XYWHRect(o.x * r, o.y * r, o.width * r, o.height * r));
+    }
+}
+
+// The sketch layer as the on-screen canvas draws it (see buildDrawLayers).
+// paperOnly: what a cut takes as its image - paper and paint, of the page and of pieces, without ink
+async function drawSketch(canvas: SkCanvas, page: PageSnapshot, r: number, paperOnly: boolean) {
+    for (const layer of buildDrawLayers(page.paths, page.overlays, page.images)) {
+        if (layer.piece) {
+            const piece = layer.piece;
+            const clip = pieceClipPath(piece, r);
+            const img = piece.src?.uri ? await loadImage(piece.src.uri) : undefined;
+            if (img) {
+                canvas.save();
+                canvas.clipPath(clip, ClipOp.Intersect, true);
+                drawImageAt(canvas, img, Skia.XYWHRect(piece.x * r, piece.y * r, piece.width * r, piece.height * r));
+                canvas.restore();
+            }
+            canvas.saveLayer();
+            for (const it of layer.items) {
+                const isFill = it.overlay?.kind === "fill";
+                if (isFill) {
+                    canvas.save();
+                    canvas.clipPath(clip, ClipOp.Intersect, true);
+                }
+                drawItem(canvas, it, r, !paperOnly);
+                if (isFill) canvas.restore();
+            }
+            canvas.restore();
+        } else {
+            canvas.saveLayer();
+            [...layer.items, ...layer.erasers].forEach(it => drawItem(canvas, it, r, !paperOnly));
+            canvas.restore();
+        }
+    }
+}
+
+function makeSurface(rect: SkRect, scale: number) {
     const w = Math.max(1, Math.round(rect.width * scale));
     const h = Math.max(1, Math.round(rect.height * scale));
     const surface = Skia.Surface.Make(w, h);
@@ -126,8 +206,17 @@ async function renderPage(page: PageSnapshot, rect: SkRect, scale: number, opts:
     canvas.scale(scale, scale);
     canvas.translate(-rect.x, -rect.y);
     canvas.clear(Skia.Color("transparent"));
+    return { surface, canvas };
+}
+
+// Renders the page area `rect` (view points) into an offscreen image
+async function renderPage(page: PageSnapshot, rect: SkRect, scale: number, opts: RenderOptions): Promise<SkImage | undefined> {
+    const r = page.ratio;
+    const made = makeSurface(rect, scale);
+    if (!made) return undefined;
+    const { surface, canvas } = made;
     if (opts.clip) canvas.clipPath(polygonPath(opts.clip, r), ClipOp.Intersect, true);
-    if (opts.includeBg || opts.penOnly) canvas.drawColor(Skia.Color("white"));
+    if (opts.includeBg) canvas.drawColor(Skia.Color("white"));
 
     const white = Skia.Paint();
     white.setColor(Skia.Color("white"));
@@ -149,68 +238,7 @@ async function renderPage(page: PageSnapshot, rect: SkRect, scale: number, opts:
         }
     }
 
-    // Sketch layer - mirrors the on-screen Skia canvas (eraser/cut clear only this layer)
-    const pieceImages = new Map<string, SkImage>();
-    for (const o of page.overlays) {
-        const img = o.kind === "piece" && o.src && !opts.penOnly ? await loadImage(o.src) : undefined;
-        if (img) pieceImages.set(o.id, img);
-    }
-    canvas.saveLayer();
-    const clear = Skia.Paint();
-    clear.setBlendMode(BlendMode.DstOut);
-    const drawOverlays = (afterPath: number) => {
-        for (const o of page.overlays) {
-            if (o.afterPath !== afterPath) continue;
-            const dst = Skia.XYWHRect(o.x * r, o.y * r, o.width * r, o.height * r);
-            if (o.kind === "cut") {
-                canvas.drawPath(cutShapePath(o, r), clear);
-            } else if (o.kind === "piece") {
-                const img = pieceImages.get(o.id);
-                if (img) drawImageAt(canvas, img, dst);
-            } else if (opts.includeFills) {
-                const img = getOverlayImage(o);
-                if (img) drawImageAt(canvas, img, dst);
-            }
-        }
-    };
-    page.paths.forEach((p, i) => {
-        drawOverlays(i);
-        if (opts.penOnly && (p.isMarker || p.color.length > 7) && !isEraser(p.color)) return;
-        const path = Skia.Path.Make();
-        for (const [verb, x, y] of p.points) {
-            if (verb == PathVerb.Move) path.moveTo(x * r, y * r);
-            else if (verb == PathVerb.Line) path.lineTo(x * r, y * r);
-        }
-        const paint = Skia.Paint();
-        paint.setAntiAlias(true);
-        paint.setStyle(PaintStyle.Stroke);
-        paint.setStrokeWidth(p.strokeWidth);
-        paint.setColor(Skia.Color(isEraser(p.color) ? "black" : p.color));
-        if (isEraser(p.color)) paint.setBlendMode(BlendMode.DstOut);
-        canvas.drawPath(path, paint);
-    });
-    drawOverlays(page.paths.length);
-    canvas.restore();
-
-    if (opts.penOnly) {
-        // close almost-closed drawings with invisible connectors between stroke ends and nearby strokes
-        const strokes: [number, number][][] = [];
-        for (const p of page.paths) {
-            if (p.isMarker || p.color.length > 7) continue; // markers and erasers
-            p.points.forEach(([verb, x, y], i) => {
-                if (verb == PathVerb.Move || i == 0) strokes.push([]);
-                strokes[strokes.length - 1].push([x * r, y * r]);
-            });
-        }
-        const paint = Skia.Paint();
-        paint.setAntiAlias(true);
-        paint.setStyle(PaintStyle.Stroke);
-        paint.setStrokeWidth(3);
-        paint.setColor(Skia.Color("black"));
-        for (const [a, b] of gapConnectors(strokes, FILL_STROKE_END_GAP_POINTS)) {
-            canvas.drawLine(a[0], a[1], b[0], b[1], paint);
-        }
-    }
+    await drawSketch(canvas, page, r, opts.sketch === "paper");
 
     if (opts.includeVectors) {
         const stroke = (color: string, width: number) => {
@@ -238,15 +266,74 @@ async function renderPage(page: PageSnapshot, rect: SkRect, scale: number, opts:
 }
 
 /**
+ * The boundaries a fill stops at, black on white: the pen strokes of the paper being filled
+ * (the base page, or one piece). Filling the base page, pieces are walls; filling a piece,
+ * everything outside its outline is.
+ */
+async function renderFillBoundary(page: PageSnapshot, pieceId: string | undefined, scale: number): Promise<SkImage | undefined> {
+    const r = page.ratio;
+    const made = makeSurface(Skia.XYWHRect(0, 0, page.canvasWidth, page.canvasHeight), scale);
+    if (!made) return undefined;
+    const { surface, canvas } = made;
+    canvas.drawColor(Skia.Color("white"));
+    const black = Skia.Paint();
+    black.setColor(Skia.Color("black"));
+    const pieces = page.images.filter(i => i.isCutPiece);
+    const target = pieceId ? pieces.find(p => p.id === pieceId) : undefined;
+
+    if (target) {
+        const outside = Skia.Path.Make();
+        outside.addRect(Skia.XYWHRect(0, 0, page.canvasWidth, page.canvasHeight));
+        outside.op(pieceClipPath(target, r), PathOp.Difference); // the page minus the piece's paper
+        canvas.drawPath(outside, black);
+    }
+
+    const owned = (e: { pieceId?: string | null }) => (e.pieceId ?? undefined) === (target?.id ?? undefined);
+    const paths = page.paths.filter(owned).sort((a, b) => (a.z ?? 0) - (b.z ?? 0));
+    canvas.saveLayer();
+    for (const p of paths) {
+        if (!isPenStroke(p) && !isEraserPath(p)) continue;
+        canvas.drawPath(strokePath(p, r), strokePaint(p));
+    }
+    canvas.restore();
+
+    // close almost-closed drawings with invisible connectors between stroke ends and nearby strokes
+
+    const strokes: [number, number][][] = [];
+    for (const p of paths) {
+        if (!isPenStroke(p)) continue;
+        p.points.forEach(([verb, x, y], i) => {
+            if (verb == PathVerb.Move || i == 0) strokes.push([]);
+            strokes[strokes.length - 1].push([x * r, y * r]);
+        });
+    }
+    const connector = Skia.Paint();
+    connector.setAntiAlias(true);
+    connector.setStyle(PaintStyle.Stroke);
+    connector.setStrokeWidth(3);
+    connector.setColor(Skia.Color("black"));
+    for (const [a, b] of gapConnectors(strokes, FILL_STROKE_END_GAP_POINTS)) {
+        canvas.drawLine(a[0], a[1], b[0], b[1], connector);
+    }
+
+    if (!target) {
+        // pieces lie on the base paper: its paint does not flow under them
+        pieces.forEach(p => canvas.drawPath(pieceClipPath(p, r), black));
+    }
+
+    surface.flush();
+    return surface.makeImageSnapshot();
+}
+
+/**
  * Computes a paint-bucket fill at `point` (normalized coords), bounded by pen strokes only.
  * Returns the fill element (normalized coords) or undefined if the area is not enclosed.
  */
-export async function computeFill(page: PageSnapshot, point: [number, number], color: string, pixelRatio: number)
-    : Promise<Omit<SketchOverlay, "id" | "kind" | "afterPath"> | undefined> {
+export async function computeFill(page: PageSnapshot, point: [number, number], color: string, pixelRatio: number,
+    pieceId?: string): Promise<Omit<SketchOverlay, "id" | "kind"> | undefined> {
     const area = page.canvasWidth * page.canvasHeight;
     const scale = Math.min(pixelRatio, 2, Math.sqrt(FILL_MAX_PIXELS / area));
-    const snapshot = await renderPage(page, Skia.XYWHRect(0, 0, page.canvasWidth, page.canvasHeight), scale,
-        { includeBg: false, includeFills: false, includeVectors: false, penOnly: true });
+    const snapshot = await renderFillBoundary(page, pieceId, scale);
     if (!snapshot) return undefined;
     const pixels = readRGBA(snapshot);
     if (!pixels) return undefined;
@@ -264,7 +351,7 @@ export async function computeFill(page: PageSnapshot, point: [number, number], c
     // Skip fills that would not visibly change the page as currently shown (with existing fills),
     // e.g. re-filling a shape with the same color, or a tiny enclosed speck
     const current = await renderPage(page, Skia.XYWHRect(region.x / scale, region.y / scale, region.width / scale, region.height / scale),
-        scale, { includeBg: true, includeFills: true, includeVectors: true });
+        scale, { includeBg: true, includeVectors: true, sketch: "all" });
     const currentPixels = current && readRGBA(current);
     if (currentPixels && current.width() === region.width && current.height() === region.height) {
         let changed = 0;
@@ -299,27 +386,30 @@ export async function computeFill(page: PageSnapshot, point: [number, number], c
 }
 
 /**
- * Captures the background and sketch content inside `rect` (normalized coords), clipped to the
- * lasso polygon if given. Rectangles on a photo background yield an opaque jpeg, others a transparent png.
+ * Captures the base paper inside `rect` (normalized coords), clipped to the lasso polygon if given:
+ * the background with its paint, without ink - ink moves into the piece as it is.
+ * Rectangles on a photo background yield an opaque jpeg, others a transparent png.
+ * `hasContent`: whether anything visible (not white) was captured.
  */
 export async function capturePiece(page: PageSnapshot, rect: NormRect, pixelRatio: number, lasso?: SketchPoint[])
-    : Promise<{ base64: string; ext: string } | undefined> {
+    : Promise<{ base64: string; ext: string; hasContent: boolean } | undefined> {
     const r = page.ratio;
     const scale = Math.min(pixelRatio, 3);
     const image = await renderPage(page, Skia.XYWHRect(rect.x * r, rect.y * r, rect.width * r, rect.height * r),
-        scale, { includeBg: page.hasPhotoBg, includeFills: true, includeVectors: false, clip: lasso });
+        scale, { includeBg: page.hasPhotoBg, includeVectors: false, sketch: "paper", clip: lasso });
     if (!image) return undefined;
 
-    // Nothing to cut: no pixel that is both opaque and not white (blank page area / plain white paper)
+    let hasContent = true;
     const pixels = readRGBA(image);
     if (pixels) {
         let content = 0;
         for (let i = 0; i < pixels.length; i += 4) {
             if (pixels[i + 3] > 32 && differs(pixels, i, 255, 255, 255)) content++;
         }
-        if (content < MIN_VISIBLE_CHANGE_POINTS * scale * scale) return undefined;
+        hasContent = content >= MIN_VISIBLE_CHANGE_POINTS * scale * scale;
     }
-    return page.hasPhotoBg && !lasso ?
+    const encoded = page.hasPhotoBg && !lasso ?
         { base64: image.encodeToBase64(ImageFormat.JPEG, 90), ext: "jpg" } :
         { base64: image.encodeToBase64(ImageFormat.PNG), ext: "png" };
+    return { ...encoded, hasContent };
 }

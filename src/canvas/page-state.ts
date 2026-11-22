@@ -1,6 +1,7 @@
 import { SketchElement, SketchImage, SketchLine, SketchOverlay, SketchPath, SketchTable, SketchText } from './types';
 import { cloneElem } from './utils';
 import { EditModes } from '../types';
+import { shiftPoints } from './pieces';
 
 /**
  * Replays a page's saved change queue into the elements to draw, plus the
@@ -8,9 +9,11 @@ import { EditModes } from '../types';
  *
  * @param q the queue entries ({type, elem}) as stored in the page's .json
  * @param attachmentBase path prefix for the page's attached files (images)
- * @param activePieceId id of a cut piece currently being moved, if any
+ *
+ * Every element gets a z (the queue position it was created at; pieces: last moved at)
+ * that orders the sketch layer. Elements with a pieceId move, copy and delete with that piece.
  */
-export function replayPageQueue(q: any[], attachmentBase: string, activePieceId?: string) {
+export function replayPageQueue(q: any[], attachmentBase: string) {
     let _texts = [] as SketchText[];
     let _images = [] as SketchImage[];
     let _tables = [] as SketchTable[]
@@ -35,6 +38,29 @@ export function replayPageQueue(q: any[], attachmentBase: string, activePieceId?
     let latestMode: EditModes | undefined
     let _pageHeightAddition = 0;
     let _background = undefined;
+
+    // an entry that names a piece (or null: the page) sets the owner; otherwise it stays
+    const ownerAfter = (entry: any, current: { pieceId?: string | null }) =>
+        ("pieceId" in entry ? entry.pieceId : current.pieceId) ?? undefined;
+    const attach = (elem: any) => elem.file ? { ...elem, src: { uri: attachmentBase + elem.file } } : elem;
+    const findPiece = (id: string) => _images.find(img => img.isCutPiece && img.id === id);
+
+    // moves a piece's own elements along with it
+    const shiftPieceContent = (pieceId: string, dx: number, dy: number) => {
+        if (dx === 0 && dy === 0) return;
+        const mine = (e: { pieceId?: string | null }) => e.pieceId === pieceId;
+        _paths = _paths.map(p => mine(p) ? { ...p, points: shiftPoints(p.points, dx, dy) } : p);
+        _texts = _texts.map(t => mine(t) ? { ...t, x: t.x + dx, y: t.y + dy } : t);
+        _images = _images.map(img => mine(img) ? { ...img, x: img.x + dx, y: img.y + dy } : img);
+        _overlays = _overlays.map(o => mine(o) ? { ...o, x: o.x + dx, y: o.y + dy } : o);
+    };
+    const removePieceContent = (pieceId: string) => {
+        const notMine = (e: { pieceId?: string | null }) => e.pieceId !== pieceId;
+        _paths = _paths.filter(notMine);
+        _texts = _texts.filter(notMine);
+        _images = _images.filter(img => notMine(img) && img.id !== pieceId);
+        _overlays = _overlays.filter(notMine);
+    };
 
     for (let i = 0; i < q.length; i++) {
         if (q[i].type === "background") {
@@ -64,14 +90,15 @@ export function replayPageQueue(q: any[], attachmentBase: string, activePieceId?
                         // remove text
                         _texts = _texts.filter(t => t.id !== txtElem.id);
                     } else {
-                        _texts[j] = txtElem;
+                        // an edit keeps its place in the drawing order; it moves to/off a piece when it says so
+                        _texts[j] = { ...txtElem, z: _texts[j].z, pieceId: ownerAfter(txtElem, _texts[j]) };
                     }
                     found = true;
                     break;
                 }
             }
             if (!found) {
-                _texts.push(txtElem);
+                _texts.push({ ...txtElem, z: i, pieceId: txtElem.pieceId ?? undefined });
             }
         } else if (q[i].type === 'path') {
             const sketchElem = q[i].elem as SketchPath;
@@ -88,7 +115,7 @@ export function replayPageQueue(q: any[], attachmentBase: string, activePieceId?
                 brushColor = sketchElem.color;
                 latestMode = EditModes.Brush;
             }
-            _paths.push(sketchElem);
+            _paths.push({ ...sketchElem, z: i });
         } else if (q[i].type === 'line') {
             _rulers = _rulers.filter(l => l.id !== q[i].elem.id);
             const lineElem = q[i].elem as SketchLine;
@@ -103,46 +130,100 @@ export function replayPageQueue(q: any[], attachmentBase: string, activePieceId?
             //latestMode = EditModes.Ruler;
         } else if (q[i].type === 'image') {
             // translate the relative path to full path:
-            let elem = cloneElem(q[i].elem);
-            if (elem.file) {
-                elem = {
-                    ...elem,
-                    ...(elem.file ? { src: { uri: attachmentBase + elem.file } } : {})
-                }
-            }
-            if (elem.isCutPiece) {
-                _overlays.push({
-                    id: elem.id, kind: "piece", x: elem.x, y: elem.y, width: elem.width, height: elem.height,
-                    src: elem.src?.uri, afterPath: _paths.length,
-                });
-                if (elem.id === activePieceId) _images.push(elem);
-            } else {
-                _images.push(elem);
-            }
+            const elem = attach(cloneElem(q[i].elem));
+            _images.push({ ...elem, z: i, ...(elem.isCutPiece ? { originX: elem.x, originY: elem.y } : {}) });
             //latestMode = EditModes.Image;
         } else if (q[i].type === 'imagePosition') {
-            const piece = _overlays.find(o => o.kind === "piece" && o.id === q[i].elem.id);
+            const pos = q[i].elem;
+            const piece = findPiece(pos.id);
             if (piece) {
-                Object.assign(piece, { x: q[i].elem.x, y: q[i].elem.y, width: q[i].elem.width, height: q[i].elem.height });
-            }
-            const elemIndex = _images.findIndex(ci => ci.id === q[i].elem.id);
-            if (elemIndex >= 0) {
-                const updatedImage = {
-                    ..._images[elemIndex],
-                    width: q[i].elem.width,
-                    height: q[i].elem.height,
-                    x: q[i].elem.x,
-                    y: q[i].elem.y,
+                // moving a piece brings it (and its content) to the top
+                shiftPieceContent(piece.id, pos.x - piece.x, pos.y - piece.y);
+                _images = _images.map(img => img === piece ? { ...img, x: pos.x, y: pos.y, originX: pos.x, originY: pos.y, z: i } : img);
+            } else {
+                const elemIndex = _images.findIndex(ci => ci.id === pos.id);
+                if (elemIndex >= 0) {
+                    // a moved image comes to the top, on the paper it was dropped on
+                    _images[elemIndex] = {
+                        ..._images[elemIndex], width: pos.width, height: pos.height, x: pos.x, y: pos.y, z: i,
+                        pieceId: ownerAfter(pos, _images[elemIndex]),
+                    };
                 }
-                _images[elemIndex] = updatedImage;
-                //latestMode = EditModes.Image;
             }
         } else if (q[i].type === 'imageDelete') {
-            _overlays = _overlays.filter(o => !(o.kind === "piece" && o.id === q[i].elem.id));
-            const elemIndex = _images.findIndex(ci => ci.id === q[i].elem.id);
-            if (elemIndex >= 0) {
-                _images.splice(elemIndex, 1);
-                //latestMode = EditModes.Image;
+            if (findPiece(q[i].elem.id)) {
+                removePieceContent(q[i].elem.id);
+            } else {
+                _images = _images.filter(ci => ci.id !== q[i].elem.id);
+            }
+        } else if (q[i].type === 'cut' && q[i].elem.copy) {
+            // a copy of a selection: a new piece with copies of what was inside, the page untouched
+            const cut = q[i].elem;
+            const pieceId = cut.piece.id;
+            const { dx, dy } = cut.copy;
+            const copyId = (id: string) => id + "~" + pieceId;
+            const paths = new Set<string>(cut.takePaths ?? []), texts = new Set<string>(cut.takeTexts ?? []);
+            const images = new Set<string>(cut.takeImages ?? []);
+            const insideParts = new Map<string, any>((cut.splitPaths ?? []).map((sp: any) => [sp.from, sp.inside]));
+            const copies: SketchPath[] = [];
+            for (const p of _paths) {
+                const part = paths.has(p.id) ? p : insideParts.get(p.id) && { ...insideParts.get(p.id), z: p.z };
+                if (part) copies.push({ ...part, id: copyId(part.id), pieceId, points: shiftPoints(part.points, dx, dy) });
+            }
+            _paths.push(...copies);
+            _texts.push(..._texts.filter(t => texts.has(t.id)).map(t => ({ ...t, id: copyId(t.id), pieceId, x: t.x + dx, y: t.y + dy })));
+            _images.push(..._images.filter(img => images.has(img.id)).map(img => ({ ...img, id: copyId(img.id), pieceId, x: img.x + dx, y: img.y + dy })));
+            const piece = attach(cloneElem(cut.piece));
+            _images.push({ ...piece, isCutPiece: true, z: i, originX: piece.x, originY: piece.y });
+        } else if (q[i].type === 'cut') {
+            const cut = q[i].elem;
+            // the hole in the base paper
+            _overlays.push({ id: cut.id, kind: "cut", x: cut.x, y: cut.y, width: cut.width, height: cut.height, points: cut.points, z: i });
+            if (cut.piece) {
+                const pieceId = cut.piece.id;
+                const take = (ids: string[] | undefined) => new Set(ids ?? []);
+                const paths = take(cut.takePaths), texts = take(cut.takeTexts), images = take(cut.takeImages);
+                // pieces fully inside are taken whole: what is left of their content goes to the page
+                const absorbed = take(cut.absorbPieces);
+                const keepOwner = (owner?: string | null) => owner && !absorbed.has(owner) ? owner : undefined;
+                const split = new Map<string, any>((cut.splitPaths ?? []).map((sp: any) => [sp.from, sp]));
+                const nextPaths: SketchPath[] = [];
+                for (const p of _paths) {
+                    const sp = split.get(p.id);
+                    if (sp) {
+                        // the parts keep the stroke's place in the drawing order; the outside part stays where it was
+                        if (sp.outside) nextPaths.push({ ...sp.outside, z: p.z, pieceId: keepOwner(p.pieceId) });
+                        if (sp.inside) nextPaths.push({ ...sp.inside, z: p.z, pieceId });
+                    } else {
+                        nextPaths.push({ ...p, pieceId: paths.has(p.id) ? pieceId : keepOwner(p.pieceId) });
+                    }
+                }
+                _paths = nextPaths;
+                _texts = _texts.map(t => ({ ...t, pieceId: texts.has(t.id) ? pieceId : keepOwner(t.pieceId) }));
+                _overlays = _overlays.map(o => ({ ...o, pieceId: keepOwner(o.pieceId) }));
+                _images = _images
+                    .filter(img => !absorbed.has(img.id))
+                    .map(img => img.isCutPiece ? img : { ...img, pieceId: images.has(img.id) ? pieceId : keepOwner(img.pieceId) });
+                // pieces under the cut get a hole
+                for (const { id, hole } of cut.cutPieces ?? []) {
+                    _images = _images.map(img => img.isCutPiece && img.id === id ? { ...img, holes: [...(img.holes ?? []), hole] } : img);
+                }
+                const piece = attach(cloneElem(cut.piece));
+                _images.push({ ...piece, isCutPiece: true, z: i, originX: piece.x, originY: piece.y });
+            }
+        } else if (q[i].type === 'pieceCopy') {
+            const { id, from, x, y } = q[i].elem;
+            const source = findPiece(from);
+            if (source) {
+                const dx = x - source.x, dy = y - source.y;
+                const copyId = (childId: string) => childId + "~" + id;
+                const mine = (e: { pieceId?: string | null }) => e.pieceId === from;
+                // the copy's content keeps its order within the piece
+                _paths.push(..._paths.filter(mine).map(p => ({ ...p, id: copyId(p.id), pieceId: id, points: shiftPoints(p.points, dx, dy) })));
+                _texts.push(..._texts.filter(mine).map(t => ({ ...t, id: copyId(t.id), pieceId: id, x: t.x + dx, y: t.y + dy })));
+                _overlays.push(..._overlays.filter(mine).map(o => ({ ...o, id: copyId(o.id), pieceId: id, x: o.x + dx, y: o.y + dy })));
+                _images.push(..._images.filter(mine).map(img => ({ ...img, id: copyId(img.id), pieceId: id, x: img.x + dx, y: img.y + dy })));
+                _images.push({ ...source, id, x, y, originX: x, originY: y, z: i });
             }
         } else if (q[i].type === 'table') {
             _tables = _tables.filter(t => t.id !== q[i].elem.id);
@@ -168,8 +249,8 @@ export function replayPageQueue(q: any[], attachmentBase: string, activePieceId?
             if (elemIndex >= 0) {
                 _audio[elemIndex] = { ..._audio[elemIndex], ...q[i].elem }
             }
-        } else if (q[i].type === 'fill' || q[i].type === 'cut') {
-            _overlays.push({ ...q[i].elem, kind: q[i].type, afterPath: _paths.length });
+        } else if (q[i].type === 'fill') {
+            _overlays.push({ ...q[i].elem, kind: "fill", z: i });
         } else if (q[i].type === 'changePageHeightAddition') {
             // Handle page height change from queue
             const newHeight = q[i].elem.height;
