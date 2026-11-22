@@ -34,7 +34,7 @@ export const FEATURES = {
 }
 
 // Features built but not yet released. Remove an entry to ship that feature.
-export const UNRELEASED_FEATURES = [FEATURES.cut, FEATURES.fill];
+export const UNRELEASED_FEATURES = [];
 
 export function isFeatureReleased(feature) {
     return !UNRELEASED_FEATURES.includes(feature);
