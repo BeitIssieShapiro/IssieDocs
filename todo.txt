@@ -1,3 +1,13 @@
+Bucket and lasso/select tool:
+- consider image;s zOrder
+- select tool - should select also texts/images - make all an image?
+- bucket -> should fill in also bg image?
+- be able to copy and area?
+
+
+
+
+
 V- template
 V- text toolbar - default off
 V- delete all
