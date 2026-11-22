@@ -215,6 +215,13 @@ export function SvgIcon({ name, width, height, color, strokeWidth, size }) {
                     </G>
                 </G>
             </Svg>
+        case 'line-tool':
+            // a straight line with small round ends (1 unit wider than the line)
+            return <Svg viewBox="0 0 24 24" {...props}>
+                <Line x1="5" y1="19" x2="19" y2="5" stroke={color} strokeWidth="2" strokeLinecap="round" />
+                <Circle cx="5" cy="19" r="1.5" fill={color} />
+                <Circle cx="19" cy="5" r="1.5" fill={color} />
+            </Svg>
         case 'doodle':
             return <Svg viewBox="-2 0 48 42" {...props} >
                 <G id="Page-1" stroke="none" strokeWidth="1" fill="none" fillRule="evenodd" strokeLinecap="round" strokeLinejoin="round">

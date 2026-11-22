@@ -368,7 +368,7 @@ function EditorToolbar({
     }
 
     const rullerBtn = <IconButton onPress={() => onModeButtonClick(Pickers.RULER, 70)} color={rulerColor}
-        iconType="MDI" icon="vector-line" size={49} iconSize={45} selected={isRulerMode} ensureContrast={true} />;
+        iconType="svg" icon="line-tool" size={49} iconSize={45} selected={isRulerMode} ensureContrast={true} />;
 
 
 
