@@ -1913,7 +1913,9 @@ export default class FolderGallery extends React.Component {
                     <View
                       style={{
                         flexDirection: asTiles ? rowReverse : 'column',
-                        flexWrap: 'wrap',
+                        // list mode must not wrap: a wrapping column spills rows into extra
+                        // off-screen columns once they exceed the screen height
+                        flexWrap: asTiles ? 'wrap' : 'nowrap',
                         minWidth: '100%',
                       }}
                     >
