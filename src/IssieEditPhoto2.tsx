@@ -701,7 +701,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         analyticEvent(LocalAnalyticEvent.worksheet_exported);
 
         FileSystem.main
-            .exportWorksheet(pageRef.current)
+            .exportWorksheetForShare(pageRef.current)
             .then(sheetArchivePath => {
                 //trace('share worksheet file', sheetArchivePath);
                 const shareOptions = {

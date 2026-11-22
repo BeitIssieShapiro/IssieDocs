@@ -9,6 +9,7 @@ import { WorkSheet } from './work-sheet';
 import { trace, assert } from './log';
 import ImageResizer from '@bam.tech/react-native-image-resizer';
 import { unzip, zip } from 'react-native-zip-archive';
+import { stampPackage } from '@beitissieshapiro/issie-shared';
 import { TemporaryDirectoryPath } from 'react-native-fs';
 import { PromiseAllProgress } from './utils';
 import uuid from 'react-native-uuid';
@@ -1390,6 +1391,24 @@ export class FileSystem {
     });
   }
 
+  // file functions with a position want a plain path, without file://
+  static plainPath(p) {
+    return p.startsWith('file://') ? p.substring(7) : p;
+  }
+
+  // lets other Issie apps tell this is an IssieDocs file; the export works without it
+  static async stampAsIssieDocs(zipPath, kind) {
+    await stampPackage(RNFS, FileSystem.plainPath(zipPath), { app: 'issiedocs', kind })
+      .catch(e => trace('stamp package failed', zipPath, e));
+    return zipPath;
+  }
+
+  // a single worksheet to share; inner archives of folders and backups are not stamped
+  async exportWorksheetForShare(sheet) {
+    const path = await this.exportWorksheet(sheet);
+    return path && FileSystem.stampAsIssieDocs(path, 'worksheet');
+  }
+
   async exportFolder(folder) {
     if (!folder) return;
     await folder.reloadedIfNeeded();
@@ -1462,7 +1481,8 @@ export class FileSystem {
       );
       await RNFS.unlink(targetPath).catch(ignore);
 
-      return zip(allZipPaths, targetPath).then(path => _androidFileName(path));
+      return zip(allZipPaths, targetPath)
+        .then(path => FileSystem.stampAsIssieDocs(_androidFileName(path), 'folder'));
     });
   }
 
@@ -1519,7 +1539,7 @@ export class FileSystem {
         await RNFS.unlink(targetPath).catch(ignore);
         const fileList = allZipPaths.filter(f => f != undefined);
         return zip(fileList, targetPath).then(path =>
-          _androidFileName(path),
+          FileSystem.stampAsIssieDocs(_androidFileName(path), 'backup'),
         );
       },
     );

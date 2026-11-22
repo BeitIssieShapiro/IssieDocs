@@ -20,6 +20,7 @@ import { isErrorWithCode, pick, types } from '@react-native-documents/picker';
 import Search from './search.js';
 import SettingsMenu from './settings-ui';
 import Share from 'react-native-share';
+import * as RNFS from 'react-native-fs';
 
 import FolderNew from './FolderNew';
 import FileNew from './FileNew';
@@ -77,7 +78,9 @@ import {
 } from './common/firebase';
 import {
   AnalyticEvent,
+  checkPackage,
   loadLanguage,
+  showPackageCheckAlert,
   updateUISettings,
 } from '@beitissieshapiro/issie-shared';
 
@@ -167,11 +170,6 @@ export default class FolderGallery extends React.Component {
       this.setEditEnabled(false);
       this.linkingListener = Linking.addEventListener('url', this._handleOpenURL);
 
-      if (this.context?.url) {
-        trace('open with URL:', this.context);
-        setTimeout(() => this._handleOpenURL({ url: this.context?.url }));
-      }
-
       //load only the folders
       let folders = await FileSystem.main.getRootFolders();
       //trace("folders loaded", folders)
@@ -201,6 +199,14 @@ export default class FolderGallery extends React.Component {
         if (Platform.OS != 'android') {
           SplashScreen.hide();
         }
+        // a file that launched the app: open it once the splash is gone - an alert
+        // shown while the splash is still closing is dropped by iOS
+        setTimeout(() => {
+          if (this.context?.url) {
+            trace('open with URL:', this.context);
+            this._handleOpenURL({ url: this.context.url });
+          }
+        }, 1000);
       }, remaining);
     }
   };
@@ -226,7 +232,14 @@ export default class FolderGallery extends React.Component {
     setNavParam(this.props.navigation, 'isMenuOpened', !this.state.showMenu);
   };
 
-  _handleOpenURL = async event => {
+  // a failure while opening a file must not pass silently
+  _handleOpenURL = event =>
+    this._openURL(event).catch(error => {
+      this.setState({ progress: undefined });
+      Alert.alert(translate('ImportError'), String(error?.message || error));
+    });
+
+  _openURL = async event => {
     console.log('_handleOpenURL event:', JSON.stringify(event));
     let url = event.url;
     url = decodeURI(url);
@@ -247,6 +260,13 @@ export default class FolderGallery extends React.Component {
       ext: url.endsWith('.zip') ? 'zip' : 'jpg',
     });
     if (url.endsWith('.zip')) {
+      const check = await checkPackage(RNFS, FileSystem.plainPath(url), 'issiedocs');
+      if (!check.ok) {
+        // another Issie app's file: say whose it is, offer to get/open that app
+        showPackageCheckAlert(check, FileSystem.plainPath(url), 'issiedocs', p =>
+          Share.open({ url: 'file://' + p, type: 'application/zip', failOnCancel: false }));
+        return;
+      }
       return FileSystem.main.extractZipInfo(url).then(zipInfo => {
         if (!zipInfo) {
           Alert.alert(translate('ImportError'), translate('InvalidZipFile'));
@@ -588,7 +608,7 @@ export default class FolderGallery extends React.Component {
     analyticEvent(LocalAnalyticEvent.worksheet_exported);
 
     FileSystem.main
-      .exportWorksheet(this.state.selected)
+      .exportWorksheetForShare(this.state.selected)
       .then(sheetArchivePath => {
         trace('share file', sheetArchivePath);
         const shareOptions = {

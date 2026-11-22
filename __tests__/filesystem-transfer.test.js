@@ -21,6 +21,7 @@ jest.mock('react-native-fs', () => ({
   touch: jest.fn(),
 }));
 jest.mock('react-native-zip-archive', () => ({ unzip: jest.fn(), zip: jest.fn() }));
+jest.mock('@beitissieshapiro/issie-shared', () => ({ stampPackage: jest.fn(() => Promise.resolve()) }));
 jest.mock('@bam.tech/react-native-image-resizer', () => ({}));
 jest.mock('react-native-uuid', () => ({}));
 jest.mock('../src/lang', () => ({
