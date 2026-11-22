@@ -639,7 +639,8 @@ export class FileSystem {
     this._notify();
   }
 
-  async saveFile(uri, filePath, isCopy) {
+  // skipReload: for batch saves (e.g. PDF import) - the caller reloads the folder once when done
+  async saveFile(uri, filePath, isCopy, skipReload) {
     trace('saveFile', arguments);
     //asserts that the filePath is in this filesystem:
     if (filePath.indexOf(this._basePath) != 0) {
@@ -707,9 +708,11 @@ export class FileSystem {
               .then(
                 //Success
                 async () => {
-                  await folder.reload();
+                  if (!skipReload) {
+                    await folder.reload();
+                  }
                   resolve();
-                  this._notify(folder.ID);
+                  if (!skipReload) this._notify(folder.ID);
                 },
                 //on error
                 err => this._handleSaveFileError('', err, reject),
@@ -737,6 +740,7 @@ export class FileSystem {
           .then(
             //Success
             async () => {
+              if (skipReload) return resolve();
               //check of the file was moved from another folder
               if (!isCopy && uri.startsWith(this._basePath)) {
                 const parseObjFrom = this._parsePath(uri);

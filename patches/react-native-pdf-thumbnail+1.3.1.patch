@@ -15,3 +15,20 @@ index 921b578..4519eb0 100644
      val canvas = Canvas(bitmapWhiteBG)
      canvas.drawBitmap(bitmap, 0f, 0f, null)
      bitmap.recycle()
+diff --git a/node_modules/react-native-pdf-thumbnail/ios/PdfThumbnail.swift b/node_modules/react-native-pdf-thumbnail/ios/PdfThumbnail.swift
+index 4869aed..21384a4 100644
+--- a/node_modules/react-native-pdf-thumbnail/ios/PdfThumbnail.swift
++++ b/node_modules/react-native-pdf-thumbnail/ios/PdfThumbnail.swift
+@@ -80,7 +80,11 @@ class PdfThumbnail: NSObject {
+                 reject("INVALID_PAGE", "Page number \(page) is invalid, file has \(pdfDocument.pageCount) pages", nil)
+                 return
+             }
+-            if let pageResult = generatePage(pdfPage: pdfPage, filePath: filePath, page: page, quality: quality) {
++            // free each page's bitmap and JPEG data before rendering the next (long PDFs ran out of memory)
++            let pageResult = autoreleasepool {
++                generatePage(pdfPage: pdfPage, filePath: filePath, page: page, quality: quality)
++            }
++            if let pageResult = pageResult {
+                 result.append(pageResult)
+             } else {
+                 reject("INTERNAL_ERROR", "Cannot write image data", nil)

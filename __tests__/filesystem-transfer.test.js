@@ -242,6 +242,24 @@ describe('folder moves and backup restoration', () => {
     await expect(filesystem.addFolder(name, '', 'blue', true)).rejects.toBe('IllegalCharacterInFolderName');
   });
 
+  it('saves imported PDF pages without reloading the folder per page', async () => {
+    await write('folders/School/existing.jpg');
+    await load();
+    const folder = filesystem.findFolderByID('School');
+    await folder.reload();
+    const reload = jest.spyOn(folder, 'reload');
+    for (let i = 0; i < 5; i++) {
+      const page = await write(`tmp/pdf-page-${i}.jpg`, `page ${i}`);
+      await filesystem.saveFile(page, root + `/folders/School/Imported/${i}.jpg`, false, true);
+    }
+    expect(reload).not.toHaveBeenCalled();
+
+    await folder.reload();
+    const sheet = await folder.getItem('Imported');
+    expect(sheet.count).toBe(5);
+    expect(await fs.promises.readFile(sheet.getPage(4), 'utf8')).toBe('page 4');
+  });
+
   it('copies all multipage worksheet files while retaining the original', async () => {
     await write('folders/School/Original/0.jpg', 'page zero');
     await write('folders/School/Original/1.jpg', 'page one');

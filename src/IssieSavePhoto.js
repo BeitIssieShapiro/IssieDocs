@@ -457,11 +457,17 @@ export default class IssieSavePhoto extends React.Component {
 
         if (this.state.multiPage) {
           //create a folder with the name of the file (happens implicitly)
+          // save without reloading the folder per page (quadratic for long PDFs), then reload once
           for (let i = 0; i < this.state.pages.length; i++) {
             let page = this.state.pages[i];
-            await FileSystem.main.saveFile(page, filePath + "/" + i + ".jpg");
+            await FileSystem.main.saveFile(page, filePath + "/" + i + ".jpg", false, true);
           }
           thumbnailSrc = filePath + "/0" + ".jpg";
+          const savedFolder = FileSystem.main.findFolderByID(FileSystem.main._parsePath(thumbnailSrc).folderID);
+          if (savedFolder) {
+            await savedFolder.reload();
+            FileSystem.main._notify(savedFolder.ID);
+          }
         } else {
           //move/copy entire folder, or save single file
           await FileSystem.main.saveFile(newPathToSave, filePath, this.isCopyMode());
