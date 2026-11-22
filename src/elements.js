@@ -739,12 +739,12 @@ export function getPageNavigationButtons(left, width, isFirst, isLast, callback)
 
         {isFirst ?
             <View /> :
-            getRoundedButton(() => callback(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 155, height: 40 }, 'row-reverse')
+            getRoundedButton(() => callback(-1), 'chevron-left', translate("BtnPreviousPage"), 30, 30, { width: 155, height: 40 }, 'row-reverse', undefined, undefined, undefined, undefined, "MI")
         }
 
         {isLast ?
             <View /> :
-            getRoundedButton(() => callback(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 155, height: 40 }, 'row')
+            getRoundedButton(() => callback(1), 'chevron-right', translate("BtnNextPage"), 30, 30, { width: 155, height: 40 }, 'row', undefined, undefined, undefined, undefined, "MI")
         }
 
     </View>
