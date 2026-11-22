@@ -108,6 +108,7 @@ export enum LocalAnalyticEvent {
   page_duplicated = 'page_duplicated',
   page_shared = 'page_shared',
   page_navigation = 'page_navigation',
+  page_navigator_opened = 'page_navigator_opened',
   blank_page_added = 'blank_page_added',
 
   // Folder Management

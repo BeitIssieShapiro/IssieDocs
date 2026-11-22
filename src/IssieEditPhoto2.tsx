@@ -21,6 +21,7 @@ import { StackScreenProps } from '@react-navigation/stack';
 import { CurrentEdited, ElementBase, ElementTypes, MoveTypes, Offset, SketchElement, SketchElementAttributes, SketchImage, SketchLine, SketchOverlay, SketchPath, SketchPoint, SketchTable, SketchText, TableContext } from './canvas/types';
 import { capturePiece, computeFill, NormRect, PageSnapshot } from './canvas/raster';
 import Canvas from './canvas/canvas';
+import { replayPageQueue } from './canvas/page-state';
 import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
 //import { trace } from './log';
@@ -47,6 +48,7 @@ import { analyticEvent, LocalAnalyticEvent } from './common/firebase';
 import { CanvasScroll } from './canvas/canvas-elements';
 import { categorizeCount } from '@beitissieshapiro/issie-shared';
 import FloatingSpeechButtons from './FloatingSpeechButtons';
+import { PageNavigator } from './page-navigator';
 
 type EditPhotoScreenProps = StackScreenProps<RootStackParamList, 'EditPhoto'>;
 
@@ -90,6 +92,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [mode, setMode] = useState<EditModes>(EditModes.Text);
     const [eraseMode, setEraseMode] = useState<boolean>(false);
     const [openContextMenu, setOpenContextMenu] = useState<boolean>(false);
+    const [showPageNavigator, setShowPageNavigator] = useState<boolean>(false);
     const [hasLock, setHasLock] = useState<boolean>(false);
     const [currentFile, setCurrentFile] = useState<string>(page.defaultSrc);
     const [currPageIndex, setCurrPageIndex] = useState<number>(pageIndex ?? 0);
@@ -857,173 +860,31 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         //console.log("Queue:", q.map(elem=>`${elem.type}: ${elem.elem.from+","+elem.elem.to}\n`))
 
-        let _texts = [] as SketchText[];
-        let _images = [] as SketchImage[];
-        let _tables = [] as SketchTable[]
-        let _paths = [] as SketchPath[];
-        let _rulers = [] as SketchLine[];
-        let _audio = [] as SketchElement[];
-        let _overlays = [] as SketchOverlay[];
-
-        let fontSize
-        let fontName = undefined
-        let textAlignment
-        let textBold
-        let textItalic
-        let textUnderline
-        let strokeWidth
-        let markerStrokeWidth
-        let markerColor
-        let brushColor
-        let rulerColor
-        let rulerStrokeWidth
-        let textColor
-        let latestMode: EditModes | undefined
-        let _pageHeightAddition = 0;
-        let _background = undefined;
-
-        for (let i = 0; i < q.length; i++) {
-            if (q[i].type === "background") {
-                _background = q[i].elem.type;
-            } else if (q[i].type === 'text') {
-                const txtElem = cloneElem(q[i].elem);
-
-                //first try to find same ID and replace, or add it
-                let found = false;
-
-                fontSize = txtElem.fontSize;
-                fontName = txtElem.fontFamily;
-
-                if (!txtElem.alignment) {
-                    txtElem.alignment = txtElem.rtl ? "Right" : "Left";
-                }
-                textAlignment = txtElem.alignment;
-                textColor = txtElem.color;
-                textBold = txtElem.bold;
-                textItalic = txtElem.italic;
-                textUnderline = txtElem.underline;
-                latestMode = EditModes.Text;
-
-                for (let j = 0; j < _texts.length; j++) {
-                    if (_texts[j].id === txtElem.id) {
-                        if (txtElem.text.length == 0) {
-                            // remove text
-                            _texts = _texts.filter(t => t.id !== txtElem.id);
-                        } else {
-                            _texts[j] = txtElem;
-                        }
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    _texts.push(txtElem);
-                }
-            } else if (q[i].type === 'path') {
-                const sketchElem = q[i].elem as SketchPath;
-                if (sketchElem.isMarker || sketchElem.color.length > 7) {
-                    markerStrokeWidth = sketchElem.strokeWidth;
-                    markerColor = sketchElem.color.substring(0, sketchElem.color.length - 2);
-                    //latestMode = EditModes.Marker;
-                    sketchElem.isMarker = true;
-
-                } else {
-                    // for cases it is missing
-                    sketchElem.isMarker = false;
-                    strokeWidth = sketchElem.strokeWidth
-                    brushColor = sketchElem.color;
-                    latestMode = EditModes.Brush;
-                }
-                _paths.push(sketchElem);
-            } else if (q[i].type === 'line') {
-                _rulers = _rulers.filter(l => l.id !== q[i].elem.id);
-                const lineElem = q[i].elem as SketchLine;
-
-                rulerColor = lineElem.color;
-                rulerStrokeWidth = lineElem.strokeWidth;
-
-                _rulers.push(cloneElem(lineElem));
-                //latestMode = EditModes.Ruler;
-            } else if (q[i].type === 'lineDelete') {
-                _rulers = _rulers.filter(l => l.id !== q[i].elem.id);
-                //latestMode = EditModes.Ruler;
-            } else if (q[i].type === 'image') {
-                // translate the relative path to full path:
-                let elem = cloneElem(q[i].elem);
-                if (elem.file) {
-                    elem = {
-                        ...elem,
-                        ...(elem.file ? { src: { uri: FileSystem.main.getAttachmentBase(pageRef.current, currPageIndexRef.current) + elem.file } } : {})
-                    }
-                }
-                if (elem.isCutPiece) {
-                    _overlays.push({
-                        id: elem.id, kind: "piece", x: elem.x, y: elem.y, width: elem.width, height: elem.height,
-                        src: elem.src?.uri, afterPath: _paths.length,
-                    });
-                    if (elem.id === activePieceIdRef.current) _images.push(elem);
-                } else {
-                    _images.push(elem);
-                }
-                //latestMode = EditModes.Image;
-            } else if (q[i].type === 'imagePosition') {
-                const piece = _overlays.find(o => o.kind === "piece" && o.id === q[i].elem.id);
-                if (piece) {
-                    Object.assign(piece, { x: q[i].elem.x, y: q[i].elem.y, width: q[i].elem.width, height: q[i].elem.height });
-                }
-                const elemIndex = _images.findIndex(ci => ci.id === q[i].elem.id);
-                if (elemIndex >= 0) {
-                    const updatedImage = {
-                        ..._images[elemIndex],
-                        width: q[i].elem.width,
-                        height: q[i].elem.height,
-                        x: q[i].elem.x,
-                        y: q[i].elem.y,
-                    }
-                    _images[elemIndex] = updatedImage;
-                    //latestMode = EditModes.Image;
-                }
-            } else if (q[i].type === 'imageDelete') {
-                _overlays = _overlays.filter(o => !(o.kind === "piece" && o.id === q[i].elem.id));
-                const elemIndex = _images.findIndex(ci => ci.id === q[i].elem.id);
-                if (elemIndex >= 0) {
-                    _images.splice(elemIndex, 1);
-                    //latestMode = EditModes.Image;
-                }
-            } else if (q[i].type === 'table') {
-                _tables = _tables.filter(t => t.id !== q[i].elem.id);
-                const tableElem = cloneElem(q[i].elem) as SketchTable;
-                if (tableElem.strokeDash && !Array.isArray(tableElem.strokeDash)) {
-                    tableElem.strokeDash = (tableElem.strokeDash as string).split(",").map((n: string) => parseInt(n)) as [number, number];
-                }
-                _tables.push(tableElem);
-                //latestMode = EditModes.Table;
-            } else if (q[i].type === 'tableDelete') {
-                _tables = _tables.filter(t => t.id !== q[i].elem.id);
-                // delete all cell text related
-                _texts = _texts.filter(tct => tct.tableId !== q[i].elemID)
-                //latestMode = EditModes.Table;
-            } else if (q[i].type === 'audio') {
-                _audio.push(cloneElem(q[i].elem));
-                //latestMode = EditModes.Audio;
-            } else if (q[i].type === 'audioDelete') {
-                _audio = _audio.filter(t => t.id !== q[i].elem.id);
-                //latestMode = EditModes.Audio;
-            } else if (q[i].type === 'audioPosition') {
-                const elemIndex = _audio.findIndex(ci => ci.id === q[i].elem.id);
-                if (elemIndex >= 0) {
-                    _audio[elemIndex] = { ..._audio[elemIndex], ...q[i].elem }
-                }
-            } else if (q[i].type === 'fill' || q[i].type === 'cut') {
-                _overlays.push({ ...q[i].elem, kind: q[i].type, afterPath: _paths.length });
-            } else if (q[i].type === 'changePageHeightAddition') {
-                // Handle page height change from queue
-                const newHeight = q[i].elem.height;
-                if (newHeight && newHeight > 0) {
-                    _pageHeightAddition = newHeight;
-                }
-            }
-        }
+        const {
+            texts: _texts,
+            images: _images,
+            tables: _tables,
+            paths: _paths,
+            rulers: _rulers,
+            audio: _audio,
+            overlays: _overlays,
+            fontSize: fontSize,
+            fontName: fontName,
+            textAlignment: textAlignment,
+            textBold: textBold,
+            textItalic: textItalic,
+            textUnderline: textUnderline,
+            strokeWidth: strokeWidth,
+            markerStrokeWidth: markerStrokeWidth,
+            markerColor: markerColor,
+            brushColor: brushColor,
+            rulerColor: rulerColor,
+            rulerStrokeWidth: rulerStrokeWidth,
+            textColor: textColor,
+            latestMode: latestMode,
+            pageHeightAddition: _pageHeightAddition,
+            background: _background,
+        } = replayPageQueue(q, FileSystem.main.getAttachmentBase(pageRef.current, currPageIndexRef.current), activePieceIdRef.current);
 
         pathsRef.current = _paths;
         textsRef.current = _texts;
@@ -2531,6 +2392,23 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         await loadPage(pageRef.current, newIndex);
     }
 
+    async function openPageNavigator() {
+        await saveText(); // so the current page's thumbnail is up to date
+        analyticEvent(LocalAnalyticEvent.page_navigator_opened, { page_count: pageRef.current.count });
+        setShowPageNavigator(true);
+    }
+
+    async function goToPage(index: number) {
+        setShowPageNavigator(false);
+        if (index === currPageIndexRef.current) return;
+        await saveText();
+        analyticEvent(LocalAnalyticEvent.page_navigation, {
+            direction: 'navigator',
+            page_index: index
+        });
+        await loadPage(pageRef.current, index);
+    }
+
     function handleRenderElements(elem: SketchElement) {
         if (elem.type == "audio") {
             return <AudioElement2
@@ -2729,6 +2607,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onDeletePage={pageRef.current && pageRef.current.count > 1 ? handleDeletePage : undefined}
                 deletePageIndex={currPageIndex + 1}
                 pagesCount={pageRef.current.count}
+                onPageNavigator={pageRef.current && pageRef.current.count > 1 ? openPageNavigator : undefined}
 
                 onDelete={undefined}
                 onMove={undefined}
@@ -2916,6 +2795,23 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 windowSize={windowSize}
                 sideMargin={sideMargin}
             />
+
+            {/** page navigator button */}
+            {pageRef.current && pageRef.current.count > 1 && !showPageNavigator &&
+                <View style={{ position: 'absolute', bottom: 50, alignSelf: 'center', zIndex: 100 }}>
+                    {getRoundedButton(openPageNavigator, 'view-agenda-outline', "", 30, 30, { width: 60, height: 40 }, 'row', true, undefined, undefined, undefined, "MDI", "nav-page-navigator")}
+                </View>}
+
+            {showPageNavigator && pageRef.current && pageRef.current.count > 1 &&
+                <PageNavigator
+                    sheet={pageRef.current}
+                    currentIndex={currPageIndex}
+                    top={toolbarHeight + dimensions.toolbarMargin}
+                    bottom={0}
+                    referenceWidth={canvasSize.width}
+                    onSelectPage={goToPage}
+                    onClose={() => setShowPageNavigator(false)}
+                />}
 
             {/** previous page button */}
             {

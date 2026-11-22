@@ -23,6 +23,7 @@ export function FileContextMenu({
 
   onDeletePage,
   deletePageIndex,
+  onPageNavigator,
   pagesCount,
   onDelete,
   onRename,
@@ -201,6 +202,18 @@ export function FileContextMenu({
                     icon="edit"
                     onPress={callbackAndClose(onRename)}
                     text={translate('BtnChangeName')}
+                  />
+                  <Seperator95 />
+                </React.Fragment>
+              )}
+              {onPageNavigator && (
+                <React.Fragment>
+                  <OneMenu
+                    scale={scale}
+                    icon="view-agenda-outline"
+                    iconType={'MDI'}
+                    onPress={callbackAndClose(onPageNavigator)}
+                    text={translate('PageNavigator')}
                   />
                   <Seperator95 />
                 </React.Fragment>
