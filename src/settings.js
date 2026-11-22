@@ -31,6 +31,7 @@ export const FEATURES = {
     voice: 5,
     cut: 6,
     fill: 7,
+    textFormat: 8, // formatting part of a text (bar for the selection)
 }
 
 // Features built but not yet released. Remove an entry to ship that feature.
@@ -105,7 +106,7 @@ export function getUseColorSetting() {
 export function getFeaturesSetting() {
     const features = getSetting(FEATURES.name)
     if (features && Array.isArray(features)) return features;
-    return [FEATURES.image, FEATURES.marker, FEATURES.ruler, FEATURES.table, FEATURES.voice, FEATURES.cut, FEATURES.fill];
+    return [FEATURES.image, FEATURES.marker, FEATURES.ruler, FEATURES.table, FEATURES.voice, FEATURES.cut, FEATURES.fill, FEATURES.textFormat];
 }
 
 export function getUseTextSetting() {
@@ -129,3 +130,16 @@ export function isSettingEmpty(val) {
     return val == undefined || val == null;
 }
 
+
+// whether a released feature is turned on in the settings
+export function isFeatureOn(feature) {
+    return isFeatureReleased(feature) && getFeaturesSetting().includes(feature);
+}
+
+// The keyboard's text tools (bar above the keyboard, whole text box) and text styling (bar for the
+// selected part) are one choice: with text styling on, the keyboard tools are off, and the other way
+// round. Until text styling is released, the keyboard tools keep their own setting.
+export function keyboardTextToolsOn() {
+    if (isFeatureReleased(FEATURES.textFormat)) return !isFeatureOn(FEATURES.textFormat);
+    return getSetting(KB_TEXT_TOOLS.name, KB_TEXT_TOOLS.no) === KB_TEXT_TOOLS.yes;
+}

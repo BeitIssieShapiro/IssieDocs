@@ -264,6 +264,7 @@ export const languageMap = {
     Ruler: 'קו ישר',
     FillTool: 'מילוי צבע',
     CutTool: 'גזירה',
+    TextFormatTool: 'עיצוב טקסט',
     Image: 'תמונה',
     Marker: 'מדגש',
     Voice: 'הקלטה',
@@ -468,6 +469,7 @@ export const languageMap = {
     Ruler: 'خط مستقيم', // or "مسطرة رسم"
     FillTool: 'تعبئة لون',
     CutTool: 'قص',
+    TextFormatTool: 'تنسيق النص',
     Image: 'صورة',
     Marker: 'محدد',
     Voice: 'تسجيل',
@@ -674,6 +676,7 @@ export const languageMap = {
     Ruler: 'Line',
     FillTool: 'Fill',
     CutTool: 'Cut',
+    TextFormatTool: 'Text styling',
     Image: 'Image',
     Marker: 'Marker',
     Voice: 'Recording',

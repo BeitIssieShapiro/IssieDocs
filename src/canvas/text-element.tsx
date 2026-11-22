@@ -7,7 +7,8 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-na
 import { MyIcon } from "../common/icons";
 import { useTranscription, speechTranscriptionEmitter, SpeechTranscription } from "../use-transcription";
 import { translate } from "../lang";
-import { getSetting, KB_TEXT_TOOLS, KB_SPEAK_DICTATE } from "../settings";
+import { getSetting, KB_SPEAK_DICTATE, keyboardTextToolsOn } from "../settings";
+import { SpanStyle, textSegments } from "./text-spans";
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 const AnimatedIcon = Animated.createAnimatedComponent(MyIcon);
@@ -29,6 +30,13 @@ interface TextElementProps {
     language?: string;
     // view points the text is shifted by while the piece it belongs to is dragged
     dragOffset?: { dx: number; dy: number };
+    // the selection while editing (start..end), for the selection format toolbar
+    onSelectionChange?: (id: string, selection: { start: number; end: number }) => void;
+    // hide the iOS edit menu while editing (the format bar has cut/copy/paste). It must be hidden
+    // from the start: turning it off when a selection is made does not close a menu already shown
+    hideEditMenu?: boolean;
+    // the edited text box's layout (view points, in the canvas), to place the format bar
+    onEditLayout?: (id: string, layout: { x: number; y: number; width: number; height: number }) => void;
     // false: touches pass through to the canvas (select tool: a drag on the text moves its piece,
     // instead of starting the system's drag of selectable text, which hides the text meanwhile)
     touchable?: boolean;
@@ -50,11 +58,22 @@ function TextElement({
     language,
     dragOffset,
     touchable = true,
+    onSelectionChange,
+    hideEditMenu,
+    onEditLayout,
 }: TextElementProps, ref: any) {
     const [revision, setRevision] = useState<number>(0)
     //console.log("text ratio", ratio, actualWidth, text.fontSize)
     const [textTillSelection, setTextTillSelection] = useState<string>(text.text);
     const [selection, setSelection] = useState({ start: text.text.length, end: text.text.length });
+
+    // While a range is selected the input's selection is controlled (mirrored from the user's):
+    // formatting re-renders the styled text, and iOS keeps the selection only if it is given in
+    // that same update. A plain cursor stays uncontrolled, so typing is not affected.
+    // the range is kept with the text it was selected in: after cut/paste it no longer applies
+    const [rangeSelection, setRangeSelection] = useState<{ start: number; end: number; text: string } | undefined>(undefined);
+    const heldSelection = rangeSelection && rangeSelection.text === text.text ?
+        { start: rangeSelection.start, end: rangeSelection.end } : undefined;
     const textBGColor = useSharedValue<ColorValue>("yellow");
     const moveIconDisplay = useSharedValue<'none' | 'flex' | undefined>("flex");
     const table = text.tableId && tables?.find(table => table.id == text.tableId);
@@ -101,7 +120,7 @@ function TextElement({
         onTextChanged: handleTranscriptionText,
         language: language || 'en',
         enabled: editMode,
-        textToolsEnabled: getSetting(KB_TEXT_TOOLS.name, KB_TEXT_TOOLS.no) === KB_TEXT_TOOLS.yes,
+        textToolsEnabled: keyboardTextToolsOn(),
         speakDictateEnabled: getSetting(KB_SPEAK_DICTATE.name, KB_SPEAK_DICTATE.yes) === KB_SPEAK_DICTATE.yes,
     });
 
@@ -203,6 +222,23 @@ function TextElement({
         ...fontPadding,
     };
 
+    // The text with its styled ranges: a segment per style, each overriding the text's own style
+    const spanStyle = (st: SpanStyle) => ({
+        ...(st.color !== undefined ? { color: st.color } : {}),
+        ...(st.fontSize !== undefined ? { fontSize: st.fontSize * ratio } : {}),
+        ...(st.bold !== undefined ? { fontWeight: st.bold ? 'bold' : 'normal' } : {}),
+        ...(st.italic !== undefined ? { fontStyle: st.italic ? 'italic' : 'normal' } : {}),
+        ...(st.underline !== undefined ? { textDecorationLine: st.underline ? 'underline' : 'none' } : {}),
+    }) as any;
+    const renderStyled = (content: string, suffix = "") => {
+        if (!text.spans?.length) return content + suffix;
+        return [
+            ...textSegments(content, text.spans).map(seg =>
+                <Text key={seg.start} style={spanStyle(seg.style)}>{seg.text}</Text>),
+            ...(suffix ? [suffix] : []),
+        ];
+    };
+
     const highlightedTextSpans = useMemo(() => {
         if (!isSpeaking || !highlightRange) {
             return <Text allowFontScaling={false} style={[styles.textStyle, style]}>{text.text}</Text>;
@@ -228,6 +264,7 @@ function TextElement({
                 //direction={text.rtl ? "rtl" : "ltr"}
                 key={text.id}
                 testID="text-element-edit"
+                onLayout={(e) => onEditLayout?.(text.id, e.nativeEvent.layout)}
                 style={[styles.textInputHost, posStyle, { zIndex: 500 }, table && bgAnimatedStyle]}
                 {...(table ? {} : moveResponder.panHandlers)}
                 onStartShouldSetResponder={(e) => {
@@ -252,10 +289,22 @@ function TextElement({
                         !table && { minWidth: Math.max(text.fontSize * ratio, 20 / ratio) },
                         isSpeaking && { opacity: 0 }
                         ]}
-                        value={text.text}
+                        {...(text.spans?.length ? {} : { value: text.text })}
                         onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
-                        onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
-                    />
+                        {...(heldSelection ? { selection: heldSelection } : {})}
+                        contextMenuHidden={!!hideEditMenu}
+                        // spelling suggestions show in a bubble over the selection too
+                        spellCheck={hideEditMenu ? false : undefined}
+                        onSelectionChange={(e) => {
+                            const sel = e.nativeEvent.selection;
+                            setRangeSelection(sel.end !== sel.start ? { start: sel.start, end: sel.end, text: text.text } : undefined);
+                            setSelection(sel);
+                            onSelectionChange?.(text.id, e.nativeEvent.selection);
+                        }}
+                    >
+                        {/* styled text is given as children: the input shows the styles while editing */}
+                        {text.spans?.length ? renderStyled(text.text) : undefined}
+                    </AnimatedTextInput>
                     {isSpeaking && (
                         <Animated.View style={[bgAnimatedStyle,
                             { position: 'absolute', top: 0, left: 0, right: 0 },
@@ -275,7 +324,7 @@ function TextElement({
                             setRevision(prev => prev + 1)
                         }}
                     >
-                        {text.text + "M"}
+                        {renderStyled(text.text, "M")}
                     </Text>
                     {/* Second Hidden Text for Cursor Tracking */}
                     <Text
@@ -289,7 +338,7 @@ function TextElement({
                         }}
                     >
                         {/* Only render text up to the selection start */}
-                        {textTillSelection}
+                        {renderStyled(textTillSelection)}
                         {/* {text.text.substring(0, selection.start) + 'A'} */}
                     </Text>
                 </>
@@ -311,7 +360,7 @@ function TextElement({
                 ]}
                 onLayout={(e) => handleTextLayout(e, text)}
             >
-                {text.text}
+                {renderStyled(text.text)}
             </Text>
         </View>
     );

@@ -23,6 +23,7 @@ import { capturePiece, computeFill, NormRect, PageSnapshot } from './canvas/rast
 import Canvas from './canvas/canvas';
 import { replayPageQueue } from './canvas/page-state';
 import { cutPolygon, cutPlanIsEmpty, planCut, textCenter, topPieceAt } from './canvas/pieces';
+import { applySpanStyle, scaleSpanSizes, SpanStyle, updateSpansForEdit } from './canvas/text-spans';
 import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
 //import { trace } from './log';
@@ -41,7 +42,8 @@ import { AudioElement2 } from './audio-elem-new';
 import { Text } from 'react-native';
 import { migrateMetadata } from './state-migrate';
 import { PathCommand, scale } from '@shopify/react-native-skia';
-import { getSetting, SCROLL_BUTTONS, KB_SPEAK_DICTATE, SPEAK_DICTATE_MODE, getSpeechRateSetting } from './settings';
+import { getSetting, SCROLL_BUTTONS, KB_SPEAK_DICTATE, SPEAK_DICTATE_MODE, getSpeechRateSetting, FEATURES, isFeatureOn } from './settings';
+import Clipboard from '@react-native-clipboard/clipboard';
 import { useMessageBox } from './message';
 import { MyIcon } from './common/icons';
 import { generatePDF } from './pdf';
@@ -1252,6 +1254,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
 
 
+
+
     // A copy of the piece and everything on it, a little off the original.
     // Copying a selection leaves the page as it was: only the copy is a piece.
     function handleCopyPiece(id: string) {
@@ -1287,6 +1291,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         if (textElem) {
             // verify text elem has changed
             if (textElem.backup) {
+                const spansBefore = JSON.stringify(JSON.parse(textElem.backup).spans ?? []);
                 const changedElem = restoreElement(textElem) as SketchText;
                 const origElem = textElem as SketchText;
                 // compare the text elements
@@ -1300,7 +1305,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     changedElem.underline != origElem.underline ||
                     changedElem.fontFamily != origElem.fontFamily ||
                     changedElem.x != origElem.x ||
-                    changedElem.y != origElem.y) {
+                    changedElem.y != origElem.y ||
+                    JSON.stringify(changedElem.spans ?? []) != spansBefore) {
 
                     // remove the current selection height temp attr
                     delete origElem.tempTop2CursorHeight;
@@ -1488,6 +1494,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         //trace("handleTextChanged", newText)
         const textElem = textsRef.current.find(t => t.id == id);
         if (textElem) {
+            // styled ranges stay on their characters
+            textElem.spans = updateSpansForEdit(textElem.spans, textElem.text, newText);
             textElem.text = newText;
         }
         setTexts([...textsRef.current]);
@@ -1495,6 +1503,32 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         verifyCurrentEditTextIsVisible();
     }
 
+
+    // Formats part of the text being edited; saved with the rest of the edit
+    function handleFormatText(id: string, start: number, end: number, patch: SpanStyle) {
+        const textElem = textsRef.current.find(t => t.id == id);
+        if (!textElem) return;
+        const spans = applySpanStyle(textElem.spans, textElem.text.length, start, end, patch);
+        textElem.spans = spans.length ? spans : undefined;
+        textElem.width = undefined; // remeasure: sizes and weights change the width
+        setTexts([...textsRef.current]);
+    }
+
+    // Cut/copy/paste for a selection in the text being edited (the iOS menu is hidden then)
+    async function handleTextClipboard(id: string, start: number, end: number, action: "cut" | "copy" | "paste") {
+        const textElem = textsRef.current.find(t => t.id == id);
+        if (!textElem) return;
+        const selected = textElem.text.substring(start, end);
+        if (action === "copy") {
+            Clipboard.setString(selected);
+        } else if (action === "cut") {
+            Clipboard.setString(selected);
+            handleTextChanged(id, textElem.text.substring(0, start) + textElem.text.substring(end));
+        } else {
+            const pasted = await Clipboard.getString();
+            if (pasted) handleTextChanged(id, textElem.text.substring(0, start) + pasted + textElem.text.substring(end));
+        }
+    }
 
     // -------------------------------------------------------------------------
     //                          MOVE / DRAG HANDLERS
@@ -2236,7 +2270,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 const underlineChanged = textElem.underline !== textUnderlineRef.current;
 
                 textElem.color = textColorRef.current;
-                textElem.fontSize = fontSizeRef.current / ratioRef.current;
+                const newFontSize = fontSizeRef.current / ratioRef.current;
+                if (textElem.fontSize && Math.abs(newFontSize - textElem.fontSize) > 0.01) {
+                    // sizes set on parts of the text change in proportion
+                    textElem.spans = scaleSpanSizes(textElem.spans, newFontSize / textElem.fontSize);
+                }
+                textElem.fontSize = newFontSize;
                 textElem.alignment = textAlignmentRef.current;
                 textElem.fontFamily = textFontRef.current;
                 textElem.bold = textBoldRef.current;
@@ -2887,6 +2926,9 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onMoveTablePartEnd={handleMoveTablePartEnd}
                 onDeleteElement={handleDelete}
                 onCopyElement={handleCopyPiece}
+                onFormatText={handleFormatText}
+                onTextClipboard={handleTextClipboard}
+                textFormatEnabled={isFeatureOn(FEATURES.textFormat)}
                 onTextYOverflow={handleTextYOverflow}
                 imageSource={{ uri: currentFile }}
                 background={background}

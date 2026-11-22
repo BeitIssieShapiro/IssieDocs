@@ -1,5 +1,6 @@
 import { PathCommand } from "@shopify/react-native-skia";
 import { ImageURISource } from "react-native";
+import type { TextSpan } from "./text-spans";
 
 
 export type SketchPoint = [number, number]
@@ -62,6 +63,8 @@ export interface SketchText extends ElementBase {
     height?: number;
     pendingPageHeightIncrease?: number;
     tempTop2CursorHeight?: number;
+    // styled ranges overriding the text's own style (see text-spans)
+    spans?: TextSpan[];
 }
 
 export interface SketchImage extends ElementBase {

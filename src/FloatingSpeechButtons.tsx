@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { MyIcon } from './common/icons';
 import { isRTL } from './lang';
-import { getSetting, KB_TEXT_TOOLS } from './settings';
+import { keyboardTextToolsOn } from './settings';
 
 const BUTTON_WIDTH = 55;
 const BUTTON_HEIGHT = 55;
@@ -102,7 +102,7 @@ export default function FloatingSpeechButtons({
     const threeQuarterY = windowSize.height * 0.25 - totalHeight / 2;
     let bottom = threeQuarterY;
     if (keyboardHeight > 0) {
-        const textToolbarOn = getSetting(KB_TEXT_TOOLS.name, KB_TEXT_TOOLS.no) === KB_TEXT_TOOLS.yes;
+        const textToolbarOn = keyboardTextToolsOn();
         bottom = keyboardHeight + 20
         if (textToolbarOn) {
             console.log("[floating buttons - toolbar on")

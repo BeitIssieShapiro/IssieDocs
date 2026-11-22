@@ -77,6 +77,10 @@ import { trace } from "../log";
 import { FileSystem } from "../filesystem";
 import { cutShapePath, getOverlayImage, getUriImage, NormRect, pieceClipPath } from "./raster";
 import { buildDrawLayers, DrawItem, topPieceAt } from "./pieces";
+import { allHave, SpanStyle, styleAt } from "./text-spans";
+import { FORMAT_BAR_HEIGHT, TextFormatBar } from "./text-format-bar";
+import Clipboard from "@react-native-clipboard/clipboard";
+import { textSizes } from "../elements";
 
 const TEXT_SEARCH_MARGIN = 0; // 15;
 const TABLE_LINE_THRESHOLD = 7;
@@ -144,6 +148,10 @@ interface CanvasProps {
     onMoveTablePartEnd?: (tableContext: TableContext) => void;
     onDeleteElement: (type: ElementTypes, id: string) => void;
     onCopyElement?: (id: string) => void; // cut pieces
+    // formats part of a text: [start, end) of the text with this id
+    onFormatText?: (id: string, start: number, end: number, patch: SpanStyle) => void;
+    onTextClipboard?: (id: string, start: number, end: number, action: "cut" | "copy" | "paste") => void;
+    textFormatEnabled?: boolean; // the selection format bar (settings feature)
     onTextYOverflow?: (elemId: string) => void;
     onTextCursorChange?: () => void;
     imageSource?: ImageURISource;
@@ -184,6 +192,9 @@ function Canvas({
     onMoveCanvas,
     onDeleteElement,
     onCopyElement,
+    onFormatText,
+    onTextClipboard,
+    textFormatEnabled,
     onTextYOverflow,
     onTextCursorChange,
     paths,
@@ -374,6 +385,11 @@ function Canvas({
                 pt[1] >= el.y && pt[1] <= el.y + elemSize
             )) return true;
         }
+
+        // The text format bar
+        const bar = formatBarRectRef.current;
+        if (bar && pt[0] * ratioRef.current >= bar.x && pt[0] * ratioRef.current <= bar.x + bar.width &&
+            pt[1] * ratioRef.current >= bar.y && pt[1] * ratioRef.current <= bar.y + bar.height) return true;
 
         // Check image delete icon area (visible when image is selected)
         if ((currentElementTypeRef.current === ElementTypes.Image || currentElementTypeRef.current === ElementTypes.Cut)
@@ -793,6 +809,69 @@ function Canvas({
 
     const [, setImagesLoaded] = useState(0);
 
+    // The selection in the text being edited, and the format bar shown for it
+    const [textSelection, setTextSelection] = useState<{ id: string; start: number; end: number } | undefined>();
+    const handleTextSelection = useCallback((id: string, sel: { start: number; end: number }) =>
+        setTextSelection({ id, start: Math.min(sel.start, sel.end), end: Math.max(sel.start, sel.end) }), []);
+    useEffect(() => setTextSelection(undefined), [currentEdited.textId]);
+    // the edited text box's layout (view points), to place the bar under it
+    const [editLayout, setEditLayout] = useState<{ id: string; x: number; y: number; width: number; height: number } | undefined>();
+    const handleEditLayout = useCallback((id: string, l: { x: number; y: number; width: number; height: number }) =>
+        setEditLayout({ id, ...l }), []);
+    // with a cursor only, the bar offers Paste - when there is text to paste
+    const [canPaste, setCanPaste] = useState(false);
+    useEffect(() => {
+        if (!textFormatEnabled || !textSelection || textSelection.end > textSelection.start) return;
+        let live = true;
+        Clipboard.hasString().then(has => live && setCanPaste(has)).catch(() => { });
+        return () => { live = false; };
+    }, [textSelection, textFormatEnabled]);
+    const formatBarRectRef = useRef<{ x: number; y: number; width: number; height: number } | undefined>(undefined);
+
+    const renderFormatBar = () => {
+        formatBarRectRef.current = undefined;
+        const sel = textSelection;
+        if (!textFormatEnabled || currentElementType != ElementTypes.Text || !sel || sel.id !== currentEdited.textId) return null;
+        const text = texts?.find(t => t.id === sel.id);
+        if (!text || text.tableId) return null;
+        const pasteOnly = sel.end <= sel.start;
+        if (pasteOnly && !canPaste) return null;
+        const box = editLayout?.id === text.id ? editLayout : undefined;
+        // the first row: 6 format buttons, a divider, cut/copy/paste
+        const width = pasteOnly ? 48 : 9 * 40 + 18;
+        // above the text box, or below it when there is no room above; kept within the page width
+        const boxTop = box ? box.y : text.y * ratio;
+        const boxBottom = box ? box.y + box.height : (text.y + text.fontSize) * ratio;
+        const above = boxTop - FORMAT_BAR_HEIGHT - 8 >= 0;
+        const boxLeft = box ? box.x : text.rtl ? text.x * ratio - (text.width ?? 0) * ratio : text.x * ratio;
+        const boxRight = box ? box.x + box.width : boxLeft + (text.width ?? 0) * ratio;
+        const preferred = text.rtl ? boxRight - width : boxLeft;
+        const left = Math.max(0, Math.min(preferred, canvasWidth - width));
+        formatBarRectRef.current = above ?
+            { x: left, y: boxTop - 8 - FORMAT_BAR_HEIGHT * 2, width, height: FORMAT_BAR_HEIGHT * 2 } :
+            { x: left, y: boxBottom + 8, width, height: FORMAT_BAR_HEIGHT * 2 };
+        const at = styleAt(text.spans, sel.start);
+        const onSize = (step: 1 | -1) => {
+            const current = (at.fontSize ?? text.fontSize) * ratio;
+            const next = step > 0 ?
+                textSizes.find((sz: number) => sz > current + 0.5) ?? current + 5 :
+                [...textSizes].reverse().find((sz: number) => sz < current - 0.5) ?? Math.max(current - 5, 10);
+            onFormatText?.(text.id, sel.start, sel.end, { fontSize: next / ratio });
+        };
+        return <TextFormatBar
+            left={left}
+            {...(above ? { bottom: canvasHeight - (boxTop - 8) } : { top: boxBottom + 8 })}
+            pasteOnly={pasteOnly}
+            bold={allHave(text.spans, sel.start, sel.end, "bold", !!text.bold)}
+            italic={allHave(text.spans, sel.start, sel.end, "italic", !!text.italic)}
+            underline={allHave(text.spans, sel.start, sel.end, "underline", !!text.underline)}
+            color={at.color ?? text.color}
+            onFormat={patch => onFormatText?.(text.id, sel.start, sel.end, patch)}
+            onSize={onSize}
+            onClipboard={action => onTextClipboard?.(text.id, sel.start, sel.end, action)}
+        />;
+    };
+
     // A piece being dragged runs ahead of where its content was laid out: offset (view points)
     const pieceDelta = (pieceId?: string | null) => {
         const piece = pieceId ? images?.find(i => i.id === pieceId) : undefined;
@@ -989,9 +1068,14 @@ function Canvas({
                         language={language}
                         dragOffset={d}
                         touchable={currentElementType != ElementTypes.Cut}
+                        onSelectionChange={handleTextSelection}
+                        hideEditMenu={!!textFormatEnabled}
+                        onEditLayout={handleEditLayout}
                     />
                     return textElement;
                 })}
+
+                {renderFormatBar()}
 
                 {/* Lines in edit mode */}
                 {currentElementType == ElementTypes.Line && currentEdited.lineId &&

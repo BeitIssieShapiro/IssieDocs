@@ -476,7 +476,13 @@ export default function SettingsMenu(props) {
                             callback: () => { flipFeatureTougle(FEATURES.cut) },
                             selected: features?.includes(FEATURES.cut)
                         }] : []),
-                        {
+                        ...(isFeatureReleased(FEATURES.textFormat) ? [{
+                            icon: <AppText style={{ fontSize: 25 }}>{translate("TextFormatTool")}</AppText>,
+                            callback: () => { flipFeatureTougle(FEATURES.textFormat) },
+                            selected: features?.includes(FEATURES.textFormat)
+                        }] : []),
+                        // text styling replaces this switch: with it off, the keyboard tools are on
+                        ...(!isFeatureReleased(FEATURES.textFormat) ? [{
                             icon: <AppText style={{ fontSize: 25 }}>{translate("KeyboardTextTools")}</AppText>,
                             callback: () => {
                                 let newValue = kbTextTools == KB_TEXT_TOOLS.yes ? KB_TEXT_TOOLS.no : KB_TEXT_TOOLS.yes;
@@ -484,7 +490,7 @@ export default function SettingsMenu(props) {
                                 setKbTextToolsHandler(newValue)
                             },
                             selected: kbTextTools == KB_TEXT_TOOLS.yes
-                        }
+                        }] : []),
                     ], true)}
 
                     <View
