@@ -3,7 +3,7 @@
  */
 
 import { AppRegistry, View } from 'react-native';
-import { initLang, LANGUAGE_SETTINGS, loadLanguage, updateUISettings } from '@beitissieshapiro/issie-shared'
+import { initLang, IssieAlertHost, LANGUAGE_SETTINGS, loadLanguage, updateUISettings } from '@beitissieshapiro/issie-shared'
 import App from './src/App';
 import { name as appName } from './app.json';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -54,6 +54,7 @@ function SafeAppContainer(props) {
     }}>
         <SafeAreaProvider>
             <SafeApp />
+            <IssieAlertHost />
         </SafeAreaProvider>
     </GlobalContext.Provider>;
 }
