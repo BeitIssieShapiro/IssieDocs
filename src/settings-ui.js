@@ -24,6 +24,7 @@ import {
     getSetting, getUseColorSetting, FOLDERS_VIEW,
     getFeaturesSetting,
     FEATURES,
+    isFeatureReleased,
     SCROLL_BUTTONS,
     KB_TOOLBAR,
     KB_TEXT_TOOLS,
@@ -465,16 +466,16 @@ export default function SettingsMenu(props) {
                             callback: () => { flipFeatureTougle(FEATURES.voice) },
                             selected: features?.includes(FEATURES.voice)
                         },
-                        {
+                        ...(isFeatureReleased(FEATURES.fill) ? [{
                             icon: <AppText style={{ fontSize: 25 }}>{translate("FillTool")}</AppText>,
                             callback: () => { flipFeatureTougle(FEATURES.fill) },
                             selected: features?.includes(FEATURES.fill)
-                        },
-                        {
+                        }] : []),
+                        ...(isFeatureReleased(FEATURES.cut) ? [{
                             icon: <AppText style={{ fontSize: 25 }}>{translate("CutTool")}</AppText>,
                             callback: () => { flipFeatureTougle(FEATURES.cut) },
                             selected: features?.includes(FEATURES.cut)
-                        },
+                        }] : []),
                         {
                             icon: <AppText style={{ fontSize: 25 }}>{translate("KeyboardTextTools")}</AppText>,
                             callback: () => {

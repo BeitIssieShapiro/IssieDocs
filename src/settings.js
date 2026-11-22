@@ -33,6 +33,13 @@ export const FEATURES = {
     fill: 7,
 }
 
+// Features built but not yet released. Remove an entry to ship that feature.
+export const UNRELEASED_FEATURES = [FEATURES.cut, FEATURES.fill];
+
+export function isFeatureReleased(feature) {
+    return !UNRELEASED_FEATURES.includes(feature);
+}
+
 
 export const USE_COLOR = {
     name: 'useColor',

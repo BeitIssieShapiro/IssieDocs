@@ -7,7 +7,7 @@ import { getRowDirections, translate, useKeyboardLanguage } from "./lang";
 import { trace } from "./log";
 import { BrushSizePicker, MyColorPicker, TextSizePicker } from "./pickers";
 import { getSvgIcon, MarkerStroke } from "./svg-icons";
-import { FEATURES, getFeaturesSetting, getSetting, KB_SPEAK_DICTATE, SPEAK_DICTATE_MODE } from "./settings";
+import { FEATURES, getFeaturesSetting, isFeatureReleased, getSetting, KB_SPEAK_DICTATE, SPEAK_DICTATE_MODE } from "./settings";
 import { IIF } from "./canvas/utils";
 import { MyIcon } from "./common/icons";
 
@@ -403,11 +403,11 @@ function EditorToolbar({
     if (featuresRef.current.includes(FEATURES.ruler)) {
         extMenu.push(rullerBtn);
     }
-    if (featuresRef.current.includes(FEATURES.fill)) {
+    if (isFeatureReleased(FEATURES.fill) && featuresRef.current.includes(FEATURES.fill)) {
         extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.FILL, 70)} color={fillColor}
             iconType="MDI" icon="format-color-fill" size={49} iconSize={45} selected={isFillMode} ensureContrast={true} />);
     }
-    if (featuresRef.current.includes(FEATURES.cut)) {
+    if (isFeatureReleased(FEATURES.cut) && featuresRef.current.includes(FEATURES.cut)) {
         extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.CUT, 70)} color={semanticColors.editPhotoButton}
             iconType="MDI" icon="content-cut" size={49} iconSize={42} selected={isCutMode} />);
     }
