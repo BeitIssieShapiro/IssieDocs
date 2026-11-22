@@ -250,7 +250,7 @@ export const languageMap = {
     BackupInProgress: 'גיבוי בתהליך...',
 
     ToolsSettings: 'כלים',
-    Ruler: 'סרגל',
+    Ruler: 'קו ישר',
     FillTool: 'מילוי צבע',
     CutTool: 'גזירה',
     Image: 'תמונה',
@@ -638,7 +638,7 @@ export const languageMap = {
       'Font change cause text to overflow beyond the end of the page',
     BackupSuccessful: 'Backup successful',
     ToolsSettings: 'Tools',
-    Ruler: 'Ruler',
+    Ruler: 'Line',
     FillTool: 'Fill',
     CutTool: 'Cut',
     Image: 'Image',
