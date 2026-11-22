@@ -197,7 +197,10 @@ describe('folder moves and backup restoration', () => {
       }
     });
     const progress = jest.fn();
-    await filesystem.RestoreFromBackup({ unzipPath: root + '/backup', metadata: { backup: true }, name: 'Backup' }, progress);
+    const report = await filesystem.RestoreFromBackup({ unzipPath: root + '/backup', metadata: { backup: true }, name: 'Backup' }, progress);
+    expect(report.kind).toBe('backup');
+    expect(report.imported.map(s => s.folder + '/' + s.name).sort()).toEqual(['School/one', 'School/three', 'School/two']);
+    expect(report.failed).toEqual([]);
     const folder = filesystem.findFolderByID('School');
     expect(folder.items.map(sheet => sheet.name).sort()).toEqual(['one', 'three', 'two']);
     expect(filesystem._folders.filter(item => item.name === 'School')).toHaveLength(1);
@@ -216,11 +219,15 @@ describe('folder moves and backup restoration', () => {
       return move(from, to);
     });
     const zipInfo = { unzipPath: root + '/backup', metadata: { backup: true }, name: 'Backup' };
-    await expect(filesystem.RestoreFromBackup(zipInfo, jest.fn())).rejects.toThrow('Disk full');
+    const failed = await filesystem.RestoreFromBackup(zipInfo, jest.fn());
+    expect(failed.failed).toEqual([{ name: 'one', error: 'Disk full' }]);
+    expect(failed.imported).toEqual([]);
     expect(fs.existsSync(archive)).toBe(true);
     expect(fs.existsSync(root + '/folders/School/one.jpg')).toBe(true);
     RNFS.moveFile.mockImplementation(move);
-    await filesystem.RestoreFromBackup(zipInfo, jest.fn());
+    const retried = await filesystem.RestoreFromBackup(zipInfo, jest.fn());
+    expect(retried.failed).toEqual([]);
+    expect(retried.imported).toEqual([{ folder: 'School', name: 'one' }]);
     expect(await fs.promises.readFile(root + '/folders/School/one.jpg', 'utf8')).toBe('original');
     expect(await fs.promises.readFile(root + '/folders/School/two.jpg', 'utf8')).toBe('second');
   });
@@ -360,7 +367,14 @@ describe('folder moves and backup restoration', () => {
     filesystem._loaded = false;
     await write('restored/filesystem.version.6.23', '');
     const info = await filesystem.extractZipInfo(archive, root + '/extracted');
-    await filesystem.RestoreFromBackup(info, jest.fn());
+    const report = await filesystem.RestoreFromBackup(info, jest.fn());
+    expect(report).toMatchObject({ kind: 'folder', name: 'School', failed: [], skipped: [] });
+    expect(report.imported).toEqual(expect.arrayContaining([
+      { folder: 'School', name: 'one' }, { folder: 'School/Math', name: 'two' }]));
+    // restoring the same folder again keeps the existing worksheets and says so
+    const again = await filesystem.RestoreFromBackup(await filesystem.extractZipInfo(archive, root + '/extracted2'), jest.fn());
+    expect(again.imported).toEqual([]);
+    expect(again.skipped).toHaveLength(2);
     await load();
     expect((await filesystem.findFolderByID('School').getItem('one')).count).toBe(1);
     expect((await filesystem.findFolderByID('School/Math').getItem('two')).count).toBe(1);

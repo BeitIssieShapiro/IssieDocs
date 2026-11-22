@@ -1,5 +1,5 @@
 import * as RNFS from 'react-native-fs';
-import { fTranslate, translate } from './lang';
+import { translate } from './lang';
 import { Image, LogBox, Platform } from 'react-native';
 import blankPage from './blank-page.png';
 import mathPage from './math-page.png';
@@ -1604,7 +1604,16 @@ export class FileSystem {
     });
   }
 
-  async RestoreFromBackup(zipInfo, monitorCB) {
+  // What an import did, shown to the user when it finishes.
+  // imported/skipped: [{ folder: folderID, name: worksheetName }], failed: [{ name, error }]
+  static newImportReport(zipInfo) {
+    const md = zipInfo?.metadata;
+    const kind = md?.folderExport ? 'folder' : md?.backup ? 'backup' : 'worksheet';
+    const name = (kind === 'folder' && md.folderName) || zipInfo?.name;
+    return { kind, name, imported: [], skipped: [], failed: [] };
+  }
+
+  async RestoreFromBackup(zipInfo, monitorCB, report = FileSystem.newImportReport(zipInfo)) {
     await this.getRootFolders();
     const items = await RNFS.readDir(_androidFileName(zipInfo.unzipPath));
     const worksheetItems = items.filter(f => f.name.endsWith('.zip'));
@@ -1613,26 +1622,32 @@ export class FileSystem {
       const targetPath = joinPaths(zipInfo.unzipPath, 'worksheet-' + i);
       // Imports create shared folders and update their metadata. Complete each
       // import before starting the next one, including on a fresh installation.
-      await this.importWorhsheet(worksheetItems[i].path, targetPath);
+      // One broken worksheet must not stop the rest: report it and continue.
+      try {
+        await this.importWorhsheet(worksheetItems[i].path, targetPath, report);
+      } catch (e) {
+        trace('restore worksheet failed', worksheetItems[i].name, e);
+        report.failed.push({
+          name: worksheetItems[i].name.replace(/\.zip$/, ''),
+          error: String(e?.message || e),
+        });
+      }
       monitorCB(((i + 1) * 100) / worksheetItems.length);
     }
     if (worksheetItems.length === 0) monitorCB(100);
-    if (zipInfo.metadata && zipInfo.metadata.folderExport) {
-      return fTranslate('ImportFolderSuccessful', zipInfo.metadata.folderName || zipInfo.name);
-    }
-    return fTranslate('RestoreSuccessful', zipInfo.name);
+    return report;
   }
 
-  async importWorhsheet(zipPath, unzipInPath) {
+  async importWorhsheet(zipPath, unzipInPath, report) {
     const info = await this.extractZipInfo(zipPath, unzipInPath);
     if (!info) throw new Error(translate('InvalidZipFile'));
     if (info.metadata?.folderExport || info.metadata?.backup) {
-      return this.RestoreFromBackup(info, () => {});
+      return this.RestoreFromBackup(info, () => {}, report);
     }
-    return this.importWorhsheetWithInfo(info, true);
+    return this.importWorhsheetWithInfo(info, true, report);
   }
 
-  async importWorhsheetWithInfo(zipInfo, preserveFolder) {
+  async importWorhsheetWithInfo(zipInfo, preserveFolder, report = FileSystem.newImportReport(zipInfo)) {
     const metadata = zipInfo?.metadata;
     if (!metadata || typeof metadata.name !== 'string' ||
         !metadata.name.split('/').every(part => this._validPathPart(part)) ||
@@ -1708,19 +1723,30 @@ export class FileSystem {
 
     // copy all other files
     const filesItems = items.filter(f => !f.name.endsWith('.metadata'));
+    // a folder's archive without worksheets (an empty folder) has no name
+    const sheetName = zipInfo.metadata.subFolder || filesItems
+      .map(f => f.name)
+      .find(n => n.endsWith('.jpg') && !n.endsWith('thumbnail.jpg'))
+      ?.slice(0, -4);
+    let moved = 0;
     try {
       for (let fi of filesItems) {
-        const destination = (fi.name.endsWith('thumbnail.jpg') ? targetPath : targetPath2) + fi.name;
+        const isThumbnail = fi.name.endsWith('thumbnail.jpg');
+        const destination = (isThumbnail ? targetPath : targetPath2) + fi.name;
         // Keep existing worksheets when restoring again after a partial import.
         if (await RNFS.exists(destination)) continue;
         await RNFS.moveFile(fi.path, destination);
+        if (!isThumbnail) moved++;
       }
     } finally {
       await folder.reload();
       this._notify();
     }
 
-    return fTranslate('ImportSuccessful', zipInfo.name);
+    if (sheetName) {
+      (moved > 0 ? report.imported : report.skipped).push({ folder: folder.ID, name: sheetName });
+    }
+    return report;
   }
 }
 

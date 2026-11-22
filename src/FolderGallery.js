@@ -69,6 +69,7 @@ import { FileSystem, swapFolders, saveFolderOrder } from './filesystem.js';
 import { trace } from './log.js';
 import { LogBox } from 'react-native';
 import { FileContextMenu } from './file-context-menu.js';
+import { ImportReportDialog } from './import-report-dialog';
 import { FolderPanel } from './folder-panel.js';
 import { DDProvider, DDScrollView, DDView } from './dragdrop.js';
 import {
@@ -224,7 +225,7 @@ export default class FolderGallery extends React.Component {
   componentWillUnmount = () => {
     this.linkingListener?.remove();
     this.fileListener?.remove();
-    this.props.navigation?.removeAllListeners();
+    this.props.navigation?.removeAllListeners?.();
   };
 
   _menuHandler = () => {
@@ -244,9 +245,8 @@ export default class FolderGallery extends React.Component {
     let url = event.url;
     url = decodeURI(url);
 
-    const handleDoneMessage = msg => {
-      this.setState({ progress: undefined });
-      Alert.alert(msg);
+    const handleDoneMessage = importReport => {
+      this.setState({ progress: undefined, importReport });
     };
     const handleImportError = error => {
       this.setState({ progress: undefined });
@@ -1615,6 +1615,13 @@ export default class FolderGallery extends React.Component {
                         } */}
             </View>
           </View>
+
+          {this.state.importReport && (
+            <ImportReportDialog
+              report={this.state.importReport}
+              onClose={() => this.setState({ importReport: undefined })}
+            />
+          )}
 
           {/** Progress */}
           {this.state.progress && (
