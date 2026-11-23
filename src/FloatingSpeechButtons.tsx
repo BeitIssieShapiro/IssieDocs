@@ -10,7 +10,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { MyIcon } from './common/icons';
 import { isRTL } from './lang';
-import { keyboardTextToolsOn } from './settings';
 
 const BUTTON_WIDTH = 55;
 const BUTTON_HEIGHT = 55;
@@ -97,18 +96,10 @@ export default function FloatingSpeechButtons({
     const rtl = isRTL();
 
     // Vertical: 3/4 of screen height or above keyboard+rounded frame padding, whichever is higher
-    // keyboardHeight already includes native toolbar when text tools are on
     const totalHeight = BUTTON_HEIGHT * 2 + GAP;
     const threeQuarterY = windowSize.height * 0.25 - totalHeight / 2;
     let bottom = threeQuarterY;
-    if (keyboardHeight > 0) {
-        const textToolbarOn = keyboardTextToolsOn();
-        bottom = keyboardHeight + 20
-        if (textToolbarOn) {
-            console.log("[floating buttons - toolbar on")
-            //bottom += 70;
-        }
-    }
+    if (keyboardHeight > 0) bottom = keyboardHeight + 20;
 
     // Horizontal: in the side margin area
     const horizontalOffset = 30 //Math.max(4, (sideMargin - BUTTON_WIDTH) / 2);

@@ -7,7 +7,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-na
 import { MyIcon } from "../common/icons";
 import { useTranscription, speechTranscriptionEmitter, SpeechTranscription } from "../use-transcription";
 import { translate } from "../lang";
-import { getSetting, KB_SPEAK_DICTATE, keyboardTextToolsOn } from "../settings";
+import { getSetting, KB_SPEAK_DICTATE } from "../settings";
 import { SpanStyle, textSegments } from "./text-spans";
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
@@ -38,6 +38,8 @@ interface TextElementProps {
     hideEditMenu?: boolean;
     // the edited text box's layout (view points, in the canvas), to place the format bar
     onEditLayout?: (id: string, layout: { x: number; y: number; width: number; height: number }) => void;
+    // a tap on the text box while it is edited (like the system menu: it shows or hides the format bar)
+    onEditTap?: (id: string) => void;
     // the text's place among the drawing's canvases (a piece laid over it covers it)
     zIndex?: number;
     // false: touches pass through to the canvas (select tool: a drag on the text moves its piece,
@@ -64,6 +66,7 @@ function TextElement({
     onSelectionChange,
     hideEditMenu,
     onEditLayout,
+    onEditTap,
     zIndex,
 }: TextElementProps, ref: any) {
     const [revision, setRevision] = useState<number>(0)
@@ -124,7 +127,7 @@ function TextElement({
         onTextChanged: handleTranscriptionText,
         language: language || 'en',
         enabled: editMode,
-        textToolsEnabled: keyboardTextToolsOn(),
+        textToolsEnabled: false, // the native bar over the keyboard is replaced by the text styling bar
         speakDictateEnabled: getSetting(KB_SPEAK_DICTATE.name, KB_SPEAK_DICTATE.yes) === KB_SPEAK_DICTATE.yes,
     });
 
@@ -299,6 +302,7 @@ function TextElement({
                         contextMenuHidden={!!hideEditMenu}
                         // spelling suggestions show in a bubble over the selection too
                         spellCheck={hideEditMenu ? false : undefined}
+                        onPressIn={() => onEditTap?.(text.id)}
                         onSelectionChange={(e) => {
                             const sel = e.nativeEvent.selection;
                             setRangeSelection(sel.end !== sel.start ? { start: sel.start, end: sel.end, text: text.text } : undefined);

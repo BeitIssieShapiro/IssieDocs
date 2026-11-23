@@ -75,7 +75,8 @@ import { FileSystem } from "../filesystem";
 import { cutShapePath, getOverlayImage, getUriImage, NormRect, pieceClipPath } from "./raster";
 import { buildDrawLayers, DrawItem, DrawLayer, ERASER_COLOR, stackTexts, textBox, textCenter, topPieceAt, visibleTextAt } from "./pieces";
 import { allHave, SpanStyle, styleAt } from "./text-spans";
-import { FORMAT_BAR_HEIGHT, TextFormatBar } from "./text-format-bar";
+import { FORMAT_BAR_HEIGHT, formatBarWidth, TextFormatBar, TextStyleKey } from "./text-format-bar";
+import { AVAILABLE_FONTS } from "../fonts";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { textSizes } from "../elements";
 
@@ -148,7 +149,8 @@ interface CanvasProps {
     // formats part of a text: [start, end) of the text with this id
     onFormatText?: (id: string, start: number, end: number, patch: SpanStyle) => void;
     onTextClipboard?: (id: string, start: number, end: number, action: "cut" | "copy" | "paste") => void;
-    textFormatEnabled?: boolean; // the selection format bar (settings feature)
+    textFormatEnabled?: boolean; // the text styling bar (settings)
+    onTextAlignment?: (alignment: string) => void;
     onTextYOverflow?: (elemId: string) => void;
     onTextCursorChange?: () => void;
     imageSource?: ImageURISource;
@@ -192,6 +194,7 @@ function Canvas({
     onFormatText,
     onTextClipboard,
     textFormatEnabled,
+    onTextAlignment,
     onTextYOverflow,
     onTextCursorChange,
     paths,
@@ -833,7 +836,15 @@ function Canvas({
     const editSelection = textSelection?.id === currentEdited.textId ? textSelection :
         editedText ? { id: editedText.id, start: editedText.text.length, end: editedText.text.length } : undefined;
     const hasRange = !!editSelection && editSelection.end > editSelection.start;
-    // with a cursor only, the bar offers Paste - when there is text to paste
+    // Without a selection, the bar shows after a tap on the edited text box, like the system menu:
+    // the next tap, typing, or a tap that clears a selection hides it
+    const [barTapped, setBarTapped] = useState<string | undefined>();
+    const hasRangeRef = useRef(hasRange);
+    hasRangeRef.current = hasRange;
+    const handleEditTap = useCallback((id: string) =>
+        setBarTapped(cur => cur === id || hasRangeRef.current ? undefined : id), []);
+    useEffect(() => setBarTapped(undefined), [currentEdited.textId, editedText?.text]);
+    // with a cursor only, the bar offers Paste when there is text to paste
     const [canPaste, setCanPaste] = useState(false);
     useEffect(() => {
         if (!textFormatEnabled || !currentEdited.textId || hasRange) return;
@@ -849,11 +860,14 @@ function Canvas({
         if (!textFormatEnabled || currentElementType != ElementTypes.Text || !sel) return null;
         const text = editedText;
         if (!text) return null;
-        const pasteOnly = sel.end <= sel.start;
-        if (pasteOnly && !canPaste) return null;
+        // with no selection, the bar styles the whole text box
+        const hasSelection = sel.end > sel.start;
+        if (!hasSelection && barTapped !== text.id) return null;
+        const range = hasSelection ? sel : { start: 0, end: text.text.length };
+        const fontStyles = (AVAILABLE_FONTS.find(f => f.name == text.fontFamily)?.supportedStyles ?? []) as TextStyleKey[];
+        const showCenter = !!text.tableId;
         const box = editLayout?.id === text.id ? editLayout : undefined;
-        // the first row: 6 format buttons, a divider, cut/copy/paste
-        const width = pasteOnly ? 48 : 9 * 40 + 18;
+        const width = formatBarWidth({ hasSelection, styles: fontStyles, showCenter, canPaste });
         // above the text box, or below it when there is no room above; kept within the page width
         const boxTop = box ? box.y : text.y * ratio;
         const boxBottom = box ? box.y + box.height : (text.y + text.fontSize) * ratio;
@@ -865,9 +879,11 @@ function Canvas({
         formatBarRectRef.current = above ?
             { x: left, y: boxTop - 8 - FORMAT_BAR_HEIGHT * 2, width, height: FORMAT_BAR_HEIGHT * 2 } :
             { x: left, y: boxBottom + 8, width, height: FORMAT_BAR_HEIGHT * 2 };
+        // an empty box: its own style
+        const isOn = (k: TextStyleKey) => range.end > range.start ? allHave(text.spans, range.start, range.end, k, !!text[k]) : !!text[k];
         const at = styleAt(text.spans, sel.start);
         const onSize = (step: 1 | -1) => {
-            const current = (at.fontSize ?? text.fontSize) * ratio;
+            const current = ((hasSelection ? at.fontSize : undefined) ?? text.fontSize) * ratio;
             const next = step > 0 ?
                 textSizes.find((sz: number) => sz > current + 0.5) ?? current + 5 :
                 [...textSizes].reverse().find((sz: number) => sz < current - 0.5) ?? Math.max(current - 5, 10);
@@ -876,10 +892,15 @@ function Canvas({
         return <TextFormatBar
             left={left}
             {...(above ? { bottom: canvasHeight - (boxTop - 8) } : { top: boxBottom + 8 })}
-            pasteOnly={pasteOnly}
-            bold={allHave(text.spans, sel.start, sel.end, "bold", !!text.bold)}
-            italic={allHave(text.spans, sel.start, sel.end, "italic", !!text.italic)}
-            underline={allHave(text.spans, sel.start, sel.end, "underline", !!text.underline)}
+            hasSelection={hasSelection}
+            styles={fontStyles}
+            canPaste={canPaste}
+            alignment={text.alignment}
+            showCenter={showCenter}
+            onAlign={a => onTextAlignment?.(a)}
+            bold={isOn("bold")}
+            italic={isOn("italic")}
+            underline={isOn("underline")}
             color={at.color ?? text.color}
             onFormat={patch => onFormatText?.(text.id, sel.start, sel.end, patch)}
             onSize={onSize}
@@ -1126,6 +1147,7 @@ function Canvas({
                         onSelectionChange={handleTextSelection}
                         hideEditMenu={!!textFormatEnabled}
                         onEditLayout={handleEditLayout}
+                        onEditTap={handleEditTap}
                         zIndex={textZIndex(stack.textLevel.get(text.id) ?? stack.canvases.length)}
                     />
                 })}

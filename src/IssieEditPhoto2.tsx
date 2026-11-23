@@ -28,7 +28,7 @@ import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
 //import { trace } from './log';
 import { arrLast, pageTitleAddition, setNavParam } from './utils';
-import { AppText, colors, dimensions, getImageDimensions, getRoundedButton, globalStyles, Icon, semanticColors, Spacer, textSizes } from './elements';
+import { AppText, colors, dimensions, getImageDimensions, getRoundedButton, globalStyles, Icon, semanticColors, Spacer } from './elements';
 import EditorToolbar from './editor-toolbar';
 import { getNewPage, SRC_CAMERA, SRC_FILE, SRC_GALLERY, SRC_RENAME } from './newPage';
 import { EditModes, RootStackParamList } from './types';
@@ -42,7 +42,7 @@ import { AudioElement2 } from './audio-elem-new';
 import { Text } from 'react-native';
 import { migrateMetadata } from './state-migrate';
 import { PathCommand, scale } from '@shopify/react-native-skia';
-import { getSetting, SCROLL_BUTTONS, KB_SPEAK_DICTATE, SPEAK_DICTATE_MODE, getSpeechRateSetting, FEATURES, isFeatureOn } from './settings';
+import { getSetting, SCROLL_BUTTONS, KB_SPEAK_DICTATE, SPEAK_DICTATE_MODE, getSpeechRateSetting, textStylingOn } from './settings';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useMessageBox } from './message';
 import { MyIcon } from './common/icons';
@@ -248,20 +248,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         brushColor, rulerColor, markerColor, textColor, tableColor, fillColor, cutShape, canvasSize,
         currPageIndex, currentFile, moveCanvas, zoom, keyboardHeight, eraseMode]);
 
-    // Sync formatting state to native keyboard toolbar
-    useEffect(() => {
-        if (Platform.OS !== 'ios' || !SpeechTranscription) return;
-        const availableStyles = AVAILABLE_FONTS.find(af => af.name == textFont)?.supportedStyles || [];
-        SpeechTranscription.updateFormattingState({
-            bold: textBold,
-            italic: textItalic,
-            underline: textUnderline,
-            rtl: textAlignment === 'Right',
-            availableStyles,
-            uiRTL: isRTL(),
-        });
-    }, [textBold, textItalic, textUnderline, textAlignment, textFont]);
-
     // Reset font to default if current font is not compatible with keyboard language
     useEffect(() => {
         if (textFont === undefined) return; // default font supports all languages
@@ -270,42 +256,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             setTextFont(undefined);
         }
     }, [kbLanguage]);
-
-    // Listen for native keyboard toolbar formatting actions
-    useEffect(() => {
-        if (!speechTranscriptionEmitter) return;
-
-        const sub = speechTranscriptionEmitter.addListener('onToolbarAction', (event: { action: string; value?: boolean }) => {
-            switch (event.action) {
-                case 'bold':
-                    setTextBold(event.value ?? false);
-                    break;
-                case 'italic':
-                    setTextItalic(event.value ?? false);
-                    break;
-                case 'underline':
-                    setTextUnderline(event.value ?? false);
-                    break;
-                case 'rtl':
-                    setTextAlignment(event.value ? 'Right' : 'Left');
-                    break;
-                case 'fontUp': {
-                    const currentSize = fontSizeRef.current;
-                    const nextSize = textSizes.find((s: number) => s > currentSize);
-                    if (nextSize) setFontSize(nextSize);
-                    break;
-                }
-                case 'fontDown': {
-                    const currentSize = fontSizeRef.current;
-                    const prevSize = [...textSizes].reverse().find((s: number) => s < currentSize);
-                    if (prevSize) setFontSize(prevSize);
-                    break;
-                }
-            }
-        });
-
-        return () => sub.remove();
-    }, []);
 
     useEffect(() => {
         currentEditedRef.current = currentEdited;
@@ -1505,9 +1455,23 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
 
     // Formats part of the text being edited; saved with the rest of the edit
+    // Formats [start, end) of a text; with no selection (start == end), the whole text box
     function handleFormatText(id: string, start: number, end: number, patch: SpanStyle) {
         const textElem = textsRef.current.find(t => t.id == id);
         if (!textElem) return;
+        if (start == end) {
+            // the text's own style; parts styled otherwise follow it
+            const { fontSize, ...flags } = patch;
+            if (fontSize !== undefined) setFontSize(fontSize * ratioRef.current); // parts' sizes scale along
+            if (flags.bold !== undefined) setTextBold(flags.bold);
+            if (flags.italic !== undefined) setTextItalic(flags.italic);
+            if (flags.underline !== undefined) setTextUnderline(flags.underline);
+            const cleared = Object.fromEntries(Object.keys(flags).map(k => [k, undefined]));
+            textElem.spans = applySpanStyle(textElem.spans, textElem.text.length, 0, textElem.text.length, cleared);
+            textElem.width = undefined;
+            setTexts([...textsRef.current]);
+            return;
+        }
         textElem.spans = applySpanStyle(textElem.spans, textElem.text.length, start, end, patch);
         textElem.width = undefined; // remeasure: sizes and weights change the width
         setTexts([...textsRef.current]);
@@ -2944,7 +2908,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 onCopyElement={handleCopyPiece}
                 onFormatText={handleFormatText}
                 onTextClipboard={handleTextClipboard}
-                textFormatEnabled={isFeatureOn(FEATURES.textFormat)}
+                textFormatEnabled={textStylingOn()}
+                onTextAlignment={onTextAlignment}
                 onTextYOverflow={handleTextYOverflow}
                 imageSource={{ uri: currentFile }}
                 background={background}
