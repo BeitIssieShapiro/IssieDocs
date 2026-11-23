@@ -268,7 +268,7 @@ async function renderPage(page: PageSnapshot, rect: SkRect, scale: number, opts:
 }
 
 /**
- * The boundaries a fill stops at, black on white: the pen strokes of the paper being filled
+ * The walls a fill stops at, black on white: the pen strokes of the paper being filled
  * (the base page, or one piece). Filling the base page, pieces are walls; filling a piece,
  * everything outside its outline is.
  */
@@ -326,23 +326,58 @@ async function renderFillBoundary(page: PageSnapshot, pieceId: string | undefine
 }
 
 /**
- * Computes a paint-bucket fill at `point` (normalized coords), bounded by pen strokes only.
+ * The paper being filled, without ink or paint: the piece's image, or the page's photo/scan
+ * (a lined or grid template is not drawn, so its lines do not split fills). The fill also stops
+ * at the outlines drawn in it.
+ */
+async function renderFillPaper(page: PageSnapshot, pieceId: string | undefined, scale: number): Promise<SkImage | undefined> {
+    const r = page.ratio;
+    const made = makeSurface(Skia.XYWHRect(0, 0, page.canvasWidth, page.canvasHeight), scale);
+    if (!made) return undefined;
+    const { surface, canvas } = made;
+    canvas.drawColor(Skia.Color("white"));
+    const target = pieceId ? page.images.find(p => p.id === pieceId) : undefined;
+    if (target) {
+        const img = target.src?.uri ? await loadImage(target.src.uri) : undefined;
+        if (img) {
+            canvas.save();
+            canvas.clipPath(pieceClipPath(target, r), ClipOp.Intersect, true);
+            drawImageAt(canvas, img, Skia.XYWHRect(target.x * r, target.y * r, target.width * r, target.height * r));
+            canvas.restore();
+        }
+    } else if (page.hasPhotoBg && page.bgUri) {
+        const bg = await loadImage(page.bgUri);
+        if (bg) drawImageAt(canvas, bg, Skia.XYWHRect(0, 0, page.canvasWidth, page.bgHeight));
+        const white = Skia.Paint();
+        white.setColor(Skia.Color("white"));
+        page.overlays.filter(o => o.kind === "cut").forEach(c => canvas.drawPath(cutShapePath(c, r), white));
+    }
+    surface.flush();
+    return surface.makeImageSnapshot();
+}
+
+/**
+ * Computes a paint-bucket fill at `point` (normalized coords), bounded by pen strokes and by
+ * outlines in the paper (the page's photo, or the piece's image).
  * Returns the fill element (normalized coords) or undefined if the area is not enclosed.
  */
 export async function computeFill(page: PageSnapshot, point: [number, number], color: string, pixelRatio: number,
     pieceId?: string): Promise<Omit<SketchOverlay, "id" | "kind"> | undefined> {
     const area = page.canvasWidth * page.canvasHeight;
     const scale = Math.min(pixelRatio, 2, Math.sqrt(FILL_MAX_PIXELS / area));
-    const snapshot = await renderFillBoundary(page, pieceId, scale);
-    if (!snapshot) return undefined;
-    const pixels = readRGBA(snapshot);
-    if (!pixels) return undefined;
+    const wallsImage = await renderFillBoundary(page, pieceId, scale);
+    const paperImage = await renderFillPaper(page, pieceId, scale);
+    const wallPixels = wallsImage && readRGBA(wallsImage);
+    const pixels = paperImage && readRGBA(paperImage);
+    if (!wallPixels || !pixels) return undefined;
 
-    const w = snapshot.width(), h = snapshot.height();
+    const w = paperImage.width(), h = paperImage.height();
+    const walls = new Uint8Array(w * h);
+    for (let i = 0; i < walls.length; i++) walls[i] = wallPixels[i * 4] < 255 - FILL_TOLERANCE ? 1 : 0;
     const region = computeFillRegion(pixels, w, h, point[0] * page.ratio * scale, point[1] * page.ratio * scale, {
         gap: Math.max(1, Math.round(FILL_GAP_POINTS * scale)),
         tolerance: FILL_TOLERANCE,
-    });
+    }, walls);
     if (!region) return undefined;
 
     const c = Skia.Color(color); // Float32Array rgba 0..1

@@ -72,6 +72,42 @@ describe('computeFillRegion', () => {
         expect(r!.height).toBe(4);
     });
 
+    it('fills into the sharp corners of an almost-closed shape', () => {
+        // a thin wedge: the bottom edge and a steep diagonal meet at (20,80); a gap in the right side
+        const px = whiteRaster();
+        for (let x = 20; x <= 80; x++) { setBlack(px, x, 80); setBlack(px, x, 80 - Math.round((x - 20) * 0.5)); }
+        for (let y = 50; y <= 80; y++) if (y < 60 || y > 64) setBlack(px, 80, y);
+        const r = computeFillRegion(px, W, H, 65, 75, opts);
+        expect(r).toBeDefined();
+        // reaches close to the tip of the wedge, not stopping a gap's width (or more) away
+        expect(r!.x).toBeLessThanOrEqual(27);
+        // does not spill out through the gap
+        expect(r!.x + r!.width).toBeLessThanOrEqual(84);
+    });
+
+    it('stops at walls whatever their color', () => {
+        const px = whiteRaster();
+        const walls = new Uint8Array(W * H);
+        for (let i = 20; i <= 80; i++) {
+            walls[20 * W + i] = walls[80 * W + i] = walls[i * W + 20] = walls[i * W + 80] = 1;
+        }
+        const r = computeFillRegion(px, W, H, 50, 50, opts, walls);
+        expect(r).toBeDefined();
+        expect(r!.x).toBe(21);
+        expect(r!.width).toBe(59);
+    });
+
+    it('does not jump across a thin outline into the area beside it', () => {
+        // two squares sharing a 1px wall; the left one has a gap
+        const px = whiteRaster();
+        for (let i = 10; i <= 90; i++) { setBlack(px, i, 30); setBlack(px, i, 70); }
+        for (let y = 30; y <= 70; y++) { setBlack(px, 10, y); setBlack(px, 50, y); setBlack(px, 90, y); }
+        for (let x = 25; x < 30; x++) px.fill(255, (30 * W + x) * 4, (30 * W + x) * 4 + 3);
+        const r = computeFillRegion(px, W, H, 30, 50, opts);
+        expect(r).toBeDefined();
+        expect(r!.x + r!.width).toBeLessThanOrEqual(50);
+    });
+
     it('does nothing when tapping on the outline itself', () => {
         expect(computeFillRegion(square(), W, H, 50, 20, opts)).toBeUndefined();
     });

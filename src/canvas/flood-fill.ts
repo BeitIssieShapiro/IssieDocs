@@ -1,10 +1,10 @@
 // Paint-bucket region detection on an RGBA raster.
 //
-// A pixel is a "barrier" if its color is far from the color at the seed point.
-// To treat almost-closed shapes as closed, barriers are dilated by `gap` pixels
-// before flooding, and the resulting region is grown back by the same amount so
-// it reaches the shape outline. If the region reaches the raster edge, the shape
-// is considered open and no region is returned.
+// A pixel is a "barrier" if it is a wall, or its color is far from the color at the seed point.
+// A closed area is filled exactly. To treat almost-closed shapes as closed, barriers are
+// dilated by `gap` pixels before flooding, and the resulting region is grown back so it
+// reaches the shape outline. If the region reaches the raster edge, the shape is considered
+// open and no region is returned.
 
 export interface FillRegion {
     mask: Uint8Array; // width * height, 1 = fill, cropped to the bounding box
@@ -98,6 +98,7 @@ export function computeFillRegion(
     pixels: Uint8Array, w: number, h: number,
     seedX: number, seedY: number,
     { gap, tolerance }: FloodFillOptions,
+    walls?: Uint8Array, // w * h, 1 = always a barrier (e.g. ink), regardless of color
 ): FillRegion | undefined {
     seedX = Math.round(seedX);
     seedY = Math.round(seedY);
@@ -108,48 +109,94 @@ export function computeFillRegion(
 
     const barrier = new Uint8Array(w * h);
     for (let i = 0, p = 0; i < barrier.length; i++, p += 4) {
-        if (Math.abs(pixels[p] - sr) > tolerance ||
+        if ((walls && walls[i]) ||
+            Math.abs(pixels[p] - sr) > tolerance ||
             Math.abs(pixels[p + 1] - sg) > tolerance ||
             Math.abs(pixels[p + 2] - sb) > tolerance) {
             barrier[i] = 1;
         }
     }
 
-    if (barrier[seedY * w + seedX]) return undefined;
-
-    let blocked = dilate(barrier, w, h, gap);
     let seed = seedY * w + seedX;
+    if (barrier[seed]) return undefined;
+
+    // A truly closed area is filled exactly, into every corner
+    const exact = flood(barrier, w, h, seedX, seedY);
+    if (exact) return isThin(exact, w, h) ? undefined : crop(exact, w, h); // thin: tapped on a line itself
+
+    // Almost closed: close openings by thickening the outlines, flood, then grow back to the outline
+    const blocked = dilate(barrier, w, h, gap);
     if (blocked[seed]) {
-        // Tapped close to an outline: start from the nearest point clear of the thickened outlines.
-        // If there is none (a narrow area), fill without gap-closing.
+        // Tapped close to an outline: start from the nearest point clear of the thickened outlines
         const nearest = nearestUnblocked(barrier, blocked, w, h, seed, 3 * gap);
-        if (nearest !== undefined) {
-            seed = nearest;
-        } else if (dilate(barrier, w, h, 1)[seed]) {
-            return undefined; // tapped on a thin stroke itself, not on an area
-        } else {
-            blocked = barrier;
-            gap = 0;
-        }
+        if (nearest === undefined) return undefined;
+        seed = nearest;
     }
 
     const core = flood(blocked, w, h, seed % w, Math.floor(seed / w));
     if (!core) return undefined;
+    return crop(growBack(barrier, blocked, core, w, h, 4 * gap + 2), w, h);
+}
 
-    // Grow back toward the outline, without covering the outline itself
-    const grown = dilate(core, w, h, gap + 1);
+/**
+ * Grows `core` back over the thickened-outline zone, up to the real outline. Every other open
+ * area grows at the same time, and each pixel goes to whichever reaches it first (walking around
+ * outlines, never across them): the fill reaches deep into sharp corners, while at an opening it
+ * meets the outside halfway instead of leaking out.
+ */
+function growBack(barrier: Uint8Array, blocked: Uint8Array, core: Uint8Array, w: number, h: number, maxDist: number)
+    : Uint8Array {
+    const OURS = 1, OTHER = 2;
+    const label = new Uint8Array(w * h);
+    const dist = new Uint16Array(w * h);
+    const queue = new Int32Array(w * h);
+    let head = 0, tail = 0;
+    for (let i = 0; i < label.length; i++) {
+        if (barrier[i]) continue;
+        if (core[i]) label[i] = OURS;
+        else if (!blocked[i]) label[i] = OTHER;
+        else continue;
+        queue[tail++] = i;
+    }
+    while (head < tail) {
+        const i = queue[head++];
+        const d = dist[i] + 1;
+        if (d > maxDist) continue;
+        const x = i % w;
+        for (const n of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w]) {
+            if (n < 0 || n >= label.length || label[n] || barrier[n]) continue;
+            label[n] = label[i];
+            dist[n] = d;
+            queue[tail++] = n;
+        }
+    }
+    const region = new Uint8Array(w * h);
+    for (let i = 0; i < label.length; i++) region[i] = label[i] === OURS ? 1 : 0;
+    return region;
+}
+
+// Whether no pixel of the region has its whole 3x3 neighbourhood in it (a line, not an area)
+function isThin(region: Uint8Array, w: number, h: number): boolean {
+    for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+            const i = y * w + x;
+            if (region[i - w - 1] && region[i - w] && region[i - w + 1] && region[i - 1] && region[i] &&
+                region[i + 1] && region[i + w - 1] && region[i + w] && region[i + w + 1]) return false;
+        }
+    }
+    return true;
+}
+
+// Crops a full-raster mask to its bounding box
+function crop(full: Uint8Array, w: number, h: number): FillRegion | undefined {
     let minX = w, minY = h, maxX = -1, maxY = -1;
     for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x++) {
-            const i = y * w + x;
-            if (grown[i] && !barrier[i]) {
-                if (x < minX) minX = x;
-                if (x > maxX) maxX = x;
-                if (y < minY) minY = y;
-                if (y > maxY) maxY = y;
-            } else {
-                grown[i] = 0;
-            }
+            if (!full[y * w + x]) continue;
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
         }
     }
     if (maxX < 0) return undefined;
@@ -158,7 +205,7 @@ export function computeFillRegion(
     const mask = new Uint8Array(width * height);
     for (let y = 0; y < height; y++) {
         const srcRow = (y + minY) * w + minX;
-        mask.set(grown.subarray(srcRow, srcRow + width), y * width);
+        mask.set(full.subarray(srcRow, srcRow + width), y * width);
     }
     return { mask, x: minX, y: minY, width, height };
 }
