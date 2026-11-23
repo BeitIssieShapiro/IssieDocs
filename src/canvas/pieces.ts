@@ -15,9 +15,34 @@ import { isPointInPolygon, isPointOnImage } from "./utils";
 const VERB_MOVE = 0; // PathVerb.Move
 const VERB_LINE = 1; // PathVerb.Line
 
-export const isEraserPath = (p: SketchPath) => p.color === "#00000000";
-// every image is a piece: cut out of the page (isCutPiece) or imported
-export const isPiece = (_img: SketchImage) => true;
+// Every image is a piece: cut out of the page (isCutPiece) or imported.
+
+export const ERASER_COLOR = "#00000000";
+export const isEraserPath = (p: SketchPath) => p.color === ERASER_COLOR;
+
+/** Whether an element belongs to the piece (undefined/null: the page) */
+export const ownedBy = (e: { pieceId?: string | null }, pieceId?: string | null) => (e.pieceId ?? undefined) === (pieceId ?? undefined);
+
+/** Orders by drawing order (z) */
+export const byZ = (a: { z?: number }, b: { z?: number }) => (a.z ?? 0) - (b.z ?? 0);
+
+type Box = { x: number; y: number; width: number; height: number };
+const boxesOverlap = (a: Box, b: Box) =>
+    a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+
+/** The bounding box of a stroke's points */
+function strokeBox(points: PathCommand[]): Box {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const c of points) {
+        const x = c[1] as unknown as number, y = c[2] as unknown as number;
+        x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y);
+    }
+    return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
+}
+
+function polygonBox(polygon: SketchPoint[]): Box {
+    return strokeBox(polygon.map(([x, y]) => [VERB_LINE, x, y] as unknown as PathCommand));
+}
 
 /** The cut shape as a polygon: the lasso, or the rect's corners */
 export function cutPolygon(rect: { x: number; y: number; width: number; height: number }, lasso?: SketchPoint[]): SketchPoint[] {
@@ -48,7 +73,7 @@ export function isPointOnPiece(piece: SketchImage, x: number, y: number): boolea
 export function topPieceAt(images: SketchImage[] | undefined, x: number, y: number): SketchImage | undefined {
     let top: SketchImage | undefined;
     for (const img of images ?? []) {
-        if (isPiece(img) && isPointOnPiece(img, x, y) && (!top || (img.z ?? 0) >= (top.z ?? 0))) top = img;
+        if (isPointOnPiece(img, x, y) && (!top || (img.z ?? 0) >= (top.z ?? 0))) top = img;
     }
     return top;
 }
@@ -128,7 +153,10 @@ export function splitStroke(points: PathCommand[], polygon: SketchPoint[]): { in
 export function splitStrokeByPieces(points: PathCommand[], images: SketchImage[] | undefined): { pieceId?: string; points: PathCommand[] }[] {
     const parts: { pieceId?: string; points: PathCommand[] }[] = [];
     let rest: PathCommand[] | undefined = points;
-    const pieces = (images ?? []).filter(isPiece).sort((a, b) => (b.z ?? 0) - (a.z ?? 0)); // top first
+    // top first; only pieces the stroke can reach (touching boxes count: a stroke along an edge)
+    const box = strokeBox(points);
+    const reach = { x: box.x - 1, y: box.y - 1, width: box.width + 2, height: box.height + 2 };
+    const pieces = (images ?? []).filter(img => boxesOverlap(reach, img)).sort((a, b) => byZ(b, a));
     for (const piece of pieces) {
         if (!rest) break;
         const split = splitStroke(rest, pieceOutline(piece));
@@ -179,16 +207,14 @@ export function visibleTextAt(texts: SketchText[] | undefined, images: SketchIma
 }
 
 export function textCenter(t: SketchText): SketchPoint {
-    const w = t.width ?? 0;
-    const h = t.height ?? t.fontSize ?? 0;
-    return [t.rtl ? t.x - w / 2 : t.x + w / 2, t.y + h / 2];
+    const b = textBox(t);
+    return [b.x + b.width / 2, b.y + b.height / 2];
 }
 
 export interface CutPlan {
     // annotations that move into the piece, as they are
     takePaths: string[];
     takeTexts: string[];
-    takeImages: string[];
     // strokes crossing the edge: replaced by their parts outside (where they were) and inside (the new piece)
     splitPaths: { from: string; outside?: SketchPath; inside?: SketchPath }[];
     // pieces under the cut: they get a hole (relative to the piece), or are taken whole when fully inside
@@ -204,8 +230,10 @@ export interface CutPlan {
  */
 export function planCut(polygon: SketchPoint[], paths: SketchPath[], texts: SketchText[], images: SketchImage[],
     newId: (prefix: string) => string): CutPlan {
-    const plan: CutPlan = { takePaths: [], takeTexts: [], takeImages: [], splitPaths: [], cutPieces: [], absorbPieces: [] };
-    for (const piece of images.filter(isPiece)) {
+    const plan: CutPlan = { takePaths: [], takeTexts: [], splitPaths: [], cutPieces: [], absorbPieces: [] };
+    const area = polygonBox(polygon);
+    for (const piece of images) {
+        if (!boxesOverlap(area, piece)) continue;
         const outline = pieceOutline(piece);
         if (outline.every(([x, y]) => isPointInPolygon(x, y, polygon))) {
             plan.absorbPieces.push(piece.id);
@@ -214,6 +242,8 @@ export function planCut(polygon: SketchPoint[], paths: SketchPath[], texts: Sket
         }
     }
     for (const p of paths) {
+        const b = strokeBox(p.points);
+        if (b.x > area.x + area.width || b.x + b.width < area.x || b.y > area.y + area.height || b.y + b.height < area.y) continue;
         const { inside, outside } = splitStroke(p.points, polygon);
         if (!inside) continue;
         if (!outside) {
@@ -236,7 +266,7 @@ export function planCut(polygon: SketchPoint[], paths: SketchPath[], texts: Sket
 }
 
 export const cutPlanIsEmpty = (plan: CutPlan) =>
-    !plan.takePaths.length && !plan.takeTexts.length && !plan.takeImages.length && !plan.splitPaths.length &&
+    !plan.takePaths.length && !plan.takeTexts.length && !plan.splitPaths.length &&
     !plan.cutPieces.length && !plan.absorbPieces.length;
 
 export function shiftPoints(points: PathCommand[], dx: number, dy: number): PathCommand[] {
@@ -274,11 +304,16 @@ export function buildDrawLayers(paths: SketchPath[] | undefined, overlays: Sketc
         ...(overlays ?? []).map(overlay => ({ overlay })),
     ];
     // stable sort: equal z keeps paths before overlays, as listed
-    const byZ = (a: DrawItem, b: DrawItem) => itemZ(a) - itemZ(b);
-    const pieces = (images ?? []).filter(isPiece).sort((a, b) => (a.z ?? 0) - (b.z ?? 0));
-    const ownerOf = (it: DrawItem) => (it.path ?? it.overlay)!.pieceId;
-    const pieceIds = new Set(pieces.map(p => p.id));
-    const base = items.filter(it => !ownerOf(it) || !pieceIds.has(ownerOf(it)!)).sort(byZ);
+    const byItemZ = (a: DrawItem, b: DrawItem) => itemZ(a) - itemZ(b);
+    const pieces = [...(images ?? [])].sort(byZ);
+    // each piece's own items; the rest (no owner, or an owner that is gone) is the base paper's
+    const owned = new Map<string, DrawItem[]>(pieces.map(p => [p.id, []]));
+    const base: DrawItem[] = [];
+    for (const it of items) {
+        const owner = (it.path ?? it.overlay)!.pieceId;
+        (owner && owned.get(owner) || base).push(it);
+    }
+    base.sort(byItemZ);
 
     const layers: DrawLayer[] = [];
     let start = 0;
@@ -294,7 +329,7 @@ export function buildDrawLayers(paths: SketchPath[] | undefined, overlays: Sketc
         let end = start;
         while (end < base.length && itemZ(base[end]) < (piece.z ?? 0)) end++;
         pushBase(end);
-        layers.push({ piece, items: items.filter(it => ownerOf(it) === piece.id).sort(byZ) });
+        layers.push({ piece, items: owned.get(piece.id)!.sort(byItemZ) });
     }
     pushBase(base.length);
     return layers;
@@ -313,9 +348,6 @@ export interface Stack {
     // the canvas each text is drawn right under (canvases.length: above them all)
     textLevel: Map<string, number>;
 }
-
-const boxesOverlap = (a: { x: number; y: number; width: number; height: number }, b: typeof a) =>
-    a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 
 /**
  * Like paper: a piece put down (or moved) after a text, over it, covers it. Ink stays under texts.
@@ -349,12 +381,7 @@ export function stackTexts(layers: DrawLayer[], texts: SketchText[] | undefined,
     const textLevel = new Map<string, number>();
     for (const t of texts ?? []) {
         const c = cover.get(t.id);
-        let level = canvases.length;
-        if (c !== undefined) {
-            level = 0;
-            splits.forEach((s, k) => { if (s <= c) level = k + 1; });
-        }
-        textLevel.set(t.id, level);
+        textLevel.set(t.id, c === undefined ? canvases.length : splits.filter(s => s <= c).length);
     }
     return { canvases, textLevel };
 }

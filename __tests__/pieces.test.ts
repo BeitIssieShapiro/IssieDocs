@@ -75,7 +75,6 @@ describe('planCut', () => {
         expect(plan.splitPaths.map(sp => sp.from)).toEqual(['cross']);
         expect(plan.takeTexts).toEqual(['t-in']); // t-out's center is outside
         // an imported image is a piece: fully inside, it is taken whole (into the new piece's paper)
-        expect(plan.takeImages).toEqual([]);
         expect(plan.absorbPieces).toEqual(['img']);
     });
 
@@ -139,7 +138,7 @@ describe('pieces in the page queue', () => {
         type: 'cut', elem: {
             id: 'C1', x: 0, y: 0, width: 10, height: 10,
             piece: { id: 'P1', x: 0, y: 0, width: 10, height: 10, file: 'p.png' },
-            takePaths: ['in'], takeTexts: ['t'], takeImages: [], splitPaths: [{
+            takePaths: ['in'], takeTexts: ['t'], splitPaths: [{
                 from: 'cross',
                 outside: stroke('cross-o', [[10, 5], [15, 5]]),
                 inside: stroke('cross-i', [[5, 5], [10, 5]]),
@@ -198,7 +197,7 @@ describe('pieces in the page queue', () => {
                 type: 'cut', elem: {
                     id: 'C2', x: 18, y: 0, width: 6, height: 10,
                     piece: { id: 'P3', x: 18, y: 0, width: 6, height: 10, file: 'p3.png' },
-                    takePaths: ['in~P2'], takeTexts: ['t~P2'], takeImages: [], splitPaths: [],
+                    takePaths: ['in~P2'], takeTexts: ['t~P2'], splitPaths: [],
                     cutPieces: [{ id: 'P2', hole: [[-2, 0], [4, 0], [4, 10], [-2, 10]] }], absorbPieces: [],
                 },
             }]);
@@ -219,7 +218,7 @@ describe('pieces in the page queue', () => {
                 type: 'cut', elem: {
                     id: 'C2', x: -1, y: -1, width: 12, height: 12,
                     piece: { id: 'P3', x: -1, y: -1, width: 12, height: 12, file: 'p3.png' },
-                    takePaths: ['in'], takeTexts: ['t'], takeImages: [], splitPaths: [],
+                    takePaths: ['in'], takeTexts: ['t'], splitPaths: [],
                     cutPieces: [], absorbPieces: ['P1'],
                 },
             }]);

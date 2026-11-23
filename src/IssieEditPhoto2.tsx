@@ -988,9 +988,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             };
             linesRef.current.push(newLine);
             setLines([...linesRef.current]);
-            const newCurrEdited = { ...currentEditedRef.current, lineId: newLine.id }
-            currentEditedRef.current = newCurrEdited
-            setCurrentEdited(newCurrEdited);
+            updateCurrentEdited({ lineId: newLine.id });
 
         } else if (modeRef.current === EditModes.Cut) {
             deselectPiece();
@@ -1176,13 +1174,17 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
     }
 
+    // what is being edited/selected: the ref (read by handlers) and the state (rendered) together
+    function updateCurrentEdited(patch: Partial<CurrentEdited>) {
+        currentEditedRef.current = { ...currentEditedRef.current, ...patch };
+        setCurrentEdited(currentEditedRef.current);
+    }
+
     function selectPiece(id: string) {
         // selecting another piece drops a selection that was not acted on
         if (pendingCutRef.current && pendingCutRef.current.pieceId !== id) discardPendingCut();
         activePieceIdRef.current = id;
-        const newCurrEdited = { ...currentEditedRef.current, imageId: id, selectedTextId: undefined }
-        currentEditedRef.current = newCurrEdited
-        setCurrentEdited(newCurrEdited);
+        updateCurrentEdited({ imageId: id, selectedTextId: undefined });
     }
 
     // Drops a selection that was not acted on: the page is as before
@@ -1205,9 +1207,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     // with the select tool, a text can be selected (not edited) and moved
     function selectTextToMove(id: string) {
         deselectPiece();
-        const newCurrEdited = { ...currentEditedRef.current, selectedTextId: id }
-        currentEditedRef.current = newCurrEdited
-        setCurrentEdited(newCurrEdited);
+        updateCurrentEdited({ selectedTextId: id });
     }
 
     function deselectPiece() {
@@ -1216,9 +1216,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
         if (!activePieceIdRef.current && !currentEditedRef.current.selectedTextId) return;
         activePieceIdRef.current = undefined;
-        const newCurrEdited = { ...currentEditedRef.current, imageId: undefined, selectedTextId: undefined }
-        currentEditedRef.current = newCurrEdited
-        setCurrentEdited(newCurrEdited);
+        updateCurrentEdited({ imageId: undefined, selectedTextId: undefined });
     }
 
     // the paper piece new ink/text/paint at a point belongs to, if any
@@ -1268,13 +1266,6 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             analyticEvent(LocalAnalyticEvent.cut_used);
         });
     }
-
-
-
-
-
-
-
 
     // A copy of the piece and everything on it, a little off the original.
     // Copying a selection leaves the page as it was: only the copy is a piece.
@@ -1357,9 +1348,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         in_table: changedElem.tableId !== undefined
                     });
                 }
-                const newCurrEdited = { ...currentEditedRef.current, textId: undefined }
-                currentEditedRef.current = newCurrEdited
-                setCurrentEdited(newCurrEdited);
+                updateCurrentEdited({ textId: undefined });
 
             } else {
                 // new text element
@@ -1390,18 +1379,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                         in_table: textElem.tableId !== undefined
                     });
                 }
-                const newCurrEdited = { ...currentEditedRef.current, textId: undefined }
-                currentEditedRef.current = newCurrEdited
-                setCurrentEdited(newCurrEdited);
+                updateCurrentEdited({ textId: undefined });
             }
         }
     }
 
     function selectText(textElem: SketchText) {
         backupElement(textElem);
-        const newCurrEdited = { ...currentEditedRef.current, textId: textElem.id }
-        currentEditedRef.current = newCurrEdited
-        setCurrentEdited(newCurrEdited);
+        updateCurrentEdited({ textId: textElem.id });
 
         // Update the font and color based on the selected text
         setFontSize(textElem.fontSize * ratioRef.current);
@@ -1449,18 +1434,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 };
                 // a text belongs to the piece it is typed on
                 const textPieceId = pieceAt(p);
-                if (textPieceId) newTextElem.pieceId = textPieceId;
+                if (textPieceId && !(elem && "cell" in elem)) newTextElem.pieceId = textPieceId;
                 if (elem && "cell" in elem) {
                     // clicked a table
-                    delete newTextElem.pieceId;
                     const tableContext = elem as TableContext;
                     newTextElem.tableId = tableContext.elem.id;
                     newTextElem.x = tableContext.cell && tableContext.cell[0] || 0;
                     newTextElem.y = tableContext.cell && tableContext.cell[1] || 0;
                 }
-                const newCurrEdited = { ...currentEditedRef.current, textId: newTextElem.id }
-                currentEditedRef.current = newCurrEdited
-                setCurrentEdited(newCurrEdited);
+                updateCurrentEdited({ textId: newTextElem.id });
                 textsRef.current.push(newTextElem);
             }
 
@@ -1468,9 +1450,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         } else if (modeRef.current === EditModes.Ruler && elem && "id" in elem) {
             const lineElem = linesRef.current.find(line => line.id == elem.id);
             if (lineElem) {
-                const newCurrEdited = { ...currentEditedRef.current, lineId: elem.id }
-                currentEditedRef.current = newCurrEdited
-                setCurrentEdited(newCurrEdited);
+                updateCurrentEdited({ lineId: elem.id });
                 setLines([...linesRef.current]);
             }
         } else if (modeRef.current === EditModes.Fill) {
@@ -1486,9 +1466,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             }
         } else if (modeRef.current === EditModes.Image && elem && "id" in elem) {
             //trace("set current image")
-            const newCurrEdited = { ...currentEditedRef.current, imageId: elem.id }
-            currentEditedRef.current = newCurrEdited
-            setCurrentEdited(newCurrEdited);
+            updateCurrentEdited({ imageId: elem.id });
         } else if (modeRef.current === EditModes.Audio) {
             // first check if an edited recording exists
             const audio = audiosRef.current.find(ae => ae.editMode);
@@ -1530,8 +1508,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     function handleFormatText(id: string, start: number, end: number, patch: SpanStyle) {
         const textElem = textsRef.current.find(t => t.id == id);
         if (!textElem) return;
-        const spans = applySpanStyle(textElem.spans, textElem.text.length, start, end, patch);
-        textElem.spans = spans.length ? spans : undefined;
+        textElem.spans = applySpanStyle(textElem.spans, textElem.text.length, start, end, patch);
         textElem.width = undefined; // remeasure: sizes and weights change the width
         setTexts([...textsRef.current]);
     }
@@ -1540,16 +1517,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     async function handleTextClipboard(id: string, start: number, end: number, action: "cut" | "copy" | "paste") {
         const textElem = textsRef.current.find(t => t.id == id);
         if (!textElem) return;
-        const selected = textElem.text.substring(start, end);
-        if (action === "copy") {
-            Clipboard.setString(selected);
-        } else if (action === "cut") {
-            Clipboard.setString(selected);
-            handleTextChanged(id, textElem.text.substring(0, start) + textElem.text.substring(end));
-        } else {
+        const replaceSelection = (inserted: string) =>
+            handleTextChanged(id, textElem.text.substring(0, start) + inserted + textElem.text.substring(end));
+        if (action === "paste") {
             const pasted = await Clipboard.getString();
-            if (pasted) handleTextChanged(id, textElem.text.substring(0, start) + pasted + textElem.text.substring(end));
+            if (pasted) replaceSelection(pasted);
+            return;
         }
+        Clipboard.setString(textElem.text.substring(start, end));
+        if (action === "cut") replaceSelection("");
     }
 
     // -------------------------------------------------------------------------
@@ -1826,24 +1802,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         } else if (type === MoveTypes.ImageMove || type === MoveTypes.ImageResize) {
             const imgElem = imagesRef.current.find(image => image.id == id);
             if (imgElem) {
-                const changed = restoreElement(imgElem) as SketchImage;
-                delete changed.imageData;
-                delete changed.aspectRatio;
-                delete changed.src;
-                delete (changed as any).file; // otherwise evicting this from the redo queue deletes the image file
-                delete changed.originX;
-                delete changed.originY;
-                delete changed.z;
-                delete changed.outline;
-                delete changed.holes;
-                delete changed.pieceId; // an image is a piece: it lies on the page, not on other paper
-                changed.layered = true; // touched: it comes to the top
-                // moving a selection cuts it out: one undo step for both
-                queue.current.pushImagePosition(changed, commitPendingCut(changed.id));
+                const { x, y, width, height } = restoreElement(imgElem) as SketchImage;
+                // only the new place (no file: evicting this from the redo queue would delete it);
+                // touched, it comes to the top (layered). Moving a selection cuts it out: one undo for both
+                queue.current.pushImagePosition({ id, x, y, width, height, layered: true }, commitPendingCut(id));
                 save();
                 queue2state();
                 // a moved piece stays selected
-                selectPiece(changed.id);
+                selectPiece(id);
             }
         } else if (type === MoveTypes.TableMove || type === MoveTypes.TableResize) {
             const table = tablesRef.current.find(table => table.id == id);
@@ -2033,9 +1999,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         if (imagesRef.current?.length == 0) {
             toolbarRef.current?.openImageSubMenu();
         } else if (imagesRef.current?.length == 1) {
-            const newCurrEdited = { ...currentEditedRef.current, imageId: imagesRef.current[0].id }
-            currentEditedRef.current = newCurrEdited
-            setCurrentEdited(newCurrEdited);
+            updateCurrentEdited({ imageId: imagesRef.current[0].id });
         }
     }
     async function handleAudioMode() {

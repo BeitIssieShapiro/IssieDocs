@@ -8,7 +8,7 @@ import {
 } from "@shopify/react-native-skia";
 import { SketchImage, SketchLine, SketchOverlay, SketchPath, SketchPoint } from "./types";
 import { computeFillRegion, gapConnectors } from "./flood-fill";
-import { buildDrawLayers, DrawItem, isEraserPath, isPiece, pieceHoles, pieceOutline } from "./pieces";
+import { buildDrawLayers, byZ, DrawItem, isEraserPath, ownedBy, pieceHoles, pieceOutline } from "./pieces";
 
 const FILL_GAP_POINTS = 8; // shapes with openings up to ~2x this are considered closed
 const FILL_STROKE_END_GAP_POINTS = 30; // a pen stroke ending this close to a stroke is treated as connected
@@ -32,8 +32,6 @@ export interface PageSnapshot {
 }
 
 export interface NormRect { x: number; y: number; width: number; height: number }
-
-const isEraser = (color: string) => color === "#00000000";
 
 // Closed polygon through normalized points, multiplied by `scale`
 export function polygonPath(points: SketchPoint[], scale: number): SkPath {
@@ -63,12 +61,23 @@ function toFileUri(uri: string) {
     return uri.startsWith("/") ? "file://" + uri : uri;
 }
 
+// decoded images, least recently used first (a Map keeps insertion order)
 const uriImageCache = new Map<string, SkImage>();
+const URI_IMAGE_CACHE_SIZE = 50;
 const uriImageLoading = new Set<string>();
+
+function cachedImage(key: string): SkImage | undefined {
+    const img = uriImageCache.get(key);
+    if (img) {
+        uriImageCache.delete(key);
+        uriImageCache.set(key, img);
+    }
+    return img;
+}
 
 // Returns the image if already loaded, otherwise starts loading it and calls onLoaded when ready
 export function getUriImage(uri: string, onLoaded: () => void): SkImage | null {
-    const img = uriImageCache.get(toFileUri(uri));
+    const img = cachedImage(toFileUri(uri));
     if (img) return img;
     if (!uriImageLoading.has(uri)) {
         uriImageLoading.add(uri);
@@ -79,12 +88,12 @@ export function getUriImage(uri: string, onLoaded: () => void): SkImage | null {
 
 async function loadImage(uri: string): Promise<SkImage | undefined> {
     const key = toFileUri(uri);
-    let img = uriImageCache.get(key);
+    let img = cachedImage(key);
     if (!img) {
         const data = await Skia.Data.fromURI(key).catch(() => undefined);
         img = data && Skia.Image.MakeImageFromEncoded(data) || undefined;
         if (!img) return undefined;
-        if (uriImageCache.size > 50) uriImageCache.clear();
+        if (uriImageCache.size >= URI_IMAGE_CACHE_SIZE) uriImageCache.delete(uriImageCache.keys().next().value!);
         uriImageCache.set(key, img);
     }
     return img;
@@ -119,9 +128,9 @@ const differs = (px: Uint8Array, i: number, r: number, g: number, b: number) =>
 
 interface RenderOptions {
     includeBg: boolean;
-    includeVectors: boolean; // rulers, tables, inserted images
-    // all: ink, paint and pieces as on screen. paper: the base paper's paint and holes only (what a cut takes)
-    sketch: "all" | "paper";
+    // screen: everything as on screen (ink, paint, pieces, rulers, tables).
+    // paper: the paper and its paint only, no ink or vectors (what a cut takes)
+    mode: "screen" | "paper";
     clip?: SketchPoint[]; // lasso polygon, normalized
 }
 
@@ -231,9 +240,9 @@ async function renderPage(page: PageSnapshot, rect: SkRect, scale: number, opts:
         }
     }
 
-    await drawSketch(canvas, page, r, opts.sketch === "paper");
+    await drawSketch(canvas, page, r, opts.mode === "paper");
 
-    if (opts.includeVectors) {
+    if (opts.mode === "screen") {
         const stroke = (color: string, width: number) => {
             const paint = Skia.Paint();
             paint.setAntiAlias(true);
@@ -271,8 +280,7 @@ async function renderFillBoundary(page: PageSnapshot, pieceId: string | undefine
     canvas.drawColor(Skia.Color("white"));
     const black = Skia.Paint();
     black.setColor(Skia.Color("black"));
-    const pieces = page.images.filter(isPiece);
-    const target = pieceId ? pieces.find(p => p.id === pieceId) : undefined;
+    const target = pieceId ? page.images.find(p => p.id === pieceId) : undefined;
 
     if (target) {
         const outside = Skia.Path.Make();
@@ -281,8 +289,7 @@ async function renderFillBoundary(page: PageSnapshot, pieceId: string | undefine
         canvas.drawPath(outside, black);
     }
 
-    const owned = (e: { pieceId?: string | null }) => (e.pieceId ?? undefined) === (target?.id ?? undefined);
-    const paths = page.paths.filter(owned).sort((a, b) => (a.z ?? 0) - (b.z ?? 0));
+    const paths = page.paths.filter(p => ownedBy(p, target?.id)).sort(byZ);
     canvas.saveLayer();
     for (const p of paths) {
         if (!isPenStroke(p) && !isEraserPath(p)) continue;
@@ -311,7 +318,7 @@ async function renderFillBoundary(page: PageSnapshot, pieceId: string | undefine
 
     if (!target) {
         // pieces lie on the base paper: its paint does not flow under them
-        pieces.forEach(p => canvas.drawPath(pieceClipPath(p, r), black));
+        page.images.forEach(p => canvas.drawPath(pieceClipPath(p, r), black));
     }
 
     surface.flush();
@@ -344,7 +351,7 @@ export async function computeFill(page: PageSnapshot, point: [number, number], c
     // Skip fills that would not visibly change the page as currently shown (with existing fills),
     // e.g. re-filling a shape with the same color, or a tiny enclosed speck
     const current = await renderPage(page, Skia.XYWHRect(region.x / scale, region.y / scale, region.width / scale, region.height / scale),
-        scale, { includeBg: true, includeVectors: true, sketch: "all" });
+        scale, { includeBg: true, mode: "screen" });
     const currentPixels = current && readRGBA(current);
     if (currentPixels && current.width() === region.width && current.height() === region.height) {
         let changed = 0;
@@ -389,7 +396,7 @@ export async function capturePiece(page: PageSnapshot, rect: NormRect, pixelRati
     const r = page.ratio;
     const scale = Math.min(pixelRatio, 3);
     const image = await renderPage(page, Skia.XYWHRect(rect.x * r, rect.y * r, rect.width * r, rect.height * r),
-        scale, { includeBg: page.hasPhotoBg, includeVectors: false, sketch: "paper", clip: lasso });
+        scale, { includeBg: page.hasPhotoBg, mode: "paper", clip: lasso });
     if (!image) return undefined;
 
     let hasContent = true;

@@ -61,7 +61,7 @@ function fromPerChar(chars: (SpanStyle | undefined)[]): TextSpan[] {
  * Sets style attributes on [start, end). An attribute set to undefined goes back to the text's own style.
  */
 export function applySpanStyle(spans: TextSpan[] | undefined, length: number, start: number, end: number,
-    patch: SpanStyle): TextSpan[] {
+    patch: SpanStyle): TextSpan[] | undefined {
     const chars = perChar(spans, length);
     for (let i = Math.max(0, start); i < Math.min(length, end); i++) {
         const next: SpanStyle = { ...(chars[i] ?? {}) };
@@ -71,7 +71,8 @@ export function applySpanStyle(spans: TextSpan[] | undefined, length: number, st
         }
         chars[i] = next;
     }
-    return fromPerChar(chars);
+    const result = fromPerChar(chars);
+    return result.length ? result : undefined;
 }
 
 /** The effective value of a style attribute at a character */

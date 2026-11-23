@@ -8,8 +8,7 @@ import { SpanStyle } from "./text-spans";
 export const FORMAT_BAR_HEIGHT = 46;
 
 interface TextFormatBarProps {
-    left?: number;
-    right?: number;
+    left: number;
     // placed by its top edge (below the text), or by its bottom edge (above the text: grows upward)
     top?: number;
     bottom?: number;
@@ -26,11 +25,11 @@ interface TextFormatBarProps {
     pasteOnly?: boolean;
 }
 
-export function TextFormatBar({ left, right, top, bottom, bold, italic, underline, color, onFormat, onSize, onClipboard, pasteOnly }: TextFormatBarProps) {
+export function TextFormatBar({ left, top, bottom, bold, italic, underline, color, onFormat, onSize, onClipboard, pasteOnly }: TextFormatBarProps) {
     const [showColors, setShowColors] = useState(false);
     const place = {
         ...(bottom !== undefined ? { bottom, flexDirection: "column-reverse" as const } : { top }),
-        ...(right !== undefined ? { right } : { left }),
+        left,
     };
     const button = (key: string, icon: string, active: boolean, onPress: () => void) =>
         <TouchableOpacity key={key} testID={"format-" + key} style={[styles.button, active && styles.active]} onPress={onPress}>

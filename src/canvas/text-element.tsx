@@ -28,7 +28,6 @@ interface TextElementProps {
     texts: SketchText[];
     canvasHeight: number;
     language?: string;
-    // view points the text is shifted by while the piece it belongs to is dragged
     // where the piece it lies on moves (and scales) it, while that piece is dragged or resized
     dragOffset?: { dx: number; dy: number; scale?: number };
     // the selection while editing (start..end), for the selection format toolbar

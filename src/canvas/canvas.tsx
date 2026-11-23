@@ -1,11 +1,10 @@
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import {
     Image,
     ImageSize,
     ImageURISource,
     LayoutChangeEvent,
     PanResponder,
-    PixelRatio,
     Pressable,
     StyleSheet,
     TouchableOpacity,
@@ -61,8 +60,6 @@ import {
     joinPath,
     normalizeFoAndroid,
     IIF,
-    findLast,
-    isPointOnImage,
 } from "./utils";
 import TextElement from "./text-element"; // Example sub-component for text
 import { PinchHelperEvent, PinchSession } from "./pinch";
@@ -76,7 +73,7 @@ import { MyIcon } from "../common/icons";
 import { trace } from "../log";
 import { FileSystem } from "../filesystem";
 import { cutShapePath, getOverlayImage, getUriImage, NormRect, pieceClipPath } from "./raster";
-import { buildDrawLayers, DrawItem, DrawLayer, stackTexts, textBox, textCenter, topPieceAt, visibleTextAt } from "./pieces";
+import { buildDrawLayers, DrawItem, DrawLayer, ERASER_COLOR, stackTexts, textBox, textCenter, topPieceAt, visibleTextAt } from "./pieces";
 import { allHave, SpanStyle, styleAt } from "./text-spans";
 import { FORMAT_BAR_HEIGHT, TextFormatBar } from "./text-format-bar";
 import Clipboard from "@react-native-clipboard/clipboard";
@@ -441,11 +438,10 @@ function Canvas({
                 startSketchRef.current = { position: clickPoint, initialOffset: offsetRef.current };
 
                 if (currentElementTypeRef.current !== ElementTypes.Sketch) {
-                    let elem = searchElement(...clickPoint);
-                    if (elem && currentElementTypeRef.current === ElementTypes.Cut && "text" in elem) {
-                        // select tool: a tap selects the text, a drag moves the piece under it (a text moves by its handle)
-                        startSketchRef.current.clickElem = elem;
-                        elem = topPieceAt(imagesRef.current, ...clickPoint);
+                    const elem = searchElement(...clickPoint);
+                    if (currentElementTypeRef.current === ElementTypes.Cut) {
+                        // select tool: a tap on a text selects it; a drag moves the piece (a text moves by its handle)
+                        startSketchRef.current.clickElem = visibleTextAt(textsRef.current, imagesRef.current, ...clickPoint, TEXT_SEARCH_MARGIN);
                     }
                     if (elem) {
                         startSketchRef.current.elem = elem;
@@ -549,8 +545,7 @@ function Canvas({
                             const pt: SketchPoint = [initialPosition[0] + dx, initialPosition[1] + dy];
                             if ("id" in elem) {
                                 isMoving.current = true;
-                                const moveType = currentElementTypeRef.current == ElementTypes.Line ? MoveTypes.LineMove :
-                                    "text" in elem ? MoveTypes.Text : MoveTypes.ImageMove;
+                                const moveType = currentElementTypeRef.current == ElementTypes.Line ? MoveTypes.LineMove : MoveTypes.ImageMove;
                                 if (moveContext.current == null) {
                                     moveContext.current = { type: moveType, id: elem.id, offsetX: 0, offsetY: 0 };
                                 }
@@ -629,8 +624,7 @@ function Canvas({
                 } else if (elem) {
                     if ("id" in elem) {
                         onMoveEnd(
-                            currentElementTypeRef.current == ElementTypes.Line ? MoveTypes.LineMove :
-                                "text" in elem ? MoveTypes.Text : MoveTypes.ImageMove,
+                            currentElementTypeRef.current == ElementTypes.Line ? MoveTypes.LineMove : MoveTypes.ImageMove,
                             (elem as ElementBase).id);
                         isMoving.current = false;
                         moveContext.current = null;
@@ -764,12 +758,7 @@ function Canvas({
             //console.log("searchElement txt",textsRef.current)
             return textsRef.current?.find(t => !t.tableId && inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
         }
-        if (currentElementTypeRef.current === ElementTypes.Cut) {
-            // a text seen there (texts can be moved with the select tool), else the piece on top
-            return visibleTextAt(textsRef.current, imagesRef.current, cx, cy, TEXT_SEARCH_MARGIN) ??
-                topPieceAt(imagesRef.current, cx, cy);
-        }
-        if (currentElementTypeRef.current === ElementTypes.Image) {
+        if (currentElementTypeRef.current === ElementTypes.Image || currentElementTypeRef.current === ElementTypes.Cut) {
             // the piece on top (images are pieces)
             return topPieceAt(imagesRef.current, cx, cy);
         }
@@ -823,7 +812,7 @@ function Canvas({
 
     imageSource = normalizeFoAndroid(imageSource)
     //console.log("canvas render", ratio, canvasWidth)
-    const isEraser = (color: string) => color === "#00000000";
+    const isEraser = (color: string) => color === ERASER_COLOR;
 
     const showImageControls = (image: SketchImage) => currentEdited.imageId == image.id &&
         (currentElementType == ElementTypes.Image || currentElementType == ElementTypes.Cut);
@@ -864,7 +853,7 @@ function Canvas({
         const boxTop = box ? box.y : text.y * ratio;
         const boxBottom = box ? box.y + box.height : (text.y + text.fontSize) * ratio;
         const above = boxTop - FORMAT_BAR_HEIGHT - 8 >= 0;
-        const boxLeft = box ? box.x : text.rtl ? text.x * ratio - (text.width ?? 0) * ratio : text.x * ratio;
+        const boxLeft = box ? box.x : textBox(text).x * ratio;
         const boxRight = box ? box.x + box.width : boxLeft + (text.width ?? 0) * ratio;
         const preferred = text.rtl ? boxRight - width : boxLeft;
         const left = Math.max(0, Math.min(preferred, canvasWidth - width));
@@ -893,7 +882,6 @@ function Canvas({
         />;
     };
 
-    // A piece being dragged runs ahead of where its content was laid out: offset (view points)
     // How a piece is shown away from where its content was laid out: moved (dx, dy, in view points)
     // and resized (sx, sy around its corner ox, oy), while it is dragged or resized
     const pieceDelta = (pieceId?: string | null) => {
@@ -943,7 +931,7 @@ function Canvas({
     };
 
     // The text selected with the select tool, or dragged in text mode, shows the piece it lies on
-    const highlightTextId = currentElementType == ElementTypes.Cut ? currentEdited.selectedTextId : movingTextId;
+    const highlightTextId = currentEdited.selectedTextId ?? movingTextId;
     const highlightText = highlightTextId ? texts?.find(t => t.id === highlightTextId) : undefined;
     // its parent; while it is being moved, the piece it would land on
     const textMoving = highlightText && (highlightText.id === movingTextId || !!highlightText.backup);
@@ -984,8 +972,8 @@ function Canvas({
 
     // A piece being dragged is on top while it moves (it is brought to the top when dropped)
     const isDragged = (img: SketchImage) => img.x !== (img.originX ?? img.x) || img.y !== (img.originY ?? img.y);
-    const drawLayers = buildDrawLayers(paths, overlays,
-        images?.map(img => isDragged(img) ? { ...img, z: Number.MAX_SAFE_INTEGER } : img));
+    const drawLayers = useMemo(() => buildDrawLayers(paths, overlays,
+        images?.map(img => isDragged(img) ? { ...img, z: Number.MAX_SAFE_INTEGER } : img)), [paths, overlays, images]);
     // Layers are keyed by position, not id: when the order changes the layers update in place
     // rather than being moved, which the Skia renderer does not reliably reorder.
 
@@ -993,8 +981,9 @@ function Canvas({
     // split into stacked canvases with the covered texts between them. The edited text is on top.
     const editedTextId = (currentElementType == ElementTypes.Text || currentElementType == ElementTypes.Table)
         ? currentEdited.textId : undefined;
-    const stack = stackTexts(drawLayers, texts,
-        editedTextId ?? (currentElementType == ElementTypes.Cut ? currentEdited.selectedTextId : undefined));
+    const onTopTextId = editedTextId ?? currentEdited.selectedTextId;
+    // (not memoized: a text's measured size is set on its layout, in place)
+    const stack = stackTexts(drawLayers, texts, onTopTextId);
     // canvas k: zIndex 8 + 2k; the texts right under it: one less; texts above all: 13
     const textZIndex = (level: number) => level >= stack.canvases.length ? 13 : 7 + 2 * level;
 
@@ -1111,7 +1100,7 @@ function Canvas({
                     const editMode = (currentElementType == ElementTypes.Text || currentElementType == ElementTypes.Table)
                         && text.id == currentEdited.textId
                     const d = textOffset(text);
-                    const textElement = <TextElement
+                    return <TextElement
                         ref={editMode ? editTextRef : undefined}
                         key={text.id}
                         text={text}
@@ -1134,7 +1123,6 @@ function Canvas({
                         onEditLayout={handleEditLayout}
                         zIndex={textZIndex(stack.textLevel.get(text.id) ?? stack.canvases.length)}
                     />
-                    return textElement;
                 })}
 
                 {renderFormatBar()}
@@ -1328,7 +1316,8 @@ function Canvas({
                     </Svg>}
 
                 {/* Images */}
-                {images && [...images].sort((a, b) => (a.z ?? 0) - (b.z ?? 0)).map((image) => {
+                {/* only the selected image has controls */}
+                {images?.filter(image => image.id === currentEdited.imageId).map((image) => {
                     const imgW = (image.width)
                     const imgH = (image.height)
                     const w = (imgW * ratio);

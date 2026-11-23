@@ -11,7 +11,7 @@ describe('text spans', () => {
             { start: 2, end: 4, bold: true },
             { start: 4, end: 6, bold: true, color: '#ff0000' },
             { start: 6, end: 7, bold: true }]);
-        expect(applySpanStyle(spans, 10, 0, 10, { bold: undefined, color: undefined })).toEqual([]);
+        expect(applySpanStyle(spans, 10, 0, 10, { bold: undefined, color: undefined })).toBeUndefined();
     });
 
     it('keeps spans on their characters while typing and deleting', () => {

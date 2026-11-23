@@ -33,6 +33,9 @@ const Pickers = {
     FILL: 14,
 }
 
+// menus that open by themselves with their tool: leaving them does not open the next tool's menu
+const AUTO_OPEN_PICKERS = [Pickers.ZOOM, Pickers.CUT, Pickers.IMAGE];
+
 const availableBrushSize = [
     1, 3, 5, 7, 9
 ]
@@ -221,8 +224,6 @@ function EditorToolbar({
                 )
         )
     }, [showExtMenu, windowSize])
-
-    const AUTO_OPEN_PICKERS = [Pickers.ZOOM, Pickers.CUT, Pickers.IMAGE];
 
     onModeButtonClick = useCallback((type, height) => {
         trace("mode button click", type, height )
