@@ -136,7 +136,7 @@ interface CanvasProps {
     onSketchStart: (p: SketchPoint) => void;
     onSketchStep: (p: SketchPoint) => void;
     onSketchEnd: (Cmd?: PathCommand[]) => void;
-    onTextChanged: (id: string, newText: string) => void;
+    onTextChanged: (id: string, newText: string, edited?: { start: number; end: number }) => void;
     onCanvasClick: (p: SketchPoint, elem: ElementBase | TableContext | undefined) => void;
     onMoveElement: (type: MoveTypes, id: string, p: SketchPoint) => void;
     onMoveEnd: (type: MoveTypes, id: string) => void;
@@ -828,22 +828,27 @@ function Canvas({
     const [editLayout, setEditLayout] = useState<{ id: string; x: number; y: number; width: number; height: number } | undefined>();
     const handleEditLayout = useCallback((id: string, l: { x: number; y: number; width: number; height: number }) =>
         setEditLayout({ id, ...l }), []);
+    // the selection in the edited text; before any selection event (e.g. a new, empty box): the cursor at the end
+    const editedText = currentEdited.textId ? texts?.find(t => t.id === currentEdited.textId) : undefined;
+    const editSelection = textSelection?.id === currentEdited.textId ? textSelection :
+        editedText ? { id: editedText.id, start: editedText.text.length, end: editedText.text.length } : undefined;
+    const hasRange = !!editSelection && editSelection.end > editSelection.start;
     // with a cursor only, the bar offers Paste - when there is text to paste
     const [canPaste, setCanPaste] = useState(false);
     useEffect(() => {
-        if (!textFormatEnabled || !textSelection || textSelection.end > textSelection.start) return;
+        if (!textFormatEnabled || !currentEdited.textId || hasRange) return;
         let live = true;
         Clipboard.hasString().then(has => live && setCanPaste(has)).catch(() => { });
         return () => { live = false; };
-    }, [textSelection, textFormatEnabled]);
+    }, [textSelection, currentEdited.textId, hasRange, textFormatEnabled]);
     const formatBarRectRef = useRef<{ x: number; y: number; width: number; height: number } | undefined>(undefined);
 
     const renderFormatBar = () => {
         formatBarRectRef.current = undefined;
-        const sel = textSelection;
-        if (!textFormatEnabled || currentElementType != ElementTypes.Text || !sel || sel.id !== currentEdited.textId) return null;
-        const text = texts?.find(t => t.id === sel.id);
-        if (!text || text.tableId) return null;
+        const sel = editSelection;
+        if (!textFormatEnabled || currentElementType != ElementTypes.Text || !sel) return null;
+        const text = editedText;
+        if (!text) return null;
         const pasteOnly = sel.end <= sel.start;
         if (pasteOnly && !canPaste) return null;
         const box = editLayout?.id === text.id ? editLayout : undefined;

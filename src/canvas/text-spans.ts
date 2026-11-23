@@ -83,19 +83,36 @@ export function styleAt(spans: TextSpan[] | undefined, index: number): SpanStyle
 
 /**
  * Keeps the spans on the same characters after the text changed from oldText to newText
- * (one edit: a replaced range). Typed characters take the style of the character before them.
+ * (one edit: a replaced range). `edited`: the selection the edit replaced, when known - with
+ * repeated characters the change alone does not tell where it was. Typed characters take the
+ * style of the first character they replace, or (inserted) of the character before them.
  */
-export function updateSpansForEdit(spans: TextSpan[] | undefined, oldText: string, newText: string): TextSpan[] | undefined {
+export function updateSpansForEdit(spans: TextSpan[] | undefined, oldText: string, newText: string,
+    edited?: { start: number; end: number }): TextSpan[] | undefined {
     if (!spans?.length || oldText === newText) return spans;
-    let prefix = 0;
-    while (prefix < oldText.length && prefix < newText.length && oldText[prefix] === newText[prefix]) prefix++;
-    let suffix = 0;
-    while (suffix < oldText.length - prefix && suffix < newText.length - prefix &&
-        oldText[oldText.length - 1 - suffix] === newText[newText.length - 1 - suffix]) suffix++;
+    let prefix = 0, suffix = 0;
+    const fits = (r: { start: number; end: number }) => r.start >= 0 && r.start <= r.end && r.end <= oldText.length &&
+        newText.length >= r.start + oldText.length - r.end &&
+        newText.startsWith(oldText.substring(0, r.start)) && newText.endsWith(oldText.substring(r.end));
+    // a cursor (no selection) and characters gone: a backspace before it, or a forward delete after it
+    const gone = oldText.length - newText.length;
+    const candidates = !edited ? [] : edited.start === edited.end && gone > 0 ?
+        [{ start: edited.start - gone, end: edited.start }, { start: edited.start, end: edited.start + gone }] : [edited];
+    const range = candidates.find(fits);
+    if (range) {
+        prefix = range.start;
+        suffix = oldText.length - range.end;
+    } else {
+        // where the text changed: the longest common start, then end
+        while (prefix < oldText.length && prefix < newText.length && oldText[prefix] === newText[prefix]) prefix++;
+        while (suffix < oldText.length - prefix && suffix < newText.length - prefix &&
+            oldText[oldText.length - 1 - suffix] === newText[newText.length - 1 - suffix]) suffix++;
+    }
 
     const chars = perChar(spans, oldText.length);
     const inserted = newText.length - prefix - suffix;
-    const inherit = prefix > 0 ? chars[prefix - 1] : chars[prefix + (oldText.length - prefix - suffix)];
+    const replaced = oldText.length - prefix - suffix;
+    const inherit = replaced > 0 || prefix === 0 ? chars[prefix] : chars[prefix - 1];
     const next = [
         ...chars.slice(0, prefix),
         ...new Array(inserted).fill(inherit),

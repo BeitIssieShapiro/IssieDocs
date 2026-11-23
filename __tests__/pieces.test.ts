@@ -370,3 +370,95 @@ describe('texts with the select tool', () => {
         expect(s.images[0]).toMatchObject({ originWidth: 40, originHeight: 20 });
     });
 });
+
+describe('review regressions', () => {
+    const rect = (id: string, x: number, y: number, w: number, h: number, z: number) =>
+        ({ id, x, y, width: w, height: h, z, layered: true }) as any;
+
+    it('a concave lasso around an image\'s corners, notched through it, does not take it whole', () => {
+        // a U-shaped lasso: all 4 corners of the image (0..10) inside, a notch down through the middle
+        const notched: [number, number][] = [[-1, -1], [4, -1], [4, 8], [6, 8], [6, -1], [11, -1], [11, 11], [-1, 11]];
+        const plan = planCut(notched, [], [], [rect('I', 0, 0, 10, 10, 1)], newId);
+        expect(plan.absorbPieces).toEqual([]);
+        expect(plan.cutPieces.map(c => c.id)).toEqual(['I']);
+    });
+
+    it('a cut does not take ink or text hidden under a piece laid over it', () => {
+        // ink and text written, then an image put over them
+        const hidden = { ...stroke('hidden', [[2, 2], [4, 4]]), z: 0 } as any;
+        const crossing = { ...stroke('cross', [[2, 5], [15, 5]]), z: 1 } as any; // under the image up to x=10
+        const text = { id: 't', text: 'a', x: 2, y: 6, width: 2, height: 2, fontSize: 2, z: 2 } as any;
+        const plan = planCut(cutPolygon({ x: 0, y: 0, width: 20, height: 10 }), [hidden, crossing], [text],
+            [rect('I', 0, 0, 10, 10, 5)], newId);
+        expect(plan.takePaths).toEqual([]);
+        expect(plan.takeTexts).toEqual([]);
+        // the hidden stroke is dropped (it is under the cut's image); the crossing one keeps only what was seen
+        const cross = plan.splitPaths.find(sp => sp.from === 'cross')!;
+        expect(cross.inside!.points).toEqual([[M, 10, 5], [L, 15, 5]]);
+        expect(cross.outside).toBeUndefined();
+        expect(plan.splitPaths.find(sp => sp.from === 'hidden')).toEqual({ from: 'hidden' });
+        expect(plan.dropTexts).toEqual(['t']);
+        // ink on the image itself is seen
+        const onImage = { ...stroke('mine', [[2, 2], [4, 4]], { pieceId: 'I' }), z: 6 } as any;
+        expect(planCut(cutPolygon({ x: 0, y: 0, width: 20, height: 10 }), [onImage], [], [rect('I', 0, 0, 10, 10, 5)], newId).takePaths)
+            .toEqual(['mine']);
+    });
+
+    it('replays a cut that drops hidden ink and texts', () => {
+        const s = replay([
+            { type: 'path', elem: stroke('hidden', [[2, 2], [4, 4]]) },
+            { type: 'text', elem: { id: 't', text: 'a', x: 2, y: 6, fontSize: 2 } },
+            {
+                type: 'cut', elem: {
+                    id: 'C1', x: 0, y: 0, width: 20, height: 10, piece: { id: 'P1', x: 0, y: 0, width: 20, height: 10, file: 'p.png' },
+                    takePaths: [], takeTexts: [], splitPaths: [{ from: 'hidden' }], dropTexts: ['t'], cutPieces: [], absorbPieces: [],
+                },
+            }]);
+        expect(s.paths).toEqual([]);
+        expect(s.texts).toEqual([]);
+    });
+
+    it('with more covers than canvases, a text is never put under its own piece', () => {
+        // pieces A..D in order; texts covered at 3 different layers; 'onD' lies on D and is covered by nothing
+        const p = (id: string, x: number, z: number) => rect(id, x, 0, 10, 10, z);
+        const t = (id: string, x: number, z: number, extra: any = {}) =>
+            ({ id, text: 'a', x, y: 2, width: 2, height: 2, fontSize: 2, z, ...extra }) as any;
+        const layers = buildDrawLayers([], [], [p('A', 0, 1), p('B', 0, 3), p('C', 20, 5), p('D', 40, 7), p('E', 40, 9)]);
+        const texts = [t('t1', 2, 0), t('t2', 22, 4), t('onD', 42, 8, { pieceId: 'D' })];
+        const s = stackTexts(layers, texts);
+        const canvasOf = (pieceId: string) => s.canvases.findIndex(c => c.some(l => l.piece?.id === pieceId));
+        // a text at level L is above canvases < L: its own piece must be among them
+        expect(s.textLevel.get('onD')!).toBeGreaterThan(canvasOf('D'));
+        expect(s.textLevel.get('t2')!).toBeGreaterThanOrEqual(0);
+    });
+
+    it('a selection made and dropped keeps the redo history and its files', () => {
+        const removed: string[] = [];
+        const q = new DoQueue(async (f: string) => { removed.push(f); });
+        q.pushImage({ id: 'I1', x: 0, y: 0, width: 5, height: 5, file: 'i.jpg' });
+        q.undo();
+        expect(q.canRedo()).toBe(true);
+        q.pushCut({ id: 'C1', piece: { id: 'P1', file: 'p.png' } }, true); // a selection: not yet in history
+        q.discardLast('C1', true);
+        expect(q.canRedo()).toBe(true);
+        expect(removed).toEqual(['p.png']);
+        q.redo();
+        expect(q.getAll().map((e: any) => e.elem.id)).toEqual(['I1']);
+    });
+});
+
+describe('review regressions 2', () => {
+    it('copying a selection with fully hidden ink replays', () => {
+        const hidden = { ...stroke('hidden', [[2, 2], [4, 4]]), z: 0 } as any;
+        const image = { id: 'I', x: 0, y: 0, width: 10, height: 10, z: 1, layered: true, file: 'i.jpg' } as any;
+        const plan = planCut(cutPolygon({ x: 0, y: 0, width: 20, height: 10 }), [hidden], [], [image], newId);
+        expect(plan.splitPaths).toEqual([{ from: 'hidden' }]);
+        const s = replay([
+            { type: 'path', elem: stroke('hidden', [[2, 2], [4, 4]]) },
+            { type: 'image', elem: image },
+            { type: 'cut', elem: { id: 'C1', x: 0, y: 0, width: 20, height: 10, piece: { id: 'P1', x: 30, y: 0, width: 20, height: 10, file: 'p.png' }, copy: { dx: 30, dy: 0 }, ...plan } },
+        ]);
+        expect(s.paths.map(p => p.id)).toEqual(['hidden']); // nothing copied, the original stays
+        expect(s.images.map(i => i.id)).toEqual(['I', 'P1']);
+    });
+});

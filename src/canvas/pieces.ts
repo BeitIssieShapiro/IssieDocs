@@ -84,6 +84,13 @@ function polygonsOverlap(a: SketchPoint[], b: SketchPoint[]): boolean {
     return a.some((p, i) => edgeCrossings(p, a[(i + 1) % a.length], b).length > 0);
 }
 
+// Whether a polygon lies fully inside another: all its corners inside, and no edges crossing
+// (a concave outer polygon can hold every corner and still cut through the middle)
+function polygonInside(inner: SketchPoint[], outer: SketchPoint[]): boolean {
+    return inner.every(([x, y]) => isPointInPolygon(x, y, outer)) &&
+        !inner.some((p, i) => edgeCrossings(p, inner[(i + 1) % inner.length], outer).length > 0);
+}
+
 // Where segment a-b crosses the polygon's edges: the fractions (0..1) along it, in order
 function edgeCrossings(a: SketchPoint, b: SketchPoint, polygon: SketchPoint[]): number[] {
     const ts: number[] = [];
@@ -146,6 +153,20 @@ export function splitStroke(points: PathCommand[], polygon: SketchPoint[]): { in
     };
 }
 
+/** Splits a stroke into what lies on the piece's paper and what does not (outside it, or in a hole) */
+function splitByPiece(points: PathCommand[], piece: SketchImage): { on?: PathCommand[]; off?: PathCommand[] } {
+    const split = splitStroke(points, pieceOutline(piece));
+    let on = split.inside;
+    const off: PathCommand[][] = split.outside ? [split.outside] : [];
+    for (const hole of pieceHoles(piece)) {
+        if (!on) break;
+        const h = splitStroke(on, hole);
+        if (h.inside) off.push(h.inside);
+        on = h.outside;
+    }
+    return { on, off: off.length ? off.flat() : undefined };
+}
+
 /**
  * A stroke drawn across pieces is divided like the paper under it: each part belongs to the
  * topmost piece it lies on (pieceId), the rest to the page (no pieceId). Holes show what is under them.
@@ -159,17 +180,10 @@ export function splitStrokeByPieces(points: PathCommand[], images: SketchImage[]
     const pieces = (images ?? []).filter(img => boxesOverlap(reach, img)).sort((a, b) => byZ(b, a));
     for (const piece of pieces) {
         if (!rest) break;
-        const split = splitStroke(rest, pieceOutline(piece));
-        let onPiece = split.inside;
-        const others: PathCommand[][] = split.outside ? [split.outside] : [];
-        for (const hole of pieceHoles(piece)) {
-            if (!onPiece) break;
-            const h = splitStroke(onPiece, hole);
-            if (h.inside) others.push(h.inside); // through the hole: what is below gets it
-            onPiece = h.outside;
-        }
-        if (onPiece) parts.push({ pieceId: piece.id, points: onPiece });
-        rest = others.length ? others.flat() : undefined;
+        // what is off the piece (also through its holes) goes to what is below
+        const { on, off } = splitByPiece(rest, piece);
+        if (on) parts.push({ pieceId: piece.id, points: on });
+        rest = off;
     }
     if (rest) parts.push({ points: rest });
     if (!parts.length && points.length) {
@@ -215,7 +229,10 @@ export interface CutPlan {
     // annotations that move into the piece, as they are
     takePaths: string[];
     takeTexts: string[];
-    // strokes crossing the edge: replaced by their parts outside (where they were) and inside (the new piece)
+    // texts inside the cut but hidden under a piece laid over them: gone with the paper under the cut
+    dropTexts: string[];
+    // strokes crossing the edge, or partly hidden: replaced by their parts outside (where they were) and
+    // inside (the new piece). A hidden part inside is dropped: it was under paper the cut flattens
     splitPaths: { from: string; outside?: SketchPath; inside?: SketchPath }[];
     // pieces under the cut: they get a hole (relative to the piece), or are taken whole when fully inside
     cutPieces: { id: string; hole: SketchPoint[] }[];
@@ -226,16 +243,22 @@ export interface CutPlan {
  * What a cut takes - everything seen inside it, on the page and on pieces. Strokes fully
  * inside are taken, crossing strokes are split at the edge, texts go with the new piece when
  * their center is inside. Pieces (and imported images) under the cut get a hole; a piece fully
- * inside is taken whole (its paper is in the new piece's image).
+ * inside is taken whole (its paper is in the new piece's image). What is hidden under a piece
+ * laid over it is not taken: the new piece's image shows that piece there.
  */
 export function planCut(polygon: SketchPoint[], paths: SketchPath[], texts: SketchText[], images: SketchImage[],
     newId: (prefix: string) => string): CutPlan {
-    const plan: CutPlan = { takePaths: [], takeTexts: [], splitPaths: [], cutPieces: [], absorbPieces: [] };
+    const plan: CutPlan = { takePaths: [], takeTexts: [], dropTexts: [], splitPaths: [], cutPieces: [], absorbPieces: [] };
     const area = polygonBox(polygon);
+    // the pieces laid over an element: above the paper it is on (the page, or its piece)
+    const zOf = (e: { pieceId?: string | null; z?: number }) =>
+        e.pieceId ? (images.find(i => i.id === e.pieceId)?.z ?? e.z ?? 0) : (e.z ?? 0);
+    const coversOf = (e: { pieceId?: string | null; z?: number }) =>
+        images.filter(img => img.id !== e.pieceId && (img.z ?? 0) > zOf(e) && boxesOverlap(area, img));
     for (const piece of images) {
         if (!boxesOverlap(area, piece)) continue;
         const outline = pieceOutline(piece);
-        if (outline.every(([x, y]) => isPointInPolygon(x, y, polygon))) {
+        if (polygonInside(outline, polygon)) {
             plan.absorbPieces.push(piece.id);
         } else if (polygonsOverlap(outline, polygon)) {
             plan.cutPieces.push({ id: piece.id, hole: polygon.map(([x, y]) => [x - piece.x, y - piece.y]) });
@@ -246,27 +269,36 @@ export function planCut(polygon: SketchPoint[], paths: SketchPath[], texts: Sket
         if (b.x > area.x + area.width || b.x + b.width < area.x || b.y > area.y + area.height || b.y + b.height < area.y) continue;
         const { inside, outside } = splitStroke(p.points, polygon);
         if (!inside) continue;
-        if (!outside) {
+        // what of the inside part is seen
+        let seen: PathCommand[] | undefined = inside, hidden = false;
+        for (const cover of coversOf(p)) {
+            if (!seen) break;
+            const { on, off } = splitByPiece(seen, cover);
+            if (on) [seen, hidden] = [off, true];
+        }
+        if (!outside && !hidden) {
             plan.takePaths.push(p.id);
         } else {
             const base = { color: p.color, strokeWidth: p.strokeWidth, isMarker: p.isMarker };
             plan.splitPaths.push({
                 from: p.id,
-                outside: { ...base, id: newId("S"), points: outside },
-                inside: { ...base, id: newId("S"), points: inside },
+                ...(outside ? { outside: { ...base, id: newId("S"), points: outside } } : {}),
+                ...(seen ? { inside: { ...base, id: newId("S"), points: seen } } : {}),
             });
         }
     }
     for (const t of texts) {
         if (t.tableId) continue;
         const [cx, cy] = textCenter(t);
-        if (isPointInPolygon(cx, cy, polygon)) plan.takeTexts.push(t.id);
+        if (!isPointInPolygon(cx, cy, polygon)) continue;
+        const hidden = coversOf(t).some(cover => isPointOnPiece(cover, cx, cy));
+        (hidden ? plan.dropTexts : plan.takeTexts).push(t.id);
     }
     return plan;
 }
 
 export const cutPlanIsEmpty = (plan: CutPlan) =>
-    !plan.takePaths.length && !plan.takeTexts.length && !plan.splitPaths.length &&
+    !plan.takePaths.length && !plan.takeTexts.length && !plan.dropTexts.length && !plan.splitPaths.length &&
     !plan.cutPieces.length && !plan.absorbPieces.length;
 
 export function shiftPoints(points: PathCommand[], dx: number, dy: number): PathCommand[] {
@@ -359,7 +391,8 @@ export function stackTexts(layers: DrawLayer[], texts: SketchText[] | undefined,
     layers.forEach((l, i) => l.piece && pieceIndex.set(l.piece.id, i));
     const layerZ = (l: DrawLayer) => l.piece ? (l.piece.z ?? 0) : itemZ(l.items[0]);
 
-    // for each text: the first layer that covers it
+    // for each text: where it lies, and the first layer that covers it
+    const lies = new Map<string, number>();
     const cover = new Map<string, number>();
     for (const t of texts ?? []) {
         if (t.tableId || t.id === onTop) continue;
@@ -367,6 +400,7 @@ export function stackTexts(layers: DrawLayer[], texts: SketchText[] | undefined,
         // where the text lies: on its piece, or among the layers by when it was written
         let at = owner ?? -1;
         if (owner === undefined) layers.forEach((l, i) => { if (layerZ(l) < (t.z ?? 0)) at = i; });
+        lies.set(t.id, at);
         const box = textBox(t);
         for (let i = at + 1; i < layers.length; i++) {
             const p = layers[i].piece;
@@ -374,14 +408,19 @@ export function stackTexts(layers: DrawLayer[], texts: SketchText[] | undefined,
         }
     }
 
-    // split where texts get covered: the lowest few, a text covered later goes under the split before it
+    // split where texts get covered: the lowest few. A text covered elsewhere goes under the highest
+    // split between where it lies and its cover; if there is none, above all (seen, not under its own paper)
     const splits = [...new Set(cover.values())].sort((a, b) => a - b).slice(0, MAX_CANVASES - 1);
     const bounds = [0, ...splits, layers.length];
     const canvases = bounds.slice(1).map((end, k) => layers.slice(bounds[k], end));
     const textLevel = new Map<string, number>();
     for (const t of texts ?? []) {
         const c = cover.get(t.id);
-        textLevel.set(t.id, c === undefined ? canvases.length : splits.filter(s => s <= c).length);
+        const at = lies.get(t.id) ?? -1;
+        // splits are sorted: the last one in (at, c]
+        let k = -1;
+        if (c !== undefined) splits.forEach((s, i) => { if (s > at && s <= c) k = i; });
+        textLevel.set(t.id, k < 0 ? canvases.length : k + 1);
     }
     return { canvases, textLevel };
 }

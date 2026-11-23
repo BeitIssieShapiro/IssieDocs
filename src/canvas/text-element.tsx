@@ -21,7 +21,8 @@ interface TextElementProps {
     ratio: number;
     moveResponder: any;
     moveContext: React.MutableRefObject<any>;
-    onTextChanged: (id: string, text: string) => void;
+    // edited: the selection the change replaced (where it was typed)
+    onTextChanged: (id: string, text: string, edited?: { start: number; end: number }) => void;
     handleTextLayout: (e: LayoutChangeEvent, text: SketchText) => void;
     handleCursorPositionChange: (newValue: number, text: SketchText) => void;
     tables?: SketchTable[];
@@ -293,7 +294,7 @@ function TextElement({
                         isSpeaking && { opacity: 0 }
                         ]}
                         {...(text.spans?.length ? {} : { value: text.text })}
-                        onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text)}
+                        onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text, selection)}
                         {...(heldSelection ? { selection: heldSelection } : {})}
                         contextMenuHidden={!!hideEditMenu}
                         // spelling suggestions show in a bubble over the selection too

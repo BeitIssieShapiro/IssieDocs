@@ -187,7 +187,8 @@ export function replayPageQueue(q: any[], attachmentBase: string) {
             const pieceId = cut.piece.id;
             const { dx, dy } = cut.copy;
             const paths = new Set<string>(cut.takePaths ?? []), texts = new Set<string>(cut.takeTexts ?? []);
-            const insideParts = new Map<string, any>((cut.splitPaths ?? []).map((sp: any) => [sp.from, sp.inside]));
+            // (a stroke fully hidden inside has no part to copy)
+            const insideParts = new Map<string, any>((cut.splitPaths ?? []).filter((sp: any) => sp.inside).map((sp: any) => [sp.from, sp.inside]));
             // what is inside: whole strokes, and the inside parts of crossing ones (in the stroke's place)
             const inside = _paths.flatMap(p => paths.has(p.id) ? [p] : insideParts.has(p.id) ? [{ ...insideParts.get(p.id), z: p.z }] : []);
             _paths.push(...copiesOf(inside, pieceId, dx, dy));
@@ -217,7 +218,10 @@ export function replayPageQueue(q: any[], attachmentBase: string) {
                     }
                 }
                 _paths = nextPaths;
-                _texts = _texts.map(t => ({ ...t, pieceId: texts.has(t.id) ? pieceId : keepOwner(t.pieceId) }));
+                // texts hidden under a piece laid over them go with the paper under the cut
+                const dropped = take(cut.dropTexts);
+                _texts = _texts.filter(t => !dropped.has(t.id))
+                    .map(t => ({ ...t, pieceId: texts.has(t.id) ? pieceId : keepOwner(t.pieceId) }));
                 _overlays = _overlays.map(o => ({ ...o, pieceId: keepOwner(o.pieceId) }));
                 _images = _images.filter(img => !absorbed.has(img.id));
                 // pieces under the cut get a hole

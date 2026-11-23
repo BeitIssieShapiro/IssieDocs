@@ -1258,8 +1258,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 ...(lasso ? { outline: lasso.map(([px, py]) => [(px - rect.x) / rect.width, (py - rect.y) / rect.height]) } : {}),
             };
             const cutElem = { id: getId("C"), ...rect, ...(lasso ? { points: lasso } : {}), piece, ...plan };
-            queue.current.pushCut(cutElem);
-            // only a selection until it is moved, deleted or copied
+            // only a selection until it is moved, deleted or copied: not in the history yet
+            queue.current.pushCut(cutElem, true);
             pendingCutRef.current = { cutId: cutElem.id, pieceId: piece.id, entry: cutElem };
             queue2state();
             selectPiece(piece.id);
@@ -1490,12 +1490,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
     }
 
-    function handleTextChanged(id: string, newText: string) {
+    function handleTextChanged(id: string, newText: string, edited?: { start: number; end: number }) {
         //trace("handleTextChanged", newText)
         const textElem = textsRef.current.find(t => t.id == id);
         if (textElem) {
             // styled ranges stay on their characters
-            textElem.spans = updateSpansForEdit(textElem.spans, textElem.text, newText);
+            textElem.spans = updateSpansForEdit(textElem.spans, textElem.text, newText, edited);
             textElem.text = newText;
         }
         setTexts([...textsRef.current]);
@@ -1518,7 +1518,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         const textElem = textsRef.current.find(t => t.id == id);
         if (!textElem) return;
         const replaceSelection = (inserted: string) =>
-            handleTextChanged(id, textElem.text.substring(0, start) + inserted + textElem.text.substring(end));
+            handleTextChanged(id, textElem.text.substring(0, start) + inserted + textElem.text.substring(end), { start, end });
         if (action === "paste") {
             const pasted = await Clipboard.getString();
             if (pasted) replaceSelection(pasted);
@@ -2790,6 +2790,12 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 windowSize={windowSize}
                 onGoBack={() => navigation.goBack()}
                 onUndo={() => {
+                    // undo drops a selection not acted on (it is not in the history)
+                    if (pendingCutRef.current) {
+                        discardPendingCut();
+                        deselectPiece();
+                        return;
+                    }
                     if (queue.current.undo()) {
                         afterUndoRedo(true);
                     }
@@ -2797,6 +2803,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 canUndo={queue.current.canUndo()}
                 canRedo={queue.current.canRedo()}
                 onRedo={() => {
+                    if (pendingCutRef.current) {
+                        discardPendingCut();
+                        deselectPiece();
+                    }
                     if (queue.current.redo()) {
                         afterUndoRedo(false);
                     }
