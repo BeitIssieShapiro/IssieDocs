@@ -42,7 +42,7 @@ import { AudioElement2 } from './audio-elem-new';
 import { Text } from 'react-native';
 import { migrateMetadata } from './state-migrate';
 import { PathCommand, scale } from '@shopify/react-native-skia';
-import { getSetting, SCROLL_BUTTONS, KB_SPEAK_DICTATE, SPEAK_DICTATE_MODE, getSpeechRateSetting, textStylingOn } from './settings';
+import { getSetting, SCROLL_BUTTONS, KB_SPEAK_DICTATE, SPEAK_DICTATE_MODE, textStylingOn } from './settings';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useMessageBox } from './message';
 import { MyIcon } from './common/icons';
@@ -545,7 +545,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 ? textsRef.current.find(t => t.id === currentEditedRef.current.textId)
                 : undefined;
             if (textElem?.text?.length) {
-                SpeechTranscription.startSpeaking(textElem.text, kbLanguage, getSpeechRateSetting());
+                SpeechTranscription.startSpeaking(textElem.text, kbLanguage);
             }
         }
     }, [isSpeaking, isRecording, kbLanguage]);

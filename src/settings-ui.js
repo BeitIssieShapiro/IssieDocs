@@ -17,7 +17,6 @@ import * as Progress from 'react-native-progress';
 
 import FadeInView from './FadeInView'
 import { isRTL, translate } from './lang';
-import Slider from '@react-native-community/slider';
 
 import {
     VIEW, EDIT_TITLE, LANGUAGE, TEXT_BUTTON,
@@ -29,9 +28,7 @@ import {
     KB_TOOLBAR,
     KB_TEXT_TOOLS,
     KB_SPEAK_DICTATE,
-    SPEAK_DICTATE_MODE,
-    SPEECH_RATE,
-    getSpeechRateSetting
+    SPEAK_DICTATE_MODE
 } from './settings'
 import { FileSystem } from './filesystem';
 import { trace } from './log';
@@ -71,7 +68,6 @@ export default function SettingsMenu(props) {
     let kbSpeakDictateSetting = getSetting(KB_SPEAK_DICTATE.name, KB_SPEAK_DICTATE.yes);
     const [kbSpeakDictate, setKbSpeakDictate] = useState(kbSpeakDictateSetting);
 
-    const [speechRate, setSpeechRate] = useState(getSpeechRateSetting());
 
     let speakDictateModeSetting = getSetting(SPEAK_DICTATE_MODE.name, SPEAK_DICTATE_MODE.floating);
     const [speakDictateMode, setSpeakDictateMode] = useState(speakDictateModeSetting);
@@ -211,10 +207,6 @@ export default function SettingsMenu(props) {
         setKbSpeakDictate(tb);
     }
 
-    const setSpeechRateHandler = (value) => {
-        Settings.set({ [SPEECH_RATE.name]: value })
-        setSpeechRate(value);
-    }
 
     const setSpeakDictateModeHandler = (mode) => {
         Settings.set({ [SPEAK_DICTATE_MODE.name]: mode })
@@ -391,27 +383,6 @@ export default function SettingsMenu(props) {
                             setKbSpeakDictateHandler(newValue)
                         },
                         kbSpeakDictate == KB_SPEAK_DICTATE.yes)}
-
-                    { false && kbSpeakDictate == KB_SPEAK_DICTATE.yes && <View style={{ width: '100%', paddingStart: 40, paddingEnd: 25, paddingTop: 10, alignItems: "flex-start", }}>
-                        <AppText style={styles.radioText}>{translate("SpeechRate")}</AppText>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
-                            <MyIcon info={{ type: "MDI",name:"tortoise", size: 28, color: semanticColors.titleText }} />
-                            <Spacer />
-                            <Slider
-                                style={{ flex: 1, height: 40 }}
-                                inverted={isRTL()}
-                                minimumValue={0.0}
-                                maximumValue={1.0}
-                                step={0.05}
-                                value={speechRate}
-                                onSlidingComplete={setSpeechRateHandler}
-                                minimumTrackTintColor={semanticColors.titleText}
-                                maximumTrackTintColor='#ACACAC'
-                            />
-                            <Spacer />
-                            <MyIcon info={{ type: "MDI",name:"rabbit", size: 28, color: semanticColors.titleText }} />
-                        </View>
-                    </View>}
 
                     {kbSpeakDictate == KB_SPEAK_DICTATE.yes && <View style={{ width: '100%', paddingStart: 40, paddingTop: 5, alignItems: "flex-start" }}>
                         <View style={{ flexDirection: "row-reverse", alignItems: 'center' }}>

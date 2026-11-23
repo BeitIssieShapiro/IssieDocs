@@ -516,7 +516,7 @@ class SpeechTranscription: RCTEventEmitter {
   }
 
   @objc
-  func startSpeaking(_ text: String, fallbackLanguage: String, speechRate: Float) {
+  func startSpeaking(_ text: String, fallbackLanguage: String) {
     DispatchQueue.main.async { [weak self] in
         guard let self = self else { return }
         if text.isEmpty { return }
@@ -550,7 +550,7 @@ class SpeechTranscription: RCTEventEmitter {
 
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: voiceLocale)
-        utterance.rate = speechRate >= 0 ? speechRate : AVSpeechUtteranceDefaultSpeechRate
+        // rate, pitch and voice come from the system's Spoken Content settings
         utterance.prefersAssistiveTechnologySettings = true
 
         NSLog("[SpeechTranscription] Speaking with voice: %@, language: %@, quality: %d",

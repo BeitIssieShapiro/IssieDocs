@@ -195,7 +195,7 @@ class SpeechTranscriptionModule(reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun startSpeaking(text: String, fallbackLanguage: String, speechRate: Float) {
+    fun startSpeaking(text: String, fallbackLanguage: String) {
         if (text.isEmpty()) return
         if (isRecording) stopTranscription()
 
@@ -203,7 +203,6 @@ class SpeechTranscriptionModule(reactContext: ReactApplicationContext) :
             fun doSpeak() {
                 val locale = langToLocale(fallbackLanguage)
                 tts?.language = locale
-                tts?.setSpeechRate(if (speechRate > 0) speechRate * 2f else 1f)
                 tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, UTTERANCE_ID)
             }
 
