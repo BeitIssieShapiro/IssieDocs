@@ -945,7 +945,10 @@ function Canvas({
     // The text selected with the select tool, or dragged in text mode, shows the piece it lies on
     const highlightTextId = currentElementType == ElementTypes.Cut ? currentEdited.selectedTextId : movingTextId;
     const highlightText = highlightTextId ? texts?.find(t => t.id === highlightTextId) : undefined;
-    const highlightPieceId = highlightText ? topPieceAt(images, ...textCenter(highlightText))?.id : undefined;
+    // its parent; while it is being moved, the piece it would land on
+    const textMoving = highlightText && (highlightText.id === movingTextId || !!highlightText.backup);
+    const highlightPieceId = !highlightText ? undefined :
+        textMoving ? topPieceAt(images, ...textCenter(highlightText))?.id : (highlightText.pieceId ?? undefined);
 
     // A piece: its paper, then its own paint and ink in a layer of their own,
     // so its erasers clear only its ink. Paint stays inside the piece's outline.
