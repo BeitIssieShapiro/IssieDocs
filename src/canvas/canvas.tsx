@@ -257,6 +257,8 @@ function Canvas({
     const startSketchRef = useRef<{
         position: SketchPoint;
         elem?: ElementBase | TableContext;
+        // what a tap selects, when it is not what a drag moves (select tool: a text on a piece)
+        clickElem?: ElementBase;
         initialPosition?: SketchPoint;
         initialOffset?: Offset;
         pinch?: PinchSession;
@@ -439,7 +441,12 @@ function Canvas({
                 startSketchRef.current = { position: clickPoint, initialOffset: offsetRef.current };
 
                 if (currentElementTypeRef.current !== ElementTypes.Sketch) {
-                    const elem = searchElement(...clickPoint);
+                    let elem = searchElement(...clickPoint);
+                    if (elem && currentElementTypeRef.current === ElementTypes.Cut && "text" in elem) {
+                        // select tool: a tap selects the text, a drag moves the piece under it (a text moves by its handle)
+                        startSketchRef.current.clickElem = elem;
+                        elem = topPieceAt(imagesRef.current, ...clickPoint);
+                    }
                     if (elem) {
                         startSketchRef.current.elem = elem;
                         if ("x" in elem && "y" in elem) {
@@ -585,7 +592,7 @@ function Canvas({
                 if (Math.abs(gState.dx) < 2 && Math.abs(gState.dy) < 2) {
                     // Possibly a tap/click
                     if (startSketchRef.current) {
-                        onCanvasClick(startSketchRef.current.position, startSketchRef.current?.elem);
+                        onCanvasClick(startSketchRef.current.position, startSketchRef.current.clickElem ?? startSketchRef.current.elem);
                     }
                     startSketchRef.current = null;
                     return;
@@ -1129,14 +1136,31 @@ function Canvas({
 
                 {renderFormatBar()}
 
-                {/* a text selected with the select tool */}
+                {/* a text selected with the select tool: moved by its handle (dragging elsewhere moves the piece) */}
                 {currentElementType == ElementTypes.Cut && highlightText && (() => {
                     const b = textBox(highlightText);
-                    return <View pointerEvents="none" testID="selected-text" style={{
-                        position: "absolute", zIndex: 2000,
-                        left: b.x * ratio - 4, top: b.y * ratio - 4, width: b.width * ratio + 8, height: b.height * ratio + 8,
-                        borderWidth: 2, borderStyle: "dashed", borderColor: "#1E90FF",
-                    }} />;
+                    const t = highlightText;
+                    // the handle beside the text's start, as when editing it
+                    const hx = t.rtl ? (b.x + b.width) * ratio + 6 : b.x * ratio - 36;
+                    return <React.Fragment>
+                        <View pointerEvents="none" testID="selected-text" style={{
+                            position: "absolute", zIndex: 2000,
+                            left: b.x * ratio - 4, top: b.y * ratio - 4, width: b.width * ratio + 8, height: b.height * ratio + 8,
+                            borderWidth: 2, borderStyle: "dashed", borderColor: "#1E90FF",
+                        }} />
+                        <MoveIcon
+                            style={[styles.moveIcon, visibleAnimatedStyle]}
+                            position={[hx, b.y * ratio - 4]}
+                            size={30}
+                            panResponderHandlers={moveResponder.panHandlers}
+                            onSetContext={() => {
+                                // the text's corner relative to the touch (the handle's center)
+                                moveContext.current = { type: MoveTypes.Text, id: t.id, offsetX: t.rtl ? -21 : 21, offsetY: -11 };
+                            }}
+                            icon="move"
+                            color="blue"
+                        />
+                    </React.Fragment>;
                 })()}
 
                 {/* Lines in edit mode */}
