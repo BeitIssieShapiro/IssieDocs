@@ -76,7 +76,7 @@ import { MyIcon } from "../common/icons";
 import { trace } from "../log";
 import { FileSystem } from "../filesystem";
 import { cutShapePath, getOverlayImage, getUriImage, NormRect, pieceClipPath } from "./raster";
-import { buildDrawLayers, DrawItem, DrawLayer, stackTexts, topPieceAt } from "./pieces";
+import { buildDrawLayers, DrawItem, DrawLayer, stackTexts, textBox, textCenter, topPieceAt, visibleTextAt } from "./pieces";
 import { allHave, SpanStyle, styleAt } from "./text-spans";
 import { FORMAT_BAR_HEIGHT, TextFormatBar } from "./text-format-bar";
 import Clipboard from "@react-native-clipboard/clipboard";
@@ -542,14 +542,13 @@ function Canvas({
                             const pt: SketchPoint = [initialPosition[0] + dx, initialPosition[1] + dy];
                             if ("id" in elem) {
                                 isMoving.current = true;
+                                const moveType = currentElementTypeRef.current == ElementTypes.Line ? MoveTypes.LineMove :
+                                    "text" in elem ? MoveTypes.Text : MoveTypes.ImageMove;
                                 if (moveContext.current == null) {
-                                    moveContext.current = { type: MoveTypes.ImageMove, id: elem.id, offsetX: 0, offsetY: 0 };
+                                    moveContext.current = { type: moveType, id: elem.id, offsetX: 0, offsetY: 0 };
                                 }
                                 moveContext.current.lastPt = pt;
-                                onMoveElement(
-                                    currentElementTypeRef.current == ElementTypes.Line ? MoveTypes.LineMove : MoveTypes.ImageMove,
-                                    elem.id,
-                                    pt);
+                                onMoveElement(moveType, elem.id, pt);
                             } else {
                                 onMoveTablePart?.(pt, elem);
                             }
@@ -623,7 +622,8 @@ function Canvas({
                 } else if (elem) {
                     if ("id" in elem) {
                         onMoveEnd(
-                            currentElementTypeRef.current == ElementTypes.Line ? MoveTypes.LineMove : MoveTypes.ImageMove,
+                            currentElementTypeRef.current == ElementTypes.Line ? MoveTypes.LineMove :
+                                "text" in elem ? MoveTypes.Text : MoveTypes.ImageMove,
                             (elem as ElementBase).id);
                         isMoving.current = false;
                         moveContext.current = null;
@@ -642,6 +642,10 @@ function Canvas({
     ).current;
 
     // PanResponder for moving elements (like text, lines, etc.)
+    // a text being dragged by its handle (text mode): the piece under it is highlighted
+    const [movingTextId, setMovingTextId] = useState<string | undefined>();
+    const movingTextIdRef = useRef<string | undefined>(undefined);
+
     const moveResponder = useRef(
         PanResponder.create({
             onStartShouldSetPanResponder: () => {
@@ -649,6 +653,10 @@ function Canvas({
                 return true;
             },
             onPanResponderMove: (e, gState) => {
+                if (moveContext.current?.type === MoveTypes.Text && movingTextIdRef.current !== moveContext.current.id) {
+                    movingTextIdRef.current = moveContext.current.id;
+                    setMovingTextId(moveContext.current.id);
+                }
                 if (moveContext.current) {
                     // +15 / -15 offset for text handle, etc. Adjust as needed for images
                     const canvasPos0 = screen2Canvas(gState.x0 + gState.dx + moveContext.current.offsetX * zoomRef.current, gState.y0 + gState.dy + moveContext.current.offsetY * zoomRef.current);
@@ -658,6 +666,10 @@ function Canvas({
             },
             onPanResponderRelease: () => {
                 isMoving.current = false;
+                if (movingTextIdRef.current) {
+                    movingTextIdRef.current = undefined;
+                    setMovingTextId(undefined);
+                }
                 if (moveContext.current) {
                     onMoveEnd?.(moveContext.current.type, moveContext.current.id);
                 }
@@ -745,7 +757,12 @@ function Canvas({
             //console.log("searchElement txt",textsRef.current)
             return textsRef.current?.find(t => !t.tableId && inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
         }
-        if (currentElementTypeRef.current === ElementTypes.Image || currentElementTypeRef.current === ElementTypes.Cut) {
+        if (currentElementTypeRef.current === ElementTypes.Cut) {
+            // a text seen there (texts can be moved with the select tool), else the piece on top
+            return visibleTextAt(textsRef.current, imagesRef.current, cx, cy, TEXT_SEARCH_MARGIN) ??
+                topPieceAt(imagesRef.current, cx, cy);
+        }
+        if (currentElementTypeRef.current === ElementTypes.Image) {
             // the piece on top (images are pieces)
             return topPieceAt(imagesRef.current, cx, cy);
         }
@@ -870,12 +887,29 @@ function Canvas({
     };
 
     // A piece being dragged runs ahead of where its content was laid out: offset (view points)
+    // How a piece is shown away from where its content was laid out: moved (dx, dy, in view points)
+    // and resized (sx, sy around its corner ox, oy), while it is dragged or resized
     const pieceDelta = (pieceId?: string | null) => {
         const piece = pieceId ? images?.find(i => i.id === pieceId) : undefined;
         if (!piece) return undefined;
-        const dx = (piece.x - (piece.originX ?? piece.x)) * ratio;
-        const dy = (piece.y - (piece.originY ?? piece.y)) * ratio;
-        return dx || dy ? { dx, dy } : undefined;
+        const ox = (piece.originX ?? piece.x) * ratio, oy = (piece.originY ?? piece.y) * ratio;
+        const dx = piece.x * ratio - ox, dy = piece.y * ratio - oy;
+        const sx = piece.width / (piece.originWidth ?? piece.width), sy = piece.height / (piece.originHeight ?? piece.height);
+        return dx || dy || sx !== 1 || sy !== 1 ? { dx, dy, sx, sy, ox, oy } : undefined;
+    };
+    const pieceTransform = (d: ReturnType<typeof pieceDelta>) => d ? [
+        { translateX: d.dx + d.ox }, { translateY: d.dy + d.oy }, { scaleX: d.sx }, { scaleY: d.sy },
+        { translateX: -d.ox }, { translateY: -d.oy },
+    ] : [];
+    // a piece's text follows it: the text's box placed where the piece moves/scales it to
+    const textOffset = (text: SketchText) => {
+        const d = pieceDelta(text.pieceId);
+        if (!d) return undefined;
+        const b = textBox(text);
+        const L = b.x * ratio, T = b.y * ratio, W = b.width * ratio, H = b.height * ratio;
+        const s = (d.sx + d.sy) / 2;
+        const cx = d.ox + (L - d.ox) * d.sx + d.dx + W * s / 2, cy = d.oy + (T - d.oy) * d.sy + d.dy + H * s / 2;
+        return { dx: cx - (L + W / 2), dy: cy - (T + H / 2), scale: s };
     };
 
     const renderDrawItem = (it: DrawItem) => {
@@ -901,16 +935,23 @@ function Canvas({
         return image && <SkiaImage key={o.id} image={image} {...rect} fit="fill" />;
     };
 
+    // The text selected with the select tool, or dragged in text mode, shows the piece it lies on
+    const highlightTextId = currentElementType == ElementTypes.Cut ? currentEdited.selectedTextId : movingTextId;
+    const highlightText = highlightTextId ? texts?.find(t => t.id === highlightTextId) : undefined;
+    const highlightPieceId = highlightText ? topPieceAt(images, ...textCenter(highlightText))?.id : undefined;
+
     // A piece: its paper, then its own paint and ink in a layer of their own,
     // so its erasers clear only its ink. Paint stays inside the piece's outline.
     const renderPiece = (piece: SketchImage, items: DrawItem[], layerIndex: number) => {
         const ox = piece.originX ?? piece.x, oy = piece.originY ?? piece.y;
+        const ow = piece.originWidth ?? piece.width, oh = piece.originHeight ?? piece.height;
         const d = pieceDelta(piece.id);
-        const clip = pieceClipPath(piece, ratio, ox, oy);
+        const clip = pieceClipPath({ ...piece, width: ow, height: oh }, ratio, ox, oy);
         const image = piece.src?.uri ? getUriImage(piece.src.uri, () => setImagesLoaded(n => n + 1)) : null;
         // with the select tool, pieces look raised: a soft shadow and a thin outline
         const marked = currentElementType == ElementTypes.Cut;
-        return <SkiaGroup key={"layer-" + layerIndex} transform={[{ translateX: d?.dx ?? 0 }, { translateY: d?.dy ?? 0 }]}>
+        const highlighted = piece.id === highlightPieceId;
+        return <SkiaGroup key={"layer-" + layerIndex} transform={pieceTransform(d)}>
             {marked && <SkiaGroup clip={clip} invertClip>
                 {/* outside the piece only: a transparent piece (blank page) does not show it through */}
                 <SkiaGroup transform={[{ translateX: 2 }, { translateY: 3 }]}>
@@ -919,14 +960,15 @@ function Canvas({
             </SkiaGroup>}
             {image && <SkiaGroup clip={clip}>
                 <SkiaImage image={image} fit="fill"
-                    x={ox * ratio} y={oy * ratio} width={piece.width * ratio} height={piece.height * ratio} />
+                    x={ox * ratio} y={oy * ratio} width={ow * ratio} height={oh * ratio} />
             </SkiaGroup>}
             {items.length > 0 && <SkiaGroup layer>
                 {items.map(it => it.overlay?.kind === "fill" ?
                     <SkiaGroup key={it.overlay.id} clip={clip}>{renderDrawItem(it)}</SkiaGroup> :
                     renderDrawItem(it))}
             </SkiaGroup>}
-            {marked && <SkiaPath path={clip} style="stroke" strokeWidth={1} color="rgba(30,144,255,0.7)" />}
+            {(marked || highlighted) && <SkiaPath path={clip} style="stroke" strokeWidth={highlighted ? 4 : 1}
+                color={highlighted ? "#1E90FF" : "rgba(30,144,255,0.7)"} />}
         </SkiaGroup>;
     };
 
@@ -941,7 +983,8 @@ function Canvas({
     // split into stacked canvases with the covered texts between them. The edited text is on top.
     const editedTextId = (currentElementType == ElementTypes.Text || currentElementType == ElementTypes.Table)
         ? currentEdited.textId : undefined;
-    const stack = stackTexts(drawLayers, texts, editedTextId);
+    const stack = stackTexts(drawLayers, texts,
+        editedTextId ?? (currentElementType == ElementTypes.Cut ? currentEdited.selectedTextId : undefined));
     // canvas k: zIndex 8 + 2k; the texts right under it: one less; texts above all: 13
     const textZIndex = (level: number) => level >= stack.canvases.length ? 13 : 7 + 2 * level;
 
@@ -1057,7 +1100,7 @@ function Canvas({
                 {texts?.map((text) => {
                     const editMode = (currentElementType == ElementTypes.Text || currentElementType == ElementTypes.Table)
                         && text.id == currentEdited.textId
-                    const d = pieceDelta(text.pieceId);
+                    const d = textOffset(text);
                     const textElement = <TextElement
                         ref={editMode ? editTextRef : undefined}
                         key={text.id}
@@ -1085,6 +1128,16 @@ function Canvas({
                 })}
 
                 {renderFormatBar()}
+
+                {/* a text selected with the select tool */}
+                {currentElementType == ElementTypes.Cut && highlightText && (() => {
+                    const b = textBox(highlightText);
+                    return <View pointerEvents="none" testID="selected-text" style={{
+                        position: "absolute", zIndex: 2000,
+                        left: b.x * ratio - 4, top: b.y * ratio - 4, width: b.width * ratio + 8, height: b.height * ratio + 8,
+                        borderWidth: 2, borderStyle: "dashed", borderColor: "#1E90FF",
+                    }} />;
+                })()}
 
                 {/* Lines in edit mode */}
                 {currentElementType == ElementTypes.Line && currentEdited.lineId &&

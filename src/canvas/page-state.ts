@@ -109,7 +109,8 @@ export function replayPageQueue(q: any[], attachmentBase: string) {
                         _texts = _texts.filter(t => t.id !== txtElem.id);
                     } else {
                         // an edit keeps its place in the drawing order; it moves to/off a piece when it says so
-                        _texts[j] = { ...txtElem, z: _texts[j].z, pieceId: ownerAfter(txtElem, _texts[j]) };
+                        // (a text moved with the select tool is put on top, like paper)
+                        _texts[j] = { ...txtElem, z: txtElem.raise ? i : _texts[j].z, pieceId: ownerAfter(txtElem, _texts[j]) };
                     }
                     found = true;
                     break;
@@ -150,7 +151,7 @@ export function replayPageQueue(q: any[], attachmentBase: string) {
             // translate the relative path to full path:
             const elem = attach(cloneElem(q[i].elem));
             // images saved before images were pieces were drawn under all ink: they stay there
-            _images.push({ ...elem, z: elem.layered || elem.isCutPiece ? i : i - LEGACY_IMAGE_Z, originX: elem.x, originY: elem.y });
+            _images.push({ ...elem, z: elem.layered || elem.isCutPiece ? i : i - LEGACY_IMAGE_Z, originX: elem.x, originY: elem.y, originWidth: elem.width, originHeight: elem.height });
             //latestMode = EditModes.Image;
         } else if (q[i].type === 'imagePosition') {
             const pos = q[i].elem;
@@ -162,7 +163,7 @@ export function replayPageQueue(q: any[], attachmentBase: string) {
                 if (sx !== 1 || sy !== 1) scalePieceContent(piece.id, piece.x, piece.y, sx, sy);
                 shiftPieceContent(piece.id, pos.x - piece.x, pos.y - piece.y);
                 _images = _images.map(img => img.id === piece.id ? {
-                    ...img, x: pos.x, y: pos.y, width, height, originX: pos.x, originY: pos.y,
+                    ...img, x: pos.x, y: pos.y, width, height, originX: pos.x, originY: pos.y, originWidth: width, originHeight: height,
                     z: pos.layered || img.isCutPiece ? i : img.z,
                     ...(img.holes && (sx !== 1 || sy !== 1) ?
                         { holes: img.holes.map(h => h.map(([hx, hy]) => [hx * sx, hy * sy] as SketchPoint)) } : {}),
@@ -188,7 +189,7 @@ export function replayPageQueue(q: any[], attachmentBase: string) {
             _texts.push(..._texts.filter(t => texts.has(t.id)).map(t => ({ ...t, id: copyId(t.id), pieceId, x: t.x + dx, y: t.y + dy })));
             _images.push(..._images.filter(img => images.has(img.id)).map(img => ({ ...img, id: copyId(img.id), pieceId, x: img.x + dx, y: img.y + dy })));
             const piece = attach(cloneElem(cut.piece));
-            _images.push({ ...piece, isCutPiece: true, z: i, originX: piece.x, originY: piece.y });
+            _images.push({ ...piece, isCutPiece: true, z: i, originX: piece.x, originY: piece.y, originWidth: piece.width, originHeight: piece.height });
         } else if (q[i].type === 'cut') {
             const cut = q[i].elem;
             // the hole in the base paper
@@ -221,7 +222,7 @@ export function replayPageQueue(q: any[], attachmentBase: string) {
                     _images = _images.map(img => img.id === id ? { ...img, holes: [...(img.holes ?? []), hole] } : img);
                 }
                 const piece = attach(cloneElem(cut.piece));
-                _images.push({ ...piece, isCutPiece: true, z: i, originX: piece.x, originY: piece.y });
+                _images.push({ ...piece, isCutPiece: true, z: i, originX: piece.x, originY: piece.y, originWidth: piece.width, originHeight: piece.height });
             }
         } else if (q[i].type === 'pieceCopy') {
             const { id, from, x, y } = q[i].elem;
@@ -235,7 +236,7 @@ export function replayPageQueue(q: any[], attachmentBase: string) {
                 _texts.push(..._texts.filter(mine).map(t => ({ ...t, id: copyId(t.id), pieceId: id, x: t.x + dx, y: t.y + dy })));
                 _overlays.push(..._overlays.filter(mine).map(o => ({ ...o, id: copyId(o.id), pieceId: id, x: o.x + dx, y: o.y + dy })));
                 _images.push(..._images.filter(mine).map(img => ({ ...img, id: copyId(img.id), pieceId: id, x: img.x + dx, y: img.y + dy })));
-                _images.push({ ...source, id, x, y, originX: x, originY: y, z: i });
+                _images.push({ ...source, id, x, y, originX: x, originY: y, originWidth: source.width, originHeight: source.height, z: i });
             }
         } else if (q[i].type === 'table') {
             _tables = _tables.filter(t => t.id !== q[i].elem.id);

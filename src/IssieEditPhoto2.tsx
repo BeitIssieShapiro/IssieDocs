@@ -1180,7 +1180,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         // selecting another piece drops a selection that was not acted on
         if (pendingCutRef.current && pendingCutRef.current.pieceId !== id) discardPendingCut();
         activePieceIdRef.current = id;
-        const newCurrEdited = { ...currentEditedRef.current, imageId: id }
+        const newCurrEdited = { ...currentEditedRef.current, imageId: id, selectedTextId: undefined }
         currentEditedRef.current = newCurrEdited
         setCurrentEdited(newCurrEdited);
     }
@@ -1202,13 +1202,21 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         return true;
     }
 
+    // with the select tool, a text can be selected (not edited) and moved
+    function selectTextToMove(id: string) {
+        deselectPiece();
+        const newCurrEdited = { ...currentEditedRef.current, selectedTextId: id }
+        currentEditedRef.current = newCurrEdited
+        setCurrentEdited(newCurrEdited);
+    }
+
     function deselectPiece() {
         if (pendingCutRef.current && pendingCutRef.current.pieceId === activePieceIdRef.current) {
             discardPendingCut();
         }
-        if (!activePieceIdRef.current) return;
+        if (!activePieceIdRef.current && !currentEditedRef.current.selectedTextId) return;
         activePieceIdRef.current = undefined;
-        const newCurrEdited = { ...currentEditedRef.current, imageId: undefined }
+        const newCurrEdited = { ...currentEditedRef.current, imageId: undefined, selectedTextId: undefined }
         currentEditedRef.current = newCurrEdited
         setCurrentEdited(newCurrEdited);
     }
@@ -1468,8 +1476,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         } else if (modeRef.current === EditModes.Fill) {
             performFill(p);
         } else if (modeRef.current === EditModes.Cut) {
-            // tapping a piece (cut or imported image) selects it, tapping elsewhere deselects
-            if (elem && "id" in elem && imagesRef.current.some(img => img.id === elem.id)) {
+            // tapping a piece (cut or imported image) or a text selects it, tapping elsewhere deselects
+            if (elem && "id" in elem && textsRef.current.some(t => t.id === elem.id)) {
+                selectTextToMove(elem.id);
+            } else if (elem && "id" in elem && imagesRef.current.some(img => img.id === elem.id)) {
                 selectPiece(elem.id);
             } else {
                 deselectPiece();
@@ -1683,6 +1693,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         if (type === MoveTypes.Text) {
             const textElem = textsRef.current.find(t => t.id === id);
+            if (textElem && modeRef.current === EditModes.Cut) {
+                // moving a text with the select tool: it is selected, and saved on drop
+                if (currentEditedRef.current.selectedTextId !== id) selectTextToMove(id);
+                if (!textElem.backup) backupElement(textElem);
+            }
             if (textElem) {
                 textElem.x = x;
                 textElem.y = y;
@@ -1788,7 +1803,19 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         verifyCurrentEditTextIsVisible();
 
 
-        if (type === MoveTypes.LineStart || type === MoveTypes.LineEnd || type === MoveTypes.LineMove) {
+        if (type === MoveTypes.Text && modeRef.current === EditModes.Cut) {
+            const textElem = textsRef.current.find(t => t.id === id);
+            if (textElem?.backup) {
+                const changed = restoreElement(textElem) as SketchText;
+                if (changed.x !== textElem.x || changed.y !== textElem.y) {
+                    changed.pieceId = textOwner(changed); // it lies on the paper it is dropped on
+                    (changed as any).raise = true; // and comes to the top
+                    queue.current.pushText(changed);
+                    save();
+                    queue2state();
+                }
+            }
+        } else if (type === MoveTypes.LineStart || type === MoveTypes.LineEnd || type === MoveTypes.LineMove) {
             //console.log("Move end", linesRef.current);
             const line = linesRef.current.find(line => line.id == id);
             if (line) {

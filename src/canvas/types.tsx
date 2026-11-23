@@ -84,6 +84,9 @@ export interface SketchImage extends ElementBase {
     // cut pieces: position the piece's content was laid out at; while dragging, x/y run ahead of it
     originX?: number;
     originY?: number;
+    // the size it was laid out at; while resizing, width/height run ahead of it
+    originWidth?: number;
+    originHeight?: number;
 }
 
 // Fills (paint) and cuts (holes in the paper) are drawn in the sketch (Skia) layer, ordered by z with the paths
@@ -156,4 +159,6 @@ export interface CurrentEdited {
     lineId?: string;
     textId?: string;
     imageId?: string;
+    // a text selected (not edited) with the select tool, to move it
+    selectedTextId?: string;
 }

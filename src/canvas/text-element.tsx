@@ -29,7 +29,8 @@ interface TextElementProps {
     canvasHeight: number;
     language?: string;
     // view points the text is shifted by while the piece it belongs to is dragged
-    dragOffset?: { dx: number; dy: number };
+    // where the piece it lies on moves (and scales) it, while that piece is dragged or resized
+    dragOffset?: { dx: number; dy: number; scale?: number };
     // the selection while editing (start..end), for the selection format toolbar
     onSelectionChange?: (id: string, selection: { start: number; end: number }) => void;
     // hide the iOS edit menu while editing (the format bar has cut/copy/paste). It must be hidden
@@ -353,7 +354,7 @@ function TextElement({
         // zIndex: above the drawing canvas also when this view is kept (moving, pass-through) - otherwise
         // React Native flattens it away and the text (zIndex 13) lands above the canvas on its own
         <View key={text.id} pointerEvents={touchable ? "auto" : "none"}
-            style={[posStyle, { zIndex: zIndex ?? 13 }, dragOffset && { transform: [{ translateX: dragOffset.dx }, { translateY: dragOffset.dy }] }]}>
+            style={[posStyle, { zIndex: zIndex ?? 13 }, dragOffset && { transform: [{ translateX: dragOffset.dx }, { translateY: dragOffset.dy }, { scale: dragOffset.scale ?? 1 }] }]}>
             <Text
                 allowFontScaling={false}
                 selectable={touchable}

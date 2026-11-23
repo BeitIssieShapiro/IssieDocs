@@ -153,6 +153,31 @@ export function splitStrokeByPieces(points: PathCommand[], images: SketchImage[]
     return parts;
 }
 
+/** The text's box (an rtl text's x is its right edge) */
+export function textBox(t: SketchText) {
+    const width = t.width ?? 0;
+    return { x: t.rtl ? t.x - width : t.x, y: t.y, width, height: t.height ?? t.fontSize ?? 0 };
+}
+
+/**
+ * The text seen at a point with the select tool: a text is hidden where a piece laid over it is
+ * (a piece above the paper it is on).
+ */
+export function visibleTextAt(texts: SketchText[] | undefined, images: SketchImage[] | undefined, x: number, y: number,
+    margin = 0): SketchText | undefined {
+    const top = topPieceAt(images, x, y);
+    const zOf = (t: SketchText) => t.pieceId ? (images?.find(i => i.id === t.pieceId)?.z ?? t.z ?? 0) : (t.z ?? 0);
+    let found: SketchText | undefined;
+    for (const t of texts ?? []) {
+        if (t.tableId) continue;
+        const b = textBox(t);
+        if (x < b.x - margin || x > b.x + b.width + margin || y < b.y - margin || y > b.y + b.height + margin) continue;
+        if (top && top.id !== t.pieceId && (top.z ?? 0) > zOf(t)) continue;
+        found = t;
+    }
+    return found;
+}
+
 export function textCenter(t: SketchText): SketchPoint {
     const w = t.width ?? 0;
     const h = t.height ?? t.fontSize ?? 0;
@@ -310,7 +335,7 @@ export function stackTexts(layers: DrawLayer[], texts: SketchText[] | undefined,
         // where the text lies: on its piece, or among the layers by when it was written
         let at = owner ?? -1;
         if (owner === undefined) layers.forEach((l, i) => { if (layerZ(l) < (t.z ?? 0)) at = i; });
-        const box = { x: t.x, y: t.y, width: t.width ?? 0, height: t.height ?? t.fontSize ?? 0 };
+        const box = textBox(t);
         for (let i = at + 1; i < layers.length; i++) {
             const p = layers[i].piece;
             if (p && boxesOverlap(box, p)) { cover.set(t.id, i); break; }

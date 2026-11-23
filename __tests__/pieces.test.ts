@@ -1,4 +1,4 @@
-import { buildDrawLayers, cutPolygon, planCut, splitStroke, splitStrokeByPieces, stackTexts, topPieceAt } from '../src/canvas/pieces';
+import { buildDrawLayers, cutPolygon, planCut, splitStroke, splitStrokeByPieces, stackTexts, topPieceAt, visibleTextAt } from '../src/canvas/pieces';
 import { replayPageQueue } from '../src/canvas/page-state';
 import DoQueue from '../src/do-queue';
 
@@ -339,5 +339,35 @@ describe('texts between pieces', () => {
         expect(s.textLevel.get('onA')).toBe(1); // under B
         expect(s.textLevel.get('onB')).toBe(2);
         expect(stackTexts(layers, [text('onA', 6, 9, { pieceId: 'A' })], 'onA').textLevel.get('onA')).toBe(1);
+    });
+});
+
+describe('texts with the select tool', () => {
+    const piece = (id: string, x: number, z: number) => ({ id, x, y: 0, width: 10, height: 10, isCutPiece: true, z }) as any;
+    const text = (id: string, x: number, z: number, extra: any = {}) =>
+        ({ id, text: 'a', x, y: 2, width: 4, height: 2, fontSize: 2, z, ...extra }) as any;
+
+    it('finds a text unless a piece laid over it hides it there', () => {
+        const images = [piece('A', 0, 5)];
+        expect(visibleTextAt([text('t', 2, 3)], images, 3, 3)).toBeUndefined(); // under A
+        expect(visibleTextAt([text('t', 2, 7)], images, 3, 3)!.id).toBe('t'); // written after A
+        expect(visibleTextAt([text('t', 2, 1, { pieceId: 'A' })], images, 3, 3)!.id).toBe('t'); // on A
+        expect(visibleTextAt([text('r', 6, 9, { rtl: true })], images, 3, 3)!.id).toBe('r'); // rtl: x is the right edge
+    });
+
+    it('a moved text comes to the top', () => {
+        const q = [
+            { type: 'text', elem: { id: 't', text: 'a', x: 1, y: 1, fontSize: 2 } },
+            { type: 'path', elem: stroke('s', [[0, 0], [1, 1]]) },
+            { type: 'text', elem: { id: 't', text: 'a', x: 5, y: 1, fontSize: 2 } },
+        ];
+        expect(replay(q).texts[0].z).toBe(0);
+        expect(replay([...q.slice(0, 2), { type: 'text', elem: { ...q[2].elem, raise: true } }]).texts[0].z).toBe(2);
+    });
+
+    it('a piece remembers the size its content was laid out at', () => {
+        const s = replay([{ type: 'image', elem: { id: 'I1', x: 0, y: 0, width: 20, height: 10, file: 'i.jpg', layered: true } },
+            { type: 'imagePosition', elem: { id: 'I1', x: 0, y: 0, width: 40, height: 20, layered: true } }]);
+        expect(s.images[0]).toMatchObject({ originWidth: 40, originHeight: 20 });
     });
 });
