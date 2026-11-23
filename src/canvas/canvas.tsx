@@ -76,7 +76,7 @@ import { MyIcon } from "../common/icons";
 import { trace } from "../log";
 import { FileSystem } from "../filesystem";
 import { cutShapePath, getOverlayImage, getUriImage, NormRect, pieceClipPath } from "./raster";
-import { buildDrawLayers, DrawItem, topPieceAt } from "./pieces";
+import { buildDrawLayers, DrawItem, DrawLayer, stackTexts, topPieceAt } from "./pieces";
 import { allHave, SpanStyle, styleAt } from "./text-spans";
 import { FORMAT_BAR_HEIGHT, TextFormatBar } from "./text-format-bar";
 import Clipboard from "@react-native-clipboard/clipboard";
@@ -401,7 +401,7 @@ function Canvas({
                     pt[1] >= image.y && pt[1] <= image.y + iconSize) return true;
                 // Copy icon (pieces) below it
                 const copyTop = image.y + 40 / ratioRef.current;
-                if (image.isCutPiece && pt[0] >= image.x - iconSize && pt[0] <= image.x &&
+                if (currentElementTypeRef.current === ElementTypes.Cut && pt[0] >= image.x - iconSize && pt[0] <= image.x &&
                     pt[1] >= copyTop && pt[1] <= copyTop + iconSize) return true;
                 // Resize icon at (image.x + image.width, image.y + image.height)
                 if (pt[0] >= image.x + image.width - iconSize && pt[0] <= image.x + image.width + iconSize &&
@@ -745,11 +745,8 @@ function Canvas({
             //console.log("searchElement txt",textsRef.current)
             return textsRef.current?.find(t => !t.tableId && inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
         }
-        if (currentElementTypeRef.current === ElementTypes.Image) {
-            //return imagesRef.current?.find(t => inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
-            return findLast(imagesRef.current, t => inBox(t, cx, cy, TEXT_SEARCH_MARGIN));
-        }
-        if (currentElementTypeRef.current === ElementTypes.Cut) {
+        if (currentElementTypeRef.current === ElementTypes.Image || currentElementTypeRef.current === ElementTypes.Cut) {
+            // the piece on top (images are pieces)
             return topPieceAt(imagesRef.current, cx, cy);
         }
         if (currentElementTypeRef.current === ElementTypes.Line) {
@@ -805,7 +802,7 @@ function Canvas({
     const isEraser = (color: string) => color === "#00000000";
 
     const showImageControls = (image: SketchImage) => currentEdited.imageId == image.id &&
-        (currentElementType == ElementTypes.Image || (currentElementType == ElementTypes.Cut && image.isCutPiece));
+        (currentElementType == ElementTypes.Image || currentElementType == ElementTypes.Cut);
 
     const [, setImagesLoaded] = useState(0);
 
@@ -936,9 +933,17 @@ function Canvas({
     // A piece being dragged is on top while it moves (it is brought to the top when dropped)
     const isDragged = (img: SketchImage) => img.x !== (img.originX ?? img.x) || img.y !== (img.originY ?? img.y);
     const drawLayers = buildDrawLayers(paths, overlays,
-        images?.map(img => img.isCutPiece && isDragged(img) ? { ...img, z: Number.MAX_SAFE_INTEGER } : img));
+        images?.map(img => isDragged(img) ? { ...img, z: Number.MAX_SAFE_INTEGER } : img));
     // Layers are keyed by position, not id: when the order changes the layers update in place
     // rather than being moved, which the Skia renderer does not reliably reorder.
+
+    // Texts are views above the drawing: to have a piece laid over a text cover it, the drawing is
+    // split into stacked canvases with the covered texts between them. The edited text is on top.
+    const editedTextId = (currentElementType == ElementTypes.Text || currentElementType == ElementTypes.Table)
+        ? currentEdited.textId : undefined;
+    const stack = stackTexts(drawLayers, texts, editedTextId);
+    // canvas k: zIndex 8 + 2k; the texts right under it: one less; texts above all: 13
+    const textZIndex = (level: number) => level >= stack.canvases.length ? 13 : 7 + 2 * level;
 
     const transformStyle = useAnimatedStyle(() => {
         return {
@@ -1017,33 +1022,36 @@ function Canvas({
                     width={canvasWidth}
                 />}
 
-                <SkiaCanvas
-                    ref={skiaCanvasRef}
-                    style={{
-                        //backgroundColor:"green",
-                        position: "absolute",
-                        width: "100%",
-                        height: "100%",
-                        zIndex: 8,
-                    }}
-                >
-                    {/* Base ink and paint, and pieces on top of them - in the order last touched */}
-                    {drawLayers.map((layer, i) => layer.piece ?
-                        renderPiece(layer.piece, layer.items, i) :
-                        <SkiaGroup key={"layer-" + i} layer>
-                            {layer.items.map(renderDrawItem)}
-                            {layer.erasers.map(it => <React.Fragment key={"clear-" + (it.path ?? it.overlay)!.id}>{renderDrawItem(it)}</React.Fragment>)}
-                        </SkiaGroup>)}
+                {stack.canvases.map((layers: DrawLayer[], k: number) => {
+                    const first = stack.canvases.slice(0, k).reduce((n, c) => n + c.length, 0);
+                    const last = k === stack.canvases.length - 1;
+                    return <SkiaCanvas
+                        key={"canvas-" + k}
+                        ref={k === 0 ? skiaCanvasRef : undefined}
+                        style={{
+                            position: "absolute",
+                            width: "100%",
+                            height: "100%",
+                            zIndex: 8 + 2 * k,
+                        }}
+                    >
+                        {/* Base ink and paint, and pieces on top of them - in the order last touched */}
+                        {layers.map((layer, j) => layer.piece ?
+                            renderPiece(layer.piece, layer.items, first + j) :
+                            <SkiaGroup key={"layer-" + (first + j)} layer>
+                                {layer.items.map(renderDrawItem)}
+                                {layer.erasers.map(it => <React.Fragment key={"clear-" + (it.path ?? it.overlay)!.id}>{renderDrawItem(it)}</React.Fragment>)}
+                            </SkiaGroup>)}
 
-                    <SkiaPath
-                        path={lastPathSV}
-                        color={isEraser(sketchColor) ? "black" : sketchColor}
-                        style={"stroke"}
-                        strokeWidth={sketchStrokeWidth}
-                        blendMode={isEraser(sketchColor) ? "dstOut" : "srcOver"}
-                    />
-
-                </SkiaCanvas>
+                        {last && <SkiaPath
+                            path={lastPathSV}
+                            color={isEraser(sketchColor) ? "black" : sketchColor}
+                            style={"stroke"}
+                            strokeWidth={sketchStrokeWidth}
+                            blendMode={isEraser(sketchColor) ? "dstOut" : "srcOver"}
+                        />}
+                    </SkiaCanvas>;
+                })}
 
                 {/* Text Elements */}
                 {texts?.map((text) => {
@@ -1071,6 +1079,7 @@ function Canvas({
                         onSelectionChange={handleTextSelection}
                         hideEditMenu={!!textFormatEnabled}
                         onEditLayout={handleEditLayout}
+                        zIndex={textZIndex(stack.textLevel.get(text.id) ?? stack.canvases.length)}
                     />
                     return textElement;
                 })}
@@ -1245,30 +1254,8 @@ function Canvas({
                     const w = (imgW * ratio);
                     const h = (imgH * ratio);
                     if (!imgW || imgW === 0) return null;
-                    const d = pieceDelta(image.pieceId);
-
+                    // every image is drawn in the sketch layer, as a piece; here: its controls only
                     return <React.Fragment key={image.id} >
-                        {/* cut pieces are drawn in the sketch layer */}
-                        {!image.isCutPiece && <View
-                            style={[
-                                styles.imageStyle,
-                                {
-                                    left: image.x * ratio + (d?.dx ?? 0),
-                                    top: image.y * ratio + (d?.dy ?? 0),
-                                    width: PixelRatio.roundToNearestPixel(w),
-                                    height: PixelRatio.roundToNearestPixel(h),
-                                },
-                            ]}
-                        >
-                            <Image
-                                style={{
-                                    width: PixelRatio.roundToNearestPixel(w),
-                                    height: PixelRatio.roundToNearestPixel(h),
-                                }}
-                                source={normalizeFoAndroid(image.src) || { uri: image.imageData }}
-                                resizeMode="contain"
-                            />
-                        </View>}
                         {showImageControls(image) && (image.outline ?
                             <Animated.View pointerEvents="none" style={[styles.moveIcon, {
                                 position: "absolute", left: image.x * ratio, top: image.y * ratio, width: w, height: h,
@@ -1298,7 +1285,7 @@ function Canvas({
                                 <MyIcon info={{ type: "Ionicons", name: "trash-outline", size: 30, color: "blue" }} />
 
                             </TouchableOpacity>}
-                        {showImageControls(image) && image.isCutPiece && <TouchableOpacity
+                        {showImageControls(image) && currentElementType == ElementTypes.Cut && <TouchableOpacity
                                 testID="piece-copy"
                                 style={{
                                     position: "absolute",
@@ -1310,7 +1297,8 @@ function Canvas({
                             >
                                 <MyIcon info={{ type: "MDI", name: "content-copy", size: 30, color: "blue" }} />
                             </TouchableOpacity>}
-                        {showImageControls(image) && !image.isCutPiece && <MoveIcon
+                        {/* every piece can be resized: its paper and what is on it scale together */}
+                        {showImageControls(image) && <MoveIcon
                                 style={[styles.moveIcon, visibleAnimatedStyle]}
                                 position={[
                                     (image.x + image.width) * ratio - 20,
@@ -1390,10 +1378,6 @@ const styles = StyleSheet.create({
         backgroundColor: "#f5f5f5",
         zIndex: 5
         //backgroundColor: "white",
-    },
-    imageStyle: {
-        position: "absolute",
-        zIndex: 2,
     },
     elementStyle: {
         position: "absolute",

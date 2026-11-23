@@ -1,7 +1,11 @@
-import { SketchElement, SketchImage, SketchLine, SketchOverlay, SketchPath, SketchTable, SketchText } from './types';
+import { SketchElement, SketchImage, SketchLine, SketchOverlay, SketchPath, SketchPoint, SketchTable, SketchText } from './types';
 import { cloneElem } from './utils';
 import { EditModes } from '../types';
-import { shiftPoints } from './pieces';
+import { scalePoints, shiftPoints } from './pieces';
+import { scaleSpanSizes } from './text-spans';
+
+// below everything drawn: images from before images were pieces (entries without `layered`)
+const LEGACY_IMAGE_Z = 1e9;
 
 /**
  * Replays a page's saved change queue into the elements to draw, plus the
@@ -43,7 +47,7 @@ export function replayPageQueue(q: any[], attachmentBase: string) {
     const ownerAfter = (entry: any, current: { pieceId?: string | null }) =>
         ("pieceId" in entry ? entry.pieceId : current.pieceId) ?? undefined;
     const attach = (elem: any) => elem.file ? { ...elem, src: { uri: attachmentBase + elem.file } } : elem;
-    const findPiece = (id: string) => _images.find(img => img.isCutPiece && img.id === id);
+    const findPiece = (id: string) => _images.find(img => img.id === id);
 
     // moves a piece's own elements along with it
     const shiftPieceContent = (pieceId: string, dx: number, dy: number) => {
@@ -53,6 +57,20 @@ export function replayPageQueue(q: any[], attachmentBase: string) {
         _texts = _texts.map(t => mine(t) ? { ...t, x: t.x + dx, y: t.y + dy } : t);
         _images = _images.map(img => mine(img) ? { ...img, x: img.x + dx, y: img.y + dy } : img);
         _overlays = _overlays.map(o => mine(o) ? { ...o, x: o.x + dx, y: o.y + dy } : o);
+    };
+    // a resized piece (an imported image) scales its own elements with it, around its corner
+    const scalePieceContent = (pieceId: string, ox: number, oy: number, sx: number, sy: number) => {
+        const mine = (e: { pieceId?: string | null }) => e.pieceId === pieceId;
+        const s = (sx + sy) / 2;
+        _paths = _paths.map(p => mine(p) ? { ...p, points: scalePoints(p.points, ox, oy, sx, sy), strokeWidth: p.strokeWidth * s } : p);
+        _texts = _texts.map(t => mine(t) ? {
+            ...t, x: ox + (t.x - ox) * sx, y: oy + (t.y - oy) * sy, fontSize: t.fontSize * s,
+            ...(t.width ? { width: t.width * s } : {}), ...(t.height ? { height: t.height * s } : {}),
+            ...(t.spans ? { spans: scaleSpanSizes(t.spans, s) } : {}),
+        } : t);
+        _overlays = _overlays.map(o => mine(o) ? {
+            ...o, x: ox + (o.x - ox) * sx, y: oy + (o.y - oy) * sy, width: o.width * sx, height: o.height * sy,
+        } : o);
     };
     const removePieceContent = (pieceId: string) => {
         const notMine = (e: { pieceId?: string | null }) => e.pieceId !== pieceId;
@@ -131,31 +149,27 @@ export function replayPageQueue(q: any[], attachmentBase: string) {
         } else if (q[i].type === 'image') {
             // translate the relative path to full path:
             const elem = attach(cloneElem(q[i].elem));
-            _images.push({ ...elem, z: i, ...(elem.isCutPiece ? { originX: elem.x, originY: elem.y } : {}) });
+            // images saved before images were pieces were drawn under all ink: they stay there
+            _images.push({ ...elem, z: elem.layered || elem.isCutPiece ? i : i - LEGACY_IMAGE_Z, originX: elem.x, originY: elem.y });
             //latestMode = EditModes.Image;
         } else if (q[i].type === 'imagePosition') {
             const pos = q[i].elem;
             const piece = findPiece(pos.id);
             if (piece) {
-                // moving a piece brings it (and its content) to the top
+                // moving a piece brings it (and its content) to the top; resizing scales its content
+                const width = pos.width || piece.width, height = pos.height || piece.height;
+                const sx = width / piece.width, sy = height / piece.height;
+                if (sx !== 1 || sy !== 1) scalePieceContent(piece.id, piece.x, piece.y, sx, sy);
                 shiftPieceContent(piece.id, pos.x - piece.x, pos.y - piece.y);
-                _images = _images.map(img => img === piece ? { ...img, x: pos.x, y: pos.y, originX: pos.x, originY: pos.y, z: i } : img);
-            } else {
-                const elemIndex = _images.findIndex(ci => ci.id === pos.id);
-                if (elemIndex >= 0) {
-                    // a moved image comes to the top, on the paper it was dropped on
-                    _images[elemIndex] = {
-                        ..._images[elemIndex], width: pos.width, height: pos.height, x: pos.x, y: pos.y, z: i,
-                        pieceId: ownerAfter(pos, _images[elemIndex]),
-                    };
-                }
+                _images = _images.map(img => img.id === piece.id ? {
+                    ...img, x: pos.x, y: pos.y, width, height, originX: pos.x, originY: pos.y,
+                    z: pos.layered || img.isCutPiece ? i : img.z,
+                    ...(img.holes && (sx !== 1 || sy !== 1) ?
+                        { holes: img.holes.map(h => h.map(([hx, hy]) => [hx * sx, hy * sy] as SketchPoint)) } : {}),
+                } : img);
             }
         } else if (q[i].type === 'imageDelete') {
-            if (findPiece(q[i].elem.id)) {
-                removePieceContent(q[i].elem.id);
-            } else {
-                _images = _images.filter(ci => ci.id !== q[i].elem.id);
-            }
+            removePieceContent(q[i].elem.id);
         } else if (q[i].type === 'cut' && q[i].elem.copy) {
             // a copy of a selection: a new piece with copies of what was inside, the page untouched
             const cut = q[i].elem;
@@ -182,7 +196,7 @@ export function replayPageQueue(q: any[], attachmentBase: string) {
             if (cut.piece) {
                 const pieceId = cut.piece.id;
                 const take = (ids: string[] | undefined) => new Set(ids ?? []);
-                const paths = take(cut.takePaths), texts = take(cut.takeTexts), images = take(cut.takeImages);
+                const paths = take(cut.takePaths), texts = take(cut.takeTexts);
                 // pieces fully inside are taken whole: what is left of their content goes to the page
                 const absorbed = take(cut.absorbPieces);
                 const keepOwner = (owner?: string | null) => owner && !absorbed.has(owner) ? owner : undefined;
@@ -201,12 +215,10 @@ export function replayPageQueue(q: any[], attachmentBase: string) {
                 _paths = nextPaths;
                 _texts = _texts.map(t => ({ ...t, pieceId: texts.has(t.id) ? pieceId : keepOwner(t.pieceId) }));
                 _overlays = _overlays.map(o => ({ ...o, pieceId: keepOwner(o.pieceId) }));
-                _images = _images
-                    .filter(img => !absorbed.has(img.id))
-                    .map(img => img.isCutPiece ? img : { ...img, pieceId: images.has(img.id) ? pieceId : keepOwner(img.pieceId) });
+                _images = _images.filter(img => !absorbed.has(img.id));
                 // pieces under the cut get a hole
                 for (const { id, hole } of cut.cutPieces ?? []) {
-                    _images = _images.map(img => img.isCutPiece && img.id === id ? { ...img, holes: [...(img.holes ?? []), hole] } : img);
+                    _images = _images.map(img => img.id === id ? { ...img, holes: [...(img.holes ?? []), hole] } : img);
                 }
                 const piece = attach(cloneElem(cut.piece));
                 _images.push({ ...piece, isCutPiece: true, z: i, originX: piece.x, originY: piece.y });

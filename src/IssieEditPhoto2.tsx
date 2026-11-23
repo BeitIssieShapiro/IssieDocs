@@ -22,7 +22,7 @@ import { CurrentEdited, ElementBase, ElementTypes, MoveTypes, Offset, SketchElem
 import { capturePiece, computeFill, NormRect, PageSnapshot } from './canvas/raster';
 import Canvas from './canvas/canvas';
 import { replayPageQueue } from './canvas/page-state';
-import { cutPolygon, cutPlanIsEmpty, planCut, textCenter, topPieceAt } from './canvas/pieces';
+import { cutPolygon, cutPlanIsEmpty, planCut, splitStrokeByPieces, textCenter, topPieceAt } from './canvas/pieces';
 import { applySpanStyle, scaleSpanSizes, SpanStyle, updateSpansForEdit } from './canvas/text-spans';
 import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
@@ -100,6 +100,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [currentFile, setCurrentFile] = useState<string>(page.defaultSrc);
     const [currPageIndex, setCurrPageIndex] = useState<number>(pageIndex ?? 0);
     const [busy, setBusy] = useState<boolean>(false);
+    const [toast, setToast] = useState<string | undefined>(undefined);
+    const toastTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const [canvasTop, setCanvasTop] = useState<number>(headerHeight + insets.top + toolbarHeight + dimensions.toolbarMargin);
 
 
@@ -1071,22 +1073,21 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 strokeWidth = Math.max(15, strokeWidth * 3)
             }
             if (commands) {
-                // a stroke belongs to the piece it starts on
-                const start = commands[0] as unknown as [number, number, number] | undefined;
-                const pieceId = start ? pieceAt([start[1], start[2]]) : undefined;
-                const newPath: SketchPath = {
+                // a stroke drawn across pieces is divided between them, like the paper under it - one undo
+                const parts = splitStrokeByPieces(commands, imagesRef.current);
+                const newPaths: SketchPath[] = parts.map(part => ({
                     id: getId("S"),
-                    points: commands,
+                    points: part.points,
                     color,
                     strokeWidth,
                     isMarker: isMarkerMode(),
-                    ...(pieceId ? { pieceId } : {}),
-                };
+                    ...(part.pieceId ? { pieceId: part.pieceId } : {}),
+                }));
 
-                pathsRef.current.push(newPath);
+                pathsRef.current.push(...newPaths);
                 setPaths([...pathsRef.current]);
 
-                queue.current.pushPath(newPath)
+                queue.current.pushMany(newPaths.map(elem => ({ elem, type: 'path' })));
 
                 // Track drawing
                 analyticEvent(eraseModeRef.current ? LocalAnalyticEvent.eraser_used :
@@ -1151,6 +1152,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         };
     }
 
+    // a short message that goes away by itself
+    function showToast(message: string) {
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        setToast(message);
+        toastTimerRef.current = setTimeout(() => setToast(undefined), 2500);
+    }
+    useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
+
     async function withRasterBusy(action: () => Promise<void>) {
         if (rasterBusyRef.current) return;
         rasterBusyRef.current = true;
@@ -1213,7 +1222,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         return withRasterBusy(async () => {
             const pieceId = pieceAt(p);
             const fill = await computeFill(pageSnapshot(), p, fillColorRef.current, PixelRatio.get(), pieceId);
-            if (!fill) return; // not an enclosed shape
+            if (!fill) { // not an enclosed shape
+                showToast(translate("FillNoClosedArea"));
+                return;
+            }
             queue.current.pushFill({ id: getId("F"), ...fill, ...(pieceId ? { pieceId } : {}) });
             queue2state();
             save();
@@ -1259,7 +1271,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     // A copy of the piece and everything on it, a little off the original.
     // Copying a selection leaves the page as it was: only the copy is a piece.
     function handleCopyPiece(id: string) {
-        const piece = imagesRef.current.find(img => img.id === id && img.isCutPiece);
+        const piece = imagesRef.current.find(img => img.id === id);
         if (!piece) return;
         const offset = 30 / ratioRef.current;
         const maxX = canvasSizeRef.current.width / ratioRef.current - piece.width;
@@ -1456,8 +1468,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         } else if (modeRef.current === EditModes.Fill) {
             performFill(p);
         } else if (modeRef.current === EditModes.Cut) {
-            // tapping a piece selects it, tapping elsewhere deselects
-            if (elem && "id" in elem && (elem as SketchImage).isCutPiece) {
+            // tapping a piece (cut or imported image) selects it, tapping elsewhere deselects
+            if (elem && "id" in elem && imagesRef.current.some(img => img.id === elem.id)) {
                 selectPiece(elem.id);
             } else {
                 deselectPiece();
@@ -1697,7 +1709,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
 
         } else if (type === MoveTypes.ImageMove || type === MoveTypes.ImageResize) {
             // dragging a piece selects it right away (this may drop another selection, replaying the page)
-            if (activePieceIdRef.current !== id && imagesRef.current.some(image => image.id == id && image.isCutPiece)) {
+            if (activePieceIdRef.current !== id && imagesRef.current.some(image => image.id == id)) {
                 selectPiece(id);
             }
             const imgElem = imagesRef.current.find(image => image.id == id);
@@ -1797,16 +1809,14 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 delete changed.z;
                 delete changed.outline;
                 delete changed.holes;
-                if (!changed.isCutPiece) {
-                    // an image belongs to the paper it is dropped on
-                    changed.pieceId = pieceAt([changed.x + changed.width / 2, changed.y + changed.height / 2]) ?? null;
-                }
+                delete changed.pieceId; // an image is a piece: it lies on the page, not on other paper
+                changed.layered = true; // touched: it comes to the top
                 // moving a selection cuts it out: one undo step for both
-                queue.current.pushImagePosition(changed, changed.isCutPiece && commitPendingCut(changed.id));
+                queue.current.pushImagePosition(changed, commitPendingCut(changed.id));
                 save();
                 queue2state();
                 // a moved piece stays selected
-                if (changed.isCutPiece) selectPiece(changed.id);
+                selectPiece(changed.id);
             }
         } else if (type === MoveTypes.TableMove || type === MoveTypes.TableResize) {
             const table = tablesRef.current.find(table => table.id == id);
@@ -2030,6 +2040,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                             file: imageAttachmentFile,
                             width: Math.round(120 * ratio / ratioRef.current),
                             height: Math.round(120 / ratioRef.current),
+                            layered: true, // a piece in the drawing order (older images stay under all ink)
                         };
 
                         queue.current.pushImage(img)
@@ -2729,6 +2740,10 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     <ActivityIndicator size="large" /></View>
             }
 
+            {toast && <View style={styles.toast} pointerEvents="none" testID="editor-toast">
+                <AppText style={styles.toastText}>{toast}</AppText>
+            </View>}
+
             {shareProgress >= 0 && <View style={globalStyles.progressBarHost}>
                 <AppText style={{ fontSize: 28, marginBottom: 5 }}>{fTranslate("ExportProgress",
                     shareProgressPage.toString(),
@@ -3014,6 +3029,20 @@ const styles = StyleSheet.create({
         left: "48%",
         top: "40%",
         zIndex: 1000
+    },
+    toast: {
+        position: 'absolute',
+        alignSelf: 'center',
+        bottom: 80,
+        zIndex: 100000,
+        backgroundColor: 'rgba(40,40,40,0.85)',
+        borderRadius: 20,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+    },
+    toastText: {
+        color: 'white',
+        fontSize: 20,
     },
     moveCanvasButton: {
         position: 'absolute',

@@ -37,6 +37,8 @@ interface TextElementProps {
     hideEditMenu?: boolean;
     // the edited text box's layout (view points, in the canvas), to place the format bar
     onEditLayout?: (id: string, layout: { x: number; y: number; width: number; height: number }) => void;
+    // the text's place among the drawing's canvases (a piece laid over it covers it)
+    zIndex?: number;
     // false: touches pass through to the canvas (select tool: a drag on the text moves its piece,
     // instead of starting the system's drag of selectable text, which hides the text meanwhile)
     touchable?: boolean;
@@ -61,6 +63,7 @@ function TextElement({
     onSelectionChange,
     hideEditMenu,
     onEditLayout,
+    zIndex,
 }: TextElementProps, ref: any) {
     const [revision, setRevision] = useState<number>(0)
     //console.log("text ratio", ratio, actualWidth, text.fontSize)
@@ -350,11 +353,11 @@ function TextElement({
         // zIndex: above the drawing canvas also when this view is kept (moving, pass-through) - otherwise
         // React Native flattens it away and the text (zIndex 13) lands above the canvas on its own
         <View key={text.id} pointerEvents={touchable ? "auto" : "none"}
-            style={[posStyle, { zIndex: 13 }, dragOffset && { transform: [{ translateX: dragOffset.dx }, { translateY: dragOffset.dy }] }]}>
+            style={[posStyle, { zIndex: zIndex ?? 13 }, dragOffset && { transform: [{ translateX: dragOffset.dx }, { translateY: dragOffset.dy }] }]}>
             <Text
                 allowFontScaling={false}
                 selectable={touchable}
-                style={[styles.textStyle, style,
+                style={[styles.textStyle, style, { zIndex: zIndex ?? 13 },
                 table && { width: posStyle.width },
                     // !table && { textAlign: "left" }
                 ]}

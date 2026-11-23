@@ -8,7 +8,7 @@ import {
 } from "@shopify/react-native-skia";
 import { SketchImage, SketchLine, SketchOverlay, SketchPath, SketchPoint } from "./types";
 import { computeFillRegion, gapConnectors } from "./flood-fill";
-import { buildDrawLayers, DrawItem, isEraserPath, pieceHoles, pieceOutline } from "./pieces";
+import { buildDrawLayers, DrawItem, isEraserPath, isPiece, pieceHoles, pieceOutline } from "./pieces";
 
 const FILL_GAP_POINTS = 8; // shapes with openings up to ~2x this are considered closed
 const FILL_STROKE_END_GAP_POINTS = 30; // a pen stroke ending this close to a stroke is treated as connected
@@ -231,13 +231,6 @@ async function renderPage(page: PageSnapshot, rect: SkRect, scale: number, opts:
         }
     }
 
-    if (opts.includeVectors) {
-        for (const image of page.images.filter(i => !i.isCutPiece)) {
-            const img = image.src?.uri ? await loadImage(image.src.uri) : undefined;
-            if (img) drawImageAt(canvas, img, Skia.XYWHRect(image.x * r, image.y * r, image.width * r, image.height * r));
-        }
-    }
-
     await drawSketch(canvas, page, r, opts.sketch === "paper");
 
     if (opts.includeVectors) {
@@ -278,7 +271,7 @@ async function renderFillBoundary(page: PageSnapshot, pieceId: string | undefine
     canvas.drawColor(Skia.Color("white"));
     const black = Skia.Paint();
     black.setColor(Skia.Color("black"));
-    const pieces = page.images.filter(i => i.isCutPiece);
+    const pieces = page.images.filter(isPiece);
     const target = pieceId ? pieces.find(p => p.id === pieceId) : undefined;
 
     if (target) {

@@ -2,9 +2,9 @@
 //
 // A page is base paper plus pieces cut out of it. A piece is a crop of the paper (an image)
 // plus the annotations that belong to it (pieceId): they move, copy and delete with it.
-// Drawing order is by z (queue position): whatever was touched last is on top. Inside a
-// piece: its paper, then its paint and ink. Texts and inserted images are drawn above the
-// sketch layer, as before.
+// An imported image is a piece too: paper glued on the page. Drawing order is by z (queue
+// position): whatever was touched last is on top. Inside a piece: its paper, then its paint
+// and ink. Texts are drawn above the sketch layer, as before.
 //
 // Coordinates are normalized (background image pixels), as everywhere in the canvas.
 
@@ -16,7 +16,8 @@ const VERB_MOVE = 0; // PathVerb.Move
 const VERB_LINE = 1; // PathVerb.Line
 
 export const isEraserPath = (p: SketchPath) => p.color === "#00000000";
-export const isPiece = (img: SketchImage) => !!img.isCutPiece;
+// every image is a piece: cut out of the page (isCutPiece) or imported
+export const isPiece = (_img: SketchImage) => true;
 
 /** The cut shape as a polygon: the lasso, or the rect's corners */
 export function cutPolygon(rect: { x: number; y: number; width: number; height: number }, lasso?: SketchPoint[]): SketchPoint[] {
@@ -120,6 +121,38 @@ export function splitStroke(points: PathCommand[], polygon: SketchPoint[]): { in
     };
 }
 
+/**
+ * A stroke drawn across pieces is divided like the paper under it: each part belongs to the
+ * topmost piece it lies on (pieceId), the rest to the page (no pieceId). Holes show what is under them.
+ */
+export function splitStrokeByPieces(points: PathCommand[], images: SketchImage[] | undefined): { pieceId?: string; points: PathCommand[] }[] {
+    const parts: { pieceId?: string; points: PathCommand[] }[] = [];
+    let rest: PathCommand[] | undefined = points;
+    const pieces = (images ?? []).filter(isPiece).sort((a, b) => (b.z ?? 0) - (a.z ?? 0)); // top first
+    for (const piece of pieces) {
+        if (!rest) break;
+        const split = splitStroke(rest, pieceOutline(piece));
+        let onPiece = split.inside;
+        const others: PathCommand[][] = split.outside ? [split.outside] : [];
+        for (const hole of pieceHoles(piece)) {
+            if (!onPiece) break;
+            const h = splitStroke(onPiece, hole);
+            if (h.inside) others.push(h.inside); // through the hole: what is below gets it
+            onPiece = h.outside;
+        }
+        if (onPiece) parts.push({ pieceId: piece.id, points: onPiece });
+        rest = others.length ? others.flat() : undefined;
+    }
+    if (rest) parts.push({ points: rest });
+    if (!parts.length && points.length) {
+        // a dot (nothing to divide): it belongs to the paper it is on
+        const [, x, y] = points[0] as unknown as [number, number, number];
+        const piece = topPieceAt(images, x, y);
+        return [{ ...(piece ? { pieceId: piece.id } : {}), points }];
+    }
+    return parts;
+}
+
 export function textCenter(t: SketchText): SketchPoint {
     const w = t.width ?? 0;
     const h = t.height ?? t.fontSize ?? 0;
@@ -140,9 +173,9 @@ export interface CutPlan {
 
 /**
  * What a cut takes - everything seen inside it, on the page and on pieces. Strokes fully
- * inside are taken, crossing strokes are split at the edge, texts and inserted images go
- * with the new piece when their center is inside. Pieces under the cut get a hole; a piece
- * fully inside is taken whole (its paper is in the new piece's image).
+ * inside are taken, crossing strokes are split at the edge, texts go with the new piece when
+ * their center is inside. Pieces (and imported images) under the cut get a hole; a piece fully
+ * inside is taken whole (its paper is in the new piece's image).
  */
 export function planCut(polygon: SketchPoint[], paths: SketchPath[], texts: SketchText[], images: SketchImage[],
     newId: (prefix: string) => string): CutPlan {
@@ -174,10 +207,6 @@ export function planCut(polygon: SketchPoint[], paths: SketchPath[], texts: Sket
         const [cx, cy] = textCenter(t);
         if (isPointInPolygon(cx, cy, polygon)) plan.takeTexts.push(t.id);
     }
-    for (const img of images) {
-        if (isPiece(img)) continue;
-        if (isPointInPolygon(img.x + img.width / 2, img.y + img.height / 2, polygon)) plan.takeImages.push(img.id);
-    }
     return plan;
 }
 
@@ -187,6 +216,11 @@ export const cutPlanIsEmpty = (plan: CutPlan) =>
 
 export function shiftPoints(points: PathCommand[], dx: number, dy: number): PathCommand[] {
     return points.map(c => [c[0], c[1] + dx, c[2] + dy] as any);
+}
+
+/** Points scaled around (ox, oy) */
+export function scalePoints(points: PathCommand[], ox: number, oy: number, sx: number, sy: number): PathCommand[] {
+    return points.map(c => [c[0], ox + (c[1] - ox) * sx, oy + (c[2] - oy) * sy] as any);
 }
 
 // ---------------------------------------------------------------------------------------
@@ -239,4 +273,63 @@ export function buildDrawLayers(paths: SketchPath[] | undefined, overlays: Sketc
     }
     pushBase(base.length);
     return layers;
+}
+
+// ---------------------------------------------------------------------------------------
+//                          Texts between pieces
+// ---------------------------------------------------------------------------------------
+
+/** The most canvases the drawing is split into, to put texts under pieces laid over them */
+export const MAX_CANVASES = 3;
+
+export interface Stack {
+    // the draw layers, split into canvases drawn bottom to top
+    canvases: DrawLayer[][];
+    // the canvas each text is drawn right under (canvases.length: above them all)
+    textLevel: Map<string, number>;
+}
+
+const boxesOverlap = (a: { x: number; y: number; width: number; height: number }, b: typeof a) =>
+    a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+
+/**
+ * Like paper: a piece put down (or moved) after a text, over it, covers it. Ink stays under texts.
+ * A text on a piece lies on it and is covered only by pieces laid over that piece.
+ * `onTop`: texts drawn above everything (e.g. the one being edited).
+ */
+export function stackTexts(layers: DrawLayer[], texts: SketchText[] | undefined, onTop?: string): Stack {
+    const pieceIndex = new Map<string, number>();
+    layers.forEach((l, i) => l.piece && pieceIndex.set(l.piece.id, i));
+    const layerZ = (l: DrawLayer) => l.piece ? (l.piece.z ?? 0) : itemZ(l.items[0]);
+
+    // for each text: the first layer that covers it
+    const cover = new Map<string, number>();
+    for (const t of texts ?? []) {
+        if (t.tableId || t.id === onTop) continue;
+        const owner = t.pieceId ? pieceIndex.get(t.pieceId) : undefined;
+        // where the text lies: on its piece, or among the layers by when it was written
+        let at = owner ?? -1;
+        if (owner === undefined) layers.forEach((l, i) => { if (layerZ(l) < (t.z ?? 0)) at = i; });
+        const box = { x: t.x, y: t.y, width: t.width ?? 0, height: t.height ?? t.fontSize ?? 0 };
+        for (let i = at + 1; i < layers.length; i++) {
+            const p = layers[i].piece;
+            if (p && boxesOverlap(box, p)) { cover.set(t.id, i); break; }
+        }
+    }
+
+    // split where texts get covered: the lowest few, a text covered later goes under the split before it
+    const splits = [...new Set(cover.values())].sort((a, b) => a - b).slice(0, MAX_CANVASES - 1);
+    const bounds = [0, ...splits, layers.length];
+    const canvases = bounds.slice(1).map((end, k) => layers.slice(bounds[k], end));
+    const textLevel = new Map<string, number>();
+    for (const t of texts ?? []) {
+        const c = cover.get(t.id);
+        let level = canvases.length;
+        if (c !== undefined) {
+            level = 0;
+            splits.forEach((s, k) => { if (s <= c) level = k + 1; });
+        }
+        textLevel.set(t.id, level);
+    }
+    return { canvases, textLevel };
 }

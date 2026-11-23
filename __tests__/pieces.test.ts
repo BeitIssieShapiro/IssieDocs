@@ -1,4 +1,4 @@
-import { buildDrawLayers, cutPolygon, planCut, splitStroke, topPieceAt } from '../src/canvas/pieces';
+import { buildDrawLayers, cutPolygon, planCut, splitStroke, splitStrokeByPieces, stackTexts, topPieceAt } from '../src/canvas/pieces';
 import { replayPageQueue } from '../src/canvas/page-state';
 import DoQueue from '../src/do-queue';
 
@@ -35,6 +35,34 @@ describe('splitStroke', () => {
     });
 });
 
+describe('splitStrokeByPieces', () => {
+    const piece = (id: string, x: number, z: number, extra: any = {}) =>
+        ({ id, x, y: 0, width: 10, height: 10, isCutPiece: true, z, ...extra }) as any;
+
+    it('divides a stroke between the page and the pieces it crosses', () => {
+        const parts = splitStrokeByPieces(stroke('s', [[-5, 5], [25, 5]]).points as any, [piece('A', 0, 1), piece('B', 20, 2)]);
+        expect(parts).toEqual([
+            { pieceId: 'B', points: [[M, 20, 5], [L, 25, 5]] },
+            { pieceId: 'A', points: [[M, 0, 5], [L, 10, 5]] },
+            { points: [[M, -5, 5], [L, 0, 5], [M, 10, 5], [L, 20, 5]] },
+        ]);
+    });
+
+    it('gives an overlap to the top piece, and a hole to what is below it', () => {
+        const top = piece('T', 5, 2, { holes: [[[2, 0], [4, 0], [4, 10], [2, 10]]] }); // hole at x 7..9
+        const parts = splitStrokeByPieces(stroke('s', [[1, 5], [12, 5]]).points as any, [piece('U', 0, 1), top]);
+        expect(parts.find(p => p.pieceId === 'T')!.points).toEqual([[M, 5, 5], [L, 7, 5], [M, 9, 5], [L, 12, 5]]);
+        expect(parts.find(p => p.pieceId === 'U')!.points).toEqual([[M, 1, 5], [L, 5, 5], [M, 7, 5], [L, 9, 5]]);
+        expect(parts.some(p => !p.pieceId)).toBe(false);
+    });
+
+    it('keeps a stroke whole without pieces, and a dot on its piece', () => {
+        const pts = stroke('s', [[1, 1], [2, 2]]).points as any;
+        expect(splitStrokeByPieces(pts, [])).toEqual([{ points: pts }]);
+        expect(splitStrokeByPieces([[M, 3, 3]] as any, [piece('A', 0, 1)])).toEqual([{ pieceId: 'A', points: [[M, 3, 3]] }]);
+    });
+});
+
 describe('planCut', () => {
     it('takes what is inside, splits what crosses, leaves the rest', () => {
         const plan = planCut(square,
@@ -46,7 +74,9 @@ describe('planCut', () => {
         expect(plan.takePaths).toEqual(['in']);
         expect(plan.splitPaths.map(sp => sp.from)).toEqual(['cross']);
         expect(plan.takeTexts).toEqual(['t-in']); // t-out's center is outside
-        expect(plan.takeImages).toEqual(['img']);
+        // an imported image is a piece: fully inside, it is taken whole (into the new piece's paper)
+        expect(plan.takeImages).toEqual([]);
+        expect(plan.absorbPieces).toEqual(['img']);
     });
 
     it('cuts through pieces: their content inside is taken, they get a hole, or are taken whole', () => {
@@ -56,6 +86,51 @@ describe('planCut', () => {
         expect(plan.takePaths).toEqual(['mine']);
         expect(plan.absorbPieces).toEqual(['In']);
         expect(plan.cutPieces).toEqual([{ id: 'U', hole: [[-5, 0], [5, 0], [5, 10], [-5, 10]] }]);
+    });
+});
+
+describe('imported images are pieces', () => {
+    const image = { type: 'image', elem: { id: 'I1', x: 10, y: 10, width: 20, height: 10, file: 'i.jpg', layered: true } };
+    const onImage = { type: 'path', elem: stroke('ink', [[12, 12], [20, 15]], { pieceId: 'I1' }) };
+    const onPage = { type: 'path', elem: stroke('page', [[50, 50], [60, 60]]) };
+
+    it('carry their ink when moved, and come to the top', () => {
+        const s = replay([image, onImage, onPage, { type: 'imagePosition', elem: { id: 'I1', x: 40, y: 10, width: 20, height: 10, layered: true } }]);
+        expect(s.images[0]).toMatchObject({ x: 40, originX: 40, z: 3 });
+        expect(s.paths.find(p => p.id === 'ink')!.points).toEqual([[M, 42, 12], [L, 50, 15]]);
+        expect(s.paths.find(p => p.id === 'page')!.points[0]).toEqual([M, 50, 50]);
+    });
+
+    it('scale their content when resized', () => {
+        const fill = { type: 'fill', elem: { id: 'F1', x: 10, y: 10, width: 4, height: 2, pieceId: 'I1', imageData: '' } };
+        const text = { type: 'text', elem: { id: 't', text: 'a', x: 20, y: 12, fontSize: 4, pieceId: 'I1' } };
+        const s = replay([image, onImage, fill, text, { type: 'imagePosition', elem: { id: 'I1', x: 10, y: 10, width: 40, height: 20 } }]);
+        const ink = s.paths.find(p => p.id === 'ink')!;
+        expect(ink.points).toEqual([[M, 14, 14], [L, 30, 20]]);
+        expect(ink.strokeWidth).toBe(4);
+        expect(s.overlays[0]).toMatchObject({ x: 10, y: 10, width: 8, height: 4 });
+        expect(s.texts[0]).toMatchObject({ x: 30, y: 14, fontSize: 8 });
+        expect(s.images[0]).toMatchObject({ width: 40, height: 20 });
+    });
+
+    it('from older worksheets stay under all ink until moved', () => {
+        const legacy = { type: 'image', elem: { id: 'I0', x: 0, y: 0, width: 50, height: 50, file: 'o.jpg' } };
+        const s = replay([onPage, legacy]);
+        const layers = buildDrawLayers(s.paths, s.overlays, s.images);
+        expect(layers.map(l => l.piece?.id ?? 'base')).toEqual(['I0', 'base']);
+        const s2 = replay([onPage, legacy, { type: 'imagePosition', elem: { id: 'I0', x: 1, y: 0, width: 50, height: 50 } }]);
+        expect(s2.images[0].z).toBe(s.images[0].z); // an old move does not bring it up
+        const s3 = replay([onPage, legacy, { type: 'imagePosition', elem: { id: 'I0', x: 1, y: 0, width: 50, height: 50, layered: true } }]);
+        expect(s3.images[0].z).toBe(2);
+    });
+
+    it('delete with their content, and are selected on top', () => {
+        const s = replay([image, onImage, onPage, { type: 'imageDelete', elem: { id: 'I1' } }]);
+        expect(s.images).toEqual([]);
+        expect(s.paths.map(p => p.id)).toEqual(['page']);
+        const s2 = replay([image, { type: 'image', elem: { id: 'I2', x: 15, y: 12, width: 5, height: 5, file: 'j.jpg', layered: true } }]);
+        expect(topPieceAt(s2.images, 16, 13)!.id).toBe('I2');
+        expect(topPieceAt(s2.images, 11, 11)!.id).toBe('I1');
     });
 });
 
@@ -233,5 +308,36 @@ describe('drawing order', () => {
         const images = [piece('low', 1), piece('high', 9), piece('mid', 5)];
         expect(topPieceAt(images, 5, 5)!.id).toBe('high');
         expect(topPieceAt(images, 50, 50)).toBeUndefined();
+    });
+});
+
+describe('texts between pieces', () => {
+    const piece = (id: string, x: number, z: number) => ({ id, x, y: 0, width: 10, height: 10, isCutPiece: true, z }) as any;
+    const text = (id: string, x: number, z: number, extra: any = {}) =>
+        ({ id, text: 'a', x, y: 2, width: 4, height: 2, fontSize: 2, z, ...extra }) as any;
+    const ink = (z: number) => ({ ...stroke('ink' + z, [[0, 0], [5, 5]]), z }) as any;
+
+    it('keeps texts above ink, and one canvas when nothing covers a text', () => {
+        const layers = buildDrawLayers([ink(5)], [], [piece('A', 0, 1)]);
+        const s = stackTexts(layers, [text('t', 2, 3), text('far', 50, 0)]);
+        expect(s.canvases.length).toBe(1);
+        expect(s.textLevel.get('t')).toBe(1);
+        expect(s.textLevel.get('far')).toBe(1);
+    });
+
+    it('puts a text under a piece laid over it later', () => {
+        const layers = buildDrawLayers([ink(0)], [], [piece('A', 0, 5)]);
+        const s = stackTexts(layers, [text('t', 2, 3), text('later', 2, 7)]);
+        expect(s.canvases.map(c => c.map(l => l.piece?.id ?? 'base'))).toEqual([['base'], ['A']]);
+        expect(s.textLevel.get('t')).toBe(1); // between: above the ink, under A
+        expect(s.textLevel.get('later')).toBe(2); // written after A: on top
+    });
+
+    it('a text on a piece is covered only by pieces over that piece; the edited text is on top', () => {
+        const layers = buildDrawLayers([], [], [piece('A', 0, 1), piece('B', 5, 4)]);
+        const s = stackTexts(layers, [text('onA', 6, 9, { pieceId: 'A' }), text('onB', 6, 2, { pieceId: 'B' })]);
+        expect(s.textLevel.get('onA')).toBe(1); // under B
+        expect(s.textLevel.get('onB')).toBe(2);
+        expect(stackTexts(layers, [text('onA', 6, 9, { pieceId: 'A' })], 'onA').textLevel.get('onA')).toBe(1);
     });
 });

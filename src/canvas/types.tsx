@@ -76,6 +76,8 @@ export interface SketchImage extends ElementBase {
     height: number;
     aspectRatio?: number;
     isCutPiece?: boolean;
+    // an image in the drawing order (last touched on top); images saved before that are under all ink
+    layered?: boolean;
     outline?: SketchPoint[]; // lasso cut pieces: outline as fractions (0..1) of width/height
     // cut pieces: areas cut out of this piece by later cuts, relative to its x/y
     holes?: SketchPoint[][];

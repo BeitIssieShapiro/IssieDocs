@@ -263,6 +263,7 @@ export const languageMap = {
     ToolsSettings: 'כלים',
     Ruler: 'קו ישר',
     FillTool: 'מילוי צבע',
+    FillNoClosedArea: 'לא נמצא אזור סגור למילוי',
     CutTool: 'גזירה',
     TextFormatTool: 'עיצוב טקסט',
     Image: 'תמונה',
@@ -468,6 +469,7 @@ export const languageMap = {
     ToolsSettings: 'أدوات',
     Ruler: 'خط مستقيم', // or "مسطرة رسم"
     FillTool: 'تعبئة لون',
+    FillNoClosedArea: 'لم يتم العثور على منطقة مغلقة للتعبئة',
     CutTool: 'قص',
     TextFormatTool: 'تنسيق النص',
     Image: 'صورة',
@@ -675,6 +677,7 @@ export const languageMap = {
     ToolsSettings: 'Tools',
     Ruler: 'Line',
     FillTool: 'Fill',
+    FillNoClosedArea: 'No closed area to fill here',
     CutTool: 'Cut',
     TextFormatTool: 'Text styling',
     Image: 'Image',

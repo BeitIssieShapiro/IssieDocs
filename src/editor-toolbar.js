@@ -137,6 +137,8 @@ function EditorToolbar({
     const [previousPickerType, setPreviousPickerType] = useState(undefined)
 
     const [showExtMenu, setShowExtMenu] = useState(false);
+    // the color menu was opened from the top row's color button (not from an ext-row tool like fill)
+    const [colorFromTopRow, setColorFromTopRow] = useState(false);
     const [toolbarHeight, setToolbarHeight] = useState(dimensions.toolbarHeight);
 
     const [menuHeight, setMenuHeight] = useState(0);
@@ -149,9 +151,17 @@ function EditorToolbar({
     const [tableCols, setTableCols] = useState(Table ? Table.verticalLines.length - 1 : 3);
     const [tableRows, setTableRows] = useState(Table ? Table.horizontalLines.length - 1 : 3);
 
+    // the top row (two rows on a narrow screen) - its menus open right below it, over the ext row
+    const topRowsHeight = (windowSize?.width < 500 ? 2 : 1) * dimensions.toolbarHeight;
+    const pickerOnTopRow = showPickerType === Pickers.TEXT || showPickerType === Pickers.BRUSH ||
+        (showPickerType === Pickers.COLOR && colorFromTopRow) ||
+        (showPickerType === Pickers.ZOOM && windowSize?.width < 500);
+    const pickerTop = pickerOnTopRow ? topRowsHeight : toolbarHeight;
+
     useEffect(() => {
-        onToolBarDimensionsChange(toolbarHeight, menuHeight)
-    }, [menuHeight, toolbarHeight]);
+        // the part of the menu that hangs below the toolbar
+        onToolBarDimensionsChange(toolbarHeight, Math.max(0, menuHeight - (toolbarHeight - pickerTop)))
+    }, [menuHeight, toolbarHeight, pickerTop]);
 
     useEffect(() => {
         if (Table) {
@@ -212,11 +222,19 @@ function EditorToolbar({
         )
     }, [showExtMenu, windowSize])
 
+    const AUTO_OPEN_PICKERS = [Pickers.ZOOM, Pickers.CUT, Pickers.IMAGE];
+
     onModeButtonClick = useCallback((type, height) => {
         trace("mode button click", type, height )
         let pickerTypeChanged = false;
         if (type !== showPickerType) {
             pickerTypeChanged = (showPickerType != Pickers.NONE);
+            // zoom, select and image menus open by themselves - leaving them should not open the next mode's menu
+            if (AUTO_OPEN_PICKERS.includes(showPickerType)) {
+                setShowPicker(false);
+                setMenuHeight(0);
+                pickerTypeChanged = false;
+            }
             setShowPickerType(type);
             //pickerTypeChanged = true;
         }
@@ -238,7 +256,6 @@ function EditorToolbar({
                     checkPickerChange()
                 } else {
                     onTextMode();
-                    setShowExtMenu(false);
                 }
                 break;
             case Pickers.BRUSH:
@@ -246,7 +263,6 @@ function EditorToolbar({
                     checkPickerChange()
                 } else {
                     onBrushMode();
-                    setShowExtMenu(false);
                 }
                 break;
             case Pickers.TABLE:
@@ -316,7 +332,8 @@ function EditorToolbar({
     }, [isVoiceMode, isTextMode, isBrushMode, isTableMode, isImageMode, isAudioMode, isMarkerMode, isRulerMode, isCutMode, isFillMode, showPickerType, showPicker]);
 
 
-    onSelectButtonClick = useCallback((type, preservePrevious, height) => {
+    onSelectButtonClick = useCallback((type, preservePrevious, height, fromTopRow = false) => {
+        if (type === Pickers.COLOR) setColorFromTopRow(fromTopRow);
         if (showPickerType === type) {
             setShowPicker(oldVal => {
                 if (setMenuHeight) {
@@ -421,7 +438,7 @@ function EditorToolbar({
             selected={showPickerType === Pickers.SPEAK_DICTATE && showPicker} />);
     }
 
-    const zoomBtn = <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM, false, 55)} color={semanticColors.editPhotoButton}
+    const zoomBtn = <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM, false, 55, isScreenNarrow())} color={semanticColors.editPhotoButton}
         icon="zoom-in" size={50} iconSize={45} />;
     if (extMenu.length > 0 && !isScreenNarrow()) {
         extMenu.push(zoomBtn);
@@ -433,7 +450,7 @@ function EditorToolbar({
         />,
         <IconButton key={13} testID="toolbar-brush-btn" onPress={() => onModeButtonClick(Pickers.BRUSH, 70)} icon={"edit"} size={55}
             color={brushColor} iconSize={45} selected={isBrushMode} ensureContrast={true} />,
-        <IconButton testID="toolbar-color-btn" onPress={() => onSelectButtonClick(Pickers.COLOR, true, 70)} iconType="MI" icon={"color-lens"}
+        <IconButton testID="toolbar-color-btn" onPress={() => onSelectButtonClick(Pickers.COLOR, true, 70, true)} iconType="MI" icon={"color-lens"}
             size={55} iconSize={45} color={semanticColors.editPhotoButton} />,
         isScreenNarrow() && extMenu.length > 0 ? zoomBtn : null,
         extMenu.length > 0 ? <IconButton onPress={() => setShowExtMenu(currVal => !currVal)} iconType="MI" icon={showExtMenu ? "expand-less" : "expand-more"}
@@ -578,7 +595,7 @@ function EditorToolbar({
 
         <MyColorPicker
             open={showPickerType === Pickers.COLOR && showPicker}
-            top={toolbarHeight}
+            top={pickerTop}
             width={availablePickerWidth}
             color={eraseMode ? undefined : colorByMode}
             isScreenNarrow={isScreenNarrow()}
@@ -599,7 +616,7 @@ function EditorToolbar({
 
         <TextSizePicker
             open={showPickerType === Pickers.TEXT && showPicker}
-            top={toolbarHeight}
+            top={pickerTop}
             width={availablePickerWidth}
             size={fontSize}
             fontSize4Toolbar={fontSize4Toolbar}
@@ -629,7 +646,7 @@ function EditorToolbar({
         />
 
         {/*View for selecting brush size*/}
-        <FadeInView height={(showPickerType === Pickers.BRUSH || showPickerType === Pickers.RULER) && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
+        <FadeInView height={(showPickerType === Pickers.BRUSH || showPickerType === Pickers.RULER) && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: pickerTop, left: 0, right: 0 }]}>
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 {
                     availableBrushSize.map((size, i) => <BrushSizePicker
@@ -648,7 +665,7 @@ function EditorToolbar({
         </FadeInView>
 
         {/*View for zoom*/}
-        <FadeInView height={showPickerType === Pickers.ZOOM && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
+        <FadeInView height={showPickerType === Pickers.ZOOM && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: pickerTop, left: '35%', right: '35%' }]}>
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 <IconButton onPress={onZoomOut} icon={"zoom-out"} size={55} iconSize={45} />
                 <IconButton onPress={onZoomIn} icon={"zoom-in"} size={55} iconSize={45} />
@@ -694,7 +711,7 @@ function EditorToolbar({
         </FadeInView> */}
 
         {/*View for selecting marker size*/}
-        <FadeInView height={showPickerType === Pickers.MARKER && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: 0, right: 0 }]}>
+        <FadeInView height={showPickerType === Pickers.MARKER && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: pickerTop, left: 0, right: 0 }]}>
 
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
                 {
