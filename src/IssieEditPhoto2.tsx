@@ -137,6 +137,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const [rulerStrokeWidth, setRulerStrokeWidth] = useState<number>(2);
 
     const [sideMargin, setSideMargin] = useState<number>(dimensions.minSideMargin);
+    const calcCanvasSeqRef = useRef(0);
     const [brushColor, setBrushColor] = useState<string>(colors.black);
     const [rulerColor, setRulerColor] = useState<string>(colors.black);
     const [markerColor, setMarkerColor] = useState<string>(colors.yellow);
@@ -352,11 +353,15 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const availableheight = () => windowSizeRef.current.height - toolbarHeightRef.current - dimensions.toolbarMargin * 2 - headerHeight - insets.top - insets.bottom;
 
     async function calcCanvasRatio(imgPath: string) {
+        // several can run at once (the window, the toolbar's height and the page change together), and
+        // each waits for the image's size: only the latest one's result is applied
+        const seq = ++calcCanvasSeqRef.current;
         const res = await calcRatio(imgPath, dimensions.minSideMargin,
             {
                 width: windowSizeRef.current.width,
                 height: availableheight()
             }, pageHeightAdditionRef.current);
+        if (seq !== calcCanvasSeqRef.current) return;
 
         setCanvasSize(res.actualSize);
         canvasSizeRef.current = res.actualSize;
@@ -386,6 +391,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     async function loadPage(newPage: any, index: number) {
         discardPendingCut(); // a selection does not survive leaving the page
         const newCurrentFile = newPage.getPage(index);
+        currentFileRef.current = newCurrentFile; // (a page size calculation started meanwhile uses it)
         setCurrentFile(newCurrentFile);
         setCurrPageIndex(index);
         setZoom(1);
