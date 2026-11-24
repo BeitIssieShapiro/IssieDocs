@@ -42,6 +42,8 @@ interface TextFormatBarProps {
     canPaste: boolean;
     // false: no cut/copy/paste (Android keeps its own text selection menu)
     clipboard?: boolean;
+    // the page's width: a wider bar wraps its buttons into rows (a phone in portrait)
+    maxWidth?: number;
     // no selection: the text's alignment (center only in table cells)
     alignment?: string;
     showCenter?: boolean;
@@ -49,12 +51,15 @@ interface TextFormatBarProps {
 }
 
 export function TextFormatBar({ left, top, bottom, hasSelection, styles: fontStyles, bold, italic, underline, color,
-    onFormat, onSize, onClipboard, canPaste, clipboard = true, alignment, showCenter, onAlign }: TextFormatBarProps) {
+    onFormat, onSize, onClipboard, canPaste, clipboard = true, alignment, showCenter, onAlign, maxWidth }: TextFormatBarProps) {
     const [showColors, setShowColors] = useState(false);
     const place = {
         ...(bottom !== undefined ? { bottom, flexDirection: "column-reverse" as const } : { top }),
         left,
+        ...(maxWidth !== undefined ? { maxWidth } : {}),
     };
+    const rowWidth = Math.min(formatBarWidth({ hasSelection, styles: fontStyles, showCenter: !!showCenter, canPaste, clipboard }),
+        maxWidth ?? Infinity) - 8;
     const button = (key: string, icon: string, active: boolean, onPress: () => void) =>
         <TouchableOpacity key={key} testID={"format-" + key} style={[styles.button, active && styles.active]} onPress={onPress}>
             <MyIcon info={{ type: "MDI", name: icon, size: 26, color: semanticColors.titleText }} />
@@ -64,7 +69,7 @@ export function TextFormatBar({ left, top, bottom, hasSelection, styles: fontSty
     const align = (a: Alignment, icon: string) => button("align-" + a.toLowerCase(), icon, alignment === a, () => onAlign?.(a));
     return (
         <View style={[styles.bar, place]} testID="text-format-bar">
-            <View style={styles.row}>
+            <View style={[styles.row, styles.wrap]}>
                 {has("bold") && button("bold", "format-bold", bold, () => onFormat({ bold: !bold }))}
                 {has("italic") && button("italic", "format-italic", italic, () => onFormat({ italic: !italic }))}
                 {has("underline") && button("underline", "format-underline", underline, () => onFormat({ underline: !underline }))}
@@ -93,7 +98,7 @@ export function TextFormatBar({ left, top, bottom, hasSelection, styles: fontSty
             </View>
             {hasSelection && showColors && <View style={[styles.row, styles.wrap,
                 // no wider than the buttons row: the colors wrap on a narrow page
-                { width: formatBarWidth({ hasSelection, styles: fontStyles, showCenter: !!showCenter, canPaste, clipboard }) - 8 }]}>
+                { width: rowWidth }]}>
                 {availableColorPicker.map((c: string) =>
                     <TouchableOpacity key={c} testID={"format-color-" + c} style={styles.button}
                         onPress={() => { onFormat({ color: c }); setShowColors(false); }}>

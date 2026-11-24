@@ -248,6 +248,9 @@ export const RecordButton2 = ({
         <Pressable
             onPress={_onPress}
             style={{
+                // the button's own size (its circles are laid over it): a press area that can be hit
+                width: size,
+                height: size,
                 transform: [{ scale: 1 / zoom }],
                 alignItems: "center",
                 justifyContent: "center",

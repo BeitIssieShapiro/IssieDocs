@@ -57,8 +57,22 @@ export function cutShapePath(cut: SketchOverlay, ratio: number): SkPath {
     return path;
 }
 
+// A file URL: the path percent-encoded - Skia does not load a file whose name has a space
+// (on Android its load then never ends), and worksheet names often have spaces
 function toFileUri(uri: string) {
-    return uri.startsWith("/") ? "file://" + uri : uri;
+    if (uri.startsWith("/")) return "file://" + encodeURI(uri);
+    if (uri.startsWith("file://") && !/%[0-9a-fA-F]{2}/.test(uri)) return "file://" + encodeURI(uri.substring(7));
+    return uri;
+}
+
+const LOAD_TIMEOUT_MS = 10000;
+
+// Skia's load, given up after a while: a load that never ends would keep the editor busy for good
+function loadData(fileUri: string) {
+    return Promise.race([
+        Skia.Data.fromURI(fileUri).catch(() => undefined),
+        new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), LOAD_TIMEOUT_MS)),
+    ]);
 }
 
 // decoded images, least recently used first (a Map keeps insertion order)
@@ -90,7 +104,7 @@ async function loadImage(uri: string): Promise<SkImage | undefined> {
     const key = toFileUri(uri);
     let img = cachedImage(key);
     if (!img) {
-        const data = await Skia.Data.fromURI(key).catch(() => undefined);
+        const data = await loadData(key);
         img = data && Skia.Image.MakeImageFromEncoded(data) || undefined;
         if (!img) return undefined;
         if (uriImageCache.size >= URI_IMAGE_CACHE_SIZE) uriImageCache.delete(uriImageCache.keys().next().value!);
@@ -293,7 +307,10 @@ async function renderFillBoundary(page: PageSnapshot, pieceId: string | undefine
     canvas.saveLayer();
     for (const p of paths) {
         if (!isPenStroke(p) && !isEraserPath(p)) continue;
-        canvas.drawPath(strokePath(p, r), strokePaint(p));
+        // walls are black whatever the ink's color (a wall is a dark pixel: red or yellow ink was not one)
+        const paint = strokePaint(p);
+        if (!isEraserPath(p)) paint.setColor(Skia.Color("black"));
+        canvas.drawPath(strokePath(p, r), paint);
     }
     canvas.restore();
 

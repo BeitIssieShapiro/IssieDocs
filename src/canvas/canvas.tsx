@@ -82,6 +82,8 @@ import Clipboard from "@react-native-clipboard/clipboard";
 import { textSizes } from "../elements";
 
 const TEXT_SEARCH_MARGIN = 0; // 15;
+// the system's cut/copy/paste menu over a text selection on Android, with its margin
+const ANDROID_SELECTION_MENU_HEIGHT = 60;
 const TABLE_LINE_THRESHOLD = 7;
 
 function createSkiaPath(points: PathCommand[], ratio: number): any {
@@ -874,14 +876,21 @@ function Canvas({
         // above the text box, or below it when there is no room above; kept within the page width
         const boxTop = box ? box.y : text.y * ratio;
         const boxBottom = box ? box.y + box.height : (text.y + text.fontSize) * ratio;
-        const above = boxTop - FORMAT_BAR_HEIGHT - 8 >= 0;
+        // Android shows its own menu right above a selection: the bar goes above that menu
+        const gap = 8 + (!clipboard && hasSelection ? ANDROID_SELECTION_MENU_HEIGHT : 0);
+        // wider than the page (a phone in portrait): the buttons wrap into rows
+        const rows = Math.ceil(width / Math.max(canvasWidth, 1));
+        const shownWidth = Math.min(width, canvasWidth);
+        const above = boxTop - FORMAT_BAR_HEIGHT * rows - gap >= 0;
         const boxLeft = box ? box.x : textBox(text).x * ratio;
         const boxRight = box ? box.x + box.width : boxLeft + (text.width ?? 0) * ratio;
-        const preferred = text.rtl ? boxRight - width : boxLeft;
-        const left = Math.max(0, Math.min(preferred, canvasWidth - width));
+        const preferred = text.rtl ? boxRight - shownWidth : boxLeft;
+        const left = Math.max(0, Math.min(preferred, canvasWidth - shownWidth));
+        // (with room for the color row)
+        const barHeight = FORMAT_BAR_HEIGHT * (rows + 1);
         formatBarRectRef.current = above ?
-            { x: left, y: boxTop - 8 - FORMAT_BAR_HEIGHT * 2, width, height: FORMAT_BAR_HEIGHT * 2 } :
-            { x: left, y: boxBottom + 8, width, height: FORMAT_BAR_HEIGHT * 2 };
+            { x: left, y: boxTop - gap - barHeight, width: shownWidth, height: barHeight } :
+            { x: left, y: boxBottom + 8, width: shownWidth, height: barHeight };
         // an empty box: its own style
         const isOn = (k: TextStyleKey) => range.end > range.start ? allHave(text.spans, range.start, range.end, k, !!text[k]) : !!text[k];
         const at = styleAt(text.spans, sel.start);
@@ -894,11 +903,12 @@ function Canvas({
         };
         return <TextFormatBar
             left={left}
-            {...(above ? { bottom: canvasHeight - (boxTop - 8) } : { top: boxBottom + 8 })}
+            {...(above ? { bottom: canvasHeight - (boxTop - gap) } : { top: boxBottom + 8 })}
             hasSelection={hasSelection}
             styles={fontStyles}
             canPaste={canPaste}
             clipboard={clipboard}
+            maxWidth={canvasWidth}
             alignment={text.alignment}
             showCenter={showCenter}
             onAlign={a => onTextAlignment?.(a)}

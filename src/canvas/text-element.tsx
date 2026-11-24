@@ -81,6 +81,15 @@ function TextElement({
     const [rangeSelection, setRangeSelection] = useState<{ start: number; end: number; text: string } | undefined>(undefined);
     const heldSelection = rangeSelection && rangeSelection.text === text.text ?
         { start: rangeSelection.start, end: rangeSelection.end } : undefined;
+    // Android drops the selection when a style changes the text's spans, and does not take the same
+    // `selection` prop again: set it on the input after the change, so the next style applies too
+    const inputRef = useRef<TextInput>(null);
+    useEffect(() => {
+        if (Platform.OS !== "android" || !heldSelection) return;
+        const { start, end } = heldSelection;
+        const frame = requestAnimationFrame(() => inputRef.current?.setSelection(start, end));
+        return () => cancelAnimationFrame(frame);
+    }, [text.spans]);
     const textBGColor = useSharedValue<ColorValue>("yellow");
     const moveIconDisplay = useSharedValue<'none' | 'flex' | undefined>("flex");
     const table = text.tableId && tables?.find(table => table.id == text.tableId);
@@ -282,6 +291,7 @@ function TextElement({
                 {!table && <AnimatedIcon style={[moveIconStyle, visibleAnimatedStyle]} info={{ type: "Ionicons", name: "move", size: 25, color: "blue" }} />}
                 <>
                     <AnimatedTextInput
+                        ref={inputRef}
                         testID="text-input-active"
                         disableKeyboardShortcuts={true}
                         autoCapitalize="none"

@@ -274,11 +274,13 @@ function EditorToolbar({
                 if (isTableMode) {
                     checkPickerChange()
                 } else {
-                    const tableExists = onTableMode();
-                    if (!tableExists) {
-                        setMenuHeight(height);
-                        setShowPicker(true);
-                    }
+                    // onTableMode is async: it resolves to whether the page has a table
+                    Promise.resolve(onTableMode()).then(tableExists => {
+                        if (!tableExists) {
+                            setMenuHeight(height);
+                            setShowPicker(true);
+                        }
+                    });
                 }
                 break;
             case Pickers.MARKER:
