@@ -137,6 +137,11 @@ interface CanvasProps {
     offset: Offset;
     sideMargin: number;
     canvasTop: number;
+    // the keyboard's top, from the canvas's top (0: no keyboard)
+    keyboardTop?: number;
+    // the styling bar is below the text box and the keyboard covers it: the page bottom (in page
+    // units) to bring above the keyboard
+    onFormatBarCovered?: (bottom: number) => void;
     style: any;
     onSketchStart: (p: SketchPoint) => void;
     onSketchStep: (p: SketchPoint) => void;
@@ -223,6 +228,8 @@ function Canvas({
     ratio,
     sideMargin,
     canvasTop,
+    keyboardTop,
+    onFormatBarCovered,
     canvasWidth,
     canvasHeight,
     currentElementType,
@@ -859,8 +866,14 @@ function Canvas({
     }, [textSelection, currentEdited.textId, hasRange, textFormatEnabled]);
     const formatBarRectRef = useRef<{ x: number; y: number; width: number; height: number } | undefined>(undefined);
 
+    const formatBarCoveredRef = useRef<number | undefined>(undefined);
+    useEffect(() => {
+        if (formatBarCoveredRef.current !== undefined) onFormatBarCovered?.(formatBarCoveredRef.current);
+    });
+
     const renderFormatBar = () => {
         formatBarRectRef.current = undefined;
+        formatBarCoveredRef.current = undefined;
         const sel = editSelection;
         if (!textFormatEnabled || currentElementType != ElementTypes.Text || !sel) return null;
         const text = editedText;
@@ -883,16 +896,23 @@ function Canvas({
         // wider than the page (a phone in portrait): the buttons wrap into rows
         const rows = Math.ceil(width / Math.max(canvasWidth, 1));
         const shownWidth = Math.min(width, canvasWidth);
-        const above = boxTop - FORMAT_BAR_HEIGHT * rows - gap >= 0;
+        // the part of the page that shows (the page is moved by the offset and zoomed), above the keyboard
+        const shownTop = Math.max(0, -offset.y * ratio);
+        const shownBottom = Math.min(canvasHeight, (keyboardTop && keyboardTop > 0 ? keyboardTop : canvasHeight * zoom) / zoom - offset.y * ratio);
+        const above = boxTop - FORMAT_BAR_HEIGHT * rows - gap >= shownTop;
         const boxLeft = box ? box.x : textBox(text).x * ratio;
         const boxRight = box ? box.x + box.width : boxLeft + (text.width ?? 0) * ratio;
         const preferred = text.rtl ? boxRight - shownWidth : boxLeft;
         const left = Math.max(0, Math.min(preferred, canvasWidth - shownWidth));
         // (with room for the color row)
         const barHeight = FORMAT_BAR_HEIGHT * (rows + 1);
+        const belowTop = boxBottom + 8;
+        // below the box and under the keyboard: the page is scrolled to show it (see the effect below)
+        const barBottom = belowTop + FORMAT_BAR_HEIGHT * rows + 4;
+        formatBarCoveredRef.current = !above && barBottom > shownBottom ? barBottom / ratio : undefined;
         formatBarRectRef.current = above ?
             { x: left, y: boxTop - gap - barHeight, width: shownWidth, height: barHeight } :
-            { x: left, y: boxBottom + 8, width: shownWidth, height: barHeight };
+            { x: left, y: belowTop, width: shownWidth, height: barHeight };
         // an empty box: its own style
         const isOn = (k: TextStyleKey) => range.end > range.start ? allHave(text.spans, range.start, range.end, k, !!text[k]) : !!text[k];
         const at = styleAt(text.spans, sel.start);
@@ -905,7 +925,7 @@ function Canvas({
         };
         return <TextFormatBar
             left={left}
-            {...(above ? { bottom: canvasHeight - (boxTop - gap) } : { top: boxBottom + 8 })}
+            {...(above ? { bottom: canvasHeight - (boxTop - gap) } : { top: belowTop })}
             hasSelection={hasSelection}
             styles={fontStyles}
             canPaste={canPaste}

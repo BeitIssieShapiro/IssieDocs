@@ -550,6 +550,16 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
         }
     }, [isSpeaking, isRecording, kbLanguage]);
 
+    // scrolls the page up so that a point of it (in page units) shows above the keyboard
+    function keepBottomAboveKeyboard(bottom: number) {
+        if (keyboardTopRef.current == 0 || isDraggingElementRef.current) return;
+        const scale = ratioRef.current * zoomRef.current;
+        const requiredY = keyboardTopRef.current / scale - bottom - 3;
+        if (requiredY < moveCanvasRef.current.y - 0.5) {
+            handleMoveCanvas({ x: moveCanvasRef.current.x, y: requiredY });
+        }
+    }
+
     function verifyCurrentEditTextIsVisible() {
         if (keyboardTopRef.current == 0) return;
         if (isDraggingElementRef.current) return;
@@ -2888,6 +2898,8 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                 canvasHeight={canvasSize.height}// - toolbarHeight - dimensions.toolbarMargin}
                 ratio={ratio}
                 canvasTop={canvasTop}
+                keyboardTop={keyboardTop}
+                onFormatBarCovered={keepBottomAboveKeyboard}
                 zoom={zoom}
                 onZoom={(newZoom) => doZoom(newZoom)}
                 onMoveCanvas={handleMoveCanvas}
