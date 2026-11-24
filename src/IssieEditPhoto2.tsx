@@ -1183,6 +1183,7 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
             `fills:${overlays.filter(o => o.kind === "fill").length}`,
             `undo:${queue.current.canUndo() ? 1 : 0}`, `redo:${queue.current.canRedo() ? 1 : 0}`,
             `mode:${mode}`, `page:${currPageIndexRef.current + 1}/${pageRef.current?.count || 1}`, `canvas:${Math.round(canvasSize.width)}x${Math.round(canvasSize.height)}`,
+            `pts:${paths.filter(p => !isEraserPath(p)).map(p => p.points.length).join(",")}`,
         ].join(" ");
     }
 

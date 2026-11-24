@@ -23,21 +23,14 @@ tests check those counts after each step.
 - **Before the editor tests:** they turn on Text Styling in Settings and create a fresh blank worksheet. They
   delete it at the end, unless `E2E_KEEP=1` is set.
 
-### Status per device (editor tests)
+### Status
 
-| Area | Android | iPad | iPhone |
-| --- | --- | --- | --- |
-| Everything else | ✓ | ✓ | ✓ |
-| Fill, select tool | ✓ | ✕ | ✕ |
-| Eraser | ✓ | ✓ | ✕ |
-
-On iOS, Detox's simulated pen strokes are saved with no points. Real drawing works, which was checked by hand.
-Because of this, steps that need saved strokes fail on iOS.
+The editor tests pass on all three: Android emulator, iPad and iPhone simulators (13/13).
 
 ## Editor (`editor-features.test.ts`)
 
 **Drawing**
-- Pen stroke, then undo and redo it
+- Pen stroke (saved with all its points), then undo and redo it
 - Change the brush color, then draw
 - Eraser stroke
 - Marker stroke

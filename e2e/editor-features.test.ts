@@ -51,13 +51,7 @@ async function tapCanvas(fx: number, fy: number) {
 // a straight stroke, from (fx, fy) as fractions of the page, `offset` of its size in `direction`
 async function strokeOnCanvas(direction: 'up' | 'down' | 'left' | 'right', offset: number, fx: number, fy: number) {
   const canvas = element(by.id('editor-canvas'));
-  if (device.getPlatform() === 'android') {
-    await canvas.swipe(direction, 'slow', offset, fx, fy);
-    return;
-  }
-  // iOS: Detox's swipe is faster than any hand - the editor saves such a stroke before it has its points
-  const [dx, dy] = { up: [0, -offset], down: [0, offset], left: [-offset, 0], right: [offset, 0] }[direction];
-  await canvas.longPressAndDrag(50, fx, fy, canvas, fx + dx, fy + dy, 'slow', 100);
+  await canvas.swipe(direction, 'slow', offset, fx, fy);
 }
 
 // a diagonal drag (select tool), between two points as fractions of the page
@@ -189,10 +183,13 @@ async function turnOnTextStyling() {
   }
   await waitFor(element(by.id('setting-text-styling'))).toBeVisible()
     .whileElement(by.id('settings-scroll')).scroll(200, 'down', 0.5, 0.4);
-  if (!(await exists('setting-text-styling-checked'))) {
+  // it is the last item: scrolled fully into view, and the tap retried (a tap on its edge can miss)
+  try { await element(by.id('settings-scroll')).scroll(300, 'down', 0.5, 0.4); } catch { } // (already at the end)
+  for (let i = 0; i < 3 && !(await exists('setting-text-styling-checked')); i++) {
     await element(by.id('setting-text-styling')).tap();
-    await waitFor(element(by.id('setting-text-styling-checked'))).toExist().withTimeout(3000);
+    await sleep(1000);
   }
+  await waitFor(element(by.id('setting-text-styling-checked'))).toExist().withTimeout(3000);
   await element(by.id('settings-close-btn')).tap();
 }
 
@@ -213,7 +210,9 @@ describe('editor features', () => {
   it('draws with the pen, and undoes and redoes it', async () => {
     await brushTool();
     await strokeOnCanvas('right', 0.5, 0.2, 0.15);
-    await expectState('a stroke', s => count(s, 'strokes') === 1 && count(s, 'undo') === 1);
+    // with its points (the stroke is built on the UI thread, and must reach the saved page whole)
+    await expectState('a stroke with its points', s => count(s, 'strokes') === 1 && count(s, 'undo') === 1 &&
+      Number(s.pts) > 10);
 
     await element(by.id('toolbar-undo-btn')).tap();
     await expectState('the stroke undone', s => count(s, 'strokes') === 0 && count(s, 'redo') === 1);
@@ -234,7 +233,7 @@ describe('editor features', () => {
 
   it('erases', async () => {
     await element(by.id('toolbar-eraser-btn')).tap();
-    await strokeOnCanvas('down', 0.15, 0.4, 0.1);
+    await strokeOnCanvas('down', 0.15, 0.4, 0.13);
     await expectState('an eraser stroke', s => count(s, 'erasers') === 1);
     await element(by.id('toolbar-eraser-btn')).tap();
   });
