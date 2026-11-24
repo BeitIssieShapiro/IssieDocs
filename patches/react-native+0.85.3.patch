@@ -1,0 +1,87 @@
+diff --git a/node_modules/react-native/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTAttributedTextUtils.mm b/node_modules/react-native/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTAttributedTextUtils.mm
+index f96a049..e009afb 100644
+--- a/node_modules/react-native/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTAttributedTextUtils.mm
++++ b/node_modules/react-native/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTAttributedTextUtils.mm
+@@ -7,6 +7,8 @@
+ 
+ #import "RCTAttributedTextUtils.h"
+ 
++#import <CoreText/CoreText.h>
++
+ #include <react/featureflags/ReactNativeFeatureFlags.h>
+ #include <react/renderer/components/view/accessibilityPropsConversions.h>
+ #include <react/renderer/core/LayoutableShadowNode.h>
+@@ -357,6 +359,57 @@ void RCTApplyBaselineOffset(NSMutableAttributedString *attributedText)
+   }
+ }
+ 
++// IssieDocs: the system font has no italic letters for Hebrew or Arabic, and iOS draws them upright
++// (Android slants them). In italic text those letters get a slanted font, like Android's.
++static void RCTSlantScriptsWithoutItalics(NSMutableAttributedString *string)
++{
++  static NSCharacterSet *scripts;
++  static dispatch_once_t onceToken;
++  dispatch_once(&onceToken, ^{
++    NSMutableCharacterSet *set = [NSMutableCharacterSet new];
++    [set addCharactersInRange:NSMakeRange(0x0590, 0x0600 - 0x0590)]; // Hebrew
++    [set addCharactersInRange:NSMakeRange(0xFB1D, 0xFB50 - 0xFB1D)]; // Hebrew presentation forms
++    [set addCharactersInRange:NSMakeRange(0x0600, 0x0700 - 0x0600)]; // Arabic
++    [set addCharactersInRange:NSMakeRange(0x0750, 0x0780 - 0x0750)]; // Arabic supplement
++    [set addCharactersInRange:NSMakeRange(0xFB50, 0xFE00 - 0xFB50)]; // Arabic presentation forms A
++    [set addCharactersInRange:NSMakeRange(0xFE70, 0xFF00 - 0xFE70)]; // Arabic presentation forms B
++    scripts = set;
++  });
++  NSString *text = string.string;
++  NSUInteger length = text.length;
++  NSRange search = NSMakeRange(0, length);
++  while (search.length > 0) {
++    NSRange found = [text rangeOfCharacterFromSet:scripts options:0 range:search];
++    if (found.location == NSNotFound) {
++      break;
++    }
++    NSUInteger end = found.location;
++    while (end < length && [scripts characterIsMember:[text characterAtIndex:end]]) {
++      end++;
++    }
++    NSRange range = NSMakeRange(found.location, end - found.location);
++    // the font that draws these letters (the font's fallback for the script), slanted by its matrix:
++    // the text drawing does not apply NSObliquenessAttributeName
++    UIFont *font = [string attribute:NSFontAttributeName atIndex:range.location effectiveRange:NULL];
++    if (font != nil) {
++      CTFontRef drawing = CTFontCreateForString((__bridge CTFontRef)font, (__bridge CFStringRef)[text substringWithRange:range],
++                                                CFRangeMake(0, range.length));
++      if (drawing != NULL) {
++        UIFontDescriptor *descriptor = [((__bridge UIFont *)drawing).fontDescriptor
++            fontDescriptorByAddingAttributes:@{
++              UIFontDescriptorMatrixAttribute : [NSValue valueWithCGAffineTransform:CGAffineTransformMake(1, 0, 0.2, 1, 0, 0)]
++            }];
++        UIFont *slanted = [UIFont fontWithDescriptor:descriptor size:font.pointSize];
++        if (slanted != nil) {
++          [string addAttribute:NSFontAttributeName value:slanted range:range];
++        }
++        CFRelease(drawing);
++      }
++    }
++    search = NSMakeRange(end, length - end);
++  }
++}
++
+ static NSMutableAttributedString *RCTNSAttributedStringFragmentFromFragment(
+     const AttributedString::Fragment &fragment,
+     UIImage *placeholderImage)
+@@ -380,9 +433,14 @@ void RCTApplyBaselineOffset(NSMutableAttributedString *attributedText)
+       string = RCTNSStringFromStringApplyingTextTransform(string, textTransform);
+     }
+ 
+-    return [[NSMutableAttributedString alloc]
++    NSMutableAttributedString *result = [[NSMutableAttributedString alloc]
+         initWithString:string
+             attributes:RCTNSTextAttributesFromTextAttributes(fragment.textAttributes)];
++    if (fragment.textAttributes.fontStyle.has_value() &&
++        fragment.textAttributes.fontStyle.value() == FontStyle::Italic) {
++      RCTSlantScriptsWithoutItalics(result);
++    }
++    return result;
+   }
+ }
+ 
