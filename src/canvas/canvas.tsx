@@ -65,6 +65,7 @@ import {
 import TextElement from "./text-element"; // Example sub-component for text
 import { PinchHelperEvent, PinchSession } from "./pinch";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import { dimensions } from "../elements";
 import { captureRef } from "react-native-view-shot";
 
@@ -606,16 +607,11 @@ function Canvas({
                     const finalY = parseFloat((finalPoint[1] * ratioRef.current).toFixed(1));
                     sketchInProgressRef.current = false;
 
-                    // Add the final point via modify() so it queues after all in-flight worklet lineTo calls.
-                    // Then read back on JS thread via setTimeout(0) — by then the worklet queue has flushed.
-                    lastPathSV.modify(p => {
-                        "worklet";
-                        p.lineTo(finalX, finalY);
-                        return p;
-                    });
-
-                    setTimeout(() => {
-                        const commands = toCmds(lastPathSV.value, ratioRef.current);
+                    // The path is built on the UI thread; the JS thread's copy of it may lag behind (it was
+                    // empty or partial when the UI thread was busy, e.g. under Detox on iOS). So the final
+                    // point is added, and the commands read, in one worklet, which hands them back to JS.
+                    const finish = (cmds: PathCommand[]) => {
+                        const commands = cmds.map(c => [c[0], c[1] / ratioRef.current, c[2] / ratioRef.current] as PathCommand);
                         sketchTimerRef.current = setTimeout(() => {
                             sketchTimerRef.current = undefined;
                             if (!sketchInProgressRef.current) {
@@ -623,7 +619,13 @@ function Canvas({
                                 onSketchEnd(commands);
                             }
                         }, 300);
-                    }, 0);
+                    };
+                    lastPathSV.modify(p => {
+                        "worklet";
+                        p.lineTo(finalX, finalY);
+                        scheduleOnRN(finish, p.toCmds() as PathCommand[]);
+                        return p;
+                    });
                 } else if (!elem && (currentElementTypeRef.current === ElementTypes.Line ||
                     currentElementTypeRef.current === ElementTypes.Cut)) {
                     onSketchEnd();
