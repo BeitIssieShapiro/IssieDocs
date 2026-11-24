@@ -299,7 +299,8 @@ function TextElement({
                         {...(text.spans?.length ? {} : { value: text.text })}
                         onChange={(tic) => onTextChanged(text.id, tic.nativeEvent.text, selection)}
                         {...(heldSelection ? { selection: heldSelection } : {})}
-                        contextMenuHidden={!!hideEditMenu}
+                        // on Android a hidden menu also cancels the long-press selection itself
+                        contextMenuHidden={!!hideEditMenu && Platform.OS === 'ios'}
                         // spelling suggestions show in a bubble over the selection too
                         spellCheck={hideEditMenu ? false : undefined}
                         onPressIn={() => onEditTap?.(text.id)}

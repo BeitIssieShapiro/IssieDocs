@@ -13,10 +13,11 @@ export type TextStyleKey = "bold" | "italic" | "underline";
 export type Alignment = "Left" | "Center" | "Right";
 
 /** The bar's width: its first row of buttons (and a divider between groups) */
-export function formatBarWidth(o: { hasSelection: boolean; styles: TextStyleKey[]; showCenter: boolean; canPaste: boolean }) {
+export function formatBarWidth(o: { hasSelection: boolean; styles: TextStyleKey[]; showCenter: boolean; canPaste: boolean; clipboard?: boolean }) {
+    const clipboard = o.clipboard ?? true;
     const sizing = o.styles.length + 2;
-    const buttons = sizing + (o.hasSelection ? 1 + 3 : (o.showCenter ? 3 : 2) + (o.canPaste ? 1 : 0));
-    const dividers = !o.hasSelection && o.canPaste ? 2 : 1;
+    const buttons = sizing + (o.hasSelection ? 1 + (clipboard ? 3 : 0) : (o.showCenter ? 3 : 2) + (clipboard && o.canPaste ? 1 : 0));
+    const dividers = o.hasSelection ? (clipboard ? 1 : 0) : (clipboard && o.canPaste ? 2 : 1);
     return buttons * BUTTON + dividers * 9 + 8;
 }
 
@@ -39,6 +40,8 @@ interface TextFormatBarProps {
     // the iOS edit menu is hidden while editing: its cut/copy/paste are here
     onClipboard: (action: "cut" | "copy" | "paste") => void;
     canPaste: boolean;
+    // false: no cut/copy/paste (Android keeps its own text selection menu)
+    clipboard?: boolean;
     // no selection: the text's alignment (center only in table cells)
     alignment?: string;
     showCenter?: boolean;
@@ -46,7 +49,7 @@ interface TextFormatBarProps {
 }
 
 export function TextFormatBar({ left, top, bottom, hasSelection, styles: fontStyles, bold, italic, underline, color,
-    onFormat, onSize, onClipboard, canPaste, alignment, showCenter, onAlign }: TextFormatBarProps) {
+    onFormat, onSize, onClipboard, canPaste, clipboard = true, alignment, showCenter, onAlign }: TextFormatBarProps) {
     const [showColors, setShowColors] = useState(false);
     const place = {
         ...(bottom !== undefined ? { bottom, flexDirection: "column-reverse" as const } : { top }),
@@ -71,22 +74,26 @@ export function TextFormatBar({ left, top, bottom, hasSelection, styles: fontSty
                     <TouchableOpacity testID="format-color" style={styles.button} onPress={() => setShowColors(!showColors)}>
                         <View style={[styles.swatch, { backgroundColor: color ?? "black" }]} />
                     </TouchableOpacity>
-                    <View style={styles.divider} />
-                    {button("cut", "content-cut", false, () => onClipboard("cut"))}
-                    {button("copy", "content-copy", false, () => onClipboard("copy"))}
-                    {button("paste", "content-paste", false, () => onClipboard("paste"))}
+                    {clipboard && <>
+                        <View style={styles.divider} />
+                        {button("cut", "content-cut", false, () => onClipboard("cut"))}
+                        {button("copy", "content-copy", false, () => onClipboard("copy"))}
+                        {button("paste", "content-paste", false, () => onClipboard("paste"))}
+                    </>}
                 </> : <>
                     <View style={styles.divider} />
                     {align("Left", "format-align-left")}
                     {showCenter && align("Center", "format-align-center")}
                     {align("Right", "format-align-right")}
-                    {canPaste && <>
+                    {clipboard && canPaste && <>
                         <View style={styles.divider} />
                         {button("paste", "content-paste", false, () => onClipboard("paste"))}
                     </>}
                 </>}
             </View>
-            {hasSelection && showColors && <View style={styles.row}>
+            {hasSelection && showColors && <View style={[styles.row, styles.wrap,
+                // no wider than the buttons row: the colors wrap on a narrow page
+                { width: formatBarWidth({ hasSelection, styles: fontStyles, showCenter: !!showCenter, canPaste, clipboard }) - 8 }]}>
                 {availableColorPicker.map((c: string) =>
                     <TouchableOpacity key={c} testID={"format-color-" + c} style={styles.button}
                         onPress={() => { onFormat({ color: c }); setShowColors(false); }}>
@@ -114,6 +121,11 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         height: FORMAT_BAR_HEIGHT,
         alignItems: "center",
+    },
+    wrap: {
+        flexWrap: "wrap",
+        height: undefined,
+        minHeight: FORMAT_BAR_HEIGHT,
     },
     button: {
         width: BUTTON,

@@ -5,6 +5,7 @@ import {
     ImageURISource,
     LayoutChangeEvent,
     PanResponder,
+    Platform,
     Pressable,
     StyleSheet,
     TouchableOpacity,
@@ -867,7 +868,9 @@ function Canvas({
         const fontStyles = (AVAILABLE_FONTS.find(f => f.name == text.fontFamily)?.supportedStyles ?? []) as TextStyleKey[];
         const showCenter = !!text.tableId;
         const box = editLayout?.id === text.id ? editLayout : undefined;
-        const width = formatBarWidth({ hasSelection, styles: fontStyles, showCenter, canPaste });
+        // Android shows its own cut/copy/paste menu over a selection (hiding it cancels the selection)
+        const clipboard = Platform.OS === "ios";
+        const width = formatBarWidth({ hasSelection, styles: fontStyles, showCenter, canPaste, clipboard });
         // above the text box, or below it when there is no room above; kept within the page width
         const boxTop = box ? box.y : text.y * ratio;
         const boxBottom = box ? box.y + box.height : (text.y + text.fontSize) * ratio;
@@ -895,6 +898,7 @@ function Canvas({
             hasSelection={hasSelection}
             styles={fontStyles}
             canPaste={canPaste}
+            clipboard={clipboard}
             alignment={text.alignment}
             showCenter={showCenter}
             onAlign={a => onTextAlignment?.(a)}

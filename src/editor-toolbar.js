@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, Fragment, useState, useRef } from "react";
-import { View, StyleSheet, TouchableOpacity, Text, Pressable } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text, Pressable, ScrollView } from "react-native";
 import Svg, { Line } from "react-native-svg";
 import { AppText, availableColorPicker, colors, dimensions, getEraserIcon, getIconButton, IconButton, semanticColors, Spacer, textSizes } from "./elements";
 import FadeInView from "./FadeInView";
@@ -44,15 +44,19 @@ const availableMarkerSize = [
     10, 20, 30, 40, 50
 ]
 
+// an ext-row button's width (its icon buttons are 47-50 wide)
+const EXT_BUTTON_WIDTH = 50;
+
 const ButtonSpacer = (props) => (<Spacer key={16} width={props.width || 23} />);
 
-function spread(btns) {
+// gap: the space between buttons (default: by screen width)
+function spread(btns, gap) {
     return (<Fragment>
-        <ButtonSpacer />
+        <ButtonSpacer width={gap} />
         {btns.map((item, i) => (
             item && <Fragment key={i}>
                 {item}
-                <ButtonSpacer width={isScreenNarrow() ? 15 : 23} />
+                <ButtonSpacer width={gap ?? (isScreenNarrow() ? 15 : 23)} />
             </Fragment>
         ))}
     </Fragment>);
@@ -575,19 +579,23 @@ function EditorToolbar({
             </View>
         </View >
         {/** bottom toolbar */}
-        {showExtMenu && <View style={{
-            position: 'absolute', direction: rtl,
-            [rtl ? "right" : "left"]: 0,
-            //left:0,
-            height: dimensions.toolbarHeight,
-            flexDirection: rtl ? "row-reverse" : "row",
-            alignItems: 'center',
-            top: (isScreenNarrow() ? 2 : 1) * dimensions.toolbarHeight,
-
-        }} >
-            {/* <View style={{position:"absolute",  borderBottomWidth:1,bottom:12,left:0,width:"100%"}}/> */}
-            {spread(extMenu)}
-        </View>}
+        {showExtMenu && (isScreenNarrow() ?
+            // a phone: the row fits the screen - tighter gaps, and it scrolls when there are still too many tools
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}
+                style={{ position: 'absolute', left: 0, width: windowSize.width, height: dimensions.toolbarHeight, top: 2 * dimensions.toolbarHeight }}
+                contentContainerStyle={{ flexDirection: rtl ? "row-reverse" : "row", alignItems: 'center', minWidth: windowSize.width }}>
+                {spread(extMenu, Math.max(4, Math.min(15, (windowSize.width - extMenu.length * EXT_BUTTON_WIDTH) / (extMenu.length + 1))))}
+            </ScrollView> :
+            <View style={{
+                position: 'absolute', direction: rtl,
+                [rtl ? "right" : "left"]: 0,
+                height: dimensions.toolbarHeight,
+                flexDirection: rtl ? "row-reverse" : "row",
+                alignItems: 'center',
+                top: dimensions.toolbarHeight,
+            }} >
+                {spread(extMenu)}
+            </View>)}
         {/**Side menu */}
         < View style={[{ position: "absolute", flexDirection: "column", top: 250, width: 45 },
         rtl ? { right: 0 } : { left: 0 }]
