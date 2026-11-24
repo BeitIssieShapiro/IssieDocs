@@ -135,7 +135,9 @@ const App = (props) => {
                         }, execNavParam(props.route, "isEditEnabled", false) ? 'white' : 'gray', getNavParam(props.route, "editMode", false) ? "check" : "edit", 35) : null
                     }
                     {!isScreenNarrow() && <Spacer />}
-                    <MyIcon info={{ type:"Ionicons", name: "settings-outline", color: "white", size: 35 }} onPress={() => execNavParam(props.route, "menuHandler", "")} />
+                    <TouchableOpacity testID="settings-btn" onPress={() => execNavParam(props.route, "menuHandler", "")}>
+                      <MyIcon info={{ type:"Ionicons", name: "settings-outline", color: "white", size: 35 }} />
+                    </TouchableOpacity>
 
                   </View>
                   }

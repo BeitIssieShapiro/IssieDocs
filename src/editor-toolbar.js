@@ -391,7 +391,7 @@ function EditorToolbar({
         previewFontSize = dimensions.toolbarHeight - 5;
     }
 
-    const rullerBtn = <IconButton onPress={() => onModeButtonClick(Pickers.RULER, 70)} color={rulerColor}
+    const rullerBtn = <IconButton testID="toolbar-ruler-btn" onPress={() => onModeButtonClick(Pickers.RULER, 70)} color={rulerColor}
         iconType="svg" icon="line-tool" size={49} iconSize={45} selected={isRulerMode} ensureContrast={true} />;
 
 
@@ -399,18 +399,18 @@ function EditorToolbar({
     const extMenu = []
 
     if (featuresRef.current.includes(FEATURES.marker)) {
-        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.MARKER, 70)} color={markerColor}
+        extMenu.push(<IconButton testID="toolbar-marker-btn" onPress={() => onModeButtonClick(Pickers.MARKER, 70)} color={markerColor}
             iconType="MDI" icon="marker" size={50} iconSize={45} selected={isMarkerMode} ensureContrast={true} />
         )
     }
 
     if (featuresRef.current.includes(FEATURES.image)) {
-        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.IMAGE, 70)
+        extMenu.push(<IconButton testID="toolbar-image-btn" onPress={() => onModeButtonClick(Pickers.IMAGE, 70)
         } color={semanticColors.editPhotoButton}
             icon={"image"} size={47} iconSize={45} selected={isImageMode} />)
     }
     if (featuresRef.current.includes(FEATURES.voice)) {
-        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.AUDIO, 70)
+        extMenu.push(<IconButton testID="toolbar-audio-btn" onPress={() => onModeButtonClick(Pickers.AUDIO, 70)
         } color={semanticColors.editPhotoButton}
             //iconType="MI" icon={"multitrack-audio"} 
             //iconType="Ionicons" icon={"recording-outline"}
@@ -420,7 +420,7 @@ function EditorToolbar({
 
     if (featuresRef.current.includes(FEATURES.table)) {
 
-        extMenu.push(< IconButton onPress={() => onModeButtonClick(Pickers.TABLE, isScreenNarrow() ? 160 : 80)
+        extMenu.push(< IconButton testID="toolbar-table-btn" onPress={() => onModeButtonClick(Pickers.TABLE, isScreenNarrow() ? 160 : 80)
         } color={Table ? Table.color : tableColor}
             iconType="MDI" icon="table-large" size={47} iconSize={42} selected={isTableMode} ensureContrast={true} />)
     }
@@ -428,11 +428,11 @@ function EditorToolbar({
         extMenu.push(rullerBtn);
     }
     if (isFeatureReleased(FEATURES.fill) && featuresRef.current.includes(FEATURES.fill)) {
-        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.FILL, 70)} color={fillColor}
+        extMenu.push(<IconButton testID="toolbar-fill-btn" onPress={() => onModeButtonClick(Pickers.FILL, 70)} color={fillColor}
             iconType="MDI" icon="format-color-fill" size={49} iconSize={45} selected={isFillMode} ensureContrast={true} />);
     }
     if (isFeatureReleased(FEATURES.cut) && featuresRef.current.includes(FEATURES.cut)) {
-        extMenu.push(<IconButton onPress={() => onModeButtonClick(Pickers.CUT, 70)} color={semanticColors.editPhotoButton}
+        extMenu.push(<IconButton testID="toolbar-cut-btn" onPress={() => onModeButtonClick(Pickers.CUT, 70)} color={semanticColors.editPhotoButton}
             iconType="MDI" icon="content-cut" size={49} iconSize={42} selected={isCutMode} />);
     }
 
@@ -445,7 +445,7 @@ function EditorToolbar({
             selected={showPickerType === Pickers.SPEAK_DICTATE && showPicker} />);
     }
 
-    const zoomBtn = <IconButton onPress={() => onSelectButtonClick(Pickers.ZOOM, false, 55, isScreenNarrow())} color={semanticColors.editPhotoButton}
+    const zoomBtn = <IconButton testID="toolbar-zoom-btn" onPress={() => onSelectButtonClick(Pickers.ZOOM, false, 55, isScreenNarrow())} color={semanticColors.editPhotoButton}
         icon="zoom-in" size={50} iconSize={45} />;
     if (extMenu.length > 0 && !isScreenNarrow()) {
         extMenu.push(zoomBtn);
@@ -460,7 +460,7 @@ function EditorToolbar({
         <IconButton testID="toolbar-color-btn" onPress={() => onSelectButtonClick(Pickers.COLOR, true, 70, true)} iconType="MI" icon={"color-lens"}
             size={55} iconSize={45} color={semanticColors.editPhotoButton} />,
         isScreenNarrow() && extMenu.length > 0 ? zoomBtn : null,
-        extMenu.length > 0 ? <IconButton onPress={() => setShowExtMenu(currVal => !currVal)} iconType="MI" icon={showExtMenu ? "expand-less" : "expand-more"}
+        extMenu.length > 0 ? <IconButton testID="toolbar-more-btn" onPress={() => setShowExtMenu(currVal => !currVal)} iconType="MI" icon={showExtMenu ? "expand-less" : "expand-more"}
             size={45} color={semanticColors.editPhotoButton} /> : zoomBtn,
     ].filter(Boolean)
 
@@ -498,7 +498,7 @@ function EditorToolbar({
             alignItems: 'center',
             //justifyContent:"flex-end"
         }}>
-            <IconButton onPress={onGoBack} color={semanticColors.editPhotoButton} icon="folder" size={55} iconSize={45} />
+            <IconButton testID="toolbar-folder-btn" onPress={onGoBack} color={semanticColors.editPhotoButton} icon="folder" size={55} iconSize={45} />
             <Spacer width={45} />
             <IconButton testID="toolbar-undo-btn" onPress={onUndo} color={canUndo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} iconType="MDI" icon={rtl ? "undo" : "redo"} size={55} />
             <Spacer width={23} />
@@ -704,9 +704,9 @@ function EditorToolbar({
         {/*View for cut selection shape*/}
         <FadeInView height={showPickerType === Pickers.CUT && showPicker ? menuHeight : 0} style={[styles.pickerView, { top: toolbarHeight, left: '35%', right: '35%' }]}>
             <View style={{ flexDirection: 'row', width: '100%', bottom: 0, justifyContent: 'space-evenly', alignItems: 'center' }}>
-                <IconButton onPress={() => { onSelectCutShape("rect"); setShowPicker(false); setMenuHeight(0); }}
+                <IconButton testID="cut-shape-rect" onPress={() => { onSelectCutShape("rect"); setShowPicker(false); setMenuHeight(0); }}
                     iconType="MDI" icon="select" size={55} iconSize={45} selected={cutShape === "rect"} color={semanticColors.editPhotoButton} />
-                <IconButton onPress={() => { onSelectCutShape("lasso"); setShowPicker(false); setMenuHeight(0); }}
+                <IconButton testID="cut-shape-lasso" onPress={() => { onSelectCutShape("lasso"); setShowPicker(false); setMenuHeight(0); }}
                     iconType="MDI" icon="lasso" size={55} iconSize={45} selected={cutShape === "lasso"} color={semanticColors.editPhotoButton} />
             </View>
         </FadeInView>
@@ -839,7 +839,7 @@ function ToolbarGroup({ width, height, children, onPress }) {
 }
 
 function LineWidthSelector({ borderWidth, color, Table, TableActions, tableCols, tableRows, height }) {
-    return <TouchableOpacity style={{ height, width: 20, alignItems: "center" }} onPress={() => {
+    return <TouchableOpacity testID={`table-width-${borderWidth}`} style={{ height, width: 20, alignItems: "center" }} onPress={() => {
         //add table
         if (!Table) {
             TableActions.addTable(tableCols, tableRows, color, borderWidth, "0,0");

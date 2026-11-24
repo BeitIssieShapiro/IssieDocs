@@ -284,10 +284,12 @@ export default function SettingsMenu(props) {
             <Spacer />
 
             <View style={{ flexDirection: "row-reverse", justifyContent: 'space-between', alignItems: 'center' }}>
-                <MyIcon info={{ name: "close", size: 30 }} onPress={props.onClose} style={{ marginEnd: 10 }} />
+                <TouchableOpacity testID="settings-close-btn" onPress={props.onClose}>
+                    <MyIcon info={{ name: "close", size: 30 }} style={{ marginEnd: 10 }} />
+                </TouchableOpacity>
                 <AppText style={styles.SettingsHeaderText}>{translate("Settings")}</AppText>
             </View>
-            <ScrollView style={{
+            <ScrollView testID="settings-scroll" style={{
                 flex: 1,
                 position: 'absolute', top: '10%',
                 width: '100%', height: '90%'
@@ -449,6 +451,7 @@ export default function SettingsMenu(props) {
                         }] : []),
                         {
                             icon: <AppText style={{ fontSize: 25 }}>{translate("TextFormatTool")}</AppText>,
+                            testID: "setting-text-styling",
                             callback: () => {
                                 let newValue = kbTextTools == KB_TEXT_TOOLS.yes ? KB_TEXT_TOOLS.no : KB_TEXT_TOOLS.yes;
                                 setKbTextTools(newValue);
@@ -525,13 +528,14 @@ function getGroup(props, name, items, isCheckboxes) {
         {items.map((item, index) =>
             <TouchableOpacity
                 key={index}
+                testID={item.testID}
                 style={{ flexDirection: "row-reverse", paddingStart: 35, paddingTop: 15, alignItems: 'center' }}
                 onPress={item.callback}
             >
                 {item.icon}
                 <Spacer />
                 <View style={isCheckboxes ? styles.box : styles.circle}>
-                    {item.selected && <View style={isCheckboxes ? styles.checkedBox : styles.checkedCircle} />}
+                    {item.selected && <View testID={item.testID && item.testID + "-checked"} style={isCheckboxes ? styles.checkedBox : styles.checkedCircle} />}
                 </View>
             </TouchableOpacity>
         )}

@@ -22,7 +22,7 @@ import { CurrentEdited, ElementBase, ElementTypes, MoveTypes, Offset, SketchElem
 import { capturePiece, computeFill, NormRect, PageSnapshot } from './canvas/raster';
 import Canvas from './canvas/canvas';
 import { replayPageQueue } from './canvas/page-state';
-import { cutPolygon, cutPlanIsEmpty, planCut, splitStrokeByPieces, textCenter, topPieceAt } from './canvas/pieces';
+import { cutPolygon, cutPlanIsEmpty, isEraserPath, planCut, splitStrokeByPieces, textCenter, topPieceAt } from './canvas/pieces';
 import { applySpanStyle, scaleSpanSizes, SpanStyle, updateSpansForEdit } from './canvas/text-spans';
 import DoQueue from './do-queue';
 import { FileSystem } from './filesystem';
@@ -1173,6 +1173,18 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
     const pieceAt = (p: SketchPoint) => topPieceAt(imagesRef.current, p[0], p[1])?.id;
     // a text belongs to the paper it lies on (null: the page) - moving it off a piece takes it off
     const textOwner = (t: SketchText) => t.tableId ? null : (pieceAt(textCenter(t)) ?? null);
+
+    // e2e tests read the page's content from this (see the editor-state view)
+    function editorStateLabel() {
+        return [
+            `strokes:${paths.filter(p => !isEraserPath(p)).length}`, `erasers:${paths.filter(isEraserPath).length}`, `texts:${texts.filter(t => t.text?.length).length}`,
+            `styled:${texts.filter(t => t.spans?.length).length}`, `lines:${lines.length}`,
+            `tables:${tables.length}`, `images:${images.length}`, `audio:${audios.filter(a => a.file).length}`,
+            `fills:${overlays.filter(o => o.kind === "fill").length}`,
+            `undo:${queue.current.canUndo() ? 1 : 0}`, `redo:${queue.current.canRedo() ? 1 : 0}`,
+            `mode:${mode}`, `page:${currPageIndexRef.current + 1}/${pageRef.current?.count || 1}`, `canvas:${Math.round(canvasSize.width)}x${Math.round(canvasSize.height)}`,
+        ].join(" ");
+    }
 
     function performFill(p: SketchPoint) {
         return withRasterBusy(async () => {
@@ -2695,6 +2707,11 @@ export function IssieEditPhoto2({ route, navigation }: EditPhotoScreenProps) {
                     <ActivityIndicator size="large" /></View>
             }
 
+            {__DEV__ &&
+                // for e2e tests (dev builds only): what the page holds, read by the tests through its label
+                <View testID="editor-state" pointerEvents="none" style={styles.e2eState}
+                    accessible accessibilityLabel={editorStateLabel()} />}
+
             {toast && <View style={styles.toast} pointerEvents="none" testID="editor-toast">
                 <AppText style={styles.toastText}>{toast}</AppText>
             </View>}
@@ -2996,6 +3013,7 @@ const styles = StyleSheet.create({
         top: "40%",
         zIndex: 1000
     },
+    e2eState: { position: "absolute", left: 0, top: 0, width: 1, height: 1, opacity: 0.01 },
     toast: {
         position: 'absolute',
         alignSelf: 'center',

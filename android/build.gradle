@@ -21,6 +21,13 @@ buildscript {
 
 apply plugin: "com.facebook.react.rootproject"
 
+// Detox (e2e tests): its Android library ships inside the npm package
+allprojects {
+    repositories {
+        maven { url("$rootDir/../node_modules/detox/Detox-android") }
+    }
+}
+
 // Fix for libraries using the removed compileSdkVersion method (Gradle 9 + AGP 8.10+)
 subprojects { subproject ->
     plugins.withId("com.android.library") {

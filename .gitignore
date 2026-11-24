@@ -83,3 +83,5 @@ android/app/release
 debug-token.ts
 .env
 opencode.json
+# Detox test screenshots
+artifacts/

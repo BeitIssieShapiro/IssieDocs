@@ -983,6 +983,7 @@ export function getColorButtonInt(callback, color, size, icon, index, iconColor,
 
 export function getEraserIcon(callback, size, color, selected, key) {
     return <View key={key} style={{ alignItems: "center" }}><TouchableOpacity
+        testID="toolbar-eraser-btn"
         activeOpacity={0.7}
         onPress={callback}
         style={{

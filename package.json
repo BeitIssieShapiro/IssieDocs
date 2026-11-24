@@ -13,6 +13,11 @@
     "deploy:ios:issiedocs": "bash scripts/deploy-ios.sh",
     "test:e2e:build": "detox build --configuration ios.sim.debug",
     "test:e2e": "detox test --configuration ios.sim.debug",
+    "test:e2e:ipad": "detox test --configuration ios.sim.debug",
+    "test:e2e:iphone": "detox test --configuration ios.iphone.debug",
+    "test:e2e:android:build": "detox build --configuration android.emu.debug",
+    "test:e2e:android": "detox test --configuration android.emu.debug",
+    "test:e2e:android:device": "detox test --configuration android.att.debug",
     "postinstall": "patch-package"
   },
   "dependencies": {

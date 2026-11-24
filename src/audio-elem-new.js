@@ -246,6 +246,7 @@ export const RecordButton2 = ({
 
     return (
         <Pressable
+            testID="audio-record-btn"
             onPress={_onPress}
             style={{
                 // the button's own size (its circles are laid over it): a press area that can be hit

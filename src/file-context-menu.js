@@ -423,6 +423,7 @@ export function FileContextMenu({
                   <>
                     <OneMenu
                       scale={scale}
+                      testID="add-page-blank"
                       icon="page-empty"
                       iconType={'svg'}
                       onPress={callbackAndClose(onBlankPage)}
@@ -491,10 +492,11 @@ function MenuGroup(props) {
   );
 }
 
-function OneMenu({ icon, iconType, onPress, text, scale }) {
+function OneMenu({ icon, iconType, onPress, text, scale, testID }) {
   iconType = iconType || 'MI';
   return (
     <TouchableOpacity
+      testID={testID}
       style={{
         flexDirection: getRowDirection(),
         justifyContent: 'space-between',

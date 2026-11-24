@@ -1384,6 +1384,7 @@ function Canvas({
                                 borderWidth: 2, borderStyle: "dashed", borderColor: "#1E90FF",
                             }, visibleAnimatedStyle]} />)}
                         {showImageControls(image) && <TouchableOpacity
+                                testID="piece-delete"
                                 style={{
                                     position: "absolute",
                                     zIndex: 30,
