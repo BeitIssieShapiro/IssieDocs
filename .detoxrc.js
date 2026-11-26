@@ -5,7 +5,7 @@ module.exports = {
       config: 'e2e/jest.config.js',
     },
     jest: {
-      setupTimeout: 180000,
+      setupTimeout: 300000,
     },
   },
   apps: {
@@ -14,7 +14,7 @@ module.exports = {
       binaryPath: 'ios/build/Build/Products/Debug-iphonesimulator/IssieDocs.app',
       build: 'xcodebuild -workspace ios/IssieDocs.xcworkspace -scheme IssieDocs.e2e -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build | (command -v xcpretty >/dev/null && xcpretty || cat)',
       reversedUnhappyFlows: true,
-      launchArgs: { RCT_jsLocation: 'localhost:8084' },
+      launchArgs: { RCT_jsLocation: 'localhost:8084', IS_DETOX_TEST: true },
     },
   },
   devices: {
