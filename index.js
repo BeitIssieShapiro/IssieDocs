@@ -12,7 +12,7 @@ import { GlobalContext } from './src/global-context.js';
 import { MessageBoxProvider } from './src/message';
 
 import TextEncoder from 'react-native-fast-encoder';
-import { Platform, NativeModules } from 'react-native';
+import { Platform, Settings as RNSettings } from 'react-native';
 import { firebaseLocalInit } from './src/common/firebase';
 import { languageMap } from './src/lang.js';
 import { Settings } from "./src/new-settings"
@@ -36,8 +36,7 @@ window.TextDecoder = TextEncoder;
 
 // const wApp = Sentry.wrap(App);
 
-const _e2eSettings = Platform.OS === 'ios' ? NativeModules.RCTSettingsManager?.settings : undefined;
-const IS_DETOX_TEST = !!(_e2eSettings?.IS_DETOX_TEST);
+const IS_DETOX_TEST = Platform.OS === 'ios' && !!(RNSettings.get('IS_DETOX_TEST') || RNSettings.get('e2e'));
 if (!IS_DETOX_TEST) {
   firebaseLocalInit();
 }
