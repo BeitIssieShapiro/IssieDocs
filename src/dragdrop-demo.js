@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { DDProvider, DDScrollView, DDView } from './dragdrop';
 import { trace } from './log';
-import { Touchable } from 'react-native';
 
 
 export function TestCmp() {

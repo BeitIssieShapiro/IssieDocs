@@ -5,7 +5,11 @@ const { SpeechTranscription } = NativeModules;
 
 // On Android, DeviceEventManagerModule emits to DeviceEventEmitter directly.
 // On iOS, NativeEventEmitter scopes to the module.
-const emitter = SpeechTranscription
+// Loosely typed: RN 0.87+ types NativeEventEmitter per event, and the two emitters differ.
+type TranscriptionEmitter = {
+  addListener: (eventType: string, listener: (event: any) => void) => { remove(): void };
+};
+const emitter: TranscriptionEmitter | null = SpeechTranscription
   ? (Platform.OS === 'android' ? DeviceEventEmitter : new NativeEventEmitter(SpeechTranscription))
   : null;
 
