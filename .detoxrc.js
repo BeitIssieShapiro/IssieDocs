@@ -21,7 +21,7 @@ module.exports = {
     // Pinned to 6C25A125 to preserve Hermes cache; override with DETOX_IPAD_ID.
     simulator: {
       type: 'ios.simulator',
-      device: { udid: process.env.DETOX_IPAD_ID || '6C25A125-B788-4F9E-B190-1B22306603BA' },
+      device: { id: process.env.DETOX_IPAD_ID || '6C25A125-B788-4F9E-B190-1B22306603BA' },
     },
   },
   configurations: {
