@@ -21,9 +21,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
      _ application: UIApplication,
      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
    ) -> Bool {
-     // Firebase initialization
-     RNFBAppCheckModule.sharedInstance()
-     FirebaseApp.configure()
+     // Firebase initialization (skipped in Detox e2e mode)
+     if !UserDefaults.standard.bool(forKey: "IS_DETOX_TEST") {
+       RNFBAppCheckModule.sharedInstance()
+       FirebaseApp.configure()
+     }
      
      let delegate = ReactNativeDelegate()
      let factory = RCTReactNativeFactory(delegate: delegate)
