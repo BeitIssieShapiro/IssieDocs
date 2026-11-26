@@ -27,7 +27,7 @@ npx detox test -c ios.sim.debug
   ```
   `RNSettings.get()` reads iOS NSUserDefaults populated from Detox launch args. This check **must stay at `index.js` body level** (after all imports) — calling `Settings.get()` during the import chain returns `undefined` because native module constants aren't populated at that point.
 
-- **Cold Hermes cache:** On a fresh simulator install, Hermes must compile the full debug bundle — this can take 15–25 min. `testTimeout` is set to 1800000 ms (30 min). Subsequent runs with a warm cache complete in ~1–2 min.
+- **Cold Hermes cache:** On a fresh simulator install, Hermes must compile the full debug bundle — this can take 15–25 min. `testTimeout` is set to 3600000 ms (60 min). Subsequent runs with a warm cache complete in ~1–2 min.
 
 - **On RN 0.88.1**, a `UIDimmingView` / `PopoverDismissRegion` popover may appear on first launch. If needed, dismiss by tapping `{ x: 825, y: 1185 }` on the element (top-left corner, away from the popover bubble).
 
