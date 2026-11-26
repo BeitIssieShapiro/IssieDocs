@@ -1,0 +1,33 @@
+diff --git a/node_modules/react-native-fast-encoder/ios/FastEncoderModule.mm b/node_modules/react-native-fast-encoder/ios/FastEncoderModule.mm
+index 2815747..cac0466 100644
+--- a/node_modules/react-native-fast-encoder/ios/FastEncoderModule.mm
++++ b/node_modules/react-native-fast-encoder/ios/FastEncoderModule.mm
+@@ -4,6 +4,12 @@
+ #include "encoder_bridge.h"
+ #import <jsi/jsi.h>
+ 
++// RN 0.87+ removed RCTCxxBridge. In bridgeless mode _bridge is an RCTBridgeProxy, which
++// implements -runtime (not declared in a public header).
++@interface NSObject (FastEncoderRuntime)
++- (void *)runtime;
++@end
++
+ @implementation FastEncoderModule
+ #import <React/RCTUtils.h>
+ 
+@@ -26,12 +32,12 @@ @implementation FastEncoderModule
+ #else
+ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install)
+ {
+-    RCTCxxBridge *cxxBridge = (RCTCxxBridge *)_bridge;
+-    if (cxxBridge == nil) {
++    id cxxBridge = _bridge;
++    if (cxxBridge == nil || ![cxxBridge respondsToSelector:@selector(runtime)]) {
+         return @false;
+     }
+     
+-    auto jsiRuntime = (facebook::jsi::Runtime *)cxxBridge.runtime;
++    auto jsiRuntime = (facebook::jsi::Runtime *)[cxxBridge runtime];
+     if (jsiRuntime == nil) {
+         return @false;
+     }
