@@ -12,8 +12,9 @@ module.exports = {
     'ios.debug': {
       type: 'ios.app',
       binaryPath: 'ios/build/Build/Products/Debug-iphonesimulator/IssieDocs.app',
-      build: 'xcodebuild -workspace ios/IssieDocs.xcworkspace -scheme IssieDocs.e2e -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build | xcpretty',
+      build: 'xcodebuild -workspace ios/IssieDocs.xcworkspace -scheme IssieDocs.e2e -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build | (command -v xcpretty >/dev/null && xcpretty || cat)',
       reversedUnhappyFlows: true,
+      launchArgs: { RCT_jsLocation: 'localhost:8084' },
     },
   },
   devices: {
