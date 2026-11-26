@@ -1,6 +1,9 @@
 import { trace } from "./log";
 import { arrLast } from "./utils";
 
+// the file an entry attached (a cut keeps its piece's image file in elem.piece)
+const attachedFile = (entry) => entry.elem?.file ?? entry.elem?.piece?.file;
+
 export default class DoQueue {
   constructor(onAttachmentRemove, name, level) {
     this._doneQueue = []
@@ -9,13 +12,19 @@ export default class DoQueue {
   }
 
   async clearUndo() {
-    this._undoQueue.forEach(async (elem) => {
-      //console.log("clear undo", elem)
-      if (elem.elem?.file) {
-        await this._onAttachmentRemove(elem.elem?.file);
+    // Build a set of all files still referenced in the done queue
+    const referencedFiles = new Set();
+    for (const entry of this._doneQueue) {
+      const file = attachedFile(entry);
+      if (file) referencedFiles.add(file);
+    }
+    // Only delete if not referenced anywhere in done queue
+    for (const entry of this._undoQueue) {
+      const file = attachedFile(entry);
+      if (file && this._onAttachmentRemove && !referencedFiles.has(file)) {
+        await this._onAttachmentRemove(file);
       }
-    })
-
+    }
     this._undoQueue = [];
   }
 
