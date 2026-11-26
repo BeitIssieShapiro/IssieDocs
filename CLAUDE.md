@@ -20,7 +20,7 @@ npx detox test -c ios.sim.debug
 
 **Key implementation notes:**
 
-- **Firebase skip:** Firebase's persistent WebSocket prevents Detox from ever seeing the app as idle. Skipped in e2e mode via a check at the top of `index.js`:
+- **Firebase skip:** Firebase's persistent WebSocket and AppCheck token exchange (a blocking network call in AppDelegate) prevent Detox from ever seeing the app as idle. Skipped in e2e mode via a check at the top of `index.js`:
   ```js
   const IS_DETOX_TEST = Platform.OS === 'ios' && !!(RNSettings.get('IS_DETOX_TEST') || RNSettings.get('e2e'));
   if (!IS_DETOX_TEST) { firebaseLocalInit(); }
