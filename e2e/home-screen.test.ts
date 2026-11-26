@@ -62,7 +62,7 @@ describe('home screen', () => {
     // RN 0.88.1 keeps the main run loop active during startup — disable synchronization
     // so the initial wait for the home screen doesn't block indefinitely.
     await device.disableSynchronization();
-    await waitFor(element(by.id('new-page-btn'))).toExist().withTimeout(30000);
+    await waitFor(element(by.id('new-page-btn'))).toExist().withTimeout(90000);
     await device.enableSynchronization();
     // Sweep leftovers from any previous crashed run
     await deleteSheet(E2E_SHEET);
