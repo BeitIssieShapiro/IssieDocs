@@ -1,0 +1,40 @@
+# New blank worksheet, draw with the pen, undo/redo, go home and reopen it.
+appId: ${APP_ID}
+env:
+  APP_ID: com.issieshapiro.issiedoc.IssieDoc
+  SHEET: Maestro Sheet
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "new-page-btn"
+    timeout: 15000
+- tapOn:
+    id: "new-page-btn"
+- tapOn: "Blank"
+- tapOn: "Name"
+- inputText: ${SHEET}
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible:
+      id: "editor-canvas"
+    timeout: 10000
+- tapOn:
+    id: "toolbar-brush-btn"
+- swipe:
+    from:
+      id: "editor-canvas"
+    direction: RIGHT
+    duration: 600
+- tapOn:
+    id: "toolbar-undo-btn"
+- tapOn:
+    id: "toolbar-redo-btn"
+- tapOn:
+    id: "header-home-button"
+- assertVisible: ${SHEET}
+- tapOn: ${SHEET}
+- assertVisible:
+    id: "editor-canvas"
+- takeScreenshot: docs-reopened

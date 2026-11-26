@@ -1,0 +1,20 @@
+name: Unit tests
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  jest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      # .npmrc reads @beitissieshapiro packages from GitHub Packages with GITHUB_TOKEN;
+      # the issie-shared package must grant this repo read access (package settings).
+      - run: npm ci
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: npx jest --ci --coverage --coverageReporters=text-summary
