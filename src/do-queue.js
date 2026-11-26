@@ -96,14 +96,25 @@ export default class DoQueue {
     this.clearUndo();
   }
 
-  pushImagePosition(elem) {
-    this.add({ elem: elem, type: 'imagePosition' });
+  // withPrevious: undone together with the entry before it (e.g. a selection cut out by this move)
+  pushImagePosition(elem, withPrevious) {
+    this.add({ elem: elem, type: 'imagePosition', ...(withPrevious ? { withPrevious: true } : {}) });
     this.clearUndo();
   }
 
-  pushDeleteImage(elem) {
-    this.add({ elem: elem, type: 'imageDelete' });
+  pushDeleteImage(elem, withPrevious) {
+    this.add({ elem: elem, type: 'imageDelete', ...(withPrevious ? { withPrevious: true } : {}) });
     this.clearUndo();
+  }
+
+  // Removes the last entry, if it is the one with this elem id, as if it never happened (no redo).
+  // removeFile: also delete its attached file
+  discardLast(elemId, removeFile) {
+    const last = arrLast(this._doneQueue);
+    if (!last || last.elem?.id !== elemId) return undefined;
+    this._doneQueue.pop();
+    if (removeFile && attachedFile(last)) this._onAttachmentRemove(attachedFile(last));
+    return last;
   }
 
   pushImage(elem) {
@@ -137,12 +148,17 @@ export default class DoQueue {
     this.clearUndo();
   }
 
-  // a cut-out area and the image piece taken from it - undone together
-  pushCut(cutElem, pieceElem) {
-    this.pushMany([
-      { elem: cutElem, type: 'cut' },
-      { elem: pieceElem, type: 'image' },
-    ]);
+  // a cut: the hole and the annotations it takes - one entry, undone as one
+  // provisional: a selection not acted on yet - the redo history stays until it is (or is discarded)
+  pushCut(cutElem, provisional) {
+    this.add({ elem: cutElem, type: 'cut' });
+    if (!provisional) this.clearUndo();
+  }
+
+  // a copy of a piece and everything on it, at (x, y)
+  pushPieceCopy(elem) {
+    this.add({ elem, type: 'pieceCopy' });
+    this.clearUndo();
   }
 
   pushTable(elem) {
