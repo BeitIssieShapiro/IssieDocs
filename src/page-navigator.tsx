@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, Image, ImageSize, StyleSheet, TouchableOpacity, View, ViewToken } from 'react-native';
+import { FlatList, Image, ImageSize, StyleSheet, TouchableOpacity, View, ListViewToken } from 'react-native';
 
 import Canvas from './canvas/canvas';
 import { replayPageQueue, PageState } from './canvas/page-state';
@@ -61,7 +61,7 @@ export function PageNavigator({ sheet, currentIndex, top, bottom, referenceWidth
         return () => { if (settleTimer.current) clearTimeout(settleTimer.current); };
     }, []);
 
-    const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ListViewToken[] }) => {
         setVisible(new Set(viewableItems.map(v => v.index as number)));
     }).current;
 
