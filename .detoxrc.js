@@ -18,17 +18,15 @@ module.exports = {
     },
   },
   devices: {
-    // Pinned to 6C25A125 to preserve Hermes cache; override with DETOX_IPAD_ID.
     simulator: {
       type: 'ios.simulator',
-      device: { id: process.env.DETOX_IPAD_ID || '6C25A125-B788-4F9E-B190-1B22306603BA' },
+      device: { type: 'iPad (A16)' },
     },
   },
   configurations: {
     'ios.sim.debug': {
       device: 'simulator',
       app: 'ios.debug',
-      behavior: { init: { reinstallApp: false } },
     },
   },
 };
