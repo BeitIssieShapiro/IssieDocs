@@ -29,11 +29,6 @@ module.exports = {
     'ios.sim.debug': {
       device: 'simulator',
       app: 'ios.debug',
-      behavior: {
-        init: {
-          reinstallApp: false,
-        },
-      },
     },
   },
 };
