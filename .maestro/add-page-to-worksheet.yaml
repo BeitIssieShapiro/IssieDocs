@@ -1,4 +1,6 @@
-appId: com.issieshapiro.issiedoc.IssieDoc
+appId: ${APP_ID}
+env:
+  APP_ID: com.issieshapiro.issiedoc.IssieDoc
 ---
 # ── Step 1: Launch app (preserve real user data) ──────────────────────────────
 - launchApp:

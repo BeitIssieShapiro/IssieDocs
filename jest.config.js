@@ -1,4 +1,5 @@
 module.exports = {
   preset: '@react-native/jest-preset',
-  testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
+  testPathIgnorePatterns: ['/node_modules/', '/e2e/', '/.maestro/'],
+  collectCoverageFrom: ['src/**/*.{ts,tsx,js}'],
 };
