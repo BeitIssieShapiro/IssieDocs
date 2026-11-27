@@ -5,7 +5,7 @@ module.exports = {
       config: 'e2e/jest.config.js',
     },
     jest: {
-      setupTimeout: 300000,
+      setupTimeout: 180000,
     },
   },
   apps: {
@@ -20,7 +20,7 @@ module.exports = {
   devices: {
     simulator: {
       type: 'ios.simulator',
-      device: { type: 'iPad (A16)' },
+      device: process.env.DETOX_IPAD_ID ? { id: process.env.DETOX_IPAD_ID } : { type: process.env.DETOX_IPAD || 'iPad (A16)' },
     },
   },
   configurations: {

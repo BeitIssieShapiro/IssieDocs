@@ -1,7 +1,7 @@
 # New blank worksheet, draw with the pen, undo/redo, go home and reopen it.
-appId: ${APP_ID}
+# iOS by default; Android: maestro test -e APP_ID=org.issieshapiro.issiedocs ...
+appId: ${APP_ID || "com.issieshapiro.issiedoc.IssieDoc"}
 env:
-  APP_ID: com.issieshapiro.issiedoc.IssieDoc
   SHEET: Maestro Sheet
 ---
 - launchApp:
@@ -10,12 +10,31 @@ env:
     visible:
       id: "new-page-btn"
     timeout: 15000
-- tapOn:
-    id: "new-page-btn"
+# The native splash fades out over the screen for ~2-3 s after launch and
+# swallows taps (Maestro can't see it). Tap until the new-page menu shows.
+- extendedWaitUntil:
+    visible:
+      id: "new-page-btn"
+    timeout: 15000
+- repeat:
+    times: 5
+    while:
+      notVisible: "Blank"
+    commands:
+      - tapOn:
+          id: "new-page-btn"
+      - waitForAnimationToEnd:
+          timeout: 2000
 - tapOn: "Blank"
-- tapOn: "Name"
+- tapOn:
+    id: "worksheet-name-input"
 - inputText: ${SHEET}
-- tapOn: "Save"
+# rounded buttons are labelled "Save, " - match by id
+- tapOn:
+    id: "save-photo-save-btn"
+# Save goes back home; open the new worksheet from its tile
+- tapOn:
+    id: "worksheet-item-${SHEET}"
 - extendedWaitUntil:
     visible:
       id: "editor-canvas"
@@ -33,8 +52,11 @@ env:
     id: "toolbar-redo-btn"
 - tapOn:
     id: "header-home-button"
-- assertVisible: ${SHEET}
-- tapOn: ${SHEET}
+# a row is one accessibility element ("<name>, <more icon>"): match by id
+- assertVisible:
+    id: "worksheet-item-${SHEET}"
+- tapOn:
+    id: "worksheet-item-${SHEET}"
 - assertVisible:
     id: "editor-canvas"
 - takeScreenshot: docs-reopened

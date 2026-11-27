@@ -27,8 +27,10 @@ npx detox test -c ios.sim.debug
   ```
   `RNSettings.get()` reads iOS NSUserDefaults populated from Detox launch args. This check **must stay at `index.js` body level** (after all imports) — calling `Settings.get()` during the import chain returns `undefined` because native module constants aren't populated at that point.
 
-- **Cold Hermes cache:** On a fresh simulator install, Hermes must compile the full debug bundle — this can take 15–25 min. `testTimeout` is set to 3600000 ms (60 min). Subsequent runs with a warm cache complete in ~1–2 min.
+- **Startup hang = two copies of react-native in the bundle.** The `issie-shared` dev copy of `react-native` must not be bundled (`'PlatformConstants' could not be found`, then Detox waits forever). `metro.config.js` blocks it and resolves everything from this app's `node_modules`. (An earlier "cold Hermes takes 15–60 min" theory was wrong; the suite takes ~6 min.)
+
+- **Accessibility containers:** a full-size `TouchableOpacity` backdrop is one accessibility element and hides its children from VoiceOver and Maestro. Menu backdrops/wrappers use `accessible={false}` (new-page menu in `FolderGallery.js`, `file-context-menu.js`); menu items set `accessibilityLabel={text}`.
 
 - **On RN 0.88.1**, a `UIDimmingView` / `PopoverDismissRegion` popover may appear on first launch. If needed, dismiss by tapping `{ x: 825, y: 1185 }` on the element (top-left corner, away from the popover bubble).
 
-- **No Android config:** IssieDocs currently has only an iOS Detox configuration (`ios.sim.debug`).
+- **No Android Detox config:** Detox is iOS only (`ios.sim.debug`). Android is covered by the Maestro flows in `.maestro/` (see its README; run on the `IssieTablet` AVD, needs `JAVA_HOME=/opt/homebrew/opt/openjdk@21`).

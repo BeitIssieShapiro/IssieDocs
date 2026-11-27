@@ -476,9 +476,9 @@ function EditorToolbar({
         }}>
             <IconButton onPress={onGoBack} color={semanticColors.editPhotoButton} icon="folder" size={55} iconSize={45} />
             <Spacer width={45} />
-            <IconButton onPress={onUndo} color={canUndo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} iconType="MDI" icon={rtl ? "undo" : "redo"} size={55} />
+            <IconButton testID="toolbar-undo-btn" onPress={onUndo} color={canUndo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} iconType="MDI" icon={rtl ? "undo" : "redo"} size={55} />
             <Spacer width={23} />
-            <IconButton onPress={onRedo} color={canRedo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} iconType="MDI" icon={rtl ? "redo" : "undo"} size={55} />
+            <IconButton testID="toolbar-redo-btn" onPress={onRedo} color={canRedo ? semanticColors.editPhotoButton : semanticColors.InactiveModeButton} iconType="MDI" icon={rtl ? "redo" : "undo"} size={55} />
             <Spacer width={23} />
             {getEraserIcon(onEraser, 50, eraseMode ? 'black' : semanticColors.editPhotoButton, eraseMode, 25)}
             { /* text size preview */}

@@ -1,40 +1,62 @@
-appId: ${APP_ID}
-env:
-  APP_ID: com.issieshapiro.issiedoc.IssieDoc
+# iOS by default; Android: maestro test -e APP_ID=org.issieshapiro.issiedocs ...
+appId: ${APP_ID || "com.issieshapiro.issiedoc.IssieDoc"}
 ---
 # ── Step 1: Launch app (preserve real user data) ──────────────────────────────
 - launchApp:
     clearState: false
 
 # ── Step 2: Create a blank worksheet ─────────────────────────────────────────
-- tapOn:
-    id: "new-page-btn"
+# The native splash fades out over the screen for ~2-3 s after launch and
+# swallows taps (Maestro can't see it). Tap until the new-page menu shows.
+- extendedWaitUntil:
+    visible:
+      id: "new-page-btn"
+    timeout: 15000
+- repeat:
+    times: 5
+    while:
+      notVisible: "Blank"
+    commands:
+      - tapOn:
+          id: "new-page-btn"
+      - waitForAnimationToEnd:
+          timeout: 2000
 - tapOn: "Blank"
 
 # ── Step 3: Name the worksheet and save ───────────────────────────────────────
-- tapOn: "Name"
-- clearText
+- tapOn:
+    id: "worksheet-name-input"
+- eraseText
 - inputText: "E2E Test Sheet"
-- tapOn: "Save"
+# rounded buttons are labelled "Save, " - match by id
+- tapOn:
+    id: "save-photo-save-btn"
 
-# ── Step 4: Assert we landed in the editor ────────────────────────────────────
-- assertVisible: "E2E Test Sheet"
+# ── Step 4: Save goes back home; open the worksheet in the editor ─────────────
+- tapOn:
+    id: "worksheet-item-E2E Test Sheet"
+- extendedWaitUntil:
+    visible:
+      id: "editor-canvas"
+    timeout: 10000
+- assertVisible: ".*E2E Test Sheet.*"
 
 # ── Step 5: Open editor context menu ─────────────────────────────────────────
 - tapOn:
     id: "editor-more-btn"
 
 # ── Step 6: Tap "Blank" in the Add Page section ───────────────────────────────
-- assertVisible: "Add Page"
+- assertVisible: "Add Page:?"
 - tapOn: "Blank"
 
 # ── Step 7: Confirm on SavePhoto screen ───────────────────────────────────────
-- tapOn: "Add"
+- tapOn:
+    id: "save-photo-save-btn"
 
 # ── Step 8: Assert page 2 of 2 ────────────────────────────────────────────────
 # Nav title becomes "E2E Test Sheet - 2/2" after successful page add.
 # This is the key assertion — the bug causes this to be missing.
-- assertVisible: "2/2"
+- assertVisible: ".*2/2.*"
 
 # ── Step 9: Go home ───────────────────────────────────────────────────────────
 - tapOn:
@@ -49,4 +71,5 @@ env:
 - tapOn: "Delete"
 
 # ── Step 12: Assert worksheet is gone (re-run safe) ───────────────────────────
-- assertNotVisible: "E2E Test Sheet"
+- assertNotVisible:
+    id: "worksheet-item-E2E Test Sheet"

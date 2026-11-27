@@ -104,6 +104,8 @@ export function FileContextMenu({
         alignItems: "center",
         justifyContent: "flex-end",
       }}
+      // backdrop/wrappers are not accessibility elements: keep the menu items reachable (VoiceOver, Maestro)
+      accessible={false}
       onPress={onClose}
     >
       <FadeInView
@@ -142,6 +144,7 @@ export function FileContextMenu({
         </TouchableOpacity>
         <TouchableOpacity
           activeOpacity={1}
+          accessible={false}
           style={{ height: '100%', width: '100%' }}
         >
           {/**title */}
@@ -498,6 +501,7 @@ function OneMenu({ icon, iconType, onPress, text, scale }) {
         marginVertical: 10 * scale,
         marginHorizontal: 20,
       }}
+      accessibilityLabel={text}
       onPress={onPress}
     >
       {iconType === 'svg' ? (

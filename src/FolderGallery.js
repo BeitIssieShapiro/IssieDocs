@@ -1198,6 +1198,8 @@ export default class FolderGallery extends React.Component {
             <TouchableOpacity
               style={{ flex: 1 }}
               activeOpacity={1}
+              // not one accessibility element: keep the menu options reachable (VoiceOver, Maestro)
+              accessible={false}
               onPress={() => this.setState({ showNewPageMenu: false })}
             >
               <View
