@@ -2420,6 +2420,28 @@ PODS:
   - ReactNativeExceptionHandler (2.10.10):
     - React-Core
   - RecaptchaInterop (101.0.0)
+  - RNCClipboard (1.16.3):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-bridging
+    - React-Core
+    - React-cxxstableapi
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNFBAnalytics (24.0.0):
     - FirebaseAnalytics/Core (= 12.10.0)
     - hermes-engine
@@ -2988,6 +3010,7 @@ DEPENDENCIES:
   - ReactNativeCameraKit (from `../node_modules/react-native-camera-kit`)
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - ReactNativeExceptionHandler (from `../node_modules/react-native-exception-handler`)
+  - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - "RNFBAnalytics (from `../node_modules/@react-native-firebase/analytics`)"
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBAppCheck (from `../node_modules/@react-native-firebase/app-check`)"
@@ -3244,6 +3267,8 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
   ReactNativeExceptionHandler:
     :path: "../node_modules/react-native-exception-handler"
+  RNCClipboard:
+    :path: "../node_modules/@react-native-clipboard/clipboard"
   RNFBAnalytics:
     :path: "../node_modules/@react-native-firebase/analytics"
   RNFBApp:
@@ -3405,6 +3430,7 @@ SPEC CHECKSUMS:
   ReactNativeDependencies: a5164c3ebbe90d992022b5d9cbabbf770a6d7d05
   ReactNativeExceptionHandler: a23922ca00122b050ae9412f960061791c232c47
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
+  RNCClipboard: eb2f61c2716d7c13bd1e4aa831187697d3025ec6
   RNFBAnalytics: e16810b157ad02a0cb241823c392acca1b6a950e
   RNFBApp: 404c24a81548ad2d05317d234b2e5cc59fb3660f
   RNFBAppCheck: 5aa55b801eeb01595c1376f802c605b32e0a088c
