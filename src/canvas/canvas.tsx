@@ -560,7 +560,9 @@ function Canvas({
                             if ("id" in elem) {
                                 isMoving.current = true;
                                 const moveType = currentElementTypeRef.current == ElementTypes.Line ? MoveTypes.LineMove : MoveTypes.ImageMove;
-                                if (moveContext.current == null) {
+                                // a context left by an earlier gesture (e.g. the resize handle) is replaced: the
+                                // offset effect replays moves with its type, which would resize instead of move
+                                if (moveContext.current?.type !== moveType || moveContext.current.id !== elem.id) {
                                     moveContext.current = { type: moveType, id: elem.id, offsetX: 0, offsetY: 0 };
                                 }
                                 moveContext.current.lastPt = pt;
@@ -689,6 +691,7 @@ function Canvas({
                 if (moveContext.current) {
                     onMoveEnd?.(moveContext.current.type, moveContext.current.id);
                 }
+                moveContext.current = null;
             },
         })
     ).current;
