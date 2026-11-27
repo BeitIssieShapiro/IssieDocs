@@ -231,6 +231,13 @@ function EditorToolbar({
 
     onModeButtonClick = useCallback((type, height) => {
         trace("mode button click", type, height )
+        if (type === Pickers.FILL && isFillMode) {
+            // the fill tool's only option is its color: open the color menu directly. Switching the
+            // picker type to FILL first would make that call see a stale COLOR type and only toggle
+            // an invisible FILL menu, so the colors opened on the second tap
+            onSelectButtonClick(Pickers.COLOR, false, height);
+            return;
+        }
         let pickerTypeChanged = false;
         if (type !== showPickerType) {
             pickerTypeChanged = (showPickerType != Pickers.NONE);
@@ -328,12 +335,8 @@ function EditorToolbar({
                 }
                 break;
             case Pickers.FILL:
-                if (isFillMode) {
-                    // the fill tool's only option is its color
-                    onSelectButtonClick(Pickers.COLOR, false, height);
-                } else {
-                    onFillMode();
-                }
+                // (in fill mode, the tap opened the color menu above)
+                onFillMode();
                 break;
         }
     }, [isVoiceMode, isTextMode, isBrushMode, isTableMode, isImageMode, isAudioMode, isMarkerMode, isRulerMode, isCutMode, isFillMode, showPickerType, showPicker]);
